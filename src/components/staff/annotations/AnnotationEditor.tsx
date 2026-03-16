@@ -23,6 +23,8 @@ interface AnnotationEditorProps {
   clipConstraint?: { start: number; end: number };
   /** Auto-start playback once video is loaded */
   autoPlay?: boolean;
+  /** Seek video to this time (seconds) once loaded */
+  initialSeekTime?: number;
 }
 
 export type AnnotationTool =
@@ -33,7 +35,7 @@ export type AnnotationTool =
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
-export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, autoPlay }: AnnotationEditorProps) => {
+export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, autoPlay, initialSeekTime }: AnnotationEditorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -48,7 +50,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     try { return localStorage.getItem('annotation-last-colour') || '#C6A332'; } catch { return '#C6A332'; }
   });
   const [strokeWidth, setStrokeWidth] = useState(() => {
-    try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '1') || 1; } catch { return 1; }
+    try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '0.2') || 0.2; } catch { return 0.2; }
   });
   const [fillOpacity, setFillOpacity] = useState(0.15);
 
@@ -217,7 +219,25 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     };
   }, []);
 
-  // Effect A: Detect annotation timestamps, capture freeze frame, pause video
+  // Seek to initialSeekTime when video is ready
+  useEffect(() => {
+    if (initialSeekTime == null || initialSeekTime <= 0) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const doSeek = () => {
+      if (video.readyState >= 1) {
+        video.currentTime = initialSeekTime;
+        video.pause();
+      }
+    };
+    if (video.readyState >= 1) {
+      doSeek();
+    } else {
+      video.addEventListener('loadedmetadata', doSeek, { once: true });
+      return () => video.removeEventListener('loadedmetadata', doSeek);
+    }
+  }, [initialSeekTime]);
+
   useEffect(() => {
     if (isExportingRef.current) return;
     if (drawingMode || !activeKlip || playbackFreezeActive) return;

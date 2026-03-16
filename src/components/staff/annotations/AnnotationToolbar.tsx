@@ -45,6 +45,8 @@ const brandColors = [
   { color: RISE_GOLD, label: 'Rise Gold' },
   { color: '#ffffff', label: 'White' },
   { color: '#000000', label: 'Black' },
+  { color: '#1a5c2e', label: 'Dark Green' },
+  { color: '#dc2626', label: 'Red' },
 ];
 
 export const AnnotationToolbar = ({

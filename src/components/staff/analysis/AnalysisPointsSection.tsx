@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -229,9 +229,11 @@ const VideoItem = ({
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
+  const [annotateSeekTime, setAnnotateSeekTime] = useState<number | undefined>(undefined);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
   const [moveOpen, setMoveOpen] = useState(false);
+  const videoPreviewRef = useRef<HTMLDivElement>(null);
 
   // Load existing annotation project if one exists
   useEffect(() => {
@@ -257,6 +259,15 @@ const VideoItem = ({
   }, [existingAnnotationId]);
 
   const handleOpenAnnotate = () => {
+    // Capture current video time from the preview before opening
+    let currentVideoTime: number | undefined;
+    const videoEl = videoPreviewRef.current?.querySelector('video') as HTMLVideoElement | null;
+    if (videoEl) {
+      currentVideoTime = videoEl.currentTime;
+      if (!videoEl.paused) videoEl.pause();
+    }
+    setAnnotateSeekTime(currentVideoTime);
+
     if (annotationProject) {
       setAnnotateOpen(true);
       return;
@@ -327,7 +338,7 @@ const VideoItem = ({
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={videoPreviewRef}>
       <div className="overflow-hidden rounded border-2 border-primary bg-background/20">
         <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
           <div style={cropShiftStyle}>
@@ -438,6 +449,7 @@ const VideoItem = ({
               project={annotationProject}
               onSave={handleSaveAnnotation}
               onBack={() => setAnnotateOpen(false)}
+              initialSeekTime={annotateSeekTime}
             />
           )}
         </DialogContent>
