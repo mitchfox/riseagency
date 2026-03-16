@@ -802,8 +802,12 @@ const AnalysisViewer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-primary/30 bg-card/80 p-8 text-center shadow-2xl backdrop-blur-sm">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+          <h1 className="font-bebas text-3xl uppercase tracking-[0.2em] text-primary">Loading Analysis</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Preparing presentation, media and annotations.</p>
+        </div>
       </div>
     );
   }
