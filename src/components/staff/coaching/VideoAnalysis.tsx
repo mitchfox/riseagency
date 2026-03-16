@@ -1848,19 +1848,21 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 }
               }}
               onWaiting={() => {
-                // At high playback rates, browsers may stall because they can't decode fast enough.
-                // Temporarily drop to 1x to let the buffer catch up, then restore.
+                // At high playback rates, browsers stall when they can't decode fast enough.
+                // Skip forward slightly to a buffered region instead of dropping rate.
                 const video = videoRef.current;
                 if (!video || video.playbackRate <= 1) return;
-                const savedRate = video.playbackRate;
-                video.playbackRate = 1;
-                const restore = () => {
-                  if (video) {
-                    video.playbackRate = savedRate;
-                    video.removeEventListener('canplay', restore);
+                const buffered = video.buffered;
+                const ct = video.currentTime;
+                // Find a buffered range ahead of current time
+                for (let i = 0; i < buffered.length; i++) {
+                  if (buffered.start(i) > ct && buffered.start(i) - ct < 2) {
+                    video.currentTime = buffered.start(i) + 0.1;
+                    return;
                   }
-                };
-                video.addEventListener('canplay', restore, { once: true });
+                }
+                // Fallback: nudge forward slightly to skip the stall point
+                video.currentTime = ct + 0.5;
               }}
               onTimeUpdate={() => {
                 if (overlayElements.length > 0) {
