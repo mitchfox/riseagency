@@ -61,6 +61,8 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  placeholder_per?: number | null;
+  placeholder_sr?: number | null;
   translated_content?: { language: string; fields: Record<string, string> } | null;
 }
 
