@@ -487,24 +487,14 @@ const PerformanceReport = () => {
         {/* Visibility: Hidden - show placeholder stats */}
         {(analysis.visibility_status || "").toLowerCase() === "hidden" ? (
           <div className="text-center py-16 space-y-6">
-            {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
-                <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
-                  <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
-                </div>
-                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
-                  <p className="text-[10px] md:text-sm opacity-90 mb-0.5 md:mb-1">R90</p>
-                  <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
-                </div>
-                <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
-                  <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">{t(reportLanguage, "placeholder_stats_not_set")}</p>
-            )}
+            <HiddenScoresGrid
+              placeholderRawScore={analysis.placeholder_raw_score}
+              placeholderMinutes={analysis.placeholder_minutes}
+              placeholderPer={analysis.placeholder_per}
+              placeholderSr={analysis.placeholder_sr}
+              t={t}
+              reportLanguage={reportLanguage}
+            />
             <div className="bg-muted/50 rounded-lg p-6 max-w-sm mx-auto">
               <p className="text-sm font-medium">{t(reportLanguage, "report_locked")}</p>
               <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "contact_to_unlock_report")}</p>
