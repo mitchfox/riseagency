@@ -49,6 +49,10 @@ export const VisibilityStatusButton = ({
   placeholderMinutes,
   onPlaceholderRawScoreChange,
   onPlaceholderMinutesChange,
+  placeholderPer,
+  onPlaceholderPerChange,
+  placeholderSr,
+  onPlaceholderSrChange,
   estimatedReadyAt,
   onEstimatedReadyAtChange,
 }: VisibilityStatusButtonProps) => {
