@@ -17,6 +17,10 @@ interface VisibilityStatusButtonProps {
   placeholderMinutes?: string;
   onPlaceholderRawScoreChange?: (val: string) => void;
   onPlaceholderMinutesChange?: (val: string) => void;
+  placeholderPer?: string;
+  onPlaceholderPerChange?: (val: string) => void;
+  placeholderSr?: string;
+  onPlaceholderSrChange?: (val: string) => void;
   estimatedReadyAt?: string | null;
   onEstimatedReadyAtChange?: (val: string | null) => void;
 }
