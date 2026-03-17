@@ -2611,6 +2611,10 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                placeholderPer={placeholderPer}
+                onPlaceholderPerChange={setPlaceholderPer}
+                placeholderSr={placeholderSr}
+                onPlaceholderSrChange={setPlaceholderSr}
                 estimatedReadyAt={estimatedReadyAt}
                 onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
