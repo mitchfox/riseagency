@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { HiddenScoresGrid } from "@/components/portal/HiddenScoresGrid";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

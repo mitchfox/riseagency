@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { HiddenScoresGrid } from "@/components/portal/HiddenScoresGrid";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useParams } from "react-router-dom";
 import { Header } from "@/components/Header";
