@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { HiddenScoresGrid } from "@/components/portal/HiddenScoresGrid";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,8 @@ interface AnalysisDetails {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  placeholder_per?: number | null;
+  placeholder_sr?: number | null;
   translated_content?: { language: string; fields: Record<string, string> } | null;
 }
 
@@ -171,6 +174,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         visibility_status: (analysisResult.data as any).visibility_status || "live",
         placeholder_raw_score: (analysisResult.data as any).placeholder_raw_score,
         placeholder_minutes: (analysisResult.data as any).placeholder_minutes,
+        placeholder_per: (analysisResult.data as any).placeholder_per,
+        placeholder_sr: (analysisResult.data as any).placeholder_sr,
         translated_content: (analysisResult.data as any).translated_content || null,
       });
 
@@ -655,24 +660,14 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
                 <Lock className="w-8 h-8 text-muted-foreground" />
               </div>
-              {analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0 ? (
-                <div className="grid grid-cols-3 gap-4 max-w-md mx-auto p-4 bg-accent/20 rounded-lg">
-                  <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
-                    <p className="text-base md:text-2xl font-bold">{analysis.placeholder_raw_score.toFixed(3)}</p>
-                  </div>
-                  <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4">
-                    <p className="text-[10px] md:text-sm opacity-90 mb-0.5 md:mb-1">R90</p>
-                    <p className="text-lg md:text-3xl font-bold">{((analysis.placeholder_raw_score / analysis.placeholder_minutes!) * 90).toFixed(2)}</p>
-                  </div>
-                  <div className="text-center p-2">
-                    <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
-                    <p className="text-base md:text-2xl font-bold">{analysis.placeholder_minutes}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t(reportLanguage, "placeholder_stats_not_set")}</p>
-              )}
+              <HiddenScoresGrid
+                placeholderRawScore={analysis.placeholder_raw_score}
+                placeholderMinutes={analysis.placeholder_minutes}
+                placeholderPer={analysis.placeholder_per}
+                placeholderSr={analysis.placeholder_sr}
+                t={t}
+                reportLanguage={reportLanguage}
+              />
               <div className="bg-muted/50 rounded-lg p-4 max-w-sm mx-auto">
                 <p className="text-sm font-medium">{t(reportLanguage, "report_locked")}</p>
                 <p className="text-xs text-muted-foreground mt-1">{t(reportLanguage, "contact_to_unlock_report")}</p>

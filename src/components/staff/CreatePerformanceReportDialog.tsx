@@ -206,6 +206,8 @@ export const CreatePerformanceReportDialog = ({
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
+  const [placeholderPer, setPlaceholderPer] = useState("");
+  const [placeholderSr, setPlaceholderSr] = useState("");
   const [estimatedReadyAt, setEstimatedReadyAt] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<TranslatedContent | null>(null);
   const [activeTranslationTab, setActiveTranslationTab] = useState("en");
@@ -885,6 +887,8 @@ export const CreatePerformanceReportDialog = ({
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
+      setPlaceholderPer((analysisData as any).placeholder_per?.toString() || "");
+      setPlaceholderSr((analysisData as any).placeholder_sr?.toString() || "");
       setEstimatedReadyAt((analysisData as any).estimated_ready_at || null);
       setTranslatedContent((analysisData as any).translated_content || null);
       if ((analysisData as any).translated_content?.language) {
@@ -1435,7 +1439,9 @@ export const CreatePerformanceReportDialog = ({
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
             placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
-            estimated_ready_at: (visibilityStatus === "draft" || visibilityStatus === "hidden") ? estimatedReadyAt : null,
+            placeholder_per: visibilityStatus === "hidden" && placeholderPer ? parseFloat(placeholderPer) : null,
+            placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
+            estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
           } as any)
           .eq("id", analysisId);
@@ -1501,7 +1507,9 @@ export const CreatePerformanceReportDialog = ({
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
             placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
-            estimated_ready_at: (visibilityStatus === "draft" || visibilityStatus === "hidden") ? estimatedReadyAt : null,
+            placeholder_per: visibilityStatus === "hidden" && placeholderPer ? parseFloat(placeholderPer) : null,
+            placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
+            estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
           } as any)
           .select()
@@ -2603,6 +2611,10 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                placeholderPer={placeholderPer}
+                onPlaceholderPerChange={setPlaceholderPer}
+                placeholderSr={placeholderSr}
+                onPlaceholderSrChange={setPlaceholderSr}
                 estimatedReadyAt={estimatedReadyAt}
                 onEstimatedReadyAtChange={setEstimatedReadyAt}
               />
@@ -2992,6 +3004,10 @@ export const CreatePerformanceReportDialog = ({
                 placeholderMinutes={placeholderMinutes}
                 onPlaceholderRawScoreChange={setPlaceholderRawScore}
                 onPlaceholderMinutesChange={setPlaceholderMinutes}
+                placeholderPer={placeholderPer}
+                onPlaceholderPerChange={setPlaceholderPer}
+                placeholderSr={placeholderSr}
+                onPlaceholderSrChange={setPlaceholderSr}
                 estimatedReadyAt={estimatedReadyAt}
                 onEstimatedReadyAtChange={setEstimatedReadyAt}
               />

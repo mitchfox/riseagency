@@ -2510,7 +2510,9 @@ export type Database = {
           pdf_url: string | null
           performance_overview: string | null
           placeholder_minutes: number | null
+          placeholder_per: number | null
           placeholder_raw_score: number | null
+          placeholder_sr: number | null
           player_id: string
           r90_score: number | null
           result: string | null
@@ -2535,7 +2537,9 @@ export type Database = {
           pdf_url?: string | null
           performance_overview?: string | null
           placeholder_minutes?: number | null
+          placeholder_per?: number | null
           placeholder_raw_score?: number | null
+          placeholder_sr?: number | null
           player_id: string
           r90_score?: number | null
           result?: string | null
@@ -2560,7 +2564,9 @@ export type Database = {
           pdf_url?: string | null
           performance_overview?: string | null
           placeholder_minutes?: number | null
+          placeholder_per?: number | null
           placeholder_raw_score?: number | null
+          placeholder_sr?: number | null
           player_id?: string
           r90_score?: number | null
           result?: string | null
