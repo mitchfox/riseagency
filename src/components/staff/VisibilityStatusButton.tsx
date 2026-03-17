@@ -7,6 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { PERCalculatorDialog } from "./PERCalculatorDialog";
+import { cn } from "@/lib/utils";
 
 export type VisibilityStatus = "draft" | "hidden" | "live";
 
