@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { PERCalculatorDialog } from "./PERCalculatorDialog";
 
 export type VisibilityStatus = "draft" | "hidden" | "live";
 
@@ -163,7 +164,10 @@ export const VisibilityStatusButton = ({
             )}
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div>
-                <Label className="text-xs">PER</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs">PER</Label>
+                  <PERCalculatorDialog onResult={(val) => onPlaceholderPerChange?.(val)} />
+                </div>
                 <Input
                   type="number"
                   step="0.01"
