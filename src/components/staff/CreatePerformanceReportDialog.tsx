@@ -1507,7 +1507,9 @@ export const CreatePerformanceReportDialog = ({
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
             placeholder_minutes: visibilityStatus === "hidden" && placeholderMinutes ? parseInt(placeholderMinutes) : null,
-            estimated_ready_at: (visibilityStatus === "draft" || visibilityStatus === "hidden") ? estimatedReadyAt : null,
+            placeholder_per: visibilityStatus === "hidden" && placeholderPer ? parseFloat(placeholderPer) : null,
+            placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
+            estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
           } as any)
           .select()
