@@ -236,6 +236,10 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'touches': 'touches',
   'goals': 'goals',
   'assists': 'assists',
+  
+  // Ratings
+  'per': 'per',
+  'sr': 'sr',
 };
 
 // Helper to normalize a stat key for lookups
