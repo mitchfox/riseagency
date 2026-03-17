@@ -157,11 +157,35 @@ export const VisibilityStatusButton = ({
                 R90 = {((parseFloat(placeholderRawScore) / parseInt(placeholderMinutes)) * 90).toFixed(2)}
               </p>
             )}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div>
+                <Label className="text-xs">PER</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 1.25"
+                  value={placeholderPer || ""}
+                  onChange={(e) => onPlaceholderPerChange?.(e.target.value)}
+                  className="h-7 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">SR</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 68.5"
+                  value={placeholderSr || ""}
+                  onChange={(e) => onPlaceholderSrChange?.(e.target.value)}
+                  className="h-7 text-xs"
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Estimated Ready Time - shown for draft and hidden */}
-        {(isDraft || value === "hidden") && onEstimatedReadyAtChange && (
+        {/* Estimated Ready Time - shown for draft only */}
+        {isDraft && onEstimatedReadyAtChange && (
           <div className="border-t mt-2 pt-2 space-y-2 px-1">
             <p className="text-xs text-muted-foreground">Estimated ready by (shown to player):</p>
             <div className="flex gap-2">
