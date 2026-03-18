@@ -741,8 +741,9 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                   <TableHeader>
                     <TableRow>
                       <TableHead>Player</TableHead>
-                      <TableHead>Position</TableHead>
+                      <TableHead>Pos</TableHead>
                       <TableHead>Age</TableHead>
+                      <TableHead>DOB</TableHead>
                       <TableHead>Nationality</TableHead>
                       <TableHead>Club</TableHead>
                       <TableHead>Value</TableHead>
