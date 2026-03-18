@@ -242,22 +242,36 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [hasSearched, setHasSearched] = useState(false);
   const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set());
   const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set());
+  const [dbPlayerNames, setDbPlayerNames] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!visible) return;
     const loadExisting = async () => {
-      const { data } = await supabase
-        .from("transfermarkt_shortlist")
-        .select("transfermarkt_url");
-      if (data) {
-        setShortlistedUrls(new Set(data.map(d => d.transfermarkt_url).filter(Boolean) as string[]));
+      const [shortlistRes, playersRes] = await Promise.all([
+        supabase.from("transfermarkt_shortlist").select("transfermarkt_url"),
+        supabase.from("players").select("name"),
+      ]);
+      if (shortlistRes.data) {
+        setShortlistedUrls(new Set(shortlistRes.data.map(d => d.transfermarkt_url).filter(Boolean) as string[]));
+      }
+      if (playersRes.data) {
+        setDbPlayerNames(new Set(playersRes.data.map(d => d.name.toLowerCase().trim())));
       }
     };
     loadExisting();
   }, [visible]);
 
   if (!visible) return null;
+
+  /** When no specific league is chosen, randomly pick several to ensure results */
+  const getLeaguesToScrape = (): string[] => {
+    const allLeagueCodes = LEAGUES.flatMap(g => g.items.map(i => i.value));
+    // Pick 3 random leagues from the bigger nations for a good spread
+    const majorLeagues = ['GB1', 'GB2', 'GB3', 'FR1', 'FR2', 'ES1', 'ES2', 'IT1', 'IT2', 'L1', 'L2', 'NL1', 'PO1', 'BE1', 'TS1', 'SC1', 'SE1', 'NO1', 'DK1', 'PL1', 'CZ1', 'GR1', 'RO1', 'A1', 'C1'];
+    const shuffled = majorLeagues.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  };
 
   const applyClientFilters = (players: PlayerResult[]) => {
     let filtered = players;
@@ -303,48 +317,69 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     return filtered;
   };
 
-  const handleSearch = async (birthdayOverride = false) => {
+  const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
     try {
       const leagueCode = filters.countryPlayingIn || 'any';
-      const skipUefa = leagueCode !== 'any' && NON_UEFA_LEAGUE_CODES.has(leagueCode);
+      const leaguesToScrape = leagueCode === 'any' ? getLeaguesToScrape() : [leagueCode];
 
-      const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
-        body: {
-          filters: {
-            ...filters,
-            position: filters.position === 'any' ? undefined : filters.position,
-            nationality: filters.nationality === 'any' ? undefined : filters.nationality,
-            countryPlayingIn: leagueCode === 'any' ? undefined : leagueCode,
-            clubName: undefined,
-            marketValueMin: undefined,
-            marketValueMax: undefined,
-            excludeLoans: undefined,
-            contractStatus: undefined,
-            birthdayToday: birthdayOverride || filters.birthdayToday || false,
+      const allPlayers: PlayerResult[] = [];
+      let totalScanned = 0;
+
+      for (const league of leaguesToScrape) {
+        const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
+        const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
+          body: {
+            filters: {
+              ...filters,
+              position: filters.position === 'any' ? undefined : filters.position,
+              nationality: filters.nationality === 'any' ? undefined : filters.nationality,
+              countryPlayingIn: league,
+              clubName: undefined,
+              marketValueMin: undefined,
+              marketValueMax: undefined,
+              excludeLoans: undefined,
+              contractStatus: undefined,
+              birthdayToday: filters.birthdayToday || false,
+            },
+            confederation: skipUefa ? undefined : 'UEFA',
           },
-          confederation: skipUefa ? undefined : 'UEFA',
-        },
+        });
+
+        if (error) throw error;
+
+        if (data?.success) {
+          allPlayers.push(...(data.players || []));
+          totalScanned += data.totalFound || 0;
+        }
+      }
+
+      // Remove duplicates by transfermarkt URL
+      const seen = new Set<string>();
+      const uniquePlayers = allPlayers.filter(p => {
+        if (!p.transfermarktUrl || seen.has(p.transfermarktUrl)) return false;
+        seen.add(p.transfermarktUrl);
+        return true;
       });
 
-      if (error) throw error;
+      // Filter out players already on shortlist or in our database
+      const filtered = uniquePlayers.filter(p => {
+        if (shortlistedUrls.has(p.transfermarktUrl)) return false;
+        if (dbPlayerNames.has(p.name.toLowerCase().trim())) return false;
+        return true;
+      });
 
-      if (data?.success) {
-        const allPlayers = data.players || [];
-        setResults(allPlayers);
-        setTotalFound(data.totalFound || 0);
+      setResults(filtered);
+      setTotalFound(totalScanned);
 
-        const clientFiltered = applyClientFilters(allPlayers);
-        setFilteredResults(clientFiltered);
+      const clientFiltered = applyClientFilters(filtered);
+      setFilteredResults(clientFiltered);
 
-        if (clientFiltered.length === 0) {
-          toast.info("No unrepresented players found matching your criteria");
-        } else {
-          toast.success(`Found ${clientFiltered.length} unrepresented player${clientFiltered.length !== 1 ? 's' : ''} from ${data.totalFound} results`);
-        }
+      if (clientFiltered.length === 0) {
+        toast.info("No unrepresented players found matching your criteria");
       } else {
-        toast.error(data?.error || "Search failed");
+        toast.success(`Found ${clientFiltered.length} unrepresented player${clientFiltered.length !== 1 ? 's' : ''} from ${totalScanned} scanned`);
       }
     } catch (error: any) {
       console.error('Scraper error:', error);
@@ -425,10 +460,6 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
         return next;
       });
     }
-  };
-
-  const handleBirthdaySearch = () => {
-    handleSearch(true);
   };
 
   const displayResults = filteredResults;
@@ -593,20 +624,23 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
               </label>
             </div>
 
-            {/* Search + Birthday buttons */}
-            <div className="flex items-end gap-2">
-              <Button onClick={() => handleSearch()} disabled={searching} className="flex-1 h-9">
+            {/* Birthday Today toggle */}
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={filters.birthdayToday || false}
+                  onCheckedChange={(checked) => setFilters(f => ({ ...f, birthdayToday: checked === true }))}
+                />
+                <Cake className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm">Birthday today only</span>
+              </label>
+            </div>
+
+            {/* Search button */}
+            <div className="flex items-end">
+              <Button onClick={() => handleSearch()} disabled={searching} className="w-full h-9">
                 {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
                 Search
-              </Button>
-              <Button
-                onClick={handleBirthdaySearch}
-                disabled={searching}
-                variant="outline"
-                className="h-9"
-                title="Show only players whose birthday is today"
-              >
-                <Cake className="h-4 w-4" />
               </Button>
             </div>
           </div>
