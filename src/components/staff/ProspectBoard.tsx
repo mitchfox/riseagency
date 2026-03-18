@@ -835,8 +835,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
               .from("players")
               .insert({
                 name: formData.name.trim(),
-                position: formData.position || null,
-                nationality: formData.nationality || null,
+                position: formData.position || 'Unknown',
+                nationality: formData.nationality || 'Unknown',
+                age: formData.age ? parseInt(formData.age) : 0,
                 club: formData.current_club || null,
                 representation_status: 'prospect',
               })
