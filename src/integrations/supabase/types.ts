@@ -3838,6 +3838,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           current_club: string | null
+          date_of_birth: string | null
           id: string
           last_contact_date: string | null
           linked_player_id: string | null
@@ -3857,6 +3858,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           last_contact_date?: string | null
           linked_player_id?: string | null
@@ -3876,6 +3878,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           current_club?: string | null
+          date_of_birth?: string | null
           id?: string
           last_contact_date?: string | null
           linked_player_id?: string | null
