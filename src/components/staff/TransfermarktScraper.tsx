@@ -462,9 +462,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     }
   };
 
-  const handleBirthdaySearch = () => {
-    handleSearch(true);
-  };
+  const displayResults = filteredResults;
 
   const displayResults = filteredResults;
 
