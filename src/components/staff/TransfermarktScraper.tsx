@@ -69,6 +69,7 @@ const abbreviatePosition = (pos: string): string => {
 };
 
 
+const POSITIONS = [
   { value: 'any', label: 'Any Position' },
   { value: 'goalkeeper', label: 'Goalkeeper' },
   { value: 'centre-back', label: 'Centre-Back' },
