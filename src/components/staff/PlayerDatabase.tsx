@@ -59,6 +59,36 @@ type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_c
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
+const UPCOMING_BIRTHDAY_DAYS = 7;
+
+const getMonthDayFromDob = (dateOfBirth: string | null) => {
+  if (!dateOfBirth) return null;
+  const [_, month, day] = dateOfBirth.split('-').map(Number);
+  if (!month || !day) return null;
+  return { month, day };
+};
+
+const isBirthdayOnOffset = (dateOfBirth: string | null, offset: number) => {
+  const dob = getMonthDayFromDob(dateOfBirth);
+  if (!dob) return false;
+
+  const target = new Date();
+  target.setHours(0, 0, 0, 0);
+  target.setDate(target.getDate() + offset);
+
+  return dob.month === target.getMonth() + 1 && dob.day === target.getDate();
+};
+
+const getUpcomingBirthdayLabel = (offset: number, date: Date) => {
+  if (offset === 0) return 'Today';
+  if (offset === 1) return 'Tomorrow';
+
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  });
+};
 
 const POSITION_ORDER: Record<string, number> = {
   'GK': 1, 'Goalkeeper': 1,
@@ -181,6 +211,7 @@ export const PlayerDatabase = () => {
   const [nationFilter, setNationFilter] = useState<string>('all');
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+  const [birthdayFilterOffset, setBirthdayFilterOffset] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -335,6 +366,20 @@ export const PlayerDatabase = () => {
     return [...new Set(players.map(p => p.position).filter((p): p is string => !!p))].sort((a, b) => getPositionOrder(a) - getPositionOrder(b));
   }, [players]);
 
+  const upcomingBirthdayOptions = useMemo(() => {
+    return Array.from({ length: UPCOMING_BIRTHDAY_DAYS }, (_, offset) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + offset);
+
+      return {
+        offset,
+        label: getUpcomingBirthdayLabel(offset, date),
+        count: players.filter(player => isBirthdayOnOffset(player.date_of_birth, offset)).length,
+      };
+    });
+  }, [players]);
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -372,6 +417,7 @@ export const PlayerDatabase = () => {
       if (nationFilter !== 'all' && player.nationality !== nationFilter) return false;
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
+      if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
       return true;
     });
 
@@ -393,16 +439,27 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, sortField, sortDirection]);
+  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthdayFilterOffset, sortField, sortDirection]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
 
   const clearAllFilters = () => {
-    setSearchQuery(''); setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setSourceFilter([]); setDobFrom(''); setDobTo('');
+    setSearchQuery('');
+    setAgeFilter('all');
+    setNationFilter('all');
+    setPositionFilter([]);
+    setSourceFilter([]);
+    setDobFrom('');
+    setDobTo('');
+    setBirthdayFilterOffset(null);
   };
 
-  const hasActiveFilters = searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo;
+  const activeBirthdayLabel = birthdayFilterOffset !== null
+    ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
+    : null;
+
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     setSelectedPlayer(player);
@@ -645,6 +702,46 @@ export const PlayerDatabase = () => {
         <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
       </div>
 
+      <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-medium">Birthdays next 7 days</p>
+            <p className="text-[11px] text-muted-foreground">Filter the database day by day so nothing gets missed.</p>
+          </div>
+          {birthdayFilterOffset !== null && (
+            <button
+              onClick={() => setBirthdayFilterOffset(null)}
+              className="text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Clear birthday filter
+            </button>
+          )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {upcomingBirthdayOptions.map((option) => {
+            const isActive = birthdayFilterOffset === option.offset;
+
+            return (
+              <Button
+                key={option.offset}
+                type="button"
+                size="sm"
+                variant={isActive ? 'default' : 'outline'}
+                className="h-8 gap-2 text-xs"
+                onClick={() => setBirthdayFilterOffset(current => current === option.offset ? null : option.offset)}
+              >
+                <span>{option.label}</span>
+                <span
+                  className={`inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] ${isActive ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >
+                  {option.count}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Active filter indicators */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-1 items-center">
@@ -653,6 +750,7 @@ export const PlayerDatabase = () => {
           {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
           {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
           {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
+          {activeBirthdayLabel && <Badge variant="secondary" className="text-[10px]">Birthday: {activeBirthdayLabel}</Badge>}
           <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground ml-1">Clear</button>
         </div>
       )}
