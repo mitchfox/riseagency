@@ -242,16 +242,21 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [hasSearched, setHasSearched] = useState(false);
   const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set());
   const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set());
+  const [dbPlayerNames, setDbPlayerNames] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!visible) return;
     const loadExisting = async () => {
-      const { data } = await supabase
-        .from("transfermarkt_shortlist")
-        .select("transfermarkt_url");
-      if (data) {
-        setShortlistedUrls(new Set(data.map(d => d.transfermarkt_url).filter(Boolean) as string[]));
+      const [shortlistRes, playersRes] = await Promise.all([
+        supabase.from("transfermarkt_shortlist").select("transfermarkt_url"),
+        supabase.from("players").select("name"),
+      ]);
+      if (shortlistRes.data) {
+        setShortlistedUrls(new Set(shortlistRes.data.map(d => d.transfermarkt_url).filter(Boolean) as string[]));
+      }
+      if (playersRes.data) {
+        setDbPlayerNames(new Set(playersRes.data.map(d => d.name.toLowerCase().trim())));
       }
     };
     loadExisting();

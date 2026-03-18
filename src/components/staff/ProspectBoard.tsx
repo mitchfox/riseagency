@@ -558,6 +558,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
   }, [dialogOpen, addMode]);
 
   const loadDbPlayers = async () => {
+    // Fetch ALL players from the full database, not just prospects
     const { data } = await supabase
       .from("players")
       .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, representation_status")
