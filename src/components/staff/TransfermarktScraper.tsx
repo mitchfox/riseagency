@@ -46,8 +46,29 @@ interface TransfermarktScraperProps {
   visible: boolean;
   onClose: () => void;
 }
+const POSITION_ABBREVIATIONS: Record<string, string> = {
+  'goalkeeper': 'GK',
+  'centre-back': 'CB',
+  'left-back': 'LB',
+  'right-back': 'RB',
+  'defensive midfield': 'DM',
+  'central midfield': 'CM',
+  'attacking midfield': 'AM',
+  'left winger': 'LW',
+  'right winger': 'RW',
+  'centre-forward': 'CF',
+  'second striker': 'SS',
+  'left midfield': 'LM',
+  'right midfield': 'RM',
+};
 
-const POSITIONS = [
+const abbreviatePosition = (pos: string): string => {
+  if (!pos) return '-';
+  const key = pos.toLowerCase();
+  return POSITION_ABBREVIATIONS[key] || pos;
+};
+
+
   { value: 'any', label: 'Any Position' },
   { value: 'goalkeeper', label: 'Goalkeeper' },
   { value: 'centre-back', label: 'Centre-Back' },
