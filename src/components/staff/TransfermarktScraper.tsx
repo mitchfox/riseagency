@@ -288,10 +288,9 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
 
   /** When no specific league is chosen, randomly pick several to ensure results */
   const getLeaguesToScrape = (): string[] => {
-    const allLeagueCodes = LEAGUES.flatMap(g => g.items.map(i => i.value));
-    // Pick 3 random leagues from the bigger nations for a good spread
-    const majorLeagues = ['GB1', 'GB2', 'GB3', 'FR1', 'FR2', 'ES1', 'ES2', 'IT1', 'IT2', 'L1', 'L2', 'NL1', 'PO1', 'BE1', 'TS1', 'SC1', 'SE1', 'NO1', 'DK1', 'PL1', 'CZ1', 'GR1', 'RO1', 'A1', 'C1'];
-    const shuffled = majorLeagues.sort(() => Math.random() - 0.5);
+    // Only use codes known to work reliably with the TM API
+    const majorLeagues = ['GB1', 'GB2', 'FR1', 'ES1', 'IT1', 'L1', 'NL1', 'PO1', 'BE1', 'TS1', 'SC1', 'A1', 'C1'];
+    const shuffled = [...majorLeagues].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 3);
   };
 
@@ -342,39 +341,61 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
+    setResults([]);
+    setFilteredResults([]);
     try {
       const leagueCode = filters.countryPlayingIn || 'any';
       const leaguesToScrape = leagueCode === 'any' ? getLeaguesToScrape() : [leagueCode];
 
       const allPlayers: PlayerResult[] = [];
       let totalScanned = 0;
+      let successCount = 0;
+      let failCount = 0;
 
       for (const league of leaguesToScrape) {
-        const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
-        const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
-          body: {
-            filters: {
-              ...filters,
-              position: filters.position === 'any' ? undefined : filters.position,
-              nationality: filters.nationality === 'any' ? undefined : filters.nationality,
-              countryPlayingIn: league,
-              clubName: undefined,
-              marketValueMin: undefined,
-              marketValueMax: undefined,
-              excludeLoans: undefined,
-              contractStatus: undefined,
-              birthdayToday: filters.birthdayToday || false,
+        try {
+          const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
+          const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
+            body: {
+              filters: {
+                ...filters,
+                position: filters.position === 'any' ? undefined : filters.position,
+                nationality: filters.nationality === 'any' ? undefined : filters.nationality,
+                countryPlayingIn: league,
+                clubName: undefined,
+                marketValueMin: undefined,
+                marketValueMax: undefined,
+                excludeLoans: undefined,
+                contractStatus: undefined,
+                birthdayToday: filters.birthdayToday || false,
+              },
+              confederation: skipUefa ? undefined : 'UEFA',
             },
-            confederation: skipUefa ? undefined : 'UEFA',
-          },
-        });
+          });
 
-        if (error) throw error;
+          if (error) {
+            console.warn(`League ${league} failed:`, error.message);
+            failCount++;
+            continue;
+          }
 
-        if (data?.success) {
-          allPlayers.push(...(data.players || []));
-          totalScanned += data.totalFound || 0;
+          if (data?.success) {
+            allPlayers.push(...(data.players || []));
+            totalScanned += data.totalFound || 0;
+            successCount++;
+          }
+        } catch (leagueError: any) {
+          console.warn(`League ${league} threw:`, leagueError?.message);
+          failCount++;
         }
+      }
+
+      if (successCount === 0 && failCount > 0) {
+        toast.error("All league searches failed. Try selecting a specific league.");
+        return;
+      }
+      if (failCount > 0) {
+        toast.warning(`${failCount} league(s) were skipped due to errors`);
       }
 
       // Remove duplicates by transfermarkt URL
@@ -386,11 +407,25 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       });
 
       // Filter out players already on shortlist or in our database
-      const filtered = uniquePlayers.filter(p => {
+      let filtered = uniquePlayers.filter(p => {
         if (shortlistedUrls.has(p.transfermarktUrl)) return false;
         if (dbPlayerNames.has(p.name.toLowerCase().trim())) return false;
         return true;
       });
+
+      // Defensive client-side birthday guard
+      if (filters.birthdayToday) {
+        const now = new Date();
+        const todayMonth = now.getUTCMonth() + 1;
+        const todayDay = now.getUTCDate();
+        filtered = filtered.filter(p => {
+          if (!p.dateOfBirth) return false;
+          const dateOnly = p.dateOfBirth.includes('T') ? p.dateOfBirth.split('T')[0] : p.dateOfBirth;
+          const parts = dateOnly.split('-');
+          if (parts.length < 3) return false;
+          return parseInt(parts[1], 10) === todayMonth && parseInt(parts[2], 10) === todayDay;
+        });
+      }
 
       setResults(filtered);
       setTotalFound(totalScanned);
