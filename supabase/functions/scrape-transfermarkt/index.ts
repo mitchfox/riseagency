@@ -221,9 +221,15 @@ async function getClubName(clubId: string): Promise<string> {
 
 function isBirthdayToday(dob: string): boolean {
   if (!dob) return false;
-  const today = new Date();
-  const dobDate = new Date(dob);
-  return dobDate.getMonth() === today.getMonth() && dobDate.getDate() === today.getDate();
+  // Extract month/day from the DOB string directly to avoid timezone shifts
+  const parts = dob.split('-');
+  if (parts.length < 3) return false;
+  const dobMonth = parseInt(parts[1], 10);
+  const dobDay = parseInt(parts[2], 10);
+  const now = new Date();
+  const todayMonth = now.getUTCMonth() + 1;
+  const todayDay = now.getUTCDate();
+  return dobMonth === todayMonth && dobDay === todayDay;
 }
 
 async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {

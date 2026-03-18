@@ -765,8 +765,9 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                               <Badge variant="outline" className="ml-1.5 text-[10px] px-1 py-0">Loan</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-sm">{player.position || '-'}</TableCell>
+                          <TableCell className="text-sm">{abbreviatePosition(player.position) || '-'}</TableCell>
                           <TableCell>{player.age || '-'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{player.dateOfBirth || '-'}</TableCell>
                           <TableCell className="text-sm">{player.nationality || '-'}</TableCell>
                           <TableCell className="text-sm">{player.club || '-'}</TableCell>
                           <TableCell className="text-sm font-medium text-primary">{player.marketValue || '-'}</TableCell>
