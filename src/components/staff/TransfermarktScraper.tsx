@@ -317,48 +317,69 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     return filtered;
   };
 
-  const handleSearch = async (birthdayOverride = false) => {
+  const handleSearch = async () => {
     setSearching(true);
     setHasSearched(true);
     try {
       const leagueCode = filters.countryPlayingIn || 'any';
-      const skipUefa = leagueCode !== 'any' && NON_UEFA_LEAGUE_CODES.has(leagueCode);
+      const leaguesToScrape = leagueCode === 'any' ? getLeaguesToScrape() : [leagueCode];
 
-      const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
-        body: {
-          filters: {
-            ...filters,
-            position: filters.position === 'any' ? undefined : filters.position,
-            nationality: filters.nationality === 'any' ? undefined : filters.nationality,
-            countryPlayingIn: leagueCode === 'any' ? undefined : leagueCode,
-            clubName: undefined,
-            marketValueMin: undefined,
-            marketValueMax: undefined,
-            excludeLoans: undefined,
-            contractStatus: undefined,
-            birthdayToday: birthdayOverride || filters.birthdayToday || false,
+      const allPlayers: PlayerResult[] = [];
+      let totalScanned = 0;
+
+      for (const league of leaguesToScrape) {
+        const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
+        const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
+          body: {
+            filters: {
+              ...filters,
+              position: filters.position === 'any' ? undefined : filters.position,
+              nationality: filters.nationality === 'any' ? undefined : filters.nationality,
+              countryPlayingIn: league,
+              clubName: undefined,
+              marketValueMin: undefined,
+              marketValueMax: undefined,
+              excludeLoans: undefined,
+              contractStatus: undefined,
+              birthdayToday: filters.birthdayToday || false,
+            },
+            confederation: skipUefa ? undefined : 'UEFA',
           },
-          confederation: skipUefa ? undefined : 'UEFA',
-        },
+        });
+
+        if (error) throw error;
+
+        if (data?.success) {
+          allPlayers.push(...(data.players || []));
+          totalScanned += data.totalFound || 0;
+        }
+      }
+
+      // Remove duplicates by transfermarkt URL
+      const seen = new Set<string>();
+      const uniquePlayers = allPlayers.filter(p => {
+        if (!p.transfermarktUrl || seen.has(p.transfermarktUrl)) return false;
+        seen.add(p.transfermarktUrl);
+        return true;
       });
 
-      if (error) throw error;
+      // Filter out players already on shortlist or in our database
+      const filtered = uniquePlayers.filter(p => {
+        if (shortlistedUrls.has(p.transfermarktUrl)) return false;
+        if (dbPlayerNames.has(p.name.toLowerCase().trim())) return false;
+        return true;
+      });
 
-      if (data?.success) {
-        const allPlayers = data.players || [];
-        setResults(allPlayers);
-        setTotalFound(data.totalFound || 0);
+      setResults(filtered);
+      setTotalFound(totalScanned);
 
-        const clientFiltered = applyClientFilters(allPlayers);
-        setFilteredResults(clientFiltered);
+      const clientFiltered = applyClientFilters(filtered);
+      setFilteredResults(clientFiltered);
 
-        if (clientFiltered.length === 0) {
-          toast.info("No unrepresented players found matching your criteria");
-        } else {
-          toast.success(`Found ${clientFiltered.length} unrepresented player${clientFiltered.length !== 1 ? 's' : ''} from ${data.totalFound} results`);
-        }
+      if (clientFiltered.length === 0) {
+        toast.info("No unrepresented players found matching your criteria");
       } else {
-        toast.error(data?.error || "Search failed");
+        toast.success(`Found ${clientFiltered.length} unrepresented player${clientFiltered.length !== 1 ? 's' : ''} from ${totalScanned} scanned`);
       }
     } catch (error: any) {
       console.error('Scraper error:', error);
