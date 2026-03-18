@@ -464,8 +464,6 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
 
   const displayResults = filteredResults;
 
-  const displayResults = filteredResults;
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
