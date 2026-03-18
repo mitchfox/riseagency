@@ -626,20 +626,23 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
               </label>
             </div>
 
-            {/* Search + Birthday buttons */}
-            <div className="flex items-end gap-2">
-              <Button onClick={() => handleSearch()} disabled={searching} className="flex-1 h-9">
+            {/* Birthday Today toggle */}
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={filters.birthdayToday || false}
+                  onCheckedChange={(checked) => setFilters(f => ({ ...f, birthdayToday: checked === true }))}
+                />
+                <Cake className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm">Birthday today only</span>
+              </label>
+            </div>
+
+            {/* Search button */}
+            <div className="flex items-end">
+              <Button onClick={() => handleSearch()} disabled={searching} className="w-full h-9">
                 {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
                 Search
-              </Button>
-              <Button
-                onClick={handleBirthdaySearch}
-                disabled={searching}
-                variant="outline"
-                className="h-9"
-                title="Show only players whose birthday is today"
-              >
-                <Cake className="h-4 w-4" />
               </Button>
             </div>
           </div>
