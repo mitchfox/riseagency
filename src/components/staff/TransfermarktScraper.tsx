@@ -288,10 +288,9 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
 
   /** When no specific league is chosen, randomly pick several to ensure results */
   const getLeaguesToScrape = (): string[] => {
-    const allLeagueCodes = LEAGUES.flatMap(g => g.items.map(i => i.value));
-    // Pick 3 random leagues from the bigger nations for a good spread
-    const majorLeagues = ['GB1', 'GB2', 'GB3', 'FR1', 'FR2', 'ES1', 'ES2', 'IT1', 'IT2', 'L1', 'L2', 'NL1', 'PO1', 'BE1', 'TS1', 'SC1', 'SE1', 'NO1', 'DK1', 'PL1', 'CZ1', 'GR1', 'RO1', 'A1', 'C1'];
-    const shuffled = majorLeagues.sort(() => Math.random() - 0.5);
+    // Only use codes known to work reliably with the TM API
+    const majorLeagues = ['GB1', 'GB2', 'FR1', 'ES1', 'IT1', 'L1', 'NL1', 'PO1', 'BE1', 'TS1', 'SC1', 'A1', 'C1'];
+    const shuffled = [...majorLeagues].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 3);
   };
 

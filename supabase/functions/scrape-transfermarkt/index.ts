@@ -29,6 +29,48 @@ interface PlayerResult {
 
 const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
 
+// Map UI league codes to actual TM API competition IDs where they differ
+const COMPETITION_ALIASES: Record<string, string> = {
+  'CZ1': 'TS1C',   // Czech First League
+  'CZ2': 'TS2C',
+  'TR2': 'TUR2',
+  'TR3': 'TUR3',
+  'KR1': 'KR1',
+  'KR2': 'KR2',
+  'SER1': 'SER1',
+  'SER2': 'SER2',
+  'BUL1': 'BU1',
+  'UNG1': 'UNG1',
+  'UNG2': 'UNG2',
+  'SLOWK1': 'SLK1',
+  'BOS1': 'BOS1',
+  'MNE1': 'MNE1',
+  'MKD1': 'MAZ1',
+  'ALB1': 'ALB1',
+  'MOL1': 'MOL1',
+  'LIT1': 'LI1',
+  'LET1': 'LET1',
+  'EST1': 'EST1',
+  'BLR1': 'WER1',
+  'WAL1': 'WAL1',
+  'NI1': 'NIR1',
+  'IR1': 'IR1',
+  'FAR1': 'FAR1',
+  'GIB1': 'GIB1',
+  'SMR1': 'SMR1',
+  'KOS1': 'KOS1',
+  'AND1': 'AND1',
+  'GEO1': 'GEO1',
+  'KAZ1': 'KAS1',
+  'AZE1': 'AZ1',
+  'ISR1': 'ISR1',
+  'CYP1': 'ZYP1',
+};
+
+function resolveCompetitionId(code: string): string {
+  return COMPETITION_ALIASES[code] || code;
+}
+
 const NATIONALITY_NAMES: Record<number, string> = {
   189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
   193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
@@ -49,8 +91,8 @@ const NATIONALITY_NAMES: Record<number, string> = {
   126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
   141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
   170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
-  52: 'Georgia', 11: 'Azerbaijan', 69: 'Kazakhstan', 62: 'Israel', 39: 'Cyprus',
-  4: 'Albania', 79: 'Malta', 1: 'Afghanistan', 82: 'Moldova', 83: 'North Macedonia',
+  52: 'Georgia', 11: 'Azerbaijan', 4: 'Albania', 79: 'Malta',
+  1: 'Afghanistan', 82: 'Moldova', 83: 'North Macedonia',
 };
 
 const POSITION_FILTERS: Record<string, string[]> = {
@@ -81,12 +123,19 @@ async function fetchJSON(url: string): Promise<any> {
 }
 
 async function getClubIds(competitionId: string): Promise<string[]> {
-  const data = await fetchJSON(`${TM_API}/competition/${competitionId}/table?seasonId=2025`);
-  if (!data.success || !data.data?.tables?.[0]?.clubs) {
-    console.log('No table data for competition:', competitionId);
+  try {
+    const resolved = resolveCompetitionId(competitionId);
+    const data = await fetchJSON(`${TM_API}/competition/${resolved}/table?seasonId=2025`);
+    if (!data.success || !data.data?.tables?.[0]?.clubs) {
+      console.log('No table data for competition:', resolved);
+      return [];
+    }
+    return data.data.tables[0].clubs.map((c: any) => c.clubId);
+  } catch (e: any) {
+    // Gracefully handle 404s and other errors — don't crash the whole search
+    console.error(`getClubIds failed for ${competitionId}:`, e.message || e);
     return [];
   }
-  return data.data.tables[0].clubs.map((c: any) => c.clubId);
 }
 
 async function getSquadPlayerIds(clubId: string): Promise<string[]> {
@@ -164,10 +213,19 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
       contractUntil = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
     }
 
-    // Extract date of birth
+    // Extract date of birth — try multiple paths
     let dateOfBirth = '';
     if (p.lifeDates?.dateOfBirth) {
       dateOfBirth = p.lifeDates.dateOfBirth;
+    } else if (attrs.dateOfBirth) {
+      dateOfBirth = attrs.dateOfBirth;
+    } else if (p.dateOfBirth) {
+      dateOfBirth = p.dateOfBirth;
+    }
+
+    // Normalise DOB to YYYY-MM-DD if it contains a T (timestamp)
+    if (dateOfBirth && dateOfBirth.includes('T')) {
+      dateOfBirth = dateOfBirth.split('T')[0];
     }
 
     return {
@@ -194,13 +252,17 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
   }
 }
 
-async function batchFetch<T>(items: string[], fn: (id: string) => Promise<T | null>, batchSize = 25): Promise<T[]> {
+async function batchFetch<T>(items: string[], fn: (id: string) => Promise<T | null>, batchSize = 10): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     const batchResults = await Promise.all(batch.map(fn));
     for (const r of batchResults) {
       if (r) results.push(r);
+    }
+    // Small delay between batches to reduce http2 connection errors
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
   return results;
@@ -219,22 +281,36 @@ async function getClubName(clubId: string): Promise<string> {
   }
 }
 
+/**
+ * Check if a DOB string matches today's month and day.
+ * Parses the string directly to avoid any timezone drift.
+ */
 function isBirthdayToday(dob: string): boolean {
   if (!dob) return false;
-  // Extract month/day from the DOB string directly to avoid timezone shifts
-  const parts = dob.split('-');
+
+  // Strip any timestamp portion
+  const dateOnly = dob.includes('T') ? dob.split('T')[0] : dob;
+  const parts = dateOnly.split('-');
   if (parts.length < 3) return false;
+
   const dobMonth = parseInt(parts[1], 10);
   const dobDay = parseInt(parts[2], 10);
+
+  if (isNaN(dobMonth) || isNaN(dobDay)) return false;
+
+  // Use UTC to be consistent with server time
   const now = new Date();
   const todayMonth = now.getUTCMonth() + 1;
   const todayDay = now.getUTCDate();
+
+  console.log(`Birthday check: DOB=${dob} => month=${dobMonth} day=${dobDay}, today => month=${todayMonth} day=${todayDay}, match=${dobMonth === todayMonth && dobDay === todayDay}`);
+
   return dobMonth === todayMonth && dobDay === todayDay;
 }
 
 async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
   const competitionId = filters.countryPlayingIn || 'GB1';
-  console.log('Searching competition:', competitionId);
+  console.log('Searching competition:', competitionId, '(resolved:', resolveCompetitionId(competitionId), ')');
 
   const clubIds = await getClubIds(competitionId);
   console.log('Found clubs:', clubIds.length);
@@ -246,7 +322,7 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
   const allPlayerIds = [...new Set(squadResults.flat())];
   console.log('Total unique players:', allPlayerIds.length);
 
-  const profiles = await batchFetch(allPlayerIds, getPlayerProfile, 25);
+  const profiles = await batchFetch(allPlayerIds, getPlayerProfile, 10);
   console.log('Fetched profiles:', profiles.length);
 
   let filtered = profiles.filter(p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent');
@@ -254,8 +330,9 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
 
   // Birthday today filter
   if (filters.birthdayToday) {
+    console.log('Applying birthday filter. Sample DOBs:', filtered.slice(0, 5).map(p => `${p.name}: ${p.dateOfBirth}`));
     filtered = filtered.filter(p => isBirthdayToday(p.dateOfBirth));
-    console.log('Birthday today:', filtered.length);
+    console.log('Birthday today matches:', filtered.length);
   }
 
   if (filters.ageMin) {
