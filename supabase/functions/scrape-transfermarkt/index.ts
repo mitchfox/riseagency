@@ -9,6 +9,7 @@ interface SearchFilters {
   ageMax?: number;
   nationality?: string;
   countryPlayingIn?: string;
+  birthdayToday?: boolean;
 }
 
 interface PlayerResult {
@@ -23,11 +24,11 @@ interface PlayerResult {
   agentName?: string;
   transfermarktUrl: string;
   isLoan: boolean;
+  dateOfBirth?: string;
 }
 
 const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
 
-// Nationality ID to name mapping
 const NATIONALITY_NAMES: Record<number, string> = {
   189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
   193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
@@ -48,9 +49,10 @@ const NATIONALITY_NAMES: Record<number, string> = {
   126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
   141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
   170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
+  52: 'Georgia', 11: 'Azerbaijan', 69: 'Kazakhstan', 62: 'Israel', 39: 'Cyprus',
+  4: 'Albania', 79: 'Malta', 1: 'Afghanistan', 82: 'Moldova', 83: 'North Macedonia',
 };
 
-// Position group mapping
 const POSITION_FILTERS: Record<string, string[]> = {
   'goalkeeper': ['Goalkeeper'],
   'centre-back': ['Centre-Back'],
@@ -102,6 +104,7 @@ interface PlayerProfile {
   id: string;
   name: string;
   age: number;
+  dateOfBirth: string;
   position: string;
   positionGroup: string;
   nationalityId: number;
@@ -126,7 +129,6 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
     const agency = attrs.consultantAgency;
     const agencyId = attrs.consultantAgencyId;
 
-    // Determine agent status
     let agentStatus: 'no_agent' | 'family_agent' | 'unknown' = 'unknown';
     let agentName = '';
 
@@ -140,36 +142,39 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
       agentName = agency?.name || '';
     }
 
-    // Get club name and loan status from assignments
     let clubName = '';
     let isLoan = false;
     const currentClub = p.clubAssignments?.find((a: any) => a.type === 'current');
     if (currentClub) {
       clubName = currentClub.clubId;
-      // Check if current assignment is a loan
       if (currentClub.isLoan === true || currentClub.transferType === 'loan' || currentClub.loanFrom) {
         isLoan = true;
       }
     }
 
-    // Format market value
     let marketValue = '';
     if (p.marketValueDetails?.current?.compact) {
       const mv = p.marketValueDetails.current.compact;
       marketValue = `${mv.prefix}${mv.content}${mv.suffix}`;
     }
 
-    // Format contract
     let contractUntil = '';
     if (attrs.contractUntil) {
       const d = new Date(attrs.contractUntil);
       contractUntil = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
     }
 
+    // Extract date of birth
+    let dateOfBirth = '';
+    if (p.lifeDates?.dateOfBirth) {
+      dateOfBirth = p.lifeDates.dateOfBirth;
+    }
+
     return {
       id: p.id,
       name: p.name || '',
       age: p.lifeDates?.age || 0,
+      dateOfBirth,
       position: attrs.position?.name || attrs.positionGroupName || '',
       positionGroup: attrs.positionGroup || '',
       nationalityId: p.nationalityDetails?.nationalities?.nationalityId || 0,
@@ -189,7 +194,6 @@ async function getPlayerProfile(playerId: string): Promise<PlayerProfile | null>
   }
 }
 
-// Fetch in parallel batches to avoid overwhelming the API
 async function batchFetch<T>(items: string[], fn: (id: string) => Promise<T | null>, batchSize = 25): Promise<T[]> {
   const results: T[] = [];
   for (let i = 0; i < items.length; i += batchSize) {
@@ -202,7 +206,6 @@ async function batchFetch<T>(items: string[], fn: (id: string) => Promise<T | nu
   return results;
 }
 
-// Get club names by fetching club data
 const clubNameCache = new Map<string, string>();
 async function getClubName(clubId: string): Promise<string> {
   if (clubNameCache.has(clubId)) return clubNameCache.get(clubId)!;
@@ -214,6 +217,13 @@ async function getClubName(clubId: string): Promise<string> {
   } catch {
     return clubId;
   }
+}
+
+function isBirthdayToday(dob: string): boolean {
+  if (!dob) return false;
+  const today = new Date();
+  const dobDate = new Date(dob);
+  return dobDate.getMonth() === today.getMonth() && dobDate.getDate() === today.getDate();
 }
 
 async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
@@ -235,6 +245,12 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
 
   let filtered = profiles.filter(p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent');
   console.log('Unrepresented players:', filtered.length);
+
+  // Birthday today filter
+  if (filters.birthdayToday) {
+    filtered = filtered.filter(p => isBirthdayToday(p.dateOfBirth));
+    console.log('Birthday today:', filtered.length);
+  }
 
   if (filters.ageMin) {
     filtered = filtered.filter(p => p.age >= filters.ageMin!);
@@ -270,6 +286,7 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
     agentName: p.agentName,
     transfermarktUrl: p.relativeUrl ? `https://www.transfermarkt.co.uk${p.relativeUrl}` : '',
     isLoan: p.isLoan,
+    dateOfBirth: p.dateOfBirth,
   }));
 
   return { players, totalFound: allPlayerIds.length };

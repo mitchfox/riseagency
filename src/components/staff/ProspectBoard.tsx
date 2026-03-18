@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Trash2, GripVertical, MapPin, Shield } from "lucide-react";
+import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, Image as ImageIcon, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
@@ -41,6 +41,7 @@ interface Prospect {
   last_contact_date: string | null;
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
+  date_of_birth: string | null;
   _source: 'prospects' | 'players';
 }
 
@@ -77,11 +78,12 @@ const ageGroupLabelMap: Record<'A' | 'B' | 'C' | 'D', string> = {
 };
 
 // Draggable prospect card
-const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
+const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDragging }: {
   prospect: Prospect;
   isAdmin: boolean;
   onEdit: (p: Prospect) => void;
   onDelete: (id: string) => void;
+  onEditDetails: (p: Prospect) => void;
   isDragging?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
@@ -187,13 +189,25 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, isDragging }: {
             >
               {ageGroupLabelMap[prospect.age_group]}
             </Badge>
-            {typeof prospect.age === 'number' && (
+            {typeof prospect.age === 'number' && prospect.age > 0 && (
               <span className="text-[10px] text-muted-foreground">Age {prospect.age}</span>
             )}
           </div>
           <div className="flex items-center gap-1">
             {isAdmin && (
               <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditDetails(prospect);
+                  }}
+                  title="Edit player details"
+                >
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -262,13 +276,14 @@ const DragOverlayCard = ({ prospect }: { prospect: Prospect }) => {
 };
 
 // Droppable stage column
-const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmin, onEdit, onDelete, isOver }: {
+const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmin, onEdit, onDelete, onEditDetails, isOver }: {
   stageValue: string;
   stageLabel: string;
   prospects: Prospect[];
   isAdmin: boolean;
   onEdit: (p: Prospect) => void;
   onDelete: (id: string) => void;
+  onEditDetails: (p: Prospect) => void;
   isOver: boolean;
 }) => {
   const { setNodeRef } = useDroppable({ id: stageValue });
@@ -303,11 +318,199 @@ const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmi
               isAdmin={isAdmin}
               onEdit={onEdit}
               onDelete={onDelete}
+              onEditDetails={onEditDetails}
             />
           ))
         )}
       </div>
     </div>
+  );
+};
+
+// Edit Details Dialog for image, DOB, etc.
+const EditDetailsDialog = ({ prospect, open, onOpenChange, onSaved }: {
+  prospect: Prospect | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSaved: () => void;
+}) => {
+  const [imageUrl, setImageUrl] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [position, setPosition] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [currentClub, setCurrentClub] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (prospect && open) {
+      setImageUrl(prospect.profile_image_url || "");
+      setDateOfBirth(prospect.date_of_birth || "");
+      setPosition(prospect.position || "");
+      setNationality(prospect.nationality || "");
+      setCurrentClub(prospect.current_club || "");
+      setImageFile(null);
+      setImagePreview("");
+    }
+  }, [prospect, open]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!prospect) return;
+    setSaving(true);
+
+    try {
+      let finalImageUrl = imageUrl;
+
+      // Upload image if a new file was selected
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `prospects/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('marketing-gallery')
+          .upload(fileName, imageFile);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('marketing-gallery')
+          .getPublicUrl(fileName);
+        finalImageUrl = publicUrl;
+      }
+
+      // Calculate age from DOB
+      let age: number | null = prospect.age;
+      if (dateOfBirth) {
+        const dob = new Date(dateOfBirth);
+        const now = new Date();
+        age = Math.floor((now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age < 0 || age > 50) age = null;
+      }
+
+      // Determine age group from age
+      let ageGroup = prospect.age_group;
+      if (age !== null) {
+        if (age >= 21) ageGroup = 'A';
+        else if (age >= 18) ageGroup = 'B';
+        else if (age >= 16) ageGroup = 'C';
+        else ageGroup = 'D';
+      }
+
+      const updateData: any = {
+        profile_image_url: finalImageUrl || null,
+        date_of_birth: dateOfBirth || null,
+        position: position || null,
+        nationality: nationality || null,
+        current_club: currentClub || null,
+        age,
+        age_group: ageGroup,
+      };
+
+      const { error } = await supabase.from("prospects").update(updateData).eq("id", prospect.id);
+      if (error) throw error;
+
+      // Also update linked player if exists
+      if (prospect.linked_player_id) {
+        await supabase.from("players").update({
+          image_url: finalImageUrl || null,
+          date_of_birth: dateOfBirth || null,
+          position: position || null,
+          nationality: nationality || null,
+          club: currentClub || null,
+        }).eq("id", prospect.linked_player_id);
+      }
+
+      toast.success("Details updated");
+      onOpenChange(false);
+      onSaved();
+    } catch (error: any) {
+      console.error("Error updating details:", error);
+      toast.error(error.message || "Failed to update details");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Details — {prospect?.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Image */}
+          <div className="space-y-2">
+            <Label>Player Image</Label>
+            {(imagePreview || imageUrl) ? (
+              <div className="relative rounded border border-border overflow-hidden bg-muted max-h-48">
+                <img src={imagePreview || imageUrl} alt="Player" className="w-full h-auto max-h-48 object-contain" />
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="absolute top-2 right-2 w-7 h-7"
+                  onClick={() => { setImageFile(null); setImagePreview(""); setImageUrl(""); }}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full h-24"
+                onClick={() => document.getElementById('prospect-img-upload')?.click()}
+              >
+                <ImageIcon className="w-6 h-6 mr-2" /> Upload Image
+              </Button>
+            )}
+            <input
+              id="prospect-img-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Date of Birth</Label>
+              <Input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Position</Label>
+              <Input value={position} onChange={e => setPosition(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Nationality</Label>
+              <Input value={nationality} onChange={e => setNationality(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Current Club</Label>
+              <Input value={currentClub} onChange={e => setCurrentClub(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Details"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -318,6 +521,12 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overStage, setOverStage] = useState<string | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsProspect, setDetailsProspect] = useState<Prospect | null>(null);
+  const [addMode, setAddMode] = useState<'manual' | 'database'>('manual');
+  const [dbPlayers, setDbPlayers] = useState<any[]>([]);
+  const [dbSearch, setDbSearch] = useState("");
+  const [selectedDbPlayer, setSelectedDbPlayer] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -341,9 +550,23 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllProspects();
   }, []);
 
+  // Load DB players when dialog opens in database mode
+  useEffect(() => {
+    if (dialogOpen && addMode === 'database') {
+      loadDbPlayers();
+    }
+  }, [dialogOpen, addMode]);
+
+  const loadDbPlayers = async () => {
+    const { data } = await supabase
+      .from("players")
+      .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, representation_status")
+      .order("name");
+    if (data) setDbPlayers(data);
+  };
+
   const fetchAllProspects = async () => {
     try {
-      // Fetch from prospects table
       const { data: prospectsData, error: pError } = await supabase
         .from("prospects")
         .select("*")
@@ -351,7 +574,6 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (pError) throw pError;
 
-      // Fetch players with representation_status = 'prospect'
       const { data: playersData, error: plError } = await supabase
         .from("players")
         .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth")
@@ -361,7 +583,6 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
       const playerById = new Map((playersData || []).map((player) => [player.id, player]));
 
-      // Map prospects table data + enrich with linked player media
       const fromProspects: Prospect[] = (prospectsData || []).map((p) => {
         const linkedPlayer = p.linked_player_id ? playerById.get(p.linked_player_id) : undefined;
 
@@ -375,10 +596,8 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
         } as Prospect;
       });
 
-      // Check which players are already linked
       const linkedPlayerIds = new Set(fromProspects.filter((p) => p.linked_player_id).map((p) => p.linked_player_id));
 
-      // Create prospect entries for unlinked players
       const fromPlayers: Prospect[] = (playersData || [])
         .filter((p) => !linkedPlayerIds.has(p.id))
         .map((p) => {
@@ -415,6 +634,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             last_contact_date: null,
             priority: 'medium' as const,
             linked_player_id: p.id,
+            date_of_birth: p.date_of_birth,
             _source: 'players' as const,
           };
         });
@@ -434,6 +654,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             profile_image_url: fp.profile_image_url,
             priority: fp.priority,
             linked_player_id: fp.linked_player_id,
+            date_of_birth: fp.date_of_birth,
           })
           .select()
           .single();
@@ -501,6 +722,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handleEdit = (prospect: Prospect) => {
     setEditingProspect(prospect);
+    setAddMode('manual');
     setFormData({
       name: prospect.name,
       age: prospect.age?.toString() || "",
@@ -515,6 +737,11 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       priority: prospect.priority || "medium",
     });
     setDialogOpen(true);
+  };
+
+  const handleEditDetails = (prospect: Prospect) => {
+    setDetailsProspect(prospect);
+    setDetailsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -533,28 +760,102 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const prospectData = {
-        name: formData.name,
-        age: formData.age ? parseInt(formData.age) : null,
-        position: formData.position || null,
-        nationality: formData.nationality || null,
-        current_club: formData.current_club || null,
-        age_group: formData.age_group,
-        stage: formData.stage,
-        contact_email: formData.contact_email || null,
-        contact_phone: formData.contact_phone || null,
-        notes: formData.notes || null,
-        priority: formData.priority,
-      };
+      if (addMode === 'database' && selectedDbPlayer && !editingProspect) {
+        // Adding from database
+        const player = selectedDbPlayer;
+        let age: number | null = null;
+        if (player.date_of_birth) {
+          const dob = new Date(player.date_of_birth);
+          const now = new Date();
+          age = Math.floor((now.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          if (age < 0 || age > 50) age = null;
+        }
 
-      if (editingProspect) {
-        const { error } = await supabase.from("prospects").update(prospectData).eq("id", editingProspect.id);
+        let ageGroup: 'A' | 'B' | 'C' | 'D' = 'C';
+        if (age !== null) {
+          if (age >= 21) ageGroup = 'A';
+          else if (age >= 18) ageGroup = 'B';
+          else if (age >= 16) ageGroup = 'C';
+          else ageGroup = 'D';
+        }
+
+        // Update player status to prospect if not already
+        if (player.representation_status !== 'prospect') {
+          await supabase.from("players").update({ representation_status: 'prospect' }).eq("id", player.id);
+        }
+
+        const { error } = await supabase.from("prospects").insert({
+          name: player.name,
+          age,
+          position: player.position || null,
+          nationality: player.nationality || null,
+          current_club: player.club || null,
+          age_group: ageGroup,
+          stage: formData.stage,
+          profile_image_url: player.image_url || null,
+          priority: formData.priority,
+          linked_player_id: player.id,
+          date_of_birth: player.date_of_birth || null,
+          notes: formData.notes || null,
+        });
         if (error) throw error;
-        toast.success("Prospect updated");
+        toast.success(`${player.name} added from database`);
       } else {
-        const { error } = await supabase.from("prospects").insert([prospectData]);
-        if (error) throw error;
-        toast.success("Prospect added");
+        // Manual add or edit
+        const prospectData = {
+          name: formData.name,
+          age: formData.age ? parseInt(formData.age) : null,
+          position: formData.position || null,
+          nationality: formData.nationality || null,
+          current_club: formData.current_club || null,
+          age_group: formData.age_group,
+          stage: formData.stage,
+          contact_email: formData.contact_email || null,
+          contact_phone: formData.contact_phone || null,
+          notes: formData.notes || null,
+          priority: formData.priority,
+        };
+
+        if (editingProspect) {
+          const { error } = await supabase.from("prospects").update(prospectData).eq("id", editingProspect.id);
+          if (error) throw error;
+          toast.success("Prospect updated");
+        } else {
+          // Auto-add to players table if not already there
+          const { data: existingPlayer } = await supabase
+            .from("players")
+            .select("id")
+            .ilike("name", formData.name.trim())
+            .maybeSingle();
+
+          let linkedPlayerId: string | null = null;
+
+          if (!existingPlayer) {
+            const { data: newPlayer, error: playerErr } = await supabase
+              .from("players")
+              .insert({
+                name: formData.name.trim(),
+                position: formData.position || null,
+                nationality: formData.nationality || null,
+                club: formData.current_club || null,
+                representation_status: 'prospect',
+              })
+              .select("id")
+              .single();
+            if (!playerErr && newPlayer) {
+              linkedPlayerId = newPlayer.id;
+            }
+          } else {
+            linkedPlayerId = existingPlayer.id;
+          }
+
+          const { error } = await supabase.from("prospects").insert([{
+            ...prospectData,
+            linked_player_id: linkedPlayerId,
+          }]);
+          if (error) throw error;
+          toast.success("Prospect added and saved to player database");
+        }
       }
 
       setDialogOpen(false);
@@ -568,12 +869,19 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const resetForm = () => {
     setEditingProspect(null);
+    setSelectedDbPlayer(null);
+    setDbSearch("");
+    setAddMode('manual');
     setFormData({
       name: "", age: "", position: "", nationality: "", current_club: "",
       age_group: "A", stage: "scouted", contact_email: "", contact_phone: "",
       notes: "", priority: "medium",
     });
   };
+
+  const filteredDbPlayers = dbPlayers.filter(p =>
+    p.name.toLowerCase().includes(dbSearch.toLowerCase())
+  );
 
   const activeProspect = prospects.find(p => p.id === activeId);
 
@@ -599,79 +907,177 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
               <DialogHeader>
                 <DialogTitle>{editingProspect ? "Edit Prospect" : "Add New Prospect"}</DialogTitle>
               </DialogHeader>
+
+              {/* Mode toggle - only when adding new */}
+              {!editingProspect && (
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant={addMode === 'manual' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => { setAddMode('manual'); setSelectedDbPlayer(null); }}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5" /> Manual
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={addMode === 'database' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setAddMode('database')}
+                  >
+                    <UserPlus className="w-3.5 h-3.5 mr-1.5" /> From Database
+                  </Button>
+                </div>
+              )}
+
+              {/* Database player picker */}
+              {addMode === 'database' && !editingProspect && (
+                <div className="space-y-3 mb-4">
+                  <Input
+                    placeholder="Search players in database..."
+                    value={dbSearch}
+                    onChange={e => setDbSearch(e.target.value)}
+                  />
+                  <div className="max-h-48 overflow-y-auto border rounded-md divide-y">
+                    {filteredDbPlayers.slice(0, 50).map(p => (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-3 p-2 cursor-pointer hover:bg-accent/50 transition-colors ${selectedDbPlayer?.id === p.id ? 'bg-accent' : ''}`}
+                        onClick={() => setSelectedDbPlayer(p)}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={p.image_url || ""} />
+                          <AvatarFallback className="text-[10px]">{p.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{p.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{[p.position, p.club, p.nationality].filter(Boolean).join(" · ")}</p>
+                        </div>
+                        {selectedDbPlayer?.id === p.id && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0">Selected</Badge>
+                        )}
+                      </div>
+                    ))}
+                    {filteredDbPlayers.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No players found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Name *</Label>
-                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                {/* Show manual fields only when in manual mode or editing */}
+                {(addMode === 'manual' || editingProspect) && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Name *</Label>
+                        <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Age</Label>
+                        <Input type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Position</Label>
+                        <Input value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nationality</Label>
+                        <Input value={formData.nationality} onChange={(e) => setFormData({ ...formData, nationality: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Current Club</Label>
+                      <Input value={formData.current_club} onChange={(e) => setFormData({ ...formData, current_club: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Age Group *</Label>
+                        <Select value={formData.age_group} onValueChange={(v: any) => setFormData({ ...formData, age_group: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {ageGroups.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Stage *</Label>
+                        <Select value={formData.stage} onValueChange={(v: any) => setFormData({ ...formData, stage: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {stages.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input type="email" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input value={formData.contact_phone} onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })} />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Common fields for both modes */}
+                {addMode === 'database' && !editingProspect && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Stage *</Label>
+                      <Select value={formData.stage} onValueChange={(v: any) => setFormData({ ...formData, stage: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {stages.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select value={formData.priority} onValueChange={(v: any) => setFormData({ ...formData, priority: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+                )}
+
+                {(addMode === 'manual' || editingProspect) && (
                   <div className="space-y-2">
-                    <Label>Age</Label>
-                    <Input type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Position</Label>
-                    <Input value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Nationality</Label>
-                    <Input value={formData.nationality} onChange={(e) => setFormData({ ...formData, nationality: e.target.value })} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Current Club</Label>
-                  <Input value={formData.current_club} onChange={(e) => setFormData({ ...formData, current_club: e.target.value })} />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Age Group *</Label>
-                    <Select value={formData.age_group} onValueChange={(v: any) => setFormData({ ...formData, age_group: v })}>
+                    <Label>Priority</Label>
+                    <Select value={formData.priority} onValueChange={(v: any) => setFormData({ ...formData, priority: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {ageGroups.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Stage *</Label>
-                    <Select value={formData.stage} onValueChange={(v: any) => setFormData({ ...formData, stage: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {stages.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input value={formData.contact_phone} onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <Select value={formData.priority} onValueChange={(v: any) => setFormData({ ...formData, priority: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Notes</Label>
                   <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={4} />
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">{editingProspect ? "Update" : "Add"} Prospect</Button>
+                  <Button
+                    type="submit"
+                    disabled={addMode === 'database' && !editingProspect && !selectedDbPlayer}
+                  >
+                    {editingProspect ? "Update" : "Add"} Prospect
+                  </Button>
                 </div>
               </form>
             </DialogContent>
@@ -699,6 +1105,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
                 isAdmin={isAdmin}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onEditDetails={handleEditDetails}
                 isOver={overStage === stage.value}
               />
             );
@@ -709,6 +1116,14 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           {activeProspect ? <DragOverlayCard prospect={activeProspect} /> : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Edit Details Dialog */}
+      <EditDetailsDialog
+        prospect={detailsProspect}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        onSaved={fetchAllProspects}
+      />
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground pt-4 border-t">

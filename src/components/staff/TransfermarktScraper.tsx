@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search, ExternalLink, UserX, Users, X, Check, Star } from "lucide-react";
+import { Loader2, Search, ExternalLink, UserX, Users, X, Star, Cake } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,7 +23,8 @@ interface SearchFilters {
   marketValueMin?: number;
   marketValueMax?: number;
   excludeLoans?: boolean;
-  contractStatus?: string; // 'any' | 'free_agent' | 'expiring_6m' | 'expiring_12m'
+  contractStatus?: string;
+  birthdayToday?: boolean;
 }
 
 interface PlayerResult {
@@ -38,6 +39,7 @@ interface PlayerResult {
   agentName?: string;
   transfermarktUrl: string;
   isLoan?: boolean;
+  dateOfBirth?: string;
 }
 
 interface TransfermarktScraperProps {
@@ -84,70 +86,129 @@ const NATIONALITIES = [
   { value: '39', label: 'Belgium' },
 ];
 
+// Countries that are semi-European / non-UEFA but have talented players — no UEFA filter applied
+const NON_UEFA_LEAGUE_CODES = new Set([
+  'GEO1', 'KAZ1', 'AZE1', 'ISR1', 'CYP1',
+]);
+
 const LEAGUES = [
   { group: 'England', items: [
     { value: 'GB1', label: 'Premier League' },
     { value: 'GB2', label: 'Championship' },
     { value: 'GB3', label: 'League One' },
     { value: 'GB4', label: 'League Two' },
+    { value: 'GB5', label: 'National League' },
   ]},
   { group: 'Scotland', items: [
     { value: 'SC1', label: 'Premiership' },
     { value: 'SC2', label: 'Championship' },
+    { value: 'SC3', label: 'League One' },
   ]},
   { group: 'France', items: [
     { value: 'FR1', label: 'Ligue 1' },
     { value: 'FR2', label: 'Ligue 2' },
+    { value: 'FR3', label: 'Championnat National' },
   ]},
   { group: 'Spain', items: [
     { value: 'ES1', label: 'La Liga' },
     { value: 'ES2', label: 'La Liga 2' },
+    { value: 'ES3', label: 'Primera Federación' },
   ]},
   { group: 'Germany', items: [
     { value: 'L1', label: 'Bundesliga' },
     { value: 'L2', label: '2. Bundesliga' },
+    { value: 'L3', label: '3. Liga' },
   ]},
   { group: 'Italy', items: [
     { value: 'IT1', label: 'Serie A' },
     { value: 'IT2', label: 'Serie B' },
+    { value: 'IT3A', label: 'Serie C' },
   ]},
   { group: 'Netherlands', items: [
     { value: 'NL1', label: 'Eredivisie' },
+    { value: 'NL2', label: 'Eerste Divisie' },
+    { value: 'NL3', label: 'Tweede Divisie' },
   ]},
   { group: 'Portugal', items: [
     { value: 'PO1', label: 'Liga Portugal' },
+    { value: 'PO2', label: 'Liga Portugal 2' },
+    { value: 'PO3', label: 'Liga 3' },
   ]},
   { group: 'Belgium', items: [
     { value: 'BE1', label: 'Pro League' },
+    { value: 'BE2', label: 'Challenger Pro League' },
   ]},
-  { group: 'Turkiye', items: [
-    { value: 'TS1', label: 'Super Lig' },
+  { group: 'Türkiye', items: [
+    { value: 'TS1', label: 'Süper Lig' },
+    { value: 'TR2', label: '1. Lig' },
+    { value: 'TR3', label: '2. Lig' },
   ]},
   { group: 'Austria', items: [
     { value: 'A1', label: 'Bundesliga' },
+    { value: 'A2', label: '2. Liga' },
   ]},
   { group: 'Switzerland', items: [
     { value: 'C1', label: 'Super League' },
+    { value: 'C2', label: 'Challenge League' },
   ]},
   { group: 'Scandinavia', items: [
     { value: 'SE1', label: 'Sweden - Allsvenskan' },
+    { value: 'SE2', label: 'Sweden - Superettan' },
     { value: 'NO1', label: 'Norway - Eliteserien' },
+    { value: 'NO2', label: 'Norway - OBOS-ligaen' },
     { value: 'DK1', label: 'Denmark - Superliga' },
+    { value: 'DK2', label: 'Denmark - 1st Division' },
+    { value: 'FI1', label: 'Finland - Veikkausliiga' },
+    { value: 'IS1', label: 'Iceland - Úrvalsdeild' },
   ]},
   { group: 'Eastern Europe', items: [
     { value: 'PL1', label: 'Poland - Ekstraklasa' },
-    { value: 'CZ1', label: 'Czech Republic - First League' },
+    { value: 'PL2', label: 'Poland - I Liga' },
+    { value: 'CZ1', label: 'Czechia - First League' },
+    { value: 'CZ2', label: 'Czechia - FNL' },
     { value: 'RO1', label: 'Romania - Liga I' },
+    { value: 'RO2', label: 'Romania - Liga II' },
     { value: 'KR1', label: 'Croatia - HNL' },
+    { value: 'KR2', label: 'Croatia - Druga HNL' },
     { value: 'UKR1', label: 'Ukraine - Premier League' },
     { value: 'GR1', label: 'Greece - Super League' },
+    { value: 'GR2', label: 'Greece - Super League 2' },
     { value: 'RU1', label: 'Russia - Premier League' },
     { value: 'SER1', label: 'Serbia - SuperLiga' },
+    { value: 'SER2', label: 'Serbia - Prva Liga' },
+    { value: 'BUL1', label: 'Bulgaria - First League' },
+    { value: 'UNG1', label: 'Hungary - NB I' },
+    { value: 'UNG2', label: 'Hungary - NB II' },
+    { value: 'SLO1', label: 'Slovenia - PrvaLiga' },
+    { value: 'SLOWK1', label: 'Slovakia - Fortuna Liga' },
+    { value: 'BOS1', label: 'Bosnia - Premijer Liga' },
+    { value: 'MNE1', label: 'Montenegro - First League' },
+    { value: 'MKD1', label: 'North Macedonia - First League' },
+    { value: 'ALB1', label: 'Albania - Superliga' },
+    { value: 'MOL1', label: 'Moldova - Super Liga' },
+    { value: 'LIT1', label: 'Lithuania - A Lyga' },
+    { value: 'LET1', label: 'Latvia - Virsliga' },
+    { value: 'EST1', label: 'Estonia - Meistriliiga' },
+    { value: 'BLR1', label: 'Belarus - Premier League' },
   ]},
-  { group: 'Other', items: [
+  { group: 'Other European', items: [
     { value: 'WAL1', label: 'Wales - Cymru Premier' },
     { value: 'NI1', label: 'Northern Ireland - Premiership' },
     { value: 'IR1', label: 'Republic of Ireland - Premier Division' },
+    { value: 'LUX1', label: 'Luxembourg - BGL Ligue' },
+    { value: 'MLT1', label: 'Malta - Premier League' },
+    { value: 'FAR1', label: 'Faroe Islands - Betrideildin' },
+    { value: 'AND1', label: 'Andorra - Primera Divisió' },
+    { value: 'GIB1', label: 'Gibraltar - National League' },
+    { value: 'SMR1', label: 'San Marino - Campionato' },
+    { value: 'KOS1', label: 'Kosovo - Superliga' },
+  ]},
+  { group: 'Semi-European / Caucasus', items: [
+    { value: 'GEO1', label: 'Georgia - Erovnuli Liga' },
+    { value: 'KAZ1', label: 'Kazakhstan - Premier League' },
+    { value: 'AZE1', label: 'Azerbaijan - Premier League' },
+    { value: 'ISR1', label: 'Israel - Premier League' },
+    { value: 'CYP1', label: 'Cyprus - First Division' },
   ]},
 ];
 
@@ -179,11 +240,10 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [totalFound, setTotalFound] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [hasSearched, setHasSearched] = useState(false);
-  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set()); // by transfermarktUrl
-  const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set()); // URLs already in DB
+  const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set());
+  const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
 
-  // Load existing shortlisted URLs from DB
   useEffect(() => {
     if (!visible) return;
     const loadExisting = async () => {
@@ -202,13 +262,11 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const applyClientFilters = (players: PlayerResult[]) => {
     let filtered = players;
 
-    // Club name filter
     if (filters.clubName?.trim()) {
       const search = filters.clubName.trim().toLowerCase();
       filtered = filtered.filter(p => p.club?.toLowerCase().includes(search));
     }
 
-    // Market value filter
     if (filters.marketValueMin != null || filters.marketValueMax != null) {
       filtered = filtered.filter(p => {
         const val = parseMarketValue(p.marketValue);
@@ -219,32 +277,24 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       });
     }
 
-    // Exclude loan players
     if (filters.excludeLoans) {
       filtered = filtered.filter(p => !p.isLoan);
     }
 
-    // Contract status filter
     if (filters.contractStatus && filters.contractStatus !== 'any') {
       const now = new Date();
       filtered = filtered.filter(p => {
         const contractEnd = parseContractDate(p.contractUntil);
-        
-        if (filters.contractStatus === 'free_agent') {
-          // No contract date or already expired
-          return !contractEnd || contractEnd <= now;
-        }
+        if (filters.contractStatus === 'free_agent') return !contractEnd || contractEnd <= now;
         if (filters.contractStatus === 'expiring_6m') {
-          if (!contractEnd) return true; // No contract = include
-          const sixMonths = new Date(now);
-          sixMonths.setMonth(sixMonths.getMonth() + 6);
-          return contractEnd <= sixMonths;
+          if (!contractEnd) return true;
+          const d = new Date(now); d.setMonth(d.getMonth() + 6);
+          return contractEnd <= d;
         }
         if (filters.contractStatus === 'expiring_12m') {
           if (!contractEnd) return true;
-          const twelveMonths = new Date(now);
-          twelveMonths.setMonth(twelveMonths.getMonth() + 12);
-          return contractEnd <= twelveMonths;
+          const d = new Date(now); d.setMonth(d.getMonth() + 12);
+          return contractEnd <= d;
         }
         return true;
       });
@@ -253,24 +303,28 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
     return filtered;
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (birthdayOverride = false) => {
     setSearching(true);
     setHasSearched(true);
     try {
+      const leagueCode = filters.countryPlayingIn || 'any';
+      const skipUefa = leagueCode !== 'any' && NON_UEFA_LEAGUE_CODES.has(leagueCode);
+
       const { data, error } = await invokeEdgeFunction<any>('scrape-transfermarkt', {
         body: {
           filters: {
             ...filters,
             position: filters.position === 'any' ? undefined : filters.position,
             nationality: filters.nationality === 'any' ? undefined : filters.nationality,
-            countryPlayingIn: filters.countryPlayingIn === 'any' ? undefined : filters.countryPlayingIn,
+            countryPlayingIn: leagueCode === 'any' ? undefined : leagueCode,
             clubName: undefined,
             marketValueMin: undefined,
             marketValueMax: undefined,
             excludeLoans: undefined,
             contractStatus: undefined,
+            birthdayToday: birthdayOverride || filters.birthdayToday || false,
           },
-          confederation: 'UEFA',
+          confederation: skipUefa ? undefined : 'UEFA',
         },
       });
 
@@ -371,6 +425,10 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
         return next;
       });
     }
+  };
+
+  const handleBirthdaySearch = () => {
+    handleSearch(true);
   };
 
   const displayResults = filteredResults;
@@ -535,17 +593,30 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
               </label>
             </div>
 
-            {/* Search Button */}
-            <div className="flex items-end">
-              <Button onClick={handleSearch} disabled={searching} className="w-full h-9">
+            {/* Search + Birthday buttons */}
+            <div className="flex items-end gap-2">
+              <Button onClick={() => handleSearch()} disabled={searching} className="flex-1 h-9">
                 {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
                 Search
+              </Button>
+              <Button
+                onClick={handleBirthdaySearch}
+                disabled={searching}
+                variant="outline"
+                className="h-9"
+                title="Show only players whose birthday is today"
+              >
+                <Cake className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">Confederation: UEFA</Badge>
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="text-xs">
+              {filters.countryPlayingIn && NON_UEFA_LEAGUE_CODES.has(filters.countryPlayingIn)
+                ? 'No confederation filter'
+                : 'Confederation: UEFA'}
+            </Badge>
           </div>
         </CardContent>
       </Card>
