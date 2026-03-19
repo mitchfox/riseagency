@@ -219,50 +219,69 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!uploadForm.file || !canManage) {
-      toast.error('Please select a file');
+    if (!uploadForm.files.length || !canManage) {
+      toast.error('Please select at least one file');
       return;
     }
 
     setUploading(true);
 
     try {
-      const fileExt = uploadForm.file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${fileName}`;
+      let successCount = 0;
+      for (const file of uploadForm.files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('marketing-gallery')
-        .upload(filePath, uploadForm.file);
+        const { error: uploadError } = await supabase.storage
+          .from('marketing-gallery')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error(`Failed to upload ${file.name}:`, uploadError);
+          continue;
+        }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('marketing-gallery')
-        .getPublicUrl(filePath);
+        const { data: { publicUrl } } = supabase.storage
+          .from('marketing-gallery')
+          .getPublicUrl(filePath);
 
-      const fileType = uploadForm.file.type.startsWith('video/') ? 'video' : 'image';
+        const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+        const title = uploadForm.files.length === 1 
+          ? uploadForm.title 
+          : (uploadForm.title ? `${uploadForm.title} - ${file.name.replace(/\.[^/.]+$/, '')}` : file.name.replace(/\.[^/.]+$/, ''));
 
-      const { error: dbError } = await supabase
-        .from('marketing_gallery')
-        .insert([{
-          title: uploadForm.title,
-          description: uploadForm.description || null,
-          file_url: publicUrl,
-          file_type: fileType,
-          category: uploadForm.category,
-          player_id: uploadForm.player_id,
-        }]);
+        const { error: dbError } = await supabase
+          .from('marketing_gallery')
+          .insert([{
+            title,
+            description: uploadForm.description || null,
+            file_url: publicUrl,
+            file_type: fileType,
+            category: uploadForm.category,
+            player_id: uploadForm.player_id,
+          }]);
 
-      if (dbError) throw dbError;
+        if (dbError) {
+          console.error(`Failed to save ${file.name}:`, dbError);
+          continue;
+        }
+        successCount++;
+      }
 
-      toast.success('File uploaded successfully');
+      if (successCount > 0) {
+        toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully`);
+      }
+      if (successCount < uploadForm.files.length) {
+        toast.error(`${uploadForm.files.length - successCount} file(s) failed to upload`);
+      }
+      
       setShowUploadDialog(false);
-      setUploadForm({ title: '', description: '', file: null, category: 'other', player_id: null });
+      setUploadForm({ title: '', description: '', files: [], category: 'other', player_id: null });
       fetchGalleryItems();
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload file');
+      toast.error('Failed to upload files');
     } finally {
       setUploading(false);
     }
