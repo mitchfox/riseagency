@@ -1036,6 +1036,20 @@ export const AnalysisPointsSection = ({
         <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 space-y-4">
+        {/* Add Point button when no points exist */}
+        {(!formData.points || formData.points.length === 0) && (
+          <div className="flex items-center gap-2 my-2">
+            <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Add {analysisType === "concept" ? "Images" : "Point"}
+            </Button>
+            {onSave && (
+              <Button onClick={onSave} size="sm" className="flex-1">
+                Save Analysis
+              </Button>
+            )}
+          </div>
+        )}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
