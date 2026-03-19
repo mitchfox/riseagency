@@ -4850,7 +4850,7 @@ const Dashboard = () => {
       </Dialog>
 
       {/* Logout Section */}
-      <div className="container mx-auto px-4 pb-8">
+      <div className="container mx-auto px-4 pb-8 mb-20 md:mb-0">
         <div className="border-t border-border my-6" />
         <div className="flex justify-center items-center gap-4">
           {playerData?.id && (

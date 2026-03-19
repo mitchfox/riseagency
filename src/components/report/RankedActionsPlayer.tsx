@@ -169,10 +169,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
                   {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
                 </span>
               </div>
-              <p className="text-white/60 text-xs truncate mt-0.5">{current.action_type}: {current.action_description}</p>
-              {current.notes && <p className="text-risegold text-[10px] italic mt-1 line-clamp-2">📝 {current.notes}</p>}
+              <p className="text-white/60 text-xs mt-0.5">{current.action_type}: {current.action_description}</p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-shrink-0">
               <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipBack className="h-4 w-4" />
               </Button>
@@ -181,6 +180,11 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
               </Button>
             </div>
           </div>
+          {current.notes && (
+            <div className="mt-2 pb-1">
+              <p className="text-risegold text-xs italic leading-relaxed">📝 {current.notes}</p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
