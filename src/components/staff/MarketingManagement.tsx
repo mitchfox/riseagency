@@ -45,7 +45,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [uploadForm, setUploadForm] = useState({
     title: '',
     description: '',
-    file: null as File | null,
+    files: [] as File[],
     category: 'other' as 'brand' | 'players' | 'other',
     player_id: null as string | null,
   });
