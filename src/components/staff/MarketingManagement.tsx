@@ -865,7 +865,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                 variant="outline"
                 onClick={() => {
                   setShowUploadDialog(false);
-                  setUploadForm({ title: '', description: '', file: null, category: 'other', player_id: null });
+                  setUploadForm({ title: '', description: '', files: [], category: 'other', player_id: null });
                 }}
                 disabled={uploading}
               >
