@@ -842,17 +842,21 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </div>
 
             <div>
-              <Label htmlFor="upload-file">File *</Label>
+              <Label htmlFor="upload-file">Files *</Label>
               <Input
                 id="upload-file"
                 type="file"
                 accept="image/*,video/*"
-                onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                multiple
+                onChange={(e) => setUploadForm({ ...uploadForm, files: e.target.files ? Array.from(e.target.files) : [] })}
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Supported: Images (JPG, PNG, GIF, WebP) and Videos (MP4, WebM, MOV)
+                Supported: Images (JPG, PNG, GIF, WebP) and Videos (MP4, WebM, MOV). Select multiple files at once.
               </p>
+              {uploadForm.files.length > 1 && (
+                <p className="text-xs text-primary mt-1">{uploadForm.files.length} files selected</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
