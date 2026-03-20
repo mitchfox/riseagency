@@ -968,9 +968,17 @@ const AnalysisViewer = () => {
 
   return (
     <div className="min-h-screen relative bg-black">
-      {/* A4 width container - 210mm ≈ 794px */}
+      {/* Allow landscape rotation on mobile for wider view */}
+      <style>{`
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+          .analysis-viewer-container {
+            max-width: 100% !important;
+          }
+        }
+      `}</style>
+      {/* A4 width container - 210mm ≈ 794px, expands in landscape mobile */}
       <div 
-        className="mx-auto min-h-screen relative"
+        className="analysis-viewer-container mx-auto min-h-screen relative"
         style={{ 
           maxWidth: '794px',
           backgroundColor: 'hsl(0 0% 15%)'
