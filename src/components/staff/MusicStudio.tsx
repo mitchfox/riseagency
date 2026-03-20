@@ -42,11 +42,16 @@ export const MusicStudio = () => {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="suno">Suno AI</TabsTrigger>
+          <TabsTrigger value="sunolive">Suno Studio</TabsTrigger>
           <TabsTrigger value="portalmusic">Portal Music</TabsTrigger>
         </TabsList>
 
         <TabsContent value="suno" className="mt-4">
           <SunoTab />
+        </TabsContent>
+
+        <TabsContent value="sunolive" className="mt-4">
+          <SunoLiveTab />
         </TabsContent>
 
         <TabsContent value="portalmusic" className="mt-4">
