@@ -64,11 +64,31 @@ export function isExportRunning(): boolean {
   return running;
 }
 
-function getMatchMinute(clipStart: number, offset?: number): string {
-  const totalSeconds = clipStart + (offset || 0);
-  const mins = Math.floor(Math.max(0, totalSeconds) / 60);
-  const secs = Math.floor(Math.max(0, totalSeconds) % 60);
-  return `${mins}.${secs.toString().padStart(2, "0")}`;
+function getEffectiveOffset(
+  videoSeconds: number,
+  matchMinuteOffset?: number,
+  secondHalfOffset?: number | null,
+  secondHalfVideoTime?: number | null
+): number {
+  if (secondHalfVideoTime != null && secondHalfOffset != null && videoSeconds >= secondHalfVideoTime) {
+    return secondHalfOffset;
+  }
+  return matchMinuteOffset || 0;
+}
+
+/** Format minute with seconds rounded to nearest 5, matching VideoAnalysis display */
+function getMatchMinute(
+  clipStart: number,
+  matchMinuteOffset?: number,
+  secondHalfOffset?: number | null,
+  secondHalfVideoTime?: number | null
+): string {
+  const offset = getEffectiveOffset(clipStart, matchMinuteOffset, secondHalfOffset, secondHalfVideoTime);
+  const matchSeconds = Math.max(0, clipStart + offset);
+  const mins = Math.floor(matchSeconds / 60);
+  const rawSecs = Math.floor(matchSeconds % 60);
+  const roundedSecs = Math.floor(rawSecs / 5) * 5;
+  return `${mins}.${roundedSecs.toString().padStart(2, "0")}`;
 }
 
 export async function startExportJob(job: ExportJob): Promise<void> {
