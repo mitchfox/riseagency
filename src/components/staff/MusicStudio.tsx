@@ -212,6 +212,42 @@ const SunoTab = () => {
   );
 };
 
+// ─── Suno Live / Studio Tab ──────────────────────────────────────────────────
+
+const SunoLiveTab = () => {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            Suno Studio
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <a href="https://suno.com/create" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />
+              Open in New Tab
+            </a>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Create and edit music directly within Suno. Use the Suno AI tab to save and manage your tracks.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-lg overflow-hidden border" style={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
+          <iframe
+            src="https://suno.com/create"
+            className="w-full h-full border-0"
+            allow="autoplay; microphone"
+            title="Suno Studio"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // ─── Portal Music Admin Tab ──────────────────────────────────────────────────
 
 const PortalMusicTab = () => {

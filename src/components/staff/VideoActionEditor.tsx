@@ -232,28 +232,26 @@ export const VideoActionEditor = ({
             crossOrigin="anonymous"
             controls
             loop
+            playsInline
             className="w-full h-full object-contain"
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />
 
-          {/* Prefetch next clip video */}
-          {safePos < clippedIndices.length - 1 && clippedIndices[safePos + 1].action.video_url && (
-            <video
-              key={`prefetch-${clippedIndices[safePos + 1].action.video_url}`}
-              src={clippedIndices[safePos + 1].action.video_url!}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              aria-hidden="true"
-              className="absolute h-px w-px opacity-0 pointer-events-none"
-              onCanPlay={(e) => {
-                e.currentTarget.play().then(() => {
-                  e.currentTarget.pause();
-                }).catch(() => {});
-              }}
-            />
-          )}
+          {/* Prefetch next 2 clip videos for instant loading */}
+          {[1, 2].map(offset => {
+            const nextIdx = safePos + offset;
+            const nextUrl = nextIdx < clippedIndices.length ? clippedIndices[nextIdx].action.video_url : null;
+            if (!nextUrl) return null;
+            return (
+              <link
+                key={`prefetch-${nextUrl}`}
+                rel="preload"
+                href={nextUrl}
+                as="video"
+                crossOrigin="anonymous"
+              />
+            );
+          })}
 
           <button
             onClick={handleNext}
