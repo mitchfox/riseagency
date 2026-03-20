@@ -22,8 +22,11 @@ export interface ExportJob {
     notes?: string | null;
     action_score?: number;
     zone_details?: { zone: number; sub?: number; direction?: "forward" | "backward" }[];
+    minute?: string;
   }>;
   matchMinuteOffset?: number;
+  secondHalfOffset?: number | null;
+  secondHalfVideoTime?: number | null;
   getClipAnnotations?: (clipId: string) => any;
 }
 
