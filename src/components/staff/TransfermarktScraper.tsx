@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search, ExternalLink, UserX, Users, X, Star, Cake } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Search, ExternalLink, UserX, Users, X, Star, Cake, ChevronDown, Terminal } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -265,6 +266,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set());
   const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set());
   const [dbPlayerNames, setDbPlayerNames] = useState<Set<string>>(new Set());
+  const [processLogs, setProcessLogs] = useState<Array<{ league: string; logs: string[]; timestamp: string }>>([]);
+  const [showLogs, setShowLogs] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -352,6 +355,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       let successCount = 0;
       let failCount = 0;
 
+      const searchLogs: Array<{ league: string; logs: string[]; timestamp: string }> = [];
+
       for (const league of leaguesToScrape) {
         try {
           const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
@@ -375,6 +380,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
 
           if (error) {
             console.warn(`League ${league} failed:`, error.message);
+            searchLogs.push({ league, logs: [`Error: ${error.message}`], timestamp: new Date().toISOString() });
             failCount++;
             continue;
           }
@@ -383,12 +389,18 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
             allPlayers.push(...(data.players || []));
             totalScanned += data.totalFound || 0;
             successCount++;
+            if (data.processLog) {
+              searchLogs.push({ league, logs: data.processLog, timestamp: new Date().toISOString() });
+            }
           }
         } catch (leagueError: any) {
           console.warn(`League ${league} threw:`, leagueError?.message);
+          searchLogs.push({ league, logs: [`Exception: ${leagueError?.message}`], timestamp: new Date().toISOString() });
           failCount++;
         }
       }
+
+      setProcessLogs(prev => [...searchLogs, ...prev].slice(0, 20));
 
       if (successCount === 0 && failCount > 0) {
         toast.error("All league searches failed. Try selecting a specific league.");
@@ -708,7 +720,34 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                 ? 'No confederation filter'
                 : 'Confederation: UEFA'}
             </Badge>
+            {processLogs.length > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setShowLogs(!showLogs)}>
+                <Terminal className="h-3 w-3" />
+                Process Log ({processLogs.length})
+                <ChevronDown className={`h-3 w-3 transition-transform ${showLogs ? 'rotate-180' : ''}`} />
+              </Button>
+            )}
           </div>
+
+          {showLogs && processLogs.length > 0 && (
+            <div className="mt-3 max-h-[300px] overflow-y-auto rounded-md border bg-black/90 p-3 space-y-3">
+              {processLogs.map((entry, i) => (
+                <div key={i}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[10px]">{entry.league}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {entry.logs.map((line, j) => (
+                      <p key={j} className={`text-[11px] font-mono ${line.startsWith('Error') || line.startsWith('Exception') ? 'text-red-400' : 'text-green-400'}`}>
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

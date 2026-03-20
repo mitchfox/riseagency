@@ -22,8 +22,11 @@ export interface ExportJob {
     notes?: string | null;
     action_score?: number;
     zone_details?: { zone: number; sub?: number; direction?: "forward" | "backward" }[];
+    minute?: string;
   }>;
   matchMinuteOffset?: number;
+  secondHalfOffset?: number | null;
+  secondHalfVideoTime?: number | null;
   getClipAnnotations?: (clipId: string) => any;
 }
 
@@ -61,11 +64,31 @@ export function isExportRunning(): boolean {
   return running;
 }
 
-function getMatchMinute(clipStart: number, offset?: number): string {
-  const totalSeconds = clipStart + (offset || 0);
-  const mins = Math.floor(Math.max(0, totalSeconds) / 60);
-  const secs = Math.floor(Math.max(0, totalSeconds) % 60);
-  return `${mins}.${secs.toString().padStart(2, "0")}`;
+function getEffectiveOffset(
+  videoSeconds: number,
+  matchMinuteOffset?: number,
+  secondHalfOffset?: number | null,
+  secondHalfVideoTime?: number | null
+): number {
+  if (secondHalfVideoTime != null && secondHalfOffset != null && videoSeconds >= secondHalfVideoTime) {
+    return secondHalfOffset;
+  }
+  return matchMinuteOffset || 0;
+}
+
+/** Format minute with seconds rounded to nearest 5, matching VideoAnalysis display */
+function getMatchMinute(
+  clipStart: number,
+  matchMinuteOffset?: number,
+  secondHalfOffset?: number | null,
+  secondHalfVideoTime?: number | null
+): string {
+  const offset = getEffectiveOffset(clipStart, matchMinuteOffset, secondHalfOffset, secondHalfVideoTime);
+  const matchSeconds = Math.max(0, clipStart + offset);
+  const mins = Math.floor(matchSeconds / 60);
+  const rawSecs = Math.floor(matchSeconds % 60);
+  const roundedSecs = Math.floor(rawSecs / 5) * 5;
+  return `${mins}.${roundedSecs.toString().padStart(2, "0")}`;
 }
 
 export async function startExportJob(job: ExportJob): Promise<void> {
@@ -129,7 +152,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
         const insertRow: any = {
             analysis_id: job.reportId,
             action_number: nextNumber,
-            minute: getMatchMinute(clip.start, job.matchMinuteOffset),
+            minute: clip.minute || getMatchMinute(clip.start, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime),
             action_type: clip.action_type || "",
             action_description: clip.action_description || "",
             notes: clip.notes || null,

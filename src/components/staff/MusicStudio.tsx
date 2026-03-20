@@ -42,11 +42,16 @@ export const MusicStudio = () => {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="suno">Suno AI</TabsTrigger>
+          <TabsTrigger value="sunolive">Suno Studio</TabsTrigger>
           <TabsTrigger value="portalmusic">Portal Music</TabsTrigger>
         </TabsList>
 
         <TabsContent value="suno" className="mt-4">
           <SunoTab />
+        </TabsContent>
+
+        <TabsContent value="sunolive" className="mt-4">
+          <SunoLiveTab />
         </TabsContent>
 
         <TabsContent value="portalmusic" className="mt-4">
@@ -204,6 +209,42 @@ const SunoTab = () => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+// ─── Suno Live / Studio Tab ──────────────────────────────────────────────────
+
+const SunoLiveTab = () => {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            Suno Studio
+          </CardTitle>
+          <Button variant="outline" size="sm" asChild>
+            <a href="https://suno.com/create" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />
+              Open in New Tab
+            </a>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Create and edit music directly within Suno. Use the Suno AI tab to save and manage your tracks.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-lg overflow-hidden border" style={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
+          <iframe
+            src="https://suno.com/create"
+            className="w-full h-full border-0"
+            allow="autoplay; microphone"
+            title="Suno Studio"
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

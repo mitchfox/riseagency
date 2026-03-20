@@ -1988,7 +1988,17 @@ const Dashboard = () => {
                               {/* Line 2: Buttons - Order: R90, PRE, POST */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 {(() => {
+                                  const isDraft = String(analysis.visibility_status || "").toLowerCase() === "draft";
                                   const isHidden = String(analysis.visibility_status || "").toLowerCase() === "hidden";
+                                  
+                                  if (isDraft) {
+                                    return (
+                                      <span className="bg-muted text-muted-foreground px-3 py-1.5 rounded text-sm font-bold">
+                                        R90: ?
+                                      </span>
+                                    );
+                                  }
+                                  
                                   const effectiveR90 = isHidden && analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0
                                     ? (analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90
                                     : analysis.r90_score;

@@ -1352,8 +1352,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         notes: c.notes,
         action_score: c.action_score,
         zone_details: c.zone_details,
+        minute: c.minute || fmtClipMinute(c.start, selectedVideo.match_minute_offset),
       })),
       matchMinuteOffset: selectedVideo.match_minute_offset,
+      secondHalfOffset: selectedVideo.second_half_offset,
+      secondHalfVideoTime: selectedVideo.second_half_video_time,
       getClipAnnotations,
     });
 
