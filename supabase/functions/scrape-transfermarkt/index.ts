@@ -394,7 +394,7 @@ Deno.serve(async (req) => {
 
     console.log('Received filters:', JSON.stringify(searchFilters));
 
-    const { players, totalFound } = await searchPlayers(searchFilters);
+    const { players, totalFound, processLog } = await searchPlayers(searchFilters);
 
     return new Response(
       JSON.stringify({
@@ -402,6 +402,7 @@ Deno.serve(async (req) => {
         players,
         totalFound,
         filteredCount: players.length,
+        processLog,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
