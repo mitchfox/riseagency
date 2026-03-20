@@ -355,6 +355,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
       let successCount = 0;
       let failCount = 0;
 
+      const searchLogs: Array<{ league: string; logs: string[]; timestamp: string }> = [];
+
       for (const league of leaguesToScrape) {
         try {
           const skipUefa = NON_UEFA_LEAGUE_CODES.has(league);
@@ -378,6 +380,7 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
 
           if (error) {
             console.warn(`League ${league} failed:`, error.message);
+            searchLogs.push({ league, logs: [`Error: ${error.message}`], timestamp: new Date().toISOString() });
             failCount++;
             continue;
           }
@@ -386,12 +389,18 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
             allPlayers.push(...(data.players || []));
             totalScanned += data.totalFound || 0;
             successCount++;
+            if (data.processLog) {
+              searchLogs.push({ league, logs: data.processLog, timestamp: new Date().toISOString() });
+            }
           }
         } catch (leagueError: any) {
           console.warn(`League ${league} threw:`, leagueError?.message);
+          searchLogs.push({ league, logs: [`Exception: ${leagueError?.message}`], timestamp: new Date().toISOString() });
           failCount++;
         }
       }
+
+      setProcessLogs(prev => [...searchLogs, ...prev].slice(0, 20));
 
       if (successCount === 0 && failCount > 0) {
         toast.error("All league searches failed. Try selecting a specific league.");
