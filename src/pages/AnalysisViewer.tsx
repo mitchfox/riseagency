@@ -693,6 +693,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
 // behaviour and supports all annotation types including space-oval, distance, etc.
 const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: string; annotationId?: string; crop?: { top: number; right: number; bottom: number; left: number } | null; audioUrl?: string }) => {
   const hasCrop = !!(crop && (crop.top > 0 || crop.right > 0 || crop.bottom > 0 || crop.left > 0));
+  const containerRef = useRef<HTMLDivElement>(null);
   const cropShiftStyle = hasCrop && crop
     ? {
         marginTop: `-${(crop.top / (100 - crop.top - crop.bottom)) * 100}%`,
@@ -702,8 +703,18 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
       }
     : undefined;
 
+  const handleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) {
+      el.requestFullscreen();
+    } else if ((el as any).webkitRequestFullscreen) {
+      (el as any).webkitRequestFullscreen();
+    }
+  };
+
   return (
-    <div className="relative overflow-hidden rounded-lg border-2 border-primary shadow-md">
+    <div ref={containerRef} className="relative overflow-hidden rounded-lg border-2 border-primary shadow-md group bg-black">
       <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
         <div style={cropShiftStyle}>
           <ReadOnlyAnnotationPlayback
@@ -712,6 +723,14 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
           />
         </div>
       </div>
+      {/* Fullscreen button */}
+      <button
+        onClick={handleFullscreen}
+        className="absolute top-2 right-2 z-20 p-1.5 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+        title="Fullscreen"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
       {audioUrl && (
         <div className="absolute right-4 top-4 z-20 md:right-5 md:top-5">
           <AudioPlaybackButton audioUrl={audioUrl} />
