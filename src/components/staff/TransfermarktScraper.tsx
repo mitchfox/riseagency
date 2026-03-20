@@ -720,7 +720,34 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
                 ? 'No confederation filter'
                 : 'Confederation: UEFA'}
             </Badge>
+            {processLogs.length > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => setShowLogs(!showLogs)}>
+                <Terminal className="h-3 w-3" />
+                Process Log ({processLogs.length})
+                <ChevronDown className={`h-3 w-3 transition-transform ${showLogs ? 'rotate-180' : ''}`} />
+              </Button>
+            )}
           </div>
+
+          {showLogs && processLogs.length > 0 && (
+            <div className="mt-3 max-h-[300px] overflow-y-auto rounded-md border bg-black/90 p-3 space-y-3">
+              {processLogs.map((entry, i) => (
+                <div key={i}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[10px]">{entry.league}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {entry.logs.map((line, j) => (
+                      <p key={j} className={`text-[11px] font-mono ${line.startsWith('Error') || line.startsWith('Exception') ? 'text-red-400' : 'text-green-400'}`}>
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
