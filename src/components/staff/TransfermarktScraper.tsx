@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search, ExternalLink, UserX, Users, X, Star, Cake } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Loader2, Search, ExternalLink, UserX, Users, X, Star, Cake, ChevronDown, Terminal } from "lucide-react";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
