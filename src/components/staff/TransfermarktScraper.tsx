@@ -266,6 +266,8 @@ export const TransfermarktScraper = ({ visible, onClose }: TransfermarktScraperP
   const [shortlistingPlayers, setShortlistingPlayers] = useState<Set<string>>(new Set());
   const [shortlistedUrls, setShortlistedUrls] = useState<Set<string>>(new Set());
   const [dbPlayerNames, setDbPlayerNames] = useState<Set<string>>(new Set());
+  const [processLogs, setProcessLogs] = useState<Array<{ league: string; logs: string[]; timestamp: string }>>([]);
+  const [showLogs, setShowLogs] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
