@@ -308,51 +308,59 @@ function isBirthdayToday(dob: string): boolean {
   return dobMonth === todayMonth && dobDay === todayDay;
 }
 
-async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number }> {
+async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerResult[]; totalFound: number; processLog: string[] }> {
+  const processLog: string[] = [];
+  const log = (msg: string) => { console.log(msg); processLog.push(msg); };
+
   const competitionId = filters.countryPlayingIn || 'GB1';
-  console.log('Searching competition:', competitionId, '(resolved:', resolveCompetitionId(competitionId), ')');
+  log(`Searching competition: ${competitionId} (resolved: ${resolveCompetitionId(competitionId)})`);
 
   const clubIds = await getClubIds(competitionId);
-  console.log('Found clubs:', clubIds.length);
+  log(`Found ${clubIds.length} clubs`);
   if (clubIds.length === 0) {
-    return { players: [], totalFound: 0 };
+    log('No clubs found - returning empty');
+    return { players: [], totalFound: 0, processLog };
   }
 
   const squadResults = await Promise.all(clubIds.map(getSquadPlayerIds));
   const allPlayerIds = [...new Set(squadResults.flat())];
-  console.log('Total unique players:', allPlayerIds.length);
+  log(`Total unique players: ${allPlayerIds.length}`);
 
   const profiles = await batchFetch(allPlayerIds, getPlayerProfile, 10);
-  console.log('Fetched profiles:', profiles.length);
+  log(`Fetched ${profiles.length} profiles`);
 
   let filtered = profiles.filter(p => p.agentStatus === 'no_agent' || p.agentStatus === 'family_agent');
-  console.log('Unrepresented players:', filtered.length);
+  log(`Unrepresented players: ${filtered.length}`);
 
   // Birthday today filter
   if (filters.birthdayToday) {
-    console.log('Applying birthday filter. Sample DOBs:', filtered.slice(0, 5).map(p => `${p.name}: ${p.dateOfBirth}`));
+    log(`Applying birthday filter. Sample DOBs: ${filtered.slice(0, 5).map(p => `${p.name}: ${p.dateOfBirth}`).join(', ')}`);
     filtered = filtered.filter(p => isBirthdayToday(p.dateOfBirth));
-    console.log('Birthday today matches:', filtered.length);
+    log(`Birthday today matches: ${filtered.length}`);
   }
 
   if (filters.ageMin) {
     filtered = filtered.filter(p => p.age >= filters.ageMin!);
+    log(`After age min (${filters.ageMin}): ${filtered.length}`);
   }
   if (filters.ageMax) {
     filtered = filtered.filter(p => p.age <= filters.ageMax!);
+    log(`After age max (${filters.ageMax}): ${filtered.length}`);
   }
   if (filters.nationality) {
     const natId = parseInt(filters.nationality);
     filtered = filtered.filter(p => p.nationalityId === natId || p.secondNationalityId === natId);
+    log(`After nationality filter: ${filtered.length}`);
   }
   if (filters.position) {
     const posNames = POSITION_FILTERS[filters.position.toLowerCase()];
     if (posNames) {
       filtered = filtered.filter(p => posNames.some(pn => p.position.toLowerCase().includes(pn.toLowerCase())));
     }
+    log(`After position filter: ${filtered.length}`);
   }
 
-  console.log('After filters:', filtered.length);
+  log(`Final filtered count: ${filtered.length}`);
 
   const uniqueClubIds = [...new Set(filtered.map(p => p.clubId).filter(Boolean))];
   await Promise.all(uniqueClubIds.map(getClubName));
@@ -372,7 +380,7 @@ async function searchPlayers(filters: SearchFilters): Promise<{ players: PlayerR
     dateOfBirth: p.dateOfBirth,
   }));
 
-  return { players, totalFound: allPlayerIds.length };
+  return { players, totalFound: allPlayerIds.length, processLog };
 }
 
 Deno.serve(async (req) => {
