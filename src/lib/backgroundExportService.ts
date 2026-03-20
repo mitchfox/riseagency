@@ -152,7 +152,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
         const insertRow: any = {
             analysis_id: job.reportId,
             action_number: nextNumber,
-            minute: getMatchMinute(clip.start, job.matchMinuteOffset),
+            minute: clip.minute || getMatchMinute(clip.start, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime),
             action_type: clip.action_type || "",
             action_description: clip.action_description || "",
             notes: clip.notes || null,
