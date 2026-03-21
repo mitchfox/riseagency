@@ -2736,7 +2736,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 return (
                   <div
                     key={video.id}
-                    onClick={() => setSelectedVideo(video)}
+                    onClick={() => { setSelectedVideo(video); loadVideoDetail(video.id); }}
                     className="p-4 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-start justify-between">
