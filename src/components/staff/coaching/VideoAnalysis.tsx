@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2 } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2, Square, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -154,6 +154,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [exportPlayerId, setExportPlayerId] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportClipProgress, setExportClipProgress] = useState<{ current: number; total: number; statuses: Record<string, "pending" | "done" | "skipped" | "error"> }>({ current: 0, total: 0, statuses: {} });
+  const [selectedExportClipIds, setSelectedExportClipIds] = useState<Set<string>>(new Set());
+  const [alreadyExportedClipIds, setAlreadyExportedClipIds] = useState<Set<string>>(new Set());
 
   // Half-time sync
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
@@ -384,9 +386,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, [selectedVideo?.player_id]);
 
   const fetchVideos = async () => {
+    // Only fetch metadata columns — exclude heavy annotations/clips JSON blobs
     let query = supabase
       .from("video_analyses")
-      .select("*")
+      .select("id, title, video_url, player_id, match_date, opponent, auto_delete_at, created_at, match_minute_offset, second_half_offset, second_half_video_time, part_number, group_id, total_parts")
       .order("created_at", { ascending: false });
 
     // When embedded in Athlete Centre, only show videos for this player
@@ -399,8 +402,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     if (data) {
       setVideos(data.map(v => ({
         ...v,
-        annotations: (v.annotations as any as Annotation[]) || [],
-        clips: (v.clips as any as Clip[]) || [],
+        annotations: [] as Annotation[],
+        clips: [] as Clip[],
         match_minute_offset: Number(v.match_minute_offset) || 0,
         second_half_offset: v.second_half_offset != null ? Number(v.second_half_offset) : null,
         second_half_video_time: v.second_half_video_time != null ? Number(v.second_half_video_time) : null,
@@ -410,6 +413,24 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       })));
     }
     setLoading(false);
+  };
+
+  /** Lazy-load annotations and clips for a single video when selected */
+  const loadVideoDetail = async (videoId: string) => {
+    const { data } = await supabase
+      .from("video_analyses")
+      .select("annotations, clips")
+      .eq("id", videoId)
+      .single();
+    if (data) {
+      const annotations = (data.annotations as any as Annotation[]) || [];
+      const clips = (data.clips as any as Clip[]) || [];
+      const updater = (prev: VideoAnalysisEntry[]) =>
+        prev.map(v => v.id === videoId ? { ...v, annotations, clips } : v);
+      setVideos(updater);
+      // Also update selectedVideo if it matches
+      setSelectedVideo(prev => prev?.id === videoId ? { ...prev, annotations, clips } : prev);
+    }
   };
 
   const fetchPlayers = async () => {
@@ -1138,11 +1159,37 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setAvailableReports([]);
     setAvailableAnalyses([]);
     setExportDestination("report");
+    setAlreadyExportedClipIds(new Set());
+    // Pre-select all clips
+    const allClipIds = new Set((selectedVideo?.clips || []).map(c => c.id));
+    setSelectedExportClipIds(allClipIds);
     setShowExportDialog(true);
 
     if (contextPlayerId) {
       await handleExportPlayerChange(contextPlayerId, "report");
     }
+  };
+
+  /** When a report is selected, fetch which clip IDs are already on it */
+  const handleReportSelect = async (reportId: string) => {
+    setSelectedReportId(reportId);
+    if (!reportId) {
+      setAlreadyExportedClipIds(new Set());
+      return;
+    }
+    const { data } = await supabase
+      .from("performance_report_actions")
+      .select("clip_id")
+      .eq("analysis_id", reportId)
+      .not("clip_id", "is", null);
+    const existing = new Set((data || []).map(r => r.clip_id).filter(Boolean) as string[]);
+    setAlreadyExportedClipIds(existing);
+    // Deselect already-exported clips
+    setSelectedExportClipIds(prev => {
+      const next = new Set(prev);
+      existing.forEach(id => next.delete(id));
+      return next;
+    });
   };
 
   const handleExportPlayerChange = async (
@@ -1328,8 +1375,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       return;
     }
 
-    const clips = selectedVideo.clips || [];
-    if (clips.length === 0) return;
+    // Only export selected clips that aren't already on the report
+    const clips = (selectedVideo.clips || []).filter(
+      c => selectedExportClipIds.has(c.id) && !alreadyExportedClipIds.has(c.id)
+    );
+    if (clips.length === 0) {
+      toast.info("No new clips to export");
+      return;
+    }
 
     // Initialise progress UI immediately
     const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
@@ -2304,7 +2357,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         </Dialog>
 
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Export Clips</DialogTitle>
             </DialogHeader>
@@ -2357,7 +2410,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     </Select>
                   )}
                   {exportPlayerId && (
-                    <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+                    <Select value={selectedReportId} onValueChange={handleReportSelect}>
                       <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
                       <SelectContent>
                         {availableReports.length === 0 ? (
@@ -2370,14 +2423,76 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       </SelectContent>
                     </Select>
                   )}
+                  {/* Clip selection */}
+                  {selectedReportId && selectedVideo.clips.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Select clips to export</p>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          onClick={() => {
+                            const exportable = selectedVideo.clips.filter(c => !alreadyExportedClipIds.has(c.id));
+                            const allSelected = exportable.every(c => selectedExportClipIds.has(c.id));
+                            if (allSelected) {
+                              setSelectedExportClipIds(new Set());
+                            } else {
+                              setSelectedExportClipIds(new Set(exportable.map(c => c.id)));
+                            }
+                          }}
+                        >
+                          {selectedVideo.clips.filter(c => !alreadyExportedClipIds.has(c.id)).every(c => selectedExportClipIds.has(c.id)) ? "Deselect all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto border rounded-md p-2 space-y-1">
+                        {selectedVideo.clips.map(clip => {
+                          const alreadyExported = alreadyExportedClipIds.has(clip.id);
+                          const selected = selectedExportClipIds.has(clip.id);
+                          return (
+                            <label
+                              key={clip.id}
+                              className={`flex items-center gap-2 text-xs py-1 px-1 rounded cursor-pointer hover:bg-muted/30 ${alreadyExported ? "opacity-50 cursor-not-allowed" : ""}`}
+                            >
+                              <button
+                                type="button"
+                                disabled={alreadyExported}
+                                onClick={() => {
+                                  if (alreadyExported) return;
+                                  setSelectedExportClipIds(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(clip.id)) next.delete(clip.id);
+                                    else next.add(clip.id);
+                                    return next;
+                                  });
+                                }}
+                                className="shrink-0"
+                              >
+                                {alreadyExported || selected ? (
+                                  <CheckSquare className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Square className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                              <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                              {alreadyExported && <span className="text-[10px] text-muted-foreground shrink-0">Already added</span>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button onClick={handleLinkToReport} disabled={!selectedReportId || exporting} variant="outline" className="flex-1">
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
                       Link Clips
                     </Button>
-                    <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting || selectedVideo.clips.length === 0} className="flex-1">
+                    <Button
+                      onClick={handleExportToReport}
+                      disabled={!selectedReportId || exporting || selectedExportClipIds.size === 0}
+                      className="flex-1"
+                    >
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                      Export as Actions
+                      Export {selectedExportClipIds.size > 0 ? `${selectedExportClipIds.size} clip${selectedExportClipIds.size !== 1 ? 's' : ''}` : "as Actions"}
                     </Button>
                   </div>
                   {/* Per-clip export progress */}
@@ -2386,7 +2501,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       <p className="text-xs font-medium text-muted-foreground">
                         Exporting clip {exportClipProgress.current}/{exportClipProgress.total}...
                       </p>
-                      {selectedVideo.clips.map((clip: any) => {
+                      {selectedVideo.clips.filter(c => selectedExportClipIds.has(c.id)).map((clip: any) => {
                         const status = exportClipProgress.statuses[clip.id] || "pending";
                         return (
                           <div key={clip.id} className="flex items-center gap-2 text-xs">
@@ -2717,7 +2832,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 return (
                   <div
                     key={video.id}
-                    onClick={() => setSelectedVideo(video)}
+                    onClick={() => { setSelectedVideo(video); loadVideoDetail(video.id); }}
                     className="p-4 rounded-lg border cursor-pointer hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-start justify-between">
