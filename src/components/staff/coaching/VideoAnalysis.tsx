@@ -384,9 +384,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, [selectedVideo?.player_id]);
 
   const fetchVideos = async () => {
+    // Only fetch metadata columns — exclude heavy annotations/clips JSON blobs
     let query = supabase
       .from("video_analyses")
-      .select("*")
+      .select("id, title, video_url, player_id, match_date, opponent, auto_delete_at, created_at, match_minute_offset, second_half_offset, second_half_video_time, part_number, group_id, total_parts")
       .order("created_at", { ascending: false });
 
     // When embedded in Athlete Centre, only show videos for this player
@@ -399,8 +400,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     if (data) {
       setVideos(data.map(v => ({
         ...v,
-        annotations: (v.annotations as any as Annotation[]) || [],
-        clips: (v.clips as any as Clip[]) || [],
+        annotations: [] as Annotation[],
+        clips: [] as Clip[],
         match_minute_offset: Number(v.match_minute_offset) || 0,
         second_half_offset: v.second_half_offset != null ? Number(v.second_half_offset) : null,
         second_half_video_time: v.second_half_video_time != null ? Number(v.second_half_video_time) : null,
@@ -410,6 +411,24 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       })));
     }
     setLoading(false);
+  };
+
+  /** Lazy-load annotations and clips for a single video when selected */
+  const loadVideoDetail = async (videoId: string) => {
+    const { data } = await supabase
+      .from("video_analyses")
+      .select("annotations, clips")
+      .eq("id", videoId)
+      .single();
+    if (data) {
+      const annotations = (data.annotations as any as Annotation[]) || [];
+      const clips = (data.clips as any as Clip[]) || [];
+      const updater = (prev: VideoAnalysisEntry[]) =>
+        prev.map(v => v.id === videoId ? { ...v, annotations, clips } : v);
+      setVideos(updater);
+      // Also update selectedVideo if it matches
+      setSelectedVideo(prev => prev?.id === videoId ? { ...prev, annotations, clips } : prev);
+    }
   };
 
   const fetchPlayers = async () => {

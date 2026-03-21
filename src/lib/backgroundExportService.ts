@@ -141,10 +141,22 @@ export async function startExportJob(job: ExportJob): Promise<void> {
 
       try {
         let clipUrl: string;
+
+        // Check if a trimmed clip already exists in storage (avoids re-trimming on retry)
+        const existingWebm = `clips/${clip.id}.webm`;
+        const { data: existCheck } = supabase.storage.from("analysis-videos").getPublicUrl(existingWebm);
+        let alreadyExists = false;
         try {
+          const head = await fetch(existCheck.publicUrl, { method: "HEAD" });
+          if (head.ok) {
+            clipUrl = existCheck.publicUrl;
+            alreadyExists = true;
+          }
+        } catch {}
+
+        if (!alreadyExists) {
+          // Attempt trim — if it fails completely, mark as error (never fall back to full video URL)
           clipUrl = await trimAndUploadClip(job.videoUrl, clip.id, clip.start, clip.end);
-        } catch {
-          clipUrl = `${job.videoUrl}#t=${clip.start},${clip.end}`;
         }
 
         const annotations = job.getClipAnnotations?.(clip.id);

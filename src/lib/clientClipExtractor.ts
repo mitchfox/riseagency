@@ -63,7 +63,24 @@ async function clientSideTrim(
   end: number,
   onProgress?: (msg: string) => void
 ): Promise<string> {
+  const TIMEOUT_MS = 120_000; // 2 minute hard timeout
   const cleanUrl = sourceUrl.split("#")[0];
+
+  return Promise.race([
+    _doClientSideTrim(cleanUrl, clipId, start, end, onProgress),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Client-side trim timed out after ${TIMEOUT_MS / 1000}s`)), TIMEOUT_MS)
+    ),
+  ]);
+}
+
+async function _doClientSideTrim(
+  cleanUrl: string,
+  clipId: string,
+  start: number,
+  end: number,
+  onProgress?: (msg: string) => void
+): Promise<string> {
 
   onProgress?.("Loading video...");
 
