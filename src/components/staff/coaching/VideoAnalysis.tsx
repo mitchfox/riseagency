@@ -1159,11 +1159,37 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setAvailableReports([]);
     setAvailableAnalyses([]);
     setExportDestination("report");
+    setAlreadyExportedClipIds(new Set());
+    // Pre-select all clips
+    const allClipIds = new Set((selectedVideo?.clips || []).map(c => c.id));
+    setSelectedExportClipIds(allClipIds);
     setShowExportDialog(true);
 
     if (contextPlayerId) {
       await handleExportPlayerChange(contextPlayerId, "report");
     }
+  };
+
+  /** When a report is selected, fetch which clip IDs are already on it */
+  const handleReportSelect = async (reportId: string) => {
+    setSelectedReportId(reportId);
+    if (!reportId) {
+      setAlreadyExportedClipIds(new Set());
+      return;
+    }
+    const { data } = await supabase
+      .from("performance_report_actions")
+      .select("clip_id")
+      .eq("analysis_id", reportId)
+      .not("clip_id", "is", null);
+    const existing = new Set((data || []).map(r => r.clip_id).filter(Boolean) as string[]);
+    setAlreadyExportedClipIds(existing);
+    // Deselect already-exported clips
+    setSelectedExportClipIds(prev => {
+      const next = new Set(prev);
+      existing.forEach(id => next.delete(id));
+      return next;
+    });
   };
 
   const handleExportPlayerChange = async (
