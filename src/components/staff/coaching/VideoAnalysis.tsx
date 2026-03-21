@@ -1375,8 +1375,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       return;
     }
 
-    const clips = selectedVideo.clips || [];
-    if (clips.length === 0) return;
+    // Only export selected clips that aren't already on the report
+    const clips = (selectedVideo.clips || []).filter(
+      c => selectedExportClipIds.has(c.id) && !alreadyExportedClipIds.has(c.id)
+    );
+    if (clips.length === 0) {
+      toast.info("No new clips to export");
+      return;
+    }
 
     // Initialise progress UI immediately
     const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
