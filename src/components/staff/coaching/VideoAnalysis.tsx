@@ -154,6 +154,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [exportPlayerId, setExportPlayerId] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportClipProgress, setExportClipProgress] = useState<{ current: number; total: number; statuses: Record<string, "pending" | "done" | "skipped" | "error"> }>({ current: 0, total: 0, statuses: {} });
+  const [selectedExportClipIds, setSelectedExportClipIds] = useState<Set<string>>(new Set());
+  const [alreadyExportedClipIds, setAlreadyExportedClipIds] = useState<Set<string>>(new Set());
 
   // Half-time sync
   const [syncHalf, setSyncHalf] = useState<"1st" | "2nd">("1st");
