@@ -2410,7 +2410,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     </Select>
                   )}
                   {exportPlayerId && (
-                    <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+                    <Select value={selectedReportId} onValueChange={handleReportSelect}>
                       <SelectTrigger><SelectValue placeholder="Select performance report" /></SelectTrigger>
                       <SelectContent>
                         {availableReports.length === 0 ? (
@@ -2423,14 +2423,76 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       </SelectContent>
                     </Select>
                   )}
+                  {/* Clip selection */}
+                  {selectedReportId && selectedVideo.clips.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Select clips to export</p>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          onClick={() => {
+                            const exportable = selectedVideo.clips.filter(c => !alreadyExportedClipIds.has(c.id));
+                            const allSelected = exportable.every(c => selectedExportClipIds.has(c.id));
+                            if (allSelected) {
+                              setSelectedExportClipIds(new Set());
+                            } else {
+                              setSelectedExportClipIds(new Set(exportable.map(c => c.id)));
+                            }
+                          }}
+                        >
+                          {selectedVideo.clips.filter(c => !alreadyExportedClipIds.has(c.id)).every(c => selectedExportClipIds.has(c.id)) ? "Deselect all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto border rounded-md p-2 space-y-1">
+                        {selectedVideo.clips.map(clip => {
+                          const alreadyExported = alreadyExportedClipIds.has(clip.id);
+                          const selected = selectedExportClipIds.has(clip.id);
+                          return (
+                            <label
+                              key={clip.id}
+                              className={`flex items-center gap-2 text-xs py-1 px-1 rounded cursor-pointer hover:bg-muted/30 ${alreadyExported ? "opacity-50 cursor-not-allowed" : ""}`}
+                            >
+                              <button
+                                type="button"
+                                disabled={alreadyExported}
+                                onClick={() => {
+                                  if (alreadyExported) return;
+                                  setSelectedExportClipIds(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(clip.id)) next.delete(clip.id);
+                                    else next.add(clip.id);
+                                    return next;
+                                  });
+                                }}
+                                className="shrink-0"
+                              >
+                                {alreadyExported || selected ? (
+                                  <CheckSquare className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Square className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                              <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                              {alreadyExported && <span className="text-[10px] text-muted-foreground shrink-0">Already added</span>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button onClick={handleLinkToReport} disabled={!selectedReportId || exporting} variant="outline" className="flex-1">
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Link2 className="h-4 w-4 mr-2" />}
                       Link Clips
                     </Button>
-                    <Button onClick={handleExportToReport} disabled={!selectedReportId || exporting || selectedVideo.clips.length === 0} className="flex-1">
+                    <Button
+                      onClick={handleExportToReport}
+                      disabled={!selectedReportId || exporting || selectedExportClipIds.size === 0}
+                      className="flex-1"
+                    >
                       {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
-                      Export as Actions
+                      Export {selectedExportClipIds.size > 0 ? `${selectedExportClipIds.size} clip${selectedExportClipIds.size !== 1 ? 's' : ''}` : "as Actions"}
                     </Button>
                   </div>
                   {/* Per-clip export progress */}
@@ -2439,7 +2501,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       <p className="text-xs font-medium text-muted-foreground">
                         Exporting clip {exportClipProgress.current}/{exportClipProgress.total}...
                       </p>
-                      {selectedVideo.clips.map((clip: any) => {
+                      {selectedVideo.clips.filter(c => selectedExportClipIds.has(c.id)).map((clip: any) => {
                         const status = exportClipProgress.statuses[clip.id] || "pending";
                         return (
                           <div key={clip.id} className="flex items-center gap-2 text-xs">
