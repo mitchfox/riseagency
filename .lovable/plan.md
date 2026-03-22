@@ -1,56 +1,68 @@
 
 
-## Plan: Fix Video Export Issues & Add Clip Selection
+## Plan: Fix Video/Clip Caching to Eliminate Redundant Network Requests
 
-### Problems Identified
+### The Problem
 
-1. **Money burn on data calls**: `fetchVideos()` uses `select("*")` which pulls ALL data (annotations, clips JSON) for every video on every load. This is wasteful — the list view only needs metadata.
+Your platform is treating every video clip like a live stream — re-fetching from storage on every view, replay, remount, and tab switch. The cost driver is not the number of clips but the number of times they're requested.
 
-2. **Full video showing instead of clip**: When server-side trim fails, the fallback at line 147 of `backgroundExportService.ts` sets `clipUrl = \`\${job.videoUrl}#t=\${clip.start},\${clip.end}\`\``. The `#t=` fragment hint is unreliable — many players/browsers ignore it, so the full video plays. Additionally, client-side trim can also fail silently, and the catch block swallows the error.
+**Root causes identified:**
 
-3. **Specific exports failing (e.g. Bilbao leg 2)**: Likely caused by the server-side trim downloading the entire source video into memory (edge function RAM limit). Large or multi-part videos exceed the 200MB limit or timeout, and the client-side fallback also fails (CORS, timeout, or codec issues), causing every clip to error.
+1. **Low cache headers on uploads**: Most files are uploaded with `cacheControl: '3600'` (1 hour). Clips in `clientClipExtractor.ts` and `trim-video-clip` use `'31536000'` (1 year) — but all other uploads (analysis files, images, player data) use 1 hour, causing frequent re-fetches.
 
-4. **No clip selection**: Currently exports ALL clips — no UI to pick which ones.
+2. **Ghost video preloader creates duplicate requests**: `useVideoPreloader.ts` creates hidden `<video>` elements that fully buffer AND play each clip for 1.2 seconds. This doubles the network traffic — the actual visible video element also loads the same URL independently. The browser cache may or may not deduplicate these depending on timing.
 
-5. **Dedup only checks clip_id**: If a clip was exported then its details changed in video analysis, re-export is skipped because `clip_id` already exists. This is correct per user's request — skip if already on report regardless of changes.
+3. **Hidden prefetch video in ClippedActionsPlayer**: Line 147-155 renders a hidden `<video>` with `preload="auto"` for the next clip. This triggers a full download in parallel with the current clip, doubling bandwidth.
+
+4. **`key={currentClip.video_url}` forces remounting**: In `ClippedActionsPlayer.tsx` (line 134) and `ActionVideoPopup.tsx` (line 83), using the URL as the React key destroys and recreates the video element on every clip change, discarding any buffered data and forcing a fresh network fetch.
+
+5. **No CDN or browser-level caching layer**: Storage URLs are served directly. Without strong `Cache-Control` headers, browsers re-validate on every request (generating `/info` and `/public` calls).
+
+---
 
 ### Changes
 
-#### 1. Optimize data loading (reduce bandwidth/cost)
-**File: `src/components/staff/coaching/VideoAnalysis.tsx`**
-- Change `fetchVideos()` to use `select("id, title, video_url, player_id, match_date, opponent, auto_delete_at, created_at, match_minute_offset, second_half_offset, second_half_video_time, part_number, group_id, total_parts")` — exclude `annotations` and `clips` JSON blobs from the list query.
-- Load `annotations` and `clips` only when a specific video is selected (on click), with a separate `select("annotations, clips")` call.
-- This dramatically reduces the payload for the video list.
+#### 1. Set aggressive cache headers on all uploads
+**Files:** `src/components/staff/AnalysisManagement.tsx`, `src/components/staff/analysis/AnalysisPointsSection.tsx`, `src/components/staff/InlineVideoUpload.tsx`, `src/components/staff/PlayerManagement.tsx`, `src/components/staff/ActionVideoUpload.tsx`, `src/components/staff/EditHighlightDialog.tsx`, `src/components/staff/CreatePerformanceReportDialog.tsx`, `src/components/staff/marketing/ImageCreator.tsx`, `src/components/staff/analysis/VideoTrimmerDialog.tsx`
 
-#### 2. Fix "full video instead of clip" bug
-**File: `src/lib/backgroundExportService.ts`**
-- Remove the fallback that sets `clipUrl` to the full video URL with `#t=` fragment. If trimming fails completely, mark the clip as `error` instead of silently inserting a link to the full video.
-- Add a check: if the returned URL still contains the original video filename (not `clips/`), treat it as a failure.
+- Change all `cacheControl: '3600'` → `cacheControl: '31536000'` (1 year)
+- These are immutable assets (unique filenames with timestamps/random strings) — they never change at the same URL
 
-**File: `src/lib/clientClipExtractor.ts`**
-- Add a timeout to the client-side trim (e.g. 120s) so it doesn't hang indefinitely on large files.
-- Add better error logging so failures are visible.
+#### 2. Replace ghost video preloader with lightweight fetch-based warming
+**File:** `src/hooks/useVideoPreloader.ts`
 
-#### 3. Fix exports failing on specific videos
-**File: `src/lib/backgroundExportService.ts`**
-- Before attempting trim, check if a trimmed clip already exists in storage (`clips/{clipId}.mp4` or `.webm`). If it does, reuse the existing URL — skip re-trimming entirely.
-- This handles retries efficiently and avoids re-downloading large source videos.
+- Remove the hidden `<video>` element approach that creates, plays, and pauses ghost videos
+- Replace with simple `fetch()` requests using `{ cache: 'force-cache' }` — this warms the browser's HTTP cache without creating media elements or triggering duplicate range-request chains
+- This alone should cut preload traffic roughly in half
 
-#### 4. Add clip selection UI to export dialog
-**File: `src/components/staff/coaching/VideoAnalysis.tsx`**
-- Add a `selectedClipIds` state (Set) in the export dialog.
-- Show checkboxes next to each clip in the export dialog with select all/none toggle.
-- Pre-check all clips by default; clips already on the report are shown as disabled/checked with "Already added" label.
-- Only pass selected clips to `startExportJob()`.
+#### 3. Fix ClippedActionsPlayer to reuse video elements
+**File:** `src/components/ClippedActionsPlayer.tsx`
 
-#### 5. Skip clips already on report (pre-filter in UI)
-**File: `src/components/staff/coaching/VideoAnalysis.tsx`**
-- When a report is selected in the export dialog, fetch existing `clip_id` values from `performance_report_actions` for that report.
-- Show those clips as greyed out / already exported in the selection list.
-- Exclude them from the export job entirely (don't even send them to the background service).
+- Remove the hidden prefetch `<video>` element (lines 146-155)
+- Change `key={currentClip.video_url}` to a stable key and update `src` via ref instead of remounting — prevents destroying buffered data
+- Use the fetch-based preloader from the hook for the next clip
 
-### Summary of file changes
-- `src/components/staff/coaching/VideoAnalysis.tsx` — optimize query, add clip selection UI, pre-filter existing clips
-- `src/lib/backgroundExportService.ts` — remove dangerous `#t=` fallback, add storage existence check
-- `src/lib/clientClipExtractor.ts` — add timeout guard
+#### 4. Fix ActionVideoPopup similarly
+**File:** `src/components/ActionVideoPopup.tsx`
+
+- Remove `key={videoUrl}` from the video element — update src via ref when URL changes to avoid remount
+
+#### 5. Add storage-level cache headers via migration
+**Database migration (SQL)**
+
+- Update existing objects in `analysis-videos` and `analysis-files` buckets to have proper cache-control metadata. This ensures the storage layer returns `Cache-Control: public, max-age=31536000, immutable` on responses for clips.
+
+#### 6. Add CDN-friendly headers to deployment configs
+**Files:** `vercel.json`, `netlify.toml`, `public/_headers`
+
+- Add cache headers for storage proxy patterns if applicable (primarily documentation — the real fix is at the storage upload level)
+
+---
+
+### Impact Estimate
+
+- **Cache headers fix**: Eliminates all repeat-visit re-fetches (~60-70% of redundant traffic)
+- **Ghost preloader fix**: Eliminates duplicate video element downloads (~20% reduction)
+- **Remount fix**: Eliminates re-fetch on clip navigation within a session (~10% reduction)
+- Combined: a viewed clip goes from 10-30 requests down to 1-2 (initial load + one range request)
 
