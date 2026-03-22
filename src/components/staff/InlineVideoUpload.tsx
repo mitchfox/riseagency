@@ -123,7 +123,7 @@ export function InlineVideoUpload({
         .from('analysis-files')
         .upload(filePath, currentUpload.file, {
           contentType: currentUpload.file.type,
-          cacheControl: '3600',
+          cacheControl: '31536000',
           upsert: false
         });
 
@@ -144,7 +144,7 @@ export function InlineVideoUpload({
           .from('analysis-files')
           .upload(`highlights/logos/${logoFileName}`, currentUpload.logoFile, {
             contentType: currentUpload.logoFile.type,
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 

@@ -406,7 +406,7 @@ export const CreatePerformanceReportDialog = ({
       const fileName = `action-clips/${action.id}-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+        .upload(fileName, file, { cacheControl: '31536000', upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('analysis-files').getPublicUrl(fileName);
       
