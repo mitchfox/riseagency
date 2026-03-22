@@ -538,7 +538,7 @@ const SortablePointCard = ({
       const fileName = `point-videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('analysis-files')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+        .upload(fileName, file, { cacheControl: '31536000', upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('analysis-files').getPublicUrl(fileName);
       const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);

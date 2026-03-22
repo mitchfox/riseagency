@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
@@ -47,6 +47,22 @@ export const ClippedActionsPlayer = ({
     }
   }, [open]);
 
+  // Update video src via ref instead of remounting with key=
+  useEffect(() => {
+    if (videoRef.current && currentClip) {
+      videoRef.current.src = currentClip.video_url;
+      videoRef.current.load();
+    }
+  }, [currentClip?.video_url]);
+
+  // Prefetch next clip via fetch (cache-warming, no media element)
+  useEffect(() => {
+    const nextClip = sortedClips[currentIndex + 1];
+    if (nextClip?.video_url) {
+      fetch(nextClip.video_url, { mode: 'cors', cache: 'force-cache' }).catch(() => {});
+    }
+  }, [currentIndex, sortedClips]);
+
   const handleVideoEnded = () => {
     if (currentIndex < sortedClips.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -60,7 +76,7 @@ export const ClippedActionsPlayer = ({
   };
 
   const handleNext = () => {
-    if (currentIndex < clips.length - 1) setCurrentIndex(prev => prev + 1);
+    if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1);
   };
 
   const togglePlayPause = () => {
@@ -73,8 +89,6 @@ export const ClippedActionsPlayer = ({
       setIsPlaying(!isPlaying);
     }
   };
-
-  const nextClip = sortedClips[currentIndex + 1] ?? null;
 
   if (!currentClip) return null;
 
@@ -127,12 +141,10 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video */}
+        {/* Video — stable element, src updated via ref */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
-            key={currentClip.video_url}
-            src={currentClip.video_url}
             className="w-full h-full object-contain"
             preload="auto"
             crossOrigin="anonymous"
@@ -143,16 +155,6 @@ export const ClippedActionsPlayer = ({
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           />
-          {nextClip && (
-            <video
-              key={`prefetch-${nextClip.video_url}`}
-              src={nextClip.video_url}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              style={{ display: 'none' }}
-            />
-          )}
           {/* Description overlay */}
           <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
             <p>{currentClip.action_description}</p>

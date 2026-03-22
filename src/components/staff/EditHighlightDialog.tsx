@@ -64,7 +64,7 @@ export function EditHighlightDialog({
         const { error: logoError } = await supabase.storage
           .from('analysis-files')
           .upload(`highlights/logos/${logoFileName}`, logoFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 

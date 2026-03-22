@@ -1005,7 +1005,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: imageError } = await supabase.storage
           .from('analysis-files')
           .upload(`player-images/${imageFileName}`, imageFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1027,7 +1027,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: logoError } = await supabase.storage
           .from('analysis-files')
           .upload(`club-logos/${logoFileName}`, clubLogoFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1049,7 +1049,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: hoverError } = await supabase.storage
           .from('analysis-files')
           .upload(`player-images/${hoverFileName}`, hoverImageFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1115,7 +1115,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: imageError } = await supabase.storage
           .from('analysis-files')
           .upload(`player-images/${imageFileName}`, imageFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1137,7 +1137,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: logoError } = await supabase.storage
           .from('analysis-files')
           .upload(`club-logos/${logoFileName}`, clubLogoFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1159,7 +1159,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: hoverError } = await supabase.storage
           .from('analysis-files')
           .upload(`player-images/${hoverFileName}`, hoverImageFile, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1184,7 +1184,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: schemePlayerError } = await supabase.storage
           .from('analysis-files')
           .upload(`player-images/${schemePlayerFileName}`, schemePlayerImageFiles[i], {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
@@ -1202,7 +1202,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         const { error: schemeLogoError } = await supabase.storage
           .from('analysis-files')
           .upload(`club-logos/${schemeLogoFileName}`, schemeClubLogoFiles[i], {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: false
           });
 
