@@ -1445,6 +1445,7 @@ export const CreatePerformanceReportDialog = ({
             placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
+            show_descriptions: showDescriptions,
           } as any)
           .eq("id", analysisId);
 
