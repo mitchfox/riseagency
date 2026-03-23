@@ -823,7 +823,7 @@ const PerformanceReport = () => {
                         <th className="text-left py-2 px-2">#</th>
                         <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
                         <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
-                        <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>
+                        {(analysis?.show_descriptions !== false) && <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>}
                         <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
                         <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
                         <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
