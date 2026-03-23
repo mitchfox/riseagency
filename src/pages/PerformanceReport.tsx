@@ -70,6 +70,7 @@ interface AnalysisDetails {
   placeholder_sr?: number | null;
   estimated_ready_at?: string | null;
   translated_content?: any | null;
+  show_descriptions?: boolean;
 }
 
 const PerformanceReport = () => {
