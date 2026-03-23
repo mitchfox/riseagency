@@ -885,6 +885,7 @@ export const CreatePerformanceReportDialog = ({
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
+      setShowDescriptions((analysisData as any).show_descriptions !== false);
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
