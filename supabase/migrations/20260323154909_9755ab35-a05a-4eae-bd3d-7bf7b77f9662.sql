@@ -1,0 +1,1 @@
+ALTER TABLE public.player_analysis ADD COLUMN IF NOT EXISTS show_descriptions boolean NOT NULL DEFAULT true;
