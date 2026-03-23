@@ -175,6 +175,7 @@ const PerformanceReport = () => {
         placeholder_sr: (analysisResult.data as any).placeholder_sr,
         estimated_ready_at: (analysisResult.data as any).estimated_ready_at,
         translated_content: (analysisResult.data as any).translated_content,
+        show_descriptions: (analysisResult.data as any).show_descriptions !== false,
       });
 
       if (actionsResult.error) throw actionsResult.error;
