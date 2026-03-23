@@ -204,6 +204,7 @@ export const CreatePerformanceReportDialog = ({
   const [dropUploading, setDropUploading] = useState<number | null>(null);
   const [reportLanguage, setReportLanguage] = useState("en");
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
+  const [showDescriptions, setShowDescriptions] = useState(true);
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
