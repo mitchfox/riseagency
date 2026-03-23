@@ -204,6 +204,7 @@ export const CreatePerformanceReportDialog = ({
   const [dropUploading, setDropUploading] = useState<number | null>(null);
   const [reportLanguage, setReportLanguage] = useState("en");
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
+  const [showDescriptions, setShowDescriptions] = useState(true);
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
@@ -884,6 +885,7 @@ export const CreatePerformanceReportDialog = ({
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
+      setShowDescriptions((analysisData as any).show_descriptions !== false);
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
@@ -1443,6 +1445,7 @@ export const CreatePerformanceReportDialog = ({
             placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
+            show_descriptions: showDescriptions,
           } as any)
           .eq("id", analysisId);
 
@@ -1511,6 +1514,7 @@ export const CreatePerformanceReportDialog = ({
             placeholder_sr: visibilityStatus === "hidden" && placeholderSr ? parseFloat(placeholderSr) : null,
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
+            show_descriptions: showDescriptions,
           } as any)
           .select()
           .single();
@@ -2633,6 +2637,17 @@ export const CreatePerformanceReportDialog = ({
                 </Button>
               )}
             </div>
+
+            {/* Show descriptions toggle */}
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+              <input
+                type="checkbox"
+                checked={showDescriptions}
+                onChange={(e) => setShowDescriptions(e.target.checked)}
+                className="rounded border-border"
+              />
+              Show action descriptions on live report
+            </label>
             
             {/* Cancel button */}
             <Button variant="outline" onClick={handleClose} disabled={loading || deleting} className="w-full sm:w-auto">

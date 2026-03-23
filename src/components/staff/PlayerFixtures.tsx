@@ -466,9 +466,29 @@ export const PlayerFixtures = ({ playerId, playerName, onCreateAnalysis, onViewR
       
       // Auto-create draft performance report for this fixture
       try {
-        const opponent = manualFixture.home_team && manualFixture.away_team
-          ? `${manualFixture.home_team} vs ${manualFixture.away_team}`
-          : manualFixture.away_team || manualFixture.home_team || "Unknown";
+        // Determine opponent intelligently from fixture
+        let opponent = "";
+        const homeTeam = manualFixture.home_team || "";
+        const awayTeam = manualFixture.away_team || "";
+        const homeIsFor = homeTeam.toLowerCase() === "for" || homeTeam.toLowerCase().startsWith("for ");
+        const awayIsFor = awayTeam.toLowerCase() === "for" || awayTeam.toLowerCase().startsWith("for ");
+        
+        if (homeIsFor) {
+          opponent = awayTeam;
+        } else if (awayIsFor) {
+          opponent = homeTeam;
+        } else if (playerTeam && playerTeam.trim()) {
+          const normalised = playerTeam.toLowerCase().trim();
+          if (homeTeam.toLowerCase().trim() === normalised || homeTeam.toLowerCase().includes(normalised)) {
+            opponent = awayTeam;
+          } else if (awayTeam.toLowerCase().trim() === normalised || awayTeam.toLowerCase().includes(normalised)) {
+            opponent = homeTeam;
+          } else {
+            opponent = awayTeam; // Default to away team as opponent
+          }
+        } else {
+          opponent = awayTeam || homeTeam || "Unknown";
+        }
         const { error: reportErr } = await supabase
           .from("player_analysis")
           .insert({

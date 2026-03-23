@@ -70,6 +70,7 @@ interface AnalysisDetails {
   placeholder_sr?: number | null;
   estimated_ready_at?: string | null;
   translated_content?: any | null;
+  show_descriptions?: boolean;
 }
 
 const PerformanceReport = () => {
@@ -174,6 +175,7 @@ const PerformanceReport = () => {
         placeholder_sr: (analysisResult.data as any).placeholder_sr,
         estimated_ready_at: (analysisResult.data as any).estimated_ready_at,
         translated_content: (analysisResult.data as any).translated_content,
+        show_descriptions: (analysisResult.data as any).show_descriptions !== false,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -805,7 +807,7 @@ const PerformanceReport = () => {
                         )}
                       </div>
                       <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
-                      <div className="text-[10px] text-foreground/80 line-clamp-2">{tAction(action.action_number - 1, "description", action.action_description)}</div>
+                      {(analysis?.show_descriptions !== false) && <div className="text-[10px] text-foreground/80 line-clamp-2">{tAction(action.action_number - 1, "description", action.action_description)}</div>}
                       {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
                         <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">{tAction(action.action_number - 1, "notes", action.notes || "")}</div>
                       )}
@@ -821,7 +823,7 @@ const PerformanceReport = () => {
                         <th className="text-left py-2 px-2">#</th>
                         <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
                         <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
-                        <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>
+                        {(analysis?.show_descriptions !== false) && <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>}
                         <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
                         <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
                         <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
@@ -833,7 +835,7 @@ const PerformanceReport = () => {
                           <td className="py-2 px-2">{action.action_number}</td>
                           <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
                           <td className="py-2 px-2">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</td>
-                          <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>
+                          {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
                           <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
                           <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
                           <td className="py-2 px-2 text-center">

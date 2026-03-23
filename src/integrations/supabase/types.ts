@@ -2516,6 +2516,7 @@ export type Database = {
           player_id: string
           r90_score: number | null
           result: string | null
+          show_descriptions: boolean
           striker_stats: Json | null
           translated_content: Json | null
           updated_at: string
@@ -2543,6 +2544,7 @@ export type Database = {
           player_id: string
           r90_score?: number | null
           result?: string | null
+          show_descriptions?: boolean
           striker_stats?: Json | null
           translated_content?: Json | null
           updated_at?: string
@@ -2570,6 +2572,7 @@ export type Database = {
           player_id?: string
           r90_score?: number | null
           result?: string | null
+          show_descriptions?: boolean
           striker_stats?: Json | null
           translated_content?: Json | null
           updated_at?: string

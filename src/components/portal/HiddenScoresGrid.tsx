@@ -1,5 +1,6 @@
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useFormGradeConfigs } from "@/hooks/useFormGradeConfigs";
 
 interface HiddenScoresGridProps {
   placeholderRawScore: number | null | undefined;
@@ -10,10 +11,21 @@ interface HiddenScoresGridProps {
   reportLanguage: string;
 }
 
-const SCORE_EXPLANATIONS = {
-  r90: "R90 measures a player's actual impact on the match result through every action made on and off the ball, normalised to 90 minutes.",
-  per: "Player Efficiency Rating standardises performance across different match contexts and playing times.",
-  sr: "Statistical Rating based purely on the success rate within actions performed during the match.",
+const SCORE_EXPLANATIONS: Record<string, Record<string, string>> = {
+  en: {
+    r90: "R90 measures a player's actual impact on the match result through every action made on and off the ball, normalised to 90 minutes.",
+    per: "Player Efficiency Rating standardises performance across different match contexts and playing times.",
+    sr: "Statistical Rating based purely on the success rate within actions performed during the match.",
+  },
+  fr: {
+    r90: "Le R90 mesure l'impact réel d'un joueur sur le résultat du match à travers chaque action réalisée avec et sans le ballon, normalisé sur 90 minutes.",
+    per: "L'indice d'efficacité du joueur standardise la performance selon les différents contextes de match et les temps de jeu.",
+    sr: "Note statistique basée uniquement sur le taux de réussite des actions effectuées pendant le match.",
+  },
+};
+
+const getExplanation = (key: string, lang: string): string => {
+  return SCORE_EXPLANATIONS[lang]?.[key] || SCORE_EXPLANATIONS.en[key] || "";
 };
 
 export const HiddenScoresGrid = ({
@@ -24,19 +36,18 @@ export const HiddenScoresGrid = ({
   t,
   reportLanguage,
 }: HiddenScoresGridProps) => {
-  const hasR90 = placeholderRawScore != null && (placeholderMinutes ?? 0) > 0;
-  const r90Value = hasR90 ? ((placeholderRawScore! / placeholderMinutes!) * 90).toFixed(2) : null;
+  const { getGradeForScore } = useFormGradeConfigs();
 
+  const hasR90 = placeholderRawScore != null && (placeholderMinutes ?? 0) > 0;
+  const r90Value = hasR90 ? ((placeholderRawScore! / placeholderMinutes!) * 90) : null;
+
+  // Only show R90, PER and SR - no raw score or mins
   const scores = [
-    ...(hasR90
-      ? [
-          { label: t(reportLanguage, "raw_score"), value: placeholderRawScore!.toFixed(3), highlight: false },
-          { label: "R90", value: r90Value!, highlight: true, explanation: SCORE_EXPLANATIONS.r90 },
-          { label: t(reportLanguage, "mins_short"), value: String(placeholderMinutes), highlight: false },
-        ]
+    ...(hasR90 && r90Value != null
+      ? [{ label: "R90", value: r90Value.toFixed(2), numericValue: r90Value, metricKey: "r90", explanation: getExplanation("r90", reportLanguage) }]
       : []),
-    ...(placeholderPer != null ? [{ label: "PER", value: placeholderPer.toFixed(2), highlight: false, explanation: SCORE_EXPLANATIONS.per }] : []),
-    ...(placeholderSr != null ? [{ label: "SR", value: placeholderSr.toFixed(1), highlight: false, explanation: SCORE_EXPLANATIONS.sr }] : []),
+    ...(placeholderPer != null ? [{ label: "PER", value: placeholderPer.toFixed(2), numericValue: placeholderPer, metricKey: "per", explanation: getExplanation("per", reportLanguage) }] : []),
+    ...(placeholderSr != null ? [{ label: "SR", value: placeholderSr.toFixed(1), numericValue: placeholderSr, metricKey: "sr", explanation: getExplanation("sr", reportLanguage) }] : []),
   ];
 
   if (scores.length === 0) {
@@ -45,32 +56,44 @@ export const HiddenScoresGrid = ({
 
   return (
     <TooltipProvider>
-      <div className={`grid gap-4 max-w-lg mx-auto p-4 bg-accent/20 rounded-lg`} style={{ gridTemplateColumns: `repeat(${scores.length}, minmax(0, 1fr))` }}>
-        {scores.map((score) => (
-          <div
-            key={score.label}
-            className={`text-center p-2 ${score.highlight ? "bg-primary text-primary-foreground rounded-lg md:p-4" : ""}`}
-          >
-            <p className={`text-[10px] md:text-sm ${score.highlight ? "opacity-90" : "text-muted-foreground"} mb-0.5 md:mb-1`}>
-              {score.label}
-            </p>
-            <p className={`${score.highlight ? "text-lg md:text-3xl" : "text-base md:text-2xl"} font-bold`}>
-              {score.value}
-            </p>
-            {score.explanation && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className={`mt-1 inline-flex ${score.highlight ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[250px] text-xs">
-                  {score.explanation}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        ))}
+      <div className={`grid gap-6 max-w-md mx-auto p-6 bg-accent/20 rounded-lg`} style={{ gridTemplateColumns: `repeat(${scores.length}, minmax(0, 1fr))` }}>
+        {scores.map((score) => {
+          const gradeInfo = getGradeForScore(score.metricKey, score.numericValue);
+          return (
+            <div
+              key={score.label}
+              className="text-center p-3 flex flex-col items-center"
+            >
+              <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
+                {score.label}
+              </p>
+              <p className="text-xl md:text-3xl font-bold">
+                {score.value}
+              </p>
+              {/* Grade indicator oval */}
+              {gradeInfo.grade !== '-' && (
+                <div
+                  className="mt-2 px-3 py-0.5 rounded-full text-[10px] md:text-xs font-semibold text-white"
+                  style={{ backgroundColor: gradeInfo.color }}
+                >
+                  {gradeInfo.grade}
+                </div>
+              )}
+              {score.explanation && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="mt-1.5 inline-flex text-muted-foreground hover:text-foreground">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[250px] text-xs">
+                    {score.explanation}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          );
+        })}
       </div>
     </TooltipProvider>
   );
