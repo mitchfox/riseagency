@@ -2637,6 +2637,17 @@ export const CreatePerformanceReportDialog = ({
                 </Button>
               )}
             </div>
+
+            {/* Show descriptions toggle */}
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+              <input
+                type="checkbox"
+                checked={showDescriptions}
+                onChange={(e) => setShowDescriptions(e.target.checked)}
+                className="rounded border-border"
+              />
+              Show action descriptions on live report
+            </label>
             
             {/* Cancel button */}
             <Button variant="outline" onClick={handleClose} disabled={loading || deleting} className="w-full sm:w-auto">
