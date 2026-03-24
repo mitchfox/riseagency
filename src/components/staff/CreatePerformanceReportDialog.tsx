@@ -1455,18 +1455,22 @@ export const CreatePerformanceReportDialog = ({
 
         if (analysisError) throw analysisError;
 
-        // Fetch existing actions to preserve video_url before deleting
+        // Fetch existing actions to preserve video_url and clip timing before deleting
         const { data: existingActions } = await supabase
           .from("performance_report_actions")
-          .select("action_number, video_url")
+          .select("action_number, video_url, clip_start, clip_end")
           .eq("analysis_id", analysisId);
         
-        // Create a map of action_number to video_url
-        const existingVideoUrls = new Map<number, string | null>();
+        // Create a map of action_number to video data
+        const existingVideoData = new Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }>();
         if (existingActions) {
           existingActions.forEach(a => {
             if (a.video_url) {
-              existingVideoUrls.set(a.action_number, a.video_url);
+              existingVideoData.set(a.action_number, {
+                video_url: a.video_url,
+                clip_start: (a as any).clip_start ?? null,
+                clip_end: (a as any).clip_end ?? null,
+              });
             }
           });
         }
