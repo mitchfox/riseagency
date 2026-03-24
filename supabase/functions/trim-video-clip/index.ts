@@ -75,9 +75,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { error: claimsErr } = await anonClient.auth.getClaims(token);
-    if (claimsErr) return jsonResponse({ error: "Unauthorised" }, 401);
+    const { data: { user }, error: userErr } = await anonClient.auth.getUser();
+    if (userErr || !user) return jsonResponse({ error: "Unauthorised" }, 401);
 
     // ── Parse body ──
     const { sourceUrl, start, end, clipId } = await req.json();
