@@ -44,6 +44,8 @@ interface PerformanceAction {
   zone?: number | null;
   is_successful?: boolean;
   video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
   recorded_stat?: RecordedStat | RecordedStat[] | null;
 }
 
