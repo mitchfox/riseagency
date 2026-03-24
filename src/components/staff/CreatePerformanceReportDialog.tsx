@@ -1141,7 +1141,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch performance actions
       const { data: actionsData, error: actionsError } = await supabase
         .from("performance_report_actions")
-        .select("*")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
