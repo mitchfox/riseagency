@@ -364,6 +364,16 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setDialogOpen(false);
       setEditingItem(null);
       setFormData(isYouth ? emptyYouthForm : emptyProForm);
+      // After adding: clear filters, expand "Not Messaged", refetch
+      if (!editingItem) {
+        setSearchQuery('');
+        setAgeFilter('all');
+        setNationFilter('all');
+        setPositionFilter([]);
+        setDobFrom('');
+        setDobTo('');
+        setExpandedSections(prev => ({ ...prev, notMessaged: true }));
+      }
       fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
