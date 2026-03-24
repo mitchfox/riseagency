@@ -870,10 +870,12 @@ const PerformanceReport = () => {
       {selectedVideoUrl && (
         <ActionVideoPopup
           open={!!selectedVideoUrl}
-          onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); } }}
+          onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); setSelectedClipStart(null); setSelectedClipEnd(null); } }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
           language={reportLanguage}
+          clipStart={selectedClipStart}
+          clipEnd={selectedClipEnd}
         />
       )}
 
