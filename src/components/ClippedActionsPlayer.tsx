@@ -147,6 +147,7 @@ export const ClippedActionsPlayer = ({
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
+            src={currentClip?.video_url || ''}
             className="w-full h-full object-contain"
             preload="auto"
             crossOrigin="anonymous"
