@@ -45,6 +45,8 @@ interface PerformanceAction {
   action_description: string;
   notes: string | null;
   video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
   zone?: number | null;
   zone_details?: any[] | null;
 }
@@ -104,6 +106,8 @@ const PerformanceReport = () => {
   // Video/player states
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [selectedClipStart, setSelectedClipStart] = useState<number | null>(null);
+  const [selectedClipEnd, setSelectedClipEnd] = useState<number | null>(null);
   const [showR90Flow, setShowR90Flow] = useState(false);
   const [showR90Info, setShowR90Info] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -117,7 +121,7 @@ const PerformanceReport = () => {
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
   const [showZonePlayer, setShowZonePlayer] = useState(false);
   const [zonePlayerTitle, setZonePlayerTitle] = useState("");
-  const [zonePlayerClips, setZonePlayerClips] = useState<Array<{ id: string; action_number: number; action_type: string; action_description: string; video_url: string; minute: number; notes?: string | null }>>([]);
+  const [zonePlayerClips, setZonePlayerClips] = useState<Array<{ id: string; action_number: number; action_type: string; action_description: string; video_url: string; minute: number; notes?: string | null; clip_start?: number | null; clip_end?: number | null }>>([]);
   const [showActionFilters, setShowActionFilters] = useState(false);
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
@@ -431,6 +435,8 @@ const PerformanceReport = () => {
           video_url: translated.video_url!,
           minute: translated.minute,
           notes: translated.notes,
+          clip_start: (action as any).clip_start,
+          clip_end: (action as any).clip_end,
         };
       });
 
@@ -801,7 +807,7 @@ const PerformanceReport = () => {
                           <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(3)}</span>
                         </div>
                         {action.video_url && (
-                          <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); }} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
+                          <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); setSelectedClipStart(action.clip_start ?? null); setSelectedClipEnd(action.clip_end ?? null); }} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
                             <Video className="h-3.5 w-3.5" />
                           </button>
                         )}
@@ -840,7 +846,7 @@ const PerformanceReport = () => {
                           <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
                           <td className="py-2 px-2 text-center">
                             {action.video_url ? (
-                              <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); }} className="text-risegold hover:text-risegold/80 p-1">
+                              <button onClick={() => { const translated = getTranslatedActionData(action); setSelectedVideoUrl(action.video_url!); setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`); setSelectedClipStart(action.clip_start ?? null); setSelectedClipEnd(action.clip_end ?? null); }} className="text-risegold hover:text-risegold/80 p-1">
                                 <Video className="h-4 w-4" />
                               </button>
                             ) : <span className="text-muted-foreground">-</span>}
@@ -864,10 +870,12 @@ const PerformanceReport = () => {
       {selectedVideoUrl && (
         <ActionVideoPopup
           open={!!selectedVideoUrl}
-          onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); } }}
+          onOpenChange={(open) => { if (!open) { setSelectedVideoUrl(null); setSelectedVideoTitle(""); setSelectedClipStart(null); setSelectedClipEnd(null); } }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
           language={reportLanguage}
+          clipStart={selectedClipStart}
+          clipEnd={selectedClipEnd}
         />
       )}
 
@@ -877,7 +885,7 @@ const PerformanceReport = () => {
         onOpenChange={setShowClippedActions}
         clips={actions.filter(a => a.video_url).map((action) => {
           const translated = getTranslatedActionData(action);
-          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, video_url: action.video_url!, minute: action.minute, notes: translated.notes };
+          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
       />
@@ -889,7 +897,7 @@ const PerformanceReport = () => {
         mode={rankedMode}
         clips={actions.filter(a => a.video_url).map((action) => {
           const translated = getTranslatedActionData(action);
-          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes };
+          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
       />
@@ -901,7 +909,7 @@ const PerformanceReport = () => {
         mode="chronological"
         clips={filteredActions.filter(a => a.video_url).map((action) => {
           const translated = getTranslatedActionData(action);
-          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes };
+          return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
       />

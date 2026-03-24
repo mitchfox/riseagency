@@ -3,9 +3,12 @@
  *
  * Runs clip-to-report exports outside the component tree so they survive
  * section navigation. Components subscribe to progress updates via callbacks.
+ *
+ * Instead of trimming clips into separate files, we store the source video URL
+ * along with clip_start/clip_end times. The player components seek to the right
+ * position, so the full video only needs to load once.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { trimAndUploadClip } from "@/lib/clientClipExtractor";
 import { toast } from "sonner";
 
 export interface ExportJob {
@@ -46,7 +49,6 @@ let running = false;
 
 export function subscribeToExportProgress(fn: ProgressListener): () => void {
   listeners.add(fn);
-  // Immediately send current state if a job is running
   if (activeJob) fn(activeJob);
   return () => listeners.delete(fn);
 }
@@ -128,6 +130,9 @@ export async function startExportJob(job: ExportJob): Promise<void> {
     let success = 0;
     let skipped = 0;
 
+    // Clean source URL (strip any existing #t= fragments)
+    const sourceVideoUrl = job.videoUrl.split("#")[0];
+
     for (let i = 0; i < job.clips.length; i++) {
       const clip = job.clips[i];
       progress.current = i + 1;
@@ -140,45 +145,25 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       }
 
       try {
-        let clipUrl: string;
-
-        // Check if a trimmed clip already exists in storage (avoids re-trimming on retry)
-        let alreadyExists = false;
-        for (const ext of ['webm', 'mp4']) {
-          const existingPath = `clips/${clip.id}.${ext}`;
-          const { data: existCheck } = supabase.storage.from("analysis-videos").getPublicUrl(existingPath);
-          try {
-            const head = await fetch(existCheck.publicUrl, { method: "HEAD" });
-            if (head.ok) {
-              clipUrl = existCheck.publicUrl;
-              alreadyExists = true;
-              break;
-            }
-          } catch {}
-        }
-
-        if (!alreadyExists) {
-          // Attempt trim — if it fails completely, mark as error (never fall back to full video URL)
-          clipUrl = await trimAndUploadClip(job.videoUrl, clip.id, clip.start, clip.end);
-        }
-
         const annotations = job.getClipAnnotations?.(clip.id);
 
         const insertRow: any = {
-            analysis_id: job.reportId,
-            action_number: nextNumber,
-            minute: clip.minute || getMatchMinute(clip.start, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime),
-            action_type: clip.action_type || "",
-            action_description: clip.action_description || "",
-            notes: clip.notes || null,
-            video_url: clipUrl,
-            video_analysis_id: job.videoId,
-            clip_id: clip.id,
-            is_successful: true,
-            ...(annotations ? { clip_annotations: annotations } : {}),
-            ...(clip.zone_details?.length ? { zone_details: clip.zone_details, zone: clip.zone_details[0].zone } : {}),
-          };
-          if (clip.action_score != null) insertRow.action_score = clip.action_score;
+          analysis_id: job.reportId,
+          action_number: nextNumber,
+          minute: clip.minute || getMatchMinute(clip.start, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime),
+          action_type: clip.action_type || "",
+          action_description: clip.action_description || "",
+          notes: clip.notes || null,
+          video_url: sourceVideoUrl,
+          clip_start: clip.start,
+          clip_end: clip.end,
+          video_analysis_id: job.videoId,
+          clip_id: clip.id,
+          is_successful: true,
+          ...(annotations ? { clip_annotations: annotations } : {}),
+          ...(clip.zone_details?.length ? { zone_details: clip.zone_details, zone: clip.zone_details[0].zone } : {}),
+        };
+        if (clip.action_score != null) insertRow.action_score = clip.action_score;
 
         const { error } = await supabase
           .from("performance_report_actions")
@@ -206,7 +191,6 @@ export async function startExportJob(job: ExportJob): Promise<void> {
     progress.finished = true;
     notify({ ...progress, statuses: { ...statuses }, finished: true });
     running = false;
-    // Clear active job after a short delay so UI can show final state
     setTimeout(() => {
       if (activeJob?.finished) activeJob = null;
     }, 5000);

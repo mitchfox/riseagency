@@ -44,6 +44,8 @@ interface PerformanceAction {
   zone?: number | null;
   is_successful?: boolean;
   video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
   recorded_stat?: RecordedStat | RecordedStat[] | null;
 }
 
@@ -80,6 +82,8 @@ export const PerformanceActionsDialog = ({
   const [actionTypeSearch, setActionTypeSearch] = useState("");
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [selectedClipStart, setSelectedClipStart] = useState<number | null>(null);
+  const [selectedClipEnd, setSelectedClipEnd] = useState<number | null>(null);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
@@ -940,6 +944,8 @@ export const PerformanceActionsDialog = ({
                             onClick={() => {
                               setSelectedVideoUrl(action.video_url!);
                               setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                              setSelectedClipStart(action.clip_start ?? null);
+                              setSelectedClipEnd(action.clip_end ?? null);
                             }}
                             className="bg-amber-500/10 hover:bg-amber-500/20"
                             title="Play Clip"
@@ -1045,10 +1051,14 @@ export const PerformanceActionsDialog = ({
             if (!open) {
               setSelectedVideoUrl(null);
               setSelectedVideoTitle("");
+              setSelectedClipStart(null);
+              setSelectedClipEnd(null);
             }
           }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
+          clipStart={selectedClipStart}
+          clipEnd={selectedClipEnd}
         />
       )}
     </Dialog>
