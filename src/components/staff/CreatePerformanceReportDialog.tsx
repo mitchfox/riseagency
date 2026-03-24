@@ -1532,28 +1532,32 @@ export const CreatePerformanceReportDialog = ({
       }
 
       // Insert performance actions
-      // Retrieve preserved video URLs if in edit mode
-      const preservedVideoUrls = (window as any).__preservedVideoUrls as Map<number, string | null> | undefined;
+      // Retrieve preserved video data if in edit mode
+      const preservedVideoData = (window as any).__preservedVideoData as Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }> | undefined;
       
       const actionsToInsert = actions
         .filter(a => a.action_number && (a.minute || a.action_score || a.action_type || a.action_description || a.notes || a.video_url))
-        .map(a => ({
-          analysis_id: analysisIdToUse,
-          action_number: a.action_number,
-          minute: a.minute ? parseFloat(a.minute) : null,
-          action_score: a.action_score ? parseFloat(a.action_score) : null,
-          action_type: a.action_type ? canonicalActionType(a.action_type) : null,
-          action_description: a.action_description?.trim() || null,
-          notes: a.notes?.trim() || null,
-          // Preserve video_url: use the one from the action state, or fall back to preserved from DB
-          video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
-          recorded_stat: (a.recorded_stat || null) as any,
-          zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
-          zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
-        }));
+        .map(a => {
+          const preserved = preservedVideoData?.get(a.action_number);
+          return {
+            analysis_id: analysisIdToUse,
+            action_number: a.action_number,
+            minute: a.minute ? parseFloat(a.minute) : null,
+            action_score: a.action_score ? parseFloat(a.action_score) : null,
+            action_type: a.action_type ? canonicalActionType(a.action_type) : null,
+            action_description: a.action_description?.trim() || null,
+            notes: a.notes?.trim() || null,
+            video_url: a.video_url || preserved?.video_url || null,
+            clip_start: a.clip_start ?? preserved?.clip_start ?? null,
+            clip_end: a.clip_end ?? preserved?.clip_end ?? null,
+            recorded_stat: (a.recorded_stat || null) as any,
+            zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
+            zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
+          };
+        });
       
       // Clean up the temporary storage
-      delete (window as any).__preservedVideoUrls;
+      delete (window as any).__preservedVideoData;
 
       if (actionsToInsert.length > 0) {
         const { data: insertedActions, error: actionsError } = await supabase
