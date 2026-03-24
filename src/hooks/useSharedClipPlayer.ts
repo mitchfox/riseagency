@@ -70,6 +70,12 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     const vid = videoRef.current;
     if (!vid) return;
 
+    // Guard against invalid clip windows
+    if (!clip.videoUrl || clip.clipEnd <= clip.clipStart || clip.clipStart < 0) {
+      console.warn('Invalid clip window:', clip);
+      return;
+    }
+
     currentClipRef.current = clip;
     setCurrentClip(clip);
     setProgress(0);
