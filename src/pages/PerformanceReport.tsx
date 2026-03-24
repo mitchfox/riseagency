@@ -130,9 +130,6 @@ const PerformanceReport = () => {
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
 
-  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
-  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
-
   const openClip = (action: PerformanceAction) => {
     if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
@@ -153,15 +150,6 @@ const PerformanceReport = () => {
     }
 
     setter(true);
-  };
-
-  const openFilteredClipCollection = () => {
-    if (filteredReportClips.length === 0) {
-      toast.error('No valid clips available. Full match playback has been blocked.');
-      return;
-    }
-
-    setShowFilteredPlayer(true);
   };
 
   const analysisId = slug ? extractAnalysisIdFromSlug(slug) : null;
@@ -456,6 +444,9 @@ const PerformanceReport = () => {
     if (filterHasNotes) { if (!a.notes) return false; }
     return true;
   });
+
+  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
