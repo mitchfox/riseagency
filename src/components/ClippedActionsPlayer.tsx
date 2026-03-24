@@ -47,11 +47,13 @@ export const ClippedActionsPlayer = ({
     }
   }, [open]);
 
-  // Update video src via ref instead of remounting with key=
+  // Update video src when clip changes
   useEffect(() => {
     if (videoRef.current && currentClip) {
-      videoRef.current.src = currentClip.video_url;
-      videoRef.current.load();
+      if (videoRef.current.src !== currentClip.video_url) {
+        videoRef.current.src = currentClip.video_url;
+        videoRef.current.load();
+      }
     }
   }, [currentClip?.video_url]);
 

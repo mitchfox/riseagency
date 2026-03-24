@@ -83,6 +83,8 @@ export const ActionVideoPopup = ({
           )}
           <video
             ref={videoRef}
+            key={videoUrl}
+            src={videoUrl}
             className="w-full max-h-[80vh] object-contain"
             preload="auto"
             crossOrigin="anonymous"
