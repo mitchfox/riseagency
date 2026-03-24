@@ -4,6 +4,7 @@ import { X, Play, Pause } from 'lucide-react';
 import { useRef, useEffect, useCallback } from 'react';
 import { t } from '@/lib/portalTranslations';
 import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
+import { toast } from 'sonner';
 
 interface ActionVideoPopupProps {
   open: boolean;
@@ -26,33 +27,29 @@ export const ActionVideoPopup = ({
 }: ActionVideoPopupProps) => {
   const player = useSharedClipPlayer();
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const hasTimeRange = clipStart != null && clipEnd != null;
+  const hasValidTimeRange = clipStart != null && clipEnd != null && clipEnd > clipStart;
+
+  useEffect(() => {
+    if (!open) return;
+    if (hasValidTimeRange || !videoUrl) return;
+
+    toast.error('Clip unavailable. Full match playback has been blocked.');
+    onOpenChange(false);
+    player.stop();
+  }, [open, hasValidTimeRange, videoUrl, onOpenChange, player]);
 
   // When dialog opens or clip changes, play the clip
   useEffect(() => {
     if (!open || !videoUrl) return;
 
-    if (hasTimeRange) {
-      player.playClip({ videoUrl, clipStart: clipStart!, clipEnd: clipEnd! });
-    } else {
-      // No clip range — play full video with native controls
-      const vid = player.videoRef.current;
-      if (vid) {
-        vid.pause();
-        vid.src = videoUrl;
-        vid.load();
-        vid.currentTime = 0;
-        const onReady = () => {
-          vid.play().catch(() => {});
-        };
-        vid.addEventListener('loadedmetadata', onReady, { once: true });
-      }
-    }
+    if (!hasValidTimeRange) return;
+
+    player.playClip({ videoUrl, clipStart: clipStart!, clipEnd: clipEnd! });
 
     return () => {
       if (!open) player.stop();
     };
-  }, [open, videoUrl, clipStart, clipEnd, hasTimeRange]);
+  }, [open, videoUrl, clipStart, clipEnd, hasValidTimeRange, player]);
 
   // Stop when dialog closes
   useEffect(() => {
@@ -60,11 +57,11 @@ export const ActionVideoPopup = ({
   }, [open]);
 
   const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || !hasTimeRange) return;
+    if (!progressBarRef.current || !hasValidTimeRange) return;
     const rect = progressBarRef.current.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
     player.seekToRatio(ratio);
-  }, [hasTimeRange, player]);
+  }, [hasValidTimeRange, player]);
 
   const handleFullscreen = () => {
     const vid = player.videoRef.current;
@@ -103,11 +100,11 @@ export const ActionVideoPopup = ({
             muted
             playsInline
             onClick={player.togglePlayPause}
-            controls={!hasTimeRange}
-            loop={!hasTimeRange}
+            controls={false}
+            loop={false}
           />
           {/* Custom controls for clipped videos */}
-          {hasTimeRange && (
+          {hasValidTimeRange && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2">
               <div
                 ref={progressBarRef}
