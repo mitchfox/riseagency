@@ -2125,6 +2125,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                     return null;
                   })()}
                   <Input
+                    key={`${clip.id}-${clip.minute}`}
                     defaultValue={clip.minute || fmtClipMinute(clip.start, selectedVideo.match_minute_offset)}
                     onBlur={e => {
                       if (e.target.value !== (clip.minute || '')) {
