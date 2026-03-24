@@ -5,6 +5,7 @@ import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
+import { toast } from 'sonner';
 
 interface ClipAction {
   id: string;
@@ -41,43 +42,43 @@ export const ClippedActionsPlayer = ({
 
   const player = useSharedClipPlayer();
 
-  const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
+  const sortedClips = useMemo(
+    () => sortReportActionsChronologically(clips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start),
+    [clips]
+  );
   const currentClip = sortedClips[currentIndex];
-  const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null;
+  const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
 
   // Reset on open
   useEffect(() => {
     if (open) {
+      if (sortedClips.length === 0) {
+        toast.error('No valid clips available. Full match playback has been blocked.');
+        onOpenChange(false);
+        return;
+      }
       setCurrentIndex(0);
     } else {
       player.stop();
     }
-  }, [open]);
+  }, [open, onOpenChange, player, sortedClips.length]);
 
   // Play current clip when index changes
   useEffect(() => {
     if (!open || !currentClip) return;
 
-    if (hasTimeRange) {
-      player.playClip({
-        videoUrl: currentClip.video_url,
-        clipStart: currentClip.clip_start!,
-        clipEnd: currentClip.clip_end!,
-      });
-    } else {
-      // No clip range — use native controls
-      const vid = player.videoRef.current;
-      if (vid) {
-        vid.pause();
-        vid.src = currentClip.video_url;
-        vid.load();
-        vid.currentTime = 0;
-        vid.addEventListener('loadedmetadata', () => {
-          vid.play().catch(() => {});
-        }, { once: true });
-      }
+    if (!hasTimeRange) {
+      toast.error('This clip has no valid timing window, so playback was blocked.');
+      onOpenChange(false);
+      return;
     }
-  }, [open, currentIndex]);
+
+    player.playClip({
+      videoUrl: currentClip.video_url,
+      clipStart: currentClip.clip_start!,
+      clipEnd: currentClip.clip_end!,
+    });
+  }, [open, currentClip, hasTimeRange, onOpenChange, player]);
 
   // Auto-advance when clip finishes (check progress reaching 1)
   useEffect(() => {
@@ -149,7 +150,7 @@ export const ClippedActionsPlayer = ({
             muted
             playsInline
             onClick={player.togglePlayPause}
-            controls={!hasTimeRange}
+            controls={false}
           />
           {/* Description overlay */}
           <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">

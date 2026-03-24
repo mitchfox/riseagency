@@ -5,6 +5,7 @@ import { X, SkipForward, SkipBack, Play, Pause } from "lucide-react";
 import { t } from "@/lib/portalTranslations";
 import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
+import { toast } from "sonner";
 
 interface Clip {
   id: string;
@@ -38,44 +39,44 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
   const filteredClips = mode === "noted" ? clips.filter((clip) => clip.notes) : clips;
   const sortedClips = mode === "ranked"
-    ? [...filteredClips].sort((a, b) => b.action_score - a.action_score)
-    : sortReportActionsChronologically(filteredClips);
+    ? [...filteredClips]
+        .filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start)
+        .sort((a, b) => b.action_score - a.action_score)
+    : sortReportActionsChronologically(filteredClips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start);
 
   const current = sortedClips[currentIndex];
-  const hasTimeRange = current?.clip_start != null && current?.clip_end != null;
+  const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
 
   // Reset on open/mode change
   useEffect(() => {
     if (open) {
+      if (sortedClips.length === 0) {
+        toast.error("No valid clips available. Full match playback has been blocked.");
+        onOpenChange(false);
+        return;
+      }
       setCurrentIndex(0);
     } else {
       player.stop();
     }
-  }, [open, mode]);
+  }, [open, mode, onOpenChange, player, sortedClips.length]);
 
   // Play current clip when index changes
   useEffect(() => {
     if (!open || !current) return;
 
-    if (hasTimeRange) {
-      player.playClip({
-        videoUrl: current.video_url,
-        clipStart: current.clip_start!,
-        clipEnd: current.clip_end!,
-      });
-    } else {
-      const vid = player.videoRef.current;
-      if (vid) {
-        vid.pause();
-        vid.src = current.video_url;
-        vid.load();
-        vid.currentTime = 0;
-        vid.addEventListener('loadedmetadata', () => {
-          vid.play().catch(() => {});
-        }, { once: true });
-      }
+    if (!hasTimeRange) {
+      toast.error("This clip has no valid timing window, so playback was blocked.");
+      onOpenChange(false);
+      return;
     }
-  }, [open, currentIndex]);
+
+    player.playClip({
+      videoUrl: current.video_url,
+      clipStart: current.clip_start!,
+      clipEnd: current.clip_end!,
+    });
+  }, [open, current, hasTimeRange, onOpenChange, player]);
 
   // Auto-advance when clip finishes
   useEffect(() => {
@@ -157,7 +158,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             onClick={player.togglePlayPause}
             onPlay={() => {}}
             onPause={() => {}}
-            controls={!hasTimeRange}
+            controls={false}
           />
         </div>
 
