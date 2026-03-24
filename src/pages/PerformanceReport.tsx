@@ -150,12 +150,12 @@ const PerformanceReport = () => {
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select(`*, players!inner (name)`)
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, show_descriptions, players!inner (name)")
           .eq("id", analysisId)
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("*")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details")
           .eq("analysis_id", analysisId)
           .order("action_number", { ascending: true })
       ]);

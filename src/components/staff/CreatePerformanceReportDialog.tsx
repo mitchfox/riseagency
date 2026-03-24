@@ -1484,7 +1484,7 @@ export const CreatePerformanceReportDialog = ({
         if (deleteError) throw deleteError;
         
         // Store the map for use when inserting
-        (window as any).__preservedVideoUrls = existingVideoUrls;
+        (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
         const { data: existingAnalysis } = await supabase
