@@ -1,8 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Maximize, Play, Pause } from 'lucide-react';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { X, Play, Pause } from 'lucide-react';
+import { useRef, useEffect, useCallback } from 'react';
 import { t } from '@/lib/portalTranslations';
+import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
 
 interface ActionVideoPopupProps {
   open: boolean;
@@ -23,129 +24,63 @@ export const ActionVideoPopup = ({
   clipStart,
   clipEnd,
 }: ActionVideoPopupProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const loadedSourceRef = useRef<string | null>(null);
-  const hasTimeRange = clipStart != null && clipEnd != null;
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [progress, setProgress] = useState(0);
+  const player = useSharedClipPlayer();
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const hasTimeRange = clipStart != null && clipEnd != null;
 
-  // Load source once and seek before playback starts
+  // When dialog opens or clip changes, play the clip
   useEffect(() => {
-    if (!open || !videoRef.current || !videoUrl) return;
+    if (!open || !videoUrl) return;
 
-    const vid = videoRef.current;
-    const targetStart = hasTimeRange ? clipStart : 0;
-
-    const applyPlaybackWindow = () => {
-      if (hasTimeRange) {
-        vid.currentTime = targetStart;
-      } else if (vid.currentTime !== 0) {
+    if (hasTimeRange) {
+      player.playClip({ videoUrl, clipStart: clipStart!, clipEnd: clipEnd! });
+    } else {
+      // No clip range — play full video with native controls
+      const vid = player.videoRef.current;
+      if (vid) {
+        vid.pause();
+        vid.src = videoUrl;
+        vid.load();
         vid.currentTime = 0;
+        const onReady = () => {
+          vid.play().catch(() => {});
+        };
+        vid.addEventListener('loadedmetadata', onReady, { once: true });
       }
-
-      if (isPlaying) {
-        vid.play().catch(() => {});
-      }
-    };
-
-    const handleLoadedMetadata = () => {
-      applyPlaybackWindow();
-    };
-
-    if (loadedSourceRef.current !== videoUrl) {
-      loadedSourceRef.current = videoUrl;
-      vid.pause();
-      vid.src = videoUrl;
-      vid.load();
     }
 
-    if (vid.readyState >= 1) {
-      applyPlaybackWindow();
-      return;
-    }
+    return () => {
+      if (!open) player.stop();
+    };
+  }, [open, videoUrl, clipStart, clipEnd, hasTimeRange]);
 
-    vid.addEventListener('loadedmetadata', handleLoadedMetadata);
-    return () => vid.removeEventListener('loadedmetadata', handleLoadedMetadata);
-  }, [open, videoUrl, clipStart, hasTimeRange, isPlaying]);
-
-  // Enforce clip boundaries and update progress
+  // Stop when dialog closes
   useEffect(() => {
-    if (!open || !videoRef.current || !hasTimeRange) return;
-    const vid = videoRef.current;
-    const duration = clipEnd - clipStart;
-
-    const handleTimeUpdate = () => {
-      // Clamp: if user somehow gets outside range, snap back
-      if (vid.currentTime < clipStart) {
-        vid.currentTime = clipStart;
-        return;
-      }
-      if (vid.currentTime >= clipEnd) {
-        vid.currentTime = clipStart; // loop back
-      }
-      setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
-    };
-
-    vid.addEventListener('timeupdate', handleTimeUpdate);
-    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [open, clipStart, clipEnd, hasTimeRange]);
-
-  // Auto-open fullscreen when dialog opens
-  useEffect(() => {
-    if (open && videoRef.current) {
-      const timer = setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.requestFullscreen?.().catch(() => {
-            (videoRef.current as any)?.webkitEnterFullscreen?.();
-          });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
+    if (!open) player.stop();
   }, [open]);
 
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !hasTimeRange) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    player.seekToRatio(ratio);
+  }, [hasTimeRange, player]);
+
   const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      } else if ((videoRef.current as any).webkitEnterFullscreen) {
-        (videoRef.current as any).webkitEnterFullscreen();
-      }
+    const vid = player.videoRef.current;
+    if (vid) {
+      vid.requestFullscreen?.().catch(() => {
+        (vid as any)?.webkitEnterFullscreen?.();
+      });
     }
   };
-
-  const togglePlayPause = useCallback(() => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play().catch(() => {});
-    } else {
-      videoRef.current.pause();
-    }
-  }, []);
-
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || !videoRef.current || !hasTimeRange) return;
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const duration = clipEnd - clipStart;
-    videoRef.current.currentTime = clipStart + ratio * duration;
-  }, [hasTimeRange, clipStart, clipEnd]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-5xl p-0 overflow-hidden bg-black">
+        <DialogTitle className="sr-only">{actionTitle || t(language, 'fullscreen')}</DialogTitle>
         <div className="relative">
           <div className="absolute top-2 right-2 z-10 flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-black/50 hover:bg-black/70 text-white"
-              onClick={handleFullscreen}
-              title={t(language, 'fullscreen')}
-            >
-              <Maximize className="h-4 w-4" />
-            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -161,15 +96,13 @@ export const ActionVideoPopup = ({
             </div>
           )}
           <video
-            ref={videoRef}
+            ref={player.videoRef}
             className="w-full max-h-[80vh] object-contain cursor-pointer"
-            preload={hasTimeRange ? "metadata" : "auto"}
+            preload="metadata"
             crossOrigin="anonymous"
             muted
             playsInline
-            onClick={togglePlayPause}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
+            onClick={player.togglePlayPause}
             controls={!hasTimeRange}
             loop={!hasTimeRange}
           />
@@ -183,12 +116,12 @@ export const ActionVideoPopup = ({
               >
                 <div
                   className="h-full bg-primary rounded"
-                  style={{ width: `${progress * 100}%` }}
+                  style={{ width: `${player.progress * 100}%` }}
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={togglePlayPause}>
-                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={player.togglePlayPause}>
+                  {player.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
