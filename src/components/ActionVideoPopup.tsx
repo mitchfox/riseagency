@@ -1,7 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Maximize } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { X, Maximize, Play, Pause } from 'lucide-react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { t } from '@/lib/portalTranslations';
 
 interface ActionVideoPopupProps {
@@ -25,6 +25,9 @@ export const ActionVideoPopup = ({
 }: ActionVideoPopupProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasTimeRange = clipStart != null && clipEnd != null;
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   // Seek to clip start when video is ready
   useEffect(() => {
@@ -38,7 +41,6 @@ export const ActionVideoPopup = ({
     };
 
     vid.addEventListener('loadedmetadata', handleLoaded);
-    // If already loaded
     if (vid.readyState >= 1 && hasTimeRange) {
       vid.currentTime = clipStart;
     }
@@ -46,15 +48,22 @@ export const ActionVideoPopup = ({
     return () => vid.removeEventListener('loadedmetadata', handleLoaded);
   }, [open, videoUrl, clipStart, hasTimeRange]);
 
-  // Stop at clip end
+  // Enforce clip boundaries and update progress
   useEffect(() => {
     if (!open || !videoRef.current || !hasTimeRange) return;
     const vid = videoRef.current;
+    const duration = clipEnd - clipStart;
 
     const handleTimeUpdate = () => {
-      if (vid.currentTime >= clipEnd) {
+      // Clamp: if user somehow gets outside range, snap back
+      if (vid.currentTime < clipStart) {
         vid.currentTime = clipStart;
+        return;
       }
+      if (vid.currentTime >= clipEnd) {
+        vid.currentTime = clipStart; // loop back
+      }
+      setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
     };
 
     vid.addEventListener('timeupdate', handleTimeUpdate);
@@ -84,6 +93,23 @@ export const ActionVideoPopup = ({
       }
     }
   };
+
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, []);
+
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !videoRef.current || !hasTimeRange) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const duration = clipEnd - clipStart;
+    videoRef.current.currentTime = clipStart + ratio * duration;
+  }, [hasTimeRange, clipStart, clipEnd]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,14 +143,38 @@ export const ActionVideoPopup = ({
             ref={videoRef}
             key={videoUrl}
             src={videoUrl}
-            className="w-full max-h-[80vh] object-contain"
+            className="w-full max-h-[80vh] object-contain cursor-pointer"
             preload="auto"
             crossOrigin="anonymous"
             muted
-            loop={!hasTimeRange}
             playsInline
+            onClick={togglePlayPause}
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            controls={!hasTimeRange}
+            loop={!hasTimeRange}
           />
+          {/* Custom controls for clipped videos */}
+          {hasTimeRange && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2">
+              <div
+                ref={progressBarRef}
+                className="w-full h-1.5 bg-white/20 rounded cursor-pointer mb-2"
+                onClick={handleProgressClick}
+              >
+                <div
+                  className="h-full bg-primary rounded"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={togglePlayPause}>
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

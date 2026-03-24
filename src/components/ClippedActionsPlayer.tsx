@@ -34,28 +34,30 @@ export const ClippedActionsPlayer = ({
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
   const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
   const currentClip = sortedClips[currentIndex];
-
-  // Group clips by source video URL so the same video element can be reused
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null;
 
   useEffect(() => {
     if (open) {
       setCurrentIndex(0);
       setIsPlaying(true);
+      setProgress(0);
     }
   }, [open]);
 
-  // When clip changes, seek to clip_start if using time ranges
+  // When clip changes, seek to clip_start
   useEffect(() => {
     if (!videoRef.current || !currentClip) return;
     const vid = videoRef.current;
+    setProgress(0);
 
     if (hasTimeRange) {
       const seekToStart = () => {
@@ -63,7 +65,6 @@ export const ClippedActionsPlayer = ({
         if (isPlaying) vid.play().catch(() => {});
       };
 
-      // If same source, just seek
       if (vid.src && vid.src === currentClip.video_url) {
         seekToStart();
       } else {
@@ -72,7 +73,6 @@ export const ClippedActionsPlayer = ({
         vid.load();
       }
     } else {
-      // Legacy trimmed clip — just set src
       if (vid.src !== currentClip.video_url) {
         vid.src = currentClip.video_url;
         vid.load();
@@ -80,29 +80,47 @@ export const ClippedActionsPlayer = ({
     }
   }, [currentIndex, currentClip?.video_url, currentClip?.clip_start]);
 
-  // Stop at clip_end and advance to next clip
+  // Enforce clip boundaries, update progress, auto-advance
   useEffect(() => {
     if (!videoRef.current || !hasTimeRange) return;
     const vid = videoRef.current;
+    const clipStart = currentClip.clip_start!;
     const clipEnd = currentClip.clip_end!;
+    const duration = clipEnd - clipStart;
 
     const handleTimeUpdate = () => {
+      // Clamp within range
+      if (vid.currentTime < clipStart - 0.5) {
+        vid.currentTime = clipStart;
+        return;
+      }
       if (vid.currentTime >= clipEnd) {
         vid.pause();
-        // Advance to next clip
         if (currentIndex < sortedClips.length - 1) {
           setCurrentIndex(prev => prev + 1);
         } else {
           setIsPlaying(false);
         }
+        return;
       }
+      setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
+    };
+
+    // Block seeking outside range
+    const handleSeeking = () => {
+      if (vid.currentTime < clipStart) vid.currentTime = clipStart;
+      if (vid.currentTime > clipEnd) vid.currentTime = clipEnd - 0.1;
     };
 
     vid.addEventListener('timeupdate', handleTimeUpdate);
-    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [currentIndex, currentClip?.clip_end, hasTimeRange, sortedClips.length]);
+    vid.addEventListener('seeking', handleSeeking);
+    return () => {
+      vid.removeEventListener('timeupdate', handleTimeUpdate);
+      vid.removeEventListener('seeking', handleSeeking);
+    };
+  }, [currentIndex, currentClip?.clip_start, currentClip?.clip_end, hasTimeRange, sortedClips.length]);
 
-  // Prefetch next clip's video via fetch (cache-warming)
+  // Prefetch next clip
   useEffect(() => {
     const nextClip = sortedClips[currentIndex + 1];
     if (nextClip?.video_url) {
@@ -111,7 +129,6 @@ export const ClippedActionsPlayer = ({
   }, [currentIndex, sortedClips]);
 
   const handleVideoEnded = () => {
-    // For legacy trimmed clips (no time range), advance on natural end
     if (!hasTimeRange) {
       if (currentIndex < sortedClips.length - 1) {
         setCurrentIndex(prev => prev + 1);
@@ -121,43 +138,35 @@ export const ClippedActionsPlayer = ({
     }
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
-  };
+  const handlePrevious = () => { if (currentIndex > 0) setCurrentIndex(prev => prev - 1); };
+  const handleNext = () => { if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1); };
 
-  const handleNext = () => {
-    if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1);
-  };
-
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      // If at clip end, restart from clip start
+      if (hasTimeRange && currentClip && videoRef.current.currentTime >= currentClip.clip_end!) {
+        videoRef.current.currentTime = currentClip.clip_start!;
       }
-      setIsPlaying(!isPlaying);
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
     }
-  };
+  }, [hasTimeRange, currentClip]);
+
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !videoRef.current || !hasTimeRange || !currentClip) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const duration = currentClip.clip_end! - currentClip.clip_start!;
+    videoRef.current.currentTime = currentClip.clip_start! + ratio * duration;
+  }, [hasTimeRange, currentClip]);
 
   if (!currentClip) return null;
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    setSwiping(true);
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!swiping) return;
-    const delta = e.touches[0].clientY - touchStartY.current;
-    setSwipeY(Math.max(0, delta));
-  };
-  const handleTouchEnd = () => {
-    if (swipeY > 120) {
-      onOpenChange(false);
-    }
-    setSwipeY(0);
-    setSwiping(false);
-  };
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; setSwiping(true); };
+  const handleTouchMove = (e: React.TouchEvent) => { if (!swiping) return; setSwipeY(Math.max(0, e.touches[0].clientY - touchStartY.current)); };
+  const handleTouchEnd = () => { if (swipeY > 120) onOpenChange(false); setSwipeY(0); setSwiping(false); };
 
   const formatMinute = (minute: number) => {
     const minPart = Math.floor(minute);
@@ -191,20 +200,22 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video — single element, seeks per clip */}
+        {/* Video */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
             src={currentClip.video_url}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain cursor-pointer"
             preload="auto"
             crossOrigin="anonymous"
             muted
             playsInline
+            onClick={togglePlayPause}
             onCanPlay={(e) => { if (isPlaying) e.currentTarget.play().catch(() => {}); }}
             onEnded={handleVideoEnded}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            controls={!hasTimeRange}
           />
           {/* Description overlay */}
           <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
@@ -214,6 +225,19 @@ export const ClippedActionsPlayer = ({
             )}
           </div>
         </div>
+
+        {/* Custom progress bar for clipped videos */}
+        {hasTimeRange && (
+          <div className="px-4 py-1 bg-black/90 shrink-0">
+            <div
+              ref={progressBarRef}
+              className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
+              onClick={handleProgressClick}
+            >
+              <div className="h-full bg-primary rounded" style={{ width: `${progress * 100}%` }} />
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="bg-black/90 border-t border-border/30 px-4 py-2 flex items-center justify-between shrink-0">

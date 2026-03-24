@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, SkipForward, SkipBack } from "lucide-react";
+import { X, SkipForward, SkipBack, Play, Pause } from "lucide-react";
 import { t } from "@/lib/portalTranslations";
 import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 
@@ -29,7 +29,9 @@ interface RankedActionsPlayerProps {
 export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language = "en" }: RankedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
@@ -45,12 +47,14 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
   useEffect(() => {
     setCurrentIndex(0);
+    setProgress(0);
   }, [open, mode]);
 
   // Seek to clip_start when clip changes
   useEffect(() => {
     if (!open || !videoRef.current || !current) return;
     const vid = videoRef.current;
+    setProgress(0);
 
     if (hasTimeRange) {
       const seekToStart = () => {
@@ -73,44 +77,72 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     }
   }, [open, currentIndex, current?.video_url, current?.clip_start]);
 
-  // Stop at clip_end
+  // Enforce clip boundaries, update progress, auto-advance
   useEffect(() => {
     if (!open || !videoRef.current || !hasTimeRange) return;
     const vid = videoRef.current;
+    const clipStart = current.clip_start!;
     const clipEnd = current.clip_end!;
+    const duration = clipEnd - clipStart;
 
     const handleTimeUpdate = () => {
+      if (vid.currentTime < clipStart - 0.5) {
+        vid.currentTime = clipStart;
+        return;
+      }
       if (vid.currentTime >= clipEnd) {
         vid.pause();
         if (mode !== "noted" && currentIndex < sortedClips.length - 1) {
           setCurrentIndex(prev => prev + 1);
+        } else {
+          setIsPlaying(false);
         }
+        return;
       }
+      setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
+    };
+
+    const handleSeeking = () => {
+      if (vid.currentTime < clipStart) vid.currentTime = clipStart;
+      if (vid.currentTime > clipEnd) vid.currentTime = clipEnd - 0.1;
     };
 
     vid.addEventListener('timeupdate', handleTimeUpdate);
-    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [open, currentIndex, current?.clip_end, hasTimeRange, mode, sortedClips.length]);
+    vid.addEventListener('seeking', handleSeeking);
+    return () => {
+      vid.removeEventListener('timeupdate', handleTimeUpdate);
+      vid.removeEventListener('seeking', handleSeeking);
+    };
+  }, [open, currentIndex, current?.clip_start, current?.clip_end, hasTimeRange, mode, sortedClips.length]);
 
-  const handleNext = () => {
-    if (currentIndex < sortedClips.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
+  const handleNext = () => { if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1); };
+  const handlePrev = () => { if (currentIndex > 0) setCurrentIndex(prev => prev - 1); };
 
   const handleVideoEnd = () => {
-    if (hasTimeRange) return; // Handled by timeupdate
+    if (hasTimeRange) return;
     if (mode === "noted") return;
-    if (currentIndex < sortedClips.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
+    if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1);
   };
+
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      if (hasTimeRange && current && videoRef.current.currentTime >= current.clip_end!) {
+        videoRef.current.currentTime = current.clip_start!;
+      }
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [hasTimeRange, current]);
+
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !videoRef.current || !hasTimeRange || !current) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const duration = current.clip_end! - current.clip_start!;
+    videoRef.current.currentTime = current.clip_start! + ratio * duration;
+  }, [hasTimeRange, current]);
 
   const formatMinute = (minute: number) => {
     const minPart = Math.floor(minute);
@@ -134,24 +166,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
   if (!current) return null;
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    setSwiping(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!swiping) return;
-    const delta = e.touches[0].clientY - touchStartY.current;
-    setSwipeY(Math.max(0, delta));
-  };
-
-  const handleTouchEnd = () => {
-    if (swipeY > 120) {
-      onOpenChange(false);
-    }
-    setSwipeY(0);
-    setSwiping(false);
-  };
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; setSwiping(true); };
+  const handleTouchMove = (e: React.TouchEvent) => { if (!swiping) return; setSwipeY(Math.max(0, e.touches[0].clientY - touchStartY.current)); };
+  const handleTouchEnd = () => { if (swipeY > 120) onOpenChange(false); setSwipeY(0); setSwiping(false); };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,14 +202,28 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             src={current.video_url}
             preload="auto"
             crossOrigin="anonymous"
-            controls
-            className="w-full h-full object-contain"
-            onCanPlay={(e) => {
-              if (isPlaying) e.currentTarget.play().catch(() => {});
-            }}
+            className="w-full h-full object-contain cursor-pointer"
+            onClick={togglePlayPause}
+            onCanPlay={(e) => { if (isPlaying) e.currentTarget.play().catch(() => {}); }}
             onEnded={handleVideoEnd}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            controls={!hasTimeRange}
           />
         </div>
+
+        {/* Custom progress bar for clipped videos */}
+        {hasTimeRange && (
+          <div className="px-4 py-1 bg-black/90 shrink-0">
+            <div
+              ref={progressBarRef}
+              className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
+              onClick={handleProgressClick}
+            >
+              <div className="h-full bg-primary rounded" style={{ width: `${progress * 100}%` }} />
+            </div>
+          </div>
+        )}
 
         <div className="px-4 py-2 bg-black/90 border-t border-border/30 shrink-0">
           <div className="flex items-center justify-between gap-2">
@@ -209,6 +240,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             <div className="flex gap-1 flex-shrink-0">
               <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipBack className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={togglePlayPause}>
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipForward className="h-4 w-4" />
