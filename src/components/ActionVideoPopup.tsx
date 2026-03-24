@@ -10,6 +10,8 @@ interface ActionVideoPopupProps {
   videoUrl: string;
   actionTitle?: string;
   language?: string;
+  clipStart?: number | null;
+  clipEnd?: number | null;
 }
 
 export const ActionVideoPopup = ({
@@ -18,8 +20,46 @@ export const ActionVideoPopup = ({
   videoUrl,
   actionTitle,
   language = 'en',
+  clipStart,
+  clipEnd,
 }: ActionVideoPopupProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasTimeRange = clipStart != null && clipEnd != null;
+
+  // Seek to clip start when video is ready
+  useEffect(() => {
+    if (!open || !videoRef.current) return;
+    const vid = videoRef.current;
+
+    const handleLoaded = () => {
+      if (hasTimeRange) {
+        vid.currentTime = clipStart;
+      }
+    };
+
+    vid.addEventListener('loadedmetadata', handleLoaded);
+    // If already loaded
+    if (vid.readyState >= 1 && hasTimeRange) {
+      vid.currentTime = clipStart;
+    }
+
+    return () => vid.removeEventListener('loadedmetadata', handleLoaded);
+  }, [open, videoUrl, clipStart, hasTimeRange]);
+
+  // Stop at clip end
+  useEffect(() => {
+    if (!open || !videoRef.current || !hasTimeRange) return;
+    const vid = videoRef.current;
+
+    const handleTimeUpdate = () => {
+      if (vid.currentTime >= clipEnd) {
+        vid.currentTime = clipStart;
+      }
+    };
+
+    vid.addEventListener('timeupdate', handleTimeUpdate);
+    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [open, clipStart, clipEnd, hasTimeRange]);
 
   // Auto-open fullscreen when dialog opens
   useEffect(() => {
@@ -81,7 +121,7 @@ export const ActionVideoPopup = ({
             preload="auto"
             crossOrigin="anonymous"
             muted
-            loop
+            loop={!hasTimeRange}
             playsInline
             onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
           />

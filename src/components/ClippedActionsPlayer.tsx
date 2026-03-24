@@ -13,6 +13,8 @@ interface ClipAction {
   video_url: string;
   minute: number;
   notes?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
 }
 
 interface ClippedActionsPlayerProps {
@@ -40,6 +42,9 @@ export const ClippedActionsPlayer = ({
   const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
   const currentClip = sortedClips[currentIndex];
 
+  // Group clips by source video URL so the same video element can be reused
+  const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null;
+
   useEffect(() => {
     if (open) {
       setCurrentIndex(0);
@@ -47,17 +52,57 @@ export const ClippedActionsPlayer = ({
     }
   }, [open]);
 
-  // Update video src when clip changes
+  // When clip changes, seek to clip_start if using time ranges
   useEffect(() => {
-    if (videoRef.current && currentClip) {
-      if (videoRef.current.src !== currentClip.video_url) {
-        videoRef.current.src = currentClip.video_url;
-        videoRef.current.load();
+    if (!videoRef.current || !currentClip) return;
+    const vid = videoRef.current;
+
+    if (hasTimeRange) {
+      const seekToStart = () => {
+        vid.currentTime = currentClip.clip_start!;
+        if (isPlaying) vid.play().catch(() => {});
+      };
+
+      // If same source, just seek
+      if (vid.src && vid.src === currentClip.video_url) {
+        seekToStart();
+      } else {
+        vid.src = currentClip.video_url;
+        vid.addEventListener('loadedmetadata', seekToStart, { once: true });
+        vid.load();
+      }
+    } else {
+      // Legacy trimmed clip — just set src
+      if (vid.src !== currentClip.video_url) {
+        vid.src = currentClip.video_url;
+        vid.load();
       }
     }
-  }, [currentClip?.video_url]);
+  }, [currentIndex, currentClip?.video_url, currentClip?.clip_start]);
 
-  // Prefetch next clip via fetch (cache-warming, no media element)
+  // Stop at clip_end and advance to next clip
+  useEffect(() => {
+    if (!videoRef.current || !hasTimeRange) return;
+    const vid = videoRef.current;
+    const clipEnd = currentClip.clip_end!;
+
+    const handleTimeUpdate = () => {
+      if (vid.currentTime >= clipEnd) {
+        vid.pause();
+        // Advance to next clip
+        if (currentIndex < sortedClips.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+        } else {
+          setIsPlaying(false);
+        }
+      }
+    };
+
+    vid.addEventListener('timeupdate', handleTimeUpdate);
+    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [currentIndex, currentClip?.clip_end, hasTimeRange, sortedClips.length]);
+
+  // Prefetch next clip's video via fetch (cache-warming)
   useEffect(() => {
     const nextClip = sortedClips[currentIndex + 1];
     if (nextClip?.video_url) {
@@ -66,10 +111,13 @@ export const ClippedActionsPlayer = ({
   }, [currentIndex, sortedClips]);
 
   const handleVideoEnded = () => {
-    if (currentIndex < sortedClips.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      setIsPlaying(false);
+    // For legacy trimmed clips (no time range), advance on natural end
+    if (!hasTimeRange) {
+      if (currentIndex < sortedClips.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      } else {
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -143,11 +191,10 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video — stable element, src updated via ref */}
+        {/* Video — single element, seeks per clip */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
-            src={currentClip?.video_url || ''}
             className="w-full h-full object-contain"
             preload="auto"
             crossOrigin="anonymous"

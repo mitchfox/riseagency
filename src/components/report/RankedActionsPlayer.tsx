@@ -14,6 +14,8 @@ interface Clip {
   video_url: string;
   minute: number;
   notes?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
 }
 
 interface RankedActionsPlayerProps {
@@ -39,10 +41,56 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     : sortReportActionsChronologically(filteredClips);
 
   const current = sortedClips[currentIndex];
+  const hasTimeRange = current?.clip_start != null && current?.clip_end != null;
 
   useEffect(() => {
     setCurrentIndex(0);
   }, [open, mode]);
+
+  // Seek to clip_start when clip changes
+  useEffect(() => {
+    if (!open || !videoRef.current || !current) return;
+    const vid = videoRef.current;
+
+    if (hasTimeRange) {
+      const seekToStart = () => {
+        vid.currentTime = current.clip_start!;
+        if (isPlaying) vid.play().catch(() => {});
+      };
+
+      if (vid.src && vid.src === current.video_url) {
+        seekToStart();
+      } else {
+        vid.src = current.video_url;
+        vid.addEventListener('loadedmetadata', seekToStart, { once: true });
+        vid.load();
+      }
+    } else {
+      if (!vid.src || vid.src !== current.video_url) {
+        vid.src = current.video_url;
+        vid.load();
+      }
+    }
+  }, [open, currentIndex, current?.video_url, current?.clip_start]);
+
+  // Stop at clip_end
+  useEffect(() => {
+    if (!open || !videoRef.current || !hasTimeRange) return;
+    const vid = videoRef.current;
+    const clipEnd = current.clip_end!;
+
+    const handleTimeUpdate = () => {
+      if (vid.currentTime >= clipEnd) {
+        vid.pause();
+        if (mode !== "noted" && currentIndex < sortedClips.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+        }
+      }
+    };
+
+    vid.addEventListener('timeupdate', handleTimeUpdate);
+    return () => vid.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [open, currentIndex, current?.clip_end, hasTimeRange, mode, sortedClips.length]);
 
   const handleNext = () => {
     if (currentIndex < sortedClips.length - 1) {
@@ -57,12 +105,10 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   };
 
   const handleVideoEnd = () => {
+    if (hasTimeRange) return; // Handled by timeupdate
     if (mode === "noted") return;
     if (currentIndex < sortedClips.length - 1) {
       setCurrentIndex((prev) => prev + 1);
-      setTimeout(() => {
-        videoRef.current?.play().catch(() => {});
-      }, 100);
     }
   };
 
@@ -136,8 +182,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
-            key={current.video_url}
-            src={current.video_url}
             preload="auto"
             crossOrigin="anonymous"
             controls
@@ -147,16 +191,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             }}
             onEnded={handleVideoEnd}
           />
-          {sortedClips[currentIndex + 1] && (
-            <video
-              key={`prefetch-${sortedClips[currentIndex + 1].video_url}`}
-              src={sortedClips[currentIndex + 1].video_url}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              style={{ display: "none" }}
-            />
-          )}
         </div>
 
         <div className="px-4 py-2 bg-black/90 border-t border-border/30 shrink-0">
