@@ -47,11 +47,13 @@ export const ClippedActionsPlayer = ({
     }
   }, [open]);
 
-  // Update video src via ref instead of remounting with key=
+  // Update video src when clip changes
   useEffect(() => {
     if (videoRef.current && currentClip) {
-      videoRef.current.src = currentClip.video_url;
-      videoRef.current.load();
+      if (videoRef.current.src !== currentClip.video_url) {
+        videoRef.current.src = currentClip.video_url;
+        videoRef.current.load();
+      }
     }
   }, [currentClip?.video_url]);
 
@@ -145,6 +147,7 @@ export const ClippedActionsPlayer = ({
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
+            src={currentClip?.video_url || ''}
             className="w-full h-full object-contain"
             preload="auto"
             crossOrigin="anonymous"

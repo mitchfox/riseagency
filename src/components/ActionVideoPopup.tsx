@@ -21,14 +21,6 @@ export const ActionVideoPopup = ({
 }: ActionVideoPopupProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Update src via ref instead of remounting with key=
-  useEffect(() => {
-    if (open && videoRef.current && videoUrl) {
-      videoRef.current.src = videoUrl;
-      videoRef.current.load();
-    }
-  }, [open, videoUrl]);
-
   // Auto-open fullscreen when dialog opens
   useEffect(() => {
     if (open && videoRef.current) {
@@ -83,6 +75,8 @@ export const ActionVideoPopup = ({
           )}
           <video
             ref={videoRef}
+            key={videoUrl}
+            src={videoUrl}
             className="w-full max-h-[80vh] object-contain"
             preload="auto"
             crossOrigin="anonymous"
