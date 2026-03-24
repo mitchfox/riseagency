@@ -182,6 +182,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
+            src={current.video_url}
             preload="auto"
             crossOrigin="anonymous"
             controls
