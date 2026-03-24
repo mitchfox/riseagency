@@ -1171,6 +1171,10 @@ export const CreatePerformanceReportDialog = ({
     } catch (error: any) {
       console.error("Error fetching existing data:", error);
       toast.error("Failed to load performance report data");
+      // Ensure we don't leave user stuck on spinner
+      setLoadingData(false);
+      initialLoadDoneRef.current = true;
+      return;
     } finally {
       setLoadingData(false);
       initialLoadDoneRef.current = true;
