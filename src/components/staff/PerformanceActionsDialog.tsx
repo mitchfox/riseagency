@@ -1051,10 +1051,14 @@ export const PerformanceActionsDialog = ({
             if (!open) {
               setSelectedVideoUrl(null);
               setSelectedVideoTitle("");
+              setSelectedClipStart(null);
+              setSelectedClipEnd(null);
             }
           }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
+          clipStart={selectedClipStart}
+          clipEnd={selectedClipEnd}
         />
       )}
     </Dialog>
