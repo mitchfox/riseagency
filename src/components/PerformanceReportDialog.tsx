@@ -1197,11 +1197,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             if (!open) {
               setSelectedVideoUrl(null);
               setSelectedVideoTitle("");
+              setSelectedClipStart(null);
+              setSelectedClipEnd(null);
             }
           }}
           videoUrl={selectedVideoUrl}
           actionTitle={selectedVideoTitle}
           language={reportLanguage}
+          clipStart={selectedClipStart}
+          clipEnd={selectedClipEnd}
         />
       )}
 
