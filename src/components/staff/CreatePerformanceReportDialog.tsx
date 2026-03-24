@@ -1157,6 +1157,8 @@ export const CreatePerformanceReportDialog = ({
             action_description: action.action_description || "",
             notes: action.notes || "",
             video_url: action.video_url || null,
+            clip_start: (action as any).clip_start ?? null,
+            clip_end: (action as any).clip_end ?? null,
             recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
