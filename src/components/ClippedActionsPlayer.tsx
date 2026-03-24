@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
+import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
 
 interface ClipAction {
   id: string;
@@ -33,148 +34,72 @@ export const ClippedActionsPlayer = ({
   title,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const loadedSourceRef = useRef<string | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
+  const player = useSharedClipPlayer();
+
   const sortedClips = useMemo(() => sortReportActionsChronologically(clips), [clips]);
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null;
 
+  // Reset on open
   useEffect(() => {
     if (open) {
       setCurrentIndex(0);
-      setIsPlaying(true);
-      setProgress(0);
+    } else {
+      player.stop();
     }
   }, [open]);
 
-  // When clip changes, seek to clip_start
+  // Play current clip when index changes
   useEffect(() => {
-    if (!videoRef.current || !currentClip) return;
+    if (!open || !currentClip) return;
 
-    const vid = videoRef.current;
-    setProgress(0);
-    const targetStart = hasTimeRange ? currentClip.clip_start! : 0;
-
-    const applyPlaybackWindow = () => {
-      if (hasTimeRange) {
-        vid.currentTime = targetStart;
-      } else if (vid.currentTime !== 0) {
-        vid.currentTime = 0;
-      }
-
-      if (isPlaying) {
-        vid.play().catch(() => {});
-      }
-    };
-
-    const handleLoadedMetadata = () => {
-      applyPlaybackWindow();
-    };
-
-    if (loadedSourceRef.current !== currentClip.video_url) {
-      loadedSourceRef.current = currentClip.video_url;
-      vid.pause();
-      vid.src = currentClip.video_url;
-      vid.load();
-    }
-
-    if (vid.readyState >= 1) {
-      applyPlaybackWindow();
-      return;
-    }
-
-    vid.addEventListener('loadedmetadata', handleLoadedMetadata);
-    return () => vid.removeEventListener('loadedmetadata', handleLoadedMetadata);
-  }, [currentIndex, currentClip?.video_url, currentClip?.clip_start, hasTimeRange, isPlaying, currentClip]);
-
-  // Enforce clip boundaries, update progress, auto-advance
-  useEffect(() => {
-    if (!videoRef.current || !hasTimeRange) return;
-    const vid = videoRef.current;
-    const clipStart = currentClip.clip_start!;
-    const clipEnd = currentClip.clip_end!;
-    const duration = clipEnd - clipStart;
-
-    const handleTimeUpdate = () => {
-      // Clamp within range
-      if (vid.currentTime < clipStart - 0.5) {
-        vid.currentTime = clipStart;
-        return;
-      }
-      if (vid.currentTime >= clipEnd) {
+    if (hasTimeRange) {
+      player.playClip({
+        videoUrl: currentClip.video_url,
+        clipStart: currentClip.clip_start!,
+        clipEnd: currentClip.clip_end!,
+      });
+    } else {
+      // No clip range — use native controls
+      const vid = player.videoRef.current;
+      if (vid) {
         vid.pause();
-        if (currentIndex < sortedClips.length - 1) {
-          setCurrentIndex(prev => prev + 1);
-        } else {
-          setIsPlaying(false);
-        }
-        return;
+        vid.src = currentClip.video_url;
+        vid.load();
+        vid.currentTime = 0;
+        vid.addEventListener('loadedmetadata', () => {
+          vid.play().catch(() => {});
+        }, { once: true });
       }
-      setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
-    };
-
-    // Block seeking outside range
-    const handleSeeking = () => {
-      if (vid.currentTime < clipStart) vid.currentTime = clipStart;
-      if (vid.currentTime > clipEnd) vid.currentTime = clipEnd - 0.1;
-    };
-
-    vid.addEventListener('timeupdate', handleTimeUpdate);
-    vid.addEventListener('seeking', handleSeeking);
-    return () => {
-      vid.removeEventListener('timeupdate', handleTimeUpdate);
-      vid.removeEventListener('seeking', handleSeeking);
-    };
-  }, [currentIndex, currentClip?.clip_start, currentClip?.clip_end, hasTimeRange, sortedClips.length]);
-
-  // Prefetch next clip
-  useEffect(() => {
-    const nextClip = sortedClips[currentIndex + 1];
-    if (nextClip?.video_url) {
-      fetch(nextClip.video_url, { mode: 'cors', cache: 'force-cache' }).catch(() => {});
     }
-  }, [currentIndex, sortedClips]);
+  }, [open, currentIndex]);
 
-  const handleVideoEnded = () => {
-    if (!hasTimeRange) {
+  // Auto-advance when clip finishes (check progress reaching 1)
+  useEffect(() => {
+    if (!hasTimeRange || !player.isPlaying) return;
+
+    // When progress hits 1 and playback stops, advance
+    if (player.progress >= 1 && !player.isPlaying) {
       if (currentIndex < sortedClips.length - 1) {
         setCurrentIndex(prev => prev + 1);
-      } else {
-        setIsPlaying(false);
       }
     }
-  };
+  }, [player.progress, player.isPlaying, hasTimeRange, currentIndex, sortedClips.length]);
 
   const handlePrevious = () => { if (currentIndex > 0) setCurrentIndex(prev => prev - 1); };
   const handleNext = () => { if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1); };
 
-  const togglePlayPause = useCallback(() => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      // If at clip end, restart from clip start
-      if (hasTimeRange && currentClip && videoRef.current.currentTime >= currentClip.clip_end!) {
-        videoRef.current.currentTime = currentClip.clip_start!;
-      }
-      videoRef.current.play().catch(() => {});
-    } else {
-      videoRef.current.pause();
-    }
-  }, [hasTimeRange, currentClip]);
-
   const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || !videoRef.current || !hasTimeRange || !currentClip) return;
+    if (!progressBarRef.current || !hasTimeRange) return;
     const rect = progressBarRef.current.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const duration = currentClip.clip_end! - currentClip.clip_start!;
-    videoRef.current.currentTime = currentClip.clip_start! + ratio * duration;
-  }, [hasTimeRange, currentClip]);
+    const ratio = (e.clientX - rect.left) / rect.width;
+    player.seekToRatio(ratio);
+  }, [hasTimeRange, player]);
 
   if (!currentClip) return null;
 
@@ -214,19 +139,16 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video */}
+        {/* Video — single shared element */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
-            ref={videoRef}
+            ref={player.videoRef}
             className="w-full h-full object-contain cursor-pointer"
-            preload={hasTimeRange ? "metadata" : "auto"}
+            preload="metadata"
             crossOrigin="anonymous"
             muted
             playsInline
-            onClick={togglePlayPause}
-            onEnded={handleVideoEnded}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
+            onClick={player.togglePlayPause}
             controls={!hasTimeRange}
           />
           {/* Description overlay */}
@@ -246,7 +168,7 @@ export const ClippedActionsPlayer = ({
               className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
               onClick={handleProgressClick}
             >
-              <div className="h-full bg-primary rounded" style={{ width: `${progress * 100}%` }} />
+              <div className="h-full bg-primary rounded" style={{ width: `${player.progress * 100}%` }} />
             </div>
           </div>
         )}
@@ -257,8 +179,8 @@ export const ClippedActionsPlayer = ({
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
               <SkipBack className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={togglePlayPause}>
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={player.togglePlayPause}>
+              {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
               <SkipForward className="h-5 w-5" />
