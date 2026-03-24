@@ -57,6 +57,9 @@ interface PerformanceActionsDialogProps {
   isAdmin: boolean;
 }
 
+const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
+  clipStart != null && clipEnd != null && clipEnd > clipStart;
+
 export const PerformanceActionsDialog = ({
   open,
   onOpenChange,
@@ -96,6 +99,18 @@ export const PerformanceActionsDialog = ({
     video_url: null,
   });
   const [actionCategory, setActionCategory] = useState<string | null>(null);
+
+  const openClip = (action: PerformanceAction) => {
+    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+      toast.error('Clip unavailable. Full match playback has been blocked.');
+      return;
+    }
+
+    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+    setSelectedClipStart(action.clip_start ?? null);
+    setSelectedClipEnd(action.clip_end ?? null);
+  };
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -941,12 +956,7 @@ export const PerformanceActionsDialog = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setSelectedVideoUrl(action.video_url!);
-                              setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
-                              setSelectedClipStart(action.clip_start ?? null);
-                              setSelectedClipEnd(action.clip_end ?? null);
-                            }}
+                            onClick={() => openClip(action)}
                             className="bg-amber-500/10 hover:bg-amber-500/20"
                             title="Play Clip"
                           >

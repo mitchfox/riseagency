@@ -77,6 +77,9 @@ interface PerformanceReportDialogProps {
   isPortalView?: boolean;
 }
 
+const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
+  clipStart != null && clipEnd != null && clipEnd > clipStart;
+
 export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPortalView = false }: PerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
@@ -106,6 +109,31 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
+
+  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+
+  const openClip = (action: PerformanceAction) => {
+    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+      toast.error('Clip unavailable. Full match playback has been blocked.');
+      return;
+    }
+
+    const translated = getTranslatedActionData(action);
+    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
+    setSelectedClipStart(action.clip_start ?? null);
+    setSelectedClipEnd(action.clip_end ?? null);
+  };
+
+  const openClipCollection = (setter: (open: boolean) => void) => {
+    if (reportClips.length === 0) {
+      toast.error('No valid clips available. Full match playback has been blocked.');
+      return;
+    }
+
+    setter(true);
+  };
 
   const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
   const reportLanguage = getReportLanguage(analysis?.translated_content, portalLanguage);
@@ -716,15 +744,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </div>
                 
                 {/* Clipped Actions Button */}
-                {actions.filter(a => a.video_url).length > 0 && (
+                {reportClips.length > 0 && (
                   <Button
                     variant="default"
                     size="sm"
                     className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2"
-                    onClick={() => setShowClippedActions(true)}
+                    onClick={() => openClipCollection(setShowClippedActions)}
                   >
                     <Play className="h-4 w-4" />
-                    {actions.filter(a => a.video_url).length} {t(reportLanguage, "clips_label")}
+                    {reportClips.length} {t(reportLanguage, "clips_label")}
                   </Button>
                 )}
               </div>
@@ -793,12 +821,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       {t(reportLanguage, "chance_creation_flow")}
                     </Button>
                   )}
-                  {actions.filter(a => a.video_url).length > 0 && (
+                  {reportClips.length > 0 && (
                     <>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setRankedMode("chronological"); setShowRankedPlayer(true); }}
+                        onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
                         className="text-xs"
                       >
                         <Film className="h-3.5 w-3.5 mr-1.5" />
@@ -807,17 +835,17 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setRankedMode("ranked"); setShowRankedPlayer(true); }}
+                        onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
                         className="text-xs"
                       >
                         <Award className="h-3.5 w-3.5 mr-1.5" />
                         {t(reportLanguage, "ranked_actions")}
                       </Button>
-                      {actions.some(a => a.video_url && a.notes) && (
+                      {reportClips.some(a => a.notes) && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { setRankedMode("noted"); setShowRankedPlayer(true); }}
+                          onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
                           className="text-xs"
                         >
                           <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />
@@ -1107,10 +1135,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             {action.video_url && (
                               <button
                                 onClick={() => {
-                                  setSelectedVideoUrl(action.video_url!);
-                                  setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
-                                  setSelectedClipStart(action.clip_start ?? null);
-                                  setSelectedClipEnd(action.clip_end ?? null);
+                                  openClip(action);
                                 }}
                                 className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0"
                               >
@@ -1159,10 +1184,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                                   <button
                                     onClick={() => {
                                       const translated = getTranslatedActionData(action);
-                                      setSelectedVideoUrl(action.video_url!);
-                                      setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
-                                      setSelectedClipStart(action.clip_start ?? null);
-                                      setSelectedClipEnd(action.clip_end ?? null);
+                                      openClip(action);
                                     }}
                                     className="text-risegold hover:text-risegold/80 p-1"
                                   >
@@ -1211,9 +1233,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         open={showClippedActions}
         onOpenChange={setShowClippedActions}
         language={reportLanguage}
-        clips={actions
-          .filter(a => a.video_url)
-          .map(a => {
+          clips={reportClips.map(a => {
             const translated = getTranslatedActionData(a);
             return {
               id: a.id,
@@ -1235,9 +1255,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         onOpenChange={setShowRankedPlayer}
         mode={rankedMode}
         language={reportLanguage}
-        clips={actions
-          .filter(a => a.video_url)
-          .map(a => {
+          clips={reportClips.map(a => {
             const translated = getTranslatedActionData(a);
             return {
               id: a.id,
@@ -1260,9 +1278,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         onOpenChange={setShowFilteredPlayer}
         mode="chronological"
         language={reportLanguage}
-        clips={filteredActions
-          .filter(a => a.video_url)
-          .map(a => {
+          clips={filteredReportClips.map(a => {
             const translated = getTranslatedActionData(a);
             return {
               id: a.id,
