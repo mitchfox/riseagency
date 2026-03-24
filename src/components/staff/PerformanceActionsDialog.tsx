@@ -82,6 +82,8 @@ export const PerformanceActionsDialog = ({
   const [actionTypeSearch, setActionTypeSearch] = useState("");
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [selectedClipStart, setSelectedClipStart] = useState<number | null>(null);
+  const [selectedClipEnd, setSelectedClipEnd] = useState<number | null>(null);
   const [newAction, setNewAction] = useState<PerformanceAction>({
     action_number: 1,
     minute: 0,
