@@ -78,15 +78,21 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     vid.pause();
 
     const seekAndPlay = () => {
-      vid.currentTime = clip.clipStart;
-
       const onSeeked = () => {
         vid.play().catch(() => {});
         setIsPlaying(true);
         startBoundaryEnforcement();
       };
 
-      vid.addEventListener('seeked', onSeeked, { once: true });
+      // CRITICAL: attach listener BEFORE setting currentTime
+      // If currentTime is already at clipStart, seeked won't fire — handle that
+      if (Math.abs(vid.currentTime - clip.clipStart) < 0.05) {
+        // Already at the right position, just play
+        onSeeked();
+      } else {
+        vid.addEventListener('seeked', onSeeked, { once: true });
+        vid.currentTime = clip.clipStart;
+      }
     };
 
     // If same source, just seek
