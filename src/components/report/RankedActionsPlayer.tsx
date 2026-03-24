@@ -31,6 +31,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loadedSourceRef = useRef<string | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
@@ -53,29 +54,42 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   // Seek to clip_start when clip changes
   useEffect(() => {
     if (!open || !videoRef.current || !current) return;
+
     const vid = videoRef.current;
     setProgress(0);
+    const targetStart = hasTimeRange ? current.clip_start! : 0;
 
-    if (hasTimeRange) {
-      const seekToStart = () => {
-        vid.currentTime = current.clip_start!;
-        if (isPlaying) vid.play().catch(() => {});
-      };
+    const applyPlaybackWindow = () => {
+      if (hasTimeRange) {
+        vid.currentTime = targetStart;
+      } else if (vid.currentTime !== 0) {
+        vid.currentTime = 0;
+      }
 
-      if (vid.src && vid.src === current.video_url) {
-        seekToStart();
-      } else {
-        vid.src = current.video_url;
-        vid.addEventListener('loadedmetadata', seekToStart, { once: true });
-        vid.load();
+      if (isPlaying) {
+        vid.play().catch(() => {});
       }
-    } else {
-      if (!vid.src || vid.src !== current.video_url) {
-        vid.src = current.video_url;
-        vid.load();
-      }
+    };
+
+    const handleLoadedMetadata = () => {
+      applyPlaybackWindow();
+    };
+
+    if (loadedSourceRef.current !== current.video_url) {
+      loadedSourceRef.current = current.video_url;
+      vid.pause();
+      vid.src = current.video_url;
+      vid.load();
     }
-  }, [open, currentIndex, current?.video_url, current?.clip_start]);
+
+    if (vid.readyState >= 1) {
+      applyPlaybackWindow();
+      return;
+    }
+
+    vid.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return () => vid.removeEventListener('loadedmetadata', handleLoadedMetadata);
+  }, [open, currentIndex, current?.video_url, current?.clip_start, hasTimeRange, isPlaying, current]);
 
   // Enforce clip boundaries, update progress, auto-advance
   useEffect(() => {
@@ -199,12 +213,10 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={videoRef}
-            src={current.video_url}
-            preload="auto"
+            preload={hasTimeRange ? "metadata" : "auto"}
             crossOrigin="anonymous"
             className="w-full h-full object-contain cursor-pointer"
             onClick={togglePlayPause}
-            onCanPlay={(e) => { if (isPlaying) e.currentTarget.play().catch(() => {}); }}
             onEnded={handleVideoEnd}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}

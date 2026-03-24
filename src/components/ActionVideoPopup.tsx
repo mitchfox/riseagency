@@ -24,29 +24,50 @@ export const ActionVideoPopup = ({
   clipEnd,
 }: ActionVideoPopupProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loadedSourceRef = useRef<string | null>(null);
   const hasTimeRange = clipStart != null && clipEnd != null;
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Seek to clip start when video is ready
+  // Load source once and seek before playback starts
   useEffect(() => {
-    if (!open || !videoRef.current) return;
-    const vid = videoRef.current;
+    if (!open || !videoRef.current || !videoUrl) return;
 
-    const handleLoaded = () => {
+    const vid = videoRef.current;
+    const targetStart = hasTimeRange ? clipStart : 0;
+
+    const applyPlaybackWindow = () => {
       if (hasTimeRange) {
-        vid.currentTime = clipStart;
+        vid.currentTime = targetStart;
+      } else if (vid.currentTime !== 0) {
+        vid.currentTime = 0;
+      }
+
+      if (isPlaying) {
+        vid.play().catch(() => {});
       }
     };
 
-    vid.addEventListener('loadedmetadata', handleLoaded);
-    if (vid.readyState >= 1 && hasTimeRange) {
-      vid.currentTime = clipStart;
+    const handleLoadedMetadata = () => {
+      applyPlaybackWindow();
+    };
+
+    if (loadedSourceRef.current !== videoUrl) {
+      loadedSourceRef.current = videoUrl;
+      vid.pause();
+      vid.src = videoUrl;
+      vid.load();
     }
 
-    return () => vid.removeEventListener('loadedmetadata', handleLoaded);
-  }, [open, videoUrl, clipStart, hasTimeRange]);
+    if (vid.readyState >= 1) {
+      applyPlaybackWindow();
+      return;
+    }
+
+    vid.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return () => vid.removeEventListener('loadedmetadata', handleLoadedMetadata);
+  }, [open, videoUrl, clipStart, hasTimeRange, isPlaying]);
 
   // Enforce clip boundaries and update progress
   useEffect(() => {
@@ -141,15 +162,12 @@ export const ActionVideoPopup = ({
           )}
           <video
             ref={videoRef}
-            key={videoUrl}
-            src={videoUrl}
             className="w-full max-h-[80vh] object-contain cursor-pointer"
-            preload="auto"
+            preload={hasTimeRange ? "metadata" : "auto"}
             crossOrigin="anonymous"
             muted
             playsInline
             onClick={togglePlayPause}
-            onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             controls={!hasTimeRange}
