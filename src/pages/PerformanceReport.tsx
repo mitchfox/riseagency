@@ -106,6 +106,8 @@ const PerformanceReport = () => {
   // Video/player states
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>("");
+  const [selectedClipStart, setSelectedClipStart] = useState<number | null>(null);
+  const [selectedClipEnd, setSelectedClipEnd] = useState<number | null>(null);
   const [showR90Flow, setShowR90Flow] = useState(false);
   const [showR90Info, setShowR90Info] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
