@@ -41,6 +41,8 @@ interface PerformanceAction {
   action_description: string;
   notes: string | null;
   video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
   zone?: number | null;
   zone_details?: any | null;
 }
