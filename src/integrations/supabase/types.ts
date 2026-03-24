@@ -2367,7 +2367,9 @@ export type Database = {
           action_type: string | null
           analysis_id: string
           clip_annotations: Json | null
+          clip_end: number | null
           clip_id: string | null
+          clip_start: number | null
           created_at: string | null
           id: string
           is_successful: boolean | null
@@ -2387,7 +2389,9 @@ export type Database = {
           action_type?: string | null
           analysis_id: string
           clip_annotations?: Json | null
+          clip_end?: number | null
           clip_id?: string | null
+          clip_start?: number | null
           created_at?: string | null
           id?: string
           is_successful?: boolean | null
@@ -2407,7 +2411,9 @@ export type Database = {
           action_type?: string | null
           analysis_id?: string
           clip_annotations?: Json | null
+          clip_end?: number | null
           clip_id?: string | null
+          clip_start?: number | null
           created_at?: string | null
           id?: string
           is_successful?: boolean | null
