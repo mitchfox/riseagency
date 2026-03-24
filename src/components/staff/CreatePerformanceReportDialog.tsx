@@ -116,6 +116,8 @@ interface PerformanceAction {
   action_description: string;
   notes: string;
   video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
   recorded_stat?: RecordedStat | RecordedStat[] | null;
   zone?: number | null;
   zone_details?: ZonePoint[] | null;
@@ -873,7 +875,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("*")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content")
         .eq("id", analysisId)
         .single();
 
@@ -1139,7 +1141,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch performance actions
       const { data: actionsData, error: actionsError } = await supabase
         .from("performance_report_actions")
-        .select("*")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
@@ -1155,6 +1157,8 @@ export const CreatePerformanceReportDialog = ({
             action_description: action.action_description || "",
             notes: action.notes || "",
             video_url: action.video_url || null,
+            clip_start: (action as any).clip_start ?? null,
+            clip_end: (action as any).clip_end ?? null,
             recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
@@ -1167,6 +1171,10 @@ export const CreatePerformanceReportDialog = ({
     } catch (error: any) {
       console.error("Error fetching existing data:", error);
       toast.error("Failed to load performance report data");
+      // Ensure we don't leave user stuck on spinner
+      setLoadingData(false);
+      initialLoadDoneRef.current = true;
+      return;
     } finally {
       setLoadingData(false);
       initialLoadDoneRef.current = true;
@@ -1451,18 +1459,22 @@ export const CreatePerformanceReportDialog = ({
 
         if (analysisError) throw analysisError;
 
-        // Fetch existing actions to preserve video_url before deleting
+        // Fetch existing actions to preserve video_url and clip timing before deleting
         const { data: existingActions } = await supabase
           .from("performance_report_actions")
-          .select("action_number, video_url")
+          .select("action_number, video_url, clip_start, clip_end")
           .eq("analysis_id", analysisId);
         
-        // Create a map of action_number to video_url
-        const existingVideoUrls = new Map<number, string | null>();
+        // Create a map of action_number to video data
+        const existingVideoData = new Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }>();
         if (existingActions) {
           existingActions.forEach(a => {
             if (a.video_url) {
-              existingVideoUrls.set(a.action_number, a.video_url);
+              existingVideoData.set(a.action_number, {
+                video_url: a.video_url,
+                clip_start: (a as any).clip_start ?? null,
+                clip_end: (a as any).clip_end ?? null,
+              });
             }
           });
         }
@@ -1476,7 +1488,7 @@ export const CreatePerformanceReportDialog = ({
         if (deleteError) throw deleteError;
         
         // Store the map for use when inserting
-        (window as any).__preservedVideoUrls = existingVideoUrls;
+        (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
         const { data: existingAnalysis } = await supabase
@@ -1524,28 +1536,32 @@ export const CreatePerformanceReportDialog = ({
       }
 
       // Insert performance actions
-      // Retrieve preserved video URLs if in edit mode
-      const preservedVideoUrls = (window as any).__preservedVideoUrls as Map<number, string | null> | undefined;
+      // Retrieve preserved video data if in edit mode
+      const preservedVideoData = (window as any).__preservedVideoData as Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }> | undefined;
       
       const actionsToInsert = actions
         .filter(a => a.action_number && (a.minute || a.action_score || a.action_type || a.action_description || a.notes || a.video_url))
-        .map(a => ({
-          analysis_id: analysisIdToUse,
-          action_number: a.action_number,
-          minute: a.minute ? parseFloat(a.minute) : null,
-          action_score: a.action_score ? parseFloat(a.action_score) : null,
-          action_type: a.action_type ? canonicalActionType(a.action_type) : null,
-          action_description: a.action_description?.trim() || null,
-          notes: a.notes?.trim() || null,
-          // Preserve video_url: use the one from the action state, or fall back to preserved from DB
-          video_url: a.video_url || preservedVideoUrls?.get(a.action_number) || null,
-          recorded_stat: (a.recorded_stat || null) as any,
-          zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
-          zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
-        }));
+        .map(a => {
+          const preserved = preservedVideoData?.get(a.action_number);
+          return {
+            analysis_id: analysisIdToUse,
+            action_number: a.action_number,
+            minute: a.minute ? parseFloat(a.minute) : null,
+            action_score: a.action_score ? parseFloat(a.action_score) : null,
+            action_type: a.action_type ? canonicalActionType(a.action_type) : null,
+            action_description: a.action_description?.trim() || null,
+            notes: a.notes?.trim() || null,
+            video_url: a.video_url || preserved?.video_url || null,
+            clip_start: a.clip_start ?? preserved?.clip_start ?? null,
+            clip_end: a.clip_end ?? preserved?.clip_end ?? null,
+            recorded_stat: (a.recorded_stat || null) as any,
+            zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
+            zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
+          };
+        });
       
       // Clean up the temporary storage
-      delete (window as any).__preservedVideoUrls;
+      delete (window as any).__preservedVideoData;
 
       if (actionsToInsert.length > 0) {
         const { data: insertedActions, error: actionsError } = await supabase
