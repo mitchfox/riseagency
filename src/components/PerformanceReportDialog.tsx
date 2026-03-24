@@ -588,6 +588,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           video_url: translated.video_url!,
           minute: translated.minute,
           notes: translated.notes,
+          clip_start: (action as any).clip_start,
+          clip_end: (action as any).clip_end,
         };
       });
 
