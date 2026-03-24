@@ -944,6 +944,8 @@ export const PerformanceActionsDialog = ({
                             onClick={() => {
                               setSelectedVideoUrl(action.video_url!);
                               setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
+                              setSelectedClipStart(action.clip_start ?? null);
+                              setSelectedClipEnd(action.clip_end ?? null);
                             }}
                             className="bg-amber-500/10 hover:bg-amber-500/20"
                             title="Play Clip"
