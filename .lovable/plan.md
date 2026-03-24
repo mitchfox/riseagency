@@ -1,63 +1,75 @@
 
-Goal: stop report clips behaving like full-match players, and make report edit load reliably.
+Goal: fix performance report clips so they play only the intended clip window in both Edit and View, and stop blaming export when the stored data is already correct.
 
-What I found
-- Your diagnosis is right: the report still uses separate player components that each own their own `<video>` and imperatively reassign `video.src` (`ActionVideoPopup`, `ClippedActionsPlayer`, `RankedActionsPlayer`). That architecture is exactly why playback leaks back to 0:00 and reloads unpredictably.
-- The current players only enforce clip windows after load. They do not make the shared video itself the source of truth, so the browser still briefly behaves like a normal full-match player.
-- The edit flow is still too heavy and fragile:
-  - `fetchExistingData()` blocks the editor while doing extra work
-  - `refreshActions()` still uses `select("*")`
-  - `refreshActions()` drops `clip_start` / `clip_end`, so timing can be lost after refreshes.
+What I verified
+- The export is not storing “everything as the full video” by mistake. It is intentionally storing:
+  - `video_url` = full match file
+  - `clip_start` / `clip_end` = exact clip boundaries
+- The latest Sandra Martins vs Luton report rows already contain valid timing data in the database.
+- Both report View and dialog View do fetch `clip_start` / `clip_end` and pass them into the popup/player components.
+- The actual problem is frontend playback:
+  1. `useSharedClipPlayer.ts` is race-prone: it sets `currentTime` before attaching the `seeked` listener, so playback can miss the seek lifecycle and fall back to normal full-video behavior.
+  2. The “shared player” is not truly shared at report level. `ActionVideoPopup`, `ClippedActionsPlayer`, and `RankedActionsPlayer` each create their own `useSharedClipPlayer()` instance, so there is still no single source of truth across the report.
+  3. Edit “working” vs View “not working” is because they are using different viewer paths/components and timing behavior, not because export data differs.
 
 Implementation plan
 
-1. Replace per-component playback with a shared report clip player
-- Create one shared report video controller at the report-view level and one at the report-dialog level.
-- Mount exactly one reusable `<video>` element per viewer session for report clip playback.
-- Keep one loaded source per match video URL and let actions call a shared `playClip({ videoUrl, clipStart, clipEnd, ... })` function instead of owning their own video element.
-- For reports containing a single full-match URL across many actions, this means load once, then seek only.
+1. Fix the playback race in the shared clip hook
+- Refactor `src/hooks/useSharedClipPlayer.ts` so clip playback is deterministic:
+  - attach readiness/seek listeners before mutating `currentTime`
+  - wait for `loadedmetadata` / `seeked` correctly
+  - only call `play()` after the seek is confirmed
+- Add hard guards for invalid clip windows (`clip_end <= clip_start`) and fail visibly instead of playing full match.
 
-2. Convert clip UIs into controllers, not video owners
-- Refactor `ActionVideoPopup`, `ClippedActionsPlayer`, and `RankedActionsPlayer` so they become UI shells around the shared player state instead of each assigning `vid.src`.
-- Remove repeated `video.src` assignment logic from those components.
-- If a clip belongs to the currently loaded source, only:
-  - pause
-  - seek to `clip_start`
-  - play
-  - stop at `clip_end`
-- If the source changes, swap once in the shared parent, then reuse again for all clips on that source.
-
-3. Enforce true clip-only playback
-- Keep native controls off for clipped playback everywhere.
-- Clamp seeking at the shared-player level, not separately in three components.
-- Only expose a custom progress bar based on clip duration, never the full match timeline.
-- Add a strict stop/reset rule at `clip_end` so the user cannot drift before or after the clip window.
-
-4. Fix the edit loader and preserve timing metadata
-- Refactor `fetchExistingData()` so only the core report row + action list block the editor.
-- Fetch those with narrow selects in parallel, and move non-essential fixture/stat lookups out of the blocking path.
-- Update `refreshActions()` to select explicit columns and preserve `clip_start` / `clip_end`.
-- Add a fail-open error state so edit mode cannot sit on a permanent spinner.
-
-5. Reduce query and player duplication across report views
-- Reuse the same shared-player approach in both:
+2. Make the report actually use one shared player per viewer
+- Lift the shared player instance up into:
   - `src/pages/PerformanceReport.tsx`
   - `src/components/PerformanceReportDialog.tsx`
-- Keep action queries narrow everywhere actions are loaded for playback/editing.
+- Pass the player/controller into:
+  - `src/components/ActionVideoPopup.tsx`
+  - `src/components/ClippedActionsPlayer.tsx`
+  - `src/components/report/RankedActionsPlayer.tsx`
+- Remove per-component `useSharedClipPlayer()` creation so all clip actions in one report session control the same loaded video instance.
 
-6. Verification
-- Test the known broken Sandra Martins vs Luton case specifically.
-- Confirm:
-  - edit screen opens without endless spinner
-  - single clip opens at the correct start
-  - all-clips player advances clip to clip without reloading the full match each time
-  - ranked/noted player uses the same loaded source
-  - no clip ever exposes the full match timeline or starts from kickoff unless it truly has no clip window
+3. Enforce clip-only viewing instead of full-match behavior
+- Keep the full match URL under the hood, but lock playback to the selected clip:
+  - seek to `clip_start`
+  - stop at `clip_end`
+  - prevent playback from starting at 0:00
+  - keep native controls off for clipped playback
+  - expose only custom clip progress UI
+- If no valid clip window exists, show a clear unavailable state instead of silently playing the full match.
+
+4. Unify Edit and View behavior
+- Ensure single-action popup, all-clips player, and ranked/noted player all use the same clip-control logic in both:
+  - public report page
+  - report dialog / portal view
+- This removes the current “only opens on edit, never on view” inconsistency.
+
+5. Keep timing preservation intact in the editor
+- Retain the recent fixes in `src/components/staff/CreatePerformanceReportDialog.tsx` that preserve `clip_start` / `clip_end`.
+- Audit refresh/save paths once more so editing a report cannot strip timing metadata and reintroduce fallback behavior.
+
+6. Verify against the exact broken case
+- Test the Sandra Martins vs Luton report specifically in:
+  - Edit
+  - View report page
+  - Report dialog / portal view
+- Confirm each clip:
+  - opens in both edit and view
+  - starts at its stored `clip_start`
+  - stops at `clip_end`
+  - never exposes kickoff or the full match timeline
 
 Technical touchpoints
+- `src/hooks/useSharedClipPlayer.ts`
 - `src/pages/PerformanceReport.tsx`
 - `src/components/PerformanceReportDialog.tsx`
 - `src/components/ActionVideoPopup.tsx`
 - `src/components/ClippedActionsPlayer.tsx`
 - `src/components/report/RankedActionsPlayer.tsx`
 - `src/components/staff/CreatePerformanceReportDialog.tsx`
+
+Key conclusion
+- I do not plan to change the export format first, because the stored report data is already correct.
+- The proper fix is to repair playback architecture so the full match file is reused once but only the clip window is ever shown.
