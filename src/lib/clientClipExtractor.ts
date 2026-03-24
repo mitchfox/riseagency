@@ -48,8 +48,18 @@ export async function trimAndUploadClip(
     console.log("Server trim unavailable, using client encoder:", err);
   }
 
-  // ── 2. Client-side canvas fallback ──
-  return clientSideTrim(sourceUrl, clipId, start, end, onProgress);
+  // ── 2. Client-side canvas fallback with retry ──
+  let lastErr: any;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) onProgress?.(`Retrying (attempt ${attempt + 1})...`);
+      return await clientSideTrim(sourceUrl, clipId, start, end, onProgress);
+    } catch (err) {
+      lastErr = err;
+      console.warn(`Client trim attempt ${attempt + 1} failed:`, err);
+    }
+  }
+  throw lastErr;
 }
 
 /**
@@ -170,9 +180,10 @@ async function _doClientSideTrim(
     video.onseeked = () => resolve();
   });
 
-  // Start recording and play
+  // Start recording and play at accelerated speed for faster capture
   onProgress?.("Recording clip...");
   recorder.start();
+  video.playbackRate = 4.0;
   video.play();
 
   // Wait until end time using requestVideoFrameCallback if available, else rAF
