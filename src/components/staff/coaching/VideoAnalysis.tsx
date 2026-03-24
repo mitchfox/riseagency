@@ -416,20 +416,30 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   /** Lazy-load annotations and clips for a single video when selected */
+  const [detailLoading, setDetailLoading] = useState(false);
   const loadVideoDetail = async (videoId: string) => {
-    const { data } = await supabase
-      .from("video_analyses")
-      .select("annotations, clips")
-      .eq("id", videoId)
-      .single();
-    if (data) {
-      const annotations = (data.annotations as any as Annotation[]) || [];
-      const clips = (data.clips as any as Clip[]) || [];
-      const updater = (prev: VideoAnalysisEntry[]) =>
-        prev.map(v => v.id === videoId ? { ...v, annotations, clips } : v);
-      setVideos(updater);
-      // Also update selectedVideo if it matches
-      setSelectedVideo(prev => prev?.id === videoId ? { ...prev, annotations, clips } : prev);
+    setDetailLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("video_analyses")
+        .select("annotations, clips")
+        .eq("id", videoId)
+        .single();
+      if (error) {
+        console.error("Failed to load video detail:", error);
+        toast.error("Failed to load video data");
+        return;
+      }
+      if (data) {
+        const annotations = (data.annotations as any as Annotation[]) || [];
+        const clips = (data.clips as any as Clip[]) || [];
+        const updater = (prev: VideoAnalysisEntry[]) =>
+          prev.map(v => v.id === videoId ? { ...v, annotations, clips } : v);
+        setVideos(updater);
+        setSelectedVideo(prev => prev?.id === videoId ? { ...prev, annotations, clips } : prev);
+      }
+    } finally {
+      setDetailLoading(false);
     }
   };
 

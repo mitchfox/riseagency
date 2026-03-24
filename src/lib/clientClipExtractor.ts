@@ -170,9 +170,10 @@ async function _doClientSideTrim(
     video.onseeked = () => resolve();
   });
 
-  // Start recording and play
+  // Start recording and play at accelerated speed for faster capture
   onProgress?.("Recording clip...");
   recorder.start();
+  video.playbackRate = 4.0;
   video.play();
 
   // Wait until end time using requestVideoFrameCallback if available, else rAF
