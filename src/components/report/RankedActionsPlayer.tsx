@@ -72,18 +72,15 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   useEffect(() => {
     if (!open || !current) return;
 
-    if (!hasTimeRange) {
-      toast.error("This clip has no valid timing window, so playback was blocked.");
-      onOpenChange(false);
-      return;
+    if (hasTimeRange) {
+      playClipFn({
+        videoUrl: current.video_url,
+        clipStart: current.clip_start!,
+        clipEnd: current.clip_end!,
+      });
     }
-
-    playClipFn({
-      videoUrl: current.video_url,
-      clipStart: current.clip_start!,
-      clipEnd: current.clip_end!,
-    });
-  }, [open, current, hasTimeRange, onOpenChange, playClipFn]);
+    // Standalone clips handled by their own video element
+  }, [open, current, hasTimeRange, playClipFn]);
 
   useEffect(() => {
     if (!open || !clipError) return;
