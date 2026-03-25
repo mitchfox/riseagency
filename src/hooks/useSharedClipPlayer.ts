@@ -10,6 +10,7 @@ export interface SharedClipPlayerState {
   videoRef: React.RefObject<HTMLVideoElement>;
   isPlaying: boolean;
   isClipReady: boolean;
+  clipError: string | null;
   progress: number;
   currentClip: ClipWindow | null;
   playClip: (clip: ClipWindow) => void;
@@ -27,9 +28,12 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
   const loadedSourceRef = useRef<string | null>(null);
   const currentClipRef = useRef<ClipWindow | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const seekTimeoutRef = useRef<number | null>(null);
+  const playRequestRef = useRef(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isClipReady, setIsClipReady] = useState(false);
+  const [clipError, setClipError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentClip, setCurrentClip] = useState<ClipWindow | null>(null);
 
@@ -37,8 +41,39 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
     };
   }, []);
+
+  const clearSeekTimeout = useCallback(() => {
+    if (seekTimeoutRef.current) {
+      clearTimeout(seekTimeoutRef.current);
+      seekTimeoutRef.current = null;
+    }
+  }, []);
+
+  const failClosed = useCallback((message: string) => {
+    const vid = videoRef.current;
+    if (vid) {
+      vid.pause();
+      vid.removeAttribute('src');
+      vid.load();
+    }
+
+    loadedSourceRef.current = null;
+    currentClipRef.current = null;
+    setCurrentClip(null);
+    setIsPlaying(false);
+    setIsClipReady(false);
+    setProgress(0);
+    setClipError(message);
+    clearSeekTimeout();
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, [clearSeekTimeout]);
 
   const startBoundaryEnforcement = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -50,6 +85,11 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
 
       const { clipStart, clipEnd } = clip;
       const duration = clipEnd - clipStart;
+
+      if (vid.currentTime < clipStart - 0.35 || vid.currentTime > clipEnd + 0.35) {
+        failClosed('Clip unavailable. Full match playback has been blocked.');
+        return;
+      }
 
       if (vid.currentTime >= clipEnd) {
         vid.pause();
@@ -66,15 +106,17 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
 
       setProgress(Math.min(1, (vid.currentTime - clipStart) / duration));
     }, 100);
-  }, []);
+  }, [failClosed]);
 
   const playClip = useCallback((clip: ClipWindow) => {
     const vid = videoRef.current;
     if (!vid) return;
+    const requestId = ++playRequestRef.current;
 
     // Guard against invalid clip windows
     if (!clip.videoUrl || clip.clipEnd <= clip.clipStart || clip.clipStart < 0) {
       console.warn('Invalid clip window:', clip);
+      failClosed('Clip unavailable. Full match playback has been blocked.');
       return;
     }
 
@@ -82,31 +124,59 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     setCurrentClip(clip);
     setProgress(0);
     setIsClipReady(false);
+    setClipError(null);
+    clearSeekTimeout();
 
     // Pause first — always
     vid.pause();
 
-    const seekAndPlay = () => {
-      const onSeeked = () => {
-        const activeClip = currentClipRef.current;
-        if (!activeClip) return;
+    const verifyAndPlay = () => {
+      if (playRequestRef.current !== requestId) return;
 
-        if (vid.currentTime < activeClip.clipStart || vid.currentTime > activeClip.clipEnd) {
-          setIsClipReady(false);
+      const activeClip = currentClipRef.current;
+      if (!activeClip) {
+        failClosed('Clip unavailable. Full match playback has been blocked.');
+        return;
+      }
+
+      const landedInsideClip =
+        vid.currentTime >= activeClip.clipStart - 0.35 &&
+        vid.currentTime <= activeClip.clipEnd + 0.35;
+
+      if (!landedInsideClip) {
+        failClosed('Clip unavailable. Full match playback has been blocked.');
+        return;
+      }
+
+      setIsClipReady(true);
+      setClipError(null);
+      vid.play().then(() => {
+        if (playRequestRef.current !== requestId) {
+          vid.pause();
           return;
         }
-
-        setIsClipReady(true);
-        vid.play().catch(() => {});
         setIsPlaying(true);
         startBoundaryEnforcement();
+      }).catch(() => {
+        failClosed('Clip unavailable. Full match playback has been blocked.');
+      });
+    };
+
+    const seekAndPlay = () => {
+      const onSeeked = () => {
+        clearSeekTimeout();
+        verifyAndPlay();
       };
 
-      // CRITICAL: attach listener BEFORE setting currentTime
-      // If currentTime is already at clipStart, seeked won't fire — handle that
+      seekTimeoutRef.current = window.setTimeout(() => {
+        if (playRequestRef.current === requestId) {
+          failClosed('Clip unavailable. Full match playback has been blocked.');
+        }
+      }, 4000);
+
       if (Math.abs(vid.currentTime - clip.clipStart) < 0.05) {
-        // Already at the right position, just play
-        onSeeked();
+        clearSeekTimeout();
+        verifyAndPlay();
       } else {
         vid.addEventListener('seeked', onSeeked, { once: true });
         vid.currentTime = clip.clipStart;
@@ -129,7 +199,7 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
 
     vid.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
     vid.load();
-  }, [startBoundaryEnforcement]);
+  }, [clearSeekTimeout, failClosed, startBoundaryEnforcement]);
 
   const togglePlayPause = useCallback(() => {
     const vid = videoRef.current;
@@ -141,15 +211,18 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
       if (vid.currentTime >= clip.clipEnd || vid.currentTime < clip.clipStart) {
         vid.currentTime = clip.clipStart;
       }
-      vid.play().catch(() => {});
-      setIsPlaying(true);
-      startBoundaryEnforcement();
+      vid.play().then(() => {
+        setIsPlaying(true);
+        startBoundaryEnforcement();
+      }).catch(() => {
+        failClosed('Clip unavailable. Full match playback has been blocked.');
+      });
     } else {
       vid.pause();
       setIsPlaying(false);
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
-  }, [startBoundaryEnforcement]);
+  }, [failClosed, startBoundaryEnforcement]);
 
   const seekToRatio = useCallback((ratio: number) => {
     const vid = videoRef.current;
@@ -166,22 +239,25 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     const vid = videoRef.current;
     if (vid) vid.pause();
     if (intervalRef.current) clearInterval(intervalRef.current);
+    clearSeekTimeout();
     setIsPlaying(false);
     setIsClipReady(false);
+    setClipError(null);
     setProgress(0);
     currentClipRef.current = null;
     setCurrentClip(null);
-  }, []);
+  }, [clearSeekTimeout]);
 
   return useMemo(() => ({
     videoRef,
     isPlaying,
     isClipReady,
+    clipError,
     progress,
     currentClip,
     playClip,
     togglePlayPause,
     seekToRatio,
     stop,
-  }), [isPlaying, isClipReady, progress, currentClip, playClip, togglePlayPause, seekToRatio, stop]);
+  }), [isPlaying, isClipReady, clipError, progress, currentClip, playClip, togglePlayPause, seekToRatio, stop]);
 };
