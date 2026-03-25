@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 
 export interface ClipWindow {
   videoUrl: string;
@@ -9,6 +9,7 @@ export interface ClipWindow {
 export interface SharedClipPlayerState {
   videoRef: React.RefObject<HTMLVideoElement>;
   isPlaying: boolean;
+  isClipReady: boolean;
   progress: number;
   currentClip: ClipWindow | null;
   playClip: (clip: ClipWindow) => void;
@@ -28,6 +29,7 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
   const intervalRef = useRef<number | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isClipReady, setIsClipReady] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentClip, setCurrentClip] = useState<ClipWindow | null>(null);
 
@@ -79,12 +81,22 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     currentClipRef.current = clip;
     setCurrentClip(clip);
     setProgress(0);
+    setIsClipReady(false);
 
     // Pause first — always
     vid.pause();
 
     const seekAndPlay = () => {
       const onSeeked = () => {
+        const activeClip = currentClipRef.current;
+        if (!activeClip) return;
+
+        if (vid.currentTime < activeClip.clipStart || vid.currentTime > activeClip.clipEnd) {
+          setIsClipReady(false);
+          return;
+        }
+
+        setIsClipReady(true);
         vid.play().catch(() => {});
         setIsPlaying(true);
         startBoundaryEnforcement();
@@ -155,19 +167,21 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     if (vid) vid.pause();
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsPlaying(false);
+    setIsClipReady(false);
     setProgress(0);
     currentClipRef.current = null;
     setCurrentClip(null);
   }, []);
 
-  return {
+  return useMemo(() => ({
     videoRef,
     isPlaying,
+    isClipReady,
     progress,
     currentClip,
     playClip,
     togglePlayPause,
     seekToRatio,
     stop,
-  };
+  }), [isPlaying, isClipReady, progress, currentClip, playClip, togglePlayPause, seekToRatio, stop]);
 };
