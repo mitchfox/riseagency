@@ -17,7 +17,6 @@ import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { HomepageVideoManager } from "./HomepageVideoManager";
 import { MarketingResources } from './marketing/MarketingResources';
-import { ScheduleManager } from './marketing/ScheduleManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GalleryItem {
@@ -71,7 +70,7 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
   const [editFocalPoint, setEditFocalPoint] = useState<string>('center');
 
   // Collapsible section states
-  const [openSections, setOpenSections] = useState<string[]>(["schedule"]);
+  const [openSections, setOpenSections] = useState<string[]>(["resources"]);
 
   useEffect(() => {
     fetchGalleryItems();
@@ -433,19 +432,6 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
         onValueChange={setOpenSections}
         className="space-y-3 sm:space-y-4"
       >
-        {/* SCHEDULE Section */}
-        <AccordionItem value="schedule" className="border rounded-lg">
-          <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              <span className="text-base sm:text-lg font-semibold">SCHEDULE</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
-            <ScheduleManager canManage={canManage} />
-          </AccordionContent>
-        </AccordionItem>
-
         {/* RESOURCES Section */}
         <AccordionItem value="resources" className="border rounded-lg">
           <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">

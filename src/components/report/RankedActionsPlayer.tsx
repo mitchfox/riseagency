@@ -80,6 +80,12 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     });
   }, [open, current, hasTimeRange, onOpenChange, player]);
 
+  useEffect(() => {
+    if (!open || !player.clipError) return;
+    toast.error(player.clipError);
+    onOpenChange(false);
+  }, [open, player.clipError, onOpenChange]);
+
   // Auto-advance when clip finishes
   useEffect(() => {
     if (!hasTimeRange) return;
@@ -162,7 +168,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             onPause={() => {}}
             controls={false}
           />
-          {!player.isClipReady && hasTimeRange && (
+          {!player.isClipReady && !player.clipError && hasTimeRange && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="flex items-center gap-2 text-sm text-white/80">
                 <Loader2 className="h-4 w-4 animate-spin" />
