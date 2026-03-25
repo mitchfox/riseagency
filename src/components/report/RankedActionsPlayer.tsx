@@ -42,12 +42,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const filteredClips = mode === "noted" ? clips.filter((clip) => clip.notes) : clips;
   const sortedClips = mode === "ranked"
     ? [...filteredClips]
-        .filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start)
+        .filter((clip) => !!clip.video_url)
         .sort((a, b) => b.action_score - a.action_score)
-    : sortReportActionsChronologically(filteredClips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start);
+    : sortReportActionsChronologically(filteredClips).filter((clip) => !!clip.video_url);
 
   const current = sortedClips[currentIndex];
   const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
+  const isStandaloneClip = !!current?.video_url && !hasTimeRange;
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
