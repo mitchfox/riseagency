@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, SkipBack, SkipForward, Play, Pause, Loader2 } from 'lucide-react';
@@ -46,11 +46,12 @@ export const ClippedActionsPlayer = ({
   const player = providedPlayer ?? localPlayer;
 
   const sortedClips = useMemo(
-    () => sortReportActionsChronologically(clips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start),
+    () => sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url),
     [clips]
   );
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
+  const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange;
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
@@ -74,18 +75,15 @@ export const ClippedActionsPlayer = ({
   useEffect(() => {
     if (!open || !currentClip) return;
 
-    if (!hasTimeRange) {
-      toast.error('This clip has no valid timing window, so playback was blocked.');
-      onOpenChange(false);
-      return;
+    if (hasTimeRange) {
+      playClipFn({
+        videoUrl: currentClip.video_url,
+        clipStart: currentClip.clip_start!,
+        clipEnd: currentClip.clip_end!,
+      });
     }
-
-    playClipFn({
-      videoUrl: currentClip.video_url,
-      clipStart: currentClip.clip_start!,
-      clipEnd: currentClip.clip_end!,
-    });
-  }, [open, currentClip, hasTimeRange, onOpenChange, playClipFn]);
+    // Standalone clips handled by their own video element
+  }, [open, currentClip, hasTimeRange, playClipFn]);
 
   useEffect(() => {
     if (!open || !clipError) return;
@@ -155,26 +153,49 @@ export const ClippedActionsPlayer = ({
 
         {/* Video — single shared element */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
-          <video
-            ref={player.videoRef}
-            className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
-            preload="metadata"
-            crossOrigin="anonymous"
-            muted
-            playsInline
-            onClick={player.togglePlayPause}
-            controls={false}
-          />
-          {!player.isClipReady && !player.clipError && hasTimeRange && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black">
-              <div className="flex items-center gap-2 text-sm text-white/80">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading clip…
-              </div>
-            </div>
+          {/* Standalone clip: simple video */}
+          {isStandaloneClip && (
+            <video
+              key={currentClip.id}
+              src={currentClip.video_url}
+              className="w-full h-full object-contain cursor-pointer"
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              playsInline
+              autoPlay
+              controls={false}
+              onClick={(e) => {
+                const vid = e.currentTarget;
+                vid.paused ? vid.play().catch(() => {}) : vid.pause();
+              }}
+            />
+          )}
+          {/* Clipped video: shared player */}
+          {hasTimeRange && (
+            <>
+              <video
+                ref={player.videoRef}
+                className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
+                preload="metadata"
+                crossOrigin="anonymous"
+                muted
+                playsInline
+                onClick={player.togglePlayPause}
+                controls={false}
+              />
+              {!player.isClipReady && !player.clipError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading clip…
+                  </div>
+                </div>
+              )}
+            </>
           )}
           {/* Description overlay */}
-          <div className={`absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%] transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
             <p>{currentClip.action_description}</p>
             {currentClip.notes && (
               <p className="text-[10px] text-risegold italic mt-1">📝 {currentClip.notes}</p>

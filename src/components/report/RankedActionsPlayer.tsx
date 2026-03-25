@@ -42,12 +42,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const filteredClips = mode === "noted" ? clips.filter((clip) => clip.notes) : clips;
   const sortedClips = mode === "ranked"
     ? [...filteredClips]
-        .filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start)
+        .filter((clip) => !!clip.video_url)
         .sort((a, b) => b.action_score - a.action_score)
-    : sortReportActionsChronologically(filteredClips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start);
+    : sortReportActionsChronologically(filteredClips).filter((clip) => !!clip.video_url);
 
   const current = sortedClips[currentIndex];
   const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
+  const isStandaloneClip = !!current?.video_url && !hasTimeRange;
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
@@ -71,18 +72,15 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   useEffect(() => {
     if (!open || !current) return;
 
-    if (!hasTimeRange) {
-      toast.error("This clip has no valid timing window, so playback was blocked.");
-      onOpenChange(false);
-      return;
+    if (hasTimeRange) {
+      playClipFn({
+        videoUrl: current.video_url,
+        clipStart: current.clip_start!,
+        clipEnd: current.clip_end!,
+      });
     }
-
-    playClipFn({
-      videoUrl: current.video_url,
-      clipStart: current.clip_start!,
-      clipEnd: current.clip_end!,
-    });
-  }, [open, current, hasTimeRange, onOpenChange, playClipFn]);
+    // Standalone clips handled by their own video element
+  }, [open, current, hasTimeRange, playClipFn]);
 
   useEffect(() => {
     if (!open || !clipError) return;
@@ -162,23 +160,44 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         </div>
 
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
-          <video
-            ref={player.videoRef}
-            preload="metadata"
-            crossOrigin="anonymous"
-            className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
-            onClick={player.togglePlayPause}
-            onPlay={() => {}}
-            onPause={() => {}}
-            controls={false}
-          />
-          {!player.isClipReady && !player.clipError && hasTimeRange && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black">
-              <div className="flex items-center gap-2 text-sm text-white/80">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading clip…
-              </div>
-            </div>
+          {/* Standalone clip: simple video */}
+          {isStandaloneClip && (
+            <video
+              key={current.id}
+              src={current.video_url}
+              className="w-full h-full object-contain cursor-pointer"
+              preload="auto"
+              crossOrigin="anonymous"
+              muted
+              playsInline
+              autoPlay
+              controls={false}
+              onClick={(e) => {
+                const vid = e.currentTarget;
+                vid.paused ? vid.play().catch(() => {}) : vid.pause();
+              }}
+            />
+          )}
+          {/* Clipped video: shared player */}
+          {hasTimeRange && (
+            <>
+              <video
+                ref={player.videoRef}
+                preload="metadata"
+                crossOrigin="anonymous"
+                className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
+                onClick={player.togglePlayPause}
+                controls={false}
+              />
+              {!player.isClipReady && !player.clipError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading clip…
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

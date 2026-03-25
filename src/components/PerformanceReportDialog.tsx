@@ -113,7 +113,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+    if (!action.video_url) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
@@ -597,8 +597,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     return true;
   });
 
-  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
-  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+  const reportClips = actions.filter((action) => !!action.video_url);
+  const filteredReportClips = filteredActions.filter((action) => !!action.video_url);
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 

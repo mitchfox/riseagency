@@ -79,6 +79,9 @@ interface AnalysisDetails {
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
   clipStart != null && clipEnd != null && clipEnd > clipStart;
 
+const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
+  !!action.video_url;
+
 const PerformanceReport = () => {
   const { slug } = useParams();
   const [loading, setLoading] = useState(true);
@@ -133,7 +136,7 @@ const PerformanceReport = () => {
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+    if (!action.video_url) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
@@ -447,8 +450,8 @@ const PerformanceReport = () => {
     return true;
   });
 
-  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
-  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+  const reportClips = actions.filter((action) => hasPlayableVideo(action));
+  const filteredReportClips = filteredActions.filter((action) => hasPlayableVideo(action));
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
