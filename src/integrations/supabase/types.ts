@@ -1954,6 +1954,51 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_schedule_items: {
+        Row: {
+          created_at: string | null
+          day_of_week: string
+          display_order: number | null
+          id: string
+          linked_draft_id: string | null
+          notes: string | null
+          owner_id: string | null
+          platform_format: string | null
+          post_type: string
+          scheduled_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: string
+          display_order?: number | null
+          id?: string
+          linked_draft_id?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          platform_format?: string | null
+          post_type: string
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: string
+          display_order?: number | null
+          id?: string
+          linked_draft_id?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          platform_format?: string | null
+          post_type?: string
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       marketing_templates: {
         Row: {
           created_at: string
