@@ -75,18 +75,15 @@ export const ClippedActionsPlayer = ({
   useEffect(() => {
     if (!open || !currentClip) return;
 
-    if (!hasTimeRange) {
-      toast.error('This clip has no valid timing window, so playback was blocked.');
-      onOpenChange(false);
-      return;
+    if (hasTimeRange) {
+      playClipFn({
+        videoUrl: currentClip.video_url,
+        clipStart: currentClip.clip_start!,
+        clipEnd: currentClip.clip_end!,
+      });
     }
-
-    playClipFn({
-      videoUrl: currentClip.video_url,
-      clipStart: currentClip.clip_start!,
-      clipEnd: currentClip.clip_end!,
-    });
-  }, [open, currentClip, hasTimeRange, onOpenChange, playClipFn]);
+    // Standalone clips handled by their own video element
+  }, [open, currentClip, hasTimeRange, playClipFn]);
 
   useEffect(() => {
     if (!open || !clipError) return;
