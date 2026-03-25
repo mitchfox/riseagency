@@ -255,37 +255,6 @@ export const PostContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Content Schedule Calendar - Using the real ScheduleManager */}
-      <Card className="border-pink-500/20">
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Instagram className="w-5 h-5 text-pink-500" />
-                Content Schedule
-              </CardTitle>
-              <CardDescription>
-                Plan and schedule your content posts
-              </CardDescription>
-            </div>
-            {/* Quick Stats */}
-            <div className="flex gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                <p className="text-lg font-bold text-orange-500">{readyToPostPosts.length}</p>
-                <p className="text-[10px] text-muted-foreground">Ready</p>
-              </div>
-              <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
-                <p className="text-lg font-bold text-green-500">{postedPosts.length}</p>
-                <p className="text-[10px] text-muted-foreground">Posted</p>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-3 sm:px-6">
-          <ScheduleManager canManage={true} compact={true} />
-        </CardContent>
-      </Card>
-
       {/* Ready to Post */}
       <Collapsible open={readyToPostOpen} onOpenChange={setReadyToPostOpen}>
         <Card>
