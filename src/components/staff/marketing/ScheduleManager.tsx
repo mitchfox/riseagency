@@ -191,7 +191,7 @@ const ScheduleCard = ({
           </Badge>
           <div className="flex items-center gap-1">
             {item.linked_draft_id && (
-              <Link2 className="w-3 h-3 text-primary/70" title="Linked to draft" />
+              <Link2 className="w-3 h-3 text-primary/70" />
             )}
             {canManage && (
               <Button
