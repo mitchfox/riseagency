@@ -79,6 +79,9 @@ interface AnalysisDetails {
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
   clipStart != null && clipEnd != null && clipEnd > clipStart;
 
+const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
+  !!action.video_url;
+
 const PerformanceReport = () => {
   const { slug } = useParams();
   const [loading, setLoading] = useState(true);
