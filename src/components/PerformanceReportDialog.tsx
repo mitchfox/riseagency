@@ -1298,6 +1298,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               clip_end: a.clip_end,
             };
           })}
+        player={sharedClipPlayer}
       />
 
       {/* Zone Clips Player */}
@@ -1307,6 +1308,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         clips={zonePlayerClips}
         language={reportLanguage}
         title={zonePlayerTitle}
+        player={sharedClipPlayer}
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
