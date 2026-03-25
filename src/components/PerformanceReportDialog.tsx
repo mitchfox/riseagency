@@ -113,7 +113,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+    if (!action.video_url) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
