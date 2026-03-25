@@ -1960,6 +1960,7 @@ export type Database = {
           day_of_week: string
           display_order: number | null
           id: string
+          image_url: string | null
           linked_draft_id: string | null
           notes: string | null
           owner_id: string | null
@@ -1974,6 +1975,7 @@ export type Database = {
           day_of_week: string
           display_order?: number | null
           id?: string
+          image_url?: string | null
           linked_draft_id?: string | null
           notes?: string | null
           owner_id?: string | null
@@ -1988,6 +1990,7 @@ export type Database = {
           day_of_week?: string
           display_order?: number | null
           id?: string
+          image_url?: string | null
           linked_draft_id?: string | null
           notes?: string | null
           owner_id?: string | null
