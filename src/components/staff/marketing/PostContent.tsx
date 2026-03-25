@@ -10,8 +10,6 @@ import { Archive, Copy, Image, ExternalLink, Calendar, Download, ChevronDown, Se
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { format } from "date-fns";
-import { ScheduleManager } from "./ScheduleManager";
-import '../marketing-calendar.css';
 
 interface BlogPost {
   id: string;
