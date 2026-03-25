@@ -450,8 +450,8 @@ const PerformanceReport = () => {
     return true;
   });
 
-  const reportClips = actions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
-  const filteredReportClips = filteredActions.filter((action) => action.video_url && hasPlayableClipWindow(action.clip_start, action.clip_end));
+  const reportClips = actions.filter((action) => hasPlayableVideo(action));
+  const filteredReportClips = filteredActions.filter((action) => hasPlayableVideo(action));
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
