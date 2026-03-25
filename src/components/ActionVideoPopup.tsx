@@ -41,6 +41,14 @@ export const ActionVideoPopup = ({
     player.stop();
   }, [open, hasValidTimeRange, videoUrl, onOpenChange, player]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (!player.clipError) return;
+
+    toast.error(player.clipError);
+    onOpenChange(false);
+  }, [open, player.clipError, onOpenChange]);
+
   // When dialog opens or clip changes, play the clip
   useEffect(() => {
     if (!open || !videoUrl) return;
@@ -106,7 +114,7 @@ export const ActionVideoPopup = ({
             controls={false}
             loop={false}
           />
-          {!player.isClipReady && hasValidTimeRange && (
+          {!player.isClipReady && !player.clipError && hasValidTimeRange && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="flex items-center gap-2 text-sm text-white/80">
                 <Loader2 className="h-4 w-4 animate-spin" />
