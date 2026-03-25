@@ -49,6 +49,10 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const current = sortedClips[currentIndex];
   const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
 
+  const playClipFn = player.playClip;
+  const stopFn = player.stop;
+  const clipError = player.clipError;
+
   // Reset on open/mode change
   useEffect(() => {
     if (open) {
@@ -59,9 +63,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
       }
       setCurrentIndex(0);
     } else {
-      player.stop();
+      stopFn();
     }
-  }, [open, mode, onOpenChange, player, sortedClips.length]);
+  }, [open, mode, onOpenChange, stopFn, sortedClips.length]);
 
   // Play current clip when index changes
   useEffect(() => {
@@ -73,18 +77,18 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
       return;
     }
 
-    player.playClip({
+    playClipFn({
       videoUrl: current.video_url,
       clipStart: current.clip_start!,
       clipEnd: current.clip_end!,
     });
-  }, [open, current, hasTimeRange, onOpenChange, player]);
+  }, [open, current, hasTimeRange, onOpenChange, playClipFn]);
 
   useEffect(() => {
-    if (!open || !player.clipError) return;
-    toast.error(player.clipError);
+    if (!open || !clipError) return;
+    toast.error(clipError);
     onOpenChange(false);
-  }, [open, player.clipError, onOpenChange]);
+  }, [open, clipError, onOpenChange]);
 
   // Auto-advance when clip finishes
   useEffect(() => {
