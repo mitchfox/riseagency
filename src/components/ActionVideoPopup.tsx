@@ -1,9 +1,9 @@
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause } from 'lucide-react';
+import { X, Play, Pause, Loader2 } from 'lucide-react';
 import { useRef, useEffect, useCallback } from 'react';
 import { t } from '@/lib/portalTranslations';
-import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
+import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
 
 interface ActionVideoPopupProps {
@@ -14,6 +14,7 @@ interface ActionVideoPopupProps {
   language?: string;
   clipStart?: number | null;
   clipEnd?: number | null;
+  player?: SharedClipPlayerState;
 }
 
 export const ActionVideoPopup = ({
@@ -24,8 +25,10 @@ export const ActionVideoPopup = ({
   language = 'en',
   clipStart,
   clipEnd,
+  player: providedPlayer,
 }: ActionVideoPopupProps) => {
-  const player = useSharedClipPlayer();
+  const localPlayer = useSharedClipPlayer();
+  const player = providedPlayer ?? localPlayer;
   const progressBarRef = useRef<HTMLDivElement>(null);
   const hasValidTimeRange = clipStart != null && clipEnd != null && clipEnd > clipStart;
 
@@ -94,7 +97,7 @@ export const ActionVideoPopup = ({
           )}
           <video
             ref={player.videoRef}
-            className="w-full max-h-[80vh] object-contain cursor-pointer"
+            className={`w-full max-h-[80vh] object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
             preload="metadata"
             crossOrigin="anonymous"
             muted
@@ -103,8 +106,16 @@ export const ActionVideoPopup = ({
             controls={false}
             loop={false}
           />
+          {!player.isClipReady && hasValidTimeRange && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading clip…
+              </div>
+            </div>
+          )}
           {/* Custom controls for clipped videos */}
-          {hasValidTimeRange && (
+          {hasValidTimeRange && player.isClipReady && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2">
               <div
                 ref={progressBarRef}

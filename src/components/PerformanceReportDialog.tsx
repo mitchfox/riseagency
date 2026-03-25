@@ -23,6 +23,7 @@ import { sortActionsByMinute } from "@/lib/actionSorting";
 import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
+import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -109,6 +110,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
+  const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
     if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
@@ -1225,6 +1227,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           language={reportLanguage}
           clipStart={selectedClipStart}
           clipEnd={selectedClipEnd}
+          player={sharedClipPlayer}
         />
       )}
 
@@ -1247,6 +1250,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               clip_end: a.clip_end,
             };
           })}
+        player={sharedClipPlayer}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -1270,6 +1274,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               clip_end: a.clip_end,
             };
           })}
+        player={sharedClipPlayer}
       />
 
       {/* Filtered Video Player */}

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2 } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
-import { useSharedClipPlayer } from '@/hooks/useSharedClipPlayer';
+import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
 
 interface ClipAction {
@@ -25,6 +25,7 @@ interface ClippedActionsPlayerProps {
   clips: ClipAction[];
   language?: string;
   title?: string;
+  player?: SharedClipPlayerState;
 }
 
 export const ClippedActionsPlayer = ({
@@ -33,6 +34,7 @@ export const ClippedActionsPlayer = ({
   clips,
   language = "en",
   title,
+  player: providedPlayer,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -40,7 +42,8 @@ export const ClippedActionsPlayer = ({
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
-  const player = useSharedClipPlayer();
+  const localPlayer = useSharedClipPlayer();
+  const player = providedPlayer ?? localPlayer;
 
   const sortedClips = useMemo(
     () => sortReportActionsChronologically(clips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start),
@@ -144,7 +147,7 @@ export const ClippedActionsPlayer = ({
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           <video
             ref={player.videoRef}
-            className="w-full h-full object-contain cursor-pointer"
+            className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
             preload="metadata"
             crossOrigin="anonymous"
             muted
@@ -152,8 +155,16 @@ export const ClippedActionsPlayer = ({
             onClick={player.togglePlayPause}
             controls={false}
           />
+          {!player.isClipReady && hasTimeRange && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading clip…
+              </div>
+            </div>
+          )}
           {/* Description overlay */}
-          <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
+          <div className={`absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%] transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}>
             <p>{currentClip.action_description}</p>
             {currentClip.notes && (
               <p className="text-[10px] text-risegold italic mt-1">📝 {currentClip.notes}</p>
@@ -162,7 +173,7 @@ export const ClippedActionsPlayer = ({
         </div>
 
         {/* Custom progress bar for clipped videos */}
-        {hasTimeRange && (
+        {hasTimeRange && player.isClipReady && (
           <div className="px-4 py-1 bg-black/90 shrink-0">
             <div
               ref={progressBarRef}

@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, ExternalLink, ChevronLeft, ChevronRight, Clock3, User, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
+import { addDays, format as formatDate, isSameDay, parseISO, startOfWeek } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../marketing-calendar.css';
 
@@ -74,6 +75,15 @@ interface CompletedPost {
   canva_link: string | null;
 }
 
+interface DraftContentPost {
+  id: string;
+  title: string;
+  canva_link: string | null;
+  workflow_status: string | null;
+  assigned_to?: string | null;
+  completed_by?: string | null;
+}
+
 interface ScheduleManagerProps {
   canManage: boolean;
   compact?: boolean;
@@ -85,11 +95,14 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
   const [templates, setTemplates] = useState<Template[]>([]);
   const [templateFolders, setTemplateFolders] = useState<TemplateFolder[]>([]);
   const [completedPosts, setCompletedPosts] = useState<CompletedPost[]>([]);
+  const [draftPosts, setDraftPosts] = useState<DraftContentPost[]>([]);
+  const [ownerNames, setOwnerNames] = useState<Record<string, string>>({});
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
-  const [templateSource, setTemplateSource] = useState<'folder' | 'completed'>('folder');
+  const [templateSource, setTemplateSource] = useState<'folder' | 'completed' | 'draft'>('folder');
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -108,6 +121,8 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
     fetchPosts();
     fetchTemplateFolders();
     fetchCompletedPosts();
+    fetchDraftPosts();
+    fetchOwners();
   }, []);
 
   // Fetch templates when selected folder changes
@@ -181,6 +196,41 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
     }
   };
 
+  const fetchDraftPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, canva_link, workflow_status, assigned_to, completed_by')
+        .neq('workflow_status', 'posted')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setDraftPosts((data || []) as DraftContentPost[]);
+    } catch (error) {
+      console.error('Failed to fetch draft posts:', error);
+    }
+  };
+
+  const fetchOwners = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name');
+
+      if (error) throw error;
+
+      const mapped = (data || []).reduce<Record<string, string>>((acc, profile: any) => {
+        if (profile.id) acc[profile.id] = profile.full_name || 'Team';
+        return acc;
+      }, {});
+
+      setOwnerNames(mapped);
+    } catch (error) {
+      console.error('Failed to fetch owners:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) return;
@@ -194,6 +244,9 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
       if (templateSource === 'folder') {
         const selectedTemplate = templates.find(t => t.id === form.template_id);
         canvaLink = selectedTemplate?.url || null;
+      } else if (templateSource === 'draft') {
+        const selectedDraft = draftPosts.find(p => p.id === form.template_id);
+        canvaLink = selectedDraft?.canva_link || null;
       } else {
         const selectedPost = completedPosts.find(p => p.id === form.template_id);
         canvaLink = selectedPost?.canva_link || null;
@@ -224,6 +277,7 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
       setSelectedFolderId('');
       setTemplateSource('folder');
       fetchPosts();
+      fetchDraftPosts();
     } catch (error) {
       console.error('Error scheduling post:', error);
       toast.error('Failed to schedule post');
@@ -314,6 +368,62 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
     }
   }, [canManage]);
 
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => addDays(currentWeekStart, index)),
+    [currentWeekStart]
+  );
+
+  const weeklyBoard = useMemo(
+    () => weekDays.map((day) => ({
+      day,
+      posts: posts
+        .filter((post) => isSameDay(parseISO(post.scheduled_date), day))
+        .sort((a, b) => (a.scheduled_time || '').localeCompare(b.scheduled_time || '')),
+    })),
+    [posts, weekDays]
+  );
+
+  const unscheduledDraftPosts = useMemo(
+    () => draftPosts.filter((draft) => !posts.some((post) => post.title.trim().toLowerCase() === draft.title.trim().toLowerCase())),
+    [draftPosts, posts]
+  );
+
+  const moveWeek = (direction: -1 | 1) => {
+    setCurrentWeekStart((prev) => addDays(prev, direction * 7));
+  };
+
+  const openScheduleForDay = (day: Date) => {
+    setForm((prev) => ({
+      ...prev,
+      scheduled_date: formatDate(day, 'yyyy-MM-dd'),
+    }));
+    setShowDialog(true);
+  };
+
+  const openDraftInSchedule = (draft: DraftContentPost) => {
+    setTemplateSource('draft');
+    setSelectedFolderId('');
+    setForm((prev) => ({
+      ...prev,
+      title: draft.title,
+      template_id: draft.id,
+      notes: prev.notes || `Linked to Content Creator: ${draft.workflow_status || 'draft'}`,
+    }));
+    setShowDialog(true);
+  };
+
+  const getOwnerLabel = (post: ScheduledPost) => {
+    if (!post.created_at) return 'Team';
+    return ownerNames[(post as any).created_by || ''] || 'Team';
+  };
+
+  const getPostStatusLabel = (post: ScheduledPost) => {
+    if (post.status === 'posted') return 'Posted';
+    if (post.status === 'cancelled') return 'Cancelled';
+    if (post.canva_link) return 'Ready to post';
+    return 'Planned';
+  };
+
   if (loading) {
     return (
       <Card>
@@ -343,21 +453,21 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
         </div>
         
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-4 text-xs">
+        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-blue-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-primary/70" />
             <span>Single Post</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-purple-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-accent" />
             <span>Series</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-green-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-secondary" />
             <span>Posted</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-red-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-muted-foreground/40" />
             <span>Cancelled</span>
           </div>
         </div>
@@ -380,57 +490,180 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Content Schedule</CardTitle>
-              <CardDescription>Plan and track your content calendar</CardDescription>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle>Schedule</CardTitle>
+                <CardDescription>Weekly content plan with clear post styles, timing, ownership and posting readiness.</CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => moveWeek(-1)}>
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  Previous week
+                </Button>
+                <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">
+                  {formatDate(weekDays[0], 'd MMM')} to {formatDate(weekDays[6], 'd MMM')}
+                </div>
+                <Button variant="outline" size="sm" onClick={() => moveWeek(1)}>
+                  Next week
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+                {canManage && (
+                  <Button onClick={() => setShowDialog(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add post
+                  </Button>
+                )}
+              </div>
             </div>
-            {canManage && (
-              <Button onClick={() => setShowDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Schedule Post
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className={`${isMobile ? 'h-[350px]' : 'h-[500px]'} bg-background rounded-lg`}>
-            <Calendar
-              localizer={localizer}
-              events={calendarEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-              views={['month', 'week', 'agenda']}
-              defaultView={isMobile ? "agenda" : "month"}
-              onSelectEvent={onSelectEvent}
-              eventPropGetter={eventPropGetter}
-            />
-          </div>
-          
-          {/* Legend */}
-          <div className="flex flex-wrap gap-3 mt-4 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-blue-500" />
-              <span>Single Post</span>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-4 xl:grid-cols-[1.25fr_3fr]">
+              <Card className="border-border bg-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Ready from Content Creator</CardTitle>
+                  <CardDescription>Tag unposted content into the weekly plan.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {unscheduledDraftPosts.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground">
+                      No unposted content waiting to be scheduled.
+                    </div>
+                  ) : (
+                    unscheduledDraftPosts.slice(0, 8).map((draft) => (
+                      <div key={draft.id} className="rounded-lg border border-border bg-background p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">{draft.title}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{draft.workflow_status || 'Draft'}</p>
+                          </div>
+                          <Badge variant={draft.canva_link ? 'default' : 'secondary'}>
+                            {draft.canva_link ? 'Ready' : 'In progress'}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          {canManage && (
+                            <Button size="sm" variant="outline" onClick={() => openDraftInSchedule(draft)}>
+                              <Link2 className="mr-2 h-3.5 w-3.5" />
+                              Tag into week
+                            </Button>
+                          )}
+                          {draft.canva_link && (
+                            <a href={draft.canva_link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                              Open asset
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="overflow-x-auto">
+                <div className="grid min-w-[980px] grid-cols-7 gap-3">
+                  {weeklyBoard.map(({ day, posts: dayPosts }) => (
+                    <div key={day.toISOString()} className="rounded-xl border border-border bg-card/80 p-3 shadow-sm">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold">{formatDate(day, 'EEEE')}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(day, 'd MMM')}</p>
+                        </div>
+                        <Badge variant="secondary">{dayPosts.length}</Badge>
+                      </div>
+
+                      <div className="space-y-3">
+                        {dayPosts.length === 0 && (
+                          <div className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-5 text-center text-xs text-muted-foreground">
+                            No posts planned
+                          </div>
+                        )}
+
+                        {dayPosts.map((post) => (
+                          <div key={post.id} className="rounded-lg border border-border bg-background p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold leading-tight">{post.title}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{post.description || (post.post_type === 'series' ? 'Series content' : 'Single post')}</p>
+                              </div>
+                              <Badge variant={post.canva_link ? 'default' : 'secondary'}>{getPostStatusLabel(post)}</Badge>
+                            </div>
+
+                            <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <Clock3 className="h-3.5 w-3.5" />
+                                <span>{post.scheduled_time || 'Time TBC'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <User className="h-3.5 w-3.5" />
+                                <span>{getOwnerLabel(post)}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {(post.platforms || []).map((platform) => (
+                                <Badge key={platform} variant="outline" className="text-[10px]">{platform}</Badge>
+                              ))}
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between gap-2">
+                              {post.canva_link ? (
+                                <a href={post.canva_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                  Open asset
+                                </a>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground">Creation not linked yet</span>
+                              )}
+
+                              {canManage && (
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(post.id)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {canManage && (
+                          <Button variant="outline" className="w-full" size="sm" onClick={() => openScheduleForDay(day)}>
+                            <Plus className="mr-2 h-3.5 w-3.5" />
+                            Add for {formatDate(day, 'EEE')}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-purple-500" />
-              <span>Series</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-green-500" />
-              <span>Posted</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-red-500" />
-              <span>Cancelled</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Calendar view</CardTitle>
+                <CardDescription>Secondary overview for the same scheduled posts.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className={`${isMobile ? 'h-[350px]' : 'h-[420px]'} bg-background rounded-lg`}>
+                  <Calendar
+                    localizer={localizer}
+                    events={calendarEvents}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    views={['month', 'week', 'agenda']}
+                    defaultView={isMobile ? "agenda" : "month"}
+                    onSelectEvent={onSelectEvent}
+                    eventPropGetter={eventPropGetter}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Schedule Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -454,12 +687,12 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">Post style / title *</Label>
             <Input
               id="title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Post title or series name"
+              placeholder="e.g. Highlight reel, player graphic, matchday story"
               required
             />
           </div>
@@ -601,7 +834,15 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
                 size="sm"
                 onClick={() => { setTemplateSource('completed'); setForm({ ...form, template_id: '' }); setSelectedFolderId(''); }}
               >
-                Completed Posts
+                Posted Content
+              </Button>
+              <Button
+                type="button"
+                variant={templateSource === 'draft' ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setTemplateSource('draft'); setForm({ ...form, template_id: '' }); setSelectedFolderId(''); }}
+              >
+                Content Creator
               </Button>
             </div>
           </div>
@@ -684,6 +925,41 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
               {completedPosts.length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
                   No completed posts available. Mark posts as "Posted" in Content Creator.
+                </p>
+              )}
+            </div>
+          )}
+
+          {templateSource === 'draft' && (
+            <div className="col-span-2">
+              <Label>Content Creator item</Label>
+              <Select
+                value={form.template_id || "none"}
+                onValueChange={(v) => {
+                  const nextId = v === "none" ? "" : v;
+                  const selectedDraft = draftPosts.find((post) => post.id === nextId);
+                  setForm({
+                    ...form,
+                    template_id: nextId,
+                    title: selectedDraft?.title || form.title,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unposted content..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No content linked</SelectItem>
+                  {draftPosts.map(post => (
+                    <SelectItem key={post.id} value={post.id}>
+                      {post.title} {post.workflow_status ? `• ${post.workflow_status}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {draftPosts.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  No unposted Content Creator items found.
                 </p>
               )}
             </div>

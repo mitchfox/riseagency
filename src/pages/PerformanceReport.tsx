@@ -28,6 +28,7 @@ import { sortActionsByMinute } from "@/lib/actionSorting";
 import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
+import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
@@ -129,6 +130,7 @@ const PerformanceReport = () => {
   const [filterTypes, setFilterTypes] = useState<string[]>([]);
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
+  const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
     if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
@@ -904,6 +906,7 @@ const PerformanceReport = () => {
           language={reportLanguage}
           clipStart={selectedClipStart}
           clipEnd={selectedClipEnd}
+          player={sharedClipPlayer}
         />
       )}
 
@@ -916,6 +919,7 @@ const PerformanceReport = () => {
           return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
+        player={sharedClipPlayer}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -928,6 +932,7 @@ const PerformanceReport = () => {
           return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
+        player={sharedClipPlayer}
       />
 
       {/* Filtered Video Player */}
@@ -940,6 +945,7 @@ const PerformanceReport = () => {
           return { id: action.id, action_number: action.action_number, action_type: translated.action_type, action_description: translated.action_description, action_score: action.action_score, video_url: action.video_url!, minute: action.minute, notes: translated.notes, clip_start: action.clip_start, clip_end: action.clip_end };
         })}
         language={reportLanguage}
+        player={sharedClipPlayer}
       />
 
       <ClippedActionsPlayer
@@ -948,6 +954,7 @@ const PerformanceReport = () => {
         clips={zonePlayerClips}
         language={reportLanguage}
         title={zonePlayerTitle}
+        player={sharedClipPlayer}
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>

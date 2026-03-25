@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, SkipForward, SkipBack, Play, Pause } from "lucide-react";
+import { X, SkipForward, SkipBack, Play, Pause, Loader2 } from "lucide-react";
 import { t } from "@/lib/portalTranslations";
 import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
-import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
+import { useSharedClipPlayer, type SharedClipPlayerState } from "@/hooks/useSharedClipPlayer";
 import { toast } from "sonner";
 
 interface Clip {
@@ -26,16 +26,18 @@ interface RankedActionsPlayerProps {
   clips: Clip[];
   mode: "chronological" | "ranked" | "noted";
   language?: string;
+  player?: SharedClipPlayerState;
 }
 
-export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language = "en" }: RankedActionsPlayerProps) => {
+export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language = "en", player: providedPlayer }: RankedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
 
-  const player = useSharedClipPlayer();
+  const localPlayer = useSharedClipPlayer();
+  const player = providedPlayer ?? localPlayer;
 
   const filteredClips = mode === "noted" ? clips.filter((clip) => clip.notes) : clips;
   const sortedClips = mode === "ranked"
@@ -154,16 +156,24 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             ref={player.videoRef}
             preload="metadata"
             crossOrigin="anonymous"
-            className="w-full h-full object-contain cursor-pointer"
+            className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
             onClick={player.togglePlayPause}
             onPlay={() => {}}
             onPause={() => {}}
             controls={false}
           />
+          {!player.isClipReady && hasTimeRange && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading clip…
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Custom progress bar for clipped videos */}
-        {hasTimeRange && (
+        {hasTimeRange && player.isClipReady && (
           <div className="px-4 py-1 bg-black/90 shrink-0">
             <div
               ref={progressBarRef}
