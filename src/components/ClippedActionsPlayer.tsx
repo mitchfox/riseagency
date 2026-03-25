@@ -46,11 +46,12 @@ export const ClippedActionsPlayer = ({
   const player = providedPlayer ?? localPlayer;
 
   const sortedClips = useMemo(
-    () => sortReportActionsChronologically(clips).filter((clip) => clip.clip_start != null && clip.clip_end != null && clip.clip_end > clip.clip_start),
+    () => sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url),
     [clips]
   );
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
+  const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange;
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
