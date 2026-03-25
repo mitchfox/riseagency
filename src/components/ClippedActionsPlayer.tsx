@@ -52,6 +52,10 @@ export const ClippedActionsPlayer = ({
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
 
+  const playClipFn = player.playClip;
+  const stopFn = player.stop;
+  const clipError = player.clipError;
+
   // Reset on open
   useEffect(() => {
     if (open) {
@@ -62,9 +66,9 @@ export const ClippedActionsPlayer = ({
       }
       setCurrentIndex(0);
     } else {
-      player.stop();
+      stopFn();
     }
-  }, [open, onOpenChange, player, sortedClips.length]);
+  }, [open, onOpenChange, stopFn, sortedClips.length]);
 
   // Play current clip when index changes
   useEffect(() => {
@@ -76,18 +80,18 @@ export const ClippedActionsPlayer = ({
       return;
     }
 
-    player.playClip({
+    playClipFn({
       videoUrl: currentClip.video_url,
       clipStart: currentClip.clip_start!,
       clipEnd: currentClip.clip_end!,
     });
-  }, [open, currentClip, hasTimeRange, onOpenChange, player]);
+  }, [open, currentClip, hasTimeRange, onOpenChange, playClipFn]);
 
   useEffect(() => {
-    if (!open || !player.clipError) return;
-    toast.error(player.clipError);
+    if (!open || !clipError) return;
+    toast.error(clipError);
     onOpenChange(false);
-  }, [open, player.clipError, onOpenChange]);
+  }, [open, clipError, onOpenChange]);
 
   // Auto-advance when clip finishes (check progress reaching 1)
   useEffect(() => {

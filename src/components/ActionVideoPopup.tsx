@@ -32,40 +32,39 @@ export const ActionVideoPopup = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const hasValidTimeRange = clipStart != null && clipEnd != null && clipEnd > clipStart;
 
+  const playClipFn = player.playClip;
+  const stopFn = player.stop;
+  const clipError = player.clipError;
+
   useEffect(() => {
     if (!open) return;
     if (hasValidTimeRange || !videoUrl) return;
 
     toast.error('Clip unavailable. Full match playback has been blocked.');
     onOpenChange(false);
-    player.stop();
-  }, [open, hasValidTimeRange, videoUrl, onOpenChange, player]);
+    stopFn();
+  }, [open, hasValidTimeRange, videoUrl, onOpenChange, stopFn]);
 
   useEffect(() => {
     if (!open) return;
-    if (!player.clipError) return;
+    if (!clipError) return;
 
-    toast.error(player.clipError);
+    toast.error(clipError);
     onOpenChange(false);
-  }, [open, player.clipError, onOpenChange]);
+  }, [open, clipError, onOpenChange]);
 
   // When dialog opens or clip changes, play the clip
   useEffect(() => {
     if (!open || !videoUrl) return;
-
     if (!hasValidTimeRange) return;
 
-    player.playClip({ videoUrl, clipStart: clipStart!, clipEnd: clipEnd! });
-
-    return () => {
-      if (!open) player.stop();
-    };
-  }, [open, videoUrl, clipStart, clipEnd, hasValidTimeRange, player]);
+    playClipFn({ videoUrl, clipStart: clipStart!, clipEnd: clipEnd! });
+  }, [open, videoUrl, clipStart, clipEnd, hasValidTimeRange, playClipFn]);
 
   // Stop when dialog closes
   useEffect(() => {
-    if (!open) player.stop();
-  }, [open]);
+    if (!open) stopFn();
+  }, [open, stopFn]);
 
   const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressBarRef.current || !hasValidTimeRange) return;
