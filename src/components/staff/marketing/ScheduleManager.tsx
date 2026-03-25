@@ -453,21 +453,21 @@ export const ScheduleManager = ({ canManage, compact = false }: ScheduleManagerP
         </div>
         
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-4 text-xs">
+        <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-blue-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-primary/70" />
             <span>Single Post</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-purple-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-accent" />
             <span>Series</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-green-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-secondary" />
             <span>Posted</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-red-500" />
+            <div className="h-3 w-3 rounded-full border border-border bg-muted-foreground/40" />
             <span>Cancelled</span>
           </div>
         </div>
