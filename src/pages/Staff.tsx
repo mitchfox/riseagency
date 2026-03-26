@@ -1696,12 +1696,38 @@ const Staff = () => {
                 </CardContent>
               </Card>
             </div>
+          ) : expandedCategory ? (
+            <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
+              {(() => {
+                const cat = categories.find(c => c.id === expandedCategory);
+                if (!cat) return null;
+                const CatIcon = cat.icon;
+                return (
+                  <>
+                    <div className="flex items-center gap-2 mb-4">
+                      <CatIcon className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-semibold">{cat.title}</h2>
+                    </div>
+                    <SectionGridPicker
+                      categories={[cat]}
+                      onSelect={(sectionId, categoryId) => {
+                        handleSectionToggle(sectionId as any);
+                        setExpandedCategory(categoryId);
+                      }}
+                    />
+                  </>
+                );
+              })()}
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <p className="text-lg mb-2">Select a section from the sidebar</p>
-                <p className="text-sm">or use the search bar to find what you need</p>
-              </div>
+            <div className="container mx-auto px-3 md:px-6 py-4 md:py-6">
+              <SectionGridPicker
+                categories={categories}
+                onSelect={(sectionId, categoryId) => {
+                  handleSectionToggle(sectionId as any);
+                  setExpandedCategory(categoryId);
+                }}
+              />
             </div>
           )}
         </main>

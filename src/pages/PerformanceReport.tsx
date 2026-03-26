@@ -79,6 +79,21 @@ interface AnalysisDetails {
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
   clipStart != null && clipEnd != null && clipEnd > clipStart;
 
+const categoriseAction = (type: string): string => {
+  const lower = (type || '').toLowerCase();
+  const keyPatterns: Record<string, string[]> = {
+    'Key Actions': ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'],
+    'Offensive': ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward'],
+    'Defensive': ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'],
+  };
+  for (const [cat, patterns] of Object.entries(keyPatterns)) {
+    if (patterns.some(p => lower.includes(p))) return cat;
+  }
+  return 'Other';
+};
+
+const ACTION_CATEGORY_ORDER = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+
 const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
   !!action.video_url;
 
@@ -829,66 +844,87 @@ const PerformanceReport = () => {
                 )}
               </CardHeader>
               <CardContent className="p-2 md:p-4">
-                {/* Mobile: Compact card layout */}
-                <div className="block md:hidden space-y-2">
-                  {filteredActions.map((action) => (
-                    <div key={action.id} className="p-2 bg-muted/30 rounded">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-semibold text-xs">#{action.action_number}</span>
-                          <span className="text-[10px] text-muted-foreground">{formatMinute(action.minute)}'</span>
-                          <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(3)}</span>
-                        </div>
-                        {action.video_url && (
-                          <button onClick={() => openClip(action)} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
-                            <Video className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
-                      {(analysis?.show_descriptions !== false) && <div className="text-[10px] text-foreground/80 line-clamp-2">{tAction(action.action_number - 1, "description", action.action_description)}</div>}
-                      {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
-                        <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">{tAction(action.action_number - 1, "notes", action.notes || "")}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {(() => {
+                  // Group filtered actions by category
+                  const grouped: Record<string, typeof filteredActions> = {};
+                  for (const action of filteredActions) {
+                    const types = action.action_type.split(',').map(t => t.trim());
+                    const cat = categoriseAction(types[0] || action.action_type);
+                    if (!grouped[cat]) grouped[cat] = [];
+                    grouped[cat].push(action);
+                  }
 
-                {/* Desktop: Table layout */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-2">#</th>
-                        <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
-                        <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
-                        {(analysis?.show_descriptions !== false) && <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>}
-                        <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
-                        <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
-                        <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredActions.map((action) => (
-                        <tr key={action.id} className="border-b border-border/50">
-                          <td className="py-2 px-2">{action.action_number}</td>
-                          <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                          <td className="py-2 px-2">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</td>
-                          {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
-                          <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
-                          <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
-                          <td className="py-2 px-2 text-center">
-                            {action.video_url ? (
-                              <button onClick={() => openClip(action)} className="text-risegold hover:text-risegold/80 p-1">
-                                <Video className="h-4 w-4" />
-                              </button>
-                            ) : <span className="text-muted-foreground">-</span>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  return ACTION_CATEGORY_ORDER.filter(cat => grouped[cat]?.length).map(cat => (
+                    <div key={cat} className="mb-4 last:mb-0">
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">{cat}</span>
+                        <span className="text-[10px] text-muted-foreground">({grouped[cat].length})</span>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+
+                      {/* Mobile: Compact card layout */}
+                      <div className="block md:hidden space-y-2">
+                        {grouped[cat].map((action) => (
+                          <div key={action.id} className="p-2 bg-muted/30 rounded">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-semibold text-xs">#{action.action_number}</span>
+                                <span className="text-[10px] text-muted-foreground">{formatMinute(action.minute)}'</span>
+                                <span className={`text-xs font-bold ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(3)}</span>
+                              </div>
+                              {action.video_url && (
+                                <button onClick={() => openClip(action)} className="text-risegold hover:text-risegold/80 p-0.5 flex-shrink-0">
+                                  <Video className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
+                            {(analysis?.show_descriptions !== false) && <div className="text-[10px] text-foreground/80 line-clamp-2">{tAction(action.action_number - 1, "description", action.action_description)}</div>}
+                            {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
+                              <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 truncate">{tAction(action.action_number - 1, "notes", action.notes || "")}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop: Table layout */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left py-2 px-2">#</th>
+                              <th className="text-left py-2 px-2">{t(reportLanguage, "min_short")}</th>
+                              <th className="text-left py-2 px-2">{t(reportLanguage, "type_label")}</th>
+                              {(analysis?.show_descriptions !== false) && <th className="text-left py-2 px-2">{t(reportLanguage, "description_label")}</th>}
+                              <th className="text-left py-2 px-2">{t(reportLanguage, "notes_label")}</th>
+                              <th className="text-right py-2 px-2">{t(reportLanguage, "score_label")}</th>
+                              <th className="text-center py-2 px-2">{t(reportLanguage, "clip_label")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {grouped[cat].map((action) => (
+                              <tr key={action.id} className="border-b border-border/50">
+                                <td className="py-2 px-2">{action.action_number}</td>
+                                <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
+                                <td className="py-2 px-2">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</td>
+                                {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
+                                <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
+                                <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>{action.action_score?.toFixed(5)}</td>
+                                <td className="py-2 px-2 text-center">
+                                  {action.video_url ? (
+                                    <button onClick={() => openClip(action)} className="text-risegold hover:text-risegold/80 p-1">
+                                      <Video className="h-4 w-4" />
+                                    </button>
+                                  ) : <span className="text-muted-foreground">-</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ));
+                })()}
               </CardContent>
             </Card>
           )}

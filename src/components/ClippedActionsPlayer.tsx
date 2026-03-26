@@ -199,6 +199,30 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
+        {/* Controls - above video */}
+        <div className="bg-black/90 border-b border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
+              <SkipBack className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={player.togglePlayPause}>
+              {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
+              <SkipForward className="h-5 w-5" />
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
+            onClick={() => setShowClipList(!showClipList)}
+          >
+            {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            Clips
+          </Button>
+        </div>
+
         {/* Video */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           {isStandaloneClip && (
@@ -261,30 +285,6 @@ export const ClippedActionsPlayer = ({
             </div>
           </div>
         )}
-
-        {/* Controls */}
-        <div className="bg-black/90 border-t border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
-              <SkipBack className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={player.togglePlayPause}>
-              {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
-              <SkipForward className="h-5 w-5" />
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
-            onClick={() => setShowClipList(!showClipList)}
-          >
-            {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            Clips
-          </Button>
-        </div>
 
         {/* Clip list table */}
         {showClipList && (
