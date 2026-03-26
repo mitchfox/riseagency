@@ -79,6 +79,21 @@ interface AnalysisDetails {
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
   clipStart != null && clipEnd != null && clipEnd > clipStart;
 
+const categoriseAction = (type: string): string => {
+  const lower = (type || '').toLowerCase();
+  const keyPatterns: Record<string, string[]> = {
+    'Key Actions': ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'],
+    'Offensive': ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward'],
+    'Defensive': ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'],
+  };
+  for (const [cat, patterns] of Object.entries(keyPatterns)) {
+    if (patterns.some(p => lower.includes(p))) return cat;
+  }
+  return 'Other';
+};
+
+const ACTION_CATEGORY_ORDER = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+
 const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
   !!action.video_url;
 
