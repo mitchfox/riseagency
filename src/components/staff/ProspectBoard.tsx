@@ -780,10 +780,8 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           else ageGroup = 'D';
         }
 
-        // Update player status to prospect if not already
-        if (player.representation_status !== 'prospect') {
-          await supabase.from("players").update({ representation_status: 'prospect' }).eq("id", player.id);
-        }
+        // Do NOT change player status when adding to prospect board
+        // Players on the board may already be represented (RISE status etc.)
 
         const { error } = await supabase.from("prospects").insert({
           name: player.name,
