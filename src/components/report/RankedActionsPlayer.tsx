@@ -273,6 +273,19 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           )}
         </div>
 
+        {/* Progress bar */}
+        {hasTimeRange && player.isClipReady && (
+          <div className="px-4 py-1 bg-black/90 shrink-0">
+            <div
+              ref={progressBarRef}
+              className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
+              onClick={handleProgressClick}
+            >
+              <div className="h-full bg-primary rounded" style={{ width: `${player.progress * 100}%` }} />
+            </div>
+          </div>
+        )}
+
         {/* Clip list table categorised */}
         {showClipList && (
           <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
