@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Loader2 } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
+import { toTitleCase } from '@/lib/titleCase';
 
 interface ClipAction {
   id: string;
@@ -28,6 +29,21 @@ interface ClippedActionsPlayerProps {
   player?: SharedClipPlayerState;
 }
 
+const normaliseType = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+
+const categoriseAction = (type: string): string => {
+  const lower = (type || '').toLowerCase();
+  const keyPatterns: Record<string, string[]> = {
+    'Key Actions': ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'],
+    'Offensive': ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward'],
+    'Defensive': ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'],
+  };
+  for (const [cat, patterns] of Object.entries(keyPatterns)) {
+    if (patterns.some(p => lower.includes(p))) return cat;
+  }
+  return 'Other';
+};
+
 export const ClippedActionsPlayer = ({
   open,
   onOpenChange,
@@ -41,6 +57,8 @@ export const ClippedActionsPlayer = ({
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
+  const [showClipList, setShowClipList] = useState(true);
+  const clipListRef = useRef<HTMLDivElement>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -49,6 +67,29 @@ export const ClippedActionsPlayer = ({
     () => sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url),
     [clips]
   );
+
+  // Deduplicate + categorise
+  const categorisedClips = useMemo(() => {
+    const seen = new Map<string, number>();
+    const deduped: typeof sortedClips = [];
+    for (const clip of sortedClips) {
+      const key = normaliseType(clip.action_type);
+      if (!seen.has(key) || seen.get(key) !== clip.action_number) {
+        deduped.push(clip);
+        seen.set(key, clip.action_number);
+      }
+    }
+
+    const categories: Record<string, typeof sortedClips> = {};
+    for (const clip of deduped) {
+      const types = clip.action_type.split(',').map(t => t.trim());
+      const cat = categoriseAction(types[0] || clip.action_type);
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(clip);
+    }
+    return categories;
+  }, [sortedClips]);
+
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
   const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange;
@@ -57,7 +98,6 @@ export const ClippedActionsPlayer = ({
   const stopFn = player.stop;
   const clipError = player.clipError;
 
-  // Reset on open
   useEffect(() => {
     if (open) {
       if (sortedClips.length === 0) {
@@ -71,10 +111,8 @@ export const ClippedActionsPlayer = ({
     }
   }, [open, onOpenChange, stopFn, sortedClips.length]);
 
-  // Play current clip when index changes
   useEffect(() => {
     if (!open || !currentClip) return;
-
     if (hasTimeRange) {
       playClipFn({
         videoUrl: currentClip.video_url,
@@ -82,7 +120,6 @@ export const ClippedActionsPlayer = ({
         clipEnd: currentClip.clip_end!,
       });
     }
-    // Standalone clips handled by their own video element
   }, [open, currentClip, hasTimeRange, playClipFn]);
 
   useEffect(() => {
@@ -91,17 +128,21 @@ export const ClippedActionsPlayer = ({
     onOpenChange(false);
   }, [open, clipError, onOpenChange]);
 
-  // Auto-advance when clip finishes (check progress reaching 1)
   useEffect(() => {
     if (!hasTimeRange || !player.isPlaying) return;
-
-    // When progress hits 1 and playback stops, advance
     if (player.progress >= 1 && !player.isPlaying) {
       if (currentIndex < sortedClips.length - 1) {
         setCurrentIndex(prev => prev + 1);
       }
     }
   }, [player.progress, player.isPlaying, hasTimeRange, currentIndex, sortedClips.length]);
+
+  // Scroll active clip into view
+  useEffect(() => {
+    if (!clipListRef.current) return;
+    const activeEl = clipListRef.current.querySelector('[data-active="true"]');
+    if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [currentIndex]);
 
   const handlePrevious = () => { if (currentIndex > 0) setCurrentIndex(prev => prev - 1); };
   const handleNext = () => { if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1); };
@@ -125,6 +166,13 @@ export const ClippedActionsPlayer = ({
     return `${minPart}.${secPart.toString().padStart(2, '0')}`;
   };
 
+  const jumpToClip = (clipId: string) => {
+    const idx = sortedClips.findIndex(c => c.id === clipId);
+    if (idx >= 0) setCurrentIndex(idx);
+  };
+
+  const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -136,7 +184,7 @@ export const ClippedActionsPlayer = ({
         <DialogTitle className="sr-only">{t(language, "full_match_video")}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
               {currentIndex + 1}/{sortedClips.length}
@@ -151,9 +199,8 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video — single shared element */}
+        {/* Video */}
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
-          {/* Standalone clip: simple video */}
           {isStandaloneClip && (
             <video
               key={currentClip.id}
@@ -171,7 +218,6 @@ export const ClippedActionsPlayer = ({
               }}
             />
           )}
-          {/* Clipped video: shared player */}
           {hasTimeRange && (
             <>
               <video
@@ -203,7 +249,7 @@ export const ClippedActionsPlayer = ({
           </div>
         </div>
 
-        {/* Custom progress bar for clipped videos */}
+        {/* Progress bar */}
         {hasTimeRange && player.isClipReady && (
           <div className="px-4 py-1 bg-black/90 shrink-0">
             <div
@@ -229,24 +275,48 @@ export const ClippedActionsPlayer = ({
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
+            onClick={() => setShowClipList(!showClipList)}
+          >
+            {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            Clips
+          </Button>
+        </div>
 
-          {/* Clip selector */}
-          <div className="flex gap-1.5 overflow-x-auto max-w-[50%]">
-            {sortedClips.map((clip, index) => (
-              <button
-                key={clip.id}
-                onClick={() => setCurrentIndex(index)}
-                className={`flex-shrink-0 px-2.5 py-1.5 rounded text-xs transition-colors ${
-                  index === currentIndex
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-white/10 text-white/80 hover:bg-white/20'
-                }`}
-              >
-                #{clip.action_number}
-              </button>
+        {/* Clip list table */}
+        {showClipList && (
+          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
+            {categoryOrder.filter(cat => categorisedClips[cat]?.length).map(cat => (
+              <div key={cat}>
+                <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
+                  {cat} ({categorisedClips[cat].length})
+                </div>
+                {categorisedClips[cat].map(clip => (
+                  <button
+                    key={clip.id}
+                    data-active={clip.id === currentClip.id}
+                    onClick={() => jumpToClip(clip.id)}
+                    className={`w-full text-left px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
+                      clip.id === currentClip.id
+                        ? 'bg-primary/20 text-white'
+                        : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
+                    <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
+                    <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
+                    {clip.id === currentClip.id && (
+                      <span className="text-primary text-[10px] font-bold">▶</span>
+                    )}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
