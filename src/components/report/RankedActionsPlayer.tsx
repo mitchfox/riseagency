@@ -195,6 +195,44 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           </Button>
         </div>
 
+        {/* Controls - above video */}
+        <div className="px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-white text-sm font-semibold">#{current.action_number}</span>
+                <span className="text-white/70 text-xs">{formatMinute(current.minute)}'</span>
+                <span className={`text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
+                  {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
+                </span>
+              </div>
+              <p className="text-white/60 text-xs mt-0.5 truncate">{toTitleCase(current.action_type)}: {current.action_description}</p>
+            </div>
+            <div className="flex gap-1 flex-shrink-0 items-center">
+              <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
+                <SkipBack className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={player.togglePlayPause}>
+                {player.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1} className="text-white/60 hover:text-white h-8 w-8 p-0">
+                <SkipForward className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1 ml-2"
+                onClick={() => setShowClipList(!showClipList)}
+              >
+                {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          {current.notes && (
+            <p className="text-risegold text-xs italic leading-relaxed mt-1">📝 {current.notes}</p>
+          )}
+        </div>
+
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
           {isStandaloneClip && (
             <video
@@ -232,59 +270,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
                 </div>
               )}
             </>
-          )}
-        </div>
-
-        {/* Progress bar */}
-        {hasTimeRange && player.isClipReady && (
-          <div className="px-4 py-1 bg-black/90 shrink-0">
-            <div
-              ref={progressBarRef}
-              className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
-              onClick={handleProgressClick}
-            >
-              <div className="h-full bg-primary rounded" style={{ width: `${player.progress * 100}%` }} />
-            </div>
-          </div>
-        )}
-
-        {/* Current clip info + controls */}
-        <div className="px-4 py-2 bg-black/90 border-t border-border/30 shrink-0">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white text-sm font-semibold">#{current.action_number}</span>
-                <span className="text-white/70 text-xs">{formatMinute(current.minute)}'</span>
-                <span className={`text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
-                  {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
-                </span>
-              </div>
-              <p className="text-white/60 text-xs mt-0.5 truncate">{toTitleCase(current.action_type)}: {current.action_description}</p>
-            </div>
-            <div className="flex gap-1 flex-shrink-0 items-center">
-              <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
-                <SkipBack className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={player.togglePlayPause}>
-                {player.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1} className="text-white/60 hover:text-white h-8 w-8 p-0">
-                <SkipForward className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1 ml-2"
-                onClick={() => setShowClipList(!showClipList)}
-              >
-                {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-          {current.notes && (
-            <div className="mt-1">
-              <p className="text-risegold text-xs italic leading-relaxed">📝 {current.notes}</p>
-            </div>
           )}
         </div>
 
