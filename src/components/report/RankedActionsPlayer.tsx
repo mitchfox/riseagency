@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, SkipForward, SkipBack, Play, Pause, Loader2 } from "lucide-react";
+import { X, SkipForward, SkipBack, Play, Pause, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 import { t } from "@/lib/portalTranslations";
 import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 import { useSharedClipPlayer, type SharedClipPlayerState } from "@/hooks/useSharedClipPlayer";
 import { toast } from "sonner";
+import { toTitleCase } from "@/lib/titleCase";
 
 interface Clip {
   id: string;
@@ -29,12 +30,27 @@ interface RankedActionsPlayerProps {
   player?: SharedClipPlayerState;
 }
 
+const categoriseAction = (type: string): string => {
+  const lower = (type || '').toLowerCase();
+  const keyPatterns: Record<string, string[]> = {
+    'Key Actions': ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'],
+    'Offensive': ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward'],
+    'Defensive': ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'],
+  };
+  for (const [cat, patterns] of Object.entries(keyPatterns)) {
+    if (patterns.some(p => lower.includes(p))) return cat;
+  }
+  return 'Other';
+};
+
 export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language = "en", player: providedPlayer }: RankedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [swipeY, setSwipeY] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const touchStartY = useRef(0);
+  const [showClipList, setShowClipList] = useState(true);
+  const clipListRef = useRef<HTMLDivElement>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -46,6 +62,17 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         .sort((a, b) => b.action_score - a.action_score)
     : sortReportActionsChronologically(filteredClips).filter((clip) => !!clip.video_url);
 
+  const categorisedClips = useMemo(() => {
+    const categories: Record<string, typeof sortedClips> = {};
+    for (const clip of sortedClips) {
+      const types = clip.action_type.split(',').map(t => t.trim());
+      const cat = categoriseAction(types[0] || clip.action_type);
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(clip);
+    }
+    return categories;
+  }, [sortedClips]);
+
   const current = sortedClips[currentIndex];
   const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
   const isStandaloneClip = !!current?.video_url && !hasTimeRange;
@@ -54,7 +81,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const stopFn = player.stop;
   const clipError = player.clipError;
 
-  // Reset on open/mode change
   useEffect(() => {
     if (open) {
       if (sortedClips.length === 0) {
@@ -68,10 +94,8 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     }
   }, [open, mode, onOpenChange, stopFn, sortedClips.length]);
 
-  // Play current clip when index changes
   useEffect(() => {
     if (!open || !current) return;
-
     if (hasTimeRange) {
       playClipFn({
         videoUrl: current.video_url,
@@ -79,7 +103,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         clipEnd: current.clip_end!,
       });
     }
-    // Standalone clips handled by their own video element
   }, [open, current, hasTimeRange, playClipFn]);
 
   useEffect(() => {
@@ -88,7 +111,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
     onOpenChange(false);
   }, [open, clipError, onOpenChange]);
 
-  // Auto-advance when clip finishes
   useEffect(() => {
     if (!hasTimeRange) return;
     if (player.progress >= 1 && !player.isPlaying && mode !== "noted") {
@@ -97,6 +119,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
       }
     }
   }, [player.progress, player.isPlaying, hasTimeRange, currentIndex, sortedClips.length, mode]);
+
+  // Scroll active clip into view
+  useEffect(() => {
+    if (!clipListRef.current) return;
+    const activeEl = clipListRef.current.querySelector('[data-active="true"]');
+    if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [currentIndex]);
 
   const handleNext = () => { if (currentIndex < sortedClips.length - 1) setCurrentIndex(prev => prev + 1); };
   const handlePrev = () => { if (currentIndex > 0) setCurrentIndex(prev => prev - 1); };
@@ -134,6 +163,13 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const handleTouchMove = (e: React.TouchEvent) => { if (!swiping) return; setSwipeY(Math.max(0, e.touches[0].clientY - touchStartY.current)); };
   const handleTouchEnd = () => { if (swipeY > 120) onOpenChange(false); setSwipeY(0); setSwiping(false); };
 
+  const jumpToClip = (clipId: string) => {
+    const idx = sortedClips.findIndex(c => c.id === clipId);
+    if (idx >= 0) setCurrentIndex(idx);
+  };
+
+  const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -149,7 +185,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
       >
         <DialogTitle className="sr-only">{getModeLabel()}</DialogTitle>
 
-        <div className="flex items-center justify-between px-4 py-3 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-primary font-bold text-sm">{getModeLabel()}</span>
             <span className="text-xs text-white/60">{currentIndex + 1} / {sortedClips.length}</span>
@@ -160,7 +196,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
         </div>
 
         <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
-          {/* Standalone clip: simple video */}
           {isStandaloneClip && (
             <video
               key={current.id}
@@ -178,7 +213,6 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
               }}
             />
           )}
-          {/* Clipped video: shared player */}
           {hasTimeRange && (
             <>
               <video
@@ -201,7 +235,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           )}
         </div>
 
-        {/* Custom progress bar for clipped videos */}
+        {/* Progress bar */}
         {hasTimeRange && player.isClipReady && (
           <div className="px-4 py-1 bg-black/90 shrink-0">
             <div
@@ -214,6 +248,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           </div>
         )}
 
+        {/* Current clip info + controls */}
         <div className="px-4 py-2 bg-black/90 border-t border-border/30 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -224,9 +259,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
                   {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
                 </span>
               </div>
-              <p className="text-white/60 text-xs mt-0.5">{current.action_type}: {current.action_description}</p>
+              <p className="text-white/60 text-xs mt-0.5 truncate">{toTitleCase(current.action_type)}: {current.action_description}</p>
             </div>
-            <div className="flex gap-1 flex-shrink-0">
+            <div className="flex gap-1 flex-shrink-0 items-center">
               <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipBack className="h-4 w-4" />
               </Button>
@@ -236,14 +271,75 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
               <Button variant="ghost" size="sm" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipForward className="h-4 w-4" />
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1 ml-2"
+                onClick={() => setShowClipList(!showClipList)}
+              >
+                {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
           {current.notes && (
-            <div className="mt-2 pb-1">
+            <div className="mt-1">
               <p className="text-risegold text-xs italic leading-relaxed">📝 {current.notes}</p>
             </div>
           )}
         </div>
+
+        {/* Clip list table categorised */}
+        {showClipList && (
+          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
+            {mode === "ranked" ? (
+              /* Ranked mode: just show by score, no categories */
+              sortedClips.map(clip => (
+                <button
+                  key={clip.id}
+                  data-active={clip.id === current.id}
+                  onClick={() => jumpToClip(clip.id)}
+                  className={`w-full text-left px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
+                    clip.id === current.id ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
+                  <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
+                  <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
+                  <span className={`text-xs font-bold ${getScoreColor(clip.action_score)}`}>
+                    {clip.action_score >= 0 ? "+" : ""}{clip.action_score.toFixed(3)}
+                  </span>
+                  {clip.id === current.id && <span className="text-primary text-[10px] font-bold">▶</span>}
+                </button>
+              ))
+            ) : (
+              categoryOrder.filter(cat => categorisedClips[cat]?.length).map(cat => (
+                <div key={cat}>
+                  <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
+                    {cat} ({categorisedClips[cat].length})
+                  </div>
+                  {categorisedClips[cat].map(clip => (
+                    <button
+                      key={clip.id}
+                      data-active={clip.id === current.id}
+                      onClick={() => jumpToClip(clip.id)}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
+                        clip.id === current.id ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
+                      <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
+                      <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
+                      <span className={`text-xs font-bold ${getScoreColor(clip.action_score)}`}>
+                        {clip.action_score >= 0 ? "+" : ""}{clip.action_score.toFixed(3)}
+                      </span>
+                      {clip.id === current.id && <span className="text-primary text-[10px] font-bold">▶</span>}
+                    </button>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
