@@ -199,71 +199,8 @@ export const ClippedActionsPlayer = ({
           </Button>
         </div>
 
-        {/* Video */}
-        <div className="flex-1 relative flex items-center justify-center bg-black min-h-0">
-          {isStandaloneClip && (
-            <video
-              key={currentClip.id}
-              src={currentClip.video_url}
-              className="w-full h-full object-contain cursor-pointer"
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              autoPlay
-              controls={false}
-              onClick={(e) => {
-                const vid = e.currentTarget;
-                vid.paused ? vid.play().catch(() => {}) : vid.pause();
-              }}
-            />
-          )}
-          {hasTimeRange && (
-            <>
-              <video
-                ref={player.videoRef}
-                className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
-                preload="metadata"
-                crossOrigin="anonymous"
-                muted
-                playsInline
-                onClick={player.togglePlayPause}
-                controls={false}
-              />
-              {!player.isClipReady && !player.clipError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black">
-                  <div className="flex items-center gap-2 text-sm text-white/80">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading clip…
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-          {/* Description overlay */}
-          <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded max-w-[80%]">
-            <p>{currentClip.action_description}</p>
-            {currentClip.notes && (
-              <p className="text-[10px] text-risegold italic mt-1">📝 {currentClip.notes}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        {hasTimeRange && player.isClipReady && (
-          <div className="px-4 py-1 bg-black/90 shrink-0">
-            <div
-              ref={progressBarRef}
-              className="w-full h-1.5 bg-white/20 rounded cursor-pointer"
-              onClick={handleProgressClick}
-            >
-              <div className="h-full bg-primary rounded" style={{ width: `${player.progress * 100}%` }} />
-            </div>
-          </div>
-        )}
-
-        {/* Controls */}
-        <div className="bg-black/90 border-t border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
+        {/* Controls - above video */}
+        <div className="bg-black/90 border-b border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
               <SkipBack className="h-5 w-5" />
