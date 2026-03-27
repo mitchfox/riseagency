@@ -17,6 +17,8 @@ export interface SharedClipPlayerState {
   togglePlayPause: () => void;
   seekToRatio: (ratio: number) => void;
   stop: () => void;
+  /** Attach to <video ref={videoRefCallback}> so playClip fires after mount */
+  videoRefCallback: (el: HTMLVideoElement | null) => void;
 }
 
 /**
@@ -30,6 +32,7 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
   const intervalRef = useRef<number | null>(null);
   const seekTimeoutRef = useRef<number | null>(null);
   const playRequestRef = useRef(0);
+  const pendingClipRef = useRef<ClipWindow | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isClipReady, setIsClipReady] = useState(false);
@@ -86,7 +89,7 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
       const { clipStart, clipEnd } = clip;
       const duration = clipEnd - clipStart;
 
-      if (vid.currentTime < clipStart - 0.35 || vid.currentTime > clipEnd + 0.35) {
+      if (vid.currentTime < clipStart - 0.5 || vid.currentTime > clipEnd + 0.5) {
         failClosed('Clip unavailable. Full match playback has been blocked.');
         return;
       }
@@ -110,7 +113,18 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
 
   const playClip = useCallback((clip: ClipWindow) => {
     const vid = videoRef.current;
-    if (!vid) return;
+    if (!vid) {
+      // Video element not mounted yet — store pending clip
+      pendingClipRef.current = clip;
+      currentClipRef.current = clip;
+      setCurrentClip(clip);
+      setProgress(0);
+      setIsClipReady(false);
+      setClipError(null);
+      return;
+    }
+
+    pendingClipRef.current = null;
     const requestId = ++playRequestRef.current;
 
     // Guard against invalid clip windows
@@ -127,8 +141,12 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     setClipError(null);
     clearSeekTimeout();
 
-    // Pause first — always
+    // Pause first
     vid.pause();
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
     const verifyAndPlay = () => {
       if (playRequestRef.current !== requestId) return;
@@ -140,8 +158,8 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
       }
 
       const landedInsideClip =
-        vid.currentTime >= activeClip.clipStart - 0.35 &&
-        vid.currentTime <= activeClip.clipEnd + 0.35;
+        vid.currentTime >= activeClip.clipStart - 0.5 &&
+        vid.currentTime <= activeClip.clipEnd + 0.5;
 
       if (!landedInsideClip) {
         failClosed('Clip unavailable. Full match playback has been blocked.');
@@ -168,13 +186,14 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
         verifyAndPlay();
       };
 
+      // 15s timeout for large files (was 4s — too short for 2hr match videos)
       seekTimeoutRef.current = window.setTimeout(() => {
         if (playRequestRef.current === requestId) {
           failClosed('Clip unavailable. Full match playback has been blocked.');
         }
-      }, 4000);
+      }, 15000);
 
-      if (Math.abs(vid.currentTime - clip.clipStart) < 0.05) {
+      if (Math.abs(vid.currentTime - clip.clipStart) < 0.5) {
         clearSeekTimeout();
         verifyAndPlay();
       } else {
@@ -193,13 +212,24 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     loadedSourceRef.current = clip.videoUrl;
     vid.src = clip.videoUrl;
 
-    const onLoadedMetadata = () => {
+    vid.addEventListener('loadedmetadata', () => {
       seekAndPlay();
-    };
-
-    vid.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
+    }, { once: true });
     vid.load();
   }, [clearSeekTimeout, failClosed, startBoundaryEnforcement]);
+
+  /** Ref callback: attach to <video> so pending clips auto-fire after mount */
+  const videoRefCallback = useCallback((el: HTMLVideoElement | null) => {
+    (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+    if (el && pendingClipRef.current) {
+      const pending = pendingClipRef.current;
+      pendingClipRef.current = null;
+      // Small delay to let React finish rendering the portal
+      requestAnimationFrame(() => {
+        playClip(pending);
+      });
+    }
+  }, [playClip]);
 
   const togglePlayPause = useCallback(() => {
     const vid = videoRef.current;
@@ -240,6 +270,7 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     if (vid) vid.pause();
     if (intervalRef.current) clearInterval(intervalRef.current);
     clearSeekTimeout();
+    pendingClipRef.current = null;
     setIsPlaying(false);
     setIsClipReady(false);
     setClipError(null);
@@ -259,5 +290,6 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
     togglePlayPause,
     seekToRatio,
     stop,
-  }), [isPlaying, isClipReady, clipError, progress, currentClip, playClip, togglePlayPause, seekToRatio, stop]);
+    videoRefCallback,
+  }), [isPlaying, isClipReady, clipError, progress, currentClip, playClip, togglePlayPause, seekToRatio, stop, videoRefCallback]);
 };

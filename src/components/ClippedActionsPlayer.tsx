@@ -245,7 +245,7 @@ export const ClippedActionsPlayer = ({
           {hasTimeRange && (
             <>
               <video
-                ref={player.videoRef}
+                ref={player.videoRefCallback}
                 className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
                 preload="metadata"
                 crossOrigin="anonymous"
