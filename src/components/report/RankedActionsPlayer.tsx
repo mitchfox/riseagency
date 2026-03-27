@@ -254,7 +254,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           {hasTimeRange && (
             <>
               <video
-                ref={player.videoRef}
+                ref={player.videoRefCallback}
                 preload="metadata"
                 crossOrigin="anonymous"
                 className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
