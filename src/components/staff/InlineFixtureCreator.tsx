@@ -110,6 +110,15 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
       </div>
+      <div>
+        <Label className="text-xs">Date</Label>
+        <Input 
+          type="date"
+          value={matchDate} 
+          onChange={e => setMatchDate(e.target.value)} 
+          className="h-8 text-sm"
+        />
+      </div>
       <Button onClick={handleCreate} disabled={saving} size="sm" className="w-full">
         {saving ? "Creating..." : "Create Fixture"}
       </Button>
