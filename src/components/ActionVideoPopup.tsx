@@ -5,6 +5,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { t } from '@/lib/portalTranslations';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
+import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 
 interface ActionVideoPopupProps {
   open: boolean;
