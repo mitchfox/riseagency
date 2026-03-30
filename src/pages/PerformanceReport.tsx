@@ -95,10 +95,8 @@ const categoriseAction = (type: string): string => {
 
 const ACTION_CATEGORY_ORDER = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
 
-const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) => {
-  const { hasPlayableClip } = require('@/lib/clipVideoUtils');
-  return hasPlayableClip(action);
-};
+const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
+  hasPlayableClip(action);
 
 const PerformanceReport = () => {
   const { slug } = useParams();
