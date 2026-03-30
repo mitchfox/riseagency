@@ -2051,6 +2051,21 @@ export const CreatePerformanceReportDialog = ({
             getDescriptionsForType={getDescriptionsForType}
           />
 
+          {/* Action Type Editor */}
+          <ActionTypeEditor
+            open={actionTypeEditorOpen}
+            onOpenChange={setActionTypeEditorOpen}
+            actions={actions}
+            updateAction={updateAction}
+            onSave={handleSave}
+            saving={loading}
+            allR90Ratings={allR90Ratings}
+            openR90Viewer={openSmartR90Viewer}
+            actionTypes={actionTypes}
+            actionTypeFrequencyMap={actionTypeFrequencyMap}
+            getDescriptionsForType={getDescriptionsForType}
+          />
+
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
@@ -2064,6 +2079,17 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <Video className="h-3.5 w-3.5" />
                   Clip Edit
+                </Button>
+              )}
+              {actions.some(a => a.action_type) && (
+                <Button
+                  onClick={() => setActionTypeEditorOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Action Edit
                 </Button>
               )}
             </div>
