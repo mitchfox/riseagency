@@ -15,6 +15,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [opponent, setOpponent] = useState("");
+  const [matchDate, setMatchDate] = useState(new Date().toISOString().split("T")[0]);
   const [playerClub, setPlayerClub] = useState<string | null>(null);
 
   // Fetch the player's club name to use as home_team
@@ -49,7 +50,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
         .insert({
           home_team: playerClub || "TBC",
           away_team: opponent.trim(),
-          match_date: new Date().toISOString().split("T")[0],
+          match_date: matchDate,
         })
         .select("id")
         .single();
@@ -67,6 +68,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
       toast.success("Fixture created");
       setShowForm(false);
       setOpponent("");
+      setMatchDate(new Date().toISOString().split("T")[0]);
       onFixtureCreated(data.id);
     } catch (error: any) {
       toast.error("Failed to create fixture: " + error.message);
@@ -106,6 +108,15 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
           placeholder="e.g. Vlasim" 
           className="h-8 text-sm"
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
+        />
+      </div>
+      <div>
+        <Label className="text-xs">Date</Label>
+        <Input 
+          type="date"
+          value={matchDate} 
+          onChange={e => setMatchDate(e.target.value)} 
+          className="h-8 text-sm"
         />
       </div>
       <Button onClick={handleCreate} disabled={saving} size="sm" className="w-full">

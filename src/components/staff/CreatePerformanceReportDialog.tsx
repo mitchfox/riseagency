@@ -864,6 +864,21 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
+  const handleFixtureDateChange = async (newDate: string) => {
+    if (!selectedFixtureId || !newDate) return;
+    try {
+      const { error } = await supabase
+        .from("fixtures")
+        .update({ match_date: newDate })
+        .eq("id", selectedFixtureId);
+      if (error) throw error;
+      setFixtures(prev => prev.map(f => f.id === selectedFixtureId ? { ...f, match_date: newDate } : f));
+      toast.success("Fixture date updated");
+    } catch (err: any) {
+      toast.error("Failed to update date: " + err.message);
+    }
+  };
+
   const fetchExistingData = async () => {
     if (!analysisId) return;
     
@@ -1813,6 +1828,18 @@ export const CreatePerformanceReportDialog = ({
                 }}
               />
             </div>
+            {selectedFixtureId && (
+              <div className="mt-2">
+                <Label htmlFor="fixture-date" className="text-xs">Match Date</Label>
+                <Input
+                  id="fixture-date"
+                  type="date"
+                  value={fixtures.find(f => f.id === selectedFixtureId)?.match_date || ""}
+                  onChange={(e) => handleFixtureDateChange(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            )}
           </div>
 
           {/* Key Stats */}

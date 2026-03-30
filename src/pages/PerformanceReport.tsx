@@ -29,6 +29,7 @@ import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
+import { hasPlayableClip } from "@/lib/clipVideoUtils";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
@@ -95,7 +96,7 @@ const categoriseAction = (type: string): string => {
 const ACTION_CATEGORY_ORDER = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
 
 const hasPlayableVideo = (action: { video_url?: string | null; clip_start?: number | null; clip_end?: number | null }) =>
-  !!action.video_url;
+  hasPlayableClip(action);
 
 const PerformanceReport = () => {
   const { slug } = useParams();
@@ -151,13 +152,13 @@ const PerformanceReport = () => {
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url) {
+    if (!hasPlayableVideo(action)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
 
     const translated = getTranslatedActionData(action);
-    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoUrl(action.video_url!);
     setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
     setSelectedClipStart(action.clip_start ?? null);
     setSelectedClipEnd(action.clip_end ?? null);
@@ -533,7 +534,12 @@ const PerformanceReport = () => {
         {/* Sticky header bar */}
         <div className="sticky top-0 z-10 bg-background border-b mb-4 py-2 flex items-center justify-between gap-2 print:hidden">
           <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
-          <div className="flex gap-1 md:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            {analysis.r90_score != null && (
+              <span className="text-sm md:text-base font-bold text-primary">
+                R90: {analysis.r90_score.toFixed(2)}
+              </span>
+            )}
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{savingImage ? t(reportLanguage, "saving_label") : t(reportLanguage, "save_label")}</span>

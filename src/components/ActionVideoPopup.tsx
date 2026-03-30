@@ -5,6 +5,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { t } from '@/lib/portalTranslations';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
+import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 
 interface ActionVideoPopupProps {
   open: boolean;
@@ -32,7 +33,7 @@ export const ActionVideoPopup = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const standaloneVideoRef = useRef<HTMLVideoElement>(null);
   const hasClipWindow = clipStart != null && clipEnd != null && clipEnd > clipStart;
-  const isStandaloneClip = !!videoUrl && !hasClipWindow;
+  const isStandaloneClip = !!videoUrl && !hasClipWindow && !isFullMatchUrl(videoUrl);
 
   // Standalone clip state
   const [standaloneReady, setStandaloneReady] = useState(false);
@@ -42,12 +43,14 @@ export const ActionVideoPopup = ({
   const stopFn = player.stop;
   const clipError = player.clipError;
 
-  // Block if no video at all
+  // Block if no video at all, or full match without clip boundaries
   useEffect(() => {
-    if (!open || videoUrl) return;
-    toast.error('Clip unavailable. Full match playback has been blocked.');
-    onOpenChange(false);
-  }, [open, videoUrl, onOpenChange]);
+    if (!open) return;
+    if (!videoUrl || (!hasClipWindow && isFullMatchUrl(videoUrl))) {
+      toast.error('Clip unavailable. Full match playback has been blocked.');
+      onOpenChange(false);
+    }
+  }, [open, videoUrl, hasClipWindow, onOpenChange]);
 
   // Propagate shared player errors
   useEffect(() => {

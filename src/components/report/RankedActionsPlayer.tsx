@@ -7,6 +7,7 @@ import { sortReportActionsChronologically } from "@/lib/reportActionHelpers";
 import { useSharedClipPlayer, type SharedClipPlayerState } from "@/hooks/useSharedClipPlayer";
 import { toast } from "sonner";
 import { toTitleCase } from "@/lib/titleCase";
+import { isFullMatchUrl } from "@/lib/clipVideoUtils";
 
 interface Clip {
   id: string;
@@ -75,7 +76,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
   const current = sortedClips[currentIndex];
   const hasTimeRange = current?.clip_start != null && current?.clip_end != null && current.clip_end > current.clip_start;
-  const isStandaloneClip = !!current?.video_url && !hasTimeRange;
+  const isStandaloneClip = !!current?.video_url && !hasTimeRange && !isFullMatchUrl(current.video_url);
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
