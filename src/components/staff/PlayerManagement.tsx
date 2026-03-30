@@ -1604,7 +1604,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                               <p className="text-sm text-muted-foreground">{player.position}</p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                 <span>{player.age}y</span>
@@ -1668,7 +1668,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                               <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate">{player.name}</h3>
+                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                               <p className="text-sm text-muted-foreground">{player.position}</p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                 <span>{player.age}y</span>
@@ -1731,7 +1731,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                                 <p className="text-sm text-muted-foreground">{player.position}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                   <span>{player.age}y</span>
@@ -1790,7 +1790,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                                 <p className="text-sm text-muted-foreground">{player.position}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                   <span>{player.age}y</span>
@@ -1854,7 +1854,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                                 <p className="text-sm text-muted-foreground">{player.position}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                   <span>{player.age}y</span>
@@ -1918,7 +1918,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                 <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{player.name}</h3>
+                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
                                 <p className="text-sm text-muted-foreground">{player.position}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                   <span>{player.age}y</span>
