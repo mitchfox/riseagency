@@ -32,7 +32,7 @@ export const ActionVideoPopup = ({
   const progressBarRef = useRef<HTMLDivElement>(null);
   const standaloneVideoRef = useRef<HTMLVideoElement>(null);
   const hasClipWindow = clipStart != null && clipEnd != null && clipEnd > clipStart;
-  const isStandaloneClip = !!videoUrl && !hasClipWindow;
+  const isStandaloneClip = !!videoUrl && !hasClipWindow && !isFullMatchUrl(videoUrl);
 
   // Standalone clip state
   const [standaloneReady, setStandaloneReady] = useState(false);
