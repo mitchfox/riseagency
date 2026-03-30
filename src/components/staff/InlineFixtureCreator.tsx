@@ -15,6 +15,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [opponent, setOpponent] = useState("");
+  const [matchDate, setMatchDate] = useState(new Date().toISOString().split("T")[0]);
   const [playerClub, setPlayerClub] = useState<string | null>(null);
 
   // Fetch the player's club name to use as home_team
