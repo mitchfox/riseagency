@@ -7,6 +7,7 @@ import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
 import { toast } from 'sonner';
 import { toTitleCase } from '@/lib/titleCase';
+import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 
 interface ClipAction {
   id: string;
