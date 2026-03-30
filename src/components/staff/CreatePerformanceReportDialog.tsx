@@ -1556,7 +1556,7 @@ export const CreatePerformanceReportDialog = ({
       const preservedVideoData = (window as any).__preservedVideoData as Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }> | undefined;
       
       const actionsToInsert = actions
-        .filter(a => a.action_number)
+        .filter(a => a.action_number != null)
         .map(a => {
           const preserved = preservedVideoData?.get(a.action_number);
           return {
