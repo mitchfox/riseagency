@@ -1400,13 +1400,9 @@ export const CreatePerformanceReportDialog = ({
   // Bulk AI score filling function removed - users should use R90 Ratings Viewer for manual lookup
 
   const handleSave = async () => {
-    // Validation
+    // Validation - only fixture is required, everything else is optional
     if (!selectedFixtureId) {
       toast.error("Please select a fixture");
-      return;
-    }
-    if (!minutesPlayed) {
-      toast.error("Please fill in Minutes Played");
       return;
     }
 
@@ -1415,9 +1411,10 @@ export const CreatePerformanceReportDialog = ({
     try {
       const fixture = fixtures.find(f => f.id === selectedFixtureId);
       
-      // Calculate R90 from actions
+      // Calculate R90 from actions (safe when no minutes)
       const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
-      const calculatedR90 = (rawScore / parseInt(minutesPlayed)) * 90;
+      const parsedMins = parseInt(minutesPlayed);
+      const calculatedR90 = parsedMins > 0 ? (rawScore / parsedMins) * 90 : null;
       
       // Prepare striker stats JSONB - from unified stats editor
       let strikerStatsJson: Record<string, any> | null = null;
@@ -1559,7 +1556,7 @@ export const CreatePerformanceReportDialog = ({
       const preservedVideoData = (window as any).__preservedVideoData as Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }> | undefined;
       
       const actionsToInsert = actions
-        .filter(a => a.action_number)
+        .filter(a => a.action_number != null)
         .map(a => {
           const preserved = preservedVideoData?.get(a.action_number);
           return {
@@ -1866,7 +1863,7 @@ export const CreatePerformanceReportDialog = ({
               />
             </div>
             <div>
-              <Label htmlFor="minutes">Minutes Played *</Label>
+              <Label htmlFor="minutes">Minutes Played</Label>
               <Input
                 id="minutes"
                 type="number"
