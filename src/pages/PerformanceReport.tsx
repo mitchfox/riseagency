@@ -152,13 +152,13 @@ const PerformanceReport = () => {
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url) {
+    if (!hasPlayableVideo(action)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
 
     const translated = getTranslatedActionData(action);
-    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoUrl(action.video_url!);
     setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
     setSelectedClipStart(action.clip_start ?? null);
     setSelectedClipEnd(action.clip_end ?? null);
