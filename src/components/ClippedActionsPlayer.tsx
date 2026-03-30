@@ -93,7 +93,7 @@ export const ClippedActionsPlayer = ({
 
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
-  const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange;
+  const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange && !isFullMatchUrl(currentClip.video_url);
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
