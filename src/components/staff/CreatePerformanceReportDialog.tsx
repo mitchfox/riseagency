@@ -1863,7 +1863,7 @@ export const CreatePerformanceReportDialog = ({
               />
             </div>
             <div>
-              <Label htmlFor="minutes">Minutes Played *</Label>
+              <Label htmlFor="minutes">Minutes Played</Label>
               <Input
                 id="minutes"
                 type="number"
