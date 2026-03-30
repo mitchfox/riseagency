@@ -68,6 +68,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
       toast.success("Fixture created");
       setShowForm(false);
       setOpponent("");
+      setMatchDate(new Date().toISOString().split("T")[0]);
       onFixtureCreated(data.id);
     } catch (error: any) {
       toast.error("Failed to create fixture: " + error.message);
