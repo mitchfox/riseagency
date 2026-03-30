@@ -864,6 +864,21 @@ export const CreatePerformanceReportDialog = ({
     }
   };
 
+  const handleFixtureDateChange = async (newDate: string) => {
+    if (!selectedFixtureId || !newDate) return;
+    try {
+      const { error } = await supabase
+        .from("fixtures")
+        .update({ match_date: newDate })
+        .eq("id", selectedFixtureId);
+      if (error) throw error;
+      setFixtures(prev => prev.map(f => f.id === selectedFixtureId ? { ...f, match_date: newDate } : f));
+      toast.success("Fixture date updated");
+    } catch (err: any) {
+      toast.error("Failed to update date: " + err.message);
+    }
+  };
+
   const fetchExistingData = async () => {
     if (!analysisId) return;
     
