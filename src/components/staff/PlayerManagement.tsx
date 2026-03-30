@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
 import { logActivity } from "@/lib/activityLogger";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
