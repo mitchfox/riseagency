@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toast } from "sonner";
 import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
+import { ActionTypeEditor } from "./ActionTypeEditor";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -172,6 +173,7 @@ export const CreatePerformanceReportDialog = ({
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [videoEditorOpen, setVideoEditorOpen] = useState(false);
+  const [actionTypeEditorOpen, setActionTypeEditorOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
@@ -1557,7 +1559,7 @@ export const CreatePerformanceReportDialog = ({
       const preservedVideoData = (window as any).__preservedVideoData as Map<number, { video_url: string | null; clip_start: number | null; clip_end: number | null }> | undefined;
       
       const actionsToInsert = actions
-        .filter(a => a.action_number && (a.minute || a.action_score || a.action_type || a.action_description || a.notes || a.video_url))
+        .filter(a => a.action_number)
         .map(a => {
           const preserved = preservedVideoData?.get(a.action_number);
           return {
@@ -2049,6 +2051,21 @@ export const CreatePerformanceReportDialog = ({
             getDescriptionsForType={getDescriptionsForType}
           />
 
+          {/* Action Type Editor */}
+          <ActionTypeEditor
+            open={actionTypeEditorOpen}
+            onOpenChange={setActionTypeEditorOpen}
+            actions={actions}
+            updateAction={updateAction}
+            onSave={handleSave}
+            saving={loading}
+            allR90Ratings={allR90Ratings}
+            openR90Viewer={openSmartR90Viewer}
+            actionTypes={actionTypes}
+            actionTypeFrequencyMap={actionTypeFrequencyMap}
+            getDescriptionsForType={getDescriptionsForType}
+          />
+
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
@@ -2062,6 +2079,17 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <Video className="h-3.5 w-3.5" />
                   Clip Edit
+                </Button>
+              )}
+              {actions.some(a => a.action_type) && (
+                <Button
+                  onClick={() => setActionTypeEditorOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Action Edit
                 </Button>
               )}
             </div>
