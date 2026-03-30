@@ -50,7 +50,7 @@ export const InlineFixtureCreator = ({ playerId, onFixtureCreated }: InlineFixtu
         .insert({
           home_team: playerClub || "TBC",
           away_team: opponent.trim(),
-          match_date: new Date().toISOString().split("T")[0],
+          match_date: matchDate,
         })
         .select("id")
         .single();
