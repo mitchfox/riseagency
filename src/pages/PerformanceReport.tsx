@@ -29,6 +29,7 @@ import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
+import { hasPlayableClip } from "@/lib/clipVideoUtils";
 
 const formatMinute = (minute: number | null | undefined): string => {
   if (minute === null || minute === undefined) return "-";
