@@ -305,8 +305,8 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
                   <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
                   <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
                   <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
-                  <span className={`text-xs font-bold ${getScoreColor(clip.action_score)}`}>
-                    {clip.action_score >= 0 ? "+" : ""}{clip.action_score.toFixed(3)}
+                  <span className={`text-xs font-bold ${getScoreColor(clip.action_score ?? 0)}`}>
+                    {clip.action_score != null ? `${clip.action_score >= 0 ? "+" : ""}${clip.action_score.toFixed(3)}` : "—"}
                   </span>
                   {clip.id === current.id && <span className="text-primary text-[10px] font-bold">▶</span>}
                 </button>
@@ -329,8 +329,8 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
                       <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
                       <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
                       <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
-                      <span className={`text-xs font-bold ${getScoreColor(clip.action_score)}`}>
-                        {clip.action_score >= 0 ? "+" : ""}{clip.action_score.toFixed(3)}
+                      <span className={`text-xs font-bold ${getScoreColor(clip.action_score ?? 0)}`}>
+                        {clip.action_score != null ? `${clip.action_score >= 0 ? "+" : ""}${clip.action_score.toFixed(3)}` : "—"}
                       </span>
                       {clip.id === current.id && <span className="text-primary text-[10px] font-bold">▶</span>}
                     </button>
