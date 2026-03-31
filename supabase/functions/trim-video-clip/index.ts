@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       `Source downloaded: ${(srcBytes.length / 1048576).toFixed(1)} MB`,
     );
 
-    // ── FFmpeg trim (stream copy – no re-encoding) ──
+    // ── FFmpeg trim (re-encode with keyframe at start for instant playback) ──
     const core = await getFFmpegCore();
 
     const inputName = `in_${Date.now()}.mp4`;
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     const duration = end - start;
     console.log(
-      `Running FFmpeg: -ss ${start} -t ${duration} -c copy`,
+      `Running FFmpeg: -ss ${start} -t ${duration} (re-encode, keyframe@start, GOP=1s, faststart)`,
     );
 
     try {
@@ -146,8 +146,25 @@ Deno.serve(async (req) => {
         inputName,
         "-t",
         String(duration),
-        "-c",
-        "copy",
+        // Re-encode video: force keyframe at start, short GOP (~1s at 25fps)
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "23",
+        "-g",
+        "25",
+        "-keyint_min",
+        "25",
+        "-force_key_frames",
+        "expr:eq(n,0)",
+        // Re-encode audio
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        // Web-optimised: moov atom at start
         "-movflags",
         "+faststart",
         outputName,

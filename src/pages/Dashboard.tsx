@@ -862,7 +862,7 @@ const Dashboard = () => {
       const { data: player, error: playerError } = await supabase
         .from("players")
         .select("id, portal_language")
-        .eq("email", playerEmail)
+        .ilike("email", playerEmail.trim().toLowerCase())
         .maybeSingle();
 
       if (playerError || !player) {

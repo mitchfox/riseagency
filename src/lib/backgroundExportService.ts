@@ -4,11 +4,12 @@
  * Runs clip-to-report exports outside the component tree so they survive
  * section navigation. Components subscribe to progress updates via callbacks.
  *
- * Instead of trimming clips into separate files, we store the source video URL
- * along with clip_start/clip_end times. The player components seek to the right
- * position, so the full video only needs to load once.
+ * Each clip is extracted as a standalone trimmed file via the trim-video-clip
+ * edge function. This ensures every clip starts with a clean keyframe and
+ * plays instantly without seeking into a full match file.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 
 export interface ExportJob {
@@ -147,6 +148,29 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       try {
         const annotations = job.getClipAnnotations?.(clip.id);
 
+        // Attempt to trim the clip into a standalone file via edge function
+        let clipVideoUrl = sourceVideoUrl;
+        let clipStart: number | null = clip.start;
+        let clipEnd: number | null = clip.end;
+
+        try {
+          const { data: trimData, error: trimError } = await invokeEdgeFunction<{ url: string }>(
+            "trim-video-clip",
+            { body: { sourceUrl: sourceVideoUrl, start: clip.start, end: clip.end, clipId: clip.id } }
+          );
+
+          if (!trimError && trimData?.url) {
+            // Successfully trimmed — use standalone clip URL, no boundaries needed
+            clipVideoUrl = trimData.url;
+            clipStart = null;
+            clipEnd = null;
+          } else {
+            console.warn(`Trim failed for clip ${clip.id}, storing with boundaries:`, trimError?.message);
+          }
+        } catch (trimErr) {
+          console.warn(`Trim call failed for clip ${clip.id}, storing with boundaries:`, trimErr);
+        }
+
         const insertRow: any = {
           analysis_id: job.reportId,
           action_number: nextNumber,
@@ -154,9 +178,9 @@ export async function startExportJob(job: ExportJob): Promise<void> {
           action_type: clip.action_type || "",
           action_description: clip.action_description || "",
           notes: clip.notes || null,
-          video_url: sourceVideoUrl,
-          clip_start: clip.start,
-          clip_end: clip.end,
+          video_url: clipVideoUrl,
+          clip_start: clipStart,
+          clip_end: clipEnd,
           video_analysis_id: job.videoId,
           clip_id: clip.id,
           is_successful: true,

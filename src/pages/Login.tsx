@@ -53,7 +53,7 @@ const Login = () => {
         const { data } = await supabase
           .from("players")
           .select("id")
-          .eq("email", playerEmail)
+          .ilike("email", playerEmail.trim().toLowerCase())
           .maybeSingle();
           
         if (data) {
@@ -70,7 +70,7 @@ const Login = () => {
         const { data } = await supabase
           .from("scouts")
           .select("id")
-          .eq("email", scoutEmail)
+          .ilike("email", scoutEmail.trim().toLowerCase())
           .maybeSingle();
           
         if (data) {
@@ -103,23 +103,26 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
       const { data: player, error: playerError } = await supabase
         .from("players")
         .select("id, email, name")
-        .eq("email", email)
+        .ilike("email", normalizedEmail)
         .maybeSingle();
 
       if (playerError) throw playerError;
       
       if (player) {
+        const storedEmail = player.email || normalizedEmail;
         try {
-          localStorage.setItem("player_email", email);
-          sessionStorage.setItem("player_email", email);
+          localStorage.setItem("player_email", storedEmail);
+          sessionStorage.setItem("player_email", storedEmail);
           localStorage.setItem("player_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
-            localStorage.setItem("player_saved_email", email);
+            localStorage.setItem("player_saved_email", storedEmail);
             localStorage.setItem("player_remember_me", "true");
           } else {
             localStorage.removeItem("player_saved_email");
@@ -148,19 +151,20 @@ const Login = () => {
       const { data: scout, error: scoutError } = await supabase
         .from("scouts")
         .select("id, email")
-        .eq("email", email)
+        .ilike("email", normalizedEmail)
         .maybeSingle();
 
       if (scoutError) throw scoutError;
       
       if (scout) {
+        const storedScoutEmail = scout.email || normalizedEmail;
         try {
-          localStorage.setItem("scout_email", email);
-          sessionStorage.setItem("scout_email", email);
+          localStorage.setItem("scout_email", storedScoutEmail);
+          sessionStorage.setItem("scout_email", storedScoutEmail);
           localStorage.setItem("scout_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
-            localStorage.setItem("scout_saved_email", email);
+            localStorage.setItem("scout_saved_email", storedScoutEmail);
             localStorage.setItem("scout_remember_me", "true");
           } else {
             localStorage.removeItem("scout_saved_email");

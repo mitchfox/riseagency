@@ -28,6 +28,7 @@ import { R90RatingsViewer } from "./R90RatingsViewer";
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { ActionsByTypeDialog } from "./ActionsByTypeDialog";
 import { ActionVideoUpload } from "./ActionVideoUpload";
+import { ReExtractClipsButton } from "./ReExtractClipsButton";
 import { ActionStatRecorder, aggregateRecordedStats, RecordedStat, STAT_TYPE_CONFIGS, StatTypeConfig } from "./ActionStatRecorder";
 import { UnifiedStatsEditor, UnifiedStat, mergeStatsForEditor, unifiedStatsToStrikerStats } from "./UnifiedStatsEditor";
 import { FixtureStatsEditor, UNIFIED_TO_FIXTURE_MAP, FIXTURE_TO_UNIFIED_MAP } from "./FixtureStatsEditor";
@@ -2112,6 +2113,12 @@ export const CreatePerformanceReportDialog = ({
                   <List className="h-3.5 w-3.5" />
                   Action Edit
                 </Button>
+              )}
+              {analysisId && actions.some(a => a.video_url && !a.video_url.includes('/clips/') && !a.video_url.includes('/action-clips/')) && (
+                <ReExtractClipsButton
+                  analysisId={analysisId}
+                  onComplete={() => fetchExistingData()}
+                />
               )}
             </div>
             

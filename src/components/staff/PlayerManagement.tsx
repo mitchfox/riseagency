@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { calculateAge } from "@/lib/ageUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1075,7 +1076,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           club: formData.club || null,
           club_logo: finalClubLogoUrl || null,
           league: formData.league || null,
-          age: formData.age,
+          age: calculateAge(formatDateForDb(formData.dateOfBirth) || null) || formData.age || 0,
           nationality: formData.nationality,
           bio: bioJSON,
           image_url: finalImageUrl || null,
@@ -1230,7 +1231,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           club: formData.club || null,
           club_logo: finalClubLogoUrl || null,
           league: formData.league || null,
-          age: formData.age,
+          age: calculateAge(formatDateForDb(formData.dateOfBirth) || null) || formData.age || 0,
           nationality: formData.nationality,
           bio: bioJSON,
           image_url: finalImageUrl || null,
@@ -3587,15 +3588,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="age" className="text-sm">Age *</Label>
-                        <Input
-                          id="age"
-                          type="number"
-                          value={formData.age}
-                          onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
-                          required
-                          className="h-10 sm:h-11"
-                        />
+                        <Label className="text-sm">Age</Label>
+                        <div className="h-10 sm:h-11 flex items-center px-3 rounded-md border border-input bg-muted/50 text-sm text-muted-foreground">
+                          {formData.dateOfBirth ? (calculateAge(formData.dateOfBirth) ?? "Set DOB") : "Set DOB"}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">

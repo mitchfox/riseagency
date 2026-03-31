@@ -618,7 +618,7 @@ const Staff = () => {
     try {
       // Use Supabase Auth with email and password
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
