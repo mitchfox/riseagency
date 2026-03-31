@@ -2114,6 +2114,12 @@ export const CreatePerformanceReportDialog = ({
                   Action Edit
                 </Button>
               )}
+              {analysisId && actions.some(a => a.video_url && !a.video_url.includes('/clips/') && !a.video_url.includes('/action-clips/')) && (
+                <ReExtractClipsButton
+                  analysisId={analysisId}
+                  onComplete={() => fetchExistingData()}
+                />
+              )}
             </div>
             
             {/* Action Stats Summary removed - now integrated into Additional Statistics section */}
