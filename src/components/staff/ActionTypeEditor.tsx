@@ -3,15 +3,16 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, ChevronDown, ChevronRight, Play, Pause, SkipBack, SkipForward, Video, Loader2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { X, Save, Search, ChevronDown, ChevronRight, Play, Pause, SkipBack, SkipForward, Video, Loader2, Maximize, Minimize } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { supabase } from "@/integrations/supabase/client";
 import type { RecordedStat } from "./ActionStatRecorder";
+import { XGPitchMap } from "./XGPitchMap";
+import { BoxZoneMap } from "./BoxZoneMap";
+import { Separator } from "@/components/ui/separator";
 
 interface PerformanceAction {
   id?: string;
@@ -48,6 +49,38 @@ interface ActionTypeEditorProps {
   actionTypeFrequencyMap: Record<string, number>;
   getDescriptionsForType: (type: string) => string[];
 }
+
+// Action types that show the 18-yard box zone map
+const BOX_ZONE_TYPES = [
+  "attacking cross", "front post movement", "central movement",
+  "back post movement", "cross", "attacking corner"
+];
+
+// Action types that show the xG map
+const XG_MAP_TYPES = [
+  "shot", "shot blocked", "blocked shot", "headed shot", "shot assist"
+];
+
+const isBoxZoneType = (type: string) =>
+  BOX_ZONE_TYPES.some(t => canonicalActionType(type).toLowerCase().includes(t));
+
+const isXGType = (type: string) =>
+  XG_MAP_TYPES.some(t => canonicalActionType(type).toLowerCase().includes(t));
+
+// Categorise action types into groups
+const OFFENSIVE_PATTERNS = ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward', 'movement', 'assist', 'goal'];
+const DEFENSIVE_PATTERNS = ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'];
+const KEY_PATTERNS = ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'];
+
+function getActionGroup(type: string): 'Key Actions' | 'Offensive' | 'Defensive' | 'Other' {
+  const lower = type.toLowerCase();
+  if (KEY_PATTERNS.some(p => lower.includes(p))) return 'Key Actions';
+  if (DEFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Defensive';
+  if (OFFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Offensive';
+  return 'Other';
+}
+
+const GROUP_ORDER: ('Key Actions' | 'Offensive' | 'Defensive' | 'Other')[] = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
 
 // Fetch top 3 scores for a given action type
 let scoresByTypeCache: Record<string, { value: string; count: number }[]> = {};
@@ -87,6 +120,55 @@ async function fetchTopScoresForType(actionType: string): Promise<{ value: strin
   return sorted;
 }
 
+// Inline R90 search component
+const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating[]; onSelect: (score: string) => void }) => {
+  const [query, setQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase();
+    return allR90Ratings.filter(r =>
+      r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)
+    ).slice(0, 8);
+  }, [query, allR90Ratings]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShowDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <Input
+        value={query}
+        onChange={e => { setQuery(e.target.value); setShowDropdown(true); }}
+        onFocus={() => setShowDropdown(true)}
+        placeholder="R90 search..."
+        className="h-7 text-xs w-28"
+      />
+      {showDropdown && filtered.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 z-50 w-64 max-h-48 overflow-y-auto bg-popover border rounded-md shadow-lg">
+          {filtered.map((r, i) => (
+            <button
+              key={i}
+              className="w-full px-2 py-1.5 text-left hover:bg-accent text-xs flex items-center gap-2"
+              onClick={() => { onSelect(String(r.score)); setQuery(""); setShowDropdown(false); }}
+            >
+              <span className="font-mono font-bold text-primary shrink-0">{String(r.score)}</span>
+              <span className="truncate text-muted-foreground">{r.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ActionTypeEditor = ({
   open,
   onOpenChange,
@@ -107,6 +189,9 @@ export const ActionTypeEditor = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [videoZoom, setVideoZoom] = useState(1);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // Group actions by action_type category
   const groupedActions = useMemo(() => {
@@ -124,11 +209,26 @@ export const ActionTypeEditor = ({
     return sorted;
   }, [actions]);
 
+  // Group the categories into offensive/defensive/other sections
+  const sidebarGroups = useMemo(() => {
+    const result: Record<string, { category: string; items: { action: PerformanceAction; index: number }[] }[]> = {
+      'Key Actions': [],
+      'Offensive': [],
+      'Defensive': [],
+      'Other': [],
+    };
+    groupedActions.forEach(([category, items]) => {
+      const group = getActionGroup(category);
+      result[group].push({ category, items });
+    });
+    return result;
+  }, [groupedActions]);
+
   const categoriesToShow = selectedCategory
     ? groupedActions.filter(([cat]) => cat === selectedCategory)
     : groupedActions;
 
-  // Flat list of clips for the selected category (actions with video_url)
+  // Flat list of clips for the selected category
   const categoryClips = useMemo(() => {
     const items: { action: PerformanceAction; index: number }[] = [];
     categoriesToShow.forEach(([, actionItems]) => {
@@ -141,48 +241,33 @@ export const ActionTypeEditor = ({
 
   // Load top scores when category changes
   useEffect(() => {
-    if (!selectedCategory) {
-      setTopScores([]);
-      return;
-    }
+    if (!selectedCategory) { setTopScores([]); return; }
     fetchTopScoresForType(selectedCategory).then(setTopScores);
   }, [selectedCategory]);
 
   // Play the active clip
   useEffect(() => {
-    if (activeClipIndex === null) {
-      setVideoReady(false);
-      setVideoPlaying(false);
-      return;
-    }
+    if (activeClipIndex === null) { setVideoReady(false); setVideoPlaying(false); return; }
     const clip = categoryClips[activeClipIndex];
     if (!clip?.action.video_url) return;
     setVideoReady(false);
     setVideoPlaying(false);
+    setVideoZoom(1);
     const vid = videoRef.current;
-    if (vid) {
-      vid.src = clip.action.video_url;
-      vid.load();
-    }
+    if (vid) { vid.src = clip.action.video_url; vid.load(); }
   }, [activeClipIndex, categoryClips]);
 
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
     const vid = videoRef.current;
-    if (vid) {
-      vid.play().then(() => setVideoPlaying(true)).catch(() => {});
-    }
+    if (vid) vid.play().then(() => setVideoPlaying(true)).catch(() => {});
   }, []);
 
   const togglePlayPause = () => {
     const vid = videoRef.current;
     if (!vid) return;
-    if (vid.paused) {
-      vid.play().then(() => setVideoPlaying(true)).catch(() => {});
-    } else {
-      vid.pause();
-      setVideoPlaying(false);
-    }
+    if (vid.paused) vid.play().then(() => setVideoPlaying(true)).catch(() => {});
+    else { vid.pause(); setVideoPlaying(false); }
   };
 
   const goToClip = (direction: number) => {
@@ -196,6 +281,7 @@ export const ActionTypeEditor = ({
     });
   };
 
+  // Click action row -> auto-play its clip
   const openClipForAction = (actionIndex: number) => {
     const clipIdx = categoryClips.findIndex(c => c.index === actionIndex);
     if (clipIdx >= 0) setActiveClipIndex(clipIdx);
@@ -223,6 +309,29 @@ export const ActionTypeEditor = ({
     updateAction(actionIndex, "action_score", String(parseFloat(newVal.toFixed(5))));
   };
 
+  // Mousewheel zoom on video
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    setVideoZoom(prev => {
+      const next = prev + (e.deltaY < 0 ? 0.15 : -0.15);
+      return Math.max(1, Math.min(4, next));
+    });
+  }, []);
+
+  const toggleFullscreen = () => setIsFullscreen(prev => !prev);
+
+  const videoHeight = isFullscreen ? "70vh" : "35vh";
+
+  // Score count helpers
+  const getScoreCounts = (items: { action: PerformanceAction; index: number }[]) => {
+    const scored = items.filter(i => i.action.action_score && i.action.action_score.trim() !== "").length;
+    return { scored, total: items.length };
+  };
+
+  // Check if selected category should show box zone or xG map
+  const showBoxZone = selectedCategory ? isBoxZoneType(selectedCategory) : false;
+  const showXGMap = selectedCategory ? isXGType(selectedCategory) : false;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
@@ -233,7 +342,7 @@ export const ActionTypeEditor = ({
           <div className="flex items-center gap-3">
             <span className="text-primary font-bold text-sm">ACTION EDIT</span>
             <span className="text-xs text-muted-foreground">
-              {actions.length} actions · {groupedActions.length} categories
+              {actions.length} actions · {groupedActions.length} types
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -249,7 +358,7 @@ export const ActionTypeEditor = ({
 
         <div className="flex flex-1 min-h-0">
           {/* Category sidebar */}
-          <div className="w-48 md:w-56 border-r shrink-0 flex flex-col">
+          <div className="w-52 md:w-60 border-r shrink-0 flex flex-col">
             <div className="p-2 border-b">
               <Button
                 variant={selectedCategory === null ? "default" : "ghost"}
@@ -257,27 +366,46 @@ export const ActionTypeEditor = ({
                 className="w-full justify-start text-xs"
                 onClick={() => { setSelectedCategory(null); setActiveClipIndex(null); }}
               >
-                All Categories
+                All Action Types
               </Button>
             </div>
             <ScrollArea className="flex-1">
-              <div className="p-1 space-y-0.5">
-                {groupedActions.map(([category, items]) => {
-                  const clipCount = items.filter(i => i.action.video_url).length;
+              <div className="p-1">
+                {GROUP_ORDER.map(group => {
+                  const entries = sidebarGroups[group];
+                  if (!entries || entries.length === 0) return null;
                   return (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? "default" : "ghost"}
-                      size="sm"
-                      className="w-full justify-between text-xs h-8"
-                      onClick={() => { setSelectedCategory(category); setActiveClipIndex(null); }}
-                    >
-                      <span className="truncate">{category}</span>
-                      <span className="flex items-center gap-1">
-                        {clipCount > 0 && <Video className="h-3 w-3 opacity-50" />}
-                        <span className="text-[10px] opacity-70">{items.length}</span>
-                      </span>
-                    </Button>
+                    <div key={group}>
+                      {/* Gold divider with group label */}
+                      <div className="flex items-center gap-2 px-2 py-2">
+                        <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group}</span>
+                        <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
+                      </div>
+                      <div className="space-y-0.5">
+                        {entries.map(({ category, items }) => {
+                          const { scored, total } = getScoreCounts(items);
+                          const clipCount = items.filter(i => i.action.video_url).length;
+                          return (
+                            <Button
+                              key={category}
+                              variant={selectedCategory === category ? "default" : "ghost"}
+                              size="sm"
+                              className="w-full justify-between text-xs h-8 px-2"
+                              onClick={() => { setSelectedCategory(category); setActiveClipIndex(null); }}
+                            >
+                              <span className="truncate">{category}</span>
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                {clipCount > 0 && <Video className="h-3 w-3 opacity-50" />}
+                                <span className={`text-[10px] font-mono ${scored === total && total > 0 ? "text-green-500" : "opacity-70"}`}>
+                                  {scored}/{total}
+                                </span>
+                              </span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -286,7 +414,7 @@ export const ActionTypeEditor = ({
 
           {/* Main content */}
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Video player area - shows when a category is selected and has clips */}
+            {/* Video player area - fixed size, always present when category selected */}
             {selectedCategory && categoryClips.length > 0 && (
               <div className="border-b shrink-0">
                 {/* Navigation controls above player */}
@@ -301,32 +429,40 @@ export const ActionTypeEditor = ({
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => goToClip(1)} disabled={categoryClips.length <= 1}>
                       Next <SkipForward className="h-3 w-3" />
                     </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={toggleFullscreen}>
+                      {isFullscreen ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
+                    </Button>
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {activeClipIndex !== null ? `Clip ${activeClipIndex + 1} of ${categoryClips.length}` : `${categoryClips.length} clips available`}
+                    {videoZoom > 1 && <span className="ml-2 text-primary">{videoZoom.toFixed(1)}×</span>}
                   </span>
                 </div>
 
-                {/* Video */}
-                <div className="relative bg-black" style={{ maxHeight: "35vh" }}>
+                {/* Video - fixed height container */}
+                <div
+                  ref={videoContainerRef}
+                  className="relative bg-black overflow-hidden"
+                  style={{ height: videoHeight }}
+                  onWheel={handleWheel}
+                >
                   {activeClipIndex === null && (
-                    <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-                      Select a clip below or press Next to start reviewing
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                      Click an action below to start reviewing
                     </div>
                   )}
                   {activeClipIndex !== null && (
                     <>
                       <video
                         ref={videoRef}
-                        className={`w-full object-contain cursor-pointer transition-opacity ${videoReady ? "opacity-100" : "opacity-0"}`}
-                        style={{ maxHeight: "35vh" }}
+                        className="w-full h-full object-contain cursor-pointer transition-transform"
+                        style={{ transform: `scale(${videoZoom})` }}
                         preload="auto"
                         crossOrigin="anonymous"
                         muted
                         playsInline
                         onClick={togglePlayPause}
                         onCanPlay={handleCanPlay}
-                        onEnded={() => setVideoPlaying(false)}
                         loop
                       />
                       {!videoReady && (
@@ -361,7 +497,10 @@ export const ActionTypeEditor = ({
                         className="w-24"
                         inputClassName="h-7 text-xs border-[hsl(43,49%,61%)]/50"
                       />
-                      {/* Quick score buttons */}
+                      <R90InlineSearch
+                        allR90Ratings={allR90Ratings}
+                        onSelect={(score) => updateAction(activeAction.index, "action_score", score)}
+                      />
                       {topScores.length > 0 && (
                         <div className="flex items-center gap-1">
                           {topScores.map(s => (
@@ -378,27 +517,14 @@ export const ActionTypeEditor = ({
                           ))}
                         </div>
                       )}
-                      {/* Modifier buttons */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
                         onClick={() => applyScoreModifier(activeAction.index, "minus25")}
                         disabled={!activeAction.action.action_score || isNaN(parseFloat(activeAction.action.action_score))}
-                        title="Reduce score by 25% (×0.75)"
-                      >
-                        −25%
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
+                      >−25%</Button>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
                         onClick={() => applyScoreModifier(activeAction.index, "times4")}
                         disabled={!activeAction.action.action_score || isNaN(parseFloat(activeAction.action.action_score))}
-                        title="Multiply score by 4"
-                      >
-                        ×4
-                      </Button>
+                      >×4</Button>
                       <ZonePitchSelector
                         value={activeAction.action.zone_details || (activeAction.action.zone ? [{ zone: activeAction.action.zone }] : [])}
                         onChange={(zd) => {
@@ -408,12 +534,7 @@ export const ActionTypeEditor = ({
                         actionType={activeAction.action.action_type}
                         compact
                       />
-                      <Button
-                        onClick={() => openR90Viewer(activeAction.index)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2"
-                      >
+                      <Button onClick={() => openR90Viewer(activeAction.index)} size="sm" variant="ghost" className="h-7 px-2">
                         <Search className="h-3 w-3 text-primary" />
                       </Button>
                     </div>
@@ -446,6 +567,7 @@ export const ActionTypeEditor = ({
                     <div className="space-y-1.5">
                       {items.map(({ action, index }) => {
                         const isActive = activeAction?.index === index;
+                        const hasClip = !!action.video_url;
                         return (
                           <Collapsible
                             key={index}
@@ -453,7 +575,14 @@ export const ActionTypeEditor = ({
                             onOpenChange={() => toggleExpanded(index)}
                           >
                             <div className={`border rounded-md bg-card ${isActive ? "ring-2 ring-primary" : ""}`}>
-                              <CollapsibleTrigger className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-accent/50 transition-colors">
+                              <div
+                                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-accent/50 transition-colors cursor-pointer"
+                                onClick={() => {
+                                  // Click action -> auto-play clip if available, otherwise just expand
+                                  if (hasClip) openClipForAction(index);
+                                  toggleExpanded(index);
+                                }}
+                              >
                                 {expandedActions.has(index) ? (
                                   <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                 ) : (
@@ -465,17 +594,10 @@ export const ActionTypeEditor = ({
                                 <span className="text-xs font-mono font-semibold text-amber-600 shrink-0">
                                   {action.action_score || "—"}
                                 </span>
-                                {action.video_url && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
-                                    onClick={(e) => { e.stopPropagation(); openClipForAction(index); }}
-                                  >
-                                    <Play className="h-3 w-3 mr-0.5" /> clip
-                                  </Button>
+                                {hasClip && (
+                                  <Video className="h-3 w-3 text-primary/60 shrink-0" />
                                 )}
-                              </CollapsibleTrigger>
+                              </div>
                               <CollapsibleContent>
                                 <div className="px-3 pb-3 pt-1 space-y-2 border-t">
                                   <div className="flex items-center gap-2 flex-wrap">
@@ -504,7 +626,10 @@ export const ActionTypeEditor = ({
                                       className="w-20"
                                       inputClassName="h-7 text-xs border-[hsl(43,49%,61%)]/50"
                                     />
-                                    {/* Quick score buttons in expanded view too */}
+                                    <R90InlineSearch
+                                      allR90Ratings={allR90Ratings}
+                                      onSelect={(score) => updateAction(index, "action_score", score)}
+                                    />
                                     {topScores.length > 0 && selectedCategory && (
                                       <div className="flex items-center gap-1">
                                         {topScores.map(s => (
@@ -521,24 +646,14 @@ export const ActionTypeEditor = ({
                                         ))}
                                       </div>
                                     )}
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-6 px-1.5 text-[10px]"
+                                    <Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]"
                                       onClick={() => applyScoreModifier(index, "minus25")}
                                       disabled={!action.action_score || isNaN(parseFloat(action.action_score))}
-                                    >
-                                      −25%
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-6 px-1.5 text-[10px]"
+                                    >−25%</Button>
+                                    <Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]"
                                       onClick={() => applyScoreModifier(index, "times4")}
                                       disabled={!action.action_score || isNaN(parseFloat(action.action_score))}
-                                    >
-                                      ×4
-                                    </Button>
+                                    >×4</Button>
                                     <ZonePitchSelector
                                       value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
                                       onChange={(zd) => {
@@ -548,12 +663,7 @@ export const ActionTypeEditor = ({
                                       actionType={action.action_type}
                                       compact
                                     />
-                                    <Button
-                                      onClick={() => openR90Viewer(index)}
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 px-2"
-                                    >
+                                    <Button onClick={() => openR90Viewer(index)} size="sm" variant="ghost" className="h-7 px-2">
                                       <Search className="h-3 w-3 text-primary" />
                                     </Button>
                                   </div>
@@ -578,6 +688,20 @@ export const ActionTypeEditor = ({
                     </div>
                   </div>
                 ))}
+
+                {/* Visual maps below actions for specific action types */}
+                {showBoxZone && (
+                  <div className="mt-4">
+                    <BoxZoneMap
+                      actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))}
+                    />
+                  </div>
+                )}
+                {showXGMap && (
+                  <div className="mt-4">
+                    <XGPitchMap />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
