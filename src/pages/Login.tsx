@@ -115,9 +115,10 @@ const Login = () => {
       if (playerError) throw playerError;
       
       if (player) {
+        const storedEmail = player.email || normalizedEmail;
         try {
-          localStorage.setItem("player_email", email);
-          sessionStorage.setItem("player_email", email);
+          localStorage.setItem("player_email", storedEmail);
+          sessionStorage.setItem("player_email", storedEmail);
           localStorage.setItem("player_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
