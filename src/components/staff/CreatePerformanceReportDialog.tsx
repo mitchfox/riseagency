@@ -1327,6 +1327,23 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
+  const duplicateAction = (index: number) => {
+    const source = actions[index];
+    const duplicate: PerformanceAction = {
+      ...source,
+      id: undefined, // new row in DB
+      action_number: actions.length + 1,
+    };
+    const newActions = [
+      ...actions.slice(0, index + 1),
+      duplicate,
+      ...actions.slice(index + 1),
+    ];
+    newActions.forEach((a, i) => { a.action_number = i + 1; });
+    setActions(sortActionsChronologically(newActions));
+    toast.success('Action duplicated');
+  };
+
   const moveAction = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= actions.length) return;
