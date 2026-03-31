@@ -1745,7 +1745,23 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-sm truncate">{selectedVideo.title}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-medium text-sm truncate">{selectedVideo.title}</h3>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" title="Rename" onClick={() => {
+                const newName = prompt("Rename video analysis:", selectedVideo.title);
+                if (newName && newName.trim() && newName.trim() !== selectedVideo.title) {
+                  supabase.from('video_analyses').update({ title: newName.trim() }).eq('id', selectedVideo.id).then(({ error }) => {
+                    if (error) { toast.error('Failed to rename'); return; }
+                    toast.success('Renamed');
+                    const updated = { ...selectedVideo, title: newName.trim() };
+                    setSelectedVideo(updated);
+                    setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+                  });
+                }
+              }}>
+                <Pencil className="h-3 w-3" />
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               {selectedVideo.opponent && `vs ${selectedVideo.opponent}`}
               {selectedVideo.match_date && ` · ${format(new Date(selectedVideo.match_date), "dd MMM yyyy")}`}
