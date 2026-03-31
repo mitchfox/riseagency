@@ -639,9 +639,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         upload.start();
       });
 
-      const autoDeleteAt = new Date();
-      autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
-
       const insertData: any = {
         title: newTitle,
         video_url: publicUrl,
@@ -650,7 +647,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         created_by: userId || null,
         annotations: [],
         clips: [],
-        auto_delete_at: autoDeleteAt.toISOString(),
+        auto_delete_at: null,
         match_minute_offset: 0,
       };
       if (newPlayerId && newPlayerId !== "none") insertData.player_id = newPlayerId;
