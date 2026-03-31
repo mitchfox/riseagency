@@ -9,6 +9,8 @@
 /** Returns true if the URL is a full match video (not a standalone trimmed clip) */
 export const isFullMatchUrl = (url: string): boolean => {
   if (!url) return false;
+  // Trimmed clips stored under clips/ prefix in analysis-videos are NOT full match
+  if (url.includes('/analysis-videos/clips/')) return false;
   // analysis-videos bucket = full match files
   if (url.includes('/analysis-videos/')) return true;
   return false;
