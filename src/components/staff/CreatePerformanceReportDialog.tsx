@@ -2164,6 +2164,29 @@ export const CreatePerformanceReportDialog = ({
                         <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground text-xs" title="Save report first to add clips">💾</span>
                       )}
                       <Button
+                        onClick={() => duplicateAction(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="Duplicate action"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {(() => {
+                        const mins = parseFloat(action.minute);
+                        return !isNaN(mins) && mins >= 45 && mins <= 51 ? (
+                          <Button
+                            onClick={() => { updateAction(index, 'is_first_half' as any, !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
+                            size="icon"
+                            variant={action.is_first_half ? "default" : "ghost"}
+                            className="h-8 w-8 text-xs font-bold"
+                            title={action.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                          >
+                            H1
+                          </Button>
+                        ) : null;
+                      })()}
+                      <Button
                         onClick={() => removeAction(index)}
                         size="icon"
                         variant="ghost"
