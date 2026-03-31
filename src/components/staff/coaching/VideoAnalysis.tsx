@@ -513,8 +513,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         const { data: session } = await supabase.auth.getSession();
         const userId = session.session?.user?.id;
 
-        const autoDeleteAt = new Date();
-        autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
 
         let firstInserted: VideoAnalysisEntry | null = null;
 
