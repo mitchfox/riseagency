@@ -164,7 +164,7 @@ const Login = () => {
           localStorage.setItem("scout_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
-            localStorage.setItem("scout_saved_email", email);
+            localStorage.setItem("scout_saved_email", storedScoutEmail);
             localStorage.setItem("scout_remember_me", "true");
           } else {
             localStorage.removeItem("scout_saved_email");
