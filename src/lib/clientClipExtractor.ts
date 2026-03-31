@@ -180,10 +180,12 @@ async function _doClientSideTrim(
     video.onseeked = () => resolve();
   });
 
-  // Start recording and play at accelerated speed for faster capture
-  onProgress?.("Recording clip...");
+  // CRITICAL: Record at native 1x speed to preserve correct playback rate
+  // Never use accelerated playback during capture — it encodes the sped-up
+  // output as the source content, producing clips that play too fast.
+  onProgress?.("Recording clip (real-time capture)...");
   recorder.start();
-  video.playbackRate = 4.0;
+  video.playbackRate = 1.0;
   video.play();
 
   // Wait until end time using requestVideoFrameCallback if available, else rAF
