@@ -2176,7 +2176,7 @@ export const CreatePerformanceReportDialog = ({
                         const mins = parseFloat(action.minute);
                         return !isNaN(mins) && mins >= 45 && mins <= 51 ? (
                           <Button
-                            onClick={() => { updateAction(index, 'is_first_half' as any, !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
+                            onClick={() => { updateAction(index, 'is_first_half', !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
                             size="icon"
                             variant={action.is_first_half ? "default" : "ghost"}
                             className="h-8 w-8 text-xs font-bold"
