@@ -2836,7 +2836,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 }
                 return true;
               }).map(video => {
-                const expiry = daysUntilExpiry(video.auto_delete_at);
                 return (
                   <div
                     key={video.id}
@@ -2859,27 +2858,22 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                           {!video.video_url && video.clips.length > 0 && (
                             <Badge variant="outline" className="text-[10px]">Source removed</Badge>
                           )}
-                          {expiry !== null && (
-                            <span className={`text-xs ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                              <Clock className="h-3 w-3 inline mr-0.5" />{expiry}d left
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        {video.video_url && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
-                            e.stopPropagation(); 
-                            const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
-                            supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
-                              if (error) { toast.error('Failed to extend'); return; }
-                              toast.success('Deletion extended by 7 days');
-                              setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Rename" onClick={e => {
+                          e.stopPropagation();
+                          const newName = prompt("Rename video analysis:", video.title);
+                          if (newName && newName.trim() && newName.trim() !== video.title) {
+                            supabase.from('video_analyses').update({ title: newName.trim() }).eq('id', video.id).then(({ error }) => {
+                              if (error) { toast.error('Failed to rename'); return; }
+                              toast.success('Renamed');
+                              setVideos(prev => prev.map(v => v.id === video.id ? { ...v, title: newName.trim() } : v));
                             });
-                          }}>
-                            <Clock className="h-4 w-4" />
-                          </Button>
-                        )}
+                          }
+                        }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
