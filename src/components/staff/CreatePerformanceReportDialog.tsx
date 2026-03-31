@@ -2609,6 +2609,29 @@ export const CreatePerformanceReportDialog = ({
                       <div className="flex-1" />
 
                       <div className="flex items-center gap-0.5 shrink-0 rounded-md border bg-background px-1 py-1">
+                        {(() => {
+                          const mins = parseFloat(action.minute);
+                          return !isNaN(mins) && mins >= 45 && mins <= 51 ? (
+                            <Button
+                              onClick={() => { updateAction(index, 'is_first_half' as any, !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
+                              size="icon"
+                              variant={action.is_first_half ? "default" : "ghost"}
+                              className="h-7 w-7 text-[10px] font-bold"
+                              title={action.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                            >
+                              H1
+                            </Button>
+                          ) : null;
+                        })()}
+                        <Button
+                          onClick={() => duplicateAction(index)}
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          title="Duplicate action"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           onClick={() => removeAction(index)}
                           size="icon"
