@@ -103,11 +103,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
       const { data: player, error: playerError } = await supabase
         .from("players")
         .select("id, email, name")
-        .eq("email", email)
+        .ilike("email", normalizedEmail)
         .maybeSingle();
 
       if (playerError) throw playerError;
