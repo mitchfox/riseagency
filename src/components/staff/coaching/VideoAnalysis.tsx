@@ -513,8 +513,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         const { data: session } = await supabase.auth.getSession();
         const userId = session.session?.user?.id;
 
-        const autoDeleteAt = new Date();
-        autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
 
         let firstInserted: VideoAnalysisEntry | null = null;
 
@@ -530,7 +528,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               created_by: userId || null,
               annotations: [],
               clips: [],
-              auto_delete_at: autoDeleteAt.toISOString(),
+              auto_delete_at: null,
               match_minute_offset: 0,
               group_id: totalParts > 1 ? groupId : null,
               part_number: totalParts > 1 ? part.partNumber : null,
@@ -639,9 +637,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         upload.start();
       });
 
-      const autoDeleteAt = new Date();
-      autoDeleteAt.setDate(autoDeleteAt.getDate() + 7);
-
       const insertData: any = {
         title: newTitle,
         video_url: publicUrl,
@@ -650,7 +645,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         created_by: userId || null,
         annotations: [],
         clips: [],
-        auto_delete_at: autoDeleteAt.toISOString(),
+        auto_delete_at: null,
         match_minute_offset: 0,
       };
       if (newPlayerId && newPlayerId !== "none") insertData.player_id = newPlayerId;
@@ -1750,7 +1745,23 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-sm truncate">{selectedVideo.title}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-medium text-sm truncate">{selectedVideo.title}</h3>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" title="Rename" onClick={() => {
+                const newName = prompt("Rename video analysis:", selectedVideo.title);
+                if (newName && newName.trim() && newName.trim() !== selectedVideo.title) {
+                  supabase.from('video_analyses').update({ title: newName.trim() }).eq('id', selectedVideo.id).then(({ error }) => {
+                    if (error) { toast.error('Failed to rename'); return; }
+                    toast.success('Renamed');
+                    const updated = { ...selectedVideo, title: newName.trim() };
+                    setSelectedVideo(updated);
+                    setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+                  });
+                }
+              }}>
+                <Pencil className="h-3 w-3" />
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               {selectedVideo.opponent && `vs ${selectedVideo.opponent}`}
               {selectedVideo.match_date && ` · ${format(new Date(selectedVideo.match_date), "dd MMM yyyy")}`}
@@ -2839,7 +2850,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 }
                 return true;
               }).map(video => {
-                const expiry = daysUntilExpiry(video.auto_delete_at);
                 return (
                   <div
                     key={video.id}
@@ -2862,27 +2872,22 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                           {!video.video_url && video.clips.length > 0 && (
                             <Badge variant="outline" className="text-[10px]">Source removed</Badge>
                           )}
-                          {expiry !== null && (
-                            <span className={`text-xs ${expiry <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                              <Clock className="h-3 w-3 inline mr-0.5" />{expiry}d left
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        {video.video_url && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Extend deletion by 7 days" onClick={e => { 
-                            e.stopPropagation(); 
-                            const newDate = new Date(video.auto_delete_at ? new Date(video.auto_delete_at).getTime() + 7 * 86400000 : Date.now() + 14 * 86400000);
-                            supabase.from('video_analyses').update({ auto_delete_at: newDate.toISOString() }).eq('id', video.id).then(({ error }) => {
-                              if (error) { toast.error('Failed to extend'); return; }
-                              toast.success('Deletion extended by 7 days');
-                              setVideos(prev => prev.map(v => v.id === video.id ? { ...v, auto_delete_at: newDate.toISOString() } : v));
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" title="Rename" onClick={e => {
+                          e.stopPropagation();
+                          const newName = prompt("Rename video analysis:", video.title);
+                          if (newName && newName.trim() && newName.trim() !== video.title) {
+                            supabase.from('video_analyses').update({ title: newName.trim() }).eq('id', video.id).then(({ error }) => {
+                              if (error) { toast.error('Failed to rename'); return; }
+                              toast.success('Renamed');
+                              setVideos(prev => prev.map(v => v.id === video.id ? { ...v, title: newName.trim() } : v));
                             });
-                          }}>
-                            <Clock className="h-4 w-4" />
-                          </Button>
-                        )}
+                          }
+                        }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={e => { e.stopPropagation(); handleDeleteVideo(video.id); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
