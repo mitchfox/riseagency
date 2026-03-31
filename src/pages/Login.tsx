@@ -122,7 +122,7 @@ const Login = () => {
           localStorage.setItem("player_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
-            localStorage.setItem("player_saved_email", email);
+            localStorage.setItem("player_saved_email", storedEmail);
             localStorage.setItem("player_remember_me", "true");
           } else {
             localStorage.removeItem("player_saved_email");
