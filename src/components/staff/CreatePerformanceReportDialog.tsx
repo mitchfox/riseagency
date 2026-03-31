@@ -62,8 +62,14 @@ const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAc
     }
   });
   
-  // Sort only the actions that have minutes
-  withMinute.sort((a, b) => a.seconds - b.seconds);
+  // Sort by time; for actions at 45-51 mins, is_first_half=true sorts before second-half actions
+  withMinute.sort((a, b) => {
+    if (a.seconds !== b.seconds) return a.seconds - b.seconds;
+    // Same time: first-half actions come before second-half
+    const aFirst = a.action.is_first_half ? 0 : 1;
+    const bFirst = b.action.is_first_half ? 0 : 1;
+    return aFirst - bFirst;
+  });
   
   // Rebuild: place sorted actions with minutes in their slots, keep empty-minute actions in place
   const result: PerformanceAction[] = new Array(actions.length);
