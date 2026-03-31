@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
@@ -62,8 +62,14 @@ const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAc
     }
   });
   
-  // Sort only the actions that have minutes
-  withMinute.sort((a, b) => a.seconds - b.seconds);
+  // Sort by time; for actions at 45-51 mins, is_first_half=true sorts before second-half actions
+  withMinute.sort((a, b) => {
+    if (a.seconds !== b.seconds) return a.seconds - b.seconds;
+    // Same time: first-half actions come before second-half
+    const aFirst = a.action.is_first_half ? 0 : 1;
+    const bFirst = b.action.is_first_half ? 0 : 1;
+    return aFirst - bFirst;
+  });
   
   // Rebuild: place sorted actions with minutes in their slots, keep empty-minute actions in place
   const result: PerformanceAction[] = new Array(actions.length);
@@ -122,6 +128,7 @@ interface PerformanceAction {
   recorded_stat?: RecordedStat | RecordedStat[] | null;
   zone?: number | null;
   zone_details?: ZonePoint[] | null;
+  is_first_half?: boolean;
 }
 
 interface SortableStatItemProps {
@@ -1326,6 +1333,23 @@ export const CreatePerformanceReportDialog = ({
     setActions(newActions);
   };
 
+  const duplicateAction = (index: number) => {
+    const source = actions[index];
+    const duplicate: PerformanceAction = {
+      ...source,
+      id: undefined, // new row in DB
+      action_number: actions.length + 1,
+    };
+    const newActions = [
+      ...actions.slice(0, index + 1),
+      duplicate,
+      ...actions.slice(index + 1),
+    ];
+    newActions.forEach((a, i) => { a.action_number = i + 1; });
+    setActions(sortActionsChronologically(newActions));
+    toast.success('Action duplicated');
+  };
+
   const moveAction = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= actions.length) return;
@@ -1338,7 +1362,7 @@ export const CreatePerformanceReportDialog = ({
   const updateAction = (
     index: number,
     field: keyof PerformanceAction,
-    value: string | number | null | RecordedStat | RecordedStat[] | ZonePoint[]
+    value: string | number | boolean | null | RecordedStat | RecordedStat[] | ZonePoint[]
   ) => {
     setActions((prevActions) => {
       const newActions = [...prevActions];
@@ -2140,6 +2164,29 @@ export const CreatePerformanceReportDialog = ({
                         <span className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground text-xs" title="Save report first to add clips">💾</span>
                       )}
                       <Button
+                        onClick={() => duplicateAction(index)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="Duplicate action"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {(() => {
+                        const mins = parseFloat(action.minute);
+                        return !isNaN(mins) && mins >= 45 && mins <= 51 ? (
+                          <Button
+                            onClick={() => { updateAction(index, 'is_first_half', !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
+                            size="icon"
+                            variant={action.is_first_half ? "default" : "ghost"}
+                            className="h-8 w-8 text-xs font-bold"
+                            title={action.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                          >
+                            H1
+                          </Button>
+                        ) : null;
+                      })()}
+                      <Button
                         onClick={() => removeAction(index)}
                         size="icon"
                         variant="ghost"
@@ -2562,6 +2609,29 @@ export const CreatePerformanceReportDialog = ({
                       <div className="flex-1" />
 
                       <div className="flex items-center gap-0.5 shrink-0 rounded-md border bg-background px-1 py-1">
+                        {(() => {
+                          const mins = parseFloat(action.minute);
+                          return !isNaN(mins) && mins >= 45 && mins <= 51 ? (
+                            <Button
+                              onClick={() => { updateAction(index, 'is_first_half', !action.is_first_half); setTimeout(() => setActions(prev => sortActionsChronologically(prev)), 100); }}
+                              size="icon"
+                              variant={action.is_first_half ? "default" : "ghost"}
+                              className="h-7 w-7 text-[10px] font-bold"
+                              title={action.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                            >
+                              H1
+                            </Button>
+                          ) : null;
+                        })()}
+                        <Button
+                          onClick={() => duplicateAction(index)}
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          title="Duplicate action"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           onClick={() => removeAction(index)}
                           size="icon"
