@@ -54,11 +54,11 @@ export class ErrorBoundary extends Component<Props, State> {
               </details>
             )}
             <div className="flex gap-4 justify-center">
-              <Button onClick={() => window.location.reload()} variant="default">
-                Refresh Page
+              <Button onClick={() => this.setState({ hasError: false, error: undefined })} variant="default">
+                Dismiss
               </Button>
-              <Button onClick={() => window.history.back()} variant="outline">
-                Go Back
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Refresh Page
               </Button>
             </div>
           </div>

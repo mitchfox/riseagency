@@ -66,8 +66,9 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
   const categorisedClips = useMemo(() => {
     const categories: Record<string, typeof sortedClips> = {};
     for (const clip of sortedClips) {
-      const types = clip.action_type.split(',').map(t => t.trim());
-      const cat = categoriseAction(types[0] || clip.action_type);
+      const rawType = clip.action_type || 'Other';
+      const types = rawType.split(',').map(t => t.trim());
+      const cat = categoriseAction(types[0] || rawType);
       if (!categories[cat]) categories[cat] = [];
       categories[cat].push(clip);
     }
