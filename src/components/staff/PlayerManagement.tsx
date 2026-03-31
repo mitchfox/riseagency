@@ -3588,15 +3588,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="age" className="text-sm">Age *</Label>
-                        <Input
-                          id="age"
-                          type="number"
-                          value={formData.age}
-                          onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
-                          required
-                          className="h-10 sm:h-11"
-                        />
+                        <Label className="text-sm">Age</Label>
+                        <div className="h-10 sm:h-11 flex items-center px-3 rounded-md border border-input bg-muted/50 text-sm text-muted-foreground">
+                          {formData.dateOfBirth ? (calculateAge(formData.dateOfBirth) ?? "Set DOB") : "Set DOB"}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
