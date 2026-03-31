@@ -53,7 +53,7 @@ const Login = () => {
         const { data } = await supabase
           .from("players")
           .select("id")
-          .eq("email", playerEmail)
+          .ilike("email", playerEmail.trim().toLowerCase())
           .maybeSingle();
           
         if (data) {
