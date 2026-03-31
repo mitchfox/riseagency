@@ -1362,7 +1362,7 @@ export const CreatePerformanceReportDialog = ({
   const updateAction = (
     index: number,
     field: keyof PerformanceAction,
-    value: string | number | null | RecordedStat | RecordedStat[] | ZonePoint[]
+    value: string | number | boolean | null | RecordedStat | RecordedStat[] | ZonePoint[]
   ) => {
     setActions((prevActions) => {
       const newActions = [...prevActions];
