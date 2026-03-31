@@ -1076,7 +1076,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           club: formData.club || null,
           club_logo: finalClubLogoUrl || null,
           league: formData.league || null,
-          age: formData.age,
+          age: calculateAge(formatDateForDb(formData.dateOfBirth) || null) || formData.age || 0,
           nationality: formData.nationality,
           bio: bioJSON,
           image_url: finalImageUrl || null,
