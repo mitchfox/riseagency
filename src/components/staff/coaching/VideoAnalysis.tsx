@@ -530,7 +530,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               created_by: userId || null,
               annotations: [],
               clips: [],
-              auto_delete_at: autoDeleteAt.toISOString(),
+              auto_delete_at: null,
               match_minute_offset: 0,
               group_id: totalParts > 1 ? groupId : null,
               part_number: totalParts > 1 ? part.partNumber : null,
