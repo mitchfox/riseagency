@@ -4,11 +4,12 @@
  * Runs clip-to-report exports outside the component tree so they survive
  * section navigation. Components subscribe to progress updates via callbacks.
  *
- * Instead of trimming clips into separate files, we store the source video URL
- * along with clip_start/clip_end times. The player components seek to the right
- * position, so the full video only needs to load once.
+ * Each clip is extracted as a standalone trimmed file via the trim-video-clip
+ * edge function. This ensures every clip starts with a clean keyframe and
+ * plays instantly without seeking into a full match file.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
 
 export interface ExportJob {
