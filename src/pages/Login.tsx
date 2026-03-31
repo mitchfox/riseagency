@@ -157,9 +157,10 @@ const Login = () => {
       if (scoutError) throw scoutError;
       
       if (scout) {
+        const storedScoutEmail = scout.email || normalizedEmail;
         try {
-          localStorage.setItem("scout_email", email);
-          sessionStorage.setItem("scout_email", email);
+          localStorage.setItem("scout_email", storedScoutEmail);
+          sessionStorage.setItem("scout_email", storedScoutEmail);
           localStorage.setItem("scout_login_timestamp", Date.now().toString());
           
           if (rememberMe) {
