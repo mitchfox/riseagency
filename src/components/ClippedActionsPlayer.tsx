@@ -30,7 +30,7 @@ interface ClippedActionsPlayerProps {
   player?: SharedClipPlayerState;
 }
 
-const normaliseType = (t: string) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+const normaliseType = (t: string) => (t || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
 const categoriseAction = (type: string): string => {
   const lower = (type || '').toLowerCase();
