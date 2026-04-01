@@ -19,8 +19,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ImageCropDialog } from "../ImageCropDialog";
+
+// Auto-lookup team branding from historical analyses and player data
+const lookupTeamBranding = async (teamName: string): Promise<{ logo?: string; bgColor?: string } | null> => {
+  if (!teamName || teamName.trim().length < 2) return null;
+  const name = teamName.trim().toLowerCase();
+  
+  try {
+    // Check previous analyses for this team name
+    const { data: prevAnalyses } = await supabase
+      .from("analyses")
+      .select("home_team, away_team, home_team_logo, away_team_logo, home_team_bg_color, away_team_bg_color")
+      .or(`home_team.ilike.%${teamName.trim()}%,away_team.ilike.%${teamName.trim()}%`)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (prevAnalyses) {
+      for (const prev of prevAnalyses) {
+        const prevHome = prev.home_team?.toLowerCase() || "";
+        const prevAway = prev.away_team?.toLowerCase() || "";
+        if (prevHome.includes(name) || name.includes(prevHome)) {
+          if (prev.home_team_logo) return { logo: prev.home_team_logo, bgColor: prev.home_team_bg_color || undefined };
+        }
+        if (prevAway.includes(name) || name.includes(prevAway)) {
+          if (prev.away_team_logo) return { logo: prev.away_team_logo, bgColor: prev.away_team_bg_color || undefined };
+        }
+      }
+    }
+
+    // Check player club data
+    const { data: playerData } = await supabase
+      .from("players")
+      .select("club, club_logo")
+      .ilike("club", `%${teamName.trim()}%`)
+      .not("club_logo", "is", null)
+      .limit(1);
+
+    if (playerData && playerData.length > 0 && playerData[0].club_logo) {
+      return { logo: playerData[0].club_logo };
+    }
+  } catch {
+    // Non-critical
+  }
+  return null;
+};
 
 interface StrengthPoint {
   color: 'green' | 'amber' | 'red';
