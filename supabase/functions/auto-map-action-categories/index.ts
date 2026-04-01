@@ -226,7 +226,6 @@ Return ONLY a valid JSON array with this exact structure:
               action_type: m.action_type,
               r90_category: m.r90_category,
               r90_subcategory: m.r90_subcategory === 'null' ? null : m.r90_subcategory,
-              r90_sub_subcategory: m.r90_sub_subcategory === 'null' ? null : m.r90_sub_subcategory,
             }))
           );
 

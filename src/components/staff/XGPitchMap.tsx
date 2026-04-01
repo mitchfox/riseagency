@@ -74,13 +74,13 @@ const getXGOpacity = (value: number): number => {
   return 0.7;
 };
 
-export const XGPitchMap = () => {
-  const [zoomed, setZoomed] = useState(false);
+export const XGPitchMap = ({ compact = false }: { compact?: boolean }) => {
+  const [zoomed, setZoomed] = useState(true);
   const displayGrid = zoomed ? XG_GRID.slice(0, 7) : XG_GRID;
   const displayLabels = zoomed ? ROW_LABELS.slice(0, 7) : ROW_LABELS;
 
   return (
-    <Card className="w-full">
+    <Card className={`w-full ${compact ? "border-0 shadow-none" : ""}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div>
