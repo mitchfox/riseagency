@@ -2086,6 +2086,7 @@ export const CreatePerformanceReportDialog = ({
             actionTypes={actionTypes}
             actionTypeFrequencyMap={actionTypeFrequencyMap}
             getDescriptionsForType={getDescriptionsForType}
+            minutesPlayed={minutesPlayed}
           />
 
           {/* Performance Actions */}

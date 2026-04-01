@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp } from "lucide-react";
+import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp, Music, Filter } from "lucide-react";
 import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
@@ -123,6 +123,7 @@ interface ActionTypeEditorProps {
   actionTypes: string[];
   actionTypeFrequencyMap: Record<string, number>;
   getDescriptionsForType: (type: string) => string[];
+  minutesPlayed?: string;
 }
 
 const BOX_ZONE_TYPES = [
@@ -264,6 +265,51 @@ const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating
   );
 };
 
+const DescriptionBlurInput = ({ value, onCommit, placeholder, className, suggestions }: { value: string; onCommit: (v: string) => void; placeholder?: string; className?: string; suggestions: string[] }) => {
+  const [local, setLocal] = useState(value);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setLocal(value); }, [value]);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setShowSuggestions(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!local.trim()) return suggestions.slice(0, 8);
+    const q = local.toLowerCase();
+    return suggestions.filter(s => s.toLowerCase().includes(q)).slice(0, 8);
+  }, [local, suggestions]);
+
+  return (
+    <div ref={ref} className="relative">
+      <Input
+        value={local}
+        onChange={(e) => { setLocal(e.target.value); setShowSuggestions(true); }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => { if (local !== value) onCommit(local); }}
+        placeholder={placeholder}
+        className={className}
+      />
+      {showSuggestions && filtered.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 z-50 w-full max-h-36 overflow-y-auto bg-popover border rounded-md shadow-lg">
+          {filtered.map((s, i) => (
+            <button
+              key={i}
+              className="w-full px-2 py-1.5 text-left hover:bg-accent text-xs truncate"
+              onMouseDown={(e) => { e.preventDefault(); setLocal(s); onCommit(s); setShowSuggestions(false); }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ActionTypeEditor = ({
   open,
   onOpenChange,
@@ -276,6 +322,7 @@ export const ActionTypeEditor = ({
   actionTypes,
   actionTypeFrequencyMap,
   getDescriptionsForType,
+  minutesPlayed,
 }: ActionTypeEditorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
@@ -284,6 +331,7 @@ export const ActionTypeEditor = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bottomCollapsed, setBottomCollapsed] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoReady, setVideoReady] = useState(false);
@@ -294,6 +342,26 @@ export const ActionTypeEditor = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
+
+  // Live R90 calculation
+  const liveR90 = useMemo(() => {
+    const scored = actions.filter(a => a.action_score && a.action_score.trim() !== "");
+    if (scored.length === 0) return null;
+    const rawScore = scored.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
+    const mins = parseFloat(minutesPlayed || "0");
+    if (mins > 0) return ((rawScore / mins) * 90).toFixed(2);
+    return rawScore.toFixed(3);
+  }, [actions, minutesPlayed]);
+
+  // Completion stats
+  const completionStats = useMemo(() => {
+    const scored = actions.filter(a => a.action_score && a.action_score.trim() !== "").length;
+    const total = actions.length;
+    const pct = total > 0 ? Math.round((scored / total) * 100) : 0;
+    return { scored, total, pct };
+  }, [actions]);
+
+  const completionColor = completionStats.pct >= 80 ? "text-green-500" : completionStats.pct >= 50 ? "text-lime-500" : completionStats.pct >= 25 ? "text-amber-500" : "text-red-400";
 
   const groupedActions = useMemo(() => {
     const groups: Record<string, { action: PerformanceAction; index: number }[]> = {};
@@ -496,16 +564,25 @@ export const ActionTypeEditor = ({
               {actions.length} actions · {groupedActions.length} types
             </span>
           </div>
-          {/* R90 Score - top centre */}
-          {activeAction && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">R90:</span>
-              <span className={`font-mono font-bold text-sm ${activeAction.action_score ? "text-primary" : "text-muted-foreground"}`}>
-                {activeAction.action_score || "—"}
-              </span>
-            </div>
-          )}
+          {/* Live R90 Score - top centre */}
           <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">R90:</span>
+            <span className={`font-mono font-bold text-sm ${liveR90 ? "text-primary" : "text-muted-foreground"}`}>
+              {liveR90 || "—"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                document.dispatchEvent(new CustomEvent("staff-music-toggle"));
+              }}
+              title="Music player"
+            >
+              <Music className="h-4 w-4" />
+            </Button>
             <Button onClick={onSave} disabled={saving} size="sm" className="gap-1.5">
               <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Update Report"}
@@ -519,11 +596,33 @@ export const ActionTypeEditor = ({
         <div className="flex flex-1 min-h-0">
           {/* Category sidebar */}
           <div className={`flex flex-col border-r shrink-0 transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[200px]"}`}>
-            {/* Collapse toggle at top */}
-            <div className="flex items-center justify-center px-1 py-1 border-b">
+            {/* Collapse toggle + pending filter + completion */}
+            <div className="flex items-center gap-1 px-1 py-1 border-b flex-wrap">
               <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setSidebarCollapsed(prev => !prev)}>
                 {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
+              {!sidebarCollapsed && (
+                <>
+                  <Button
+                    variant={showPendingOnly ? "default" : "outline"}
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    onClick={() => setShowPendingOnly(prev => !prev)}
+                    title={showPendingOnly ? "Showing pending only" : "Showing all"}
+                  >
+                    <Filter className="h-3 w-3" />
+                    {showPendingOnly ? "Pending" : "All"}
+                  </Button>
+                  <span className={`text-[11px] font-bold font-mono ml-auto ${completionColor}`}>
+                    {completionStats.pct}%
+                  </span>
+                </>
+              )}
+              {sidebarCollapsed && (
+                <span className={`text-[10px] font-bold font-mono ${completionColor}`}>
+                  {completionStats.pct}%
+                </span>
+              )}
             </div>
             {!sidebarCollapsed && (
               <div className="px-2 py-1 border-b">
@@ -542,6 +641,10 @@ export const ActionTypeEditor = ({
                 {GROUP_ORDER.map(group => {
                   const entries = sidebarGroups[group];
                   if (!entries || entries.length === 0) return null;
+                  const filteredEntries = showPendingOnly
+                    ? entries.filter(({ items }) => { const { scored, total } = getScoreCounts(items); return scored < total; })
+                    : entries;
+                  if (filteredEntries.length === 0) return null;
                   return (
                     <div key={group}>
                       {!sidebarCollapsed && (
@@ -552,7 +655,7 @@ export const ActionTypeEditor = ({
                         </div>
                       )}
                       <div className="space-y-0.5">
-                        {entries.map(({ category, items }) => {
+                        {filteredEntries.map(({ category, items }) => {
                           const { scored, total } = getScoreCounts(items);
                           return (
                             <Button
@@ -589,7 +692,7 @@ export const ActionTypeEditor = ({
                   <div
                     ref={videoContainerRef}
                     className="relative bg-black overflow-hidden min-w-0"
-                    style={{ flex: '3 1 0%', cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
+                    style={{ flex: '2.85 1 0%', cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                     onWheel={handleWheel}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -670,7 +773,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '0.8 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '120px' }}>
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '0.95 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '120px' }}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap
@@ -798,11 +901,12 @@ export const ActionTypeEditor = ({
                         <Search className="h-3 w-3 text-primary" />
                       </Button>
                     </div>
-                    <BlurInput
+                    <DescriptionBlurInput
                       value={activeAction.action_description}
                       onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)}
                       placeholder="Description"
                       className="h-7 text-xs"
+                      suggestions={getDescriptionsForType(activeAction.action_type || "")}
                     />
                     <BlurInput
                       value={activeAction.notes}
