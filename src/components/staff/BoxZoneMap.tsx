@@ -50,7 +50,7 @@ const getScoreColor = (avg: number): string => {
 };
 
 export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
-  const [contested, setContested] = useState<"all" | "contested" | "uncontested">("all");
+  const [contested, setContested] = useState<"contested" | "uncontested">("contested");
 
   // Group actions by box zone
   const zoneData = useMemo(() => {
@@ -74,7 +74,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm">18-Yard Box Zone Map</CardTitle>
           <div className="flex items-center gap-1">
-            {(["all", "contested", "uncontested"] as const).map(opt => (
+            {(["contested", "uncontested"] as const).map(opt => (
               <Button
                 key={opt}
                 variant={contested === opt ? "default" : "outline"}
@@ -133,9 +133,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
             </div>
           </TooltipProvider>
         </div>
-        <div className="flex justify-center -mt-0.5">
-          <div className="bg-slate-700 text-white text-[10px] px-4 py-0.5 rounded-b font-medium tracking-wider">GOAL</div>
-        </div>
+        {/* Goal label removed */}
       </CardContent>
     </Card>
   );
