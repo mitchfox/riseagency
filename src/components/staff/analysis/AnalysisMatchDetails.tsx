@@ -367,6 +367,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   value={formData.home_team || ""}
                   onChange={(e) => setFormData({ ...formData, home_team: e.target.value })}
+                  onBlur={() => handleTeamBlur("home")}
                 />
               </div>
               <Button
