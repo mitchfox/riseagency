@@ -265,6 +265,51 @@ const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating
   );
 };
 
+const DescriptionBlurInput = ({ value, onCommit, placeholder, className, suggestions }: { value: string; onCommit: (v: string) => void; placeholder?: string; className?: string; suggestions: string[] }) => {
+  const [local, setLocal] = useState(value);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setLocal(value); }, [value]);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setShowSuggestions(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!local.trim()) return suggestions.slice(0, 8);
+    const q = local.toLowerCase();
+    return suggestions.filter(s => s.toLowerCase().includes(q)).slice(0, 8);
+  }, [local, suggestions]);
+
+  return (
+    <div ref={ref} className="relative">
+      <Input
+        value={local}
+        onChange={(e) => { setLocal(e.target.value); setShowSuggestions(true); }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => { if (local !== value) onCommit(local); }}
+        placeholder={placeholder}
+        className={className}
+      />
+      {showSuggestions && filtered.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 z-50 w-full max-h-36 overflow-y-auto bg-popover border rounded-md shadow-lg">
+          {filtered.map((s, i) => (
+            <button
+              key={i}
+              className="w-full px-2 py-1.5 text-left hover:bg-accent text-xs truncate"
+              onMouseDown={(e) => { e.preventDefault(); setLocal(s); onCommit(s); setShowSuggestions(false); }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ActionTypeEditor = ({
   open,
   onOpenChange,
