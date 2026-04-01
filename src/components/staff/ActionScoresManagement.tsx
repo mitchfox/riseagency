@@ -255,8 +255,9 @@ export const ActionScoresManagement = ({ initialFilter }: ActionScoresManagement
       </ScrollArea>
 
       {/* Add ratings dialog */}
+      {addDialogOpen && ReactDOM.createPortal(
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="fixed left-1/2 top-1/2 z-[10001] max-w-2xl -translate-x-1/2 -translate-y-1/2">
           <DialogHeader>
             <DialogTitle className="text-sm">Add Ratings to: <span className="text-primary">{addDialogType}</span></DialogTitle>
           </DialogHeader>
