@@ -27,9 +27,10 @@ import { GraduationCap, UserCheck } from "lucide-react";
 import { ComparisonPlayerData } from "./ComparisonPlayerData";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { SportscodeActionTypes } from "./SportscodeActionTypes";
+import { ActionScoresManagement } from "./ActionScoresManagement";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data' | 'sportscode';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data' | 'sportscode' | 'action_scores';
 
 interface Exercise {
   name: string;
@@ -202,6 +203,13 @@ const tableConfigs = {
     icon: Video,
     color: 'rose',
   },
+  action_scores: {
+    label: 'Action Scores',
+    singular: 'Action Score',
+    fields: [],
+    icon: Settings,
+    color: 'amber',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -303,7 +311,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchCategories = async () => {
     // Skip for aphorisms, tactical schemes, performance statistics, scheme view, positional guides, and club ratings as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode') {
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
       return;
     }
     
@@ -365,7 +373,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchItems = async () => {
     // Skip fetching for tabs that don't use the database list view
-    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode') {
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
       setItems([]);
       setTotalItems(0);
       setLoading(false);
@@ -1041,6 +1049,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <ActionReportsList />
             ) : key === 'sportscode' ? (
               <SportscodeActionTypes />
+            ) : key === 'action_scores' ? (
+              <ActionScoresManagement />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
