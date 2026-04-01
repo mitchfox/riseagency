@@ -112,6 +112,23 @@ export const AnalysisMatchDetails = ({
 }: MatchDetailsProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
+  const handleTeamBlur = useCallback(async (side: "home" | "away") => {
+    const teamName = side === "home" ? formData.home_team : formData.away_team;
+    const logoField = side === "home" ? "home_team_logo" : "away_team_logo";
+    const bgField = side === "home" ? "home_team_bg_color" : "away_team_bg_color";
+    // Only auto-fill if there's no logo already set
+    if (formData[logoField]) return;
+    const branding = await lookupTeamBranding(teamName);
+    if (branding) {
+      const updates: any = {};
+      if (branding.logo && !formData[logoField]) updates[logoField] = branding.logo;
+      if (branding.bgColor && !formData[bgField]) updates[bgField] = branding.bgColor;
+      if (Object.keys(updates).length > 0) {
+        setFormData({ ...formData, ...updates });
+      }
+    }
+  }, [formData, setFormData]);
+
   // Crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState("");
