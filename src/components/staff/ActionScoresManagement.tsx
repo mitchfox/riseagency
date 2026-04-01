@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import ReactDOM from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
