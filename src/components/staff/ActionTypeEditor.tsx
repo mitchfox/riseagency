@@ -277,6 +277,7 @@ export const ActionTypeEditor = ({
   actionTypes,
   actionTypeFrequencyMap,
   getDescriptionsForType,
+  minutesPlayed,
 }: ActionTypeEditorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
@@ -285,6 +286,7 @@ export const ActionTypeEditor = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bottomCollapsed, setBottomCollapsed] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoReady, setVideoReady] = useState(false);
