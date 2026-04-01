@@ -152,8 +152,8 @@ export const InlinePitchGrid = ({ value, onChange, actionType }: InlinePitchGrid
                   const count = zoneCount(zone);
                   return (
                     <button key={zone} onClick={() => setExpandedZone(zone)}
-                      className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-sm transition-all ${count > 0 ? 'bg-primary/80 text-primary-foreground ring-1 ring-primary' : `${getMultiplierColor(zone)} hover:opacity-80`}`}>
-                      <span className={`text-[10px] font-bold ${count > 0 ? '' : 'text-black'}`}>{zone}</span>
+                      className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-sm transition-all ${count > 0 ? 'bg-primary/80 text-primary-foreground ring-1 ring-primary' : `${getMultiplierColor(zone)} hover:opacity-80`}`}>
+                      <span className={`text-[9px] font-bold leading-none ${count > 0 ? '' : 'text-black'}`}>{zone}</span>
                       {count > 0 ? (
                         <span className="text-[7px] text-primary-foreground/80">{count}</span>
                       ) : (
