@@ -123,6 +123,7 @@ interface ActionTypeEditorProps {
   actionTypes: string[];
   actionTypeFrequencyMap: Record<string, number>;
   getDescriptionsForType: (type: string) => string[];
+  minutesPlayed?: string;
 }
 
 const BOX_ZONE_TYPES = [
