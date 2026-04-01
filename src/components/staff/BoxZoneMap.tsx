@@ -69,36 +69,34 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
   }, [actions, contested]);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">18-Yard Box Zone Map</CardTitle>
-          <div className="flex items-center gap-1">
-            {(["contested", "uncontested"] as const).map(opt => (
-              <Button
-                key={opt}
-                variant={contested === opt ? "default" : "outline"}
-                size="sm"
-                className="h-6 px-2 text-[10px] capitalize"
-                onClick={() => setContested(opt)}
-              >
-                {opt}
-              </Button>
-            ))}
-          </div>
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-2 py-1 border-b">
+        <span className="text-[10px] font-semibold">18-Yard Box</span>
+        <div className="flex items-center gap-1">
+          {(["contested", "uncontested"] as const).map(opt => (
+            <Button
+              key={opt}
+              variant={contested === opt ? "default" : "outline"}
+              size="sm"
+              className="h-5 px-1.5 text-[9px] capitalize"
+              onClick={() => setContested(opt)}
+            >
+              {opt}
+            </Button>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="relative border-2 border-slate-600 rounded overflow-hidden bg-emerald-800/20">
+      </div>
+      <div className="flex-1 p-1.5">
+        <div className="relative border border-slate-600 rounded overflow-hidden bg-emerald-800/20 h-full">
           {/* Goal line */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30%] h-1 bg-white/90 z-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[30%] h-0.5 bg-white/90 z-10" />
           {/* 6-yard box outline */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55%] border border-white/40 z-10" style={{ height: "33.3%" }} />
           {/* Penalty spot */}
-          <div className="absolute left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white/70 rounded-full z-10" style={{ top: "55%" }} />
+          <div className="absolute left-1/2 -translate-x-1/2 w-1 h-1 bg-white/70 rounded-full z-10" style={{ top: "55%" }} />
 
           <TooltipProvider delayDuration={100}>
-            <div className="grid grid-rows-3 grid-cols-3" style={{ aspectRatio: "1.4" }}>
+            <div className="grid grid-rows-3 grid-cols-3 h-full">
               {ZONE_LABELS.map((label, i) => {
                 const zoneNum = i + 1;
                 const data = zoneData[zoneNum];
@@ -107,17 +105,17 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
                   <Tooltip key={i}>
                     <TooltipTrigger asChild>
                       <div
-                        className={`border border-slate-500/30 flex flex-col items-center justify-center text-center p-2 cursor-default transition-all hover:scale-105 hover:z-20 ${
+                        className={`border border-slate-500/30 flex flex-col items-center justify-center text-center p-1 cursor-default transition-all hover:scale-105 hover:z-20 ${
                           avg !== null ? getScoreColor(avg) : "bg-slate-300/20 text-muted-foreground"
                         }`}
                       >
-                        <span className="text-[9px] whitespace-pre-line leading-tight opacity-80">{label}</span>
+                        <span className="text-[8px] whitespace-pre-line leading-tight opacity-80">{label}</span>
                         {data.count > 0 && (
                           <>
-                            <span className="text-sm font-bold font-mono mt-1">
+                            <span className="text-[10px] font-bold font-mono mt-0.5">
                               {avg !== null ? (avg >= 0 ? "+" : "") + avg.toFixed(3) : "—"}
                             </span>
-                            <span className="text-[9px] opacity-70">{data.count} action{data.count !== 1 ? "s" : ""}</span>
+                            <span className="text-[7px] opacity-70">{data.count}</span>
                           </>
                         )}
                       </div>
@@ -125,7 +123,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
                     <TooltipContent side="top" className="text-xs">
                       <p className="font-semibold">{label.replace("\n", " ")}</p>
                       <p>{data.count} action{data.count !== 1 ? "s" : ""}</p>
-                      {avg !== null && <p>Avg score: <span className="font-mono font-bold">{avg.toFixed(3)}</span></p>}
+                      {avg !== null && <p>Avg: <span className="font-mono font-bold">{avg.toFixed(3)}</span></p>}
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -133,8 +131,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
             </div>
           </TooltipProvider>
         </div>
-        {/* Goal label removed */}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
