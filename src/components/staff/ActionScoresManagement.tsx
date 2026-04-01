@@ -28,7 +28,11 @@ interface ActionMapping {
   selected_rating_ids: string[] | null;
 }
 
-export const ActionScoresManagement = () => {
+interface ActionScoresManagementProps {
+  initialFilter?: string;
+}
+
+export const ActionScoresManagement = ({ initialFilter }: ActionScoresManagementProps = {}) => {
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [mappings, setMappings] = useState<ActionMapping[]>([]);
   const [allRatings, setAllRatings] = useState<R90Rating[]>([]);

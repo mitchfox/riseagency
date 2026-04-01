@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize } from "lucide-react";
+import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import { InlinePitchGrid } from "./InlinePitchGrid";
@@ -13,7 +13,7 @@ import type { RecordedStat } from "./ActionStatRecorder";
 import { XGPitchMap } from "./XGPitchMap";
 import { BoxZoneMap } from "./BoxZoneMap";
 import { Separator } from "@/components/ui/separator";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ActionScoresManagement } from "./ActionScoresManagement";
 
 interface MappedR90Rating {
   id: string;
@@ -22,9 +22,10 @@ interface MappedR90Rating {
   description: string | null;
   category: string | null;
   subcategory: string | null;
+  tags?: string[] | null;
 }
 
-// Zone classification helpers for filtering
+// Zone classification helpers
 const OWN_THIRD_ZONES = [1,2,3,4,5,6];
 const MID_THIRD_ZONES = [7,8,9,10,11,12];
 const FINAL_THIRD_ZONES = [13,14,15,16,17,18];
@@ -57,14 +58,12 @@ function isRatingRelevantToZone(rating: MappedR90Rating, zoneThird: string | nul
   const desc = (rating.description || "").toLowerCase();
   const combined = title + " " + desc;
 
-  // Filter by third
   if (zoneThird === "own") {
     if (combined.includes("final third") || combined.includes("attacking third")) return false;
   } else if (zoneThird === "final") {
     if (combined.includes("own third") || combined.includes("defensive third") || combined.includes("own half")) return false;
   }
 
-  // Filter by width
   if (zoneWidth === "central") {
     if (combined.includes("wide") && !combined.includes("half-space")) return false;
   } else if (zoneWidth === "wide") {
@@ -72,6 +71,21 @@ function isRatingRelevantToZone(rating: MappedR90Rating, zoneThird: string | nul
   }
 
   return true;
+}
+
+// Categorise R90 ratings for display with dividers
+function categoriseRatings(ratings: MappedR90Rating[]): { label: string; items: MappedR90Rating[] }[] {
+  const groups: Record<string, MappedR90Rating[]> = {};
+  
+  ratings.forEach(r => {
+    const cat = r.subcategory || r.category || "General";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(r);
+  });
+
+  return Object.entries(groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, items]) => ({ label, items }));
 }
 
 interface PerformanceAction {
@@ -186,21 +200,19 @@ async function fetchMappedR90Ratings(actionType: string): Promise<MappedR90Ratin
     if (allRatingIds.length > 0) {
       const { data: ratings } = await supabase
         .from("r90_ratings")
-        .select("id, title, score, description, category, subcategory")
+        .select("id, title, score, description, category, subcategory, tags")
         .in("id", allRatingIds)
         .not("score", "is", null);
       return (ratings || []) as MappedR90Rating[];
     }
 
-    // Fallback: fetch by category/subcategory
     const results: MappedR90Rating[] = [];
     for (const m of mappings) {
-      let query = supabase.from("r90_ratings").select("id, title, score, description, category, subcategory").eq("category", m.r90_category).not("score", "is", null);
+      let query = supabase.from("r90_ratings").select("id, title, score, description, category, subcategory, tags").eq("category", m.r90_category).not("score", "is", null);
       if (m.r90_subcategory) query = query.eq("subcategory", m.r90_subcategory);
       const { data } = await query;
       if (data) results.push(...(data as MappedR90Rating[]));
     }
-    // Deduplicate
     const seen = new Set<string>();
     return results.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; });
   } catch { return []; }
@@ -268,12 +280,17 @@ export const ActionTypeEditor = ({
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
   const [topScores, setTopScores] = useState<{ value: string; count: number }[]>([]);
   const [mappedRatings, setMappedRatings] = useState<MappedR90Rating[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoZoom, setVideoZoom] = useState(1);
-  // Track the video URL we've loaded to avoid re-triggering
+  const [videoPan, setVideoPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
 
   const groupedActions = useMemo(() => {
@@ -304,7 +321,6 @@ export const ActionTypeEditor = ({
     ? groupedActions.filter(([cat]) => cat === selectedCategory)
     : groupedActions;
 
-  // Flat list of clips for the selected category
   const categoryClips = useMemo(() => {
     const items: { action: PerformanceAction; index: number }[] = [];
     categoriesToShow.forEach(([, actionItems]) => {
@@ -321,7 +337,6 @@ export const ActionTypeEditor = ({
     fetchMappedR90Ratings(selectedCategory).then(setMappedRatings);
   }, [selectedCategory]);
 
-  // Load video only when selectedActionIndex changes and the action has a video
   useEffect(() => {
     if (selectedActionIndex === null) {
       setVideoReady(false);
@@ -337,9 +352,7 @@ export const ActionTypeEditor = ({
     const vid = videoRef.current;
     if (!vid) return;
 
-    // Only reload if URL actually changed
     if (loadedUrlRef.current === action.video_url && vid.readyState >= 2) {
-      // Same video already loaded, just play
       setVideoReady(true);
       vid.play().then(() => setVideoPlaying(true)).catch(() => {});
       return;
@@ -348,10 +361,11 @@ export const ActionTypeEditor = ({
     setVideoReady(false);
     setVideoPlaying(false);
     setVideoZoom(1);
+    setVideoPan({ x: 0, y: 0 });
     loadedUrlRef.current = action.video_url;
     vid.src = action.video_url;
     vid.load();
-  }, [selectedActionIndex]); // Only depend on the index, NOT on actions/categoryClips
+  }, [selectedActionIndex]);
 
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
@@ -395,11 +409,54 @@ export const ActionTypeEditor = ({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    setVideoZoom(prev => Math.max(1, Math.min(4, prev + (e.deltaY < 0 ? 0.15 : -0.15))));
+    setVideoZoom(prev => {
+      const newZoom = Math.max(1, Math.min(4, prev + (e.deltaY < 0 ? 0.15 : -0.15)));
+      if (newZoom <= 1) setVideoPan({ x: 0, y: 0 });
+      return newZoom;
+    });
   }, []);
 
-  const toggleFullscreen = () => setIsFullscreen(prev => !prev);
-  const videoHeight = isFullscreen ? "70vh" : "35vh";
+  // Pan handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (videoZoom <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, panX: videoPan.x, panY: videoPan.y };
+  }, [videoZoom, videoPan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    const maxPan = (videoZoom - 1) * 50;
+    setVideoPan({
+      x: Math.max(-maxPan, Math.min(maxPan, dragStart.current.panX + dx)),
+      y: Math.max(-maxPan, Math.min(maxPan, dragStart.current.panY + dy)),
+    });
+  }, [isDragging, videoZoom]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const container = videoContainerRef.current;
+    if (!container) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    } else {
+      container.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      if (!document.fullscreenElement) setIsFullscreen(false);
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
 
   const getScoreCounts = (items: { action: PerformanceAction; index: number }[]) => {
     const scored = items.filter(i => i.action.action_score && i.action.action_score.trim() !== "").length;
@@ -409,7 +466,6 @@ export const ActionTypeEditor = ({
   const showBoxZone = selectedCategory ? isBoxZoneType(selectedCategory) : false;
   const showXGMap = selectedCategory ? isXGType(selectedCategory) : false;
 
-  // Filter R90 ratings by zone selection
   const activeZones = useMemo(() => {
     if (!activeAction?.zone_details || activeAction.zone_details.length === 0) return [];
     return (activeAction.zone_details as ZonePoint[]).map(z => z.zone);
@@ -421,6 +477,10 @@ export const ActionTypeEditor = ({
     const zoneWidth = getZoneWidth(activeZones);
     return mappedRatings.filter(r => isRatingRelevantToZone(r, zoneThird, zoneWidth));
   }, [mappedRatings, activeZones]);
+
+  const categorisedRatings = useMemo(() => categoriseRatings(filteredMappedRatings), [filteredMappedRatings]);
+
+  const videoHeight = "40vh";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -446,17 +506,22 @@ export const ActionTypeEditor = ({
           </div>
         </div>
 
-        <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-          {/* Category sidebar - resizable */}
-          <ResizablePanel defaultSize={18} minSize={12} maxSize={30} className="flex flex-col">
-            <div className="p-2 border-b">
-              <Button
-                variant={selectedCategory === null ? "default" : "ghost"}
-                size="sm"
-                className="w-full justify-start text-xs"
-                onClick={() => { setSelectedCategory(null); setSelectedActionIndex(null); }}
-              >
-                All Action Types
+        <div className="flex flex-1 min-h-0">
+          {/* Category sidebar */}
+          <div className={`flex flex-col border-r shrink-0 transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[200px]"}`}>
+            <div className="flex items-center justify-between px-2 py-2 border-b">
+              {!sidebarCollapsed && (
+                <Button
+                  variant={selectedCategory === null ? "default" : "ghost"}
+                  size="sm"
+                  className="flex-1 justify-start text-xs mr-1"
+                  onClick={() => { setSelectedCategory(null); setSelectedActionIndex(null); }}
+                >
+                  All Action Types
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setSidebarCollapsed(prev => !prev)}>
+                {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
             </div>
             <ScrollArea className="flex-1">
@@ -466,11 +531,13 @@ export const ActionTypeEditor = ({
                   if (!entries || entries.length === 0) return null;
                   return (
                     <div key={group}>
-                      <div className="flex items-center gap-2 px-2 py-2">
-                        <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group}</span>
-                        <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
-                      </div>
+                      {!sidebarCollapsed && (
+                        <div className="flex items-center gap-2 px-2 py-2">
+                          <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group}</span>
+                          <Separator className="flex-1 bg-[hsl(43,49%,61%)]" />
+                        </div>
+                      )}
                       <div className="space-y-0.5">
                         {entries.map(({ category, items }) => {
                           const { scored, total } = getScoreCounts(items);
@@ -479,13 +546,14 @@ export const ActionTypeEditor = ({
                               key={category}
                               variant={selectedCategory === category ? "default" : "ghost"}
                               size="sm"
-                              className="w-full justify-start text-xs h-8 px-2 gap-1.5"
+                              className={`w-full text-xs h-8 px-2 gap-1.5 ${sidebarCollapsed ? "justify-center" : "justify-start"}`}
                               onClick={() => { setSelectedCategory(category); setSelectedActionIndex(null); }}
+                              title={sidebarCollapsed ? `${category} (${scored}/${total})` : undefined}
                             >
                               <span className={`font-mono text-[10px] shrink-0 ${scored === total && total > 0 ? "text-green-500" : "opacity-70"}`}>
                                 {scored}/{total}
                               </span>
-                              <span className="truncate">{category}</span>
+                              {!sidebarCollapsed && <span className="truncate">{category}</span>}
                             </Button>
                           );
                         })}
@@ -495,16 +563,14 @@ export const ActionTypeEditor = ({
                 })}
               </div>
             </ScrollArea>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
+          </div>
 
           {/* Main content */}
-          <ResizablePanel defaultSize={82} className="flex flex-col min-h-0">
+          <div className="flex flex-col flex-1 min-h-0 min-w-0">
             {/* Video player area + pitch map side by side */}
             {selectedCategory && categoryClips.length > 0 && (
               <div className="border-b shrink-0">
-                {/* Navigation controls above player */}
+                {/* Navigation controls */}
                 <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b">
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => goToClip(-1)} disabled={categoryClips.length <= 1}>
@@ -515,9 +581,6 @@ export const ActionTypeEditor = ({
                     </Button>
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => goToClip(1)} disabled={categoryClips.length <= 1}>
                       Next <SkipForward className="h-3 w-3" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={toggleFullscreen}>
-                      {isFullscreen ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
                     </Button>
                   </div>
                   <span className="text-xs text-muted-foreground">
@@ -530,10 +593,16 @@ export const ActionTypeEditor = ({
 
                 {/* Video + Pitch map + R90 Scores row */}
                 <div className="flex" style={{ height: videoHeight }}>
-                  {/* Video - flexible width */}
+                  {/* Video */}
                   <div
+                    ref={videoContainerRef}
                     className="relative bg-black overflow-hidden flex-1 min-w-0"
                     onWheel={handleWheel}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    style={{ cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                   >
                     {!hasActiveVideo && (
                       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -544,8 +613,8 @@ export const ActionTypeEditor = ({
                       <>
                         <video
                           ref={videoRef}
-                          className="w-full h-full object-contain cursor-pointer transition-transform"
-                          style={{ transform: `scale(${videoZoom})` }}
+                          className="w-full h-full object-contain transition-transform"
+                          style={{ transform: `scale(${videoZoom}) translate(${videoPan.x / videoZoom}px, ${videoPan.y / videoZoom}px)` }}
                           preload="auto"
                           crossOrigin="anonymous"
                           muted
@@ -559,11 +628,20 @@ export const ActionTypeEditor = ({
                             <Loader2 className="h-5 w-5 animate-spin text-white/60" />
                           </div>
                         )}
+                        {/* Fullscreen button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute bottom-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 text-white z-20"
+                          onClick={toggleFullscreen}
+                        >
+                          {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                        </Button>
                       </>
                     )}
                   </div>
 
-                  {/* Pitch map - fixed width, tighter boxes */}
+                  {/* Pitch map */}
                   <div className="w-[140px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
@@ -581,7 +659,7 @@ export const ActionTypeEditor = ({
                     )}
                   </div>
 
-                  {/* Right panel: R90 action scores + visual maps */}
+                  {/* Right panel: R90 scores / visual maps */}
                   <div className="w-[280px] border-l bg-muted/5 flex flex-col overflow-hidden shrink-0">
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
@@ -596,40 +674,59 @@ export const ActionTypeEditor = ({
                         <div className="px-2 py-1 border-b flex items-center justify-between">
                           <p className="text-[10px] font-semibold">
                             R90 Action Scores
-                            {activeZones.length > 0 && <span className="ml-1 text-muted-foreground font-normal">(filtered by zone)</span>}
+                            {activeZones.length > 0 && <span className="ml-1 text-muted-foreground font-normal">(filtered)</span>}
                           </p>
-                          <span className="text-[9px] text-muted-foreground">{filteredMappedRatings.length} rating{filteredMappedRatings.length !== 1 ? "s" : ""}</span>
+                          <span className="text-[9px] text-muted-foreground">{filteredMappedRatings.length}</span>
                         </div>
                         <ScrollArea className="flex-1">
-                          <div className="p-1.5 space-y-0.5">
-                            {filteredMappedRatings.length > 0 ? filteredMappedRatings.map(r => (
-                              <button
-                                key={r.id}
-                                className="w-full text-left px-2 py-1 rounded hover:bg-accent text-xs flex items-center gap-2 group"
-                                onClick={() => selectedActionIndex !== null && applyQuickScore(selectedActionIndex, String(r.score))}
-                              >
-                                <span className="font-mono font-bold text-primary shrink-0 min-w-[50px]">{r.score}</span>
-                                <span className="truncate flex-1">{r.title}</span>
-                                {r.description && (
-                                  <span className="text-[9px] text-muted-foreground truncate max-w-[120px] hidden group-hover:inline">{r.description}</span>
+                          <div className="p-1.5 space-y-0">
+                            {categorisedRatings.length > 0 ? categorisedRatings.map((group, gi) => (
+                              <div key={gi}>
+                                {categorisedRatings.length > 1 && (
+                                  <div className="flex items-center gap-1.5 px-1 py-1.5">
+                                    <Separator className="flex-1 bg-[hsl(43,49%,61%)]/50" />
+                                    <span className="text-[8px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group.label}</span>
+                                    <Separator className="flex-1 bg-[hsl(43,49%,61%)]/50" />
+                                  </div>
                                 )}
-                              </button>
+                                {group.items.map(r => (
+                                  <button
+                                    key={r.id}
+                                    className="w-full text-left px-2 py-1 rounded hover:bg-accent text-xs flex items-center gap-2 group"
+                                    onClick={() => selectedActionIndex !== null && applyQuickScore(selectedActionIndex, String(r.score))}
+                                  >
+                                    <span className="font-mono font-bold text-primary shrink-0 min-w-[50px]">{r.score}</span>
+                                    <span className="truncate flex-1">{r.title}</span>
+                                  </button>
+                                ))}
+                              </div>
                             )) : mappedRatings.length === 0 ? (
                               <div className="text-center py-4">
                                 <p className="text-[10px] text-muted-foreground">No action scores configured</p>
-                                <p className="text-[9px] text-muted-foreground mt-1">Set up mappings in Coaching Database → Action Scores</p>
+                                <p className="text-[9px] text-muted-foreground mt-1">Set up in Coaching Database → Action Scores</p>
                               </div>
                             ) : (
                               <p className="text-[10px] text-muted-foreground text-center py-4">No scores match the selected zones</p>
                             )}
                           </div>
                         </ScrollArea>
+                        {/* Settings button */}
+                        <div className="border-t px-2 py-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                            onClick={() => setSettingsOpen(true)}
+                          >
+                            <Settings className="h-3 w-3" /> Configure Scores
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Active action editing panel below video */}
+                {/* Active action editing panel */}
                 {selectedActionIndex !== null && activeAction && (
                   <div className="px-4 py-3 bg-muted/20 border-t space-y-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -733,11 +830,21 @@ export const ActionTypeEditor = ({
                     </div>
                   </div>
                 ))}
-
               </div>
             </ScrollArea>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </div>
+        </div>
+
+        {/* Settings popup for action scores */}
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogTitle className="text-sm font-semibold">
+              Action Score Configuration
+              {selectedCategory && <span className="text-primary ml-2">— {selectedCategory}</span>}
+            </DialogTitle>
+            <ActionScoresManagement initialFilter={selectedCategory || undefined} />
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
