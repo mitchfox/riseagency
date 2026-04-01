@@ -29,13 +29,14 @@ export const ActionVideoPopup = ({
   clipStart,
   clipEnd,
   player: providedPlayer,
+  forceStandalone = false,
 }: ActionVideoPopupProps) => {
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
   const progressBarRef = useRef<HTMLDivElement>(null);
   const standaloneVideoRef = useRef<HTMLVideoElement>(null);
   const hasClipWindow = clipStart != null && clipEnd != null && clipEnd > clipStart;
-  const isStandaloneClip = !!videoUrl && !hasClipWindow && !isFullMatchUrl(videoUrl);
+  const isStandaloneClip = !!videoUrl && !hasClipWindow && (forceStandalone || !isFullMatchUrl(videoUrl));
 
   // Standalone clip state
   const [standaloneReady, setStandaloneReady] = useState(false);
