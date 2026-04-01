@@ -530,10 +530,9 @@ export const ActionTypeEditor = ({
 
                 {/* Video + Pitch map + R90 Scores row */}
                 <div className="flex" style={{ height: videoHeight }}>
-                  {/* Video - constrained width */}
+                  {/* Video - flexible width */}
                   <div
-                    className="relative bg-black overflow-hidden shrink-0"
-                    style={{ width: "50%" }}
+                    className="relative bg-black overflow-hidden flex-1 min-w-0"
                     onWheel={handleWheel}
                   >
                     {!hasActiveVideo && (
