@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Crop, ArrowLeftRight } from "lucide-react";
+import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import {
   Collapsible,
@@ -18,8 +19,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ImageCropDialog } from "../ImageCropDialog";
+
+// Auto-lookup team branding from historical analyses and player data
+const lookupTeamBranding = async (teamName: string): Promise<{ logo?: string; bgColor?: string } | null> => {
+  if (!teamName || teamName.trim().length < 2) return null;
+  const name = teamName.trim().toLowerCase();
+  
+  try {
+    // Check previous analyses for this team name
+    const { data: prevAnalyses } = await supabase
+      .from("analyses")
+      .select("home_team, away_team, home_team_logo, away_team_logo, home_team_bg_color, away_team_bg_color")
+      .or(`home_team.ilike.%${teamName.trim()}%,away_team.ilike.%${teamName.trim()}%`)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (prevAnalyses) {
+      for (const prev of prevAnalyses) {
+        const prevHome = prev.home_team?.toLowerCase() || "";
+        const prevAway = prev.away_team?.toLowerCase() || "";
+        if (prevHome.includes(name) || name.includes(prevHome)) {
+          if (prev.home_team_logo) return { logo: prev.home_team_logo, bgColor: prev.home_team_bg_color || undefined };
+        }
+        if (prevAway.includes(name) || name.includes(prevAway)) {
+          if (prev.away_team_logo) return { logo: prev.away_team_logo, bgColor: prev.away_team_bg_color || undefined };
+        }
+      }
+    }
+
+    // Check player club data
+    const { data: playerData } = await supabase
+      .from("players")
+      .select("club, club_logo")
+      .ilike("club", `%${teamName.trim()}%`)
+      .not("club_logo", "is", null)
+      .limit(1);
+
+    if (playerData && playerData.length > 0 && playerData[0].club_logo) {
+      return { logo: playerData[0].club_logo };
+    }
+  } catch {
+    // Non-critical
+  }
+  return null;
+};
 
 interface StrengthPoint {
   color: 'green' | 'amber' | 'red';
@@ -66,6 +111,23 @@ export const AnalysisMatchDetails = ({
   defaultPlayerId,
 }: MatchDetailsProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const handleTeamBlur = useCallback(async (side: "home" | "away") => {
+    const teamName = side === "home" ? formData.home_team : formData.away_team;
+    const logoField = side === "home" ? "home_team_logo" : "away_team_logo";
+    const bgField = side === "home" ? "home_team_bg_color" : "away_team_bg_color";
+    // Only auto-fill if there's no logo already set
+    if (formData[logoField]) return;
+    const branding = await lookupTeamBranding(teamName);
+    if (branding) {
+      const updates: any = {};
+      if (branding.logo && !formData[logoField]) updates[logoField] = branding.logo;
+      if (branding.bgColor && !formData[bgField]) updates[bgField] = branding.bgColor;
+      if (Object.keys(updates).length > 0) {
+        setFormData({ ...formData, ...updates });
+      }
+    }
+  }, [formData, setFormData]);
 
   // Crop dialog state
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -305,6 +367,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   value={formData.home_team || ""}
                   onChange={(e) => setFormData({ ...formData, home_team: e.target.value })}
+                  onBlur={() => handleTeamBlur("home")}
                 />
               </div>
               <Button
@@ -332,6 +395,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   value={formData.away_team || ""}
                   onChange={(e) => setFormData({ ...formData, away_team: e.target.value })}
+                  onBlur={() => handleTeamBlur("away")}
                 />
               </div>
             </div>
@@ -451,6 +515,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   value={formData.home_team || ""}
                   onChange={(e) => setFormData({ ...formData, home_team: e.target.value })}
+                  onBlur={() => handleTeamBlur("home")}
                 />
               </div>
               <div>
@@ -496,6 +561,7 @@ export const AnalysisMatchDetails = ({
                 <Input
                   value={formData.away_team || ""}
                   onChange={(e) => setFormData({ ...formData, away_team: e.target.value })}
+                  onBlur={() => handleTeamBlur("away")}
                 />
               </div>
             </div>

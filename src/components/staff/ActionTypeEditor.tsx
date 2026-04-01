@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -641,7 +642,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Pitch map */}
-                  <div className="w-[140px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
+                  <div className={`border-l bg-muted/10 flex flex-col overflow-auto shrink-0 ${showBoxZone || showXGMap ? 'w-[140px]' : 'flex-1 min-w-[160px]'}`}>
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
@@ -659,7 +660,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className="w-[280px] border-l bg-muted/5 flex flex-col overflow-hidden shrink-0">
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden shrink-0 ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : 'flex-1 min-w-[160px]'}`}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap
@@ -841,16 +842,19 @@ export const ActionTypeEditor = ({
           </div>
         </div>
 
-        {/* Settings popup for action scores */}
-        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogTitle className="text-sm font-semibold">
-              Action Score Configuration
-              {selectedCategory && <span className="text-primary ml-2">— {selectedCategory}</span>}
-            </DialogTitle>
-            <ActionScoresManagement initialFilter={selectedCategory || undefined} />
-          </DialogContent>
-        </Dialog>
+        {/* Settings popup for action scores - rendered via portal to escape parent dialog z-index */}
+        {settingsOpen && ReactDOM.createPortal(
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogContent className="fixed left-1/2 top-1/2 z-[10000] w-[min(96vw,1100px)] max-h-[85vh] overflow-y-auto -translate-x-1/2 -translate-y-1/2">
+              <DialogTitle className="text-sm font-semibold">
+                Action Score Configuration
+                {selectedCategory && <span className="text-primary ml-2">— {selectedCategory}</span>}
+              </DialogTitle>
+              <ActionScoresManagement initialFilter={selectedCategory || undefined} />
+            </DialogContent>
+          </Dialog>,
+          document.body
+        )}
       </DialogContent>
     </Dialog>
   );
