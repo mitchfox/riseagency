@@ -15,6 +15,65 @@ import { BoxZoneMap } from "./BoxZoneMap";
 import { Separator } from "@/components/ui/separator";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
+interface MappedR90Rating {
+  id: string;
+  title: string;
+  score: string;
+  description: string | null;
+  category: string | null;
+  subcategory: string | null;
+}
+
+// Zone classification helpers for filtering
+const OWN_THIRD_ZONES = [1,2,3,4,5,6];
+const MID_THIRD_ZONES = [7,8,9,10,11,12];
+const FINAL_THIRD_ZONES = [13,14,15,16,17,18];
+const WIDE_ZONES = [1,3,4,6,7,9,10,12,13,15,16,18];
+const CENTRAL_ZONES = [2,5,8,11,14,17];
+
+function getZoneThird(zones: number[]): string | null {
+  if (zones.length === 0) return null;
+  const inOwn = zones.some(z => OWN_THIRD_ZONES.includes(z));
+  const inMid = zones.some(z => MID_THIRD_ZONES.includes(z));
+  const inFinal = zones.some(z => FINAL_THIRD_ZONES.includes(z));
+  if (inFinal && !inOwn && !inMid) return "final";
+  if (inMid && !inOwn && !inFinal) return "mid";
+  if (inOwn && !inMid && !inFinal) return "own";
+  return null;
+}
+
+function getZoneWidth(zones: number[]): string | null {
+  if (zones.length === 0) return null;
+  const allWide = zones.every(z => WIDE_ZONES.includes(z));
+  const allCentral = zones.every(z => CENTRAL_ZONES.includes(z));
+  if (allCentral) return "central";
+  if (allWide) return "wide";
+  return null;
+}
+
+function isRatingRelevantToZone(rating: MappedR90Rating, zoneThird: string | null, zoneWidth: string | null): boolean {
+  if (!zoneThird && !zoneWidth) return true;
+  const title = (rating.title || "").toLowerCase();
+  const desc = (rating.description || "").toLowerCase();
+  const combined = title + " " + desc;
+
+  // Filter by third
+  if (zoneThird === "own") {
+    if (combined.includes("final third") || combined.includes("attacking third")) return false;
+  } else if (zoneThird === "final") {
+    if (combined.includes("own third") || combined.includes("defensive third") || combined.includes("own half")) return false;
+  }
+
+  // Filter by width
+  if (zoneWidth === "central") {
+    if (combined.includes("wide") && !combined.includes("half-space")) return false;
+  } else if (zoneWidth === "wide") {
+    if (combined.includes("central") && !combined.includes("half-space")) return false;
+  }
+
+  return true;
+}
+
 interface PerformanceAction {
   id?: string;
   action_number: number;
