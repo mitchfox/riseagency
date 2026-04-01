@@ -28,14 +28,18 @@ interface ActionMapping {
   selected_rating_ids: string[] | null;
 }
 
-export const ActionScoresManagement = () => {
+interface ActionScoresManagementProps {
+  initialFilter?: string;
+}
+
+export const ActionScoresManagement = ({ initialFilter }: ActionScoresManagementProps = {}) => {
   const [actionTypes, setActionTypes] = useState<string[]>([]);
   const [mappings, setMappings] = useState<ActionMapping[]>([]);
   const [allRatings, setAllRatings] = useState<R90Rating[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [subcategories, setSubcategories] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialFilter || "");
   const [expandedType, setExpandedType] = useState<string | null>(null);
 
   // Add rating dialog
