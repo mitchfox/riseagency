@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp } from "lucide-react";
+import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import { InlinePitchGrid } from "./InlinePitchGrid";
