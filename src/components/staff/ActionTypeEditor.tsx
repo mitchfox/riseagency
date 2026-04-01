@@ -420,11 +420,11 @@ export const ActionTypeEditor = ({
                   </span>
                 </div>
 
-                {/* Video + Pitch map row */}
+                {/* Video + Pitch map + Visual maps row */}
                 <div className="flex" style={{ height: videoHeight }}>
-                  {/* Video - 2/3 width */}
+                  {/* Video - fills available space, aligned left */}
                   <div
-                    className="relative bg-black overflow-hidden flex-[2]"
+                    className="relative bg-black overflow-hidden flex-1"
                     onWheel={handleWheel}
                   >
                     {!hasActiveVideo && (
@@ -455,20 +455,52 @@ export const ActionTypeEditor = ({
                     )}
                   </div>
 
-                  {/* Pitch map - 1/3 width */}
-                  <div className="flex-[1] border-l bg-muted/10 flex items-center justify-center p-2 overflow-auto">
+                  {/* Pitch map - fixed width */}
+                  <div className="w-[160px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
                     {selectedActionIndex !== null ? (
-                      <ZonePitchSelector
+                      <InlinePitchGrid
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
                         onChange={(zd) => {
                           updateAction(selectedActionIndex, "zone_details", zd as any);
                           updateAction(selectedActionIndex, "zone", (zd.length ? zd[0].zone : null) as any);
                         }}
                         actionType={activeAction?.action_type || ""}
-                        compact={false}
                       />
                     ) : (
-                      <span className="text-xs text-muted-foreground">Select an action to set zone</span>
+                      <div className="flex items-center justify-center h-full">
+                        <span className="text-[10px] text-muted-foreground">Select an action</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right panel: visual maps (BoxZone/xG) or R90 relevant scores */}
+                  <div className="w-[240px] border-l bg-muted/5 flex flex-col overflow-auto shrink-0">
+                    {showBoxZone ? (
+                      <div className="p-2 h-full">
+                        <BoxZoneMap actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))} />
+                      </div>
+                    ) : showXGMap ? (
+                      <div className="p-2 h-full">
+                        <XGPitchMap />
+                      </div>
+                    ) : (
+                      <div className="p-2 flex flex-col h-full">
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">Frequent Scores</p>
+                        <div className="space-y-0.5 flex-1 overflow-auto">
+                          {topScores.length > 0 ? topScores.map(s => (
+                            <button
+                              key={s.value}
+                              className="w-full text-left px-2 py-1 rounded hover:bg-accent text-xs flex items-center gap-2"
+                              onClick={() => selectedActionIndex !== null && applyQuickScore(selectedActionIndex, s.value)}
+                            >
+                              <span className="font-mono font-bold text-primary">{s.value}</span>
+                              <span className="text-muted-foreground text-[10px]">×{s.count}</span>
+                            </button>
+                          )) : (
+                            <span className="text-[10px] text-muted-foreground">Select a category</span>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
