@@ -318,7 +318,7 @@ export const ActionTypeEditor = ({
 
   const completionColor = completionStats.pct >= 80 ? "text-green-500" : completionStats.pct >= 50 ? "text-lime-500" : completionStats.pct >= 25 ? "text-amber-500" : "text-red-400";
 
-
+  const groupedActions = useMemo(() => {
     const groups: Record<string, { action: PerformanceAction; index: number }[]> = {};
     actions.forEach((action, index) => {
       const type = action.action_type ? canonicalActionType(action.action_type) : "Uncategorised";
