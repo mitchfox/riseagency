@@ -50,7 +50,7 @@ const getScoreColor = (avg: number): string => {
 };
 
 export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
-  const [contested, setContested] = useState<"all" | "contested" | "uncontested">("all");
+  const [contested, setContested] = useState<"contested" | "uncontested">("contested");
 
   // Group actions by box zone
   const zoneData = useMemo(() => {
