@@ -104,7 +104,7 @@ export const XGPitchMap = ({ compact = false }: { compact?: boolean }) => {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="relative w-full overflow-x-auto">
-          <div className="min-w-[500px] mx-auto">
+          <div className={`${compact ? "" : "min-w-[500px]"} mx-auto`}>
             {/* Pitch container */}
             <div className="relative border-2 border-slate-700 bg-emerald-800/20 rounded overflow-hidden">
               {/* Pitch markings overlay */}
