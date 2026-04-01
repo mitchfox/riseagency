@@ -841,16 +841,19 @@ export const ActionTypeEditor = ({
           </div>
         </div>
 
-        {/* Settings popup for action scores */}
-        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogTitle className="text-sm font-semibold">
-              Action Score Configuration
-              {selectedCategory && <span className="text-primary ml-2">— {selectedCategory}</span>}
-            </DialogTitle>
-            <ActionScoresManagement initialFilter={selectedCategory || undefined} />
-          </DialogContent>
-        </Dialog>
+        {/* Settings popup for action scores - rendered via portal to escape parent dialog z-index */}
+        {settingsOpen && ReactDOM.createPortal(
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogContent className="fixed left-1/2 top-1/2 z-[10000] w-[min(96vw,1100px)] max-h-[85vh] overflow-y-auto -translate-x-1/2 -translate-y-1/2">
+              <DialogTitle className="text-sm font-semibold">
+                Action Score Configuration
+                {selectedCategory && <span className="text-primary ml-2">— {selectedCategory}</span>}
+              </DialogTitle>
+              <ActionScoresManagement initialFilter={selectedCategory || undefined} />
+            </DialogContent>
+          </Dialog>,
+          document.body
+        )}
       </DialogContent>
     </Dialog>
   );
