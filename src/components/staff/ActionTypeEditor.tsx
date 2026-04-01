@@ -551,11 +551,33 @@ export const ActionTypeEditor = ({
         <div className="flex flex-1 min-h-0">
           {/* Category sidebar */}
           <div className={`flex flex-col border-r shrink-0 transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[200px]"}`}>
-            {/* Collapse toggle at top */}
-            <div className="flex items-center justify-center px-1 py-1 border-b">
+            {/* Collapse toggle + pending filter + completion */}
+            <div className="flex items-center gap-1 px-1 py-1 border-b flex-wrap">
               <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setSidebarCollapsed(prev => !prev)}>
                 {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
+              {!sidebarCollapsed && (
+                <>
+                  <Button
+                    variant={showPendingOnly ? "default" : "outline"}
+                    size="sm"
+                    className="h-6 px-2 text-[10px] gap-1"
+                    onClick={() => setShowPendingOnly(prev => !prev)}
+                    title={showPendingOnly ? "Showing pending only" : "Showing all"}
+                  >
+                    <Filter className="h-3 w-3" />
+                    {showPendingOnly ? "Pending" : "All"}
+                  </Button>
+                  <span className={`text-[11px] font-bold font-mono ml-auto ${completionColor}`}>
+                    {completionStats.pct}%
+                  </span>
+                </>
+              )}
+              {sidebarCollapsed && (
+                <span className={`text-[10px] font-bold font-mono ${completionColor}`}>
+                  {completionStats.pct}%
+                </span>
+              )}
             </div>
             {!sidebarCollapsed && (
               <div className="px-2 py-1 border-b">
