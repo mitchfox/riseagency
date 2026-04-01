@@ -856,11 +856,12 @@ export const ActionTypeEditor = ({
                         <Search className="h-3 w-3 text-primary" />
                       </Button>
                     </div>
-                    <BlurInput
+                    <DescriptionBlurInput
                       value={activeAction.action_description}
                       onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)}
                       placeholder="Description"
                       className="h-7 text-xs"
+                      suggestions={getDescriptionsForType(activeAction.action_type || "")}
                     />
                     <BlurInput
                       value={activeAction.notes}
