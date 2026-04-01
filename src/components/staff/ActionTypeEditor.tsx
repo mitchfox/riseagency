@@ -641,8 +641,8 @@ export const ActionTypeEditor = ({
                     </div>
                   </div>
 
-                  {/* Pitch map */}
-                  <div className={`border-l bg-muted/10 flex flex-col overflow-auto shrink-0 ${showBoxZone || showXGMap ? 'w-[140px]' : 'flex-1 min-w-[160px]'}`}>
+                  {/* Pitch map - 50:50 with R90 panel (except box/xG) */}
+                  <div className={`border-l bg-muted/10 flex flex-col overflow-auto shrink-0 ${showBoxZone || showXGMap ? 'w-[140px]' : 'w-[calc((100%-var(--video-w,50%)-60px)/2)]'}`} style={{ flex: showBoxZone || showXGMap ? undefined : '1 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '140px' }}>
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
@@ -660,7 +660,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden shrink-0 ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : 'flex-1 min-w-[160px]'}`}>
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '1 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '140px' }}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap

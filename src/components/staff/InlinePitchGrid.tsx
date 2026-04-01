@@ -145,7 +145,7 @@ export const InlinePitchGrid = ({ value, onChange, actionType }: InlinePitchGrid
             <p className="text-[7px] text-muted-foreground">Zone {expandedZone} &bull; {getMultiplierDisplay(expandedZone)}</p>
           </div>
         ) : (
-          <div className="grid grid-rows-6 gap-px">
+          <div className="grid grid-rows-6 gap-px flex-1">
             {ZONE_GRID.map((row, rowIdx) => (
               <div key={rowIdx} className="grid grid-cols-3 gap-px">
                 {row.map(zone => {
