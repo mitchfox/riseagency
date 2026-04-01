@@ -118,6 +118,7 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
+                setLocalValue(score.value);
                 onChange(score.value);
                 setDropdownOpen(false);
               }}
