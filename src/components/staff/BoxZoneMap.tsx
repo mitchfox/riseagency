@@ -133,9 +133,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
             </div>
           </TooltipProvider>
         </div>
-        <div className="flex justify-center -mt-0.5">
-          <div className="bg-slate-700 text-white text-[10px] px-4 py-0.5 rounded-b font-medium tracking-wider">GOAL</div>
-        </div>
+        {/* Goal label removed */}
       </CardContent>
     </Card>
   );
