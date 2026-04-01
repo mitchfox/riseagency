@@ -316,8 +316,9 @@ export const ActionTypeEditor = ({
   }, [categoriesToShow]);
 
   useEffect(() => {
-    if (!selectedCategory) { setTopScores([]); return; }
+    if (!selectedCategory) { setTopScores([]); setMappedRatings([]); return; }
     fetchTopScoresForType(selectedCategory).then(setTopScores);
+    fetchMappedR90Ratings(selectedCategory).then(setMappedRatings);
   }, [selectedCategory]);
 
   // Load video only when selectedActionIndex changes and the action has a video
