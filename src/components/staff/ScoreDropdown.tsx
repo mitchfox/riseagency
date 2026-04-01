@@ -83,10 +83,10 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           ref={inputRef}
           type="number"
           step="0.00001"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
           onFocus={() => setDropdownOpen(true)}
-          onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+          onBlur={() => { if (localValue !== String(value ?? "")) onChange(localValue); setTimeout(() => setDropdownOpen(false), 200); }}
           placeholder="Score"
           disabled={disabled}
           className={`pr-6 ${inputClassName}`}
