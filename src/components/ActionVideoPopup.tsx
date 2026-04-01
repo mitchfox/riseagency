@@ -16,6 +16,8 @@ interface ActionVideoPopupProps {
   clipStart?: number | null;
   clipEnd?: number | null;
   player?: SharedClipPlayerState;
+  /** When true, treat the video as a standalone clip regardless of URL pattern */
+  forceStandalone?: boolean;
 }
 
 export const ActionVideoPopup = ({
