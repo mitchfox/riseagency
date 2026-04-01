@@ -519,16 +519,25 @@ export const ActionTypeEditor = ({
               {actions.length} actions · {groupedActions.length} types
             </span>
           </div>
-          {/* R90 Score - top centre */}
-          {activeAction && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">R90:</span>
-              <span className={`font-mono font-bold text-sm ${activeAction.action_score ? "text-primary" : "text-muted-foreground"}`}>
-                {activeAction.action_score || "—"}
-              </span>
-            </div>
-          )}
+          {/* Live R90 Score - top centre */}
           <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">R90:</span>
+            <span className={`font-mono font-bold text-sm ${liveR90 ? "text-primary" : "text-muted-foreground"}`}>
+              {liveR90 || "—"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                document.dispatchEvent(new CustomEvent("staff-music-toggle"));
+              }}
+              title="Music player"
+            >
+              <Music className="h-4 w-4" />
+            </Button>
             <Button onClick={onSave} disabled={saving} size="sm" className="gap-1.5">
               <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Update Report"}
