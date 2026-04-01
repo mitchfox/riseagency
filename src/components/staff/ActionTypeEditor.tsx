@@ -582,14 +582,14 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 action scores + visual maps */}
-                  <div className="flex-1 border-l bg-muted/5 flex flex-col overflow-hidden min-w-0">
+                  <div className="w-[280px] border-l bg-muted/5 flex flex-col overflow-hidden shrink-0">
                     {showBoxZone ? (
-                      <div className="p-2 h-full">
+                      <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))} />
                       </div>
                     ) : showXGMap ? (
-                      <div className="p-2 h-full">
-                        <XGPitchMap />
+                      <div className="p-2 h-full overflow-auto flex items-start justify-center">
+                        <XGPitchMap compact />
                       </div>
                     ) : (
                       <div className="flex flex-col h-full">
