@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Crop, ArrowLeftRight } from "lucide-react";
+import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import {
   Collapsible,
