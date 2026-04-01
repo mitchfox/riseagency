@@ -610,18 +610,6 @@ export const ActionTypeEditor = ({
                   </div>
                 ))}
 
-                {showBoxZone && (
-                  <div className="mt-4">
-                    <BoxZoneMap
-                      actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))}
-                    />
-                  </div>
-                )}
-                {showXGMap && (
-                  <div className="mt-4">
-                    <XGPitchMap />
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </ResizablePanel>
