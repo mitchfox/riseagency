@@ -459,6 +459,7 @@ const VideoItem = ({
         onOpenChange={setFullscreenOpen}
         videoUrl={url}
         actionTitle=""
+        forceStandalone
       />
     </div>
   );

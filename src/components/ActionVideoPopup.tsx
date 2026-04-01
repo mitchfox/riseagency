@@ -49,11 +49,11 @@ export const ActionVideoPopup = ({
   // Block if no video at all, or full match without clip boundaries
   useEffect(() => {
     if (!open) return;
-    if (!videoUrl || (!hasClipWindow && isFullMatchUrl(videoUrl))) {
+    if (!videoUrl || (!hasClipWindow && !forceStandalone && isFullMatchUrl(videoUrl))) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       onOpenChange(false);
     }
-  }, [open, videoUrl, hasClipWindow, onOpenChange]);
+  }, [open, videoUrl, hasClipWindow, forceStandalone, onOpenChange]);
 
   // Propagate shared player errors
   useEffect(() => {
