@@ -798,15 +798,15 @@ export const ActionTypeEditor = ({
                         <Search className="h-3 w-3 text-primary" />
                       </Button>
                     </div>
-                    <Input
+                    <BlurInput
                       value={activeAction.action_description}
-                      onChange={(e) => updateAction(selectedActionIndex, "action_description", e.target.value)}
+                      onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)}
                       placeholder="Description"
                       className="h-7 text-xs"
                     />
-                    <Input
+                    <BlurInput
                       value={activeAction.notes}
-                      onChange={(e) => updateAction(selectedActionIndex, "notes", e.target.value)}
+                      onCommit={(val) => updateAction(selectedActionIndex, "notes", val)}
                       placeholder="Notes"
                       className="h-7 text-xs"
                     />
