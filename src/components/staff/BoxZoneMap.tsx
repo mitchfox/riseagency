@@ -74,7 +74,7 @@ export const BoxZoneMap = ({ actions }: BoxZoneMapProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm">18-Yard Box Zone Map</CardTitle>
           <div className="flex items-center gap-1">
-            {(["all", "contested", "uncontested"] as const).map(opt => (
+            {(["contested", "uncontested"] as const).map(opt => (
               <Button
                 key={opt}
                 variant={contested === opt ? "default" : "outline"}
