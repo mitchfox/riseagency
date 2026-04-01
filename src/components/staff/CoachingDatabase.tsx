@@ -1049,6 +1049,8 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <ActionReportsList />
             ) : key === 'sportscode' ? (
               <SportscodeActionTypes />
+            ) : key === 'action_scores' ? (
+              <ActionScoresManagement />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
