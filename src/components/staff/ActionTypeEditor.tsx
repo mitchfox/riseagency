@@ -596,6 +596,10 @@ export const ActionTypeEditor = ({
                 {GROUP_ORDER.map(group => {
                   const entries = sidebarGroups[group];
                   if (!entries || entries.length === 0) return null;
+                  const filteredEntries = showPendingOnly
+                    ? entries.filter(({ items }) => { const { scored, total } = getScoreCounts(items); return scored < total; })
+                    : entries;
+                  if (filteredEntries.length === 0) return null;
                   return (
                     <div key={group}>
                       {!sidebarCollapsed && (
@@ -606,7 +610,7 @@ export const ActionTypeEditor = ({
                         </div>
                       )}
                       <div className="space-y-0.5">
-                        {entries.map(({ category, items }) => {
+                        {filteredEntries.map(({ category, items }) => {
                           const { scored, total } = getScoreCounts(items);
                           return (
                             <Button
