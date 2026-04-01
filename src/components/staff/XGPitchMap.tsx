@@ -74,13 +74,13 @@ const getXGOpacity = (value: number): number => {
   return 0.7;
 };
 
-export const XGPitchMap = () => {
-  const [zoomed, setZoomed] = useState(false);
+export const XGPitchMap = ({ compact = false }: { compact?: boolean }) => {
+  const [zoomed, setZoomed] = useState(true);
   const displayGrid = zoomed ? XG_GRID.slice(0, 7) : XG_GRID;
   const displayLabels = zoomed ? ROW_LABELS.slice(0, 7) : ROW_LABELS;
 
   return (
-    <Card className="w-full">
+    <Card className={`w-full ${compact ? "border-0 shadow-none" : ""}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div>
@@ -104,7 +104,7 @@ export const XGPitchMap = () => {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="relative w-full overflow-x-auto">
-          <div className="min-w-[500px] mx-auto">
+          <div className={`${compact ? "" : "min-w-[500px]"} mx-auto`}>
             {/* Pitch container */}
             <div className="relative border-2 border-slate-700 bg-emerald-800/20 rounded overflow-hidden">
               {/* Pitch markings overlay */}
