@@ -660,7 +660,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className="w-[280px] border-l bg-muted/5 flex flex-col overflow-hidden shrink-0">
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden shrink-0 ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : 'flex-1 min-w-[160px]'}`}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap
