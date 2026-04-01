@@ -528,11 +528,12 @@ export const ActionTypeEditor = ({
                   </span>
                 </div>
 
-                {/* Video + Pitch map + Visual maps row */}
+                {/* Video + Pitch map + R90 Scores row */}
                 <div className="flex" style={{ height: videoHeight }}>
-                  {/* Video - fills available space, aligned left */}
+                  {/* Video - constrained width */}
                   <div
-                    className="relative bg-black overflow-hidden flex-1"
+                    className="relative bg-black overflow-hidden shrink-0"
+                    style={{ width: "50%" }}
                     onWheel={handleWheel}
                   >
                     {!hasActiveVideo && (
@@ -563,8 +564,8 @@ export const ActionTypeEditor = ({
                     )}
                   </div>
 
-                  {/* Pitch map - fixed width */}
-                  <div className="w-[160px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
+                  {/* Pitch map - fixed width, tighter boxes */}
+                  <div className="w-[140px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
@@ -581,8 +582,8 @@ export const ActionTypeEditor = ({
                     )}
                   </div>
 
-                  {/* Right panel: visual maps (BoxZone/xG) or R90 relevant scores */}
-                  <div className="w-[240px] border-l bg-muted/5 flex flex-col overflow-auto shrink-0">
+                  {/* Right panel: R90 action scores + visual maps */}
+                  <div className="flex-1 border-l bg-muted/5 flex flex-col overflow-hidden min-w-0">
                     {showBoxZone ? (
                       <div className="p-2 h-full">
                         <BoxZoneMap actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))} />
@@ -592,22 +593,38 @@ export const ActionTypeEditor = ({
                         <XGPitchMap />
                       </div>
                     ) : (
-                      <div className="p-2 flex flex-col h-full">
-                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">Frequent Scores</p>
-                        <div className="space-y-0.5 flex-1 overflow-auto">
-                          {topScores.length > 0 ? topScores.map(s => (
-                            <button
-                              key={s.value}
-                              className="w-full text-left px-2 py-1 rounded hover:bg-accent text-xs flex items-center gap-2"
-                              onClick={() => selectedActionIndex !== null && applyQuickScore(selectedActionIndex, s.value)}
-                            >
-                              <span className="font-mono font-bold text-primary">{s.value}</span>
-                              <span className="text-muted-foreground text-[10px]">×{s.count}</span>
-                            </button>
-                          )) : (
-                            <span className="text-[10px] text-muted-foreground">Select a category</span>
-                          )}
+                      <div className="flex flex-col h-full">
+                        <div className="px-2 py-1 border-b flex items-center justify-between">
+                          <p className="text-[10px] font-semibold">
+                            R90 Action Scores
+                            {activeZones.length > 0 && <span className="ml-1 text-muted-foreground font-normal">(filtered by zone)</span>}
+                          </p>
+                          <span className="text-[9px] text-muted-foreground">{filteredMappedRatings.length} rating{filteredMappedRatings.length !== 1 ? "s" : ""}</span>
                         </div>
+                        <ScrollArea className="flex-1">
+                          <div className="p-1.5 space-y-0.5">
+                            {filteredMappedRatings.length > 0 ? filteredMappedRatings.map(r => (
+                              <button
+                                key={r.id}
+                                className="w-full text-left px-2 py-1 rounded hover:bg-accent text-xs flex items-center gap-2 group"
+                                onClick={() => selectedActionIndex !== null && applyQuickScore(selectedActionIndex, String(r.score))}
+                              >
+                                <span className="font-mono font-bold text-primary shrink-0 min-w-[50px]">{r.score}</span>
+                                <span className="truncate flex-1">{r.title}</span>
+                                {r.description && (
+                                  <span className="text-[9px] text-muted-foreground truncate max-w-[120px] hidden group-hover:inline">{r.description}</span>
+                                )}
+                              </button>
+                            )) : mappedRatings.length === 0 ? (
+                              <div className="text-center py-4">
+                                <p className="text-[10px] text-muted-foreground">No action scores configured</p>
+                                <p className="text-[9px] text-muted-foreground mt-1">Set up mappings in Coaching Database → Action Scores</p>
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-muted-foreground text-center py-4">No scores match the selected zones</p>
+                            )}
+                          </div>
+                        </ScrollArea>
                       </div>
                     )}
                   </div>
