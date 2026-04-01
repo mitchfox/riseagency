@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp } from "lucide-react";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import { InlinePitchGrid } from "./InlinePitchGrid";
@@ -73,7 +73,6 @@ function isRatingRelevantToZone(rating: MappedR90Rating, zoneThird: string | nul
   return true;
 }
 
-// Categorise R90 ratings for display with dividers
 function categoriseRatings(ratings: MappedR90Rating[]): { label: string; items: MappedR90Rating[] }[] {
   const groups: Record<string, MappedR90Rating[]> = {};
   
@@ -282,6 +281,7 @@ export const ActionTypeEditor = ({
   const [mappedRatings, setMappedRatings] = useState<MappedR90Rating[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bottomCollapsed, setBottomCollapsed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoReady, setVideoReady] = useState(false);
@@ -416,7 +416,6 @@ export const ActionTypeEditor = ({
     });
   }, []);
 
-  // Pan handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (videoZoom <= 1) return;
     e.preventDefault();
@@ -480,15 +479,15 @@ export const ActionTypeEditor = ({
 
   const categorisedRatings = useMemo(() => categoriseRatings(filteredMappedRatings), [filteredMappedRatings]);
 
-  const videoHeight = "40vh";
+  const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Action Type Editor</DialogTitle>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+        {/* Header - compact */}
+        <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-primary font-bold text-sm">ACTION EDIT</span>
             <span className="text-xs text-muted-foreground">
@@ -509,21 +508,24 @@ export const ActionTypeEditor = ({
         <div className="flex flex-1 min-h-0">
           {/* Category sidebar */}
           <div className={`flex flex-col border-r shrink-0 transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[200px]"}`}>
-            <div className="flex items-center justify-between px-2 py-2 border-b">
-              {!sidebarCollapsed && (
-                <Button
-                  variant={selectedCategory === null ? "default" : "ghost"}
-                  size="sm"
-                  className="flex-1 justify-start text-xs mr-1"
-                  onClick={() => { setSelectedCategory(null); setSelectedActionIndex(null); }}
-                >
-                  All Action Types
-                </Button>
-              )}
+            {/* Collapse toggle at top */}
+            <div className="flex items-center justify-center px-1 py-1 border-b">
               <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setSidebarCollapsed(prev => !prev)}>
                 {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
             </div>
+            {!sidebarCollapsed && (
+              <div className="px-2 py-1 border-b">
+                <Button
+                  variant={selectedCategory === null ? "default" : "ghost"}
+                  size="sm"
+                  className="w-full justify-start text-xs"
+                  onClick={() => { setSelectedCategory(null); setSelectedActionIndex(null); }}
+                >
+                  All Action Types
+                </Button>
+              </div>
+            )}
             <ScrollArea className="flex-1">
               <div className="p-1">
                 {GROUP_ORDER.map(group => {
@@ -567,32 +569,11 @@ export const ActionTypeEditor = ({
 
           {/* Main content */}
           <div className="flex flex-col flex-1 min-h-0 min-w-0">
-            {/* Video player area + pitch map side by side */}
+            {/* Video player area + pitch map side by side - NO separate header bar */}
             {selectedCategory && categoryClips.length > 0 && (
-              <div className="border-b shrink-0">
-                {/* Navigation controls */}
-                <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => goToClip(-1)} disabled={categoryClips.length <= 1}>
-                      <SkipBack className="h-3 w-3" /> Prev
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={togglePlayPause} disabled={!hasActiveVideo}>
-                      {videoPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => goToClip(1)} disabled={categoryClips.length <= 1}>
-                      Next <SkipForward className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedActionIndex !== null
-                      ? `Clip ${categoryClips.findIndex(c => c.index === selectedActionIndex) + 1} of ${categoryClips.length}`
-                      : `${categoryClips.length} clips available`}
-                    {videoZoom > 1 && <span className="ml-2 text-primary">{videoZoom.toFixed(1)}×</span>}
-                  </span>
-                </div>
-
+              <div className={`border-b shrink-0 ${bottomCollapsed ? "" : ""}`}>
                 {/* Video + Pitch map + R90 Scores row */}
-                <div className="flex" style={{ height: videoHeight }}>
+                <div className="flex" style={{ height: bottomCollapsed ? "55vh" : "40vh" }}>
                   {/* Video */}
                   <div
                     ref={videoContainerRef}
@@ -628,17 +609,35 @@ export const ActionTypeEditor = ({
                             <Loader2 className="h-5 w-5 animate-spin text-white/60" />
                           </div>
                         )}
-                        {/* Fullscreen button */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute bottom-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 text-white z-20"
-                          onClick={toggleFullscreen}
-                        >
-                          {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                        </Button>
                       </>
                     )}
+
+                    {/* Controls overlay on the video */}
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/60 px-3 py-1.5 z-20">
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => goToClip(-1)} disabled={categoryClips.length <= 1}>
+                          <SkipBack className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" onClick={togglePlayPause} disabled={!hasActiveVideo}>
+                          {videoPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => goToClip(1)} disabled={categoryClips.length <= 1}>
+                          <SkipForward className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <span className="text-[11px] text-white/80">
+                        {currentClipIdx >= 0 ? `Clip ${currentClipIdx + 1} / ${categoryClips.length}` : `${categoryClips.length} clips`}
+                        {videoZoom > 1 && <span className="ml-2 text-primary">{videoZoom.toFixed(1)}×</span>}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" onClick={() => setBottomCollapsed(prev => !prev)}>
+                          {bottomCollapsed ? <ChevronsDown className="h-3.5 w-3.5" /> : <ChevronsUp className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20" onClick={toggleFullscreen}>
+                          {isFullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Pitch map */}
@@ -663,7 +662,15 @@ export const ActionTypeEditor = ({
                   <div className="w-[280px] border-l bg-muted/5 flex flex-col overflow-hidden shrink-0">
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
-                        <BoxZoneMap actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))} />
+                        <BoxZoneMap
+                          actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))}
+                          actionType={selectedCategory || undefined}
+                          onScoreSelect={(score) => {
+                            if (selectedActionIndex !== null) {
+                              applyQuickScore(selectedActionIndex, score);
+                            }
+                          }}
+                        />
                       </div>
                     ) : showXGMap ? (
                       <div className="p-2 h-full overflow-auto flex items-start justify-center">
@@ -710,7 +717,6 @@ export const ActionTypeEditor = ({
                             )}
                           </div>
                         </ScrollArea>
-                        {/* Settings button */}
                         <div className="border-t px-2 py-1.5">
                           <Button
                             variant="ghost"
