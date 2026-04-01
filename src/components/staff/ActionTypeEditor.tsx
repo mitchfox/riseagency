@@ -671,7 +671,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '1 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '140px' }}>
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '0.8 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '120px' }}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap
