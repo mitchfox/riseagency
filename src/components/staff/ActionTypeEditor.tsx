@@ -298,7 +298,27 @@ export const ActionTypeEditor = ({
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
 
-  const groupedActions = useMemo(() => {
+  // Live R90 calculation
+  const liveR90 = useMemo(() => {
+    const scored = actions.filter(a => a.action_score && a.action_score.trim() !== "");
+    if (scored.length === 0) return null;
+    const rawScore = scored.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
+    const mins = parseFloat(minutesPlayed || "0");
+    if (mins > 0) return ((rawScore / mins) * 90).toFixed(2);
+    return rawScore.toFixed(3);
+  }, [actions, minutesPlayed]);
+
+  // Completion stats
+  const completionStats = useMemo(() => {
+    const scored = actions.filter(a => a.action_score && a.action_score.trim() !== "").length;
+    const total = actions.length;
+    const pct = total > 0 ? Math.round((scored / total) * 100) : 0;
+    return { scored, total, pct };
+  }, [actions]);
+
+  const completionColor = completionStats.pct >= 80 ? "text-green-500" : completionStats.pct >= 50 ? "text-lime-500" : completionStats.pct >= 25 ? "text-amber-500" : "text-red-400";
+
+
     const groups: Record<string, { action: PerformanceAction; index: number }[]> = {};
     actions.forEach((action, index) => {
       const type = action.action_type ? canonicalActionType(action.action_type) : "Uncategorised";
