@@ -203,6 +203,13 @@ const tableConfigs = {
     icon: Video,
     color: 'rose',
   },
+  action_scores: {
+    label: 'Action Scores',
+    singular: 'Action Score',
+    fields: [],
+    icon: Settings,
+    color: 'amber',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
