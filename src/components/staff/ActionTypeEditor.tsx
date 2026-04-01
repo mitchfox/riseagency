@@ -589,13 +589,12 @@ export const ActionTypeEditor = ({
                   <div
                     ref={videoContainerRef}
                     className="relative bg-black overflow-hidden min-w-0"
-                    style={{ flex: '3 1 0%' }}
+                    style={{ flex: '3 1 0%', cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                     onWheel={handleWheel}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
-                    style={{ cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                   >
                     {!hasActiveVideo && (
                       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
