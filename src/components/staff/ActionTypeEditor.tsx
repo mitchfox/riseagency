@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp } from "lucide-react";
+import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 import { InlinePitchGrid } from "./InlinePitchGrid";
@@ -495,6 +496,15 @@ export const ActionTypeEditor = ({
               {actions.length} actions · {groupedActions.length} types
             </span>
           </div>
+          {/* R90 Score - top centre */}
+          {activeAction && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">R90:</span>
+              <span className={`font-mono font-bold text-sm ${activeAction.action_score ? "text-primary" : "text-muted-foreground"}`}>
+                {activeAction.action_score || "—"}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Button onClick={onSave} disabled={saving} size="sm" className="gap-1.5">
               <Save className="h-4 w-4" />
@@ -578,13 +588,13 @@ export const ActionTypeEditor = ({
                   {/* Video */}
                   <div
                     ref={videoContainerRef}
-                    className="relative bg-black overflow-hidden flex-1 min-w-0"
+                    className="relative bg-black overflow-hidden min-w-0"
+                    style={{ flex: '3 1 0%', cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                     onWheel={handleWheel}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
-                    style={{ cursor: videoZoom > 1 ? (isDragging ? "grabbing" : "grab") : "pointer" }}
                   >
                     {!hasActiveVideo && (
                       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -660,7 +670,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Right panel: R90 scores / visual maps */}
-                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '1 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '140px' }}>
+                  <div className={`border-l bg-muted/5 flex flex-col overflow-hidden ${showBoxZone || showXGMap ? 'flex-1 min-w-[280px]' : ''}`} style={{ flex: showBoxZone || showXGMap ? undefined : '0.8 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '120px' }}>
                     {showBoxZone ? (
                       <div className="p-2 h-full overflow-auto">
                         <BoxZoneMap
@@ -788,15 +798,15 @@ export const ActionTypeEditor = ({
                         <Search className="h-3 w-3 text-primary" />
                       </Button>
                     </div>
-                    <Input
+                    <BlurInput
                       value={activeAction.action_description}
-                      onChange={(e) => updateAction(selectedActionIndex, "action_description", e.target.value)}
+                      onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)}
                       placeholder="Description"
                       className="h-7 text-xs"
                     />
-                    <Input
+                    <BlurInput
                       value={activeAction.notes}
-                      onChange={(e) => updateAction(selectedActionIndex, "notes", e.target.value)}
+                      onCommit={(val) => updateAction(selectedActionIndex, "notes", val)}
                       placeholder="Notes"
                       className="h-7 text-xs"
                     />

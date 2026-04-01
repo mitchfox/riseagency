@@ -54,7 +54,12 @@ async function loadAllScores() {
 export const ScoreDropdown = ({ value, onChange, className = "", inputClassName = "", disabled = false, dropUp = false }: ScoreDropdownProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [allScores, setAllScores] = useState<{ value: string; count: number }[]>(cachedScores || []);
+  const [localValue, setLocalValue] = useState(String(value ?? ""));
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLocalValue(String(value ?? ""));
+  }, [value]);
 
   useEffect(() => {
     loadAllScores().then(() => {
@@ -63,8 +68,8 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
   }, []);
 
   // Filter scores based on current input value
-  const inputStr = String(value ?? "");
-  const filtered = inputStr.trim()
+  const inputStr = localValue.trim();
+  const filtered = inputStr
     ? allScores.filter((s) => s.value.startsWith(inputStr) || s.value.startsWith(inputStr.replace(/^-?0?\.?/, "")))
     : allScores;
 
@@ -78,10 +83,10 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           ref={inputRef}
           type="number"
           step="0.00001"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
           onFocus={() => setDropdownOpen(true)}
-          onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+          onBlur={() => { if (localValue !== String(value ?? "")) onChange(localValue); setTimeout(() => setDropdownOpen(false), 200); }}
           placeholder="Score"
           disabled={disabled}
           className={`pr-6 ${inputClassName}`}
@@ -113,6 +118,7 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
+                setLocalValue(score.value);
                 onChange(score.value);
                 setDropdownOpen(false);
               }}
