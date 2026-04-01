@@ -313,7 +313,9 @@ export const ActionScoresManagement = ({ initialFilter }: ActionScoresManagement
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
+      document.body
+      )}
     </div>
   );
 };
