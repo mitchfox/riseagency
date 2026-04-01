@@ -409,6 +409,19 @@ export const ActionTypeEditor = ({
   const showBoxZone = selectedCategory ? isBoxZoneType(selectedCategory) : false;
   const showXGMap = selectedCategory ? isXGType(selectedCategory) : false;
 
+  // Filter R90 ratings by zone selection
+  const activeZones = useMemo(() => {
+    if (!activeAction?.zone_details || activeAction.zone_details.length === 0) return [];
+    return (activeAction.zone_details as ZonePoint[]).map(z => z.zone);
+  }, [activeAction?.zone_details]);
+
+  const filteredMappedRatings = useMemo(() => {
+    if (mappedRatings.length === 0) return [];
+    const zoneThird = getZoneThird(activeZones);
+    const zoneWidth = getZoneWidth(activeZones);
+    return mappedRatings.filter(r => isRatingRelevantToZone(r, zoneThird, zoneWidth));
+  }, [mappedRatings, activeZones]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
