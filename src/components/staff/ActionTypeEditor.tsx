@@ -642,7 +642,7 @@ export const ActionTypeEditor = ({
                   </div>
 
                   {/* Pitch map */}
-                  <div className="w-[140px] border-l bg-muted/10 flex flex-col overflow-auto shrink-0">
+                  <div className={`border-l bg-muted/10 flex flex-col overflow-auto shrink-0 ${showBoxZone || showXGMap ? 'w-[140px]' : 'flex-1 min-w-[160px]'}`}>
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
