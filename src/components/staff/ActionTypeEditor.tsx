@@ -172,6 +172,40 @@ async function fetchTopScoresForType(actionType: string): Promise<{ value: strin
   return sorted;
 }
 
+async function fetchMappedR90Ratings(actionType: string): Promise<MappedR90Rating[]> {
+  try {
+    const { data: mappings } = await supabase
+      .from("action_r90_category_mappings")
+      .select("r90_category, r90_subcategory, selected_rating_ids")
+      .eq("action_type", actionType.trim());
+
+    if (!mappings || mappings.length === 0) return [];
+
+    const allRatingIds = mappings.flatMap((m: any) => m.selected_rating_ids || []);
+    
+    if (allRatingIds.length > 0) {
+      const { data: ratings } = await supabase
+        .from("r90_ratings")
+        .select("id, title, score, description, category, subcategory")
+        .in("id", allRatingIds)
+        .not("score", "is", null);
+      return (ratings || []) as MappedR90Rating[];
+    }
+
+    // Fallback: fetch by category/subcategory
+    const results: MappedR90Rating[] = [];
+    for (const m of mappings) {
+      let query = supabase.from("r90_ratings").select("id, title, score, description, category, subcategory").eq("category", m.r90_category).not("score", "is", null);
+      if (m.r90_subcategory) query = query.eq("subcategory", m.r90_subcategory);
+      const { data } = await query;
+      if (data) results.push(...(data as MappedR90Rating[]));
+    }
+    // Deduplicate
+    const seen = new Set<string>();
+    return results.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; });
+  } catch { return []; }
+}
+
 const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating[]; onSelect: (score: string) => void }) => {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
