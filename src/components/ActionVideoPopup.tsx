@@ -16,6 +16,8 @@ interface ActionVideoPopupProps {
   clipStart?: number | null;
   clipEnd?: number | null;
   player?: SharedClipPlayerState;
+  /** When true, treat the video as a standalone clip regardless of URL pattern */
+  forceStandalone?: boolean;
 }
 
 export const ActionVideoPopup = ({
@@ -27,13 +29,14 @@ export const ActionVideoPopup = ({
   clipStart,
   clipEnd,
   player: providedPlayer,
+  forceStandalone = false,
 }: ActionVideoPopupProps) => {
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
   const progressBarRef = useRef<HTMLDivElement>(null);
   const standaloneVideoRef = useRef<HTMLVideoElement>(null);
   const hasClipWindow = clipStart != null && clipEnd != null && clipEnd > clipStart;
-  const isStandaloneClip = !!videoUrl && !hasClipWindow && !isFullMatchUrl(videoUrl);
+  const isStandaloneClip = !!videoUrl && !hasClipWindow && (forceStandalone || !isFullMatchUrl(videoUrl));
 
   // Standalone clip state
   const [standaloneReady, setStandaloneReady] = useState(false);
@@ -46,11 +49,11 @@ export const ActionVideoPopup = ({
   // Block if no video at all, or full match without clip boundaries
   useEffect(() => {
     if (!open) return;
-    if (!videoUrl || (!hasClipWindow && isFullMatchUrl(videoUrl))) {
+    if (!videoUrl || (!hasClipWindow && !forceStandalone && isFullMatchUrl(videoUrl))) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       onOpenChange(false);
     }
-  }, [open, videoUrl, hasClipWindow, onOpenChange]);
+  }, [open, videoUrl, hasClipWindow, forceStandalone, onOpenChange]);
 
   // Propagate shared player errors
   useEffect(() => {
