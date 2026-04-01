@@ -588,7 +588,8 @@ export const ActionTypeEditor = ({
                   {/* Video */}
                   <div
                     ref={videoContainerRef}
-                    className="relative bg-black overflow-hidden flex-1 min-w-0"
+                    className="relative bg-black overflow-hidden min-w-0"
+                    style={{ flex: '3 1 0%' }}
                     onWheel={handleWheel}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
