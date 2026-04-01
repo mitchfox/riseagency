@@ -267,6 +267,7 @@ export const ActionTypeEditor = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
   const [topScores, setTopScores] = useState<{ value: string; count: number }[]>([]);
+  const [mappedRatings, setMappedRatings] = useState<MappedR90Rating[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
