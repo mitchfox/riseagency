@@ -347,7 +347,8 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        align="end" 
+        align="end"
+        side="bottom"
         className="w-80 bg-popover border border-border shadow-lg z-50"
       >
         <DropdownMenuLabel className="flex items-center justify-between">

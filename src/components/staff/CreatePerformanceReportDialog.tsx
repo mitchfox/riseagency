@@ -721,11 +721,34 @@ export const CreatePerformanceReportDialog = ({
       const loadedStats: UnifiedStat[] = [];
       const processedKeys = new Set<string>();
 
+      // Also populate legacy striker stats fields from previous report (preserve stat types)
+      const legacyStrikerKeys = [
+        'xGChain', 'xG_adj', 'xA_adj',
+        'movement_in_behind_xC', 'movement_down_side_xC',
+        'triple_threat_xC', 'movement_to_feet_xC',
+        'crossing_movement_xC', 'interceptions',
+        'regains_adj', 'turnovers_adj', 'progressive_passes_adj',
+      ];
+      const newStrikerStats: Record<string, string> = {};
+      let hasAnyLegacy = false;
+      legacyStrikerKeys.forEach(key => {
+        // Keep the field present (empty) so the stat type shows up in the form
+        newStrikerStats[key] = "";
+        newStrikerStats[`${key}_per90`] = "";
+        if (stats[key] != null) {
+          hasAnyLegacy = true;
+        }
+      });
+      if (hasAnyLegacy) {
+        setStrikerStats(prev => ({ ...prev, ...newStrikerStats }));
+      }
+
       // Find paired success/total stats
       const pairedStats = new Map<string, { successful?: number; total?: number }>();
       Object.keys(stats).forEach(key => {
         if (key === 'stats_order') return;
         if (key.endsWith('_per90')) return;
+        if (legacyStrikerKeys.includes(key)) return; // skip legacy keys handled above
         if (key.endsWith('_successful')) {
           const baseKey = key.replace('_successful', '');
           if (!pairedStats.has(baseKey)) pairedStats.set(baseKey, {});
@@ -761,10 +784,11 @@ export const CreatePerformanceReportDialog = ({
         });
       });
 
-      // Add remaining single stats (empty values)
+      // Add remaining single stats (empty values), excluding legacy keys
       Object.keys(stats).forEach(key => {
         if (processedKeys.has(key) || key === 'stats_order') return;
         if (key.endsWith('_per90') || key.endsWith('_successful') || key.endsWith('_total')) return;
+        if (legacyStrikerKeys.includes(key) || legacyStrikerKeys.some(lk => key === `${lk}_per90`)) return;
 
         const value = stats[key];
         if (typeof value !== 'number') return;
@@ -789,8 +813,8 @@ export const CreatePerformanceReportDialog = ({
         });
       });
 
-      if (loadedStats.length > 0) {
-        setUnifiedStats(loadedStats);
+      if (loadedStats.length > 0 || hasAnyLegacy) {
+        if (loadedStats.length > 0) setUnifiedStats(loadedStats);
         setShowStrikerStats(true);
       }
     } catch (error) {
@@ -1677,14 +1701,38 @@ export const CreatePerformanceReportDialog = ({
           try {
             const currentFS = (current.fixture_stats as Record<string, number>) || {};
             const previousFS = (previous.fixture_stats as Record<string, number>) || {};
-            const keyStats = ['goals_per90', 'assists_per90', 'npxg_per90', 'xa_per90', 'successful_dribbles_per90', 'progressive_carries_per90', 'tackles_won_per90'];
-            for (const key of keyStats) {
+            // Compare ALL fixture stats, not just a handful
+            const allFixtureKeys = new Set([...Object.keys(currentFS), ...Object.keys(previousFS)]);
+            for (const key of allFixtureKeys) {
               if (currentFS[key] != null && previousFS[key] != null && currentFS[key] > previousFS[key]) {
-                const label = key.replace(/_per90$/, '').replace(/_/g, ' ');
+                const label = key.replace(/_per90$/, '').replace(/_pct$/, ' %').replace(/_/g, ' ');
                 improvements.push(`${label}: ${previousFS[key]} → ${currentFS[key]}`);
               }
             }
           } catch { /* fixture_stats parsing issue - ignore */ }
+
+          // Also compare striker_stats (xC metrics, etc.)
+          try {
+            const { data: fullReports } = await supabase
+              .from("player_analysis")
+              .select("striker_stats")
+              .eq("player_id", playerId)
+              .order("analysis_date", { ascending: false })
+              .limit(2);
+            
+            if (fullReports && fullReports.length >= 2) {
+              const currentSS = (fullReports[0].striker_stats as Record<string, number>) || {};
+              const previousSS = (fullReports[1].striker_stats as Record<string, number>) || {};
+              const strikerKeys = new Set([...Object.keys(currentSS), ...Object.keys(previousSS)]);
+              for (const key of strikerKeys) {
+                if (key === 'stats_order' || key.endsWith('_per90')) continue;
+                if (typeof currentSS[key] === 'number' && typeof previousSS[key] === 'number' && currentSS[key] > previousSS[key]) {
+                  const label = key.replace(/_/g, ' ');
+                  improvements.push(`${label}: ${previousSS[key]} → ${currentSS[key]}`);
+                }
+              }
+            }
+          } catch { /* striker_stats comparison issue - ignore */ }
 
           if (improvements.length > 0) {
             const dedupeKey = `improvement_${analysisIdToUse}`;
