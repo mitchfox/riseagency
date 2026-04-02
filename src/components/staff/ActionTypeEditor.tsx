@@ -834,7 +834,52 @@ export const ActionTypeEditor = ({
                             )}
                           </div>
                         </ScrollArea>
-                        <div className="border-t px-2 py-1.5">
+                        <div className="border-t px-2 py-1.5 space-y-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`w-full h-7 text-xs gap-1.5 ${showAiSuggestions ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                            onClick={async () => {
+                              if (showAiSuggestions) {
+                                setShowAiSuggestions(false);
+                                return;
+                              }
+                              setShowAiSuggestions(true);
+                              if (aiSuggestions.length > 0 || !selectedCategory) return;
+                              setAiSuggestLoading(true);
+                              try {
+                                const { data } = await supabase.functions.invoke("generate-ai-response", {
+                                  body: {
+                                    prompt: `Given the football action type "${selectedCategory}", suggest 3-5 specific R90 action score names that might be missing from the coaching database. These should be common variations or related actions that a coach might want to track. Return just a JSON array of strings. Example: ["Dribble Forward", "Beat Defender", "Progressive Carry"]`,
+                                    format: "json",
+                                  },
+                                });
+                                if (data?.response) {
+                                  try {
+                                    let parsed = data.response;
+                                    if (typeof parsed === "string") {
+                                      parsed = parsed.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+                                      parsed = JSON.parse(parsed);
+                                    }
+                                    if (Array.isArray(parsed)) setAiSuggestions(parsed);
+                                  } catch { /* ignore parse errors */ }
+                                }
+                              } catch { /* ignore */ }
+                              setAiSuggestLoading(false);
+                            }}
+                          >
+                            <Loader2 className={`h-3 w-3 ${aiSuggestLoading ? "animate-spin" : "hidden"}`} />
+                            {!aiSuggestLoading && <span>💡</span>}
+                            {showAiSuggestions ? "Hide AI Suggestions" : "AI Suggestions"}
+                          </Button>
+                          {showAiSuggestions && aiSuggestions.length > 0 && (
+                            <div className="space-y-1 px-1">
+                              <p className="text-[9px] text-muted-foreground">Suggested scores to add:</p>
+                              {aiSuggestions.map((s, i) => (
+                                <div key={i} className="text-[10px] text-amber-500/80 bg-amber-500/5 border border-amber-500/20 rounded px-2 py-1">{s}</div>
+                              ))}
+                            </div>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
