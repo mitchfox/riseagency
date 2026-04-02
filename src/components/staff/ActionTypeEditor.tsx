@@ -577,7 +577,7 @@ export const ActionTypeEditor = ({
               size="icon"
               className="h-8 w-8"
               onClick={() => {
-                document.dispatchEvent(new CustomEvent("staff-music-toggle"));
+                window.dispatchEvent(new Event("staff-music-toggle"));
               }}
               title="Music player"
             >

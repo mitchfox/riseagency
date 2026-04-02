@@ -133,7 +133,7 @@ export const StaffMusicPlayer = () => {
     }
   }, [isPlaying, currentTrack, currentIndex, flashHUD, validTracks.length, playTrack]);
 
-  // Handle ended/error via custom events (since Audio is created programmatically)
+  // Handle ended/error/toggle via custom events (since Audio is created programmatically)
   useEffect(() => {
     const onEnded = () => {
       if (validTracks.length > 1) {
@@ -155,13 +155,16 @@ export const StaffMusicPlayer = () => {
         }
       }
     };
+    const onToggle = () => handlePlayPause();
     window.addEventListener("staff-music-ended", onEnded);
     window.addEventListener("staff-music-error", onError);
+    window.addEventListener("staff-music-toggle", onToggle);
     return () => {
       window.removeEventListener("staff-music-ended", onEnded);
       window.removeEventListener("staff-music-error", onError);
+      window.removeEventListener("staff-music-toggle", onToggle);
     };
-  }, [currentIndex, validTracks, playTrack]);
+  }, [currentIndex, validTracks, playTrack, handlePlayPause]);
 
   // Cleanup on unmount
   useEffect(() => {
