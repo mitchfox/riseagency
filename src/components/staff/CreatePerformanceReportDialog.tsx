@@ -1701,14 +1701,38 @@ export const CreatePerformanceReportDialog = ({
           try {
             const currentFS = (current.fixture_stats as Record<string, number>) || {};
             const previousFS = (previous.fixture_stats as Record<string, number>) || {};
-            const keyStats = ['goals_per90', 'assists_per90', 'npxg_per90', 'xa_per90', 'successful_dribbles_per90', 'progressive_carries_per90', 'tackles_won_per90'];
-            for (const key of keyStats) {
+            // Compare ALL fixture stats, not just a handful
+            const allFixtureKeys = new Set([...Object.keys(currentFS), ...Object.keys(previousFS)]);
+            for (const key of allFixtureKeys) {
               if (currentFS[key] != null && previousFS[key] != null && currentFS[key] > previousFS[key]) {
-                const label = key.replace(/_per90$/, '').replace(/_/g, ' ');
+                const label = key.replace(/_per90$/, '').replace(/_pct$/, ' %').replace(/_/g, ' ');
                 improvements.push(`${label}: ${previousFS[key]} → ${currentFS[key]}`);
               }
             }
           } catch { /* fixture_stats parsing issue - ignore */ }
+
+          // Also compare striker_stats (xC metrics, etc.)
+          try {
+            const { data: fullReports } = await supabase
+              .from("player_analysis")
+              .select("striker_stats")
+              .eq("player_id", playerId)
+              .order("analysis_date", { ascending: false })
+              .limit(2);
+            
+            if (fullReports && fullReports.length >= 2) {
+              const currentSS = (fullReports[0].striker_stats as Record<string, number>) || {};
+              const previousSS = (fullReports[1].striker_stats as Record<string, number>) || {};
+              const strikerKeys = new Set([...Object.keys(currentSS), ...Object.keys(previousSS)]);
+              for (const key of strikerKeys) {
+                if (key === 'stats_order' || key.endsWith('_per90')) continue;
+                if (typeof currentSS[key] === 'number' && typeof previousSS[key] === 'number' && currentSS[key] > previousSS[key]) {
+                  const label = key.replace(/_/g, ' ');
+                  improvements.push(`${label}: ${previousSS[key]} → ${currentSS[key]}`);
+                }
+              }
+            }
+          } catch { /* striker_stats comparison issue - ignore */ }
 
           if (improvements.length > 0) {
             const dedupeKey = `improvement_${analysisIdToUse}`;
