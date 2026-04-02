@@ -51,11 +51,23 @@ STAT TYPES:
 - count: Simple count (e.g. 4 interceptions)
 - score: Decimal value (e.g. 0.45 xG)
 
+CRITICAL RULES FOR xC (EXPECTED CONTRIBUTION) STATS:
+- movement_in_behind_xC: Actions where a player makes runs in behind the defence. Look for: "in behind", "run behind", "movement behind", "last line", "triple threat" (triple threat involves in-behind movement). Offers and runs in behind count.
+- movement_down_side_xC: Actions where a player moves down the side/wide channels. Look for: "down the side", "wide run", "overlap", "underlap", "offer down". Any offer or run down the flank counts.
+- movement_to_feet_xC: Actions where a player offers to receive to feet. Look for: "to feet", "check", "show", "offer to feet", "receive". Many passes and dribbles originate from xC offer to feet.
+- crossing_movement_xC: Actions involving crossing situations. Look for: "cross", "delivery", "whip", "cutback". Very obvious when it's a crossing action.
+- triple_threat_xC: Actions where a player is in a "triple threat" position. Look for: "triple threat", "last line" (often involves triple threat positioning), "in behind" (triple threat is either last line or in behind).
+
+CRITICAL RULES FOR SCORE STATS:
+- npxG (non-penalty expected goals): Can ONLY come from shots that are NOT penalties. If a player had 0 shots, npxG MUST be 0. If they only had penalty shots, npxG MUST be 0. npxG is always <= xG.
+- xA (expected assists): Requires the teammate to ACTUALLY take a shot after the pass. xA is typically LESS than xT because xT measures the threat created by moving the ball forward, while xA only counts when a shot actually followed. xA can NEVER be greater than xT.
+- xG: Only comes from shots taken by the player.
+
 RULES:
 - Be LENIENT. If an action could contribute to a stat, include it.
 - For success_fail stats, estimate both successful and total attempts.
 - For count stats, count relevant actions.
-- For score stats (xG, xA, npxG), estimate reasonable decimal values.
+- For score stats (xG, xA, npxG), estimate reasonable decimal values respecting the constraints above.
 - Only suggest stats that have clear evidence in the actions.
 - List which action numbers contribute to each stat.${existingStatsText}`;
 
