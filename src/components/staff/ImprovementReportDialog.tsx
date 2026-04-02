@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Download, TrendingUp, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 interface ImprovementReportDialogProps {
   open: boolean;
@@ -26,7 +27,6 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
 
   const { player_name, opponent, improvements, r90_current, r90_previous } = data;
 
-  // Parse improvement strings like "goals: 2 → 4" or "R90: 6.50 → 7.20"
   const parsedImprovements = improvements.map((imp) => {
     const arrowMatch = imp.match(/^(.+?):\s*(.+?)\s*→\s*(.+)$/);
     if (arrowMatch) {
@@ -36,11 +36,20 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
       const fromNum = parseFloat(from);
       const toNum = parseFloat(to);
       const pctChange = fromNum > 0 ? Math.round(((toNum - fromNum) / fromNum) * 100) : null;
-      return { label, from, to, pctChange };
+      return { label, from, to, fromNum, toNum, pctChange };
     }
-    // Fallback for percentage strings like "+15% goals"
-    return { label: imp, from: null, to: null, pctChange: null };
+    return { label: imp, from: null, to: null, fromNum: 0, toNum: 0, pctChange: null };
   });
+
+  const chartData = parsedImprovements
+    .filter(imp => imp.from !== null && imp.to !== null && !isNaN(imp.fromNum) && !isNaN(imp.toNum))
+    .slice(0, 12)
+    .map(imp => ({
+      name: imp.label.length > 18 ? imp.label.substring(0, 16) + "…" : imp.label,
+      previous: imp.fromNum,
+      current: imp.toNum,
+      pctChange: imp.pctChange,
+    }));
 
   const r90Change = r90_previous && r90_current
     ? ((r90_current - r90_previous) / r90_previous * 100).toFixed(1)
@@ -72,13 +81,13 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle>Improvement Report</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Overview Card */}
+          {/* Overview Card with R90 visual */}
           <div className="relative">
             <div
               ref={overviewRef}
@@ -94,22 +103,69 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
               <p className="text-sm text-white/60 mt-1">vs {opponent}</p>
 
               {r90_previous != null && r90_current != null && (
-                <div className="mt-6 flex items-end gap-4">
-                  <div>
-                    <p className="text-xs text-white/50 uppercase tracking-wider">R90 Score</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-white/50 text-lg">{Number(r90_previous).toFixed(2)}</span>
-                      <ArrowRight className="h-4 w-4 text-emerald-400" />
-                      <span className="text-emerald-400 text-2xl font-bold">{Number(r90_current).toFixed(2)}</span>
+                <div className="mt-6">
+                  <p className="text-xs text-white/50 uppercase tracking-wider mb-3">R90 Score Progression</p>
+                  <div className="flex items-end gap-6">
+                    <div className="flex items-center gap-4">
+                      {/* Previous score bar */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div
+                          className="w-16 rounded-t-md bg-white/20 transition-all"
+                          style={{ height: `${Math.max(20, Math.min(Number(r90_previous) * 30, 120))}px` }}
+                        />
+                        <span className="text-white/50 text-sm">{Number(r90_previous).toFixed(2)}</span>
+                        <span className="text-[10px] text-white/30">Previous</span>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-emerald-400 mb-6" />
+                      {/* Current score bar */}
+                      <div className="flex flex-col items-center gap-1">
+                        <div
+                          className="w-16 rounded-t-md bg-emerald-500 transition-all"
+                          style={{ height: `${Math.max(20, Math.min(Number(r90_current) * 30, 120))}px` }}
+                        />
+                        <span className="text-emerald-400 text-2xl font-bold">{Number(r90_current).toFixed(2)}</span>
+                        <span className="text-[10px] text-emerald-400/60">Current</span>
+                      </div>
                     </div>
+                    {r90Change && (
+                      <div className="mb-6">
+                        <span className="text-emerald-400 text-lg font-bold bg-emerald-400/10 px-3 py-1 rounded-lg">
+                          +{r90Change}%
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  {r90Change && (
-                    <span className="text-emerald-400 text-sm font-semibold bg-emerald-400/10 px-2 py-0.5 rounded">
-                      +{r90Change}%
-                    </span>
-                  )}
                 </div>
               )}
+
+              {/* Summary stats */}
+              <div className="mt-6 grid grid-cols-3 gap-4">
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <p className="text-[10px] text-white/40 uppercase">Improvements</p>
+                  <p className="text-xl font-bold text-emerald-400">{improvements.length}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <p className="text-[10px] text-white/40 uppercase">Avg. Change</p>
+                  <p className="text-xl font-bold text-emerald-400">
+                    {parsedImprovements.filter(i => i.pctChange != null).length > 0
+                      ? `+${Math.round(parsedImprovements.filter(i => i.pctChange != null).reduce((s, i) => s + (i.pctChange || 0), 0) / parsedImprovements.filter(i => i.pctChange != null).length)}%`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <p className="text-[10px] text-white/40 uppercase">Categories</p>
+                  <p className="text-xl font-bold text-emerald-400">
+                    {new Set(parsedImprovements.map(i => {
+                      const l = i.label.toLowerCase();
+                      if (l.includes('xg') || l.includes('goal') || l.includes('shot')) return 'Shooting';
+                      if (l.includes('pass') || l.includes('xa') || l.includes('assist') || l.includes('cross')) return 'Passing';
+                      if (l.includes('dribble') || l.includes('carry') || l.includes('touch')) return 'Possession';
+                      if (l.includes('tackle') || l.includes('intercept') || l.includes('aerial') || l.includes('duel') || l.includes('clearance')) return 'Defending';
+                      return 'Other';
+                    })).size}
+                  </p>
+                </div>
+              </div>
 
               <div className="mt-6 text-xs text-white/30">Rise Agency</div>
             </div>
@@ -125,6 +181,53 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
             </Button>
           </div>
 
+          {/* Chart comparison */}
+          {chartData.length > 0 && (
+            <div className="bg-black rounded-xl p-6 text-white">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">
+                  Before & After Comparison
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mb-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-white/20" />
+                  <span className="text-[10px] text-white/50">Previous</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+                  <span className="text-[10px] text-white/50">Current</span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={Math.max(200, chartData.length * 35)}>
+                <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis type="number" tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} axisLine={false} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={130}
+                    tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
+                    axisLine={false}
+                  />
+                  <Bar dataKey="previous" fill="rgba(255,255,255,0.15)" radius={[0, 3, 3, 0]} barSize={14} />
+                  <Bar dataKey="current" radius={[0, 3, 3, 0]} barSize={14}>
+                    {chartData.map((entry, i) => (
+                      <Cell key={i} fill="#10b981" />
+                    ))}
+                    <LabelList
+                      dataKey="pctChange"
+                      position="right"
+                      formatter={(v: number | null) => v != null && v > 0 ? `+${v}%` : ''}
+                      style={{ fill: '#10b981', fontSize: 9, fontWeight: 600 }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           {/* Detail Card */}
           <div className="relative">
             <div
@@ -134,15 +237,15 @@ export const ImprovementReportDialog = ({ open, onOpenChange, data }: Improvemen
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
                 <span className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">
-                  {player_name} — Improvements Breakdown
+                  {player_name} — Full Breakdown
                 </span>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {parsedImprovements.map((imp, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3 border border-white/10"
+                    className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2.5 border border-white/10"
                   >
                     <span className="text-sm font-medium capitalize">{imp.label}</span>
                     <div className="flex items-center gap-3">
