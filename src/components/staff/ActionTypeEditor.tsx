@@ -408,6 +408,8 @@ export const ActionTypeEditor = ({
     if (!selectedCategory) { setTopScores([]); setMappedRatings([]); return; }
     fetchTopScoresForType(selectedCategory).then(setTopScores);
     fetchMappedR90Ratings(selectedCategory).then(setMappedRatings);
+    setAiSuggestions([]);
+    setShowAiSuggestions(false);
   }, [selectedCategory]);
 
   useEffect(() => {
