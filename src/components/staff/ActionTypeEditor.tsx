@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp, Music, Filter } from "lucide-react";
+import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp, Music, Filter, Copy, Zap, Trophy } from "lucide-react";
 import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
@@ -335,7 +335,10 @@ export const ActionTypeEditor = ({
   const [showAiSuggestions, setShowAiSuggestions] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [streak, setStreak] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const preloadVideoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoReady, setVideoReady] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -345,6 +348,7 @@ export const ActionTypeEditor = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
+  const pitchGridKeyRef = useRef(0);
 
   // Live R90 calculation
   const liveR90 = useMemo(() => {
@@ -404,6 +408,15 @@ export const ActionTypeEditor = ({
     return items;
   }, [categoriesToShow]);
 
+  // All actions in current view (with or without clips)
+  const categoryActions = useMemo(() => {
+    const items: { action: PerformanceAction; index: number }[] = [];
+    categoriesToShow.forEach(([, actionItems]) => {
+      actionItems.forEach(item => items.push(item));
+    });
+    return items;
+  }, [categoriesToShow]);
+
   useEffect(() => {
     if (!selectedCategory) { setTopScores([]); setMappedRatings([]); return; }
     fetchTopScoresForType(selectedCategory).then(setTopScores);
@@ -411,6 +424,13 @@ export const ActionTypeEditor = ({
     setAiSuggestions([]);
     setShowAiSuggestions(false);
   }, [selectedCategory]);
+
+  // Reset pitch grid to 18-zone view when action changes
+  useEffect(() => {
+    if (selectedActionIndex !== null) {
+      pitchGridKeyRef.current += 1;
+    }
+  }, [selectedActionIndex]);
 
   useEffect(() => {
     if (selectedActionIndex === null) {
@@ -442,6 +462,21 @@ export const ActionTypeEditor = ({
     vid.load();
   }, [selectedActionIndex]);
 
+  // Preload next clip
+  useEffect(() => {
+    if (selectedActionIndex === null || categoryClips.length <= 1) return;
+    const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
+    if (currentClipIdx === -1) return;
+    const nextIdx = (currentClipIdx + 1) % categoryClips.length;
+    const nextUrl = categoryClips[nextIdx]?.action.video_url;
+    if (!nextUrl) return;
+    const preload = preloadVideoRef.current;
+    if (preload && preload.src !== nextUrl) {
+      preload.src = nextUrl;
+      preload.load();
+    }
+  }, [selectedActionIndex, categoryClips]);
+
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
     const vid = videoRef.current;
@@ -455,14 +490,24 @@ export const ActionTypeEditor = ({
     else { vid.pause(); setVideoPlaying(false); }
   }, []);
 
-  const goToClip = (direction: number) => {
+  const goToClip = useCallback((direction: number) => {
     if (categoryClips.length === 0) return;
     const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
     let next = (currentClipIdx === -1 ? 0 : currentClipIdx + direction);
     if (next < 0) next = categoryClips.length - 1;
     if (next >= categoryClips.length) next = 0;
     setSelectedActionIndex(categoryClips[next].index);
-  };
+  }, [categoryClips, selectedActionIndex]);
+
+  // Navigate to next/prev action (not just clips)
+  const goToAction = useCallback((direction: number) => {
+    if (categoryActions.length === 0) return;
+    const currentIdx = categoryActions.findIndex(c => c.index === selectedActionIndex);
+    let next = (currentIdx === -1 ? 0 : currentIdx + direction);
+    if (next < 0) next = categoryActions.length - 1;
+    if (next >= categoryActions.length) next = 0;
+    setSelectedActionIndex(categoryActions[next].index);
+  }, [categoryActions, selectedActionIndex]);
 
   const selectAction = (actionIndex: number) => {
     setSelectedActionIndex(actionIndex);
@@ -471,9 +516,29 @@ export const ActionTypeEditor = ({
   const activeAction = selectedActionIndex !== null ? actions[selectedActionIndex] : null;
   const hasActiveVideo = activeAction?.video_url;
 
-  const applyQuickScore = (actionIndex: number, score: string) => {
+  const applyQuickScore = useCallback((actionIndex: number, score: string) => {
     updateAction(actionIndex, "action_score", score);
-  };
+    // Update streak
+    setStreak(prev => prev + 1);
+    // Auto-advance after applying score
+    if (autoAdvance) {
+      setTimeout(() => {
+        const currentIdx = categoryActions.findIndex(c => c.index === actionIndex);
+        if (currentIdx >= 0 && currentIdx < categoryActions.length - 1) {
+          // Find next unscored action
+          for (let i = currentIdx + 1; i < categoryActions.length; i++) {
+            const a = categoryActions[i].action;
+            if (!a.action_score || a.action_score.trim() === "") {
+              setSelectedActionIndex(categoryActions[i].index);
+              return;
+            }
+          }
+          // If all remaining are scored, just go to next
+          setSelectedActionIndex(categoryActions[Math.min(currentIdx + 1, categoryActions.length - 1)].index);
+        }
+      }, 150);
+    }
+  }, [updateAction, autoAdvance, categoryActions]);
 
   const applyScoreModifier = (actionIndex: number, modifier: "minus25" | "times4") => {
     const current = parseFloat(actions[actionIndex]?.action_score);
@@ -481,6 +546,22 @@ export const ActionTypeEditor = ({
     const newVal = modifier === "minus25" ? current * 0.75 : current * 4;
     updateAction(actionIndex, "action_score", String(parseFloat(newVal.toFixed(5))));
   };
+
+  // Copy score from previous similar action
+  const copyFromSimilar = useCallback((actionIndex: number) => {
+    const action = actions[actionIndex];
+    if (!action) return;
+    const canonical = canonicalActionType(action.action_type);
+    // Find the most recent action of the same type that has a score
+    for (let i = actionIndex - 1; i >= 0; i--) {
+      const other = actions[i];
+      if (canonicalActionType(other.action_type) === canonical && other.action_score && other.action_score.trim() !== "") {
+        updateAction(actionIndex, "action_score", other.action_score);
+        setStreak(prev => prev + 1);
+        return;
+      }
+    }
+  }, [actions, updateAction]);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
@@ -532,6 +613,73 @@ export const ActionTypeEditor = ({
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+      if (isInput) {
+        // Tab in input field = blur and advance to next action
+        if (e.key === "Tab" && !e.shiftKey && selectedActionIndex !== null) {
+          e.preventDefault();
+          target.blur();
+          setTimeout(() => goToAction(1), 50);
+        }
+        return;
+      }
+
+      // Space = play/pause
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        togglePlayPause();
+        return;
+      }
+      // Arrow down/right = next action
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        goToAction(1);
+        return;
+      }
+      // Arrow up/left = prev action
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        goToAction(-1);
+        return;
+      }
+      // Number keys 1-9 = quick apply from R90 panel
+      if (e.key >= "1" && e.key <= "9" && selectedActionIndex !== null) {
+        const idx = parseInt(e.key) - 1;
+        const allRatings = categorisedRatings.flatMap(g => g.items);
+        if (idx < allRatings.length) {
+          e.preventDefault();
+          applyQuickScore(selectedActionIndex, String(allRatings[idx].score));
+          return;
+        }
+      }
+      // 'c' = copy from similar
+      if (e.key === "c" && selectedActionIndex !== null) {
+        e.preventDefault();
+        copyFromSimilar(selectedActionIndex);
+        return;
+      }
+      // 'n' = next clip
+      if (e.key === "n") {
+        e.preventDefault();
+        goToClip(1);
+        return;
+      }
+      // 'p' = prev clip
+      if (e.key === "b") {
+        e.preventDefault();
+        goToClip(-1);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, selectedActionIndex, togglePlayPause, goToAction, goToClip, copyFromSimilar, applyQuickScore]);
+
   const getScoreCounts = (items: { action: PerformanceAction; index: number }[]) => {
     const scored = items.filter(i => i.action.action_score && i.action.action_score.trim() !== "").length;
     return { scored, total: items.length };
@@ -556,10 +704,16 @@ export const ActionTypeEditor = ({
 
   const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
 
+  // Motivational messages based on streak
+  const streakMessage = streak >= 20 ? "🔥 Unstoppable!" : streak >= 10 ? "🔥 On fire!" : streak >= 5 ? "⚡ Great pace!" : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Action Type Editor</DialogTitle>
+
+        {/* Hidden preload video */}
+        <video ref={preloadVideoRef} preload="auto" muted className="hidden" />
 
         {/* Header - compact */}
         <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
@@ -568,6 +722,9 @@ export const ActionTypeEditor = ({
             <span className="text-xs text-muted-foreground">
               {actions.length} actions · {groupedActions.length} types
             </span>
+            {streakMessage && (
+              <span className="text-xs font-bold text-amber-400 animate-pulse">{streakMessage}</span>
+            )}
           </div>
           {/* Live R90 Score - top centre */}
           <div className="flex items-center gap-2">
@@ -575,8 +732,22 @@ export const ActionTypeEditor = ({
             <span className={`font-mono font-bold text-sm ${liveR90 ? "text-primary" : "text-muted-foreground"}`}>
               {liveR90 || "—"}
             </span>
+            <span className="text-[10px] text-muted-foreground">·</span>
+            <span className={`text-xs font-mono font-bold ${completionColor}`}>
+              {completionStats.scored}/{completionStats.total} ({completionStats.pct}%)
+            </span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={autoAdvance ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2 text-[10px] gap-1"
+              onClick={() => setAutoAdvance(prev => !prev)}
+              title="Auto-advance to next unscored action after scoring"
+            >
+              <Zap className="h-3 w-3" />
+              Auto
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -763,6 +934,7 @@ export const ActionTypeEditor = ({
                   <div className={`border-l bg-muted/10 flex flex-col overflow-auto shrink-0 ${showBoxZone || showXGMap ? 'w-[140px]' : 'w-[calc((100%-var(--video-w,50%)-60px)/2)]'}`} style={{ flex: showBoxZone || showXGMap ? undefined : '1 1 0%', minWidth: showBoxZone || showXGMap ? undefined : '140px' }}>
                     {selectedActionIndex !== null ? (
                       <InlinePitchGrid
+                        key={pitchGridKeyRef.current}
                         value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])}
                         onChange={(zd) => {
                           updateAction(selectedActionIndex, "zone_details", zd as any);
@@ -852,7 +1024,7 @@ export const ActionTypeEditor = ({
                               try {
                                 const { data } = await supabase.functions.invoke("generate-ai-response", {
                                   body: {
-                                    prompt: `Given the football action type "${selectedCategory}", suggest 3-5 specific R90 action score names that might be missing from the coaching database. These should be common variations or related actions that a coach might want to track. Return just a JSON array of strings. Example: ["Dribble Forward", "Beat Defender", "Progressive Carry"]`,
+                                    prompt: `Given the football action type "${selectedCategory}", suggest 3-5 specific R90 action score names that might be missing from the coaching database. These should be common variations or related actions that a coach might want to track. Return just a JSON array of strings. Example: ["Dribble Forward", "Change Picture", "Progressive Carry"]`,
                                     format: "json",
                                   },
                                 });
@@ -921,7 +1093,7 @@ export const ActionTypeEditor = ({
                       />
                       <R90InlineSearch
                         allR90Ratings={allR90Ratings}
-                        onSelect={(score) => updateAction(selectedActionIndex, "action_score", score)}
+                        onSelect={(score) => applyQuickScore(selectedActionIndex, score)}
                       />
                       {topScores.length > 0 && (
                         <div className="flex items-center gap-1">
@@ -939,6 +1111,12 @@ export const ActionTypeEditor = ({
                           ))}
                         </div>
                       )}
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1"
+                        onClick={() => copyFromSimilar(selectedActionIndex)}
+                        title="Copy score from previous similar action (C)"
+                      >
+                        <Copy className="h-3 w-3" /> Copy
+                      </Button>
                       <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
                         onClick={() => applyScoreModifier(selectedActionIndex, "minus25")}
                         disabled={!activeAction.action_score || isNaN(parseFloat(activeAction.action_score))}
