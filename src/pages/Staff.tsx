@@ -187,7 +187,7 @@ const Staff = () => {
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading } = useRolePermissions(currentRole);
-  const permissionManagedRole = !!currentRole && !isAdmin && currentRole !== 'marketeer';
+  const permissionManagedRole = !!currentRole && !isAdmin && currentRole !== 'marketeer' && currentRole !== 'staff';
 
   const applyRoleVisibility = (categoryList: any[]) => {
     if (!permissionManagedRole || permissionsLoading) {

@@ -177,13 +177,15 @@ export const RolePermissionsEditor = () => {
       }
 
       const adminPerms = permissions.filter((p) => p.role === "admin");
+      // New roles get overview visible by default so the user can access the portal
+      const overviewSections = ['overview', 'focusedtasks', 'visionboard'];
       const newPerms = adminPerms.map((p) => ({
         role: key,
         section_id: p.section_id,
         section_title: p.section_title,
         category_id: p.category_id,
         category_title: p.category_title,
-        can_view: false,
+        can_view: overviewSections.includes(p.section_id),
         can_edit: false,
       }));
 
