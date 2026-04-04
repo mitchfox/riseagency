@@ -57,6 +57,7 @@ import {
   AlertTriangle,
   Pin,
   Clock,
+  Lock,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -494,7 +495,14 @@ const matchesRoleTemplate = (role: string, recipientType: string) => {
   return false;
 };
 
-const ClubNetworkManagement = () => {
+interface ClubNetworkManagementProps {
+  isAdmin?: boolean;
+  userRole?: string;
+}
+
+const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagementProps) => {
+  // Trust Network role can only see contacts
+  const isTrustNetwork = userRole?.toLowerCase().replace(/[\s_-]+/g, '') === 'trustnetwork';
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [networkSummaryRows, setNetworkSummaryRows] = useState<NetworkSummaryRow[]>([]);
   const [countrySummary, setCountrySummary] = useState<{ country: string; count: number }[]>([]);
@@ -593,7 +601,7 @@ const ClubNetworkManagement = () => {
     setCountryContactsLoading(true);
 
     try {
-      const isUncategorised = countryKey === 'uncategorised';
+      const isUncategorised = countryKey === 'uncategorised' || countryKey === '';
       const rangeFrom = page * CONTACTS_PER_PAGE;
       const rangeTo = rangeFrom + CONTACTS_PER_PAGE - 1;
 
@@ -838,8 +846,15 @@ const ClubNetworkManagement = () => {
   }, [landingRoleEntries, searchQuery]);
 
   const countryContacts = useMemo(() => {
-    const cached = selectedCountryKey ? (countryContactsCache.get(`${selectedCountryKey}:${contactPage}`) || []) : [];
-    let result = [...cached];
+    // Accumulate all loaded pages for this country
+    const allCached: Contact[] = [];
+    if (selectedCountryKey) {
+      for (let p = 0; p <= contactPage; p++) {
+        const pageContacts = countryContactsCache.get(`${selectedCountryKey}:${p}`) || [];
+        allCached.push(...pageContacts);
+      }
+    }
+    let result = [...allCached];
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -1554,6 +1569,7 @@ const ClubNetworkManagement = () => {
       >
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_36%)] opacity-90" />
+        {!isTrustNetwork && (
         <div className="absolute right-4 top-4 z-10 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
@@ -1591,6 +1607,7 @@ const ClubNetworkManagement = () => {
             </Tooltip>
           </TooltipProvider>
         </div>
+        )}
 
         <div className="relative z-[1] space-y-4">
           <div className="flex items-start gap-4">
@@ -1695,10 +1712,10 @@ const ClubNetworkManagement = () => {
 
     return (
       <div className="space-y-3">
-        <h3 className="font-bebas text-2xl tracking-[0.2em] text-foreground">
-          #{activeIndex + 1}
-        </h3>
-        <p className="text-sm font-medium text-primary">{schemes[activeIndex]}</p>
+        <div className="flex items-baseline gap-3">
+          <span className="font-bebas text-4xl tracking-[0.14em] text-primary drop-shadow-[0_4px_12px_hsl(var(--primary)/0.35)]">#{activeIndex + 1}</span>
+          <h3 className="font-bebas text-3xl tracking-[0.16em] text-foreground drop-shadow-[0_4px_12px_hsl(var(--foreground)/0.2)]">{schemes[activeIndex]}</h3>
+        </div>
         <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
           <AnimatePresence mode="wait">
             <motion.div key={`${schemes[activeIndex]}-${activeIndex}`} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
@@ -1928,43 +1945,47 @@ const ClubNetworkManagement = () => {
                 ))}
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
-                    {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                  <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {!isTrustNetwork && (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                        {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-72">
+                      <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
-                    <Upload className="mr-2 h-4 w-4" />Import .vcf text
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />Import .vcf file
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
-                    <Download className="mr-2 h-4 w-4" />Export all as .vcf
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
+                        <Upload className="mr-2 h-4 w-4" />Import .vcf text
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="mr-2 h-4 w-4" />Import .vcf file
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
+                        <Download className="mr-2 h-4 w-4" />Export all as .vcf
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-              <Button onClick={openAddDialog} size="icon" className="rounded-xl shrink-0">
-                <Plus className="h-4 w-4" />
-              </Button>
+                  <Button onClick={openAddDialog} size="icon" className="rounded-xl shrink-0">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -2023,6 +2044,7 @@ const ClubNetworkManagement = () => {
                 </div>
               </div>
 
+              {!isTrustNetwork && (
               <div className="flex flex-wrap gap-2 xl:justify-end">
                 <TooltipProvider delayDuration={200}>
                   <DropdownMenu>
@@ -2072,37 +2094,51 @@ const ClubNetworkManagement = () => {
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              )}
             </div>
 
             {/* Style & Background (wider) + Schemes (thinner) */}
-            <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
-              <InfoBlock title="Style & Background">
-                {buildCountryBackgroundParagraphs(selectedCountry?.name || 'This country', selectedCountry?.profile || null).map((paragraph, index) => (
-                  <ScrollReveal key={`${selectedCountry?.key || 'country'}-bg-${index}`} delay={index * 0.05}>
-                    <p className="text-sm leading-relaxed text-foreground/85">{paragraph}</p>
-                  </ScrollReveal>
+            {isTrustNetwork ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {['Style & Background', 'Schemes', 'Traits', 'League Rules'].map((label) => (
+                  <div key={label} className="relative overflow-hidden rounded-[1.5rem] border border-border/50 p-6 backdrop-blur-2xl flex flex-col items-center justify-center gap-3 min-h-[8rem]" style={softPanelStyle}>
+                    <Lock className="h-6 w-6 text-[hsl(43,49%,61%)]" />
+                    <span className="font-bebas text-sm tracking-[0.24em] text-muted-foreground uppercase">{label}</span>
+                  </div>
                 ))}
-              </InfoBlock>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
+                  <InfoBlock title="Style & Background">
+                    {buildCountryBackgroundParagraphs(selectedCountry?.name || 'This country', selectedCountry?.profile || null).map((paragraph, index) => (
+                      <ScrollReveal key={`${selectedCountry?.key || 'country'}-bg-${index}`} delay={index * 0.05}>
+                        <p className="text-sm leading-relaxed text-foreground/85">{paragraph}</p>
+                      </ScrollReveal>
+                    ))}
+                  </InfoBlock>
 
-              <InfoBlock title="Schemes">
-                <SchemeCarousel schemes={countrySchemes} />
-              </InfoBlock>
-            </div>
+                  <InfoBlock title="Schemes">
+                    <SchemeCarousel schemes={countrySchemes} />
+                  </InfoBlock>
+                </div>
 
-            {/* Traits + League Rules */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock title="Traits">
-                <ScrollReveal>
-                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
-                </ScrollReveal>
-              </InfoBlock>
+                {/* Traits + League Rules */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <InfoBlock title="Traits">
+                    <ScrollReveal>
+                      <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
+                    </ScrollReveal>
+                  </InfoBlock>
 
-              <InfoBlock title="League Rules">
-                <ScrollReveal>
-                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
-                </ScrollReveal>
-              </InfoBlock>
-            </div>
+                  <InfoBlock title="League Rules">
+                    <ScrollReveal>
+                      <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
+                    </ScrollReveal>
+                  </InfoBlock>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </ScrollReveal>
@@ -2178,17 +2214,22 @@ const ClubNetworkManagement = () => {
       {!countryContactsLoading && groupBy === 'flat' && (
         <ScrollReveal>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {countryContacts.slice(0, (contactPage + 1) * CONTACTS_PER_PAGE).map((contact) => (
+            {countryContacts.map((contact) => (
               <ContactCard key={contact.id} contact={contact} />
             ))}
           </div>
-          {countryContacts.length > (contactPage + 1) * CONTACTS_PER_PAGE && (
-            <div className="flex justify-center pt-6">
-              <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
-                Show more ({countryContacts.length - (contactPage + 1) * CONTACTS_PER_PAGE} remaining)
-              </Button>
-            </div>
-          )}
+          {(() => {
+            const lastPageContacts = selectedCountryKey ? (countryContactsCache.get(`${selectedCountryKey}:${contactPage}`) || []) : [];
+            const hasMore = lastPageContacts.length === CONTACTS_PER_PAGE;
+            if (!hasMore) return null;
+            return (
+              <div className="flex justify-center pt-6">
+                <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
+                  Show more
+                </Button>
+              </div>
+            );
+          })()}
         </ScrollReveal>
       )}
 
@@ -2432,6 +2473,7 @@ const ClubNetworkManagement = () => {
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
+              {!isTrustNetwork && (
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => { setViewingContact(null); openEditDialog(contact); }}>
                   <Pencil className="h-4 w-4 mr-2" />Edit
@@ -2440,6 +2482,7 @@ const ClubNetworkManagement = () => {
                   <Share2 className="h-4 w-4 mr-2" />Share
                 </Button>
               </div>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -2449,16 +2492,35 @@ const ClubNetworkManagement = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(val) => {
+        if (isTrustNetwork && val !== 'contacts') return;
+        setActiveTab(val);
+      }} className="w-full">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
             <TabsList className="relative z-[1] grid min-w-[36rem] grid-cols-5 gap-2 bg-transparent p-0 sm:min-w-0">
               <TabsTrigger value="contacts" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><User className="mr-2 h-4 w-4" />Contacts</TabsTrigger>
-              <TabsTrigger value="analytics" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
-              <TabsTrigger value="duplicates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><AlertTriangle className="mr-2 h-4 w-4" />Duplicates</TabsTrigger>
-              <TabsTrigger value="templates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><FileText className="mr-2 h-4 w-4" />Templates</TabsTrigger>
-              <TabsTrigger value="pathways" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><Link2 className="mr-2 h-4 w-4" />Pathways</TabsTrigger>
+              {(['analytics', 'duplicates', 'templates', 'pathways'] as const).map((tab) => {
+                const icons = { analytics: BarChart3, duplicates: AlertTriangle, templates: FileText, pathways: Link2 };
+                const labels = { analytics: 'Analytics', duplicates: 'Duplicates', templates: 'Templates', pathways: 'Pathways' };
+                const TabIcon = icons[tab];
+                return (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    disabled={isTrustNetwork}
+                    className={`rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary ${isTrustNetwork ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isTrustNetwork ? (
+                      <Lock className="mr-2 h-4 w-4 text-[hsl(43,49%,61%)]" />
+                    ) : (
+                      <TabIcon className="mr-2 h-4 w-4" />
+                    )}
+                    {labels[tab]}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
         </div>
@@ -2477,25 +2539,29 @@ const ClubNetworkManagement = () => {
           </AnimatePresence>
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-6">
-          <NetworkAnalytics contacts={contacts} />
-        </TabsContent>
+        {!isTrustNetwork && (
+          <>
+            <TabsContent value="analytics" className="mt-6">
+              <NetworkAnalytics contacts={contacts} />
+            </TabsContent>
 
-        <TabsContent value="duplicates" className="mt-6">
-          <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
-        </TabsContent>
+            <TabsContent value="duplicates" className="mt-6">
+              <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
+            </TabsContent>
 
-        <TabsContent value="templates" className="mt-6">
-          <NetworkTabPanel title="Templates" description="Quick-copy templates in the same glass layout as the rest of Network." icon={FileText}>
-            <QuickMessageSection />
-          </NetworkTabPanel>
-        </TabsContent>
+            <TabsContent value="templates" className="mt-6">
+              <NetworkTabPanel title="Templates" description="Quick-copy templates in the same glass layout as the rest of Network." icon={FileText}>
+                <QuickMessageSection />
+              </NetworkTabPanel>
+            </TabsContent>
 
-        <TabsContent value="pathways" className="mt-6">
-          <NetworkTabPanel title="Pathways" description="Pathways now match the same visual system as the country and contact views." icon={Link2}>
-            <MessagePathways />
-          </NetworkTabPanel>
-        </TabsContent>
+            <TabsContent value="pathways" className="mt-6">
+              <NetworkTabPanel title="Pathways" description="Pathways now match the same visual system as the country and contact views." icon={Link2}>
+                <MessagePathways />
+              </NetworkTabPanel>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
 
       <ImportProgressIndicator />
