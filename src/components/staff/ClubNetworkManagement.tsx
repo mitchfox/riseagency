@@ -846,8 +846,15 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, [landingRoleEntries, searchQuery]);
 
   const countryContacts = useMemo(() => {
-    const cached = selectedCountryKey ? (countryContactsCache.get(`${selectedCountryKey}:${contactPage}`) || []) : [];
-    let result = [...cached];
+    // Accumulate all loaded pages for this country
+    const allCached: Contact[] = [];
+    if (selectedCountryKey) {
+      for (let p = 0; p <= contactPage; p++) {
+        const pageContacts = countryContactsCache.get(`${selectedCountryKey}:${p}`) || [];
+        allCached.push(...pageContacts);
+      }
+    }
+    let result = [...allCached];
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
