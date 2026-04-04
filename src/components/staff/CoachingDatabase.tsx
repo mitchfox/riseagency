@@ -332,7 +332,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchCategories = async () => {
     // Skip for aphorisms, tactical schemes, performance statistics, scheme view, positional guides, and club ratings as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores' || activeTab === 'network_countries' || activeTab === 'network_clubs' || activeTab === 'network_roles') {
       return;
     }
     
