@@ -713,6 +713,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, []);
 
   useEffect(() => {
+    if (initialLoadDoneRef.current) return;
+    initialLoadDoneRef.current = true;
     fetchCountrySummary();
     fetchProfiles();
     fetchAuxiliaryData();
@@ -720,8 +722,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   useEffect(() => {
     if (!selectedCountryKey) return;
-    fetchCountryContacts(selectedCountryKey, contactPage);
-  }, [contactPage, fetchCountryContacts, selectedCountryKey]);
+    fetchCountryContacts(selectedCountryKey);
+  }, [fetchCountryContacts, selectedCountryKey]);
 
   useEffect(() => {
     if ((activeTab === 'analytics' || activeTab === 'duplicates') && contacts.length === 0) {
