@@ -1299,15 +1299,7 @@ const Staff = () => {
           {/* Right side: music + theme toggle + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             <StaffMusicPlayer />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-9 w-9 group"
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
-            </Button>
+            {/* Theme is locked to dark for staff portal */}
             {user && <StaffNotificationsDropdown userId={user.id} />}
           </div>
         </div>
