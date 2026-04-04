@@ -2038,6 +2038,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                 </div>
               </div>
 
+              {!isTrustNetwork && (
               <div className="flex flex-wrap gap-2 xl:justify-end">
                 <TooltipProvider delayDuration={200}>
                   <DropdownMenu>
@@ -2087,6 +2088,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              )}
             </div>
 
             {/* Style & Background (wider) + Schemes (thinner) */}
