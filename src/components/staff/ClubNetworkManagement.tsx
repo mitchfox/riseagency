@@ -2341,18 +2341,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               <ContactCard key={contact.id} contact={contact} />
             ))}
           </div>
-          {(() => {
-            const lastPageContacts = selectedCountryKey ? (countryContactsCache.get(`${selectedCountryKey}:${contactPage}`) || []) : [];
-            const hasMore = lastPageContacts.length === CONTACTS_PER_PAGE;
-            if (!hasMore) return null;
-            return (
-              <div className="flex justify-center pt-6">
-                <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
-                  Show more
-                </Button>
-              </div>
-            );
-          })()}
         </ScrollReveal>
       )}
 
