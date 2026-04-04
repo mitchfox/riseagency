@@ -1440,7 +1440,7 @@ const ClubNetworkManagement = () => {
     return (
       <article
         onClick={() => setViewingContact(contact)}
-        className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
+        className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.2)]"
         style={softPanelStyle}
       >
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
