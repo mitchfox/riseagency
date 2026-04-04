@@ -1769,7 +1769,7 @@ const ClubNetworkManagement = () => {
                 <h2 className="font-bebas text-2xl tracking-[0.3em] text-foreground">NETWORK</h2>
               </ScrollReveal>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span>{contacts.length} contacts</span>
+                <span>{totalContactCount} contacts</span>
                 <span className="text-border">·</span>
                 <span>{uniqueCountries.length} countries</span>
                 <span className="text-border">·</span>
