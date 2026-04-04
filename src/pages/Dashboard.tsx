@@ -1989,9 +1989,10 @@ const Dashboard = () => {
                               <div className="flex items-center gap-2 flex-wrap">
                                 {(() => {
                                   const isDraft = String(analysis.visibility_status || "").toLowerCase() === "draft";
+                                  const isClipped = String(analysis.visibility_status || "").toLowerCase() === "clipped";
                                   const isHidden = String(analysis.visibility_status || "").toLowerCase() === "hidden";
                                   
-                                  if (isDraft) {
+                                  if (isDraft || isClipped) {
                                     return (
                                       <span className="bg-muted text-muted-foreground px-3 py-1.5 rounded text-sm font-bold">
                                         R90: ?
