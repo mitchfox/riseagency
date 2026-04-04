@@ -53,6 +53,10 @@ import {
   Search,
   Pencil,
   Eye,
+  BarChart3,
+  AlertTriangle,
+  Pin,
+  Clock,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
