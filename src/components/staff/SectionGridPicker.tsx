@@ -50,7 +50,7 @@ const SECTION_PREVIEWS: Record<string, string> = {
   updates: "Player updates and announcements",
   requests: "Incoming requests and submissions",
   portalmanagement: "Player portal feature toggles and settings",
-  clubnetwork: "Club contacts, agents and scouts network",
+  clubnetwork: "Contacts, agents, scouts and industry network",
   playerlist: "Full player list with filtering and search",
   casestudies: "Messaging case studies and conversation examples",
   recruitment: "Prospect tracking and scouting targets",

@@ -41,7 +41,7 @@ const AVAILABLE_LINKS: QuickLinkOption[] = [
   { id: "gallery", title: "Media Gallery", url: "/staff?tab=gallery", category: "Marketing" },
   
   // Network & Contacts
-  { id: "contacts", title: "Club Network", url: "/staff?tab=contacts", category: "Network" },
+  { id: "contacts", title: "Network", url: "/staff?tab=contacts", category: "Network" },
   { id: "club-outreach", title: "Club Outreach", url: "/staff?tab=club-outreach", category: "Network" },
   
   // Finance & Legal

@@ -72,7 +72,7 @@ const EXPORT_CATEGORIES: ExportCategory[] = [
     id: "network",
     label: "Network",
     tables: [
-      { name: "club_network_contacts", displayName: "Club Network" },
+      { name: "club_network_contacts", displayName: "Network Contacts" },
     ],
   },
 ];
