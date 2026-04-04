@@ -599,42 +599,49 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     setCountrySummary(summary);
   }, []);
 
-  const fetchCountryContacts = useCallback(async (countryKey: string, page: number) => {
-    const cacheKey = `${countryKey}:${page}`;
-    if (countryContactsCacheRef.current.has(cacheKey)) return;
+  const fetchCountryContacts = useCallback(async (countryKey: string) => {
+    if (countryContactsCacheRef.current.has(countryKey)) return;
     setCountryContactsLoading(true);
 
     try {
       const isUncategorised = countryKey === 'uncategorised' || countryKey === '';
-      const rangeFrom = page * CONTACTS_PER_PAGE;
-      const rangeTo = rangeFrom + CONTACTS_PER_PAGE - 1;
+      let allData: Contact[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      let query = supabase
-        .from('club_network_contacts')
-        .select('*')
-        .order('name', { ascending: true })
-        .range(rangeFrom, rangeTo);
+      while (hasMore) {
+        let query = supabase
+          .from('club_network_contacts')
+          .select('*')
+          .order('name', { ascending: true })
+          .range(from, from + pageSize - 1);
 
-      if (isUncategorised) {
-        query = query.or('country.is.null,country.eq.');
-      } else {
-        query = query.ilike('country', escapeOrValue(countryKey));
-      }
+        if (isUncategorised) {
+          query = query.or('country.is.null,country.eq.');
+        } else {
+          query = query.ilike('country', escapeOrValue(countryKey));
+        }
 
-      const { data, error } = await query;
-      if (error) {
-        toast.error('Failed to load contacts');
-        return;
+        const { data, error } = await query;
+        if (error) {
+          toast.error('Failed to load contacts');
+          return;
+        }
+
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
       }
 
       const nextCache = new Map(countryContactsCacheRef.current);
-      nextCache.set(cacheKey, data || []);
+      nextCache.set(countryKey, allData);
       countryContactsCacheRef.current = nextCache;
       setCountryContactsCache(nextCache);
     } finally {
       setCountryContactsLoading(false);
     }
-  }, [CONTACTS_PER_PAGE]);
+  }, []);
 
   // Full fetch for AI tools / duplicates / analytics that need all contacts
   const fetchAllContacts = useCallback(async () => {
