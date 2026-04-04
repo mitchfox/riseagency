@@ -220,15 +220,25 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
                 <p className="text-sm text-muted-foreground">{duplicates.length} potential duplicate group{duplicates.length === 1 ? '' : 's'} found.</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="rounded-xl border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-              disabled={mergingAll}
-              onClick={handleMergeAll}
-            >
-              {mergingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Merge className="h-4 w-4 mr-2" />}
-              Merge All
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={async () => { await onRefresh(); setScanKey((k) => k + 1); }}
+                disabled={mergingAll}
+              >
+                Rescan
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                disabled={mergingAll}
+                onClick={handleMergeAll}
+              >
+                {mergingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Merge className="h-4 w-4 mr-2" />}
+                Merge All
+              </Button>
+            </div>
           </div>
         </div>
       </ScrollReveal>
