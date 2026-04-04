@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload, Grid, List, SortAsc, FileText, Download, FolderPlus, Building2, Waypoints, Video } from "lucide-react";
+import { Plus, Edit, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Database, Search, Calendar, Clock, Dumbbell, Brain, Target, BookOpen, Quote, LineChart, Settings, Upload, Grid, List, SortAsc, FileText, Download, FolderPlus, Building2, Waypoints, Video, Globe } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { R90RatingsManagement } from "./R90RatingsManagement";
@@ -28,9 +28,10 @@ import { ComparisonPlayerData } from "./ComparisonPlayerData";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { SportscodeActionTypes } from "./SportscodeActionTypes";
 import { ActionScoresManagement } from "./ActionScoresManagement";
+import { NetworkProfileManager } from "./NetworkProfileManager";
 
 
-type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data' | 'sportscode' | 'action_scores';
+type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data' | 'sportscode' | 'action_scores' | 'network_countries' | 'network_clubs' | 'network_roles';
 
 interface Exercise {
   name: string;
@@ -210,6 +211,27 @@ const tableConfigs = {
     icon: Settings,
     color: 'amber',
   },
+  network_countries: {
+    label: 'Country Profiles',
+    singular: 'Country Profile',
+    fields: [],
+    icon: Globe,
+    color: 'blue',
+  },
+  network_clubs: {
+    label: 'Club Profiles',
+    singular: 'Club Profile',
+    fields: [],
+    icon: Building2,
+    color: 'indigo',
+  },
+  network_roles: {
+    label: 'Role Profiles',
+    singular: 'Role Profile',
+    fields: [],
+    icon: UserCheck,
+    color: 'violet',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
@@ -311,7 +333,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchCategories = async () => {
     // Skip for aphorisms, tactical schemes, performance statistics, scheme view, positional guides, and club ratings as they don't have category/tags
-    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
+    if (activeTab === 'coaching_aphorisms' || activeTab === 'tactical_schemes' || activeTab === 'performance_statistics' || activeTab === 'scheme_view' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores' || activeTab === 'network_countries' || activeTab === 'network_clubs' || activeTab === 'network_roles') {
       return;
     }
     
@@ -373,7 +395,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchItems = async () => {
     // Skip fetching for tabs that don't use the database list view
-    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores' || activeTab === 'network_countries' || activeTab === 'network_clubs' || activeTab === 'network_roles') {
       setItems([]);
       setTotalItems(0);
       setLoading(false);
@@ -1051,6 +1073,12 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <SportscodeActionTypes />
             ) : key === 'action_scores' ? (
               <ActionScoresManagement />
+            ) : key === 'network_countries' ? (
+              <NetworkProfileManager type="country" />
+            ) : key === 'network_clubs' ? (
+              <NetworkProfileManager type="club" />
+            ) : key === 'network_roles' ? (
+              <NetworkProfileManager type="role" />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
