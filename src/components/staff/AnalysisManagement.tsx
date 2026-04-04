@@ -1688,6 +1688,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                 <SelectContent>
                   <SelectItem value="live">Live</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="clipped">Clipped</SelectItem>
                   <SelectItem value="hidden">Hidden</SelectItem>
                 </SelectContent>
               </Select>
