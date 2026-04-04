@@ -724,17 +724,21 @@ export type Database = {
         Row: {
           city: string | null
           club_name: string | null
+          contact_strength: number | null
           country: string | null
           created_at: string
           email: string | null
           id: string
           image_url: string | null
+          last_contacted_at: string | null
           latitude: number | null
           longitude: number | null
           name: string
           notes: string | null
           phone: string | null
+          pinned_note: string | null
           position: string | null
+          referred_by_contact_id: string | null
           updated_at: string
           x_position: number | null
           y_position: number | null
@@ -742,17 +746,21 @@ export type Database = {
         Insert: {
           city?: string | null
           club_name?: string | null
+          contact_strength?: number | null
           country?: string | null
           created_at?: string
           email?: string | null
           id?: string
           image_url?: string | null
+          last_contacted_at?: string | null
           latitude?: number | null
           longitude?: number | null
           name: string
           notes?: string | null
           phone?: string | null
+          pinned_note?: string | null
           position?: string | null
+          referred_by_contact_id?: string | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
@@ -760,22 +768,34 @@ export type Database = {
         Update: {
           city?: string | null
           club_name?: string | null
+          contact_strength?: number | null
           country?: string | null
           created_at?: string
           email?: string | null
           id?: string
           image_url?: string | null
+          last_contacted_at?: string | null
           latitude?: number | null
           longitude?: number | null
           name?: string
           notes?: string | null
           phone?: string | null
+          pinned_note?: string | null
           position?: string | null
+          referred_by_contact_id?: string | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "club_network_contacts_referred_by_contact_id_fkey"
+            columns: ["referred_by_contact_id"]
+            isOneToOne: false
+            referencedRelation: "club_network_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       club_outreach: {
         Row: {
@@ -1240,6 +1260,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contact_interactions: {
+        Row: {
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          interaction_type: string
+          notes: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type?: string
+          notes?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "club_network_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_marketing_resources: {
         Row: {
