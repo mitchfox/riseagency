@@ -150,6 +150,20 @@ import {
   Monitor,
 } from "lucide-react";
 
+const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
+
+const getPrimaryStaffRole = (roles: string[]) => {
+  if (roles.includes('admin')) return 'admin';
+
+  const customRole = roles.find((role) => !STAFF_BASE_ROLES.includes(role as (typeof STAFF_BASE_ROLES)[number]));
+  if (customRole) return customRole;
+
+  if (roles.includes('marketeer') && !roles.includes('staff')) return 'marketeer';
+  if (roles.includes('staff')) return 'staff';
+
+  return roles[0] ?? null;
+};
+
 const Staff = () => {
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
@@ -173,6 +187,36 @@ const Staff = () => {
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading } = useRolePermissions(currentRole);
+  const permissionManagedRole = !!currentRole && !isAdmin && currentRole !== 'marketeer';
+
+  const applyRoleVisibility = (categoryList: any[]) => {
+    if (!permissionManagedRole || permissionsLoading) {
+      return categoryList.map((category) => ({ ...category, locked: false }));
+    }
+
+    return categoryList
+      .map((category) => {
+        const visibleSections = category.sections.filter((section: any) => section.isGroupLabel || canView(section.id));
+
+        const cleanedSections = visibleSections.filter((section: any, index: number, sections: any[]) => {
+          if (!section.isGroupLabel) return true;
+
+          const nextVisibleSectionExists = sections.slice(index + 1).some((item: any) => !item.isGroupLabel);
+          const previousIsGroupLabel = index > 0 && sections[index - 1]?.isGroupLabel;
+
+          return nextVisibleSectionExists && !previousIsGroupLabel;
+        });
+
+        const unlockedSections = cleanedSections.filter((section: any) => !section.isGroupLabel);
+
+        return {
+          ...category,
+          locked: unlockedSections.length === 0,
+          sections: cleanedSections,
+        };
+      })
+      .filter((category) => category.sections.some((section: any) => !section.isGroupLabel));
+  };
   
   // Check for app updates on load (force check on every staff portal load)
   useEffect(() => {
@@ -427,14 +471,12 @@ const Staff = () => {
           .eq('user_id', session.user.id);
 
         if (!roleError && roleData && roleData.length > 0) {
-          const hasAdmin = roleData.some(row => row.role === 'admin');
-          const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
-          const hasMarketeer = roleData.some(row => row.role === 'marketeer');
+          const resolvedRoles = roleData.map((row) => row.role);
+          const hasAdmin = resolvedRoles.includes('admin');
+          const primaryRole = getPrimaryStaffRole(resolvedRoles);
           setIsStaff(true); // Any role grants staff portal access
           setIsAdmin(hasAdmin);
-          setIsMarketeer(hasMarketeer);
-          // Set current role: admin > staff > marketeer > first available role
-          const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+          setIsMarketeer(primaryRole === 'marketeer');
           setCurrentRole(primaryRole);
           setUser(session.user);
           
@@ -483,13 +525,12 @@ const Staff = () => {
         setIsAdmin(false);
         setIsMarketeer(false);
       } else if (data && data.length > 0) {
-        const hasAdmin = data.some(row => row.role === 'admin');
-        const hasStaffOrAdmin = data.some(row => row.role === 'staff' || row.role === 'admin');
-        const hasMarketeer = data.some(row => row.role === 'marketeer');
+        const resolvedRoles = data.map((row) => row.role);
+        const hasAdmin = resolvedRoles.includes('admin');
+        const primaryRole = getPrimaryStaffRole(resolvedRoles);
         setIsStaff(true);
         setIsAdmin(hasAdmin);
-        setIsMarketeer(hasMarketeer);
-        const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : data[0].role;
+        setIsMarketeer(primaryRole === 'marketeer');
         setCurrentRole(primaryRole);
       } else {
         setIsStaff(false);
@@ -668,13 +709,12 @@ const Staff = () => {
       sessionStorage.setItem("staff_user_id", authData.user.id);
       
       // Set user state
-      const hasAdmin = roleData.some(row => row.role === 'admin');
-      const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
-      const hasMarketeer = roleData.some(row => row.role === 'marketeer');
+      const resolvedRoles = roleData.map((row) => row.role);
+      const hasAdmin = resolvedRoles.includes('admin');
+      const primaryRole = getPrimaryStaffRole(resolvedRoles);
       setIsStaff(true);
       setIsAdmin(hasAdmin);
-      setIsMarketeer(hasMarketeer);
-      const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+      setIsMarketeer(primaryRole === 'marketeer');
       setCurrentRole(primaryRole);
       setUser(authData.user);
       
@@ -792,11 +832,15 @@ const Staff = () => {
     );
   }
 
+  if (isStaff && permissionManagedRole && permissionsLoading) {
+    return <PageLoading />;
+  }
+
   // Build categories based on role
   const buildCategories = () => {
     // Marketeer-only sections (marketeer without admin role)
     if (isMarketeer && !isAdmin) {
-      return [
+      return applyRoleVisibility([
         {
           id: 'overview',
           title: 'Overview',
@@ -858,11 +902,11 @@ const Staff = () => {
             { id: 'offlinemanager', title: 'Offline Content', icon: HardDrive },
           ]
         }
-      ];
+      ]);
     }
 
     // Full staff/admin sections
-    return [
+    return applyRoleVisibility([
       {
         id: 'overview',
         title: 'Overview',
@@ -1019,10 +1063,28 @@ const Staff = () => {
           { id: 'pushnotifications', title: 'Push Notifications', icon: Bell },
         ]
       }
-    ];
+    ]);
   };
 
   const categories = buildCategories();
+  const visibleSectionIds = categories.flatMap((category) =>
+    category.sections.filter((section: any) => !(section as any).isGroupLabel).map((section: any) => section.id)
+  );
+
+  useEffect(() => {
+    if (!isStaff || permissionsLoading || visibleSectionIds.length === 0) return;
+    if (expandedSection && visibleSectionIds.includes(expandedSection)) return;
+
+    const fallbackSection = visibleSectionIds[0];
+    const fallbackCategory = categories.find((category) =>
+      category.sections.some((section: any) => section.id === fallbackSection)
+    )?.id || null;
+
+    setExpandedSection(fallbackSection as any);
+    setExpandedCategory(fallbackCategory);
+    setSearchParams({ section: fallbackSection }, { replace: true });
+    localStorage.setItem('staff_active_tab', fallbackSection);
+  }, [categories, expandedSection, isStaff, permissionsLoading, setSearchParams, visibleSectionIds]);
 
   // Keyword map for deeper sidebar search
   const SECTION_KEYWORDS: Record<string, string[]> = {
