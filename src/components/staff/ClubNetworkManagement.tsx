@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -523,6 +523,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [showDialog, setShowDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearch = useDeferredValue(searchQuery);
   const [landingView, setLandingView] = useState<'country' | 'role'>('country');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('name');
@@ -892,29 +893,29 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
 
   const filteredCountries = useMemo(() => {
-    const query = searchQuery.toLowerCase();
+    const query = deferredSearch.toLowerCase();
     return countryData
       .filter((country) => {
-        if (!searchQuery.trim()) return country.count > 0;
+        if (!deferredSearch.trim()) return country.count > 0;
         return country.name.toLowerCase().includes(query);
       });
-  }, [countryData, searchQuery]);
+  }, [countryData, deferredSearch]);
 
   const filteredRegions = useMemo(() => {
-    if (!searchQuery.trim()) return regionData;
-    const query = searchQuery.toLowerCase();
+    if (!deferredSearch.trim()) return regionData;
+    const query = deferredSearch.toLowerCase();
     return regionData
       .map((region) => ({
         ...region,
         countries: region.countries.filter((c) => c.name.toLowerCase().includes(query)),
       }))
       .filter((region) => region.countries.length > 0);
-  }, [regionData, searchQuery]);
+  }, [regionData, deferredSearch]);
 
   const filteredLandingRoles = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return landingRoleEntries.filter((role) => !searchQuery.trim() || role.name.toLowerCase().includes(query));
-  }, [landingRoleEntries, searchQuery]);
+    const query = deferredSearch.toLowerCase();
+    return landingRoleEntries.filter((role) => !deferredSearch.trim() || role.name.toLowerCase().includes(query));
+  }, [landingRoleEntries, deferredSearch]);
 
   const countryContacts = useMemo(() => {
     const allCached: Contact[] = selectedCountryKey
@@ -922,8 +923,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       : [];
     let result = [...allCached];
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (deferredSearch.trim()) {
+      const query = deferredSearch.toLowerCase();
       result = result.filter((contact) =>
         [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.notes || '']
           .join(' ')
@@ -943,7 +944,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     });
 
     return result;
-  }, [roleFilter, searchQuery, selectedCountryKey, countryContactsCache, sortDir, sortField]);
+  }, [roleFilter, deferredSearch, selectedCountryKey, countryContactsCache, sortDir, sortField]);
 
   const roleOptions = useMemo(() => {
     const roleMap = new Map<string, string[]>();
@@ -1698,12 +1699,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
-                {(() => {
-                  const s = computeContactStrength(contact);
-                  return (
-                    <span className={`text-xs font-bold ${strengthColor(s)}`}>{s}%</span>
-                  );
-                })()}
               </div>
               {contact.position && <p className="mt-1 text-sm text-muted-foreground">{contact.position}</p>}
             </div>
@@ -2387,7 +2382,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               const group = clubGroups.find((g) => g.key === expandedClubKey);
               if (!group) return null;
 
-              // Split contacts by role
               const roleSubgroups = new Map<string, Contact[]>();
               group.contacts.forEach((contact) => {
                 const role = normaliseText(contact.position) || 'Other';
@@ -2399,7 +2393,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
               return (
                 <motion.div
-                  key={expandedClubKey}
+                  key={`club-detail-${expandedClubKey}`}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -2460,7 +2454,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                       )}
                     </div>
 
-                    {/* Role subgroups within the club */}
                     {sortedRoleSubgroups.map(([roleName, roleContacts]) => (
                       <div key={roleName} className="space-y-3">
                         <div className="flex items-center gap-2 px-2">
