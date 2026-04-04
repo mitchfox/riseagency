@@ -210,6 +210,27 @@ const tableConfigs = {
     icon: Settings,
     color: 'amber',
   },
+  network_countries: {
+    label: 'Country Profiles',
+    singular: 'Country Profile',
+    fields: [],
+    icon: Globe,
+    color: 'blue',
+  },
+  network_clubs: {
+    label: 'Club Profiles',
+    singular: 'Club Profile',
+    fields: [],
+    icon: Building2,
+    color: 'indigo',
+  },
+  network_roles: {
+    label: 'Role Profiles',
+    singular: 'Role Profile',
+    fields: [],
+    icon: UserCheck,
+    color: 'violet',
+  },
 };
 
 const getScoreColor = (score: number | string | null) => {
