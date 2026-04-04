@@ -163,7 +163,7 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     );
   }
 
-  const [mergingAll, setMergingAll] = useState(false);
+
 
   const handleMergeAll = async () => {
     if (!confirm(`Merge all ${duplicates.length} duplicate groups? This cannot be undone.`)) return;
