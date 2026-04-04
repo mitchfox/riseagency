@@ -1569,6 +1569,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       >
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_36%)] opacity-90" />
+        {!isTrustNetwork && (
         <div className="absolute right-4 top-4 z-10 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider delayDuration={200}>
             <Tooltip>
@@ -1606,6 +1607,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
             </Tooltip>
           </TooltipProvider>
         </div>
+        )}
 
         <div className="relative z-[1] space-y-4">
           <div className="flex items-start gap-4">
