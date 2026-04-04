@@ -163,21 +163,68 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     );
   }
 
+  const [mergingAll, setMergingAll] = useState(false);
+
+  const handleMergeAll = async () => {
+    if (!confirm(`Merge all ${duplicates.length} duplicate groups? This cannot be undone.`)) return;
+    setMergingAll(true);
+    let merged = 0;
+    for (const group of duplicates) {
+      try {
+        const primary = { ...group.contacts[0] };
+        const others = group.contacts.slice(1);
+        others.forEach((c) => {
+          if (!primary.email && c.email) primary.email = c.email;
+          if (!primary.phone && c.phone) primary.phone = c.phone;
+          if (!primary.club_name && c.club_name) primary.club_name = c.club_name;
+          if (!primary.position && c.position) primary.position = c.position;
+          if (!primary.country && c.country) primary.country = c.country;
+          if (!primary.city && c.city) primary.city = c.city;
+          if (!primary.image_url && c.image_url) primary.image_url = c.image_url;
+          if (c.notes && !primary.notes?.includes(c.notes)) {
+            primary.notes = [primary.notes, c.notes].filter(Boolean).join('\n');
+          }
+        });
+        await supabase.from('club_network_contacts').update({
+          email: primary.email, phone: primary.phone, club_name: primary.club_name,
+          position: primary.position, country: primary.country, city: primary.city,
+          image_url: primary.image_url, notes: primary.notes,
+        }).eq('id', primary.id);
+        await supabase.from('club_network_contacts').delete().in('id', others.map(c => c.id));
+        merged++;
+      } catch { /* skip failed */ }
+    }
+    toast.success(`Merged ${merged} duplicate groups`);
+    setMergingAll(false);
+    onRefresh();
+  };
+
   return (
     <div className="space-y-4">
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={softPanelStyle}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_38%)] opacity-85" />
-          <div className="relative z-[1] flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
-              <AlertTriangle className="h-5 w-5" />
+          <div className="relative z-[1] flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <ScrollReveal>
+                  <h3 className="font-bebas text-xl tracking-[0.26em] text-foreground uppercase">Duplicate Detection</h3>
+                </ScrollReveal>
+                <p className="text-sm text-muted-foreground">{duplicates.length} potential duplicate group{duplicates.length === 1 ? '' : 's'} found.</p>
+              </div>
             </div>
-            <div>
-              <ScrollReveal>
-                <h3 className="font-bebas text-xl tracking-[0.26em] text-foreground uppercase">Duplicate Detection</h3>
-              </ScrollReveal>
-              <p className="text-sm text-muted-foreground">{duplicates.length} potential duplicate group{duplicates.length === 1 ? '' : 's'} found.</p>
-            </div>
+            <Button
+              variant="outline"
+              className="rounded-xl border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+              disabled={mergingAll}
+              onClick={handleMergeAll}
+            >
+              {mergingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Merge className="h-4 w-4 mr-2" />}
+              Merge All
+            </Button>
           </div>
         </div>
       </ScrollReveal>
