@@ -1918,7 +1918,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
           setRoleFilter('all');
           setGroupBy('club');
           setContactPage(0);
-          fetchCountryContacts(country.key, 0);
+          setExpandedClubKey(null);
+          fetchCountryContacts(country.key);
         }}
         className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
       >
