@@ -1840,7 +1840,7 @@ const Staff = () => {
       </div>
 
       {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} visibleSectionIds={visibleSectionIds} />
       
       {/* Grid Picker Dialog for new tabs */}
       <Dialog open={showGridPickerDialog} onOpenChange={setShowGridPickerDialog}>
