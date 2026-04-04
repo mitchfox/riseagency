@@ -893,29 +893,29 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
 
   const filteredCountries = useMemo(() => {
-    const query = searchQuery.toLowerCase();
+    const query = deferredSearch.toLowerCase();
     return countryData
       .filter((country) => {
-        if (!searchQuery.trim()) return country.count > 0;
+        if (!deferredSearch.trim()) return country.count > 0;
         return country.name.toLowerCase().includes(query);
       });
-  }, [countryData, searchQuery]);
+  }, [countryData, deferredSearch]);
 
   const filteredRegions = useMemo(() => {
-    if (!searchQuery.trim()) return regionData;
-    const query = searchQuery.toLowerCase();
+    if (!deferredSearch.trim()) return regionData;
+    const query = deferredSearch.toLowerCase();
     return regionData
       .map((region) => ({
         ...region,
         countries: region.countries.filter((c) => c.name.toLowerCase().includes(query)),
       }))
       .filter((region) => region.countries.length > 0);
-  }, [regionData, searchQuery]);
+  }, [regionData, deferredSearch]);
 
   const filteredLandingRoles = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return landingRoleEntries.filter((role) => !searchQuery.trim() || role.name.toLowerCase().includes(query));
-  }, [landingRoleEntries, searchQuery]);
+    const query = deferredSearch.toLowerCase();
+    return landingRoleEntries.filter((role) => !deferredSearch.trim() || role.name.toLowerCase().includes(query));
+  }, [landingRoleEntries, deferredSearch]);
 
   const countryContacts = useMemo(() => {
     const allCached: Contact[] = selectedCountryKey
@@ -923,8 +923,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       : [];
     let result = [...allCached];
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (deferredSearch.trim()) {
+      const query = deferredSearch.toLowerCase();
       result = result.filter((contact) =>
         [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.notes || '']
           .join(' ')
@@ -944,7 +944,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     });
 
     return result;
-  }, [roleFilter, searchQuery, selectedCountryKey, countryContactsCache, sortDir, sortField]);
+  }, [roleFilter, deferredSearch, selectedCountryKey, countryContactsCache, sortDir, sortField]);
 
   const roleOptions = useMemo(() => {
     const roleMap = new Map<string, string[]>();
