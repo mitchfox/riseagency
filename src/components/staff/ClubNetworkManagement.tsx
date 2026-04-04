@@ -452,6 +452,12 @@ const matchesRoleTemplate = (role: string, recipientType: string) => {
 
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [countrySummary, setCountrySummary] = useState<{ country: string; count: number }[]>([]);
+  const [loadedCountryKeys, setLoadedCountryKeys] = useState<Set<string>>(new Set());
+  const [countryContactsCache, setCountryContactsCache] = useState<Map<string, Contact[]>>(new Map());
+  const [countryContactsLoading, setCountryContactsLoading] = useState(false);
+  const [contactPage, setContactPage] = useState(0);
+  const CONTACTS_PER_PAGE = 9;
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
   const [clubLogos, setClubLogos] = useState<ClubLogo[]>([]);
   const [countryProfiles, setCountryProfiles] = useState<CountryProfile[]>([]);
@@ -497,7 +503,80 @@ const ClubNetworkManagement = () => {
     notes: '',
   });
 
-  const fetchContacts = useCallback(async () => {
+  // Lightweight summary: just country + count, no full contact data
+  const fetchCountrySummary = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('club_network_contacts')
+      .select('country');
+    
+    if (error) {
+      toast.error('Failed to fetch contacts');
+      return;
+    }
+
+    const countMap = new Map<string, number>();
+    let totalCount = 0;
+    (data || []).forEach((row: any) => {
+      const country = normaliseText(row.country) || 'Uncategorised';
+      countMap.set(country.toLowerCase(), (countMap.get(country.toLowerCase()) || 0) + 1);
+      totalCount++;
+    });
+
+    const summary = [...countMap.entries()]
+      .map(([key, count]) => ({ country: key, count }))
+      .sort((a, b) => b.count - a.count);
+
+    setCountrySummary(summary);
+    // Store total count in contacts array length for header display
+    setContacts(new Array(totalCount) as any);
+  }, []);
+
+  // Load contacts for a specific country on demand
+  const fetchCountryContacts = useCallback(async (countryKey: string) => {
+    if (loadedCountryKeys.has(countryKey)) return;
+    setCountryContactsLoading(true);
+
+    try {
+      let allContacts: Contact[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      const isUncategorised = countryKey === 'uncategorised';
+
+      while (hasMore) {
+        let query = supabase
+          .from('club_network_contacts')
+          .select('*')
+          .order('name', { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (isUncategorised) {
+          query = query.or('country.is.null,country.eq.');
+        } else {
+          query = query.ilike('country', countryKey);
+        }
+
+        const { data, error } = await query;
+        if (error) { toast.error('Failed to load contacts'); return; }
+        allContacts = allContacts.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      setCountryContactsCache((prev) => {
+        const next = new Map(prev);
+        next.set(countryKey, allContacts);
+        return next;
+      });
+      setLoadedCountryKeys((prev) => new Set(prev).add(countryKey));
+    } finally {
+      setCountryContactsLoading(false);
+    }
+  }, [loadedCountryKeys]);
+
+  // Full fetch for AI tools / duplicates / analytics that need all contacts
+  const fetchAllContacts = useCallback(async () => {
     let allContacts: Contact[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -512,7 +591,7 @@ const ClubNetworkManagement = () => {
 
       if (error) {
         toast.error('Failed to fetch contacts');
-        return;
+        return [];
       }
 
       allContacts = allContacts.concat(data || []);
@@ -521,6 +600,7 @@ const ClubNetworkManagement = () => {
     }
 
     setContacts(allContacts);
+    return allContacts;
   }, []);
 
   const fetchProfiles = useCallback(async () => {
@@ -547,42 +627,11 @@ const ClubNetworkManagement = () => {
     if (templatesRes.data) setMarketingTemplates(templatesRes.data);
   }, []);
 
-  const syncOutreachContacts = useCallback(async () => {
-    const { data: outreachData, error: outreachError } = await supabase
-      .from('club_outreach')
-      .select('club_name, contact_name, contact_role')
-      .in('status', ['meeting', 'responded', 'interested']);
-
-    if (outreachError || !outreachData) return;
-
-    const { data: existingContacts } = await supabase.from('club_network_contacts').select('name, club_name');
-    const existingSet = new Set(
-      (existingContacts || []).map((contact) => `${contact.name?.toLowerCase()}-${contact.club_name?.toLowerCase()}`)
-    );
-
-    const newContacts = outreachData
-      .filter((item) => item.contact_name && !existingSet.has(`${item.contact_name.toLowerCase()}-${item.club_name.toLowerCase()}`))
-      .map((item) => ({
-        name: item.contact_name!,
-        club_name: item.club_name,
-        position: item.contact_role || null,
-      }));
-
-    if (newContacts.length === 0) return;
-
-    const { error: insertError } = await supabase.from('club_network_contacts').insert(newContacts);
-    if (!insertError) {
-      toast.success(`Added ${newContacts.length} contact${newContacts.length === 1 ? '' : 's'} from outreach`);
-      fetchContacts();
-    }
-  }, [fetchContacts]);
-
   useEffect(() => {
-    fetchContacts();
+    fetchCountrySummary();
     fetchProfiles();
     fetchAuxiliaryData();
-    syncOutreachContacts();
-  }, [fetchAuxiliaryData, fetchContacts, fetchProfiles, syncOutreachContacts]);
+  }, [fetchAuxiliaryData, fetchCountrySummary, fetchProfiles]);
 
   const clubRatingsIndex = useMemo(
     () => clubRatings.map((rating) => ({ ...rating, norm: normalizeClubName(rating.club_name) })),
