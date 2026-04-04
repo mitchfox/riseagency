@@ -95,7 +95,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     });
 
     return groups;
-  }, [contacts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contacts, scanKey]);
 
   const handleMerge = async (group: DuplicateGroup) => {
     if (group.contacts.length < 2) return;
