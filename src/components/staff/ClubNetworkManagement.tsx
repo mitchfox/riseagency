@@ -1084,24 +1084,40 @@ const ClubNetworkManagement = () => {
     const candidates = contacts.filter((contact) => !contact.country || !contact.position);
     if (candidates.length === 0) { toast.info('Country and role tags are already filled'); return; }
 
-    await runAiBulkUpdate(
-      'tag',
-      `For each of these contacts, infer missing country and position. Country must be where they work, not nationality. Return JSON array with id and only the fields that should change.\n\n${JSON.stringify(candidates.slice(0, 80))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 50;
+    setAiAction('tag');
+
+    try {
+      for (let i = 0; i < candidates.length; i += batchSize) {
+        const batch = candidates.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, email: c.email, notes: c.notes }));
+        const prompt = `You are a football industry expert. For each contact below, infer the MISSING country and/or position (role) fields. Country must be the country where they WORK (based on their club, league, or context clues in notes/email domain), NOT their nationality. Position means their job role (e.g. Director of Football, Scout, Agent, Head Coach, Sporting Director, Academy Director, etc). Only return fields that are currently null/empty. Return a JSON array with objects containing "id" and only the fields to update.\n\nContacts:\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           const payload: Record<string, string> = {};
           if (update.country) payload.country = update.country;
           if (update.position) payload.position = update.position;
           if (Object.keys(payload).length === 0) continue;
-          const { error } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No new country or role tags were suggested',
-      'AI tagged'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No new country or role tags were suggested');
+      else toast.success(`AI tagged ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI tagging failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiOrganise = async () => {
