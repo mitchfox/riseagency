@@ -169,6 +169,7 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
+  const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
     const isDraft = String(a.visibility_status || "").toLowerCase() === "draft";
