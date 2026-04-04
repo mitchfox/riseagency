@@ -601,7 +601,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     setCountryContactsLoading(true);
 
     try {
-      const isUncategorised = countryKey === 'uncategorised';
+      const isUncategorised = countryKey === 'uncategorised' || countryKey === '';
       const rangeFrom = page * CONTACTS_PER_PAGE;
       const rangeTo = rangeFrom + CONTACTS_PER_PAGE - 1;
 
