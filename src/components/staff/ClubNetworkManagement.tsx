@@ -1162,21 +1162,37 @@ const ClubNetworkManagement = () => {
     const withClubs = contacts.filter((contact) => normaliseText(contact.club_name));
     if (withClubs.length === 0) { toast.info('No contacts with clubs to standardise'); return; }
 
-    await runAiBulkUpdate(
-      'clubs',
-      `These contacts may have the same club name with different spellings (accents, abbreviations, spacing). Group duplicates and pick the preferred spelling for each. Return JSON array with id and club_name for those that should change.\n\n${JSON.stringify(withClubs.slice(0, 80).map((c) => ({ id: c.id, club_name: c.club_name })))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 80;
+    setAiAction('clubs');
+
+    try {
+      for (let i = 0; i < withClubs.length; i += batchSize) {
+        const batch = withClubs.slice(i, i + batchSize).map((c) => ({ id: c.id, club_name: c.club_name }));
+        const prompt = `You are a football club name standardisation expert. These contacts may have the same club name with different spellings (accents, abbreviations, spacing, language variants). Group duplicates and pick the single preferred/official spelling for each club. Return a JSON array with objects containing "id" and "club_name" ONLY for those that should change.\n\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           if (!update.club_name) continue;
-          const { error } = await supabase.from('club_network_contacts').update({ club_name: update.club_name }).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update({ club_name: update.club_name }).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No club names needed standardising',
-      'AI standardised'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No club names needed standardising');
+      else toast.success(`AI standardised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI standardise failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiMapLinks = async () => {
