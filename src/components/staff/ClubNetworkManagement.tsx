@@ -2345,76 +2345,141 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       )}
 
       {groupBy === 'club' && (
-        <div className="space-y-6">
-          {clubGroups.map((group, index) => (
-            <ScrollReveal key={group.key} delay={0.04 * index}>
-              <section className="space-y-4">
-                <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_40%)] opacity-80" />
-                  <div className="relative z-[1] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex min-w-0 items-center gap-3">
-                      {group.logo ? (
-                        <img src={group.logo} alt="" className="h-11 w-11 rounded-xl bg-card/60 p-1.5 object-contain ring-1 ring-border/60" />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted/70 text-muted-foreground ring-1 ring-border/60">
-                          <Building2 className="h-4 w-4" />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <ScrollReveal>
-                          <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{group.name.toUpperCase()}</h3>
-                        </ScrollReveal>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="secondary">{group.contacts.length}</Badge>
-                          <Badge variant="outline" className="border-primary/40 text-primary">{getDisplayScore(group.rating)}</Badge>
-                          {group.profile?.league && <span>{group.profile.league}</span>}
-                          {group.profile?.tier && <span>· Tier {group.profile.tier}</span>}
-                        </div>
+        <div className="space-y-4">
+          {/* Compact club grid - all clubs visible */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {clubGroups.map((group) => {
+              const isExpanded = expandedClubKey === group.key;
+              return (
+                <button
+                  key={group.key}
+                  onClick={() => setExpandedClubKey(isExpanded ? null : group.key)}
+                  className={`relative overflow-hidden rounded-[1.3rem] border p-3 text-center transition-all duration-200 ${
+                    isExpanded
+                      ? 'border-primary/50 bg-primary/8 shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)]'
+                      : 'border-border/50 hover:border-primary/30 hover:-translate-y-0.5'
+                  }`}
+                  style={softPanelStyle}
+                >
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.1),transparent_40%)] opacity-80" />
+                  <div className="relative z-[1] flex flex-col items-center gap-2">
+                    {group.logo ? (
+                      <img src={group.logo} alt="" className="h-8 w-8 rounded-lg object-contain" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" />
                       </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <TooltipProvider delayDuration={200}>
-                        {group.name !== 'Independent' && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('club', group.name)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Edit club profile</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Export group</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    )}
+                    <p className="text-xs font-medium text-foreground leading-tight truncate w-full">{group.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground">{group.contacts.length}</span>
+                      {group.rating && <Badge variant="outline" className="border-primary/40 text-primary text-[9px] px-1.5 py-0">{getDisplayScore(group.rating)}</Badge>}
                     </div>
                   </div>
-                  {/* Club bio */}
-                  {group.profile?.description && (
-                    <ScrollReveal delay={0.05}>
-                      <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>
-                    </ScrollReveal>
-                  )}
-                  {group.profile?.playing_style && (
-                    <ScrollReveal delay={0.08}>
-                      <p className="relative z-[1] mt-1 text-xs leading-relaxed text-muted-foreground/70 italic">{group.profile.playing_style}</p>
-                    </ScrollReveal>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-                  {group.contacts.map((contact) => (
-                    <ContactCard key={contact.id} contact={contact} />
-                  ))}
-                </div>
-              </section>
-            </ScrollReveal>
-          ))}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Expanded club detail */}
+          <AnimatePresence>
+            {expandedClubKey && (() => {
+              const group = clubGroups.find((g) => g.key === expandedClubKey);
+              if (!group) return null;
+
+              // Split contacts by role
+              const roleSubgroups = new Map<string, Contact[]>();
+              group.contacts.forEach((contact) => {
+                const role = normaliseText(contact.position) || 'Other';
+                const existing = roleSubgroups.get(role) || [];
+                existing.push(contact);
+                roleSubgroups.set(role, existing);
+              });
+              const sortedRoleSubgroups = [...roleSubgroups.entries()].sort((a, b) => b[1].length - a[1].length);
+
+              return (
+                <motion.div
+                  key={expandedClubKey}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <section className="space-y-4">
+                    <div className="relative overflow-hidden rounded-[1.7rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_40%)] opacity-80" />
+                      <div className="relative z-[1] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
+                          {group.logo ? (
+                            <img src={group.logo} alt="" className="h-11 w-11 rounded-xl bg-card/60 p-1.5 object-contain ring-1 ring-border/60" />
+                          ) : (
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted/70 text-muted-foreground ring-1 ring-border/60">
+                              <Building2 className="h-4 w-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <ScrollReveal>
+                              <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{group.name.toUpperCase()}</h3>
+                            </ScrollReveal>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                              <Badge variant="secondary">{group.contacts.length}</Badge>
+                              <Badge variant="outline" className="border-primary/40 text-primary">{getDisplayScore(group.rating)}</Badge>
+                              {group.profile?.league && <span>{group.profile.league}</span>}
+                              {group.profile?.tier && <span>· Tier {group.profile.tier}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <TooltipProvider delayDuration={200}>
+                            {group.name !== 'Independent' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('club', group.name)}>
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit club profile</TooltipContent>
+                              </Tooltip>
+                            )}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Export group</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      {group.profile?.description && (
+                        <ScrollReveal delay={0.05}>
+                          <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>
+                        </ScrollReveal>
+                      )}
+                    </div>
+
+                    {/* Role subgroups within the club */}
+                    {sortedRoleSubgroups.map(([roleName, roleContacts]) => (
+                      <div key={roleName} className="space-y-3">
+                        <div className="flex items-center gap-2 px-2">
+                          <User className="h-3.5 w-3.5 text-primary" />
+                          <h4 className="font-bebas text-sm tracking-[0.2em] text-primary uppercase">{roleName}</h4>
+                          <span className="text-xs text-muted-foreground">({roleContacts.length})</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                          {roleContacts.map((contact) => (
+                            <ContactCard key={contact.id} contact={contact} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+                </motion.div>
+              );
+            })()}
+          </AnimatePresence>
         </div>
       )}
 
