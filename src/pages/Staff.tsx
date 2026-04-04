@@ -234,6 +234,11 @@ const Staff = () => {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  // Force dark mode on staff portal
+  useEffect(() => {
+    setTheme('dark');
+  }, [setTheme]);
   
   // Memoize notification triggers to prevent infinite re-renders
   const notificationTriggers = useMemo(() => {
@@ -1296,19 +1301,11 @@ const Staff = () => {
             })()}
           </div>
 
-          {/* Right side: music + theme toggle + notifications — always far right */}
+          {/* Right side: music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
-            <StaffMusicPlayer />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-9 w-9 group"
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              <Lightbulb className={`h-5 w-5 transition-colors ${theme === 'dark' ? 'text-primary group-hover:text-foreground' : 'text-primary fill-primary group-hover:text-foreground group-hover:fill-foreground'}`} />
-            </Button>
-            {user && <StaffNotificationsDropdown userId={user.id} />}
+            {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+            {/* Theme is locked to dark for staff portal */}
+            {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
         </div>
       </header>
@@ -1843,7 +1840,7 @@ const Staff = () => {
       </div>
 
       {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} visibleSectionIds={visibleSectionIds} />
       
       {/* Grid Picker Dialog for new tabs */}
       <Dialog open={showGridPickerDialog} onOpenChange={setShowGridPickerDialog}>

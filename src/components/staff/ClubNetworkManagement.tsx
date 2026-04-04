@@ -474,17 +474,29 @@ const ClubNetworkManagement = () => {
   });
 
   const fetchContacts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('club_network_contacts')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let allContacts: Contact[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error) {
-      toast.error('Failed to fetch contacts');
-      return;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('club_network_contacts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        toast.error('Failed to fetch contacts');
+        return;
+      }
+
+      allContacts = allContacts.concat(data || []);
+      hasMore = (data?.length || 0) === pageSize;
+      from += pageSize;
     }
 
-    setContacts(data || []);
+    setContacts(allContacts);
   }, []);
 
   const fetchProfiles = useCallback(async () => {
@@ -1072,67 +1084,115 @@ const ClubNetworkManagement = () => {
     const candidates = contacts.filter((contact) => !contact.country || !contact.position);
     if (candidates.length === 0) { toast.info('Country and role tags are already filled'); return; }
 
-    await runAiBulkUpdate(
-      'tag',
-      `For each of these contacts, infer missing country and position. Country must be where they work, not nationality. Return JSON array with id and only the fields that should change.\n\n${JSON.stringify(candidates.slice(0, 80))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 50;
+    setAiAction('tag');
+
+    try {
+      for (let i = 0; i < candidates.length; i += batchSize) {
+        const batch = candidates.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, email: c.email, notes: c.notes }));
+        const prompt = `You are a football industry expert. For each contact below, infer the MISSING country and/or position (role) fields. Country must be the country where they WORK (based on their club, league, or context clues in notes/email domain), NOT their nationality. Position means their job role (e.g. Director of Football, Scout, Agent, Head Coach, Sporting Director, Academy Director, etc). Only return fields that are currently null/empty. Return a JSON array with objects containing "id" and only the fields to update.\n\nContacts:\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           const payload: Record<string, string> = {};
           if (update.country) payload.country = update.country;
           if (update.position) payload.position = update.position;
           if (Object.keys(payload).length === 0) continue;
-          const { error } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No new country or role tags were suggested',
-      'AI tagged'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No new country or role tags were suggested');
+      else toast.success(`AI tagged ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI tagging failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiOrganise = async () => {
-    await runAiBulkUpdate(
-      'organise',
-      `Review these contacts for misplaced information, such as club names in the person name, or role text in the wrong field. Return a JSON array with id and only corrected fields. Country must still reflect where they work.\n\n${JSON.stringify(contacts.slice(0, 80))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 50;
+    setAiAction('organise');
+
+    try {
+      for (let i = 0; i < contacts.length; i += batchSize) {
+        const batch = contacts.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, city: c.city, notes: c.notes }));
+        const prompt = `You are a data quality expert for a football contacts database. Review each contact for misplaced information. Common issues: club names appearing in the person's name field, role/position text in the wrong field, country showing nationality instead of where they work, city and country swapped. Return a JSON array with objects containing "id" and ONLY the corrected fields. Do not return contacts that need no changes.\n\nContacts:\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           const payload: Record<string, string> = {};
           ['name', 'club_name', 'position', 'country', 'city', 'notes'].forEach((field) => {
             if (update[field]) payload[field] = update[field];
           });
           if (Object.keys(payload).length === 0) continue;
-          const { error } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No field changes were suggested',
-      'AI organised'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No field changes were suggested');
+      else toast.success(`AI organised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI organise failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiStandardiseClubs = async () => {
     const withClubs = contacts.filter((contact) => normaliseText(contact.club_name));
     if (withClubs.length === 0) { toast.info('No contacts with clubs to standardise'); return; }
 
-    await runAiBulkUpdate(
-      'clubs',
-      `These contacts may have the same club name with different spellings (accents, abbreviations, spacing). Group duplicates and pick the preferred spelling for each. Return JSON array with id and club_name for those that should change.\n\n${JSON.stringify(withClubs.slice(0, 80).map((c) => ({ id: c.id, club_name: c.club_name })))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 80;
+    setAiAction('clubs');
+
+    try {
+      for (let i = 0; i < withClubs.length; i += batchSize) {
+        const batch = withClubs.slice(i, i + batchSize).map((c) => ({ id: c.id, club_name: c.club_name }));
+        const prompt = `You are a football club name standardisation expert. These contacts may have the same club name with different spellings (accents, abbreviations, spacing, language variants). Group duplicates and pick the single preferred/official spelling for each club. Return a JSON array with objects containing "id" and "club_name" ONLY for those that should change.\n\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           if (!update.club_name) continue;
-          const { error } = await supabase.from('club_network_contacts').update({ club_name: update.club_name }).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update({ club_name: update.club_name }).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No club names needed standardising',
-      'AI standardised'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No club names needed standardising');
+      else toast.success(`AI standardised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI standardise failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiMapLinks = async () => {
