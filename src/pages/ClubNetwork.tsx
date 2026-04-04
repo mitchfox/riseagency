@@ -12,8 +12,8 @@ const ClubNetwork = () => {
   return (
     <>
       <SEO
-        title="Club Network - RISE Football Agency"
-        description="Access our extensive network of football clubs and contacts across Europe. Connect with scouts, directors, and key decision-makers."
+        title="Network - RISE Football Agency"
+        description="Access our extensive network of football contacts across Europe. Connect with scouts, directors, and key decision-makers."
       />
       <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
         <Header />
@@ -21,9 +21,9 @@ const ClubNetwork = () => {
           <div className="container mx-auto px-4 py-8 md:py-12">
             <div className="max-w-7xl mx-auto">
               <div className="mb-8">
-                <h1 className="text-4xl md:text-5xl font-bebas mb-4">CLUB NETWORK</h1>
+                <h1 className="text-4xl md:text-5xl font-bebas mb-4">NETWORK</h1>
                 <p className="text-muted-foreground text-lg">
-                  Explore our extensive network of football clubs, scouts, and key decision-makers across Europe.
+                  Explore our extensive network of contacts, scouts, and key decision-makers across Europe.
                 </p>
               </div>
               <ClubNetworkManagement />
