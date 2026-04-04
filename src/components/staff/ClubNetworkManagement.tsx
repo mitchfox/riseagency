@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -37,7 +38,6 @@ import {
   Wand2,
   SortAsc,
   Share2,
-  ArrowUpDown,
   ArrowLeft,
   FileText,
   CheckSquare,
@@ -45,10 +45,12 @@ import {
   Mail,
   Copy,
   Link2,
-  Layers3,
   ShieldCheck,
   Bot,
   CheckCircle2,
+  Search,
+  Pencil,
+  Eye,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -175,10 +177,8 @@ const toTitleCase = (value: string) =>
 const formatRiseRating = (rating: string | null | undefined): string | null => {
   const raw = normaliseText(rating);
   if (!raw) return null;
-
   const digits = raw.match(/\d+/)?.[0];
   if (digits) return `R${digits}`;
-
   const cleaned = raw.replace(/^r+/i, '').trim();
   if (!cleaned) return null;
   return cleaned.toUpperCase().startsWith('R') ? cleaned.toUpperCase() : `R${cleaned.toUpperCase()}`;
@@ -195,10 +195,8 @@ const scoreDisplayName = (name: string, count: number) => {
 
 const choosePreferredLabel = (values: string[], fallback: string) => {
   if (values.length === 0) return fallback;
-
   const counts = new Map<string, number>();
   values.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
-
   return [...counts.entries()]
     .sort((a, b) => scoreDisplayName(b[0], b[1]) - scoreDisplayName(a[0], a[1]))[0]?.[0] || fallback;
 };
@@ -245,9 +243,32 @@ const buildVCard = (contact: Contact) => {
 const unfoldVCardLines = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '');
 
 const readVCardValue = (lines: string[], field: string) => {
-  const match = lines.find((line) => line.toUpperCase().startsWith(field.toUpperCase()));
-  if (!match) return '';
-  return match.split(':').slice(1).join(':').trim();
+  // Match field with optional params e.g. TEL;TYPE=work:+123
+  for (const line of lines) {
+    const upperLine = line.toUpperCase();
+    const upperField = field.toUpperCase();
+    if (upperLine.startsWith(upperField + ':') || upperLine.startsWith(upperField + ';')) {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx === -1) continue;
+      return line.substring(colonIdx + 1).trim();
+    }
+  }
+  return '';
+};
+
+const parseVCardName = (lines: string[]): string => {
+  // Try FN first
+  const fn = readVCardValue(lines, 'FN');
+  if (fn) return fn;
+  // Fall back to N property
+  const n = readVCardValue(lines, 'N');
+  if (!n) return '';
+  const parts = n.split(';');
+  const lastName = (parts[0] || '').trim();
+  const firstName = (parts[1] || '').trim();
+  const middle = (parts[2] || '').trim();
+  const prefix = (parts[3] || '').trim();
+  return [prefix, firstName, middle, lastName].filter(Boolean).join(' ');
 };
 
 const parseVCardText = (text: string) => {
@@ -266,15 +287,23 @@ const parseVCardText = (text: string) => {
 
       const adrValue = readVCardValue(lines, 'ADR');
       const adrParts = adrValue.split(';');
-      const city = adrParts[2] || '';
+      const city = adrParts[3] || adrParts[2] || '';
       const country = adrParts[6] || '';
 
+      // Get all email lines
+      const emailLines = lines.filter(l => l.toUpperCase().startsWith('EMAIL'));
+      const email = emailLines.length > 0 ? emailLines[0].substring(emailLines[0].indexOf(':') + 1).trim() : '';
+
+      // Get all tel lines
+      const telLines = lines.filter(l => l.toUpperCase().startsWith('TEL'));
+      const phone = telLines.length > 0 ? telLines[0].substring(telLines[0].indexOf(':') + 1).trim() : '';
+
       return {
-        name: readVCardValue(lines, 'FN') || readVCardValue(lines, 'N'),
+        name: parseVCardName(lines),
         club_name: readVCardValue(lines, 'ORG') || null,
-        position: readVCardValue(lines, 'TITLE') || null,
-        email: readVCardValue(lines, 'EMAIL') || null,
-        phone: readVCardValue(lines, 'TEL') || null,
+        position: readVCardValue(lines, 'TITLE') || readVCardValue(lines, 'ROLE') || null,
+        email: email || null,
+        phone: phone || null,
         country: country || null,
         city: city || null,
         notes: readVCardValue(lines, 'NOTE')?.replace(/\\n/g, '\n') || null,
@@ -286,7 +315,6 @@ const parseVCardText = (text: string) => {
 const matchesRoleTemplate = (role: string, recipientType: string) => {
   const target = role.toLowerCase();
   const recipient = recipientType.toLowerCase();
-
   if (target === recipient || target.includes(recipient) || recipient.includes(target)) return true;
   if (target.includes('scout') && recipient.includes('scout')) return true;
   if (target.includes('director') && recipient.includes('director')) return true;
@@ -294,21 +322,6 @@ const matchesRoleTemplate = (role: string, recipientType: string) => {
   if ((target.includes('coach') || target.includes('manager')) && (recipient.includes('manager') || recipient.includes('coach'))) return true;
   return false;
 };
-
-const MarqueeText = ({ text, className = '' }: { text: string; className?: string }) => (
-  <div className={`relative overflow-hidden whitespace-nowrap ${className}`}>
-    <motion.div
-      className="flex w-max items-center gap-8"
-      animate={{ x: ['0%', '-50%'] }}
-      transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
-    >
-      <span>{text}</span>
-      <span className="text-muted-foreground/70">{text}</span>
-      <span>{text}</span>
-      <span className="text-muted-foreground/70">{text}</span>
-    </motion.div>
-  </div>
-);
 
 const ClubNetworkManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -335,6 +348,7 @@ const ClubNetworkManagement = () => {
   const [profileEditData, setProfileEditData] = useState<any>({});
   const [selectedCountryKey, setSelectedCountryKey] = useState<string | null>(null);
   const [schemeIndex, setSchemeIndex] = useState(0);
+  const [viewingContact, setViewingContact] = useState<Contact | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -427,6 +441,12 @@ const ClubNetworkManagement = () => {
     syncOutreachContacts();
   }, [fetchAuxiliaryData, fetchContacts, fetchProfiles, syncOutreachContacts]);
 
+  // Auto-cycle schemes
+  const schemes = useMemo(() => {
+    const country = selectedCountryKey ? undefined : undefined; // computed below
+    return [];
+  }, []);
+
   const clubRatingsIndex = useMemo(
     () => clubRatings.map((rating) => ({ ...rating, norm: normalizeClubName(rating.club_name) })),
     [clubRatings]
@@ -509,12 +529,7 @@ const ClubNetworkManagement = () => {
       .map(([key, entry]) => {
         const displayName = key === 'uncategorised' ? 'Uncategorised' : choosePreferredLabel(entry.names, toTitleCase(entry.names[0] || key));
         const profile = countryProfiles.find((item) => item.country_name.trim().toLowerCase() === displayName.trim().toLowerCase()) || null;
-        return {
-          key,
-          name: displayName,
-          contacts: entry.contacts,
-          profile,
-        };
+        return { key, name: displayName, contacts: entry.contacts, profile };
       })
       .sort((a, b) => {
         if (a.key === 'uncategorised') return 1;
@@ -528,16 +543,26 @@ const ClubNetworkManagement = () => {
     [countryData, selectedCountryKey]
   );
 
+  const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
+
   useEffect(() => {
     setSchemeIndex(0);
   }, [selectedCountryKey]);
+
+  // Auto-cycle schemes every 4 seconds
+  useEffect(() => {
+    if (countrySchemes.length <= 1) return;
+    const interval = setInterval(() => {
+      setSchemeIndex((prev) => (prev + 1) % countrySchemes.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [countrySchemes.length]);
 
   const uniqueCountries = countryData.map((country) => country.name);
 
   const filteredCountries = useMemo(() => {
     if (!searchQuery.trim()) return countryData;
     const query = searchQuery.toLowerCase();
-
     return countryData.filter((country) => {
       if (country.name.toLowerCase().includes(query)) return true;
       return country.contacts.some((contact) =>
@@ -591,8 +616,6 @@ const ClubNetworkManagement = () => {
       .map(([key, labels]) => ({ key, label: choosePreferredLabel(labels, toTitleCase(labels[0] || key)) }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [selectedCountry]);
-
-  const schemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
 
   const clubGroups = useMemo<ClubGroup[]>(() => {
     const groups = new Map<string, { names: string[]; contacts: Contact[] }>();
@@ -672,19 +695,7 @@ const ClubNetworkManagement = () => {
   }, [contacts]);
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      club_name: '',
-      position: '',
-      email: '',
-      phone: '',
-      country: '',
-      city: '',
-      latitude: '',
-      longitude: '',
-      image_url: '',
-      notes: '',
-    });
+    setFormData({ name: '', club_name: '', position: '', email: '', phone: '', country: '', city: '', latitude: '', longitude: '', image_url: '', notes: '' });
   };
 
   const openAddDialog = () => {
@@ -738,17 +749,11 @@ const ClubNetworkManagement = () => {
 
     if (editingContact) {
       const { error } = await supabase.from('club_network_contacts').update(payload).eq('id', editingContact.id);
-      if (error) {
-        toast.error('Failed to update contact');
-        return;
-      }
+      if (error) { toast.error('Failed to update contact'); return; }
       toast.success('Contact updated');
     } else {
       const { error } = await supabase.from('club_network_contacts').insert(payload);
-      if (error) {
-        toast.error('Failed to create contact');
-        return;
-      }
+      if (error) { toast.error('Failed to create contact'); return; }
       toast.success('Contact created');
     }
 
@@ -760,13 +765,8 @@ const ClubNetworkManagement = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this contact?')) return;
-
     const { error } = await supabase.from('club_network_contacts').delete().eq('id', id);
-    if (error) {
-      toast.error('Failed to delete contact');
-      return;
-    }
-
+    if (error) { toast.error('Failed to delete contact'); return; }
     toast.success('Contact deleted');
     fetchContacts();
   };
@@ -778,11 +778,7 @@ const ClubNetworkManagement = () => {
   };
 
   const exportContactsAsVcf = (exportContacts: Contact[], filenameBase: string) => {
-    if (exportContacts.length === 0) {
-      toast.info('No contacts to export');
-      return;
-    }
-
+    if (exportContacts.length === 0) { toast.info('No contacts to export'); return; }
     const vcfContent = exportContacts.map(buildVCard).join('\n');
     const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -797,7 +793,6 @@ const ClubNetworkManagement = () => {
   const handleImportFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       setImportText((loadEvent.target?.result as string) || '');
@@ -806,7 +801,6 @@ const ClubNetworkManagement = () => {
       setShowImportDialog(true);
     };
     reader.readAsText(file);
-
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -818,6 +812,7 @@ const ClubNetworkManagement = () => {
       let parsed = parseVCardText(importText);
 
       if (parsed.length === 0) {
+        // Try AI fallback for non-vcard formats
         const { data, error } = await invokeEdgeFunction('generate-ai-response', {
           body: {
             prompt: `Parse this contact file text and return a JSON array of contacts with name, club_name, position, email, phone, country, city and notes. Country must be where the person works, not their nationality.\n\n${importText.substring(0, 12000)}`,
@@ -831,30 +826,27 @@ const ClubNetworkManagement = () => {
       }
 
       if (parsed.length === 0) {
-        toast.error('No contacts found in that .vcf file');
+        toast.error('No contacts found in that file');
         return;
       }
 
       setParsedContacts(parsed);
-      setSelectedImportIndices(new Set(parsed.map((_, index) => index)));
+      setSelectedImportIndices(new Set(parsed.map((_: any, index: number) => index)));
       toast.success(`Parsed ${parsed.length} contact${parsed.length === 1 ? '' : 's'}`);
     } catch (error: any) {
-      toast.error(`Failed to read .vcf file${error?.message ? `: ${error.message}` : ''}`);
+      toast.error(`Failed to read file${error?.message ? `: ${error.message}` : ''}`);
     } finally {
       setImportProcessing(false);
     }
   };
 
   const handleImportContacts = async () => {
-    const selected = parsedContacts.filter((_, index) => selectedImportIndices.has(index));
-    if (selected.length === 0) {
-      toast.info('No contacts selected');
-      return;
-    }
+    const selected = parsedContacts.filter((_: any, index: number) => selectedImportIndices.has(index));
+    if (selected.length === 0) { toast.info('No contacts selected'); return; }
 
     setImportProcessing(true);
     try {
-      const payload = selected.map((contact) => ({
+      const payload = selected.map((contact: any) => ({
         name: normaliseText(contact.name) || 'Unknown',
         club_name: normaliseText(contact.club_name) || null,
         position: normaliseText(contact.position) || null,
@@ -895,8 +887,7 @@ const ClubNetworkManagement = () => {
       setSelectedImportIndices(new Set());
       return;
     }
-
-    setSelectedImportIndices(new Set(parsedContacts.map((_, index) => index)));
+    setSelectedImportIndices(new Set(parsedContacts.map((_: any, index: number) => index)));
   };
 
   const runAiBulkUpdate = async (
@@ -912,10 +903,7 @@ const ClubNetworkManagement = () => {
       if (error) throw error;
       const responseText = data?.response || '';
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        toast.info(emptyMessage);
-        return;
-      }
+      if (!jsonMatch) { toast.info(emptyMessage); return; }
       const updates = JSON.parse(jsonMatch[0]);
       const applied = await onSuccess(updates);
       if (applied === 0) toast.info(emptyMessage);
@@ -930,10 +918,7 @@ const ClubNetworkManagement = () => {
 
   const handleAiAutoTag = async () => {
     const candidates = contacts.filter((contact) => !contact.country || !contact.position);
-    if (candidates.length === 0) {
-      toast.info('Country and role tags are already filled');
-      return;
-    }
+    if (candidates.length === 0) { toast.info('Country and role tags are already filled'); return; }
 
     await runAiBulkUpdate(
       'tag',
@@ -979,14 +964,11 @@ const ClubNetworkManagement = () => {
 
   const handleAiStandardiseClubs = async () => {
     const withClubs = contacts.filter((contact) => normaliseText(contact.club_name));
-    if (withClubs.length === 0) {
-      toast.info('There are no clubs to standardise');
-      return;
-    }
+    if (withClubs.length === 0) { toast.info('No contacts with clubs to standardise'); return; }
 
     await runAiBulkUpdate(
       'clubs',
-      `Standardise these club names so the same organisation uses one clear display name, even if accents, spacing or casing differ. Return JSON array with id and club_name only where a change is needed.\n\n${JSON.stringify(withClubs.slice(0, 120).map((contact) => ({ id: contact.id, club_name: contact.club_name, country: contact.country })) )}`,
+      `These contacts may have the same club name with different spellings (accents, abbreviations, spacing). Group duplicates and pick the preferred spelling for each. Return JSON array with id and club_name for those that should change.\n\n${JSON.stringify(withClubs.slice(0, 80).map((c) => ({ id: c.id, club_name: c.club_name })))}`,
       async (updates) => {
         let applied = 0;
         for (const update of updates) {
@@ -996,7 +978,7 @@ const ClubNetworkManagement = () => {
         }
         return applied;
       },
-      'No club naming changes were suggested',
+      'No club names needed standardising',
       'AI standardised'
     );
   };
@@ -1005,7 +987,6 @@ const ClubNetworkManagement = () => {
     setAiAction('links');
     try {
       let applied = 0;
-
       for (const contact of contacts) {
         const sharedContacts = contacts.filter((candidate) => {
           if (candidate.id === contact.id) return false;
@@ -1020,7 +1001,7 @@ const ClubNetworkManagement = () => {
         const sharedSummary = sharedContacts
           .slice(0, 3)
           .map((candidate) => {
-            const reasons = [];
+            const reasons: string[] = [];
             if (normaliseText(contact.club_name) && normalizeClubName(contact.club_name || '') === normalizeClubName(candidate.club_name || '')) reasons.push('same club');
             if (normaliseText(contact.position) && normalizeClubName(contact.position || '') === normalizeClubName(candidate.position || '')) reasons.push('same role');
             if (normaliseText(contact.country) && contact.country?.trim().toLowerCase() === candidate.country?.trim().toLowerCase()) reasons.push('same country');
@@ -1053,7 +1034,6 @@ const ClubNetworkManagement = () => {
     if (type === 'country') existing = countryProfiles.find((profile) => profile.country_name === name) || {};
     if (type === 'club') existing = getClubProfile(name) || {};
     if (type === 'role') existing = getRoleProfile(name) || {};
-
     setProfileEditData(existing);
     setShowProfileDialog({ type, name });
   };
@@ -1123,6 +1103,7 @@ const ClubNetworkManagement = () => {
     }
   };
 
+  // ── Contact card ──
   const ContactCard = ({ contact }: { contact: Contact }) => {
     const logo = getClubLogo(contact.club_name);
     const rating = getDisplayScore(getClubRating(contact.club_name));
@@ -1132,33 +1113,48 @@ const ClubNetworkManagement = () => {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28 }}
-        onClick={() => openEditDialog(contact)}
+        onClick={() => setViewingContact(contact)}
         className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
         style={softPanelStyle}
       >
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_36%)] opacity-90" />
         <div className="absolute right-4 top-4 z-10 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleShareContact(contact);
-            }}
-            className="rounded-full border border-border/60 bg-card/60 p-2 text-muted-foreground transition-colors hover:text-primary"
-            title="Share"
-          >
-            <Share2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              handleDelete(contact.id);
-            }}
-            className="rounded-full border border-border/60 bg-card/60 p-2 text-muted-foreground transition-colors hover:text-destructive"
-            title="Delete"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(event) => { event.stopPropagation(); openEditDialog(contact); }}
+                  className="rounded-full border border-border/60 bg-card/60 p-2 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Edit</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(event) => { event.stopPropagation(); handleShareContact(contact); }}
+                  className="rounded-full border border-border/60 bg-card/60 p-2 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Share</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(event) => { event.stopPropagation(); handleDelete(contact.id); }}
+                  className="rounded-full border border-border/60 bg-card/60 p-2 text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <div className="relative z-[1] space-y-4">
@@ -1167,12 +1163,7 @@ const ClubNetworkManagement = () => {
               <img src={contact.image_url} alt={contact.name} className="h-16 w-16 rounded-2xl object-cover ring-1 ring-border/70" />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-lg font-semibold text-primary ring-1 ring-border/50">
-                {contact.name
-                  .split(' ')
-                  .map((part) => part[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
+                {contact.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
               </div>
             )}
             <div className="min-w-0 flex-1 pt-0.5">
@@ -1193,9 +1184,7 @@ const ClubNetworkManagement = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{contact.club_name}</p>
               </div>
-              <Badge variant="outline" className="border-primary/40 text-primary">
-                {rating}
-              </Badge>
+              <Badge variant="outline" className="border-primary/40 text-primary">{rating}</Badge>
             </div>
           )}
 
@@ -1209,10 +1198,7 @@ const ClubNetworkManagement = () => {
           <div className="flex flex-wrap gap-2 pt-1">
             {contact.phone && (
               <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openExternalUrl(`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`);
-                }}
+                onClick={(event) => { event.stopPropagation(); openExternalUrl(`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`); }}
                 className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <FaWhatsapp className="h-4 w-4 text-primary" />
@@ -1221,10 +1207,7 @@ const ClubNetworkManagement = () => {
             )}
             {contact.email && (
               <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openMailto(contact.email);
-                }}
+                onClick={(event) => { event.stopPropagation(); openMailto(contact.email); }}
                 className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <Mail className="h-4 w-4 text-primary" />
@@ -1237,28 +1220,38 @@ const ClubNetworkManagement = () => {
     );
   };
 
+  // ── Template quick copy with hover preview ──
   const TemplateQuickCopy = ({ templates }: { templates: MarketingTemplate[] }) => {
     if (templates.length === 0) return null;
 
     return (
-      <div className="flex flex-wrap gap-2 pt-3">
-        {templates.map((template) => (
-          <button
-            key={template.id}
-            onClick={() => {
-              navigator.clipboard.writeText(template.message_content);
-              toast.success(`Copied ${template.message_title}`);
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/45 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            {template.message_title}
-          </button>
-        ))}
-      </div>
+      <TooltipProvider delayDuration={300}>
+        <div className="flex flex-wrap gap-2 pt-3">
+          {templates.map((template) => (
+            <Tooltip key={template.id}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(template.message_content);
+                    toast.success(`Copied ${template.message_title}`);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/45 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {template.message_title}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-sm whitespace-pre-wrap text-left text-xs">
+                {template.message_content.length > 300 ? template.message_content.substring(0, 300) + '...' : template.message_content}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
     );
   };
 
+  // ── Country card ──
   const CountryCard = ({ country }: { country: CountryEntry }) => (
     <ScrollRevealItem>
       <motion.button
@@ -1288,7 +1281,9 @@ const ClubNetworkManagement = () => {
           </div>
 
           <div className="space-y-3">
-            <MarqueeText text={country.name.toUpperCase()} className="font-bebas text-[1.15rem] tracking-[0.22em] text-foreground" />
+            <ScrollReveal>
+              <h3 className="font-bebas text-[1.15rem] tracking-[0.22em] text-foreground">{country.name.toUpperCase()}</h3>
+            </ScrollReveal>
             <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/35 px-3.5 py-1.5 text-sm font-medium text-foreground">
               <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
               {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
@@ -1299,105 +1294,84 @@ const ClubNetworkManagement = () => {
     </ScrollRevealItem>
   );
 
-  const InfoBlock = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
+  // ── Info block ──
+  const InfoBlock = ({ title, children, className: extraClass = '' }: { title: string; children: React.ReactNode; className?: string }) => (
+    <div className={`relative overflow-hidden rounded-[1.5rem] border border-border/50 p-4 backdrop-blur-2xl ${extraClass}`} style={softPanelStyle}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_36%)] opacity-80" />
       <div className="relative z-[1] space-y-3">
-        <MarqueeText text={title.toUpperCase()} className="font-bebas text-sm tracking-[0.28em] text-primary" />
+        <ScrollReveal>
+          <h4 className="font-bebas text-sm tracking-[0.28em] text-primary uppercase">{title}</h4>
+        </ScrollReveal>
         {children}
       </div>
     </div>
   );
 
+  // ── Landing view ──
   const LandingView = () => (
     <div className="space-y-6">
       <ScrollReveal>
-        <div className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-6 backdrop-blur-2xl" style={panelStyle}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
-            <div className="relative z-[1] space-y-5">
-              <div className="space-y-2">
-                <MarqueeText text="NETWORK" className="font-bebas text-3xl tracking-[0.32em] text-foreground" />
-                <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Country-first navigation with cleaner organisation, stronger hierarchy and faster actions.
-                </p>
+        <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={panelStyle}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
+          <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <ScrollReveal>
+                <h2 className="font-bebas text-2xl tracking-[0.3em] text-foreground">NETWORK</h2>
+              </ScrollReveal>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span>{contacts.length} contacts</span>
+                <span className="text-border">·</span>
+                <span>{uniqueCountries.length} countries</span>
+                <span className="text-border">·</span>
+                <span>{uniqueClubCount} organisations</span>
               </div>
+            </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border/50 bg-background/35 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Contacts</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground">{contacts.length}</p>
-                </div>
-                <div className="rounded-2xl border border-border/50 bg-background/35 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Countries</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground">{uniqueCountries.length}</p>
-                </div>
-                <div className="rounded-2xl border border-border/50 bg-background/35 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Organisations</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground">{uniqueClubCount}</p>
-                </div>
-              </div>
-
+            <div className="flex items-center gap-2">
               <StaffSearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Search countries, contacts, clubs and roles"
-                className="w-full"
+                placeholder="Search countries, contacts, clubs"
+                className="w-64"
               />
-            </div>
-          </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-6 backdrop-blur-2xl" style={panelStyle}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,hsl(var(--accent)/0.15),transparent_42%)] opacity-80" />
-            <div className="relative z-[1] flex h-full flex-col justify-between gap-5">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Actions</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Import .vcf contacts, organise records, standardise clubs and grow the network cleanly.
-                </p>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                    {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="justify-between rounded-2xl border-border/60 bg-background/45 h-12">
-                      <span className="inline-flex items-center gap-2"><Bot className="h-4 w-4" />AI tools</span>
-                      {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
+                    <Upload className="mr-2 h-4 w-4" />Import .vcf text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />Import .vcf file
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
+                    <Download className="mr-2 h-4 w-4" />Export all as .vcf
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="justify-between rounded-2xl border-border/60 bg-background/45 h-12">
-                      <span className="inline-flex items-center gap-2"><ArrowUpDown className="h-4 w-4" />Import / Export</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
-                      <Upload className="mr-2 h-4 w-4" />Import .vcf text
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="mr-2 h-4 w-4" />Import .vcf file
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
-                      <Download className="mr-2 h-4 w-4" />Export all as .vcf
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button onClick={openAddDialog} className="h-12 rounded-2xl sm:col-span-2">
-                  <Plus className="mr-2 h-4 w-4" />Add contact
-                </Button>
-              </div>
+              <Button onClick={openAddDialog} size="icon" className="rounded-xl shrink-0">
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -1420,15 +1394,12 @@ const ClubNetworkManagement = () => {
     </div>
   );
 
+  // ── Country detail view ──
   const CountryDetailView = () => (
     <div className="space-y-6">
       <ScrollReveal>
         <button
-          onClick={() => {
-            setSelectedCountryKey(null);
-            setSearchQuery('');
-            setRoleFilter('all');
-          }}
+          onClick={() => { setSelectedCountryKey(null); setSearchQuery(''); setRoleFilter('all'); }}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -1450,7 +1421,9 @@ const ClubNetworkManagement = () => {
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <MarqueeText text={(selectedCountry?.name || '').toUpperCase()} className="font-bebas text-3xl tracking-[0.34em] text-foreground" />
+                  <ScrollReveal>
+                    <h2 className="font-bebas text-3xl tracking-[0.34em] text-foreground">{(selectedCountry?.name || '').toUpperCase()}</h2>
+                  </ScrollReveal>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {countryContacts.length} contacts · {clubGroups.length} organisations · {roleGroups.length} roles
                   </p>
@@ -1458,73 +1431,92 @@ const ClubNetworkManagement = () => {
               </div>
 
               <div className="flex flex-wrap gap-2 xl:justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="rounded-2xl border-border/60 bg-background/45">
-                      <Bot className="mr-2 h-4 w-4" />AI tools
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="outline" className="rounded-2xl border-border/60 bg-background/45" onClick={() => openProfileEditor('country', selectedCountry?.name || '')}>
-                  <FileText className="mr-2 h-4 w-4" />Edit country profile
-                </Button>
-                <Button variant="outline" className="rounded-2xl border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(countryContacts, `${selectedCountry?.name || 'country'}-contacts`)}>
-                  <Download className="mr-2 h-4 w-4" />Export .vcf
-                </Button>
-                <Button onClick={openAddDialog} className="rounded-2xl">
-                  <Plus className="mr-2 h-4 w-4" />Add contact
-                </Button>
+                <TooltipProvider delayDuration={200}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45">
+                            {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>AI tools</TooltipContent>
+                      </Tooltip>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-72">
+                      <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => openProfileEditor('country', selectedCountry?.name || '')}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit country profile</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(countryContacts, `${selectedCountry?.name || 'country'}-contacts`)}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Export .vcf</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" className="rounded-xl" onClick={openAddDialog}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add contact</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock title="Style">
-                <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.playing_style || 'Add the national style profile here.'}</p>
+            {/* Style & Background (wider) + Schemes (thinner) */}
+            <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
+              <InfoBlock title="Style & Background">
+                <ScrollReveal>
+                  <p className="text-sm leading-relaxed text-foreground/85">
+                    {selectedCountry?.profile?.playing_style || 'Add the national style, background and league context here.'}
+                  </p>
+                </ScrollReveal>
+                {selectedCountry?.profile?.notes && (
+                  <ScrollReveal delay={0.1}>
+                    <p className="text-xs leading-relaxed text-muted-foreground mt-2">{selectedCountry.profile.notes}</p>
+                  </ScrollReveal>
+                )}
               </InfoBlock>
 
               <InfoBlock title="Schemes">
-                {schemes.length > 0 ? (
+                {countrySchemes.length > 0 ? (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
                       <Badge variant="outline" className="border-primary/40 text-primary">
-                        {schemes[schemeIndex]}
+                        #{schemeIndex + 1} {countrySchemes[schemeIndex]}
                       </Badge>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={() => setSchemeIndex((current) => (current === 0 ? schemes.length - 1 : current - 1))}
-                        >
-                          Prev
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={() => setSchemeIndex((current) => (current === schemes.length - 1 ? 0 : current + 1))}
-                        >
-                          Next
-                        </Button>
-                      </div>
                     </div>
                     <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
-                      <FormationDisplay formation={schemes[schemeIndex]} />
+                      <AnimatePresence mode="wait">
+                        <motion.div key={schemeIndex} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
+                          <FormationDisplay formation={countrySchemes[schemeIndex]} />
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {schemes.map((scheme, index) => (
+                    <div className="flex flex-wrap gap-1.5">
+                      {countrySchemes.map((scheme, index) => (
                         <button
                           key={scheme}
                           onClick={() => setSchemeIndex(index)}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
                             index === schemeIndex
                               ? 'border-primary/40 bg-primary/10 text-primary'
                               : 'border-border/60 bg-background/45 text-muted-foreground hover:text-foreground'
@@ -1539,30 +1531,39 @@ const ClubNetworkManagement = () => {
                   <p className="text-sm leading-relaxed text-muted-foreground">Add schemes to the country profile and they will appear here on a slider.</p>
                 )}
               </InfoBlock>
+            </div>
 
+            {/* Traits + League Rules */}
+            <div className="grid gap-4 md:grid-cols-2">
               <InfoBlock title="Traits">
-                <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
+                <ScrollReveal>
+                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
+                </ScrollReveal>
               </InfoBlock>
 
               <InfoBlock title="League Rules">
-                <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
+                <ScrollReveal>
+                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
+                </ScrollReveal>
               </InfoBlock>
             </div>
           </div>
         </div>
       </ScrollReveal>
 
+      {/* Filters bar */}
       <ScrollReveal delay={0.1}>
-        <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={softPanelStyle}>
+        <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.1),transparent_44%)] opacity-80" />
-          <div className="relative z-[1] grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_auto_auto] lg:items-center">
+          <div className="relative z-[1] flex flex-wrap items-center gap-3">
             <StaffSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder={`Search ${selectedCountry?.name || 'country'} contacts`}
+              className="flex-1 min-w-[12rem]"
             />
 
-            <div className="flex flex-wrap items-center gap-2 rounded-full border border-border/60 bg-background/40 p-1">
+            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
               {[
                 { value: 'club' as GroupBy, label: 'Club' },
                 { value: 'role' as GroupBy, label: 'Role' },
@@ -1580,37 +1581,37 @@ const ClubNetworkManagement = () => {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[14rem] rounded-2xl border-border/60 bg-background/45">
-                  <SelectValue placeholder="All roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  {roleOptions.map((role) => (
-                    <SelectItem key={role.key} value={role.key}>{role.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
-                {(['name', 'club_name'] as SortField[]).map((field) => (
-                  <button
-                    key={field}
-                    onClick={() => handleSort(field)}
-                    className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
-                      sortField === field ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {field === 'club_name' ? 'Club' : 'Name'}
-                    {sortField === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                  </button>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[12rem] rounded-2xl border-border/60 bg-background/45">
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                {roleOptions.map((role) => (
+                  <SelectItem key={role.key} value={role.key}>{role.label}</SelectItem>
                 ))}
-              </div>
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
+              {(['name', 'club_name'] as SortField[]).map((field) => (
+                <button
+                  key={field}
+                  onClick={() => handleSort(field)}
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                    sortField === field ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {field === 'club_name' ? 'Club' : 'Name'}
+                  {sortField === field ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </ScrollReveal>
 
+      {/* Contact groups */}
       {groupBy === 'flat' && (
         <ScrollReveal>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
@@ -1638,27 +1639,51 @@ const ClubNetworkManagement = () => {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <MarqueeText text={group.name.toUpperCase()} className="font-bebas text-xl tracking-[0.24em] text-foreground" />
+                        <ScrollReveal>
+                          <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{group.name.toUpperCase()}</h3>
+                        </ScrollReveal>
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                           <Badge variant="secondary">{group.contacts.length}</Badge>
                           <Badge variant="outline" className="border-primary/40 text-primary">{getDisplayScore(group.rating)}</Badge>
                           {group.profile?.league && <span>{group.profile.league}</span>}
-                          {group.profile?.tier && <span>• Tier {group.profile.tier}</span>}
+                          {group.profile?.tier && <span>· Tier {group.profile.tier}</span>}
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {group.name !== 'Independent' && (
-                        <Button variant="outline" size="sm" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('club', group.name)}>
-                          <FileText className="mr-2 h-4 w-4" />Edit club profile
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
-                        <Download className="mr-2 h-4 w-4" />Export group
-                      </Button>
+                      <TooltipProvider delayDuration={200}>
+                        {group.name !== 'Independent' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('club', group.name)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit club profile</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Export group</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
-                  {group.profile?.description && <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>}
+                  {/* Club bio */}
+                  {group.profile?.description && (
+                    <ScrollReveal delay={0.05}>
+                      <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>
+                    </ScrollReveal>
+                  )}
+                  {group.profile?.playing_style && (
+                    <ScrollReveal delay={0.08}>
+                      <p className="relative z-[1] mt-1 text-xs leading-relaxed text-muted-foreground/70 italic">{group.profile.playing_style}</p>
+                    </ScrollReveal>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                   {group.contacts.map((contact) => (
@@ -1680,22 +1705,40 @@ const ClubNetworkManagement = () => {
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--accent)/0.12),transparent_42%)] opacity-85" />
                   <div className="relative z-[1] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
-                      <MarqueeText text={group.name.toUpperCase()} className="font-bebas text-xl tracking-[0.24em] text-foreground" />
+                      <ScrollReveal>
+                        <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{group.name.toUpperCase()}</h3>
+                      </ScrollReveal>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                         <Badge variant="secondary">{group.contacts.length}</Badge>
                         {group.profile?.seniority_level && <span>{group.profile.seniority_level}</span>}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('role', group.name)}>
-                        <FileText className="mr-2 h-4 w-4" />Edit role profile
-                      </Button>
-                      <Button variant="outline" size="sm" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
-                        <Download className="mr-2 h-4 w-4" />Export group
-                      </Button>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => openProfileEditor('role', group.name)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit role profile</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="rounded-full border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(group.contacts, `${group.name}-contacts`)}>
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Export group</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
-                  {group.profile?.description && <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>}
+                  {group.profile?.description && (
+                    <ScrollReveal delay={0.05}>
+                      <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>
+                    </ScrollReveal>
+                  )}
                   <TemplateQuickCopy templates={group.templates} />
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
@@ -1717,6 +1760,109 @@ const ClubNetworkManagement = () => {
       )}
     </div>
   );
+
+  // ── Contact preview popup (shared card style) ──
+  const ContactPreviewDialog = () => {
+    if (!viewingContact) return null;
+    const contact = viewingContact;
+    const logo = getClubLogo(contact.club_name);
+    const rating = getDisplayScore(getClubRating(contact.club_name));
+    const shareUrl = `${window.location.origin}/contact/${contact.id}`;
+
+    return (
+      <Dialog open={!!viewingContact} onOpenChange={(open) => !open && setViewingContact(null)}>
+        <DialogContent className="w-[96vw] max-w-lg p-0 overflow-hidden border-0 bg-transparent shadow-none">
+          <div className="backdrop-blur-xl bg-gradient-to-br from-card/90 via-card/80 to-card/60 border border-white/10 rounded-3xl p-8 shadow-2xl" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05)' }}>
+            {/* Avatar */}
+            <div className="flex justify-center mb-6">
+              {contact.image_url ? (
+                <img src={contact.image_url} alt={contact.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-primary/20" />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-primary/15 flex items-center justify-center ring-4 ring-primary/20">
+                  <span className="text-3xl font-bold text-primary">
+                    {contact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Name */}
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold">{contact.name}</h2>
+              {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
+            </div>
+
+            {/* Details */}
+            <div className="space-y-3 mb-6">
+              {contact.club_name && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/30">
+                  {logo ? (
+                    <img src={logo} alt="" className="h-6 w-6 rounded object-contain" />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="font-medium flex-1">{contact.club_name}</span>
+                  <Badge variant="outline" className="border-primary/40 text-primary">{rating}</Badge>
+                </div>
+              )}
+              {contact.country?.trim() && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/30">
+                  <img src={getCountryFlagUrl(contact.country.trim())} alt={contact.country.trim()} className="w-6 h-4 object-cover rounded-sm shrink-0" />
+                  <span>{contact.city ? `${contact.city}, ` : ''}{contact.country.trim()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="space-y-3">
+              {contact.phone && (
+                <button
+                  onClick={() => openExternalUrl(`https://wa.me/${contact.phone!.replace(/[^0-9]/g, '')}`)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 transition-colors font-medium"
+                >
+                  <FaWhatsapp className="h-5 w-5" />WhatsApp
+                </button>
+              )}
+              {contact.email && (
+                <button
+                  onClick={() => openMailto(contact.email)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-primary/15 hover:bg-primary/25 text-primary transition-colors font-medium"
+                >
+                  <Mail className="h-5 w-5" />Email
+                </button>
+              )}
+            </div>
+
+            {/* Share URL + actions */}
+            <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+              <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-3 py-2">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 bg-transparent text-xs text-muted-foreground outline-none"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(shareUrl); toast.success('Link copied'); }}
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => { setViewingContact(null); openEditDialog(contact); }}>
+                  <Pencil className="h-4 w-4 mr-2" />Edit
+                </Button>
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => handleShareContact(contact)}>
+                  <Share2 className="h-4 w-4 mr-2" />Share
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -1752,6 +1898,10 @@ const ClubNetworkManagement = () => {
         </TabsContent>
       </Tabs>
 
+      {/* Contact preview popup */}
+      <ContactPreviewDialog />
+
+      {/* Import dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
         <DialogContent className="w-[96vw] max-w-6xl max-h-[88vh] overflow-y-auto p-5 md:p-7">
           <DialogHeader>
@@ -1762,32 +1912,30 @@ const ClubNetworkManagement = () => {
 
           <div className="space-y-4">
             {parsedContacts.length === 0 ? (
-              <>
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                  <div>
-                    <Label className="mb-2 block">Paste .vcf content or open a .vcf file</Label>
-                    <Textarea
-                      value={importText}
-                      onChange={(event) => setImportText(event.target.value)}
-                      rows={14}
-                      placeholder="BEGIN:VCARD\nVERSION:3.0\nFN:John Smith\nORG:Arsenal\nTITLE:Scout\nEMAIL:john@example.com\nTEL:+441234567890\nEND:VCARD"
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3 lg:w-64">
-                    <Button variant="outline" className="justify-start rounded-2xl" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="mr-2 h-4 w-4" />Choose .vcf file
-                    </Button>
-                    <Button onClick={handleImportParse} disabled={importProcessing || !importText.trim()} className="rounded-2xl">
-                      {importProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                      Parse contacts
-                    </Button>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      You can review every contact before importing and select all or just the ones you want.
-                    </p>
-                  </div>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                <div>
+                  <Label className="mb-2 block">Paste .vcf content or open a .vcf file</Label>
+                  <Textarea
+                    value={importText}
+                    onChange={(event) => setImportText(event.target.value)}
+                    rows={14}
+                    placeholder="BEGIN:VCARD&#10;VERSION:3.0&#10;FN:John Smith&#10;ORG:Arsenal&#10;TITLE:Scout&#10;EMAIL:john@example.com&#10;TEL:+441234567890&#10;END:VCARD"
+                    className="font-mono text-xs"
+                  />
                 </div>
-              </>
+                <div className="flex flex-col gap-3 lg:w-64">
+                  <Button variant="outline" className="justify-start rounded-2xl" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />Choose .vcf file
+                  </Button>
+                  <Button onClick={handleImportParse} disabled={importProcessing || !importText.trim()} className="rounded-2xl">
+                    {importProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Parse contacts
+                  </Button>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    You can review every contact before importing and select all or just the ones you want.
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1805,7 +1953,7 @@ const ClubNetworkManagement = () => {
                 </div>
 
                 <div className="grid gap-3">
-                  {parsedContacts.map((contact, index) => (
+                  {parsedContacts.map((contact: any, index: number) => (
                     <button
                       key={`${contact.name}-${index}`}
                       type="button"
@@ -1849,6 +1997,7 @@ const ClubNetworkManagement = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Profile editor dialog */}
       <Dialog open={!!showProfileDialog} onOpenChange={(open) => !open && setShowProfileDialog(null)}>
         <DialogContent className="w-[96vw] max-w-4xl max-h-[88vh] overflow-y-auto p-5 md:p-7">
           <DialogHeader>
@@ -1863,8 +2012,8 @@ const ClubNetworkManagement = () => {
             {showProfileDialog?.type === 'country' && (
               <>
                 <div>
-                  <Label>Style</Label>
-                  <Textarea value={profileEditData.playing_style || ''} onChange={(event) => setProfileEditData({ ...profileEditData, playing_style: event.target.value })} rows={3} />
+                  <Label>Style & Background</Label>
+                  <Textarea value={profileEditData.playing_style || ''} onChange={(event) => setProfileEditData({ ...profileEditData, playing_style: event.target.value })} rows={4} />
                 </div>
                 <div>
                   <Label>Schemes</Label>
@@ -1941,6 +2090,7 @@ const ClubNetworkManagement = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Add/Edit contact dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="w-[96vw] max-w-4xl max-h-[88vh] overflow-y-auto p-5 md:p-7">
           <DialogHeader>
