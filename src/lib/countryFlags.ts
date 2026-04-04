@@ -216,8 +216,8 @@ export const countryCodeMap: Record<string, string> = {
   'Zimbabwe': 'zw', 'Zimbabwean': 'zw',
 };
 
-export const getCountryFlagUrl = (country: string): string => {
-  if (!country) return 'https://flagcdn.com/w40/un.png';
+export const getCountryCode = (country: string): string | null => {
+  if (!country) return null;
   
   // Try exact match first
   let code = countryCodeMap[country];
@@ -233,7 +233,7 @@ export const getCountryFlagUrl = (country: string): string => {
     }
   }
   
-  // If still not found, try partial match (for complex nationalities)
+  // If still not found, try partial match
   if (!code) {
     const lowerCountry = country.toLowerCase().trim();
     for (const [key, value] of Object.entries(countryCodeMap)) {
@@ -244,5 +244,13 @@ export const getCountryFlagUrl = (country: string): string => {
     }
   }
   
-  return `https://flagcdn.com/w40/${code || 'un'}.png`;
+  return code || null;
+};
+
+export const getCountryFlagUrl = (country: string): string => {
+  const code = getCountryCode(country);
+  if (!code) return '/flags/un.svg';
+  
+  // Use local SVG flags from public/flags/
+  return `/flags/${code}.svg`;
 };
