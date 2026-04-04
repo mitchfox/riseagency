@@ -2381,7 +2381,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               const group = clubGroups.find((g) => g.key === expandedClubKey);
               if (!group) return null;
 
-              // Split contacts by role
               const roleSubgroups = new Map<string, Contact[]>();
               group.contacts.forEach((contact) => {
                 const role = normaliseText(contact.position) || 'Other';
@@ -2393,7 +2392,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
               return (
                 <motion.div
-                  key={expandedClubKey}
+                  key={`club-detail-${expandedClubKey}`}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -2454,7 +2453,6 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                       )}
                     </div>
 
-                    {/* Role subgroups within the club */}
                     {sortedRoleSubgroups.map(([roleName, roleContacts]) => (
                       <div key={roleName} className="space-y-3">
                         <div className="flex items-center gap-2 px-2">

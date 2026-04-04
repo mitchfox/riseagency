@@ -273,28 +273,44 @@ const Staff = () => {
   useEffect(() => {
     if (!isStaff) return;
     const urlSection = searchParams.get('section');
+
+    // For permission-managed roles, wait for permissions to load before determining initial section
+    // This prevents the overview flash for roles that can't view overview
+    if (permissionManagedRole && permissionsLoading) return;
+
+    // Determine the default section based on role permissions
+    let defaultSection = 'overview';
+    if (permissionManagedRole) {
+      // If the role can't view overview, find the first section they can view
+      if (!canView('overview')) {
+        const viewable = getViewableSections();
+        const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
+        if (firstViewable) defaultSection = firstViewable;
+      }
+    }
     
     // Restore saved tabs if none currently open
     try {
       const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
       if (savedTabs.length === 0) {
-        // First visit or cleared - seed with current section
-        const initial = urlSection || 'overview';
+        const initial = urlSection || defaultSection;
         localStorage.setItem('staff_open_tabs', JSON.stringify([initial]));
         setTabsVersion(v => v + 1);
       }
     } catch {}
 
     // Determine which section to show
-    const section = urlSection || localStorage.getItem('staff_active_tab') || 'overview';
-    setExpandedSection(section as any);
-    setSearchParams({ section }, { replace: true });
+    const section = urlSection || localStorage.getItem('staff_active_tab') || defaultSection;
+    // Validate that the role can actually view this section
+    const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
+    setExpandedSection(finalSection as any);
+    setSearchParams({ section: finalSection }, { replace: true });
 
     // Expand parent category
     const cats = buildCategories();
-    const parentCat = cats.find(c => c.sections.some(s => s.id === section));
+    const parentCat = cats.find(c => c.sections.some(s => s.id === finalSection));
     if (parentCat) setExpandedCategory(parentCat.id);
-  }, [isStaff]);
+  }, [isStaff, permissionManagedRole, permissionsLoading]);
 
   // Keep URL in sync with section changes from searchParams
   useEffect(() => {
