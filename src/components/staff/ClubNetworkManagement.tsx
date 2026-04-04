@@ -2042,13 +2042,27 @@ const ClubNetworkManagement = () => {
       </ScrollReveal>
 
       {/* Contact groups */}
-      {groupBy === 'flat' && (
+      {countryContactsLoading && (
+        <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading contacts...</span>
+        </div>
+      )}
+
+      {!countryContactsLoading && groupBy === 'flat' && (
         <ScrollReveal>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {countryContacts.map((contact) => (
+            {countryContacts.slice(0, (contactPage + 1) * CONTACTS_PER_PAGE).map((contact) => (
               <ContactCard key={contact.id} contact={contact} />
             ))}
           </div>
+          {countryContacts.length > (contactPage + 1) * CONTACTS_PER_PAGE && (
+            <div className="flex justify-center pt-6">
+              <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
+                Show more ({countryContacts.length - (contactPage + 1) * CONTACTS_PER_PAGE} remaining)
+              </Button>
+            </div>
+          )}
         </ScrollReveal>
       )}
 
