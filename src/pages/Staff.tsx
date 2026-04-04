@@ -475,22 +475,26 @@ const Staff = () => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .in('role', ['staff', 'admin', 'marketeer']);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error checking staff role:', error);
         setIsStaff(false);
         setIsAdmin(false);
         setIsMarketeer(false);
-      } else {
-        const hasStaffOrAdmin = data?.some(row => row.role === 'staff' || row.role === 'admin') ?? false;
-        const hasMarketeer = data?.some(row => row.role === 'marketeer') ?? false;
-        const hasAdmin = data?.some(row => row.role === 'admin') ?? false;
-        setIsStaff(hasStaffOrAdmin || hasMarketeer);
+      } else if (data && data.length > 0) {
+        const hasAdmin = data.some(row => row.role === 'admin');
+        const hasStaffOrAdmin = data.some(row => row.role === 'staff' || row.role === 'admin');
+        const hasMarketeer = data.some(row => row.role === 'marketeer');
+        setIsStaff(true);
         setIsAdmin(hasAdmin);
         setIsMarketeer(hasMarketeer);
-        setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
+        const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : data[0].role;
+        setCurrentRole(primaryRole);
+      } else {
+        setIsStaff(false);
+        setIsAdmin(false);
+        setIsMarketeer(false);
       }
     } catch (err) {
       console.error('Error:', err);
