@@ -599,7 +599,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   const fetchCountryContacts = useCallback(async (countryKey: string, page: number) => {
     const cacheKey = `${countryKey}:${page}`;
-    if (countryContactsCache.has(cacheKey)) return;
+    if (countryContactsCacheRef.current.has(cacheKey)) return;
     setCountryContactsLoading(true);
 
     try {
@@ -625,15 +625,14 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
         return;
       }
 
-      setCountryContactsCache((prev) => {
-        const next = new Map(prev);
-        next.set(cacheKey, data || []);
-        return next;
-      });
+      const nextCache = new Map(countryContactsCacheRef.current);
+      nextCache.set(cacheKey, data || []);
+      countryContactsCacheRef.current = nextCache;
+      setCountryContactsCache(nextCache);
     } finally {
       setCountryContactsLoading(false);
     }
-  }, [CONTACTS_PER_PAGE, countryContactsCache]);
+  }, [CONTACTS_PER_PAGE]);
 
   // Full fetch for AI tools / duplicates / analytics that need all contacts
   const fetchAllContacts = useCallback(async () => {
