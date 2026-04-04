@@ -35,7 +35,7 @@ const normalisePhone = (v: string | null) => (v || '').replace(/\D+/g, '');
 
 export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh: () => void }> = ({ contacts, onRefresh }) => {
   const [merging, setMerging] = useState<string | null>(null);
-
+  const [mergingAll, setMergingAll] = useState(false);
   const duplicates = useMemo<DuplicateGroup[]>(() => {
     const groups: DuplicateGroup[] = [];
     const seen = new Set<string>();
