@@ -748,30 +748,11 @@ const ClubNetworkManagement = () => {
   const filteredCountries = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return countryData
-      .map((country) => {
-        const roleScopedContacts = landingRoleFilter === 'all'
-          ? country.contacts
-          : country.contacts.filter((contact) => normalizeClubName(contact.position || '') === landingRoleFilter);
-
-        if (!searchQuery.trim()) {
-          return roleScopedContacts.length > 0 ? { ...country, contacts: roleScopedContacts } : null;
-        }
-
-        const matchingContacts = roleScopedContacts.filter((contact) =>
-          [contact.name, contact.club_name || '', contact.position || '', contact.email || '']
-            .join(' ')
-            .toLowerCase()
-            .includes(query)
-        );
-
-        if (country.name.toLowerCase().includes(query) || matchingContacts.length > 0) {
-          return { ...country, contacts: matchingContacts.length > 0 ? matchingContacts : roleScopedContacts };
-        }
-
-        return null;
-      })
-      .filter((country): country is CountryEntry => Boolean(country));
-  }, [countryData, landingRoleFilter, searchQuery]);
+      .filter((country) => {
+        if (!searchQuery.trim()) return country.contacts.length > 0;
+        return country.name.toLowerCase().includes(query) || country.contacts.length > 0;
+      });
+  }, [countryData, searchQuery]);
 
   const countryContacts = useMemo(() => {
     const baseContacts = selectedCountry?.contacts || [];
