@@ -2119,6 +2119,114 @@ export type Database = {
         }
         Relationships: []
       }
+      network_club_profiles: {
+        Row: {
+          club_name: string
+          country: string | null
+          created_at: string
+          description: string | null
+          id: string
+          league: string | null
+          notes: string | null
+          playing_style: string | null
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          club_name: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          league?: string | null
+          notes?: string | null
+          playing_style?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          club_name?: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          league?: string | null
+          notes?: string | null
+          playing_style?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      network_country_profiles: {
+        Row: {
+          common_formations: string | null
+          country_name: string
+          created_at: string
+          id: string
+          key_characteristics: string | null
+          league_structure: string | null
+          notes: string | null
+          playing_style: string | null
+          updated_at: string
+        }
+        Insert: {
+          common_formations?: string | null
+          country_name: string
+          created_at?: string
+          id?: string
+          key_characteristics?: string | null
+          league_structure?: string | null
+          notes?: string | null
+          playing_style?: string | null
+          updated_at?: string
+        }
+        Update: {
+          common_formations?: string | null
+          country_name?: string
+          created_at?: string
+          id?: string
+          key_characteristics?: string | null
+          league_structure?: string | null
+          notes?: string | null
+          playing_style?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      network_role_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          role_name: string
+          seniority_level: string | null
+          typical_responsibilities: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          role_name: string
+          seniority_level?: string | null
+          typical_responsibilities?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          role_name?: string
+          seniority_level?: string | null
+          typical_responsibilities?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           analyses: boolean
