@@ -53,6 +53,10 @@ import {
   Search,
   Pencil,
   Eye,
+  BarChart3,
+  AlertTriangle,
+  Pin,
+  Clock,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -66,6 +70,9 @@ import { QuickMessageSection } from './QuickMessageSection';
 import MessagePathways from './MessagePathways';
 import { FormationDisplay } from '@/components/FormationDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NetworkAnalytics, computeContactStrength, strengthColor, strengthBg } from './NetworkAnalytics';
+import { NetworkDuplicateDetector } from './NetworkDuplicateDetector';
+import { NetworkActivityTimeline } from './NetworkActivityTimeline';
 
 interface Contact {
   id: string;
@@ -1466,7 +1473,15 @@ const ClubNetworkManagement = () => {
               </button>
             )}
             <div className="min-w-0 flex-1 pt-0.5">
-              <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
+                {(() => {
+                  const s = computeContactStrength(contact);
+                  return (
+                    <span className={`text-xs font-bold ${strengthColor(s)}`}>{s}%</span>
+                  );
+                })()}
+              </div>
               {contact.position && <p className="mt-1 text-sm text-muted-foreground">{contact.position}</p>}
             </div>
           </div>
@@ -2218,8 +2233,21 @@ const ClubNetworkManagement = () => {
               )}
             </div>
 
+            {/* Pinned note */}
+            {(contact as any).pinned_note && (
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <Pin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground/85">{(contact as any).pinned_note}</p>
+              </div>
+            )}
+
+            {/* Activity timeline */}
+            <div className="pt-2 border-t border-border/30">
+              <NetworkActivityTimeline contactId={contact.id} contactName={contact.name} />
+            </div>
+
             {/* Share URL + actions */}
-            <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+            <div className="mt-4 pt-4 border-t border-border/30 space-y-3">
               <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-3 py-2">
                 <input
                   readOnly
@@ -2255,8 +2283,10 @@ const ClubNetworkManagement = () => {
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
-            <TabsList className="relative z-[1] grid min-w-[28rem] grid-cols-3 gap-2 bg-transparent p-0 sm:min-w-0">
+            <TabsList className="relative z-[1] grid min-w-[36rem] grid-cols-5 gap-2 bg-transparent p-0 sm:min-w-0">
               <TabsTrigger value="contacts" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><User className="mr-2 h-4 w-4" />Contacts</TabsTrigger>
+              <TabsTrigger value="analytics" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
+              <TabsTrigger value="duplicates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><AlertTriangle className="mr-2 h-4 w-4" />Duplicates</TabsTrigger>
               <TabsTrigger value="templates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><FileText className="mr-2 h-4 w-4" />Templates</TabsTrigger>
               <TabsTrigger value="pathways" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><Link2 className="mr-2 h-4 w-4" />Pathways</TabsTrigger>
             </TabsList>
@@ -2275,6 +2305,14 @@ const ClubNetworkManagement = () => {
               </motion.div>
             )}
           </AnimatePresence>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <NetworkAnalytics contacts={contacts} />
+        </TabsContent>
+
+        <TabsContent value="duplicates" className="mt-6">
+          <NetworkDuplicateDetector contacts={contacts} onRefresh={fetchContacts} />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
