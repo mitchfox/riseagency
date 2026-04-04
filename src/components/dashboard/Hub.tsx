@@ -149,6 +149,7 @@ interface PlayerAnalysis {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  video_url?: string | null;
 }
 
 interface HubProps {
@@ -922,8 +923,32 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                             </Button>
                           );
                         })()}
+                        {/* Full Game Clips button */}
+                        {analysis.video_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-0 h-8 w-8 bg-black text-[hsl(43,49%,61%)] border border-[hsl(43,49%,61%)] hover:bg-[hsl(43,49%,61%)] hover:text-black rounded flex items-center justify-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReportId(analysis.id);
+                              setReportDialogOpen(true);
+                            }}
+                            title="Watch Full Game Clips"
+                          >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><polygon points="5,3 19,12 5,21" /></svg>
+                          </Button>
+                        )}
                         {(() => {
+                          const isDraft = String(analysis.visibility_status || "").toLowerCase() === "draft";
                           const effectiveR90 = getEffectiveR90(analysis);
+                          if (isDraft) {
+                            return (
+                              <div className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600">
+                                R90: ?
+                              </div>
+                            );
+                          }
                           return effectiveR90 != null ? (
                             <div 
                               className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
