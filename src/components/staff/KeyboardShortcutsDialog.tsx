@@ -3,24 +3,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 interface KeyboardShortcutsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  visibleSectionIds?: string[];
 }
 
-const shortcuts = [
-  { keys: ["⌘", "K"], description: "Open search" },
-  { keys: ["Esc"], description: "Exit video / close dialog" },
-  { keys: ["↑", "↓"], description: "Navigate sections" },
-  { keys: ["1-9"], description: "Jump to category" },
-  { keys: ["?"], description: "Show shortcuts" },
-  { keys: ["A"], description: "Analysis" },
-  { keys: ["R"], description: "Data" },
-  { keys: ["P"], description: "Player Management" },
-  { keys: ["D"], description: "Player Database" },
-  { keys: ["M"], description: "Content Creator" },
-  { keys: ["T"], description: "Tactics Board" },
-  { keys: ["C"], description: "Meeting" },
+const allShortcuts = [
+  { keys: ["⌘", "K"], description: "Open search", sectionId: null },
+  { keys: ["Esc"], description: "Exit video / close dialog", sectionId: null },
+  { keys: ["↑", "↓"], description: "Navigate sections", sectionId: null },
+  { keys: ["1-9"], description: "Jump to category", sectionId: null },
+  { keys: ["?"], description: "Show shortcuts", sectionId: null },
+  { keys: ["A"], description: "Analysis", sectionId: "analysis" },
+  { keys: ["R"], description: "Data", sectionId: "coachingdata" },
+  { keys: ["P"], description: "Player Management", sectionId: "players" },
+  { keys: ["D"], description: "Player Database", sectionId: "playerdatabase" },
+  { keys: ["M"], description: "Content Creator", sectionId: "contentcreator" },
+  { keys: ["T"], description: "Tactics Board", sectionId: "tacticsboard" },
+  { keys: ["C"], description: "Meeting", sectionId: "meetings" },
 ];
 
-export const KeyboardShortcutsDialog = ({ open, onOpenChange }: KeyboardShortcutsDialogProps) => {
+export const KeyboardShortcutsDialog = ({ open, onOpenChange, visibleSectionIds }: KeyboardShortcutsDialogProps) => {
+  const shortcuts = visibleSectionIds
+    ? allShortcuts.filter((s) => s.sectionId === null || visibleSectionIds.includes(s.sectionId))
+    : allShortcuts;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
