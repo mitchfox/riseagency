@@ -889,6 +889,17 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       });
   }, [countryData, searchQuery]);
 
+  const filteredRegions = useMemo(() => {
+    if (!searchQuery.trim()) return regionData;
+    const query = searchQuery.toLowerCase();
+    return regionData
+      .map((region) => ({
+        ...region,
+        countries: region.countries.filter((c) => c.name.toLowerCase().includes(query)),
+      }))
+      .filter((region) => region.countries.length > 0);
+  }, [regionData, searchQuery]);
+
   const filteredLandingRoles = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return landingRoleEntries.filter((role) => !searchQuery.trim() || role.name.toLowerCase().includes(query));
