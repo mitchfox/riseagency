@@ -507,9 +507,11 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [networkSummaryRows, setNetworkSummaryRows] = useState<NetworkSummaryRow[]>([]);
   const [countrySummary, setCountrySummary] = useState<{ country: string; count: number }[]>([]);
   const [countryContactsCache, setCountryContactsCache] = useState<Map<string, Contact[]>>(new Map());
+  const countryContactsCacheRef = useRef<Map<string, Contact[]>>(new Map());
   const [countryContactsLoading, setCountryContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(0);
   const CONTACTS_PER_PAGE = 9;
+  const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
   const [clubLogos, setClubLogos] = useState<ClubLogo[]>([]);
   const [countryProfiles, setCountryProfiles] = useState<CountryProfile[]>([]);
