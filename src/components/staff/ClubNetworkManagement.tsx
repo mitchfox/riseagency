@@ -1710,10 +1710,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
     return (
       <div className="space-y-3">
-        <h3 className="font-bebas text-2xl tracking-[0.2em] text-foreground">
-          #{activeIndex + 1}
-        </h3>
-        <p className="text-sm font-medium text-primary">{schemes[activeIndex]}</p>
+        <div className="flex items-baseline gap-3">
+          <span className="font-bebas text-4xl tracking-[0.14em] text-primary drop-shadow-[0_4px_12px_hsl(var(--primary)/0.35)]">#{activeIndex + 1}</span>
+          <h3 className="font-bebas text-3xl tracking-[0.16em] text-foreground drop-shadow-[0_4px_12px_hsl(var(--foreground)/0.2)]">{schemes[activeIndex]}</h3>
+        </div>
         <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
           <AnimatePresence mode="wait">
             <motion.div key={`${schemes[activeIndex]}-${activeIndex}`} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
