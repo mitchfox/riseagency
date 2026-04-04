@@ -755,8 +755,9 @@ const ClubNetworkManagement = () => {
   }, [countryData, searchQuery]);
 
   const countryContacts = useMemo(() => {
-    const baseContacts = selectedCountry?.contacts || [];
-    let result = [...baseContacts];
+    // Use cached contacts (real data), filter out placeholder entries
+    const cached = selectedCountryKey ? (countryContactsCache.get(selectedCountryKey) || []) : [];
+    let result = [...cached];
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -779,7 +780,7 @@ const ClubNetworkManagement = () => {
     });
 
     return result;
-  }, [roleFilter, searchQuery, selectedCountry, sortDir, sortField]);
+  }, [roleFilter, searchQuery, selectedCountryKey, countryContactsCache, sortDir, sortField]);
 
   const roleOptions = useMemo(() => {
     const roleMap = new Map<string, string[]>();
