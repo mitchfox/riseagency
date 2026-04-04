@@ -189,13 +189,15 @@ type ImportProgressState = {
 };
 
 const panelStyle = {
-  background: 'linear-gradient(145deg, hsl(var(--card) / 0.92), hsl(var(--muted) / 0.42))',
-  boxShadow: '0 24px 70px -36px hsl(var(--foreground) / 0.55), inset 0 1px 0 hsl(var(--background) / 0.26)',
+  background: 'linear-gradient(145deg, hsl(var(--card) / 0.88), hsl(var(--muted) / 0.38))',
+  boxShadow: '0 24px 70px -36px hsl(var(--foreground) / 0.55), inset 0 1px 0 hsl(var(--background) / 0.32), inset 0 -1px 0 hsl(var(--foreground) / 0.04)',
+  backdropFilter: 'blur(40px) saturate(1.4)',
 };
 
 const softPanelStyle = {
-  background: 'linear-gradient(145deg, hsl(var(--card) / 0.84), hsl(var(--muted) / 0.3))',
-  boxShadow: '0 20px 54px -34px hsl(var(--foreground) / 0.38), inset 0 1px 0 hsl(var(--background) / 0.18)',
+  background: 'linear-gradient(145deg, hsl(var(--card) / 0.78), hsl(var(--muted) / 0.26))',
+  boxShadow: '0 20px 54px -34px hsl(var(--foreground) / 0.38), inset 0 1px 0 hsl(var(--background) / 0.22), inset 0 -1px 0 hsl(var(--foreground) / 0.03)',
+  backdropFilter: 'blur(32px) saturate(1.3)',
 };
 
 const normaliseText = (value: string | null | undefined) => (value || '').trim();
