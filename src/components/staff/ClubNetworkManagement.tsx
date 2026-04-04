@@ -222,6 +222,15 @@ const parseDelimitedList = (value: string | null | undefined) => {
     .filter(Boolean);
 };
 
+const createAssociationInitials = (country: string) =>
+  country
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 3)
+    .toUpperCase();
+
 const normalisePhone = (value: string | null | undefined) => (value || '').replace(/\D+/g, '');
 
 const sanitiseImportedContact = (contact: any): ImportCandidate => ({
