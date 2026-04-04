@@ -72,7 +72,7 @@ export const VisibilityStatusButton = ({
   const config = STATUS_CONFIG[value];
   const Icon = config.icon;
 
-  const isDraft = value === "draft";
+  const isDraft = value === "draft" || value === "clipped";
   const readyDate = estimatedReadyAt ? new Date(estimatedReadyAt) : undefined;
   const readyTime = readyDate ? format(readyDate, "HH:mm") : "";
 
