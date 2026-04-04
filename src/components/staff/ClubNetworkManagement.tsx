@@ -1713,7 +1713,7 @@ const ClubNetworkManagement = () => {
   const CountryCard = ({ country }: { country: CountryEntry }) => (
     <ScrollRevealItem>
       <motion.button
-        whileHover={{ y: -4, scale: 1.01 }}
+        whileHover={{ y: -6, scale: 1.015 }}
         whileTap={{ scale: 0.985 }}
         onClick={() => {
           setSelectedCountryKey(country.key);
@@ -1723,23 +1723,20 @@ const ClubNetworkManagement = () => {
           setContactPage(0);
           fetchCountryContacts(country.key);
         }}
-        className="group relative min-h-[15rem] w-full overflow-hidden rounded-[1.9rem] border border-border/50 text-left backdrop-blur-2xl transition-all duration-300 hover:border-primary/35"
-        style={panelStyle}
+        className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
       >
-        <img src={getCountryFlagUrl(country.name)} alt={country.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-background/5" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_38%)] opacity-80" />
+        <img src={getCountryFlagUrl(country.name)} alt={country.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.06]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_40%)] opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
-        <div className="relative z-[1] flex h-full items-center justify-center p-5 text-center">
-          <div className="w-full max-w-[16rem] space-y-3 rounded-[1.35rem] border border-border/40 bg-background/25 p-4 backdrop-blur-xl">
-            <ScrollReveal>
-              <h3 className="font-bebas text-[1.15rem] tracking-[0.22em] text-foreground">{country.name.toUpperCase()}</h3>
-            </ScrollReveal>
-            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-border/60 bg-background/45 px-3.5 py-1.5 text-sm font-medium text-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-              {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
-            </div>
+        <div className="relative z-[1] flex h-full flex-col items-center justify-end p-5 pb-6 text-center">
+          <ScrollReveal>
+            <h3 className="font-bebas text-[1.3rem] tracking-[0.24em] text-white drop-shadow-lg">{country.name.toUpperCase()}</h3>
+          </ScrollReveal>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-sm font-medium text-white/90 backdrop-blur-md">
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+            {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
           </div>
         </div>
       </motion.button>
