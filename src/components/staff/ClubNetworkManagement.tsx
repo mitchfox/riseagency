@@ -658,6 +658,17 @@ const ClubNetworkManagement = () => {
     return await fetchAllContacts();
   }, [contacts, fetchAllContacts]);
 
+  const refreshNetwork = useCallback(async (reloadAllContacts = false) => {
+    setCountryContactsCache(new Map());
+    setContactPage(0);
+    await fetchCountrySummary();
+    if (reloadAllContacts || activeTab === 'analytics' || activeTab === 'duplicates') {
+      await fetchAllContacts();
+      return;
+    }
+    setContacts([]);
+  }, [activeTab, fetchAllContacts, fetchCountrySummary]);
+
   const fetchProfiles = useCallback(async () => {
     const [countryRes, clubRes, roleRes] = await Promise.all([
       supabase.from('network_country_profiles').select('*'),
@@ -971,6 +982,8 @@ const ClubNetworkManagement = () => {
     return seen.size;
   }, [networkSummaryRows, selectedCountryKey]);
 
+  const totalCountryCount = useMemo(() => countryData.length, [countryData]);
+
   const resetForm = () => {
     setFormData({ name: '', club_name: '', position: '', email: '', phone: '', country: '', city: '', latitude: '', longitude: '', image_url: '', notes: '' });
   };
@@ -1037,7 +1050,7 @@ const ClubNetworkManagement = () => {
     setShowDialog(false);
     setEditingContact(null);
     resetForm();
-    fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+    await refreshNetwork();
   };
 
   const handleDelete = async (id: string) => {
@@ -1045,7 +1058,7 @@ const ClubNetworkManagement = () => {
     const { error } = await supabase.from('club_network_contacts').delete().eq('id', id);
     if (error) { toast.error('Failed to delete contact'); return; }
     toast.success('Contact deleted');
-    fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+    await refreshNetwork();
   };
 
   const handleShareContact = (contact: Contact) => {
@@ -1185,7 +1198,7 @@ const ClubNetworkManagement = () => {
       setImportText('');
       setParsedContacts([]);
       setSelectedImportIndices(new Set());
-      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+      await refreshNetwork();
       setImportProgress({ active: true, processed: payload.length, total: payload.length, inserted, updated, skipped, completed: true, message: 'Import complete' });
     } catch (error: any) {
       setImportProgress((current) => ({ ...current, active: false, completed: false, message: '' }));
@@ -1281,7 +1294,7 @@ const ClubNetworkManagement = () => {
       const applied = await onSuccess(updates);
       if (applied === 0) toast.info(emptyMessage);
       else toast.success(`${successLabel} ${applied} record${applied === 1 ? '' : 's'}`);
-      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+      await refreshNetwork(true);
     } catch (error) {
       toast.error('AI update failed');
     } finally {
@@ -1290,7 +1303,8 @@ const ClubNetworkManagement = () => {
   };
 
   const handleAiAutoTag = async () => {
-    const candidates = contacts.filter((contact) => !contact.country || !contact.position);
+    const allContacts = await ensureAllContactsLoaded();
+    const candidates = allContacts.filter((contact) => !contact.country || !contact.position);
     if (candidates.length === 0) { toast.info('Country and role tags are already filled'); return; }
 
     let totalApplied = 0;
@@ -1321,7 +1335,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No new country or role tags were suggested');
       else toast.success(`AI tagged ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+      await refreshNetwork(true);
     } catch {
       toast.error('AI tagging failed');
     } finally {
@@ -1330,13 +1344,14 @@ const ClubNetworkManagement = () => {
   };
 
   const handleAiOrganise = async () => {
+    const allContacts = await ensureAllContactsLoaded();
     let totalApplied = 0;
     const batchSize = 50;
     setAiAction('organise');
 
     try {
-      for (let i = 0; i < contacts.length; i += batchSize) {
-        const batch = contacts.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, city: c.city, notes: c.notes }));
+      for (let i = 0; i < allContacts.length; i += batchSize) {
+        const batch = allContacts.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, city: c.city, notes: c.notes }));
         const prompt = `You are a data quality expert for a football contacts database. Review each contact for misplaced information. Common issues: club names appearing in the person's name field, role/position text in the wrong field, country showing nationality instead of where they work, city and country swapped. Return a JSON array with objects containing "id" and ONLY the corrected fields. Do not return contacts that need no changes.\n\nContacts:\n${JSON.stringify(batch)}`;
 
         const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
@@ -1359,7 +1374,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No field changes were suggested');
       else toast.success(`AI organised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+      await refreshNetwork(true);
     } catch {
       toast.error('AI organise failed');
     } finally {
@@ -1368,7 +1383,8 @@ const ClubNetworkManagement = () => {
   };
 
   const handleAiStandardiseClubs = async () => {
-    const withClubs = contacts.filter((contact) => normaliseText(contact.club_name));
+    const allContacts = await ensureAllContactsLoaded();
+    const withClubs = allContacts.filter((contact) => normaliseText(contact.club_name));
     if (withClubs.length === 0) { toast.info('No contacts with clubs to standardise'); return; }
 
     let totalApplied = 0;
@@ -1396,7 +1412,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No club names needed standardising');
       else toast.success(`AI standardised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+      await refreshNetwork(true);
     } catch {
       toast.error('AI standardise failed');
     } finally {
@@ -1405,11 +1421,12 @@ const ClubNetworkManagement = () => {
   };
 
   const handleAiMapLinks = async () => {
+    const allContacts = await ensureAllContactsLoaded();
     setAiAction('links');
     try {
       let applied = 0;
-      for (const contact of contacts) {
-        const sharedContacts = contacts.filter((candidate) => {
+      for (const contact of allContacts) {
+        const sharedContacts = allContacts.filter((candidate) => {
           if (candidate.id === contact.id) return false;
           const sharedClub = normaliseText(contact.club_name) && normalizeClubName(contact.club_name || '') === normalizeClubName(candidate.club_name || '');
           const sharedRole = normaliseText(contact.position) && normalizeClubName(contact.position || '') === normalizeClubName(candidate.position || '');
@@ -1441,7 +1458,7 @@ const ClubNetworkManagement = () => {
       if (applied === 0) toast.info('No new network links were found');
       else {
         toast.success(`Mapped network links for ${applied} contact${applied === 1 ? '' : 's'}`);
-        fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
+        await refreshNetwork(true);
       }
     } catch {
       toast.error('Failed to map links');
@@ -1813,7 +1830,7 @@ const ClubNetworkManagement = () => {
           setRoleFilter('all');
           setGroupBy('club');
           setContactPage(0);
-          fetchCountryContacts(country.key);
+          fetchCountryContacts(country.key, 0);
         }}
         className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
       >
@@ -1828,10 +1845,30 @@ const ClubNetworkManagement = () => {
           </ScrollReveal>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-sm font-medium text-white/90 backdrop-blur-md">
             <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-            {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
+            {country.count} contact{country.count === 1 ? '' : 's'}
           </div>
         </div>
       </motion.button>
+    </ScrollRevealItem>
+  );
+
+  const RoleLandingCard = ({ role }: { role: RoleEntry }) => (
+    <ScrollRevealItem>
+      <div className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 p-5 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]" style={softPanelStyle}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_40%)] opacity-85" />
+        <div className="relative z-[1] flex h-full flex-col justify-between">
+          <Badge variant="outline" className="w-fit border-primary/40 text-primary">ROLE VIEW</Badge>
+          <div className="space-y-3 text-center">
+            <ScrollReveal>
+              <h3 className="font-bebas text-[1.5rem] tracking-[0.18em] text-foreground drop-shadow-[0_10px_20px_hsl(var(--foreground)/0.18)]">{role.name.toUpperCase()}</h3>
+            </ScrollReveal>
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-sm font-medium text-foreground/90">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              {role.count} contact{role.count === 1 ? '' : 's'}
+            </div>
+          </div>
+        </div>
+      </div>
     </ScrollRevealItem>
   );
 
@@ -1862,7 +1899,7 @@ const ClubNetworkManagement = () => {
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <span>{totalContactCount} contacts</span>
                 <span className="text-border">·</span>
-                <span>{uniqueCountries.length} countries</span>
+                <span>{totalCountryCount} countries</span>
                 <span className="text-border">·</span>
                 <span>{uniqueClubCount} organisations</span>
               </div>
@@ -1876,17 +1913,20 @@ const ClubNetworkManagement = () => {
                 className="w-64"
               />
 
-              <Select value={landingRoleFilter} onValueChange={setLandingRoleFilter}>
-                <SelectTrigger className="w-[12rem] rounded-xl border-border/60 bg-background/45">
-                  <SelectValue placeholder="All roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  {globalRoleOptions.map((role) => (
-                    <SelectItem key={role.key} value={role.key}>{role.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
+                {[
+                  { value: 'country' as const, label: 'Country' },
+                  { value: 'role' as const, label: 'Role' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setLandingView(option.value)}
+                    className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${landingView === option.value ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1933,15 +1973,15 @@ const ClubNetworkManagement = () => {
       <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleImportFileUpload} className="hidden" />
 
       <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.05}>
-        {filteredCountries.map((country) => (
-          <CountryCard key={country.key} country={country} />
-        ))}
+        {landingView === 'country'
+          ? filteredCountries.map((country) => <CountryCard key={country.key} country={country} />)
+          : filteredLandingRoles.map((role) => <RoleLandingCard key={role.key} role={role} />)}
       </ScrollRevealContainer>
 
-      {filteredCountries.length === 0 && (
+      {((landingView === 'country' && filteredCountries.length === 0) || (landingView === 'role' && filteredLandingRoles.length === 0)) && (
         <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
           <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
-          <p className="font-medium text-foreground">No countries found</p>
+          <p className="font-medium text-foreground">No results found</p>
         </div>
       )}
     </div>
@@ -1978,7 +2018,7 @@ const ClubNetworkManagement = () => {
                     <h2 className="font-bebas text-3xl tracking-[0.34em] text-foreground">{(selectedCountry?.name || '').toUpperCase()}</h2>
                   </ScrollReveal>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {countryContacts.length} contacts · {clubGroups.length} organisations · {roleGroups.length} roles
+                    {selectedCountry?.count || 0} contacts · {selectedCountryOrganisationCount} organisations · {selectedCountryRoleCount} roles
                   </p>
                 </div>
               </div>
@@ -2037,16 +2077,11 @@ const ClubNetworkManagement = () => {
             {/* Style & Background (wider) + Schemes (thinner) */}
             <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
               <InfoBlock title="Style & Background">
-                <ScrollReveal>
-                  <p className="text-sm leading-relaxed text-foreground/85">
-                    {selectedCountry?.profile?.playing_style || 'Add the national style, background and league context here.'}
-                  </p>
-                </ScrollReveal>
-                {selectedCountry?.profile?.notes && (
-                  <ScrollReveal delay={0.1}>
-                    <p className="text-xs leading-relaxed text-muted-foreground mt-2">{selectedCountry.profile.notes}</p>
+                {buildCountryBackgroundParagraphs(selectedCountry?.name || 'This country', selectedCountry?.profile || null).map((paragraph, index) => (
+                  <ScrollReveal key={`${selectedCountry?.key || 'country'}-bg-${index}`} delay={index * 0.05}>
+                    <p className="text-sm leading-relaxed text-foreground/85">{paragraph}</p>
                   </ScrollReveal>
-                )}
+                ))}
               </InfoBlock>
 
               <InfoBlock title="Schemes">
@@ -2414,7 +2449,7 @@ const ClubNetworkManagement = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="contacts" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
@@ -2447,7 +2482,7 @@ const ClubNetworkManagement = () => {
         </TabsContent>
 
         <TabsContent value="duplicates" className="mt-6">
-          <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await fetchAllContacts(); fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map()); }} />
+          <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
