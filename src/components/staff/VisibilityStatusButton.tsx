@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock } from "lucide-react";
+import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock, Film } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PERCalculatorDialog } from "./PERCalculatorDialog";
