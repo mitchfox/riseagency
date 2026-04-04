@@ -1747,10 +1747,12 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                 <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
                   (analysis as any).visibility_status === "draft"
                     ? "bg-yellow-500/20 text-yellow-400"
+                    : (analysis as any).visibility_status === "clipped"
+                    ? "bg-blue-500/20 text-blue-400"
                     : "bg-red-500/20 text-red-400"
                 }`}>
-                  {(analysis as any).visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
-                  {(analysis as any).visibility_status === "draft" ? "Draft" : "Hidden"}
+                  {(analysis as any).visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : (analysis as any).visibility_status === "clipped" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                  {(analysis as any).visibility_status === "draft" ? "Draft" : (analysis as any).visibility_status === "clipped" ? "Clipped" : "Hidden"}
                 </span>
               )}
             </div>
