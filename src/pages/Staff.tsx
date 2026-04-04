@@ -590,7 +590,7 @@ const Staff = () => {
         results.push({ id: campaign.id, title: campaign.title, description: campaign.status, section: 'Marketing', sectionId: 'marketing', type: 'campaign' });
       });
       contactsRes.data?.forEach(contact => {
-        results.push({ id: contact.id, title: contact.name, description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`, section: 'Club Network', sectionId: 'clubnetwork', type: 'contact' });
+        results.push({ id: contact.id, title: contact.name, description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`, section: 'Network', sectionId: 'clubnetwork', type: 'contact' });
       });
       legalDocsRes.data?.forEach(doc => {
         results.push({ id: doc.id, title: doc.title, description: doc.category, section: 'Legal', sectionId: 'legal', type: 'legal_doc' });
@@ -820,7 +820,7 @@ const Staff = () => {
           icon: Network,
           locked: false,
           sections: [
-            { id: 'clubnetwork', title: 'Club Network', icon: Network },
+{ id: 'clubnetwork', title: 'Network', icon: Network },
             { id: 'playerlist', title: 'Player List', icon: Users },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
@@ -931,7 +931,7 @@ const Staff = () => {
         locked: false,
         sections: [
           { id: '_group_network', title: 'Network', isGroupLabel: true },
-          { id: 'clubnetwork', title: 'Club Network', icon: Network },
+          { id: 'clubnetwork', title: 'Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
           { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
