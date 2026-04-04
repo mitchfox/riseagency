@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PERCalculatorDialog } from "./PERCalculatorDialog";
 
-export type VisibilityStatus = "draft" | "hidden" | "live";
+export type VisibilityStatus = "draft" | "hidden" | "live" | "clipped";
 
 interface VisibilityStatusButtonProps {
   value: VisibilityStatus;
@@ -32,6 +32,12 @@ const STATUS_CONFIG: Record<VisibilityStatus, { label: string; icon: typeof File
     icon: FileEdit,
     description: "Player sees a blurred preview, not legible",
     className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  },
+  clipped: {
+    label: "Clipped",
+    icon: Film,
+    description: "R90 shows ? but clicking reveals clips in order",
+    className: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   },
   hidden: {
     label: "Hidden",
