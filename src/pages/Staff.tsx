@@ -820,7 +820,7 @@ const Staff = () => {
           icon: Network,
           locked: false,
           sections: [
-            { id: 'clubnetwork', title: 'Club Network', icon: Network },
+{ id: 'clubnetwork', title: 'Network', icon: Network },
             { id: 'playerlist', title: 'Player List', icon: Users },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
