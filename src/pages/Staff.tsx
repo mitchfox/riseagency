@@ -188,6 +188,11 @@ const Staff = () => {
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading } = useRolePermissions(currentRole);
   const permissionManagedRole = !!currentRole && !isAdmin && currentRole !== 'marketeer' && currentRole !== 'staff';
+  const canManageSection = (sectionId: string) => {
+    if (isAdmin) return true;
+    if (!permissionManagedRole) return true;
+    return canEdit(sectionId);
+  };
 
   const applyRoleVisibility = (categoryList: any[]) => {
     if (!permissionManagedRole || permissionsLoading) {
