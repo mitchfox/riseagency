@@ -1072,6 +1072,12 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
               <SportscodeActionTypes />
             ) : key === 'action_scores' ? (
               <ActionScoresManagement />
+            ) : key === 'network_countries' ? (
+              <NetworkProfileManager type="country" />
+            ) : key === 'network_clubs' ? (
+              <NetworkProfileManager type="club" />
+            ) : key === 'network_roles' ? (
+              <NetworkProfileManager type="role" />
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
