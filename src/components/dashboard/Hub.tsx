@@ -946,11 +946,22 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           const isDraft = String(analysis.visibility_status || "").toLowerCase() === "draft";
                           const isClipped = String(analysis.visibility_status || "").toLowerCase() === "clipped";
                           const effectiveR90 = getEffectiveR90(analysis);
-                          if (isDraft || isClipped) {
+                          if (isDraft) {
                             return (
                               <div className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600">
                                 R90: ?
                               </div>
+                            );
+                          }
+                          if (isClipped) {
+                            return (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setClippedAnalysis(analysis); }}
+                                className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600 hover:border-primary/60 transition-colors cursor-pointer"
+                                title="Click to view clips"
+                              >
+                                R90: ?
+                              </button>
                             );
                           }
                           return effectiveR90 != null ? (
