@@ -1759,7 +1759,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
             </p>
-            {(analysis.visibility_status === "draft" || analysis.visibility_status === "hidden" || analysis.visibility_status === "clipped") && analysis.estimated_ready_at && (
+            {["draft", "hidden", "clipped"].includes(analysis.visibility_status || "") && analysis.estimated_ready_at && (
               <p className="text-xs text-primary mt-1">
                 Expected by {new Date(analysis.estimated_ready_at).toLocaleString("en-GB", {
                   day: "2-digit",
