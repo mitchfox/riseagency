@@ -1694,7 +1694,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
               </Select>
             </div>
 
-            {(formData.visibility_status === "draft" || formData.visibility_status === "hidden") && (
+            {(formData.visibility_status === "draft" || formData.visibility_status === "hidden" || formData.visibility_status === "clipped") && (
               <div className="space-y-1">
                 <Label htmlFor="analysis-estimated-ready" className="text-xs text-muted-foreground">
                   Expected ready time (shown to player)
