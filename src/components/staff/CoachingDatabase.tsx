@@ -28,6 +28,7 @@ import { ComparisonPlayerData } from "./ComparisonPlayerData";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { SportscodeActionTypes } from "./SportscodeActionTypes";
 import { ActionScoresManagement } from "./ActionScoresManagement";
+import { NetworkProfileManager } from "./NetworkProfileManager";
 
 
 type TableType = 'coaching_sessions' | 'coaching_programmes' | 'coaching_drills' | 'coaching_exercises' | 'coaching_analysis' | 'coaching_concepts' | 'psychological_sessions' | 'coaching_aphorisms' | 'r90_ratings' | 'tactical_schemes' | 'performance_statistics' | 'scheme_view' | 'positional_guides' | 'club_ratings' | 'form_grade_configs' | 'comparison_player_data' | 'performance_data' | 'sportscode' | 'action_scores' | 'network_countries' | 'network_clubs' | 'network_roles';
