@@ -134,7 +134,7 @@ export const NetworkProfileManager = ({ type }: NetworkProfileManagerProps) => {
     } else {
       const { error } = await supabase
         .from(tableName)
-        .insert(data);
+        .insert([data]);
 
       if (error) {
         if (error.code === '23505') {
