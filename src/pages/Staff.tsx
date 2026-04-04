@@ -590,7 +590,7 @@ const Staff = () => {
         results.push({ id: campaign.id, title: campaign.title, description: campaign.status, section: 'Marketing', sectionId: 'marketing', type: 'campaign' });
       });
       contactsRes.data?.forEach(contact => {
-        results.push({ id: contact.id, title: contact.name, description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`, section: 'Club Network', sectionId: 'clubnetwork', type: 'contact' });
+        results.push({ id: contact.id, title: contact.name, description: `${contact.position || ''}${contact.club_name ? ` at ${contact.club_name}` : ''}`, section: 'Network', sectionId: 'clubnetwork', type: 'contact' });
       });
       legalDocsRes.data?.forEach(doc => {
         results.push({ id: doc.id, title: doc.title, description: doc.category, section: 'Legal', sectionId: 'legal', type: 'legal_doc' });
