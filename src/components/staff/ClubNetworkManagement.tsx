@@ -2053,17 +2053,73 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
       <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleImportFileUpload} className="hidden" />
 
-      <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.05}>
-        {landingView === 'country'
-          ? filteredCountries.map((country) => <CountryCard key={country.key} country={country} />)
-          : filteredLandingRoles.map((role) => <RoleLandingCard key={role.key} role={role} />)}
-      </ScrollRevealContainer>
-
-      {((landingView === 'country' && filteredCountries.length === 0) || (landingView === 'role' && filteredLandingRoles.length === 0)) && (
-        <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
-          <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
-          <p className="font-medium text-foreground">No results found</p>
+      {landingView === 'country' ? (
+        <div className="space-y-4">
+          {(searchQuery.trim() ? filteredRegions : regionData).map((region) => {
+            const isExpanded = expandedRegion === region.name || !!searchQuery.trim();
+            return (
+              <ScrollReveal key={region.name}>
+                <div className="relative overflow-hidden rounded-[1.8rem] border border-border/50 backdrop-blur-2xl" style={softPanelStyle}>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_40%)] opacity-80" />
+                  <button
+                    onClick={() => setExpandedRegion(isExpanded && !searchQuery.trim() ? null : region.name)}
+                    className="relative z-[1] flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-primary/5"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
+                        <Globe className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <ScrollReveal>
+                          <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{region.name.toUpperCase()}</h3>
+                        </ScrollReveal>
+                        <p className="text-sm text-muted-foreground">{region.countries.length} countr{region.countries.length === 1 ? 'y' : 'ies'} · {region.totalContacts} contacts</p>
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 text-muted-foreground transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="relative z-[1] border-t border-border/30 p-4">
+                          <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.04}>
+                            {region.countries.map((country) => (
+                              <CountryCard key={country.key} country={country} />
+                            ))}
+                          </ScrollRevealContainer>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </ScrollReveal>
+            );
+          })}
+          {filteredRegions.length === 0 && (
+            <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+              <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
+              <p className="font-medium text-foreground">No results found</p>
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.05}>
+            {filteredLandingRoles.map((role) => <RoleLandingCard key={role.key} role={role} />)}
+          </ScrollRevealContainer>
+          {filteredLandingRoles.length === 0 && (
+            <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+              <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
+              <p className="font-medium text-foreground">No results found</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
