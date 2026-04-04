@@ -474,17 +474,29 @@ const ClubNetworkManagement = () => {
   });
 
   const fetchContacts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('club_network_contacts')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let allContacts: Contact[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (error) {
-      toast.error('Failed to fetch contacts');
-      return;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('club_network_contacts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        toast.error('Failed to fetch contacts');
+        return;
+      }
+
+      allContacts = allContacts.concat(data || []);
+      hasMore = (data?.length || 0) === pageSize;
+      from += pageSize;
     }
 
-    setContacts(data || []);
+    setContacts(allContacts);
   }, []);
 
   const fetchProfiles = useCallback(async () => {
