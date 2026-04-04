@@ -1717,6 +1717,8 @@ const ClubNetworkManagement = () => {
           setSearchQuery('');
           setRoleFilter('all');
           setGroupBy('club');
+          setContactPage(0);
+          fetchCountryContacts(country.key);
         }}
         className="group relative min-h-[15rem] w-full overflow-hidden rounded-[1.9rem] border border-border/50 text-left backdrop-blur-2xl transition-all duration-300 hover:border-primary/35"
         style={panelStyle}
