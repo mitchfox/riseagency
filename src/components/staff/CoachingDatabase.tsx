@@ -394,7 +394,7 @@ export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchItems = async () => {
     // Skip fetching for tabs that don't use the database list view
-    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores') {
+    if (activeTab === 'scheme_view' || activeTab === 'tactical_schemes' || activeTab === 'positional_guides' || activeTab === 'club_ratings' || activeTab === 'comparison_player_data' || activeTab === 'sportscode' || activeTab === 'action_scores' || activeTab === 'network_countries' || activeTab === 'network_clubs' || activeTab === 'network_roles') {
       setItems([]);
       setTotalItems(0);
       setLoading(false);
