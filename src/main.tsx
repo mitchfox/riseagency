@@ -192,29 +192,31 @@ const removeSplash = () => {
   const splash = document.getElementById('loading-splash');
   if (splash) {
     splash.classList.add('hidden');
-    setTimeout(() => splash.remove(), 4000);
+    setTimeout(() => splash.remove(), 400);
   }
 };
 
 setTimeout(() => {
   const splash = document.getElementById('loading-splash');
   const currentPath = window.location.pathname;
-  
-  // Only show splash for /portal and /staff routes (exact match or starts with)
   const shouldShowSplash = currentPath === '/portal' || currentPath.startsWith('/portal/') || 
                            currentPath === '/staff' || currentPath.startsWith('/staff/');
-  
+
+  // In Lovable preview, never leave the splash covering the app
+  if (isLovablePreviewEnv) {
+    requestAnimationFrame(() => requestAnimationFrame(removeSplash));
+    setTimeout(removeSplash, 250);
+    return;
+  }
+
   if (splash && !shouldShowSplash) {
-    // Immediately hide splash on other pages
     splash.classList.add('hidden');
     setTimeout(() => splash.remove(), 500);
   } else if (splash && shouldShowSplash) {
-    // For portal/staff, show for 1 second then fade out over 4 seconds
     setTimeout(() => {
       removeSplash();
     }, 1000);
-    
-    // Fallback: Always remove splash after 4 seconds max (reduced from 6 for faster recovery)
+
     setTimeout(() => {
       removeSplash();
     }, 4000);
