@@ -70,6 +70,9 @@ import { QuickMessageSection } from './QuickMessageSection';
 import MessagePathways from './MessagePathways';
 import { FormationDisplay } from '@/components/FormationDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NetworkAnalytics, computeContactStrength, strengthColor, strengthBg } from './NetworkAnalytics';
+import { NetworkDuplicateDetector } from './NetworkDuplicateDetector';
+import { NetworkActivityTimeline } from './NetworkActivityTimeline';
 
 interface Contact {
   id: string;
