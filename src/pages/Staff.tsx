@@ -643,11 +643,9 @@ const Staff = () => {
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', authData.user.id)
-        .in('role', ['staff', 'admin', 'marketeer']);
+        .eq('user_id', authData.user.id);
 
       if (roleError || !roleData || roleData.length === 0) {
-        // Sign out if no staff role
         await supabase.auth.signOut();
         toast.error('You do not have staff permissions to access this page.');
         setLoading(false);
@@ -670,11 +668,14 @@ const Staff = () => {
       sessionStorage.setItem("staff_user_id", authData.user.id);
       
       // Set user state
+      const hasAdmin = roleData.some(row => row.role === 'admin');
       const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
       const hasMarketeer = roleData.some(row => row.role === 'marketeer');
-      setIsStaff(hasStaffOrAdmin || hasMarketeer);
-      setIsAdmin(roleData.some(row => row.role === 'admin'));
+      setIsStaff(true);
+      setIsAdmin(hasAdmin);
       setIsMarketeer(hasMarketeer);
+      const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+      setCurrentRole(primaryRole);
       setUser(authData.user);
       
       toast.success("Login successful");
