@@ -2473,6 +2473,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
+              {!isTrustNetwork && (
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => { setViewingContact(null); openEditDialog(contact); }}>
                   <Pencil className="h-4 w-4 mr-2" />Edit
@@ -2481,6 +2482,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                   <Share2 className="h-4 w-4 mr-2" />Share
                 </Button>
               </div>
+              )}
             </div>
           </div>
         </DialogContent>
