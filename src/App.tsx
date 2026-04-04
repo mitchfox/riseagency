@@ -69,6 +69,7 @@ const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+const SharedContact = lazy(() => import("./pages/SharedContact"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -180,6 +181,7 @@ const App = () => {
                       <Route path="/sign/:token" element={<SignContract />} />
                       <Route path="/risewithus" element={<RiseWithUs />} />
                       <Route path="/risewithus/:slug" element={<RiseWithUs />} />
+                      <Route path="/contact/:contactId" element={<SharedContact />} />
                       <Route path="/diagnostics" element={<Diagnostics />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

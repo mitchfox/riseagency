@@ -424,18 +424,18 @@ const Staff = () => {
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
-          .in('role', ['staff', 'admin', 'marketeer']);
+          .eq('user_id', session.user.id);
 
         if (!roleError && roleData && roleData.length > 0) {
+          const hasAdmin = roleData.some(row => row.role === 'admin');
           const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
           const hasMarketeer = roleData.some(row => row.role === 'marketeer');
-          const hasAdmin = roleData.some(row => row.role === 'admin');
-          setIsStaff(hasStaffOrAdmin || hasMarketeer);
+          setIsStaff(true); // Any role grants staff portal access
           setIsAdmin(hasAdmin);
           setIsMarketeer(hasMarketeer);
-          // Set current role for permissions (admin > staff > marketeer)
-          setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
+          // Set current role: admin > staff > marketeer > first available role
+          const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+          setCurrentRole(primaryRole);
           setUser(session.user);
           
           // Store for edge function auth
@@ -475,22 +475,26 @@ const Staff = () => {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .in('role', ['staff', 'admin', 'marketeer']);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error checking staff role:', error);
         setIsStaff(false);
         setIsAdmin(false);
         setIsMarketeer(false);
-      } else {
-        const hasStaffOrAdmin = data?.some(row => row.role === 'staff' || row.role === 'admin') ?? false;
-        const hasMarketeer = data?.some(row => row.role === 'marketeer') ?? false;
-        const hasAdmin = data?.some(row => row.role === 'admin') ?? false;
-        setIsStaff(hasStaffOrAdmin || hasMarketeer);
+      } else if (data && data.length > 0) {
+        const hasAdmin = data.some(row => row.role === 'admin');
+        const hasStaffOrAdmin = data.some(row => row.role === 'staff' || row.role === 'admin');
+        const hasMarketeer = data.some(row => row.role === 'marketeer');
+        setIsStaff(true);
         setIsAdmin(hasAdmin);
         setIsMarketeer(hasMarketeer);
-        setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
+        const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : data[0].role;
+        setCurrentRole(primaryRole);
+      } else {
+        setIsStaff(false);
+        setIsAdmin(false);
+        setIsMarketeer(false);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -639,11 +643,9 @@ const Staff = () => {
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', authData.user.id)
-        .in('role', ['staff', 'admin', 'marketeer']);
+        .eq('user_id', authData.user.id);
 
       if (roleError || !roleData || roleData.length === 0) {
-        // Sign out if no staff role
         await supabase.auth.signOut();
         toast.error('You do not have staff permissions to access this page.');
         setLoading(false);
@@ -666,11 +668,14 @@ const Staff = () => {
       sessionStorage.setItem("staff_user_id", authData.user.id);
       
       // Set user state
+      const hasAdmin = roleData.some(row => row.role === 'admin');
       const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
       const hasMarketeer = roleData.some(row => row.role === 'marketeer');
-      setIsStaff(hasStaffOrAdmin || hasMarketeer);
-      setIsAdmin(roleData.some(row => row.role === 'admin'));
+      setIsStaff(true);
+      setIsAdmin(hasAdmin);
       setIsMarketeer(hasMarketeer);
+      const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+      setCurrentRole(primaryRole);
       setUser(authData.user);
       
       toast.success("Login successful");
