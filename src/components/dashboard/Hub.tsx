@@ -170,6 +170,34 @@ interface HubProps {
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
   const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
+  const [clippedClips, setClippedClips] = React.useState<any[]>([]);
+
+  const handleClippedClick = React.useCallback(async (analysis: PlayerAnalysis) => {
+    try {
+      const { data } = await supabase
+        .from('performance_report_actions')
+        .select('id, action_type, video_url, start_time, end_time, display_order')
+        .eq('report_id', analysis.id)
+        .not('video_url', 'is', null)
+        .order('display_order', { ascending: true });
+
+      const clips = (data || []).map((a: any) => ({
+        action_type: a.action_type,
+        video_url: a.video_url,
+        start_time: a.start_time,
+        end_time: a.end_time,
+      }));
+
+      if (clips.length === 0) {
+        return;
+      }
+
+      setClippedClips(clips);
+      setClippedAnalysis(analysis);
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
     const isDraft = String(a.visibility_status || "").toLowerCase() === "draft";
