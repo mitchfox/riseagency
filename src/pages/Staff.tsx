@@ -424,18 +424,18 @@ const Staff = () => {
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
-          .in('role', ['staff', 'admin', 'marketeer']);
+          .eq('user_id', session.user.id);
 
         if (!roleError && roleData && roleData.length > 0) {
+          const hasAdmin = roleData.some(row => row.role === 'admin');
           const hasStaffOrAdmin = roleData.some(row => row.role === 'staff' || row.role === 'admin');
           const hasMarketeer = roleData.some(row => row.role === 'marketeer');
-          const hasAdmin = roleData.some(row => row.role === 'admin');
-          setIsStaff(hasStaffOrAdmin || hasMarketeer);
+          setIsStaff(true); // Any role grants staff portal access
           setIsAdmin(hasAdmin);
           setIsMarketeer(hasMarketeer);
-          // Set current role for permissions (admin > staff > marketeer)
-          setCurrentRole(hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : 'marketeer');
+          // Set current role: admin > staff > marketeer > first available role
+          const primaryRole = hasAdmin ? 'admin' : hasStaffOrAdmin ? 'staff' : hasMarketeer ? 'marketeer' : roleData[0].role;
+          setCurrentRole(primaryRole);
           setUser(session.user);
           
           // Store for edge function auth
