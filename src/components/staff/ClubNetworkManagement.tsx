@@ -2526,7 +2526,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
                       <p className="relative z-[1] mt-3 text-sm leading-relaxed text-muted-foreground">{group.profile.description}</p>
                     </ScrollReveal>
                   )}
-                  <TemplateQuickCopy templates={group.templates} />
+                  {!isTrustNetwork && <TemplateQuickCopy templates={group.templates} />}
                 </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                   {group.contacts.map((contact) => (
