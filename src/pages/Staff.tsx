@@ -234,6 +234,11 @@ const Staff = () => {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  // Force dark mode on staff portal
+  useEffect(() => {
+    setTheme('dark');
+  }, [setTheme]);
   
   // Memoize notification triggers to prevent infinite re-renders
   const notificationTriggers = useMemo(() => {
