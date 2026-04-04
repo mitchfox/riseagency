@@ -1584,11 +1584,10 @@ const ClubNetworkManagement = () => {
 
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-primary/40 text-primary">
-            #{activeIndex + 1} {schemes[activeIndex]}
-          </Badge>
-        </div>
+        <h3 className="font-bebas text-2xl tracking-[0.2em] text-foreground">
+          #{activeIndex + 1}
+        </h3>
+        <p className="text-sm font-medium text-primary">{schemes[activeIndex]}</p>
         <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
           <AnimatePresence mode="wait">
             <motion.div key={`${schemes[activeIndex]}-${activeIndex}`} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
@@ -1597,9 +1596,9 @@ const ClubNetworkManagement = () => {
           </AnimatePresence>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {schemes.map((scheme, index) => (
+          {schemes.map((_, index) => (
             <button
-              key={scheme}
+              key={index}
               onClick={() => setActiveIndex(index)}
               className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
                 index === activeIndex
@@ -1607,7 +1606,7 @@ const ClubNetworkManagement = () => {
                   : 'border-border/60 bg-background/45 text-muted-foreground hover:text-foreground'
               }`}
             >
-              {scheme}
+              #{index + 1}
             </button>
           ))}
         </div>
