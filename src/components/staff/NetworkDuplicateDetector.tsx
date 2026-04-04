@@ -36,6 +36,7 @@ const normalisePhone = (v: string | null) => (v || '').replace(/\D+/g, '');
 export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh: () => void }> = ({ contacts, onRefresh }) => {
   const [merging, setMerging] = useState<string | null>(null);
   const [mergingAll, setMergingAll] = useState(false);
+  const [scanKey, setScanKey] = useState(0);
   const duplicates = useMemo<DuplicateGroup[]>(() => {
     const groups: DuplicateGroup[] = [];
     const seen = new Set<string>();
@@ -94,7 +95,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     });
 
     return groups;
-  }, [contacts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contacts, scanKey]);
 
   const handleMerge = async (group: DuplicateGroup) => {
     if (group.contacts.length < 2) return;
@@ -144,7 +146,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
       if (deleteError) throw deleteError;
 
       toast.success(`Merged ${group.contacts.length} contacts into ${primary.name}`);
-      onRefresh();
+      await onRefresh();
+      setScanKey((k) => k + 1);
     } catch (err: any) {
       toast.error(`Merge failed: ${err?.message || 'Unknown error'}`);
     } finally {
@@ -196,7 +199,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     }
     toast.success(`Merged ${merged} duplicate groups`);
     setMergingAll(false);
-    onRefresh();
+    await onRefresh();
+    setScanKey((k) => k + 1);
   };
 
   return (
@@ -216,15 +220,25 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
                 <p className="text-sm text-muted-foreground">{duplicates.length} potential duplicate group{duplicates.length === 1 ? '' : 's'} found.</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="rounded-xl border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-              disabled={mergingAll}
-              onClick={handleMergeAll}
-            >
-              {mergingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Merge className="h-4 w-4 mr-2" />}
-              Merge All
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={async () => { await onRefresh(); setScanKey((k) => k + 1); }}
+                disabled={mergingAll}
+              >
+                Rescan
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                disabled={mergingAll}
+                onClick={handleMergeAll}
+              >
+                {mergingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Merge className="h-4 w-4 mr-2" />}
+                Merge All
+              </Button>
+            </div>
           </div>
         </div>
       </ScrollReveal>

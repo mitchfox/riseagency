@@ -507,9 +507,11 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [networkSummaryRows, setNetworkSummaryRows] = useState<NetworkSummaryRow[]>([]);
   const [countrySummary, setCountrySummary] = useState<{ country: string; count: number }[]>([]);
   const [countryContactsCache, setCountryContactsCache] = useState<Map<string, Contact[]>>(new Map());
+  const countryContactsCacheRef = useRef<Map<string, Contact[]>>(new Map());
   const [countryContactsLoading, setCountryContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(0);
   const CONTACTS_PER_PAGE = 9;
+  const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
   const [clubLogos, setClubLogos] = useState<ClubLogo[]>([]);
   const [countryProfiles, setCountryProfiles] = useState<CountryProfile[]>([]);
@@ -597,7 +599,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   const fetchCountryContacts = useCallback(async (countryKey: string, page: number) => {
     const cacheKey = `${countryKey}:${page}`;
-    if (countryContactsCache.has(cacheKey)) return;
+    if (countryContactsCacheRef.current.has(cacheKey)) return;
     setCountryContactsLoading(true);
 
     try {
@@ -623,15 +625,14 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
         return;
       }
 
-      setCountryContactsCache((prev) => {
-        const next = new Map(prev);
-        next.set(cacheKey, data || []);
-        return next;
-      });
+      const nextCache = new Map(countryContactsCacheRef.current);
+      nextCache.set(cacheKey, data || []);
+      countryContactsCacheRef.current = nextCache;
+      setCountryContactsCache(nextCache);
     } finally {
       setCountryContactsLoading(false);
     }
-  }, [CONTACTS_PER_PAGE, countryContactsCache]);
+  }, [CONTACTS_PER_PAGE]);
 
   // Full fetch for AI tools / duplicates / analytics that need all contacts
   const fetchAllContacts = useCallback(async () => {
@@ -667,6 +668,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, [contacts, fetchAllContacts]);
 
   const refreshNetwork = useCallback(async (reloadAllContacts = false) => {
+    countryContactsCacheRef.current = new Map();
     setCountryContactsCache(new Map());
     setContactPage(0);
     await fetchCountrySummary();
@@ -797,6 +799,53 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     });
   }, [countrySummary, countryProfiles]);
 
+  const europeanRegions: Record<string, string[]> = useMemo(() => ({
+    'British Isles': ['England', 'Scotland', 'Wales', 'Ireland', 'Northern Ireland'],
+    'Western Europe': ['France', 'Belgium', 'Netherlands', 'Luxembourg', 'Germany', 'Austria', 'Switzerland'],
+    'Scandinavia': ['Sweden', 'Norway', 'Denmark', 'Finland', 'Iceland', 'Faroe Islands'],
+    'Mediterranean': ['Spain', 'Italy', 'Portugal', 'Greece', 'Cyprus', 'Malta', 'Turkey'],
+    'Central Europe': ['Poland', 'Czech Republic', 'Czechia', 'Slovakia', 'Hungary', 'Slovenia', 'Croatia'],
+    'Eastern Europe': ['Romania', 'Bulgaria', 'Serbia', 'Montenegro', 'Bosnia And Herzegovina', 'North Macedonia', 'Albania', 'Kosovo', 'Moldova', 'Ukraine', 'Belarus', 'Russia'],
+    'Baltics': ['Estonia', 'Latvia', 'Lithuania'],
+    'South America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Uruguay', 'Paraguay', 'Peru', 'Ecuador', 'Venezuela', 'Bolivia'],
+    'North America': ['United States', 'Canada', 'Mexico'],
+    'Africa': ['Nigeria', 'Ghana', 'Cameroon', 'Senegal', 'South Africa', 'Egypt', 'Morocco', 'Tunisia', 'Algeria', 'Ivory Coast', 'Mali', 'Guinea', 'Kenya', 'Tanzania', 'Congo', 'DR Congo', 'Zambia', 'Zimbabwe'],
+    'Asia': ['Japan', 'South Korea', 'China', 'India', 'Thailand', 'Indonesia', 'Vietnam', 'Saudi Arabia', 'UAE', 'Qatar', 'Iran', 'Iraq', 'Uzbekistan', 'Kazakhstan', 'Israel', 'Palestine', 'Jordan', 'Australia', 'New Zealand'],
+  }), []);
+
+  const regionData = useMemo(() => {
+    const countryToRegion = new Map<string, string>();
+    Object.entries(europeanRegions).forEach(([region, countries]) => {
+      countries.forEach((c) => countryToRegion.set(c.toLowerCase(), region));
+    });
+
+    const regionMap = new Map<string, CountryEntry[]>();
+    countryData.forEach((country) => {
+      if (country.key === 'uncategorised') {
+        const list = regionMap.get('Other') || [];
+        list.push(country);
+        regionMap.set('Other', list);
+        return;
+      }
+      const region = countryToRegion.get(country.name.toLowerCase()) || 'Other';
+      const list = regionMap.get(region) || [];
+      list.push(country);
+      regionMap.set(region, list);
+    });
+
+    return [...regionMap.entries()]
+      .map(([name, countries]) => ({
+        name,
+        countries,
+        totalContacts: countries.reduce((sum, c) => sum + c.count, 0),
+      }))
+      .sort((a, b) => {
+        if (a.name === 'Other') return 1;
+        if (b.name === 'Other') return -1;
+        return b.totalContacts - a.totalContacts;
+      });
+  }, [countryData, europeanRegions]);
+
   const landingRoleEntries = useMemo<RoleEntry[]>(() => {
     const roleMap = new Map<string, string[]>();
     const countMap = new Map<string, number>();
@@ -839,6 +888,17 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
         return country.name.toLowerCase().includes(query);
       });
   }, [countryData, searchQuery]);
+
+  const filteredRegions = useMemo(() => {
+    if (!searchQuery.trim()) return regionData;
+    const query = searchQuery.toLowerCase();
+    return regionData
+      .map((region) => ({
+        ...region,
+        countries: region.countries.filter((c) => c.name.toLowerCase().includes(query)),
+      }))
+      .filter((region) => region.countries.length > 0);
+  }, [regionData, searchQuery]);
 
   const filteredLandingRoles = useMemo(() => {
     const query = searchQuery.toLowerCase();
@@ -1993,17 +2053,73 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
       <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleImportFileUpload} className="hidden" />
 
-      <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.05}>
-        {landingView === 'country'
-          ? filteredCountries.map((country) => <CountryCard key={country.key} country={country} />)
-          : filteredLandingRoles.map((role) => <RoleLandingCard key={role.key} role={role} />)}
-      </ScrollRevealContainer>
-
-      {((landingView === 'country' && filteredCountries.length === 0) || (landingView === 'role' && filteredLandingRoles.length === 0)) && (
-        <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
-          <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
-          <p className="font-medium text-foreground">No results found</p>
+      {landingView === 'country' ? (
+        <div className="space-y-4">
+          {(searchQuery.trim() ? filteredRegions : regionData).map((region) => {
+            const isExpanded = expandedRegion === region.name || !!searchQuery.trim();
+            return (
+              <ScrollReveal key={region.name}>
+                <div className="relative overflow-hidden rounded-[1.8rem] border border-border/50 backdrop-blur-2xl" style={softPanelStyle}>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_40%)] opacity-80" />
+                  <button
+                    onClick={() => setExpandedRegion(isExpanded && !searchQuery.trim() ? null : region.name)}
+                    className="relative z-[1] flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-primary/5"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
+                        <Globe className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <ScrollReveal>
+                          <h3 className="font-bebas text-xl tracking-[0.24em] text-foreground">{region.name.toUpperCase()}</h3>
+                        </ScrollReveal>
+                        <p className="text-sm text-muted-foreground">{region.countries.length} countr{region.countries.length === 1 ? 'y' : 'ies'} · {region.totalContacts} contacts</p>
+                      </div>
+                    </div>
+                    <ChevronRight className={`h-5 w-5 text-muted-foreground transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="relative z-[1] border-t border-border/30 p-4">
+                          <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.04}>
+                            {region.countries.map((country) => (
+                              <CountryCard key={country.key} country={country} />
+                            ))}
+                          </ScrollRevealContainer>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </ScrollReveal>
+            );
+          })}
+          {filteredRegions.length === 0 && (
+            <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+              <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
+              <p className="font-medium text-foreground">No results found</p>
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          <ScrollRevealContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" staggerDelay={0.05}>
+            {filteredLandingRoles.map((role) => <RoleLandingCard key={role.key} role={role} />)}
+          </ScrollRevealContainer>
+          {filteredLandingRoles.length === 0 && (
+            <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+              <Globe className="mx-auto mb-3 h-12 w-12 opacity-50" />
+              <p className="font-medium text-foreground">No results found</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
