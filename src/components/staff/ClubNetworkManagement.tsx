@@ -2193,17 +2193,22 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       {!countryContactsLoading && groupBy === 'flat' && (
         <ScrollReveal>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-            {countryContacts.slice(0, (contactPage + 1) * CONTACTS_PER_PAGE).map((contact) => (
+            {countryContacts.map((contact) => (
               <ContactCard key={contact.id} contact={contact} />
             ))}
           </div>
-          {countryContacts.length > (contactPage + 1) * CONTACTS_PER_PAGE && (
-            <div className="flex justify-center pt-6">
-              <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
-                Show more ({countryContacts.length - (contactPage + 1) * CONTACTS_PER_PAGE} remaining)
-              </Button>
-            </div>
-          )}
+          {(() => {
+            const lastPageContacts = selectedCountryKey ? (countryContactsCache.get(`${selectedCountryKey}:${contactPage}`) || []) : [];
+            const hasMore = lastPageContacts.length === CONTACTS_PER_PAGE;
+            if (!hasMore) return null;
+            return (
+              <div className="flex justify-center pt-6">
+                <Button variant="outline" className="rounded-2xl" onClick={() => setContactPage(p => p + 1)}>
+                  Show more
+                </Button>
+              </div>
+            );
+          })()}
         </ScrollReveal>
       )}
 
