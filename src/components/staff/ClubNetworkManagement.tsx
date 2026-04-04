@@ -668,6 +668,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, [contacts, fetchAllContacts]);
 
   const refreshNetwork = useCallback(async (reloadAllContacts = false) => {
+    countryContactsCacheRef.current = new Map();
     setCountryContactsCache(new Map());
     setContactPage(0);
     await fetchCountrySummary();
