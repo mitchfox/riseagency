@@ -866,14 +866,16 @@ const ClubNetworkManagement = () => {
       .sort((a, b) => b.contacts.length - a.contacts.length || a.name.localeCompare(b.name));
   }, [countryContacts, getRoleProfile, marketingTemplates]);
 
+  const totalContactCount = useMemo(() => countrySummary.reduce((s, e) => s + e.count, 0), [countrySummary]);
   const uniqueClubCount = useMemo(() => {
+    const allCached = [...countryContactsCache.values()].flat();
     const seen = new Set<string>();
-    contacts.forEach((contact) => {
+    allCached.forEach((contact) => {
       const club = normaliseText(contact.club_name);
       if (club) seen.add(normalizeClubName(club));
     });
-    return seen.size;
-  }, [contacts]);
+    return seen.size || countrySummary.length; // fallback to country count if no contacts loaded
+  }, [countryContactsCache, countrySummary]);
 
   const resetForm = () => {
     setFormData({ name: '', club_name: '', position: '', email: '', phone: '', country: '', city: '', latitude: '', longitude: '', image_url: '', notes: '' });
