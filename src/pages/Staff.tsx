@@ -186,7 +186,7 @@ const Staff = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   
   // Role permissions from database
-  const { canView, canEdit, loading: permissionsLoading } = useRolePermissions(currentRole);
+  const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
   const permissionManagedRole = !!currentRole && !isAdmin && currentRole !== 'marketeer' && currentRole !== 'staff';
   const canManageSection = (sectionId: string) => {
     if (isAdmin) return true;
