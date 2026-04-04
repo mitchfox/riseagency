@@ -174,7 +174,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
 
   const handleClippedClick = React.useCallback(async (analysis: PlayerAnalysis) => {
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('performance_report_actions')
         .select('id, action_type, video_url, start_time, end_time, display_order')
         .eq('report_id', analysis.id)
