@@ -341,7 +341,9 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                       <span className="font-bold text-sm" style={{ color: getR90Color(a.r90_score) }}>
                         {a.r90_score.toFixed(2)}
                       </span>
-                    ) : '-'}
+                    ) : (
+                      <span className="font-bold text-sm text-zinc-500">?</span>
+                    )}
                   </TableCell>
                   {currentMetrics.map(m => {
                     const val = getStatValue(a, m.key);
