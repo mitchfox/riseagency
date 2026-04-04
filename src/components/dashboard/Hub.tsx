@@ -171,7 +171,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
     const isDraft = String(a.visibility_status || "").toLowerCase() === "draft";
-    if (isDraft) return null; // Draft reports show "?" not a score
+    const isClipped = String(a.visibility_status || "").toLowerCase() === "clipped";
+    if (isDraft || isClipped) return null; // Draft/Clipped reports show "?" not a score
     const isHidden = String(a.visibility_status || "").toLowerCase() === "hidden";
     if (isHidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0) {
       return (a.placeholder_raw_score / a.placeholder_minutes!) * 90;
