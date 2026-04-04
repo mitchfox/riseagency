@@ -2233,8 +2233,21 @@ const ClubNetworkManagement = () => {
               )}
             </div>
 
+            {/* Pinned note */}
+            {(contact as any).pinned_note && (
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <Pin className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground/85">{(contact as any).pinned_note}</p>
+              </div>
+            )}
+
+            {/* Activity timeline */}
+            <div className="pt-2 border-t border-border/30">
+              <NetworkActivityTimeline contactId={contact.id} contactName={contact.name} />
+            </div>
+
             {/* Share URL + actions */}
-            <div className="mt-6 pt-4 border-t border-white/10 space-y-3">
+            <div className="mt-4 pt-4 border-t border-border/30 space-y-3">
               <div className="flex items-center gap-2 rounded-xl bg-muted/30 px-3 py-2">
                 <input
                   readOnly
