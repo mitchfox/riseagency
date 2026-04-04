@@ -700,29 +700,22 @@ const ClubNetworkManagement = () => {
   );
 
   const countryData = useMemo<CountryEntry[]>(() => {
-    const map = new Map<string, { names: string[]; contacts: Contact[] }>();
-
-    contacts.forEach((contact) => {
-      const rawCountry = normaliseText(contact.country);
-      const key = rawCountry ? rawCountry.toLowerCase() : 'uncategorised';
-      const entry = map.get(key) || { names: [], contacts: [] };
-      if (rawCountry) entry.names.push(rawCountry);
-      entry.contacts.push(contact);
-      map.set(key, entry);
+    // Use lightweight summary for landing cards - no full contact data needed
+    return countrySummary.map((entry) => {
+      const key = entry.country.toLowerCase();
+      const displayName = key === 'uncategorised' ? 'Uncategorised' : toTitleCase(entry.country);
+      const profile = countryProfiles.find((item) => item.country_name.trim().toLowerCase() === displayName.trim().toLowerCase()) || null;
+      // Contacts array is a placeholder with correct length for count display
+      // Real contacts are loaded lazily via countryContactsCache
+      const cachedContacts = countryContactsCache.get(key) || [];
+      const placeholderContacts = cachedContacts.length > 0 ? cachedContacts : new Array(entry.count) as Contact[];
+      return { key, name: displayName, contacts: placeholderContacts, profile };
+    }).sort((a, b) => {
+      if (a.key === 'uncategorised') return 1;
+      if (b.key === 'uncategorised') return -1;
+      return b.contacts.length - a.contacts.length;
     });
-
-    return [...map.entries()]
-      .map(([key, entry]) => {
-        const displayName = key === 'uncategorised' ? 'Uncategorised' : choosePreferredLabel(entry.names, toTitleCase(entry.names[0] || key));
-        const profile = countryProfiles.find((item) => item.country_name.trim().toLowerCase() === displayName.trim().toLowerCase()) || null;
-        return { key, name: displayName, contacts: entry.contacts, profile };
-      })
-      .sort((a, b) => {
-        if (a.key === 'uncategorised') return 1;
-        if (b.key === 'uncategorised') return -1;
-        return b.contacts.length - a.contacts.length;
-      });
-  }, [contacts, countryProfiles]);
+  }, [countrySummary, countryProfiles, countryContactsCache]);
 
   const selectedCountry = useMemo(
     () => countryData.find((country) => country.key === selectedCountryKey) || null,
@@ -733,9 +726,12 @@ const ClubNetworkManagement = () => {
 
   const uniqueCountries = countryData.map((country) => country.name);
 
+  // globalRoleOptions only computed when we have full contacts (for AI tools tab)
   const globalRoleOptions = useMemo(() => {
+    // Use cached contacts from all loaded countries
+    const allCached = [...countryContactsCache.values()].flat();
     const roleMap = new Map<string, string[]>();
-    contacts.forEach((contact) => {
+    allCached.forEach((contact) => {
       const role = normaliseText(contact.position);
       if (!role) return;
       const key = normalizeClubName(role);
@@ -747,7 +743,7 @@ const ClubNetworkManagement = () => {
     return [...roleMap.entries()]
       .map(([key, labels]) => ({ key, label: choosePreferredLabel(labels, toTitleCase(labels[0] || key)) }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [contacts]);
+  }, [countryContactsCache]);
 
   const filteredCountries = useMemo(() => {
     const query = searchQuery.toLowerCase();
