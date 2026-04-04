@@ -1121,25 +1121,41 @@ const ClubNetworkManagement = () => {
   };
 
   const handleAiOrganise = async () => {
-    await runAiBulkUpdate(
-      'organise',
-      `Review these contacts for misplaced information, such as club names in the person name, or role text in the wrong field. Return a JSON array with id and only corrected fields. Country must still reflect where they work.\n\n${JSON.stringify(contacts.slice(0, 80))}`,
-      async (updates) => {
-        let applied = 0;
+    let totalApplied = 0;
+    const batchSize = 50;
+    setAiAction('organise');
+
+    try {
+      for (let i = 0; i < contacts.length; i += batchSize) {
+        const batch = contacts.slice(i, i + batchSize).map((c) => ({ id: c.id, name: c.name, club_name: c.club_name, position: c.position, country: c.country, city: c.city, notes: c.notes }));
+        const prompt = `You are a data quality expert for a football contacts database. Review each contact for misplaced information. Common issues: club names appearing in the person's name field, role/position text in the wrong field, country showing nationality instead of where they work, city and country swapped. Return a JSON array with objects containing "id" and ONLY the corrected fields. Do not return contacts that need no changes.\n\nContacts:\n${JSON.stringify(batch)}`;
+
+        const { data, error } = await invokeEdgeFunction('generate-ai-response', { body: { prompt } });
+        if (error) continue;
+        const responseText = data?.response || '';
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) continue;
+
+        const updates = JSON.parse(jsonMatch[0]);
         for (const update of updates) {
           const payload: Record<string, string> = {};
           ['name', 'club_name', 'position', 'country', 'city', 'notes'].forEach((field) => {
             if (update[field]) payload[field] = update[field];
           });
           if (Object.keys(payload).length === 0) continue;
-          const { error } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
-          if (!error) applied += 1;
+          const { error: updateErr } = await supabase.from('club_network_contacts').update(payload).eq('id', update.id);
+          if (!updateErr) totalApplied += 1;
         }
-        return applied;
-      },
-      'No field changes were suggested',
-      'AI organised'
-    );
+      }
+
+      if (totalApplied === 0) toast.info('No field changes were suggested');
+      else toast.success(`AI organised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
+      fetchContacts();
+    } catch {
+      toast.error('AI organise failed');
+    } finally {
+      setAiAction(null);
+    }
   };
 
   const handleAiStandardiseClubs = async () => {
