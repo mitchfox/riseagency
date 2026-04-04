@@ -1473,7 +1473,15 @@ const ClubNetworkManagement = () => {
               </button>
             )}
             <div className="min-w-0 flex-1 pt-0.5">
-              <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
+                {(() => {
+                  const s = computeContactStrength(contact);
+                  return (
+                    <span className={`text-xs font-bold ${strengthColor(s)}`}>{s}%</span>
+                  );
+                })()}
+              </div>
               {contact.position && <p className="mt-1 text-sm text-muted-foreground">{contact.position}</p>}
             </div>
           </div>
