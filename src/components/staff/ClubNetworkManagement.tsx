@@ -28,6 +28,7 @@ import {
   Plus,
   X,
   Upload,
+  Camera,
   Sparkles,
   Globe,
   MapPin,
@@ -59,6 +60,7 @@ import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { invokeEdgeFunction } from '@/lib/edgeFunctionHelper';
 import { normalizeClubName } from '@/lib/clubNameUtils';
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from '@/components/ScrollReveal';
+import { ImageCropDialog } from './ImageCropDialog';
 import { StaffSearchInput } from './StaffSearchInput';
 import { QuickMessageSection } from './QuickMessageSection';
 import MessagePathways from './MessagePathways';
@@ -166,6 +168,17 @@ type ImportCandidate = {
   city: string | null;
   image_url: string | null;
   notes: string | null;
+};
+
+type ImportProgressState = {
+  active: boolean;
+  processed: number;
+  total: number;
+  inserted: number;
+  updated: number;
+  skipped: number;
+  completed: boolean;
+  message: string;
 };
 
 const panelStyle = {
@@ -441,6 +454,7 @@ const ClubNetworkManagement = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [landingRoleFilter, setLandingRoleFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -454,10 +468,13 @@ const ClubNetworkManagement = () => {
   const [showProfileDialog, setShowProfileDialog] = useState<{ type: 'country' | 'club' | 'role'; name: string } | null>(null);
   const [profileEditData, setProfileEditData] = useState<any>({});
   const [selectedCountryKey, setSelectedCountryKey] = useState<string | null>(null);
-  const [schemeIndex, setSchemeIndex] = useState(0);
   const [viewingContact, setViewingContact] = useState<Contact | null>(null);
-  const [importProgress, setImportProgress] = useState({ active: false, processed: 0, total: 0, inserted: 0, updated: 0, skipped: 0 });
+  const [importProgress, setImportProgress] = useState<ImportProgressState>({ active: false, processed: 0, total: 0, inserted: 0, updated: 0, skipped: 0, completed: false, message: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarObjectUrlRef = useRef<string | null>(null);
+  const [avatarUploadTarget, setAvatarUploadTarget] = useState<Contact | null>(null);
+  const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -560,12 +577,6 @@ const ClubNetworkManagement = () => {
     syncOutreachContacts();
   }, [fetchAuxiliaryData, fetchContacts, fetchProfiles, syncOutreachContacts]);
 
-  // Auto-cycle schemes
-  const schemes = useMemo(() => {
-    const country = selectedCountryKey ? undefined : undefined; // computed below
-    return [];
-  }, []);
-
   const clubRatingsIndex = useMemo(
     () => clubRatings.map((rating) => ({ ...rating, norm: normalizeClubName(rating.club_name) })),
     [clubRatings]
@@ -664,34 +675,51 @@ const ClubNetworkManagement = () => {
 
   const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
 
-  useEffect(() => {
-    setSchemeIndex(0);
-  }, [selectedCountryKey]);
-
-  // Auto-cycle schemes every 4 seconds
-  useEffect(() => {
-    if (countrySchemes.length <= 1) return;
-    const interval = setInterval(() => {
-      setSchemeIndex((prev) => (prev + 1) % countrySchemes.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [countrySchemes.length]);
-
   const uniqueCountries = countryData.map((country) => country.name);
 
-  const filteredCountries = useMemo(() => {
-    if (!searchQuery.trim()) return countryData;
-    const query = searchQuery.toLowerCase();
-    return countryData.filter((country) => {
-      if (country.name.toLowerCase().includes(query)) return true;
-      return country.contacts.some((contact) =>
-        [contact.name, contact.club_name || '', contact.position || '', contact.email || '']
-          .join(' ')
-          .toLowerCase()
-          .includes(query)
-      );
+  const globalRoleOptions = useMemo(() => {
+    const roleMap = new Map<string, string[]>();
+    contacts.forEach((contact) => {
+      const role = normaliseText(contact.position);
+      if (!role) return;
+      const key = normalizeClubName(role);
+      const existing = roleMap.get(key) || [];
+      existing.push(role);
+      roleMap.set(key, existing);
     });
-  }, [countryData, searchQuery]);
+
+    return [...roleMap.entries()]
+      .map(([key, labels]) => ({ key, label: choosePreferredLabel(labels, toTitleCase(labels[0] || key)) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [contacts]);
+
+  const filteredCountries = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return countryData
+      .map((country) => {
+        const roleScopedContacts = landingRoleFilter === 'all'
+          ? country.contacts
+          : country.contacts.filter((contact) => normalizeClubName(contact.position || '') === landingRoleFilter);
+
+        if (!searchQuery.trim()) {
+          return roleScopedContacts.length > 0 ? { ...country, contacts: roleScopedContacts } : null;
+        }
+
+        const matchingContacts = roleScopedContacts.filter((contact) =>
+          [contact.name, contact.club_name || '', contact.position || '', contact.email || '']
+            .join(' ')
+            .toLowerCase()
+            .includes(query)
+        );
+
+        if (country.name.toLowerCase().includes(query) || matchingContacts.length > 0) {
+          return { ...country, contacts: matchingContacts.length > 0 ? matchingContacts : roleScopedContacts };
+        }
+
+        return null;
+      })
+      .filter((country): country is CountryEntry => Boolean(country));
+  }, [countryData, landingRoleFilter, searchQuery]);
 
   const countryContacts = useMemo(() => {
     const baseContacts = selectedCountry?.contacts || [];
@@ -964,7 +992,7 @@ const ClubNetworkManagement = () => {
     if (selected.length === 0) { toast.info('No contacts selected'); return; }
 
     setImportProcessing(true);
-    setImportProgress({ active: true, processed: 0, total: selected.length, inserted: 0, updated: 0, skipped: 0 });
+    setImportProgress({ active: true, processed: 0, total: selected.length, inserted: 0, updated: 0, skipped: 0, completed: false, message: 'Preparing import' });
     try {
       const payload = dedupeImportedContacts(selected);
       const { data: existingContacts, error: existingContactsError } = await supabase.from('club_network_contacts').select('id, name, club_name, position, email, phone, country, city, latitude, longitude, image_url, notes');
@@ -1019,7 +1047,7 @@ const ClubNetworkManagement = () => {
         }
 
         processed += chunk.length;
-        setImportProgress({ active: true, processed, total: payload.length, inserted, updated, skipped });
+        setImportProgress({ active: true, processed, total: payload.length, inserted, updated, skipped, completed: false, message: 'Importing contacts' });
       }
 
       toast.success(`Imported ${inserted} new, updated ${updated}, skipped ${skipped}`);
@@ -1028,14 +1056,65 @@ const ClubNetworkManagement = () => {
       setParsedContacts([]);
       setSelectedImportIndices(new Set());
       fetchContacts();
-      window.setTimeout(() => setImportProgress((current) => ({ ...current, active: false })), 1800);
+      setImportProgress({ active: true, processed: payload.length, total: payload.length, inserted, updated, skipped, completed: true, message: 'Import complete' });
     } catch (error: any) {
-      setImportProgress((current) => ({ ...current, active: false }));
+      setImportProgress((current) => ({ ...current, active: false, completed: false, message: '' }));
       toast.error(`Import failed${error?.message ? `: ${error.message}` : ''}`);
     } finally {
       setImportProcessing(false);
     }
   };
+
+  const closeAvatarCrop = useCallback(() => {
+    if (avatarObjectUrlRef.current) {
+      URL.revokeObjectURL(avatarObjectUrlRef.current);
+      avatarObjectUrlRef.current = null;
+    }
+    setAvatarCropSource(null);
+    setAvatarUploadTarget(null);
+  }, []);
+
+  const handleAvatarSelect = useCallback((contact: Contact) => {
+    setAvatarUploadTarget(contact);
+    avatarInputRef.current?.click();
+  }, []);
+
+  const handleAvatarFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !avatarUploadTarget) return;
+    if (avatarObjectUrlRef.current) URL.revokeObjectURL(avatarObjectUrlRef.current);
+    avatarObjectUrlRef.current = URL.createObjectURL(file);
+    setAvatarCropSource(avatarObjectUrlRef.current);
+    event.target.value = '';
+  }, [avatarUploadTarget]);
+
+  const handleAvatarCropComplete = useCallback(async (croppedBlob: Blob) => {
+    if (!avatarUploadTarget) return;
+
+    const filePath = `network-contact-images/${avatarUploadTarget.id}-${Date.now()}.png`;
+    const { error: uploadError } = await supabase.storage
+      .from('analysis-files')
+      .upload(filePath, croppedBlob, { contentType: 'image/png', upsert: true });
+
+    if (uploadError) {
+      toast.error('Failed to upload profile photo');
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('analysis-files').getPublicUrl(filePath);
+    const nextUrl = publicUrlData.publicUrl;
+    const { error: updateError } = await supabase.from('club_network_contacts').update({ image_url: nextUrl }).eq('id', avatarUploadTarget.id);
+
+    if (updateError) {
+      toast.error('Failed to save profile photo');
+      return;
+    }
+
+    setContacts((current) => current.map((contact) => contact.id === avatarUploadTarget.id ? { ...contact, image_url: nextUrl } : contact));
+    setViewingContact((current) => current?.id === avatarUploadTarget.id ? { ...current, image_url: nextUrl } : current);
+    toast.success('Profile photo updated');
+    closeAvatarCrop();
+  }, [avatarUploadTarget, closeAvatarCrop]);
 
   const toggleImportContact = (index: number) => {
     setSelectedImportIndices((current) => {
@@ -1321,10 +1400,7 @@ const ClubNetworkManagement = () => {
     const rating = getDisplayScore(getClubRating(contact.club_name));
 
     return (
-      <motion.article
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28 }}
+      <article
         onClick={() => setViewingContact(contact)}
         className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
         style={softPanelStyle}
@@ -1374,9 +1450,20 @@ const ClubNetworkManagement = () => {
             {contact.image_url ? (
               <img src={contact.image_url} alt={contact.name} className="h-16 w-16 rounded-2xl object-cover ring-1 ring-border/70" />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-lg font-semibold text-primary ring-1 ring-border/50">
-                {contact.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
-              </div>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleAvatarSelect(contact);
+                }}
+                className="group/avatar relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-primary/25 bg-primary/10 text-lg font-semibold text-primary ring-1 ring-border/50"
+                title="Upload profile photo"
+              >
+                <span>{contact.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</span>
+                <span className="absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover/avatar:opacity-100">
+                  <Camera className="h-4 w-4" />
+                </span>
+              </button>
             )}
             <div className="min-w-0 flex-1 pt-0.5">
               <h3 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-foreground">{contact.name}</h3>
@@ -1428,7 +1515,59 @@ const ClubNetworkManagement = () => {
             )}
           </div>
         </div>
-      </motion.article>
+      </article>
+    );
+  };
+
+  const SchemeCarousel = ({ schemes }: { schemes: string[] }) => {
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useEffect(() => {
+      setActiveIndex(0);
+    }, [schemes]);
+
+    useEffect(() => {
+      if (schemes.length <= 1) return;
+      const interval = window.setInterval(() => {
+        setActiveIndex((current) => (current + 1) % schemes.length);
+      }, 4000);
+      return () => window.clearInterval(interval);
+    }, [schemes]);
+
+    if (schemes.length === 0) {
+      return <p className="text-sm leading-relaxed text-muted-foreground">Add schemes to the country profile and they will appear here on a slider.</p>;
+    }
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="border-primary/40 text-primary">
+            #{activeIndex + 1} {schemes[activeIndex]}
+          </Badge>
+        </div>
+        <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
+          <AnimatePresence mode="wait">
+            <motion.div key={`${schemes[activeIndex]}-${activeIndex}`} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
+              <FormationDisplay formation={schemes[activeIndex]} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {schemes.map((scheme, index) => (
+            <button
+              key={scheme}
+              onClick={() => setActiveIndex(index)}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                index === activeIndex
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-border/60 bg-background/45 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {scheme}
+            </button>
+          ))}
+        </div>
+      </div>
     );
   };
 
@@ -1497,10 +1636,22 @@ const ClubNetworkManagement = () => {
         <div className="relative z-[1] space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-bebas text-sm tracking-[0.24em] text-foreground uppercase">Importing contacts</p>
+              <p className="font-bebas text-sm tracking-[0.24em] text-foreground uppercase">{importProgress.message || 'Importing contacts'}</p>
               <p className="text-xs text-muted-foreground">{importProgress.processed} of {importProgress.total} processed</p>
             </div>
-            <Badge variant="outline" className="border-primary/40 text-primary">{Math.round(progressValue)}%</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="border-primary/40 text-primary">{Math.round(progressValue)}%</Badge>
+              {importProgress.completed && (
+                <button
+                  type="button"
+                  onClick={() => setImportProgress((current) => ({ ...current, active: false }))}
+                  className="rounded-full border border-border/60 bg-background/40 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                  title="Dismiss"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <Progress value={progressValue} className="h-2 bg-muted/60" />
           <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
@@ -1533,12 +1684,12 @@ const ClubNetworkManagement = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_38%)] opacity-80" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
-        <div className="relative z-[1] flex h-full flex-col justify-end p-5">
-          <div className="space-y-3 rounded-[1.35rem] border border-border/40 bg-background/25 p-4 backdrop-blur-xl">
+        <div className="relative z-[1] flex h-full items-center justify-center p-5 text-center">
+          <div className="w-full max-w-[16rem] space-y-3 rounded-[1.35rem] border border-border/40 bg-background/25 p-4 backdrop-blur-xl">
             <ScrollReveal>
               <h3 className="font-bebas text-[1.15rem] tracking-[0.22em] text-foreground">{country.name.toUpperCase()}</h3>
             </ScrollReveal>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/45 px-3.5 py-1.5 text-sm font-medium text-foreground">
+            <div className="inline-flex items-center justify-center gap-2 rounded-full border border-border/60 bg-background/45 px-3.5 py-1.5 text-sm font-medium text-foreground">
               <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
               {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
             </div>
@@ -1588,6 +1739,18 @@ const ClubNetworkManagement = () => {
                 placeholder="Search countries, contacts, clubs"
                 className="w-64"
               />
+
+              <Select value={landingRoleFilter} onValueChange={setLandingRoleFilter}>
+                <SelectTrigger className="w-[12rem] rounded-xl border-border/60 bg-background/45">
+                  <SelectValue placeholder="All roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All roles</SelectItem>
+                  {globalRoleOptions.map((role) => (
+                    <SelectItem key={role.key} value={role.key}>{role.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1751,39 +1914,7 @@ const ClubNetworkManagement = () => {
               </InfoBlock>
 
               <InfoBlock title="Schemes">
-                {countrySchemes.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-primary/40 text-primary">
-                        #{schemeIndex + 1} {countrySchemes[schemeIndex]}
-                      </Badge>
-                    </div>
-                    <div className="rounded-[1.35rem] border border-border/50 bg-background/35 px-2 py-3">
-                      <AnimatePresence mode="wait">
-                        <motion.div key={schemeIndex} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}>
-                          <FormationDisplay formation={countrySchemes[schemeIndex]} />
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {countrySchemes.map((scheme, index) => (
-                        <button
-                          key={scheme}
-                          onClick={() => setSchemeIndex(index)}
-                          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                            index === schemeIndex
-                              ? 'border-primary/40 bg-primary/10 text-primary'
-                              : 'border-border/60 bg-background/45 text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          {scheme}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm leading-relaxed text-muted-foreground">Add schemes to the country profile and they will appear here on a slider.</p>
-                )}
+                <SchemeCarousel schemes={countrySchemes} />
               </InfoBlock>
             </div>
 
@@ -2160,6 +2291,20 @@ const ClubNetworkManagement = () => {
       </Tabs>
 
       <ImportProgressIndicator />
+      <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarFileChange} className="hidden" />
+
+      {avatarCropSource && (
+        <ImageCropDialog
+          open={!!avatarCropSource}
+          onOpenChange={(open) => {
+            if (!open) closeAvatarCrop();
+          }}
+          imageSrc={avatarCropSource}
+          onCropComplete={handleAvatarCropComplete}
+          aspectRatio={1}
+          title="Adjust profile photo"
+        />
+      )}
 
       {/* Contact preview popup */}
       <ContactPreviewDialog />
