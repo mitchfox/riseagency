@@ -123,7 +123,7 @@ export const NetworkProfileManager = ({ type }: NetworkProfileManagerProps) => {
     if (editingItem) {
       const { error } = await supabase
         .from(tableName)
-        .update(data)
+        .update(data as any)
         .eq('id', editingItem.id);
 
       if (error) {
@@ -134,7 +134,7 @@ export const NetworkProfileManager = ({ type }: NetworkProfileManagerProps) => {
     } else {
       const { error } = await supabase
         .from(tableName)
-        .insert([data]);
+        .insert([data] as any);
 
       if (error) {
         if (error.code === '23505') {
