@@ -494,7 +494,14 @@ const matchesRoleTemplate = (role: string, recipientType: string) => {
   return false;
 };
 
-const ClubNetworkManagement = () => {
+interface ClubNetworkManagementProps {
+  isAdmin?: boolean;
+  userRole?: string;
+}
+
+const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagementProps) => {
+  // Trust Network role can only see contacts
+  const isTrustNetwork = userRole?.toLowerCase().replace(/[\s_-]+/g, '') === 'trustnetwork';
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [networkSummaryRows, setNetworkSummaryRows] = useState<NetworkSummaryRow[]>([]);
   const [countrySummary, setCountrySummary] = useState<{ country: string; count: number }[]>([]);
