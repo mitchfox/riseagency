@@ -2090,34 +2090,47 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
             </div>
 
             {/* Style & Background (wider) + Schemes (thinner) */}
-            <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
-              <InfoBlock title="Style & Background">
-                {buildCountryBackgroundParagraphs(selectedCountry?.name || 'This country', selectedCountry?.profile || null).map((paragraph, index) => (
-                  <ScrollReveal key={`${selectedCountry?.key || 'country'}-bg-${index}`} delay={index * 0.05}>
-                    <p className="text-sm leading-relaxed text-foreground/85">{paragraph}</p>
-                  </ScrollReveal>
+            {isTrustNetwork ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {['Style & Background', 'Schemes', 'Traits', 'League Rules'].map((label) => (
+                  <div key={label} className="relative overflow-hidden rounded-[1.5rem] border border-border/50 p-6 backdrop-blur-2xl flex flex-col items-center justify-center gap-3 min-h-[8rem]" style={softPanelStyle}>
+                    <Lock className="h-6 w-6 text-[hsl(43,49%,61%)]" />
+                    <span className="font-bebas text-sm tracking-[0.24em] text-muted-foreground uppercase">{label}</span>
+                  </div>
                 ))}
-              </InfoBlock>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-[1.6fr_1fr]">
+                  <InfoBlock title="Style & Background">
+                    {buildCountryBackgroundParagraphs(selectedCountry?.name || 'This country', selectedCountry?.profile || null).map((paragraph, index) => (
+                      <ScrollReveal key={`${selectedCountry?.key || 'country'}-bg-${index}`} delay={index * 0.05}>
+                        <p className="text-sm leading-relaxed text-foreground/85">{paragraph}</p>
+                      </ScrollReveal>
+                    ))}
+                  </InfoBlock>
 
-              <InfoBlock title="Schemes">
-                <SchemeCarousel schemes={countrySchemes} />
-              </InfoBlock>
-            </div>
+                  <InfoBlock title="Schemes">
+                    <SchemeCarousel schemes={countrySchemes} />
+                  </InfoBlock>
+                </div>
 
-            {/* Traits + League Rules */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <InfoBlock title="Traits">
-                <ScrollReveal>
-                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
-                </ScrollReveal>
-              </InfoBlock>
+                {/* Traits + League Rules */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <InfoBlock title="Traits">
+                    <ScrollReveal>
+                      <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.key_characteristics || 'Add the core football traits for this country.'}</p>
+                    </ScrollReveal>
+                  </InfoBlock>
 
-              <InfoBlock title="League Rules">
-                <ScrollReveal>
-                  <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
-                </ScrollReveal>
-              </InfoBlock>
-            </div>
+                  <InfoBlock title="League Rules">
+                    <ScrollReveal>
+                      <p className="text-sm leading-relaxed text-foreground/85">{selectedCountry?.profile?.league_structure || 'Add the league rules and key competition details.'}</p>
+                    </ScrollReveal>
+                  </InfoBlock>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </ScrollReveal>
