@@ -1040,6 +1040,15 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           </Card>
         </div>
       )}
+
+      {clippedAnalysis && (
+        <ClippedActionsPlayer
+          open={!!clippedAnalysis}
+          onOpenChange={(open) => !open && setClippedAnalysis(null)}
+          analysisId={clippedAnalysis.id}
+          title={`${clippedAnalysis.home_team} vs ${clippedAnalysis.away_team}`}
+        />
+      )}
     </>
   );
 };
