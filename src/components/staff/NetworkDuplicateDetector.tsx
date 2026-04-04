@@ -146,7 +146,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
       if (deleteError) throw deleteError;
 
       toast.success(`Merged ${group.contacts.length} contacts into ${primary.name}`);
-      onRefresh();
+      await onRefresh();
+      setScanKey((k) => k + 1);
     } catch (err: any) {
       toast.error(`Merge failed: ${err?.message || 'Unknown error'}`);
     } finally {
