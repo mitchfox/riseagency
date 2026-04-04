@@ -799,6 +799,53 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     });
   }, [countrySummary, countryProfiles]);
 
+  const europeanRegions: Record<string, string[]> = useMemo(() => ({
+    'British Isles': ['England', 'Scotland', 'Wales', 'Ireland', 'Northern Ireland'],
+    'Western Europe': ['France', 'Belgium', 'Netherlands', 'Luxembourg', 'Germany', 'Austria', 'Switzerland'],
+    'Scandinavia': ['Sweden', 'Norway', 'Denmark', 'Finland', 'Iceland', 'Faroe Islands'],
+    'Mediterranean': ['Spain', 'Italy', 'Portugal', 'Greece', 'Cyprus', 'Malta', 'Turkey'],
+    'Central Europe': ['Poland', 'Czech Republic', 'Czechia', 'Slovakia', 'Hungary', 'Slovenia', 'Croatia'],
+    'Eastern Europe': ['Romania', 'Bulgaria', 'Serbia', 'Montenegro', 'Bosnia And Herzegovina', 'North Macedonia', 'Albania', 'Kosovo', 'Moldova', 'Ukraine', 'Belarus', 'Russia'],
+    'Baltics': ['Estonia', 'Latvia', 'Lithuania'],
+    'South America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Uruguay', 'Paraguay', 'Peru', 'Ecuador', 'Venezuela', 'Bolivia'],
+    'North America': ['United States', 'Canada', 'Mexico'],
+    'Africa': ['Nigeria', 'Ghana', 'Cameroon', 'Senegal', 'South Africa', 'Egypt', 'Morocco', 'Tunisia', 'Algeria', 'Ivory Coast', 'Mali', 'Guinea', 'Kenya', 'Tanzania', 'Congo', 'DR Congo', 'Zambia', 'Zimbabwe'],
+    'Asia': ['Japan', 'South Korea', 'China', 'India', 'Thailand', 'Indonesia', 'Vietnam', 'Saudi Arabia', 'UAE', 'Qatar', 'Iran', 'Iraq', 'Uzbekistan', 'Kazakhstan', 'Israel', 'Palestine', 'Jordan', 'Australia', 'New Zealand'],
+  }), []);
+
+  const regionData = useMemo(() => {
+    const countryToRegion = new Map<string, string>();
+    Object.entries(europeanRegions).forEach(([region, countries]) => {
+      countries.forEach((c) => countryToRegion.set(c.toLowerCase(), region));
+    });
+
+    const regionMap = new Map<string, CountryEntry[]>();
+    countryData.forEach((country) => {
+      if (country.key === 'uncategorised') {
+        const list = regionMap.get('Other') || [];
+        list.push(country);
+        regionMap.set('Other', list);
+        return;
+      }
+      const region = countryToRegion.get(country.name.toLowerCase()) || 'Other';
+      const list = regionMap.get(region) || [];
+      list.push(country);
+      regionMap.set(region, list);
+    });
+
+    return [...regionMap.entries()]
+      .map(([name, countries]) => ({
+        name,
+        countries,
+        totalContacts: countries.reduce((sum, c) => sum + c.count, 0),
+      }))
+      .sort((a, b) => {
+        if (a.name === 'Other') return 1;
+        if (b.name === 'Other') return -1;
+        return b.totalContacts - a.totalContacts;
+      });
+  }, [countryData, europeanRegions]);
+
   const landingRoleEntries = useMemo<RoleEntry[]>(() => {
     const roleMap = new Map<string, string[]>();
     const countMap = new Map<string, number>();
