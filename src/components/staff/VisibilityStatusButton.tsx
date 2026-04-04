@@ -4,12 +4,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock } from "lucide-react";
+import { FileEdit, EyeOff, Radio, ChevronDown, CalendarIcon, Clock, Film } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PERCalculatorDialog } from "./PERCalculatorDialog";
 
-export type VisibilityStatus = "draft" | "hidden" | "live";
+export type VisibilityStatus = "draft" | "hidden" | "live" | "clipped";
 
 interface VisibilityStatusButtonProps {
   value: VisibilityStatus;
@@ -32,6 +32,12 @@ const STATUS_CONFIG: Record<VisibilityStatus, { label: string; icon: typeof File
     icon: FileEdit,
     description: "Player sees a blurred preview, not legible",
     className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  },
+  clipped: {
+    label: "Clipped",
+    icon: Film,
+    description: "R90 shows ? but clicking reveals clips in order",
+    className: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   },
   hidden: {
     label: "Hidden",
@@ -66,7 +72,7 @@ export const VisibilityStatusButton = ({
   const config = STATUS_CONFIG[value];
   const Icon = config.icon;
 
-  const isDraft = value === "draft";
+  const isDraft = value === "draft" || value === "clipped";
   const readyDate = estimatedReadyAt ? new Date(estimatedReadyAt) : undefined;
   const readyTime = readyDate ? format(readyDate, "HH:mm") : "";
 

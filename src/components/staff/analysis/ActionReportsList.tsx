@@ -271,10 +271,12 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                         <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                           report.visibility_status === "draft" 
                             ? "bg-yellow-500/20 text-yellow-400" 
+                            : report.visibility_status === "clipped"
+                            ? "bg-blue-500/20 text-blue-400"
                             : "bg-red-500/20 text-red-400"
                         }`}>
-                          {report.visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
-                          {report.visibility_status === "draft" ? "Draft" : "Hidden"}
+                          {report.visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : report.visibility_status === "clipped" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
+                          {report.visibility_status === "draft" ? "Draft" : report.visibility_status === "clipped" ? "Clipped" : "Hidden"}
                         </span>
                       )}
                     </div>

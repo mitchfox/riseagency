@@ -10,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
 import { NewsFeed } from "./NewsFeed";
@@ -168,10 +169,40 @@ interface HubProps {
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
+  const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
+  const [clippedClips, setClippedClips] = React.useState<any[]>([]);
+
+  const handleClippedClick = React.useCallback(async (analysis: PlayerAnalysis) => {
+    try {
+      const { data } = await (supabase as any)
+        .from('performance_report_actions')
+        .select('id, action_type, video_url, start_time, end_time, display_order')
+        .eq('report_id', analysis.id)
+        .not('video_url', 'is', null)
+        .order('display_order', { ascending: true });
+
+      const clips = (data || []).map((a: any) => ({
+        action_type: a.action_type,
+        video_url: a.video_url,
+        start_time: a.start_time,
+        end_time: a.end_time,
+      }));
+
+      if (clips.length === 0) {
+        return;
+      }
+
+      setClippedClips(clips);
+      setClippedAnalysis(analysis);
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
     const isDraft = String(a.visibility_status || "").toLowerCase() === "draft";
-    if (isDraft) return null; // Draft reports show "?" not a score
+    const isClipped = String(a.visibility_status || "").toLowerCase() === "clipped";
+    if (isDraft || isClipped) return null; // Draft/Clipped reports show "?" not a score
     const isHidden = String(a.visibility_status || "").toLowerCase() === "hidden";
     if (isHidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0) {
       return (a.placeholder_raw_score / a.placeholder_minutes!) * 90;
@@ -941,12 +972,24 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                         )}
                         {(() => {
                           const isDraft = String(analysis.visibility_status || "").toLowerCase() === "draft";
+                          const isClipped = String(analysis.visibility_status || "").toLowerCase() === "clipped";
                           const effectiveR90 = getEffectiveR90(analysis);
                           if (isDraft) {
                             return (
                               <div className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600">
                                 R90: ?
                               </div>
+                            );
+                          }
+                          if (isClipped) {
+                            return (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleClippedClick(analysis); }}
+                                className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600 hover:border-primary/60 transition-colors cursor-pointer"
+                                title="Click to view clips"
+                              >
+                                R90: ?
+                              </button>
                             );
                           }
                           return effectiveR90 != null ? (
@@ -1024,6 +1067,15 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {clippedAnalysis && clippedClips.length > 0 && (
+        <ClippedActionsPlayer
+          open={!!clippedAnalysis}
+          onOpenChange={(open) => { if (!open) { setClippedAnalysis(null); setClippedClips([]); } }}
+          clips={clippedClips}
+          title={`vs ${clippedAnalysis.opponent}`}
+        />
       )}
     </>
   );
