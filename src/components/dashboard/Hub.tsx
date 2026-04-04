@@ -1069,12 +1069,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
         </div>
       )}
 
-      {clippedAnalysis && (
+      {clippedAnalysis && clippedClips.length > 0 && (
         <ClippedActionsPlayer
           open={!!clippedAnalysis}
-          onOpenChange={(open) => !open && setClippedAnalysis(null)}
-          analysisId={clippedAnalysis.id}
-          title={`${clippedAnalysis.home_team} vs ${clippedAnalysis.away_team}`}
+          onOpenChange={(open) => { if (!open) { setClippedAnalysis(null); setClippedClips([]); } }}
+          clips={clippedClips}
+          title={`vs ${clippedAnalysis.opponent}`}
         />
       )}
     </>
