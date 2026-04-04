@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -155,6 +156,18 @@ type RoleGroup = {
   templates: MarketingTemplate[];
 };
 
+type ImportCandidate = {
+  name: string;
+  club_name: string | null;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  city: string | null;
+  image_url: string | null;
+  notes: string | null;
+};
+
 const panelStyle = {
   background: 'linear-gradient(145deg, hsl(var(--card) / 0.92), hsl(var(--muted) / 0.42))',
   boxShadow: '0 24px 70px -36px hsl(var(--foreground) / 0.55), inset 0 1px 0 hsl(var(--background) / 0.26)',
@@ -217,6 +230,100 @@ const createAssociationInitials = (country: string) =>
     .join('')
     .slice(0, 3)
     .toUpperCase();
+
+const normalisePhone = (value: string | null | undefined) => (value || '').replace(/\D+/g, '');
+
+const sanitiseImportedContact = (contact: any): ImportCandidate => ({
+  name: normaliseText(contact.name) || 'Unknown',
+  club_name: normaliseText(contact.club_name) || null,
+  position: normaliseText(contact.position) || null,
+  email: normaliseText(contact.email).toLowerCase() || null,
+  phone: normaliseText(contact.phone) || null,
+  country: normaliseText(contact.country) || null,
+  city: normaliseText(contact.city) || null,
+  image_url: normaliseText(contact.image_url) || null,
+  notes: normaliseText(contact.notes) || null,
+});
+
+const buildContactMatchKeys = (contact: { name: string | null; club_name: string | null; email: string | null; phone: string | null; country: string | null }) => {
+  const keys = new Set<string>();
+  const emailKey = normaliseText(contact.email).toLowerCase();
+  const phoneKey = normalisePhone(contact.phone);
+  const nameKey = normalizeClubName(normaliseText(contact.name));
+  const clubKey = normalizeClubName(normaliseText(contact.club_name));
+  const countryKey = normalizeClubName(normaliseText(contact.country));
+
+  if (emailKey) keys.add(`email:${emailKey}`);
+  if (phoneKey) keys.add(`phone:${phoneKey}`);
+  if (nameKey && clubKey) keys.add(`name-club:${nameKey}:${clubKey}`);
+  if (nameKey && countryKey) keys.add(`name-country:${nameKey}:${countryKey}`);
+
+  return [...keys];
+};
+
+const appendUniqueNotes = (existingNotes: string | null, incomingNotes: string | null) => {
+  const current = normaliseText(existingNotes);
+  const incoming = normaliseText(incomingNotes);
+
+  if (!incoming) return current || null;
+  if (!current) return incoming;
+  if (current.toLowerCase().includes(incoming.toLowerCase())) return current;
+
+  return `${current}\n\n${incoming}`;
+};
+
+const mergeImportCandidates = (base: ImportCandidate, incoming: ImportCandidate): ImportCandidate => ({
+  ...base,
+  name: base.name === 'Unknown' && incoming.name !== 'Unknown' ? incoming.name : base.name,
+  club_name: base.club_name || incoming.club_name,
+  position: base.position || incoming.position,
+  email: base.email || incoming.email,
+  phone: base.phone || incoming.phone,
+  country: base.country || incoming.country,
+  city: base.city || incoming.city,
+  image_url: base.image_url || incoming.image_url,
+  notes: appendUniqueNotes(base.notes, incoming.notes),
+});
+
+const mergeIntoExistingContact = (existing: Contact, incoming: ImportCandidate) => {
+  const merged: Contact = {
+    ...existing,
+    name: existing.name === 'Unknown' && incoming.name !== 'Unknown' ? incoming.name : existing.name,
+    club_name: existing.club_name || incoming.club_name,
+    position: existing.position || incoming.position,
+    email: existing.email || incoming.email,
+    phone: existing.phone || incoming.phone,
+    country: existing.country || incoming.country,
+    city: existing.city || incoming.city,
+    image_url: existing.image_url || incoming.image_url,
+    notes: appendUniqueNotes(existing.notes, incoming.notes),
+  };
+
+  const changed = merged.name !== existing.name || merged.club_name !== existing.club_name || merged.position !== existing.position || merged.email !== existing.email || merged.phone !== existing.phone || merged.country !== existing.country || merged.city !== existing.city || merged.image_url !== existing.image_url || merged.notes !== existing.notes;
+
+  return { merged, changed };
+};
+
+const dedupeImportedContacts = (contacts: any[]) => {
+  const deduped: ImportCandidate[] = [];
+  const keyToIndex = new Map<string, number>();
+
+  contacts.map(sanitiseImportedContact).forEach((contact) => {
+    const keys = buildContactMatchKeys(contact);
+    const existingIndex = keys.map((key) => keyToIndex.get(key)).find((value): value is number => value !== undefined);
+
+    if (existingIndex !== undefined) {
+      deduped[existingIndex] = mergeImportCandidates(deduped[existingIndex], contact);
+      buildContactMatchKeys(deduped[existingIndex]).forEach((key) => keyToIndex.set(key, existingIndex));
+      return;
+    }
+
+    const nextIndex = deduped.push(contact) - 1;
+    keys.forEach((key) => keyToIndex.set(key, nextIndex));
+  });
+
+  return deduped;
+};
 
 const buildVCard = (contact: Contact) => {
   const noteLines = [contact.notes, contact.club_name ? `Club: ${contact.club_name}` : '', contact.position ? `Role: ${contact.position}` : '']
@@ -349,6 +456,7 @@ const ClubNetworkManagement = () => {
   const [selectedCountryKey, setSelectedCountryKey] = useState<string | null>(null);
   const [schemeIndex, setSchemeIndex] = useState(0);
   const [viewingContact, setViewingContact] = useState<Contact | null>(null);
+  const [importProgress, setImportProgress] = useState({ active: false, processed: 0, total: 0, inserted: 0, updated: 0, skipped: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -369,7 +477,6 @@ const ClubNetworkManagement = () => {
     const { data, error } = await supabase
       .from('club_network_contacts')
       .select('*')
-      .not('position', 'is', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -377,7 +484,7 @@ const ClubNetworkManagement = () => {
       return;
     }
 
-    setContacts((data || []).filter((contact) => contact.position !== null && contact.position !== ''));
+    setContacts(data || []);
   }, []);
 
   const fetchProfiles = useCallback(async () => {
@@ -845,28 +952,73 @@ const ClubNetworkManagement = () => {
     if (selected.length === 0) { toast.info('No contacts selected'); return; }
 
     setImportProcessing(true);
+    setImportProgress({ active: true, processed: 0, total: selected.length, inserted: 0, updated: 0, skipped: 0 });
     try {
-      const payload = selected.map((contact: any) => ({
-        name: normaliseText(contact.name) || 'Unknown',
-        club_name: normaliseText(contact.club_name) || null,
-        position: normaliseText(contact.position) || null,
-        email: normaliseText(contact.email) || null,
-        phone: normaliseText(contact.phone) || null,
-        country: normaliseText(contact.country) || null,
-        city: normaliseText(contact.city) || null,
-        notes: normaliseText(contact.notes) || null,
-      }));
+      const payload = dedupeImportedContacts(selected);
+      const { data: existingContacts, error: existingContactsError } = await supabase.from('club_network_contacts').select('id, name, club_name, position, email, phone, country, city, latitude, longitude, image_url, notes');
+      if (existingContactsError) throw existingContactsError;
 
-      const { error } = await supabase.from('club_network_contacts').insert(payload);
-      if (error) throw error;
+      const existingByKey = new Map<string, Contact>();
+      (existingContacts || []).forEach((contact) => {
+        buildContactMatchKeys(contact).forEach((key) => {
+          if (!existingByKey.has(key)) existingByKey.set(key, contact as Contact);
+        });
+      });
 
-      toast.success(`Imported ${payload.length} contact${payload.length === 1 ? '' : 's'}`);
+      let inserted = 0;
+      let updated = 0;
+      let skipped = 0;
+      let processed = 0;
+      const chunkSize = 100;
+
+      for (let start = 0; start < payload.length; start += chunkSize) {
+        const chunk = payload.slice(start, start + chunkSize);
+        const insertBatch: ImportCandidate[] = [];
+        const updateBatch: Array<{ id: string } & ImportCandidate> = [];
+
+        chunk.forEach((contact) => {
+          const existingContact = buildContactMatchKeys(contact).map((key) => existingByKey.get(key)).find((value): value is Contact => Boolean(value));
+          if (!existingContact) {
+            insertBatch.push(contact);
+            return;
+          }
+
+          const { merged, changed } = mergeIntoExistingContact(existingContact, contact);
+          if (!changed) {
+            skipped += 1;
+            return;
+          }
+
+          updateBatch.push({ id: merged.id, name: merged.name, club_name: merged.club_name, position: merged.position, email: merged.email, phone: merged.phone, country: merged.country, city: merged.city, image_url: merged.image_url, notes: merged.notes });
+        });
+
+        if (insertBatch.length > 0) {
+          const { data: insertedRows, error } = await supabase.from('club_network_contacts').insert(insertBatch).select('id, name, club_name, position, email, phone, country, city, latitude, longitude, image_url, notes');
+          if (error) throw error;
+          inserted += insertedRows?.length || 0;
+          (insertedRows || []).forEach((contact) => buildContactMatchKeys(contact).forEach((key) => existingByKey.set(key, contact as Contact)));
+        }
+
+        if (updateBatch.length > 0) {
+          const { data: updatedRows, error } = await supabase.from('club_network_contacts').upsert(updateBatch, { onConflict: 'id' }).select('id, name, club_name, position, email, phone, country, city, latitude, longitude, image_url, notes');
+          if (error) throw error;
+          updated += updatedRows?.length || 0;
+          (updatedRows || []).forEach((contact) => buildContactMatchKeys(contact).forEach((key) => existingByKey.set(key, contact as Contact)));
+        }
+
+        processed += chunk.length;
+        setImportProgress({ active: true, processed, total: payload.length, inserted, updated, skipped });
+      }
+
+      toast.success(`Imported ${inserted} new, updated ${updated}, skipped ${skipped}`);
       setShowImportDialog(false);
       setImportText('');
       setParsedContacts([]);
       setSelectedImportIndices(new Set());
       fetchContacts();
+      window.setTimeout(() => setImportProgress((current) => ({ ...current, active: false })), 1800);
     } catch (error: any) {
+      setImportProgress((current) => ({ ...current, active: false }));
       toast.error(`Import failed${error?.message ? `: ${error.message}` : ''}`);
     } finally {
       setImportProcessing(false);
@@ -1251,6 +1403,56 @@ const ClubNetworkManagement = () => {
     );
   };
 
+  const NetworkTabPanel = ({ title, description, icon: Icon, children }: { title: string; description: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) => (
+    <div className="space-y-4">
+      <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={panelStyle}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_40%)] opacity-85" />
+        <div className="relative z-[1] flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <ScrollReveal>
+              <h3 className="font-bebas text-xl tracking-[0.26em] text-foreground uppercase">{title}</h3>
+            </ScrollReveal>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+      <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.1),transparent_46%)] opacity-80" />
+        <div className="relative z-[1]">{children}</div>
+      </div>
+    </div>
+  );
+
+  const ImportProgressIndicator = () => {
+    if (!importProgress.active) return null;
+
+    const progressValue = importProgress.total > 0 ? (importProgress.processed / importProgress.total) * 100 : 0;
+
+    return (
+      <div className="fixed bottom-6 right-6 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[1.6rem] border border-border/60 p-4 backdrop-blur-2xl" style={panelStyle}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%)] opacity-80" />
+        <div className="relative z-[1] space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-bebas text-sm tracking-[0.24em] text-foreground uppercase">Importing contacts</p>
+              <p className="text-xs text-muted-foreground">{importProgress.processed} of {importProgress.total} processed</p>
+            </div>
+            <Badge variant="outline" className="border-primary/40 text-primary">{Math.round(progressValue)}%</Badge>
+          </div>
+          <Progress value={progressValue} className="h-2 bg-muted/60" />
+          <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+            <span>New {importProgress.inserted}</span>
+            <span>Updated {importProgress.updated}</span>
+            <span>Skipped {importProgress.skipped}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ── Country card ──
   const CountryCard = ({ country }: { country: CountryEntry }) => (
     <ScrollRevealItem>
@@ -1263,28 +1465,20 @@ const ClubNetworkManagement = () => {
           setRoleFilter('all');
           setGroupBy('club');
         }}
-        className="group relative w-full overflow-hidden rounded-[1.75rem] border border-border/50 p-5 text-left backdrop-blur-2xl transition-all duration-300 hover:border-primary/35"
+        className="group relative min-h-[15rem] w-full overflow-hidden rounded-[1.9rem] border border-border/50 text-left backdrop-blur-2xl transition-all duration-300 hover:border-primary/35"
         style={panelStyle}
       >
+        <img src={getCountryFlagUrl(country.name)} alt={country.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-background/5" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_38%)] opacity-80" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
-        <div className="relative z-[1] flex h-full flex-col gap-5">
-          <div className="flex items-start justify-between gap-4">
-            <img src={getCountryFlagUrl(country.name)} alt={country.name} className="h-12 w-[4.2rem] rounded-2xl object-cover ring-1 ring-border/70" />
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary shadow-sm">
-              <div className="flex flex-col items-center leading-none">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span className="mt-0.5 text-[10px] font-semibold tracking-[0.18em]">{createAssociationInitials(country.name)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
+        <div className="relative z-[1] flex h-full flex-col justify-end p-5">
+          <div className="space-y-3 rounded-[1.35rem] border border-border/40 bg-background/25 p-4 backdrop-blur-xl">
             <ScrollReveal>
               <h3 className="font-bebas text-[1.15rem] tracking-[0.22em] text-foreground">{country.name.toUpperCase()}</h3>
             </ScrollReveal>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/35 px-3.5 py-1.5 text-sm font-medium text-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/45 px-3.5 py-1.5 text-sm font-medium text-foreground">
               <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
               {country.contacts.length} contact{country.contacts.length === 1 ? '' : 's'}
             </div>
@@ -1868,11 +2062,14 @@ const ClubNetworkManagement = () => {
     <div className="space-y-6">
       <Tabs defaultValue="contacts" className="w-full">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <TabsList className="inline-flex w-max sm:w-auto">
-            <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
-            <TabsTrigger value="pathways">Pathways</TabsTrigger>
-          </TabsList>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
+            <TabsList className="relative z-[1] grid min-w-[28rem] grid-cols-3 gap-2 bg-transparent p-0 sm:min-w-0">
+              <TabsTrigger value="contacts" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><User className="mr-2 h-4 w-4" />Contacts</TabsTrigger>
+              <TabsTrigger value="templates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><FileText className="mr-2 h-4 w-4" />Templates</TabsTrigger>
+              <TabsTrigger value="pathways" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><Link2 className="mr-2 h-4 w-4" />Pathways</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         <TabsContent value="contacts" className="mt-6">
@@ -1890,13 +2087,19 @@ const ClubNetworkManagement = () => {
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
-          <QuickMessageSection />
+          <NetworkTabPanel title="Templates" description="Quick-copy templates in the same glass layout as the rest of Network." icon={FileText}>
+            <QuickMessageSection />
+          </NetworkTabPanel>
         </TabsContent>
 
         <TabsContent value="pathways" className="mt-6">
-          <MessagePathways />
+          <NetworkTabPanel title="Pathways" description="Pathways now match the same visual system as the country and contact views." icon={Link2}>
+            <MessagePathways />
+          </NetworkTabPanel>
         </TabsContent>
       </Tabs>
+
+      <ImportProgressIndicator />
 
       {/* Contact preview popup */}
       <ContactPreviewDialog />
