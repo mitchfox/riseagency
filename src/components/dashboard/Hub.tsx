@@ -984,7 +984,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           if (isClipped) {
                             return (
                               <button
-                                onClick={(e) => { e.stopPropagation(); setClippedAnalysis(analysis); }}
+                                onClick={(e) => { e.stopPropagation(); handleClippedClick(analysis); }}
                                 className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600 hover:border-primary/60 transition-colors cursor-pointer"
                                 title="Click to view clips"
                               >
