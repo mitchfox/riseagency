@@ -917,14 +917,9 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, [landingRoleEntries, searchQuery]);
 
   const countryContacts = useMemo(() => {
-    // Accumulate all loaded pages for this country
-    const allCached: Contact[] = [];
-    if (selectedCountryKey) {
-      for (let p = 0; p <= contactPage; p++) {
-        const pageContacts = countryContactsCache.get(`${selectedCountryKey}:${p}`) || [];
-        allCached.push(...pageContacts);
-      }
-    }
+    const allCached: Contact[] = selectedCountryKey
+      ? (countryContactsCache.get(selectedCountryKey) || [])
+      : [];
     let result = [...allCached];
 
     if (searchQuery.trim()) {
@@ -948,7 +943,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     });
 
     return result;
-  }, [contactPage, roleFilter, searchQuery, selectedCountryKey, countryContactsCache, sortDir, sortField]);
+  }, [roleFilter, searchQuery, selectedCountryKey, countryContactsCache, sortDir, sortField]);
 
   const roleOptions = useMemo(() => {
     const roleMap = new Map<string, string[]>();
