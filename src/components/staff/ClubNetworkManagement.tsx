@@ -510,6 +510,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const countryContactsCacheRef = useRef<Map<string, Contact[]>>(new Map());
   const [countryContactsLoading, setCountryContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(0);
+  const [expandedClubKey, setExpandedClubKey] = useState<string | null>(null);
+  const initialLoadDoneRef = useRef(false);
   const CONTACTS_PER_PAGE = 9;
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
