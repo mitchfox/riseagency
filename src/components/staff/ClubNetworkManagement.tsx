@@ -144,8 +144,22 @@ type AiAction = 'tag' | 'organise' | 'clubs' | 'links' | null;
 type CountryEntry = {
   key: string;
   name: string;
-  contacts: Contact[];
+  count: number;
   profile: CountryProfile | null;
+};
+
+type RoleEntry = {
+  key: string;
+  name: string;
+  count: number;
+  variants: string[];
+  profile: RoleProfile | null;
+};
+
+type NetworkSummaryRow = {
+  country: string | null;
+  club_name: string | null;
+  position: string | null;
 };
 
 type ClubGroup = {
@@ -254,6 +268,34 @@ const createAssociationInitials = (country: string) =>
     .toUpperCase();
 
 const normalisePhone = (value: string | null | undefined) => (value || '').replace(/\D+/g, '');
+
+const normaliseCountryKey = (value: string | null | undefined) => normaliseText(value).toLowerCase() || 'uncategorised';
+
+const escapeOrValue = (value: string) => value.replace(/,/g, '\\,').replace(/%/g, '').replace(/\*/g, '').trim();
+
+const countSentences = (value: string) =>
+  (value.match(/[^.!?]+[.!?]+/g) || []).length;
+
+const buildCountryBackgroundParagraphs = (countryName: string, profile: CountryProfile | null) => {
+  const style = normaliseText(profile?.playing_style) || 'A fuller football identity summary still needs to be added for this country.';
+  const schemes = parseDelimitedList(profile?.common_formations).join(', ') || 'the main schemes are still to be confirmed';
+  const traits = normaliseText(profile?.key_characteristics) || 'the key player traits and behavioural patterns still need to be documented in more detail';
+  const rules = normaliseText(profile?.league_structure) || 'the league structure, registration context and competitive rules still need to be expanded';
+  const notes = normaliseText(profile?.notes);
+
+  const paragraphs = [
+    `${countryName} should be approached with a proper understanding of its wider football culture rather than just a surface-level country tag. ${style} That should be read as a clue to the tempo, emotional tone and game management habits that people in this market are likely to value. It also helps frame how players, coaches and decision-makers may speak about control, risk and transitions. In practical terms, that context matters because the same individual qualities can be interpreted very differently depending on the local football environment.`,
+    `The main schemes associated with this country currently point towards ${schemes}. Those shapes matter because they influence spacing, pressing references and the kind of tactical language that feels normal to staff and players coming through the system. The profile also points towards ${traits}. For recruitment and relationship building, that means you should pay close attention to role detail, off-ball habits and how adaptable somebody looks when moved away from familiar reference points. It is usually the blend of these habits, rather than the label of the scheme alone, that tells you how transferable someone will be.`,
+    `The competitive context is just as important as the tactical one. At the moment the profile notes ${rules}. That affects exposure, development pace, squad-building decisions and the type of gatekeepers who tend to hold influence inside clubs and organisations. Any network work in ${countryName} should therefore combine football knowledge with awareness of hierarchy, pressure points and timing within the domestic calendar. ${notes || `Used properly, that broader context turns a basic list of names into a more realistic picture of how football decisions are actually made in ${countryName}.`}`,
+  ];
+
+  if (countSentences(paragraphs.join(' ')) >= 15) return paragraphs;
+
+  return [
+    ...paragraphs,
+    `${countryName} also needs to be viewed through the lens of pathway design, because academy habits, first-team demands and recruitment expectations do not always align neatly. That is why local context should sit alongside video work, data and personal relationships when judging a contact or opportunity.`,
+  ];
+};
 
 const sanitiseImportedContact = (contact: any): ImportCandidate => ({
   name: normaliseText(contact.name) || 'Unknown',
