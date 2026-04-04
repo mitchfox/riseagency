@@ -2457,16 +2457,35 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(val) => {
+        if (isTrustNetwork && val !== 'contacts') return;
+        setActiveTab(val);
+      }} className="w-full">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
             <TabsList className="relative z-[1] grid min-w-[36rem] grid-cols-5 gap-2 bg-transparent p-0 sm:min-w-0">
               <TabsTrigger value="contacts" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><User className="mr-2 h-4 w-4" />Contacts</TabsTrigger>
-              <TabsTrigger value="analytics" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><BarChart3 className="mr-2 h-4 w-4" />Analytics</TabsTrigger>
-              <TabsTrigger value="duplicates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><AlertTriangle className="mr-2 h-4 w-4" />Duplicates</TabsTrigger>
-              <TabsTrigger value="templates" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><FileText className="mr-2 h-4 w-4" />Templates</TabsTrigger>
-              <TabsTrigger value="pathways" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><Link2 className="mr-2 h-4 w-4" />Pathways</TabsTrigger>
+              {(['analytics', 'duplicates', 'templates', 'pathways'] as const).map((tab) => {
+                const icons = { analytics: BarChart3, duplicates: AlertTriangle, templates: FileText, pathways: Link2 };
+                const labels = { analytics: 'Analytics', duplicates: 'Duplicates', templates: 'Templates', pathways: 'Pathways' };
+                const TabIcon = icons[tab];
+                return (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    disabled={isTrustNetwork}
+                    className={`rounded-[1.25rem] border border-border/50 bg-background/30 px-4 py-3 text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary ${isTrustNetwork ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isTrustNetwork ? (
+                      <Lock className="mr-2 h-4 w-4 text-[hsl(43,49%,61%)]" />
+                    ) : (
+                      <TabIcon className="mr-2 h-4 w-4" />
+                    )}
+                    {labels[tab]}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
         </div>
@@ -2485,25 +2504,29 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
           </AnimatePresence>
         </TabsContent>
 
-        <TabsContent value="analytics" className="mt-6">
-          <NetworkAnalytics contacts={contacts} />
-        </TabsContent>
+        {!isTrustNetwork && (
+          <>
+            <TabsContent value="analytics" className="mt-6">
+              <NetworkAnalytics contacts={contacts} />
+            </TabsContent>
 
-        <TabsContent value="duplicates" className="mt-6">
-          <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
-        </TabsContent>
+            <TabsContent value="duplicates" className="mt-6">
+              <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
+            </TabsContent>
 
-        <TabsContent value="templates" className="mt-6">
-          <NetworkTabPanel title="Templates" description="Quick-copy templates in the same glass layout as the rest of Network." icon={FileText}>
-            <QuickMessageSection />
-          </NetworkTabPanel>
-        </TabsContent>
+            <TabsContent value="templates" className="mt-6">
+              <NetworkTabPanel title="Templates" description="Quick-copy templates in the same glass layout as the rest of Network." icon={FileText}>
+                <QuickMessageSection />
+              </NetworkTabPanel>
+            </TabsContent>
 
-        <TabsContent value="pathways" className="mt-6">
-          <NetworkTabPanel title="Pathways" description="Pathways now match the same visual system as the country and contact views." icon={Link2}>
-            <MessagePathways />
-          </NetworkTabPanel>
-        </TabsContent>
+            <TabsContent value="pathways" className="mt-6">
+              <NetworkTabPanel title="Pathways" description="Pathways now match the same visual system as the country and contact views." icon={Link2}>
+                <MessagePathways />
+              </NetworkTabPanel>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
 
       <ImportProgressIndicator />
