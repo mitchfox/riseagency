@@ -963,7 +963,7 @@ const ClubNetworkManagement = () => {
     setShowDialog(false);
     setEditingContact(null);
     resetForm();
-    fetchContacts();
+    fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
   };
 
   const handleDelete = async (id: string) => {
@@ -971,7 +971,7 @@ const ClubNetworkManagement = () => {
     const { error } = await supabase.from('club_network_contacts').delete().eq('id', id);
     if (error) { toast.error('Failed to delete contact'); return; }
     toast.success('Contact deleted');
-    fetchContacts();
+    fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
   };
 
   const handleShareContact = (contact: Contact) => {
@@ -1111,7 +1111,7 @@ const ClubNetworkManagement = () => {
       setImportText('');
       setParsedContacts([]);
       setSelectedImportIndices(new Set());
-      fetchContacts();
+      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
       setImportProgress({ active: true, processed: payload.length, total: payload.length, inserted, updated, skipped, completed: true, message: 'Import complete' });
     } catch (error: any) {
       setImportProgress((current) => ({ ...current, active: false, completed: false, message: '' }));
@@ -1207,7 +1207,7 @@ const ClubNetworkManagement = () => {
       const applied = await onSuccess(updates);
       if (applied === 0) toast.info(emptyMessage);
       else toast.success(`${successLabel} ${applied} record${applied === 1 ? '' : 's'}`);
-      fetchContacts();
+      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
     } catch (error) {
       toast.error('AI update failed');
     } finally {
@@ -1247,7 +1247,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No new country or role tags were suggested');
       else toast.success(`AI tagged ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchContacts();
+      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
     } catch {
       toast.error('AI tagging failed');
     } finally {
@@ -1285,7 +1285,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No field changes were suggested');
       else toast.success(`AI organised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchContacts();
+      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
     } catch {
       toast.error('AI organise failed');
     } finally {
@@ -1322,7 +1322,7 @@ const ClubNetworkManagement = () => {
 
       if (totalApplied === 0) toast.info('No club names needed standardising');
       else toast.success(`AI standardised ${totalApplied} record${totalApplied === 1 ? '' : 's'}`);
-      fetchContacts();
+      fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
     } catch {
       toast.error('AI standardise failed');
     } finally {
@@ -1367,7 +1367,7 @@ const ClubNetworkManagement = () => {
       if (applied === 0) toast.info('No new network links were found');
       else {
         toast.success(`Mapped network links for ${applied} contact${applied === 1 ? '' : 's'}`);
-        fetchContacts();
+        fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map());
       }
     } catch {
       toast.error('Failed to map links');
@@ -2361,7 +2361,7 @@ const ClubNetworkManagement = () => {
         </TabsContent>
 
         <TabsContent value="duplicates" className="mt-6">
-          <NetworkDuplicateDetector contacts={contacts} onRefresh={fetchContacts} />
+          <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await fetchAllContacts(); fetchCountrySummary(); setLoadedCountryKeys(new Set()); setCountryContactsCache(new Map()); }} />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
