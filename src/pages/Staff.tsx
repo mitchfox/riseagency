@@ -1661,8 +1661,8 @@ const Staff = () => {
               {/* Use hidden class for key sections to preserve state (popups, playback, etc.) */}
                   <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
-                  <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={isAdmin} /></div>
-                  <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={isAdmin} /></div>
+                  <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
+                  <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={canManageSection('analysis')} /></div>
                   {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
@@ -1680,17 +1680,17 @@ const Staff = () => {
                   {expandedSection === 'designstudio' && <DesignProjects />}
                   {expandedSection === 'streams' && <StreamsSection />}
                   {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
-                  {expandedSection === 'playerlist' && <PlayerList isAdmin={isAdmin} />}
-                  {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'playerlist' && <PlayerList isAdmin={canManageSection('playerlist')} />}
+                  {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={canManageSection('recruitment')} />}
+                  {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />}
                   
-                  {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'coaching' && <CoachingDatabase isAdmin={isAdmin} />}
+                  {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />}
+                  {expandedSection === 'coaching' && <CoachingDatabase isAdmin={canManageSection('coaching')} />}
                   {expandedSection === 'tacticsboard' && <TacticsBoard />}
                   {expandedSection === 'meetings' && <Meetings />}
                   {expandedSection === 'coachingdata' && <CoachingDataSection />}
-                  {expandedSection === 'marketingschedule' && <ScheduleManager canManage={isAdmin || !!isMarketeer} />}
-                  {expandedSection === 'marketing' && <MarketingManagement isAdmin={isAdmin} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
+                  {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
@@ -1698,27 +1698,27 @@ const Staff = () => {
                   {expandedSection === 'musicstudio' && <MusicStudio />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}
                   
-                  {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'invoices' && <InvoiceManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'payments' && <PaymentsManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'expenses' && <ExpensesManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'budgets' && <BudgetsManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'financialreports' && <FinancialReports isAdmin={isAdmin} />}
-                  {expandedSection === 'updates' && <UpdatesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={canManageSection('publiccontent')} />}
+                  {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={canManageSection('submissions')} />}
+                  {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={canManageSection('visitors')} />}
+                  {expandedSection === 'invoices' && <InvoiceManagement isAdmin={canManageSection('invoices')} />}
+                  {expandedSection === 'payments' && <PaymentsManagement isAdmin={canManageSection('payments')} />}
+                  {expandedSection === 'expenses' && <ExpensesManagement isAdmin={canManageSection('expenses')} />}
+                  {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={canManageSection('taxrecords')} />}
+                  {expandedSection === 'budgets' && <BudgetsManagement isAdmin={canManageSection('budgets')} />}
+                  {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
+                  {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement />}
                   {expandedSection === 'casestudies' && <MessagingCaseStudies />}
-                  {expandedSection === 'transferhub' && <TransferHub isAdmin={isAdmin} />}
+                  {expandedSection === 'transferhub' && <TransferHub isAdmin={canManageSection('transferhub')} />}
                   {expandedSection === 'portalmanagement' && <PortalManagement />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
-                  {expandedSection === 'legal' && <LegalManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'partners' && <PartnersManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'legal' && <LegalManagement isAdmin={canManageSection('legal')} />}
+                  {expandedSection === 'partners' && <PartnersManagement isAdmin={canManageSection('partners')} />}
                   {expandedSection === 'jobs' && <JobsManagement />}
                   {expandedSection === 'requests' && <RequestsManagement />}
-                  {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={isAdmin} />}
-                  {expandedSection === 'languages' && <LanguagesManagement isAdmin={isAdmin} />}
+                  {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={canManageSection('sitetext')} />}
+                  {expandedSection === 'languages' && <LanguagesManagement isAdmin={canManageSection('languages')} />}
                   {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
                   {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
                   {expandedSection === 'pwainstall' && <StaffPWAInstall />}
