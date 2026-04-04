@@ -742,100 +742,6 @@ const Staff = () => {
     toast.success("Logged out");
   };
 
-  if (loading) {
-    return <PageLoading />;
-  }
-
-  // Show login form if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
-        <div className="max-w-md w-full mx-4">
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-center">
-                Staff Login
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="staff@example.com"
-                    required
-                    autoFocus
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember-me-staff"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  />
-                  <Label htmlFor="remember-me-staff" className="text-sm cursor-pointer">
-                    Remember me
-                  </Label>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Logging in..." : "Access Dashboard"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Show access denied if user is authenticated but not staff
-  if (!isStaff) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
-        <div className="max-w-md w-full mx-4">
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-center text-destructive">
-                Access Denied
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-center text-muted-foreground">
-                You do not have staff permissions to access this page.
-              </p>
-              <Button onClick={handleLogout} className="w-full" variant="outline">
-                Logout
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (isStaff && permissionManagedRole && permissionsLoading) {
-    return <PageLoading />;
-  }
-
   // Build categories based on role
   const buildCategories = () => {
     // Marketeer-only sections (marketeer without admin role)
@@ -1085,6 +991,65 @@ const Staff = () => {
     setSearchParams({ section: fallbackSection }, { replace: true });
     localStorage.setItem('staff_active_tab', fallbackSection);
   }, [categories, expandedSection, isStaff, permissionsLoading, setSearchParams, visibleSectionIds]);
+
+  if (loading) {
+    return <PageLoading />;
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
+        <div className="max-w-md w-full mx-4">
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">
+                Staff Login
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="staff@example.com" required autoFocus autoComplete="email" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" required autoComplete="current-password" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="remember-me-staff" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
+                  <Label htmlFor="remember-me-staff" className="text-sm cursor-pointer">Remember me</Label>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Logging in..." : "Access Dashboard"}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isStaff) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center overflow-x-hidden">
+        <div className="max-w-md w-full mx-4">
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center text-destructive">Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-center text-muted-foreground">You do not have staff permissions to access this page.</p>
+              <Button onClick={handleLogout} className="w-full" variant="outline">Logout</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isStaff && permissionManagedRole && permissionsLoading) {
+    return <PageLoading />;
+  }
 
   // Keyword map for deeper sidebar search
   const SECTION_KEYWORDS: Record<string, string[]> = {
