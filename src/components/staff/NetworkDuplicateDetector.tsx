@@ -199,7 +199,8 @@ export const NetworkDuplicateDetector: React.FC<{ contacts: Contact[]; onRefresh
     }
     toast.success(`Merged ${merged} duplicate groups`);
     setMergingAll(false);
-    onRefresh();
+    await onRefresh();
+    setScanKey((k) => k + 1);
   };
 
   return (
