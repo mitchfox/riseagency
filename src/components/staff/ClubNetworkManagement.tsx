@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
