@@ -795,14 +795,14 @@ export const ActionTypeEditor = ({
             </div>
           )}
 
-          {/* Fullscreen pitch map popup */}
+          {/* Pitch map popup - below video */}
           {mobilePitchOpen && (
-            <div className="absolute inset-0 z-40 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-              <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="absolute left-0 right-0 bottom-0 z-40 bg-background flex flex-col pb-[env(safe-area-inset-bottom)]" style={{ top: '35vh' }}>
+              <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
                 <span className="text-sm font-semibold">Pitch Map</span>
                 <Button variant="ghost" size="sm" onClick={() => setMobilePitchOpen(false)}>Close</Button>
               </div>
-              <div className="flex-1 p-4 pb-8">
+              <div className="flex-1 overflow-y-auto p-3">
                 {selectedActionIndex !== null ? (
                   <InlinePitchGrid key={pitchGridKeyRef.current} value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])} onChange={(zd) => { updateAction(selectedActionIndex, "zone_details", zd as any); updateAction(selectedActionIndex, "zone", (zd.length ? zd[0].zone : null) as any); }} actionType={activeAction?.action_type || ""} />
                 ) : <div className="flex items-center justify-center h-full text-muted-foreground">Select an action first</div>}
@@ -810,12 +810,23 @@ export const ActionTypeEditor = ({
             </div>
           )}
 
-          {/* Fullscreen scores popup */}
+          {/* Scores popup - below video with search */}
           {mobileScoresOpen && (
-            <div className="absolute inset-0 z-40 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-              <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="absolute left-0 right-0 bottom-0 z-40 bg-background flex flex-col pb-[env(safe-area-inset-bottom)]" style={{ top: '35vh' }}>
+              <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
                 <span className="text-sm font-semibold">R90 Action Scores</span>
                 <Button variant="ghost" size="sm" onClick={() => setMobileScoresOpen(false)}>Close</Button>
+              </div>
+              <div className="px-3 pt-2 shrink-0">
+                <R90InlineSearch
+                  allR90Ratings={allR90Ratings}
+                  onSelect={(score) => {
+                    if (selectedActionIndex !== null) {
+                      applyQuickScore(selectedActionIndex, score);
+                      setMobileScoresOpen(false);
+                    }
+                  }}
+                />
               </div>
               <ScrollArea className="flex-1">
                 <div className="p-3 space-y-1">
@@ -900,7 +911,7 @@ export const ActionTypeEditor = ({
                 <div className="p-3 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div><label className="text-[10px] text-muted-foreground">Minute</label><Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs" /></div>
-                    <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => updateAction(selectedActionIndex, "action_score", val)} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
+                    <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => { applyQuickScore(selectedActionIndex, val); }} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
                   </div>
                   <div><label className="text-[10px] text-muted-foreground">Description</label><DescriptionBlurInput value={activeAction.action_description} onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)} placeholder="Description" className="h-8 text-xs" suggestions={getDescriptionsForType(activeAction.action_type || "")} /></div>
                   <div><label className="text-[10px] text-muted-foreground">Notes</label><BlurInput value={activeAction.notes} onCommit={(val) => updateAction(selectedActionIndex, "notes", val)} placeholder="Notes" className="h-8 text-xs" /></div>

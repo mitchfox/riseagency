@@ -513,6 +513,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [countryContactsLoading, setCountryContactsLoading] = useState(false);
   const [contactPage, setContactPage] = useState(0);
   const [expandedClubKey, setExpandedClubKey] = useState<string | null>(null);
+  const [selectedRoleKey, setSelectedRoleKey] = useState<string | null>(null);
+  const [roleContactsCache, setRoleContactsCache] = useState<Map<string, Contact[]>>(new Map());
+  const roleContactsCacheRef = useRef<Map<string, Contact[]>>(new Map());
+  const [roleContactsLoading, setRoleContactsLoading] = useState(false);
   const initialLoadDoneRef = useRef(false);
   const CONTACTS_PER_PAGE = 9;
   const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
@@ -645,6 +649,58 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       setCountryContactsLoading(false);
     }
   }, []);
+
+  const fetchRoleContacts = useCallback(async (roleKey: string) => {
+    if (roleContactsCacheRef.current.has(roleKey)) return;
+    setRoleContactsLoading(true);
+    try {
+      // Find all variant names for this role from summary
+      const variants = new Set<string>();
+      networkSummaryRows.forEach((row) => {
+        const role = normaliseText(row.position);
+        if (!role) return;
+        if (normalizeClubName(role) === roleKey) variants.add(role);
+      });
+
+      let allData: Contact[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from('club_network_contacts')
+          .select('*')
+          .order('name', { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (roleKey === 'unassigned') {
+          query = query.or('position.is.null,position.eq.');
+        } else {
+          // Filter by any of the variant role names
+          const variantArray = [...variants];
+          if (variantArray.length === 1) {
+            query = query.ilike('position', escapeOrValue(variantArray[0]));
+          } else if (variantArray.length > 0) {
+            query = query.or(variantArray.map(v => `position.ilike.${escapeOrValue(v)}`).join(','));
+          }
+        }
+
+        const { data, error } = await query;
+        if (error) { toast.error('Failed to load contacts'); return; }
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      const nextCache = new Map(roleContactsCacheRef.current);
+      nextCache.set(roleKey, allData);
+      roleContactsCacheRef.current = nextCache;
+      setRoleContactsCache(nextCache);
+    } finally {
+      setRoleContactsLoading(false);
+    }
+  }, [networkSummaryRows]);
 
   // Full fetch for AI tools / duplicates / analytics that need all contacts
   const fetchAllContacts = useCallback(async () => {
@@ -893,6 +949,51 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   );
 
   const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
+
+  const selectedRole = useMemo(
+    () => landingRoleEntries.find((r) => r.key === selectedRoleKey) || null,
+    [landingRoleEntries, selectedRoleKey]
+  );
+
+  const roleContacts = useMemo(() => {
+    if (!selectedRoleKey) return [];
+    let result = [...(roleContactsCache.get(selectedRoleKey) || [])];
+    if (deferredSearch.trim()) {
+      const query = deferredSearch.toLowerCase();
+      result = result.filter((contact) =>
+        [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.country || '']
+          .join(' ').toLowerCase().includes(query)
+      );
+    }
+    result.sort((a, b) => {
+      const aVal = ((a[sortField] as string | null) || '').toLowerCase();
+      const bVal = ((b[sortField] as string | null) || '').toLowerCase();
+      return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+    return result;
+  }, [selectedRoleKey, roleContactsCache, deferredSearch, sortField, sortDir]);
+
+  const roleClubGroups = useMemo(() => {
+    const groups = new Map<string, { names: string[]; contacts: Contact[] }>();
+    roleContacts.forEach((contact) => {
+      const rawClub = normaliseText(contact.club_name) || 'Independent';
+      const key = rawClub === 'Independent' ? 'independent' : normalizeClubName(rawClub);
+      const existing = groups.get(key) || { names: [], contacts: [] };
+      existing.names.push(rawClub);
+      existing.contacts.push(contact);
+      groups.set(key, existing);
+    });
+    return [...groups.entries()]
+      .map(([key, { names, contacts }]) => ({
+        key,
+        name: choosePreferredLabel(names, toTitleCase(names[0] || key)),
+        contacts,
+        logo: getClubLogo(choosePreferredLabel(names, names[0])),
+        profile: getClubProfile(choosePreferredLabel(names, names[0])),
+        rating: getClubRating(choosePreferredLabel(names, names[0])),
+      }))
+      .sort((a, b) => b.contacts.length - a.contacts.length || a.name.localeCompare(b.name));
+  }, [roleContacts, getClubLogo, getClubProfile, getClubRating]);
 
   const filteredCountries = useMemo(() => {
     const query = deferredSearch.toLowerCase();
@@ -1935,21 +2036,29 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   const RoleLandingCard = ({ role }: { role: RoleEntry }) => (
     <ScrollRevealItem>
-      <div className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 p-5 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]" style={softPanelStyle}>
+      <motion.button
+        whileHover={{ y: -6, scale: 1.015 }}
+        whileTap={{ scale: 0.985 }}
+        onClick={() => {
+          setSelectedRoleKey(role.key);
+          setSearchQuery('');
+          setExpandedClubKey(null);
+          fetchRoleContacts(role.key);
+        }}
+        className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
+        style={softPanelStyle}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_40%)] opacity-85" />
-        <div className="relative z-[1] flex h-full flex-col justify-between">
-          <Badge variant="outline" className="w-fit border-primary/40 text-primary">ROLE VIEW</Badge>
-          <div className="space-y-3 text-center">
-            <ScrollReveal>
-              <h3 className="font-bebas text-[1.5rem] tracking-[0.18em] text-foreground drop-shadow-[0_10px_20px_hsl(var(--foreground)/0.18)]">{role.name.toUpperCase()}</h3>
-            </ScrollReveal>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-sm font-medium text-foreground/90">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-              {role.count} contact{role.count === 1 ? '' : 's'}
-            </div>
+        <div className="relative z-[1] flex h-full flex-col items-center justify-center p-5 text-center">
+          <ScrollReveal>
+            <h3 className="font-bebas text-[1.5rem] tracking-[0.18em] text-foreground drop-shadow-[0_10px_20px_hsl(var(--foreground)/0.18)]">{role.name.toUpperCase()}</h3>
+          </ScrollReveal>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-sm font-medium text-foreground/90">
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+            {role.count} contact{role.count === 1 ? '' : 's'}
           </div>
         </div>
-      </div>
+      </motion.button>
     </ScrollRevealItem>
   );
 
@@ -1994,12 +2103,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={panelStyle}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
-          <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
+          <div className="relative z-[1] flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <ScrollReveal>
                 <h2 className="font-bebas text-2xl tracking-[0.3em] text-foreground">NETWORK</h2>
               </ScrollReveal>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                 <span>{totalContactCount} contacts</span>
                 <span className="text-border">·</span>
                 <span>{totalCountryCount} countries</span>
@@ -2008,12 +2117,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <StaffSearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Search countries, contacts, clubs"
-                className="w-64"
+                className="w-full sm:w-64"
               />
 
               <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
@@ -2032,46 +2141,44 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               </div>
 
               {!isTrustNetwork && (
-                <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
-                        {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-72">
-                      <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
-                        <Upload className="mr-2 h-4 w-4" />Import .vcf text
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="mr-2 h-4 w-4" />Import .vcf file
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
-                        <Download className="mr-2 h-4 w-4" />Export all as .vcf
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <Button onClick={openAddDialog} size="icon" className="rounded-xl shrink-0">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                      {aiAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    <DropdownMenuItem onClick={handleAiAutoTag} disabled={!!aiAction}><Wand2 className="mr-2 h-4 w-4" />Auto-tag country and role</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAiOrganise} disabled={!!aiAction}><SortAsc className="mr-2 h-4 w-4" />Organise fields</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAiStandardiseClubs} disabled={!!aiAction}><Building2 className="mr-2 h-4 w-4" />Standardise club names</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAiMapLinks} disabled={!!aiAction}><Link2 className="mr-2 h-4 w-4" />Map likely network links</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45 shrink-0">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => { setImportText(''); setParsedContacts([]); setSelectedImportIndices(new Set()); setShowImportDialog(true); }}>
+                    <Upload className="mr-2 h-4 w-4" />Import .vcf text
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />Import .vcf file
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => exportContactsAsVcf(contacts, 'network-all-contacts')}>
+                    <Download className="mr-2 h-4 w-4" />Export all as .vcf
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button onClick={openAddDialog} size="icon" className="rounded-xl shrink-0">
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -2551,7 +2658,126 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     </div>
   );
 
-  // ── Contact preview popup (shared card style) ──
+  // ── Role detail view ──
+  const RoleDetailView = () => {
+    const [expandedRoleClub, setExpandedRoleClub] = useState<string | null>(null);
+    const expandedClubContacts = expandedRoleClub
+      ? roleClubGroups.find(g => g.key === expandedRoleClub)?.contacts || []
+      : [];
+
+    return (
+      <div className="space-y-6">
+        <ScrollReveal>
+          <button
+            onClick={() => { setSelectedRoleKey(null); setSearchQuery(''); }}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />All roles
+          </button>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-6 backdrop-blur-2xl" style={panelStyle}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
+            <div className="relative z-[1]">
+              <ScrollReveal>
+                <h2 className="font-bebas text-3xl tracking-[0.3em] text-foreground">{selectedRole?.name?.toUpperCase()}</h2>
+              </ScrollReveal>
+              <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                <span>{roleContacts.length} contacts</span>
+                <span className="text-border">·</span>
+                <span>{roleClubGroups.length} clubs</span>
+              </div>
+              {selectedRole?.profile?.description && (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-3xl">{selectedRole.profile.description}</p>
+              )}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Search bar */}
+        <ScrollReveal delay={0.1}>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
+            <div className="relative z-[1] flex flex-col gap-3 md:flex-row md:items-center">
+              <StaffSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={`Search ${selectedRole?.name || 'role'} contacts`}
+                className="w-full md:flex-1 md:min-w-[12rem]"
+              />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(roleContacts, `${selectedRole?.name || 'role'}-contacts`)}>
+                  <Download className="h-4 w-4" />
+                </Button>
+                {!isTrustNetwork && selectedRole && (
+                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => openProfileEditor('role', selectedRole.name)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {roleContactsLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {!roleContactsLoading && !expandedRoleClub && (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+            {roleClubGroups.map((group) => (
+              <motion.button
+                key={group.key}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setExpandedRoleClub(group.key)}
+                className="group relative overflow-hidden rounded-[1.5rem] border border-border/40 p-4 text-left transition-all duration-300 hover:border-primary/40"
+                style={softPanelStyle}
+              >
+                <div className="flex items-center gap-3">
+                  {group.logo ? (
+                    <img src={group.logo} alt="" className="h-8 w-8 rounded-lg object-contain bg-card/60 p-1" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground"><Building2 className="h-4 w-4" /></div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
+                    <p className="text-xs text-muted-foreground">{group.contacts.length} contact{group.contacts.length === 1 ? '' : 's'}</p>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        )}
+
+        {!roleContactsLoading && expandedRoleClub && (
+          <div className="space-y-4">
+            <button
+              onClick={() => setExpandedRoleClub(null)}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />All clubs
+            </button>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+              {expandedClubContacts.map((contact) => (
+                <ContactCard key={contact.id} contact={contact} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!roleContactsLoading && roleContacts.length === 0 && (
+          <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+            <User className="mx-auto mb-3 h-12 w-12 opacity-50" />
+            <p className="font-medium text-foreground">No contacts found</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const ContactPreviewDialog = () => {
     if (!viewingContact) return null;
     const contact = viewingContact;
@@ -2711,6 +2937,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
             {selectedCountry ? (
               <motion.div key="country-detail" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.24 }}>
                 <CountryDetailView />
+              </motion.div>
+            ) : selectedRole ? (
+              <motion.div key="role-detail" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.24 }}>
+                <RoleDetailView />
               </motion.div>
             ) : (
               <motion.div key="country-grid" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 18 }} transition={{ duration: 0.24 }}>
