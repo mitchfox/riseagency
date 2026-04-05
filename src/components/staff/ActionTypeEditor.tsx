@@ -739,7 +739,7 @@ export const ActionTypeEditor = ({
 
           {/* Full-screen action list overlay */}
           {mobileActionListOpen && (
-            <div className="absolute inset-0 z-50 bg-background flex flex-col">
+            <div className="absolute inset-0 z-50 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
               <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
                 <span className="text-primary font-bold text-sm">SELECT ACTION</span>
                 <div className="flex items-center gap-2">
@@ -797,12 +797,12 @@ export const ActionTypeEditor = ({
 
           {/* Fullscreen pitch map popup */}
           {mobilePitchOpen && (
-            <div className="absolute inset-0 z-40 bg-background flex flex-col">
+            <div className="absolute inset-0 z-40 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <span className="text-sm font-semibold">Pitch Map</span>
                 <Button variant="ghost" size="sm" onClick={() => setMobilePitchOpen(false)}>Close</Button>
               </div>
-              <div className="flex-1 p-4">
+              <div className="flex-1 p-4 pb-8">
                 {selectedActionIndex !== null ? (
                   <InlinePitchGrid key={pitchGridKeyRef.current} value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])} onChange={(zd) => { updateAction(selectedActionIndex, "zone_details", zd as any); updateAction(selectedActionIndex, "zone", (zd.length ? zd[0].zone : null) as any); }} actionType={activeAction?.action_type || ""} />
                 ) : <div className="flex items-center justify-center h-full text-muted-foreground">Select an action first</div>}
@@ -812,7 +812,7 @@ export const ActionTypeEditor = ({
 
           {/* Fullscreen scores popup */}
           {mobileScoresOpen && (
-            <div className="absolute inset-0 z-40 bg-background flex flex-col">
+            <div className="absolute inset-0 z-40 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <span className="text-sm font-semibold">R90 Action Scores</span>
                 <Button variant="ghost" size="sm" onClick={() => setMobileScoresOpen(false)}>Close</Button>
