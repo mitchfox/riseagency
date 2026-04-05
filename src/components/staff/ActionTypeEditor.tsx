@@ -911,7 +911,7 @@ export const ActionTypeEditor = ({
                 <div className="p-3 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div><label className="text-[10px] text-muted-foreground">Minute</label><Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs" /></div>
-                    <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => updateAction(selectedActionIndex, "action_score", val)} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
+                    <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => { applyQuickScore(selectedActionIndex, val); }} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
                   </div>
                   <div><label className="text-[10px] text-muted-foreground">Description</label><DescriptionBlurInput value={activeAction.action_description} onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)} placeholder="Description" className="h-8 text-xs" suggestions={getDescriptionsForType(activeAction.action_type || "")} /></div>
                   <div><label className="text-[10px] text-muted-foreground">Notes</label><BlurInput value={activeAction.notes} onCommit={(val) => updateAction(selectedActionIndex, "notes", val)} placeholder="Notes" className="h-8 text-xs" /></div>
