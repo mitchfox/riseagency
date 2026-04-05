@@ -812,7 +812,7 @@ export const ActionTypeEditor = ({
 
           {/* Fullscreen scores popup */}
           {mobileScoresOpen && (
-            <div className="absolute inset-0 z-40 bg-background flex flex-col">
+            <div className="absolute inset-0 z-40 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <span className="text-sm font-semibold">R90 Action Scores</span>
                 <Button variant="ghost" size="sm" onClick={() => setMobileScoresOpen(false)}>Close</Button>
