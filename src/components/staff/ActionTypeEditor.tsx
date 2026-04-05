@@ -739,7 +739,7 @@ export const ActionTypeEditor = ({
 
           {/* Full-screen action list overlay */}
           {mobileActionListOpen && (
-            <div className="absolute inset-0 z-50 bg-background flex flex-col">
+            <div className="absolute inset-0 z-50 bg-background flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
               <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
                 <span className="text-primary font-bold text-sm">SELECT ACTION</span>
                 <div className="flex items-center gap-2">
