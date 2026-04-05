@@ -2103,12 +2103,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-5 backdrop-blur-2xl" style={panelStyle}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
-          <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
+          <div className="relative z-[1] flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <ScrollReveal>
                 <h2 className="font-bebas text-2xl tracking-[0.3em] text-foreground">NETWORK</h2>
               </ScrollReveal>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                 <span>{totalContactCount} contacts</span>
                 <span className="text-border">·</span>
                 <span>{totalCountryCount} countries</span>
@@ -2117,12 +2117,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <StaffSearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Search countries, contacts, clubs"
-                className="w-64"
+                className="w-full sm:w-64"
               />
 
               <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
