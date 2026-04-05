@@ -2821,6 +2821,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               <motion.div key="country-detail" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.24 }}>
                 <CountryDetailView />
               </motion.div>
+            ) : selectedRole ? (
+              <motion.div key="role-detail" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.24 }}>
+                <RoleDetailView />
+              </motion.div>
             ) : (
               <motion.div key="country-grid" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 18 }} transition={{ duration: 0.24 }}>
                 <LandingView />
