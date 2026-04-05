@@ -2660,7 +2660,126 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     </div>
   );
 
-  // ── Contact preview popup (shared card style) ──
+  // ── Role detail view ──
+  const RoleDetailView = () => {
+    const [expandedRoleClub, setExpandedRoleClub] = useState<string | null>(null);
+    const expandedClubContacts = expandedRoleClub
+      ? roleClubGroups.find(g => g.key === expandedRoleClub)?.contacts || []
+      : [];
+
+    return (
+      <div className="space-y-6">
+        <ScrollReveal>
+          <button
+            onClick={() => { setSelectedRoleKey(null); setSearchQuery(''); }}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />All roles
+          </button>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-6 backdrop-blur-2xl" style={panelStyle}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%)] opacity-85" />
+            <div className="relative z-[1]">
+              <ScrollReveal>
+                <h2 className="font-bebas text-3xl tracking-[0.3em] text-foreground">{selectedRole?.name?.toUpperCase()}</h2>
+              </ScrollReveal>
+              <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                <span>{roleContacts.length} contacts</span>
+                <span className="text-border">·</span>
+                <span>{roleClubGroups.length} clubs</span>
+              </div>
+              {selectedRole?.profile?.description && (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-3xl">{selectedRole.profile.description}</p>
+              )}
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Search bar */}
+        <ScrollReveal delay={0.1}>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
+            <div className="relative z-[1] flex flex-col gap-3 md:flex-row md:items-center">
+              <StaffSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={`Search ${selectedRole?.name || 'role'} contacts`}
+                className="w-full md:flex-1 md:min-w-[12rem]"
+              />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => exportContactsAsVcf(roleContacts, `${selectedRole?.name || 'role'}-contacts`)}>
+                  <Download className="h-4 w-4" />
+                </Button>
+                {!isTrustNetwork && selectedRole && (
+                  <Button variant="outline" size="icon" className="rounded-xl border-border/60 bg-background/45" onClick={() => openProfileEditor('role', selectedRole.name)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {roleContactsLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {!roleContactsLoading && !expandedRoleClub && (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+            {roleClubGroups.map((group) => (
+              <motion.button
+                key={group.key}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setExpandedRoleClub(group.key)}
+                className="group relative overflow-hidden rounded-[1.5rem] border border-border/40 p-4 text-left transition-all duration-300 hover:border-primary/40"
+                style={softPanelStyle}
+              >
+                <div className="flex items-center gap-3">
+                  {group.logo ? (
+                    <img src={group.logo} alt="" className="h-8 w-8 rounded-lg object-contain bg-card/60 p-1" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground"><Building2 className="h-4 w-4" /></div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{group.name}</p>
+                    <p className="text-xs text-muted-foreground">{group.contacts.length} contact{group.contacts.length === 1 ? '' : 's'}</p>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        )}
+
+        {!roleContactsLoading && expandedRoleClub && (
+          <div className="space-y-4">
+            <button
+              onClick={() => setExpandedRoleClub(null)}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />All clubs
+            </button>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+              {expandedClubContacts.map((contact) => (
+                <ContactCard key={contact.id} contact={contact} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!roleContactsLoading && roleContacts.length === 0 && (
+          <div className="rounded-[2rem] border border-border/50 py-16 text-center text-muted-foreground" style={softPanelStyle}>
+            <User className="mx-auto mb-3 h-12 w-12 opacity-50" />
+            <p className="font-medium text-foreground">No contacts found</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const ContactPreviewDialog = () => {
     if (!viewingContact) return null;
     const contact = viewingContact;
