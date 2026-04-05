@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp, Music, Filter, Copy, Zap, Trophy } from "lucide-react";
+import { X, Save, Search, Play, Pause, SkipBack, SkipForward, Loader2, Maximize, Minimize, PanelLeftClose, PanelLeftOpen, Settings, ChevronsDown, ChevronsUp, Music, Filter, Copy, Zap, Trophy, List, FileText, MapPinned, Target } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
@@ -324,6 +325,7 @@ export const ActionTypeEditor = ({
   getDescriptionsForType,
   minutesPlayed,
 }: ActionTypeEditorProps) => {
+  const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
   const [topScores, setTopScores] = useState<{ value: string; count: number }[]>([]);
@@ -349,6 +351,11 @@ export const ActionTypeEditor = ({
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
   const pitchGridKeyRef = useRef(0);
+  // Mobile-specific state
+  const [mobileActionListOpen, setMobileActionListOpen] = useState(true);
+  const [mobilePitchOpen, setMobilePitchOpen] = useState(false);
+  const [mobileScoresOpen, setMobileScoresOpen] = useState(false);
+  const [mobileBottomView, setMobileBottomView] = useState<'details' | 'playlist'>('details');
 
   // Live R90 calculation
   const liveR90 = useMemo(() => {
@@ -707,6 +714,236 @@ export const ActionTypeEditor = ({
   // Motivational messages based on streak
   const streakMessage = streak >= 20 ? "🔥 Unstoppable!" : streak >= 10 ? "🔥 On fire!" : streak >= 5 ? "⚡ Great pace!" : null;
 
+  // Mobile helper: select action and close list
+  const mobileSelectAction = (actionIndex: number) => {
+    selectAction(actionIndex);
+    setMobileActionListOpen(false);
+  };
+
+  const mobileSelectCategory = (category: string) => {
+    setSelectedCategory(category);
+    const firstInCategory = groupedActions.find(([cat]) => cat === category)?.[1]?.[0];
+    if (firstInCategory) {
+      setSelectedActionIndex(firstInCategory.index);
+      setMobileActionListOpen(false);
+    }
+  };
+
+  // ── MOBILE LAYOUT ──
+  if (isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
+          <DialogTitle className="sr-only">Action Type Editor</DialogTitle>
+          <video ref={preloadVideoRef} preload="auto" muted className="hidden" />
+
+          {/* Full-screen action list overlay */}
+          {mobileActionListOpen && (
+            <div className="absolute inset-0 z-50 bg-background flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+                <span className="text-primary font-bold text-sm">SELECT ACTION</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-mono font-bold ${completionColor}`}>{completionStats.pct}%</span>
+                  {selectedCategory && <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setMobileActionListOpen(false)}>Close</Button>}
+                </div>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-3 space-y-2">
+                  {GROUP_ORDER.map(group => {
+                    const entries = sidebarGroups[group];
+                    if (!entries || entries.length === 0) return null;
+                    return (
+                      <div key={group}>
+                        <div className="flex items-center gap-2 px-2 py-1.5">
+                          <div className="flex-1 h-px bg-[hsl(43,49%,61%)]/50" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group}</span>
+                          <div className="flex-1 h-px bg-[hsl(43,49%,61%)]/50" />
+                        </div>
+                        {entries.map(({ category, items }) => {
+                          const { scored, total } = getScoreCounts(items);
+                          const isSelected = selectedCategory === category;
+                          return (
+                            <div key={category}>
+                              <button className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 ${isSelected ? 'bg-primary/15 text-primary font-semibold' : 'hover:bg-muted/50'}`} onClick={() => isSelected ? setSelectedCategory(null) : mobileSelectCategory(category)}>
+                                <span className={`font-mono text-xs shrink-0 ${scored === total && total > 0 ? "text-green-500" : "opacity-70"}`}>{scored}/{total}</span>
+                                <span className="truncate flex-1">{category}</span>
+                              </button>
+                              {isSelected && (
+                                <div className="pl-4 space-y-1 mt-1 mb-2">
+                                  {items.map(({ action, index }) => (
+                                    <button key={index} className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2 ${selectedActionIndex === index ? 'ring-1 ring-primary bg-primary/10' : 'bg-muted/30 hover:bg-muted/50'}`} onClick={() => mobileSelectAction(index)}>
+                                      <span className="font-mono font-bold text-primary">#{action.action_number}</span>
+                                      <span className="text-muted-foreground">{action.minute ? `${action.minute}'` : ""}</span>
+                                      <span className="truncate flex-1">{action.action_description || "—"}</span>
+                                      <span className="font-mono font-semibold text-amber-600 shrink-0">{action.action_score || "—"}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+              <div className="px-4 py-3 border-t shrink-0 flex gap-2">
+                <Button onClick={onSave} disabled={saving} className="flex-1 gap-1.5"><Save className="h-4 w-4" />{saving ? "Saving..." : "Save"}</Button>
+                <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}><X className="h-5 w-5" /></Button>
+              </div>
+            </div>
+          )}
+
+          {/* Fullscreen pitch map popup */}
+          {mobilePitchOpen && (
+            <div className="absolute inset-0 z-40 bg-background flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <span className="text-sm font-semibold">Pitch Map</span>
+                <Button variant="ghost" size="sm" onClick={() => setMobilePitchOpen(false)}>Close</Button>
+              </div>
+              <div className="flex-1 p-4">
+                {selectedActionIndex !== null ? (
+                  <InlinePitchGrid key={pitchGridKeyRef.current} value={activeAction?.zone_details || (activeAction?.zone ? [{ zone: activeAction.zone }] : [])} onChange={(zd) => { updateAction(selectedActionIndex, "zone_details", zd as any); updateAction(selectedActionIndex, "zone", (zd.length ? zd[0].zone : null) as any); }} actionType={activeAction?.action_type || ""} />
+                ) : <div className="flex items-center justify-center h-full text-muted-foreground">Select an action first</div>}
+              </div>
+            </div>
+          )}
+
+          {/* Fullscreen scores popup */}
+          {mobileScoresOpen && (
+            <div className="absolute inset-0 z-40 bg-background flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <span className="text-sm font-semibold">R90 Action Scores</span>
+                <Button variant="ghost" size="sm" onClick={() => setMobileScoresOpen(false)}>Close</Button>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-3 space-y-1">
+                  {showBoxZone ? (
+                    <BoxZoneMap actions={categoriesToShow.flatMap(([, items]) => items.map(i => i.action))} actionType={selectedCategory || undefined} onScoreSelect={(score) => { if (selectedActionIndex !== null) { applyQuickScore(selectedActionIndex, score); setMobileScoresOpen(false); } }} />
+                  ) : showXGMap ? (
+                    <div className="p-2 flex justify-center"><XGPitchMap compact /></div>
+                  ) : categorisedRatings.length > 0 ? categorisedRatings.map((group, gi) => (
+                    <div key={gi}>
+                      {categorisedRatings.length > 1 && (
+                        <div className="flex items-center gap-1.5 px-1 py-2">
+                          <div className="flex-1 h-px bg-[hsl(43,49%,61%)]/50" />
+                          <span className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(43,49%,61%)]">{group.label}</span>
+                          <div className="flex-1 h-px bg-[hsl(43,49%,61%)]/50" />
+                        </div>
+                      )}
+                      {group.items.map(r => (
+                        <button key={r.id} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-accent text-sm flex items-center gap-3" onClick={() => { if (selectedActionIndex !== null) { applyQuickScore(selectedActionIndex, String(r.score)); setMobileScoresOpen(false); } }}>
+                          <span className="font-mono font-bold text-primary shrink-0 min-w-[50px]">{r.score}</span>
+                          <span className="flex-1">{r.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )) : <div className="text-center py-8 text-sm text-muted-foreground">No action scores configured</div>}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* Main mobile view */}
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Video player */}
+            <div ref={videoContainerRef} className="relative bg-black shrink-0" style={{ height: '35vh' }} onClick={togglePlayPause}>
+              {!hasActiveVideo ? <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Select an action to start</div> : (
+                <>
+                  <video ref={videoRef} className="w-full h-full object-contain" preload="auto" crossOrigin="anonymous" muted playsInline onCanPlay={handleCanPlay} loop />
+                  {!videoReady && <div className="absolute inset-0 flex items-center justify-center bg-black"><Loader2 className="h-5 w-5 animate-spin text-white/60" /></div>}
+                </>
+              )}
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/60 px-3 py-1.5 z-20" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-1.5">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => goToClip(-1)}><SkipBack className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={togglePlayPause}>{videoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => goToClip(1)}><SkipForward className="h-4 w-4" /></Button>
+                </div>
+                <span className="text-xs text-white/80">{currentClipIdx >= 0 ? `${currentClipIdx + 1}/${categoryClips.length}` : ""}</span>
+              </div>
+            </div>
+
+            {/* Tool buttons */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0 overflow-x-auto">
+              <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setMobileActionListOpen(true)}><List className="h-3.5 w-3.5" />Actions</Button>
+              <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setMobilePitchOpen(true)}><MapPinned className="h-3.5 w-3.5" />Pitch</Button>
+              <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setMobileScoresOpen(true)}><Target className="h-3.5 w-3.5" />Scores</Button>
+              <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                <Button onClick={onSave} disabled={saving} size="sm" className="gap-1"><Save className="h-3.5 w-3.5" />{saving ? "..." : "Save"}</Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
+              </div>
+            </div>
+
+            {/* Active action bar */}
+            {selectedActionIndex !== null && activeAction && (
+              <div className="px-3 py-2 border-b bg-muted/20 shrink-0">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-mono font-bold text-primary">#{activeAction.action_number}</span>
+                  <span className="text-muted-foreground">{activeAction.minute ? `${activeAction.minute}'` : ""}</span>
+                  <span className="font-semibold truncate flex-1">{activeAction.action_type}</span>
+                  <span className="font-mono font-bold text-amber-600">{activeAction.action_score || "—"}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom view toggle */}
+            <div className="flex border-b shrink-0">
+              <button className={`flex-1 py-2 text-xs font-medium text-center ${mobileBottomView === 'details' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`} onClick={() => setMobileBottomView('details')}><FileText className="h-3.5 w-3.5 inline mr-1" />Details</button>
+              <button className={`flex-1 py-2 text-xs font-medium text-center ${mobileBottomView === 'playlist' ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`} onClick={() => setMobileBottomView('playlist')}><List className="h-3.5 w-3.5 inline mr-1" />Clips</button>
+            </div>
+
+            {/* Bottom content */}
+            <ScrollArea className="flex-1">
+              {mobileBottomView === 'details' && selectedActionIndex !== null && activeAction ? (
+                <div className="p-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><label className="text-[10px] text-muted-foreground">Minute</label><Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs" /></div>
+                    <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => updateAction(selectedActionIndex, "action_score", val)} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
+                  </div>
+                  <div><label className="text-[10px] text-muted-foreground">Description</label><DescriptionBlurInput value={activeAction.action_description} onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)} placeholder="Description" className="h-8 text-xs" suggestions={getDescriptionsForType(activeAction.action_type || "")} /></div>
+                  <div><label className="text-[10px] text-muted-foreground">Notes</label><BlurInput value={activeAction.notes} onCommit={(val) => updateAction(selectedActionIndex, "notes", val)} placeholder="Notes" className="h-8 text-xs" /></div>
+                  {topScores.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {topScores.map(s => (<Button key={s.value} variant="outline" size="sm" className={`h-8 px-3 text-xs font-mono ${activeAction.action_score === s.value ? "bg-primary/20 border-primary" : ""}`} onClick={() => applyQuickScore(selectedActionIndex, s.value)}>{s.value}</Button>))}
+                      <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1" onClick={() => copyFromSimilar(selectedActionIndex)}><Copy className="h-3 w-3" />Copy</Button>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" className="flex-1" onClick={() => goToAction(-1)}>← Prev</Button>
+                    <Button variant="outline" className="flex-1" onClick={() => goToAction(1)}>Next →</Button>
+                  </div>
+                </div>
+              ) : mobileBottomView === 'details' ? (
+                <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">Open Actions to select a clip</div>
+              ) : (
+                <div className="p-3 space-y-1">
+                  {categoriesToShow.map(([category, items]) => (
+                    <div key={category}>
+                      <h3 className="text-xs font-semibold text-primary mb-1.5">{category} <span className="text-[10px] text-muted-foreground font-normal">({items.length})</span></h3>
+                      <div className="space-y-0.5 mb-3">
+                        {items.map(({ action, index }) => (
+                          <button key={index} className={`w-full text-left border rounded-lg px-3 py-2 flex items-center gap-2 text-xs ${selectedActionIndex === index ? "ring-1 ring-primary border-primary bg-primary/10" : "border-border/50 hover:bg-accent/50"}`} onClick={() => { selectAction(index); setMobileBottomView('details'); }}>
+                            <span className="font-mono font-bold text-primary">#{action.action_number}</span>
+                            <span className="text-muted-foreground">{action.minute ? `${action.minute}'` : ""}</span>
+                            <span className="truncate flex-1">{action.action_description || "—"}</span>
+                            <span className="font-mono font-semibold text-amber-600 shrink-0">{action.action_score || "—"}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ── DESKTOP LAYOUT ──
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-background border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none [&>button.absolute]:hidden">
