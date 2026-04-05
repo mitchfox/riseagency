@@ -351,6 +351,11 @@ export const ActionTypeEditor = ({
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
   const pitchGridKeyRef = useRef(0);
+  // Mobile-specific state
+  const [mobileActionListOpen, setMobileActionListOpen] = useState(true);
+  const [mobilePitchOpen, setMobilePitchOpen] = useState(false);
+  const [mobileScoresOpen, setMobileScoresOpen] = useState(false);
+  const [mobileBottomView, setMobileBottomView] = useState<'details' | 'playlist'>('details');
 
   // Live R90 calculation
   const liveR90 = useMemo(() => {
