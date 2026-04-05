@@ -2036,21 +2036,29 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   const RoleLandingCard = ({ role }: { role: RoleEntry }) => (
     <ScrollRevealItem>
-      <div className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 p-5 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]" style={softPanelStyle}>
+      <motion.button
+        whileHover={{ y: -6, scale: 1.015 }}
+        whileTap={{ scale: 0.985 }}
+        onClick={() => {
+          setSelectedRoleKey(role.key);
+          setSearchQuery('');
+          setExpandedClubKey(null);
+          fetchRoleContacts(role.key);
+        }}
+        className="group relative min-h-[13rem] w-full overflow-hidden rounded-[1.9rem] border border-border/40 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
+        style={softPanelStyle}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_40%)] opacity-85" />
-        <div className="relative z-[1] flex h-full flex-col justify-between">
-          <Badge variant="outline" className="w-fit border-primary/40 text-primary">ROLE VIEW</Badge>
-          <div className="space-y-3 text-center">
-            <ScrollReveal>
-              <h3 className="font-bebas text-[1.5rem] tracking-[0.18em] text-foreground drop-shadow-[0_10px_20px_hsl(var(--foreground)/0.18)]">{role.name.toUpperCase()}</h3>
-            </ScrollReveal>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-sm font-medium text-foreground/90">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-              {role.count} contact{role.count === 1 ? '' : 's'}
-            </div>
+        <div className="relative z-[1] flex h-full flex-col items-center justify-center p-5 text-center">
+          <ScrollReveal>
+            <h3 className="font-bebas text-[1.5rem] tracking-[0.18em] text-foreground drop-shadow-[0_10px_20px_hsl(var(--foreground)/0.18)]">{role.name.toUpperCase()}</h3>
+          </ScrollReveal>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1 text-sm font-medium text-foreground/90">
+            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+            {role.count} contact{role.count === 1 ? '' : 's'}
           </div>
         </div>
-      </div>
+      </motion.button>
     </ScrollRevealItem>
   );
 
