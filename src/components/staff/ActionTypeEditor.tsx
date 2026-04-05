@@ -325,6 +325,7 @@ export const ActionTypeEditor = ({
   getDescriptionsForType,
   minutesPlayed,
 }: ActionTypeEditorProps) => {
+  const isMobile = useIsMobile();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedActionIndex, setSelectedActionIndex] = useState<number | null>(null);
   const [topScores, setTopScores] = useState<{ value: string; count: number }[]>([]);
