@@ -1953,18 +1953,40 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     </ScrollRevealItem>
   );
 
-  // ── Info block ──
-  const InfoBlock = ({ title, children, className: extraClass = '' }: { title: string; children: React.ReactNode; className?: string }) => (
-    <div className={`relative overflow-hidden rounded-[1.5rem] border border-border/50 p-4 backdrop-blur-2xl ${extraClass}`} style={softPanelStyle}>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_36%)] opacity-80" />
-      <div className="relative z-[1] space-y-3">
-        <ScrollReveal>
-          <h4 className="font-bebas text-sm tracking-[0.28em] text-primary uppercase">{title}</h4>
-        </ScrollReveal>
-        {children}
+  // ── Info block (collapsible on mobile) ──
+  const InfoBlock = ({ title, children, className: extraClass = '' }: { title: string; children: React.ReactNode; className?: string }) => {
+    const [collapsed, setCollapsed] = useState(isMobile);
+
+    return (
+      <div className={`relative overflow-hidden rounded-[1.5rem] border border-border/50 backdrop-blur-2xl ${extraClass}`} style={softPanelStyle}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_36%)] opacity-80" />
+        <button
+          onClick={() => setCollapsed(prev => !prev)}
+          className="relative z-[1] flex w-full items-center justify-between p-4 text-left"
+        >
+          <ScrollReveal>
+            <h4 className="font-bebas text-sm tracking-[0.28em] text-primary uppercase">{title}</h4>
+          </ScrollReveal>
+          <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${collapsed ? '' : 'rotate-90'}`} />
+        </button>
+        <AnimatePresence initial={false}>
+          {!collapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="relative z-[1] space-y-3 px-4 pb-4">
+                {children}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── Landing view ──
   const LandingView = () => (
