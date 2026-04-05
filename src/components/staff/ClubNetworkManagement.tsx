@@ -950,6 +950,51 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
   const countrySchemes = useMemo(() => parseDelimitedList(selectedCountry?.profile?.common_formations), [selectedCountry]);
 
+  const selectedRole = useMemo(
+    () => landingRoleEntries.find((r) => r.key === selectedRoleKey) || null,
+    [landingRoleEntries, selectedRoleKey]
+  );
+
+  const roleContacts = useMemo(() => {
+    if (!selectedRoleKey) return [];
+    let result = [...(roleContactsCache.get(selectedRoleKey) || [])];
+    if (deferredSearch.trim()) {
+      const query = deferredSearch.toLowerCase();
+      result = result.filter((contact) =>
+        [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.country || '']
+          .join(' ').toLowerCase().includes(query)
+      );
+    }
+    result.sort((a, b) => {
+      const aVal = ((a[sortField] as string | null) || '').toLowerCase();
+      const bVal = ((b[sortField] as string | null) || '').toLowerCase();
+      return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+    return result;
+  }, [selectedRoleKey, roleContactsCache, deferredSearch, sortField, sortDir]);
+
+  const roleClubGroups = useMemo(() => {
+    const groups = new Map<string, { names: string[]; contacts: Contact[] }>();
+    roleContacts.forEach((contact) => {
+      const rawClub = normaliseText(contact.club_name) || 'Independent';
+      const key = rawClub === 'Independent' ? 'independent' : normalizeClubName(rawClub);
+      const existing = groups.get(key) || { names: [], contacts: [] };
+      existing.names.push(rawClub);
+      existing.contacts.push(contact);
+      groups.set(key, existing);
+    });
+    return [...groups.entries()]
+      .map(([key, { names, contacts }]) => ({
+        key,
+        name: choosePreferredLabel(names, toTitleCase(names[0] || key)),
+        contacts,
+        logo: getClubLogo(choosePreferredLabel(names, names[0])),
+        profile: getClubProfile(choosePreferredLabel(names, names[0])),
+        rating: getClubRating(choosePreferredLabel(names, names[0])),
+      }))
+      .sort((a, b) => b.contacts.length - a.contacts.length || a.name.localeCompare(b.name));
+  }, [roleContacts, getClubLogo, getClubProfile, getClubRating]);
+
   const filteredCountries = useMemo(() => {
     const query = deferredSearch.toLowerCase();
     return countryData
