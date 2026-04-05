@@ -502,6 +502,7 @@ interface ClubNetworkManagementProps {
 }
 
 const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagementProps) => {
+  const isMobile = useIsMobile();
   // Trust Network role can only see contacts
   const isTrustNetwork = userRole?.toLowerCase().replace(/[\s_-]+/g, '') === 'trustnetwork';
   const [contacts, setContacts] = useState<Contact[]>([]);
