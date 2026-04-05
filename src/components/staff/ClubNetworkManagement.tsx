@@ -650,6 +650,58 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     }
   }, []);
 
+  const fetchRoleContacts = useCallback(async (roleKey: string) => {
+    if (roleContactsCacheRef.current.has(roleKey)) return;
+    setRoleContactsLoading(true);
+    try {
+      // Find all variant names for this role from summary
+      const variants = new Set<string>();
+      networkSummaryRows.forEach((row) => {
+        const role = normaliseText(row.position);
+        if (!role) return;
+        if (normalizeClubName(role) === roleKey) variants.add(role);
+      });
+
+      let allData: Contact[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from('club_network_contacts')
+          .select('*')
+          .order('name', { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (roleKey === 'unassigned') {
+          query = query.or('position.is.null,position.eq.');
+        } else {
+          // Filter by any of the variant role names
+          const variantArray = [...variants];
+          if (variantArray.length === 1) {
+            query = query.ilike('position', escapeOrValue(variantArray[0]));
+          } else if (variantArray.length > 0) {
+            query = query.or(variantArray.map(v => `position.ilike.${escapeOrValue(v)}`).join(','));
+          }
+        }
+
+        const { data, error } = await query;
+        if (error) { toast.error('Failed to load contacts'); return; }
+        allData = allData.concat(data || []);
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      const nextCache = new Map(roleContactsCacheRef.current);
+      nextCache.set(roleKey, allData);
+      roleContactsCacheRef.current = nextCache;
+      setRoleContactsCache(nextCache);
+    } finally {
+      setRoleContactsLoading(false);
+    }
+  }, [networkSummaryRows]);
+
   // Full fetch for AI tools / duplicates / analytics that need all contacts
   const fetchAllContacts = useCallback(async () => {
     let allContacts: Contact[] = [];
