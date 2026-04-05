@@ -2289,15 +2289,15 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       <ScrollReveal delay={0.1}>
         <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-4 backdrop-blur-2xl" style={softPanelStyle}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,hsl(var(--accent)/0.1),transparent_44%)] opacity-80" />
-          <div className="relative z-[1] flex flex-wrap items-center gap-3">
+          <div className="relative z-[1] flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
             <StaffSearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder={`Search ${selectedCountry?.name || 'country'} contacts`}
-              className="flex-1 min-w-[12rem]"
+              className="w-full md:flex-1 md:min-w-[12rem]"
             />
 
-            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
+            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1 w-full md:w-auto">
               {[
                 { value: 'club' as GroupBy, label: 'Club' },
                 { value: 'role' as GroupBy, label: 'Role' },
@@ -2305,8 +2305,8 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               ].map((option) => (
                 <button
                   key={option.value}
-                  onClick={() => setGroupBy(option.value)}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                  onClick={() => { setGroupBy(option.value); setExpandedClubKey(null); }}
+                  className={`flex-1 md:flex-none rounded-full px-3 py-2 text-sm font-medium transition-colors ${
                     groupBy === option.value ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -2316,7 +2316,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
             </div>
 
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[12rem] rounded-2xl border-border/60 bg-background/45">
+              <SelectTrigger className="w-full md:w-[12rem] rounded-2xl border-border/60 bg-background/45">
                 <SelectValue placeholder="All roles" />
               </SelectTrigger>
               <SelectContent>
@@ -2327,12 +2327,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1">
+            <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/40 p-1 w-full md:w-auto">
               {(['name', 'club_name'] as SortField[]).map((field) => (
                 <button
                   key={field}
                   onClick={() => handleSort(field)}
-                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`flex-1 md:flex-none rounded-full px-3 py-2 text-sm font-medium transition-colors ${
                     sortField === field ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
