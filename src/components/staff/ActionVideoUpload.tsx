@@ -90,11 +90,16 @@ export const ActionVideoUpload = ({
               end: clip.end,
               action_type: clip.action_type || '',
               action_description: clip.action_description || '',
+              action_score: clip.action_score || '',
+              notes: clip.notes || '',
               video_url: va.video_url,
               video_title: va.title,
+              hasNotes: !!(clip.notes && clip.notes.trim()),
             });
           }
         }
+        // Sort: clips with notes first
+        allClips.sort((a, b) => (b.hasNotes ? 1 : 0) - (a.hasNotes ? 1 : 0));
         setLinkedClips(allClips);
       }
     } catch (err) {
