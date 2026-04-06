@@ -582,6 +582,18 @@ export const AthleteCentre = () => {
                       )}
                     </TabsContent>
 
+                    <TabsContent value="testing" className="mt-0 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base md:text-lg font-semibold">Testing Results</h3>
+                        <AddTestResultDialog
+                          playerId={selectedPlayer}
+                          playerName={currentPlayer.name}
+                          onSuccess={() => {}}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Test results are accessible from Player Management and Strength, Power &amp; Speed sections.</p>
+                    </TabsContent>
+
                     <TabsContent value="injuries" className="mt-0">
                       <InjuryLog playerId={selectedPlayer} readOnly />
                     </TabsContent>
