@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
+import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
