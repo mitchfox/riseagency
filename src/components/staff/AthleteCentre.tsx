@@ -317,6 +317,7 @@ export const AthleteCentre = () => {
     { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
     { value: "programming", label: "Programming", icon: Dumbbell },
+    { value: "testing", label: "Testing", icon: ClipboardList },
     { value: "injuries", label: "Injury Log", icon: ClipboardList },
     { value: "scouting", label: "Scouting", icon: ClipboardList },
     { value: "data", label: "Data", icon: Database },
