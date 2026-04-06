@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
+import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -68,12 +69,22 @@ export const StrengthPowerSpeedSection = () => {
       )}
 
       {selectedPlayer !== "all" && currentPlayer && (
-        <ProgrammingManagement
-          embedded
-          playerId={currentPlayer.id}
-          playerName={currentPlayer.name}
-          isAdmin={true}
-        />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Testing Results</h3>
+            <AddTestResultDialog
+              playerId={currentPlayer.id}
+              playerName={currentPlayer.name}
+              onSuccess={() => {}}
+            />
+          </div>
+          <ProgrammingManagement
+            embedded
+            playerId={currentPlayer.id}
+            playerName={currentPlayer.name}
+            isAdmin={true}
+          />
+        </div>
       )}
     </div>
   );

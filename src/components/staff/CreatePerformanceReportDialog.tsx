@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
@@ -2830,6 +2830,116 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <List className="h-4 w-4 mr-2" />
                   By Action
+                </Button>
+              )}
+              {actions.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const zoneLabels: Record<number, string> = {
+                      1: 'Own Third Left', 2: 'Own Third Centre', 3: 'Own Third Right',
+                      4: 'Middle Third Left', 5: 'Middle Third Centre', 6: 'Middle Third Right',
+                      7: 'Final Third Left', 8: 'Final Third Centre', 9: 'Final Third Right',
+                      10: 'Own Box Left', 11: 'Own Box Centre', 12: 'Own Box Right',
+                      13: 'Opp Box Left', 14: 'Opp Box Centre', 15: 'Opp Box Right',
+                      16: 'Own Wide Left', 17: 'Own Wide Right', 18: 'Opp Wide Left',
+                    };
+                    const lines: string[] = [];
+                    lines.push(`PERFORMANCE REPORT - ${playerName}`);
+                    lines.push(`Opponent: ${opponent || 'N/A'}`);
+                    lines.push(`Result: ${result || 'N/A'}`);
+                    lines.push(`Minutes Played: ${minutesPlayed || 'N/A'}`);
+                    const calcR90 = minutesPlayed && actions.length > 0
+                      ? ((actions.reduce((s, a) => s + (parseFloat(a.action_score) || 0), 0) / parseInt(minutesPlayed)) * 90).toFixed(2)
+                      : r90Score || 'N/A';
+                    lines.push(`R90 Score: ${calcR90}`);
+                    lines.push(`Visibility: ${visibilityStatus}`);
+                    lines.push('');
+                    lines.push('=== ACTIONS ===');
+                    lines.push('');
+                    actions.forEach((a, i) => {
+                      lines.push(`Action ${i + 1}:`);
+                      lines.push(`  Minute: ${a.minute || 'N/A'}`);
+                      lines.push(`  Type: ${a.action_type || 'N/A'}`);
+                      lines.push(`  Description: ${a.action_description || 'N/A'}`);
+                      lines.push(`  Score: ${a.action_score || 'N/A'}`);
+                      if (a.notes) lines.push(`  Notes: ${a.notes}`);
+                      if (a.zone) lines.push(`  Zone: ${zoneLabels[a.zone] || `Zone ${a.zone}`}`);
+                      lines.push('');
+                    });
+                    const posCount: Record<string, number> = {};
+                    const negCount: Record<string, number> = {};
+                    const zoneCount: Record<string, number> = {};
+                    actions.forEach(a => {
+                      const sc = parseFloat(a.action_score);
+                      if (!isNaN(sc)) {
+                        if (sc > 0) posCount[a.action_type] = (posCount[a.action_type] || 0) + 1;
+                        if (sc < 0) negCount[a.action_type] = (negCount[a.action_type] || 0) + 1;
+                      }
+                      if (a.zone) {
+                        const zl = zoneLabels[a.zone] || `Zone ${a.zone}`;
+                        zoneCount[zl] = (zoneCount[zl] || 0) + 1;
+                      }
+                    });
+                    lines.push('=== SUMMARY ===');
+                    lines.push(`Total Actions: ${actions.length}`);
+                    lines.push(`Positive Actions: ${Object.values(posCount).reduce((s, v) => s + v, 0)}`);
+                    lines.push(`Negative Actions: ${Object.values(negCount).reduce((s, v) => s + v, 0)}`);
+                    lines.push('');
+                    lines.push('Actions by Type (positive/negative):');
+                    const allTypes = new Set([...Object.keys(posCount), ...Object.keys(negCount)]);
+                    allTypes.forEach(t => {
+                      if (t) lines.push(`  ${t}: +${posCount[t] || 0} / -${negCount[t] || 0}`);
+                    });
+                    if (Object.keys(zoneCount).length > 0) {
+                      lines.push('');
+                      lines.push('Actions by Zone:');
+                      Object.entries(zoneCount).sort((a, b) => b[1] - a[1]).forEach(([z, c]) => {
+                        lines.push(`  ${z}: ${c}`);
+                      });
+                    }
+                    lines.push('');
+                    lines.push('=== AI PROMPT ===');
+                    lines.push('');
+                    lines.push('Based on the above performance report actions, please fill out the following match statistics. Use only the information from the action descriptions, types, zones and scores provided above. Return the values in a clear format I can copy back:');
+                    lines.push('');
+                    lines.push('Required fixture stats:');
+                    lines.push('- Shots, Shots on Target, Goals, Assists');
+                    lines.push('- Passes Attempted, Passes Completed, Pass Accuracy %');
+                    lines.push('- Key Passes, Crosses, Crosses Completed');
+                    lines.push('- Dribbles Attempted, Dribbles Completed');
+                    lines.push('- Tackles, Interceptions, Clearances, Blocks');
+                    lines.push('- Aerial Duels Won, Aerial Duels Lost');
+                    lines.push('- Fouls Committed, Fouls Won');
+                    lines.push('- Touches, Possession Lost');
+                    lines.push('- Chances Created, Big Chances Created');
+                    lines.push('');
+                    lines.push('Required performance stats:');
+                    lines.push('- npxG (non-penalty expected goals, only if shots recorded)');
+                    lines.push('- xA (expected assists, capped at xT value)');
+                    lines.push('- xT (expected threat from progressive actions)');
+                    lines.push('');
+                    lines.push('Important rules:');
+                    lines.push('- Only count actions where the description clearly matches the stat');
+                    lines.push('- If unsure whether an action counts for a stat, do NOT count it');
+                    lines.push('- Own half passes + Opposition half passes must not exceed total accurate passes');
+                    lines.push('- Goals must not exceed shots on target');
+                    lines.push('- npxG should be 0 if there are no non-penalty shots');
+                    lines.push('- Return each stat on its own line as: stat_name: value');
+
+                    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a2 = document.createElement('a');
+                    a2.href = url;
+                    a2.download = `${playerName.replace(/\s+/g, '_')}_actions_export.txt`;
+                    a2.click();
+                    URL.revokeObjectURL(url);
+                    toast.success('Actions exported as text file');
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export Actions
                 </Button>
               )}
             </div>

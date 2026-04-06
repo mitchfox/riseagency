@@ -31,6 +31,7 @@ import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 import { RecentPlayersBar, getRecentPlayerIds, addRecentPlayer } from "@/components/staff/RecentPlayersBar";
 import { SessionResumeBanner, saveSession, clearSession, type SessionState } from "@/components/staff/SessionResumeBanner";
+import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 
 interface Player {
   id: string;
@@ -317,6 +318,7 @@ export const AthleteCentre = () => {
     { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
     { value: "programming", label: "Programming", icon: Dumbbell },
+    { value: "testing", label: "Testing", icon: ClipboardList },
     { value: "injuries", label: "Injury Log", icon: ClipboardList },
     { value: "scouting", label: "Scouting", icon: ClipboardList },
     { value: "data", label: "Data", icon: Database },
@@ -578,6 +580,18 @@ export const AthleteCentre = () => {
                           <p className="text-sm md:text-base">No programs assigned yet</p>
                         </div>
                       )}
+                    </TabsContent>
+
+                    <TabsContent value="testing" className="mt-0 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base md:text-lg font-semibold">Testing Results</h3>
+                        <AddTestResultDialog
+                          playerId={selectedPlayer}
+                          playerName={currentPlayer.name}
+                          onSuccess={() => {}}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Test results are accessible from Player Management and Strength, Power &amp; Speed sections.</p>
                     </TabsContent>
 
                     <TabsContent value="injuries" className="mt-0">

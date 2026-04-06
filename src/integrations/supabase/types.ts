@@ -730,6 +730,7 @@ export type Database = {
           email: string | null
           id: string
           image_url: string | null
+          is_favourite: boolean
           last_contacted_at: string | null
           latitude: number | null
           longitude: number | null
@@ -739,6 +740,7 @@ export type Database = {
           pinned_note: string | null
           position: string | null
           referred_by_contact_id: string | null
+          tags: string[] | null
           updated_at: string
           x_position: number | null
           y_position: number | null
@@ -752,6 +754,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_url?: string | null
+          is_favourite?: boolean
           last_contacted_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -761,6 +764,7 @@ export type Database = {
           pinned_note?: string | null
           position?: string | null
           referred_by_contact_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
@@ -774,6 +778,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_url?: string | null
+          is_favourite?: boolean
           last_contacted_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -783,6 +788,7 @@ export type Database = {
           pinned_note?: string | null
           position?: string | null
           referred_by_contact_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
