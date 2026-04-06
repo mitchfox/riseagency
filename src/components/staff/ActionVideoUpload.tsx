@@ -13,8 +13,11 @@ interface LinkedClip {
   end: number;
   action_type: string;
   action_description: string;
+  action_score: string;
+  notes: string;
   video_url: string;
   video_title: string;
+  hasNotes: boolean;
 }
 
 interface ActionVideoUploadProps {
