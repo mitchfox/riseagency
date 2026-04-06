@@ -314,7 +314,7 @@ export const ActionVideoUpload = ({
         <DialogHeader>
           <DialogTitle>Select from Linked Clips</DialogTitle>
         </DialogHeader>
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+        <div className="space-y-2 max-h-[500px] overflow-y-auto">
           {loadingClips ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -326,23 +326,75 @@ export const ActionVideoUpload = ({
               <p className="text-xs mt-1">Link clips from Video Analysis first using "Link Clips" on the export dialog.</p>
             </div>
           ) : (
-            linkedClips.map(clip => (
-              <button
-                key={clip.id}
-                onClick={() => handleSelectLinkedClip(clip)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
-              >
-                <Play className="h-4 w-4 text-primary shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{clip.label}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {fmtTime(clip.start)} → {fmtTime(clip.end)}
-                    {clip.action_type && <span className="ml-2 capitalize">{clip.action_type}</span>}
-                    <span className="ml-2 opacity-60">from {clip.video_title}</span>
-                  </p>
+            <>
+              {/* Noted actions first */}
+              {linkedClips.some(c => c.hasNotes) && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">Noted Actions</p>
+                  {linkedClips.filter(c => c.hasNotes).map(clip => (
+                    <button
+                      key={clip.id}
+                      onClick={() => handleSelectLinkedClip(clip)}
+                      className="w-full flex items-start gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left mb-1.5"
+                    >
+                      <Play className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium truncate">{clip.label}</p>
+                          {clip.action_type && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">{clip.action_type}</span>
+                          )}
+                          {clip.action_score && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${parseFloat(clip.action_score) > 0 ? 'bg-green-500/20 text-green-400' : parseFloat(clip.action_score) < 0 ? 'bg-red-500/20 text-red-400' : 'bg-muted text-muted-foreground'}`}>
+                              {parseFloat(clip.action_score) > 0 ? '+' : ''}{clip.action_score}
+                            </span>
+                          )}
+                        </div>
+                        {clip.notes && (
+                          <p className="text-xs text-primary/80 mt-1 italic line-clamp-2">{clip.notes}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {fmtTime(clip.start)} → {fmtTime(clip.end)}
+                          <span className="ml-2 opacity-60">from {clip.video_title}</span>
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))
+              )}
+              {/* Remaining clips */}
+              {linkedClips.some(c => c.hasNotes) && linkedClips.some(c => !c.hasNotes) && (
+                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">All Clips</p>
+              )}
+              {linkedClips.filter(c => !c.hasNotes || !linkedClips.some(cc => cc.hasNotes)).map(clip => (
+                !clip.hasNotes && (
+                  <button
+                    key={clip.id}
+                    onClick={() => handleSelectLinkedClip(clip)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                  >
+                    <Play className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium truncate">{clip.label}</p>
+                        {clip.action_type && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">{clip.action_type}</span>
+                        )}
+                        {clip.action_score && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${parseFloat(clip.action_score) > 0 ? 'bg-green-500/20 text-green-400' : parseFloat(clip.action_score) < 0 ? 'bg-red-500/20 text-red-400' : 'bg-muted text-muted-foreground'}`}>
+                            {parseFloat(clip.action_score) > 0 ? '+' : ''}{clip.action_score}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtTime(clip.start)} → {fmtTime(clip.end)}
+                        <span className="ml-2 opacity-60">from {clip.video_title}</span>
+                      </p>
+                    </div>
+                  </button>
+                )
+              ))}
+            </>
           )}
         </div>
       </DialogContent>
