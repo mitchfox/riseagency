@@ -872,36 +872,47 @@ const AnalysisViewer = () => {
   if (showLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        {/* Rise marble background */}
+        <div className="absolute inset-0">
+          <img src={blackMarble} alt="" className="w-full h-full object-cover opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+        </div>
         <TacticalSymbols />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative text-center flex flex-col items-center gap-6"
         >
           <motion.img 
             src={riseLogo} 
             alt="Rise Agency" 
-            className="w-20 h-20 md:w-28 md:h-28 object-contain"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-2xl"
+            animate={{ scale: [1, 1.06, 1], opacity: [0.9, 1, 0.9] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="h-[2px] rounded-full bg-primary"
-            initial={{ width: 0 }}
-            animate={{ width: 120 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="h-[2px] rounded-full"
+            style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)' }}
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 160, opacity: 1 }}
+            transition={{ duration: 2, ease: "easeOut", delay: 0.3 }}
           />
-          <p className="font-bebas tracking-[0.3em] uppercase text-lg md:text-xl text-primary">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="font-bebas tracking-[0.4em] uppercase text-lg md:text-xl text-primary drop-shadow-lg"
+          >
             Loading Analysis
-          </p>
-          <div className="flex gap-2">
+          </motion.p>
+          <div className="flex gap-3">
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                className="w-2 h-2 rounded-full bg-primary"
-                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                className="w-2.5 h-2.5 rounded-full bg-primary"
+                animate={{ opacity: [0.2, 1, 0.2], scale: [0.7, 1.3, 0.7] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.25, ease: "easeInOut" }}
               />
             ))}
           </div>
