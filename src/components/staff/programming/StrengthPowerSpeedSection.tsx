@@ -69,12 +69,22 @@ export const StrengthPowerSpeedSection = () => {
       )}
 
       {selectedPlayer !== "all" && currentPlayer && (
-        <ProgrammingManagement
-          embedded
-          playerId={currentPlayer.id}
-          playerName={currentPlayer.name}
-          isAdmin={true}
-        />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Testing Results</h3>
+            <AddTestResultDialog
+              playerId={currentPlayer.id}
+              playerName={currentPlayer.name}
+              onSuccess={() => {}}
+            />
+          </div>
+          <ProgrammingManagement
+            embedded
+            playerId={currentPlayer.id}
+            playerName={currentPlayer.name}
+            isAdmin={true}
+          />
+        </div>
       )}
     </div>
   );
