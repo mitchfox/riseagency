@@ -92,8 +92,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     const q = query.toLowerCase();
     setSearchResults(
       r90Scores.filter(s =>
-        s.description?.toLowerCase().includes(q) ||
-        s.action_type?.toLowerCase().includes(q) ||
+        s.title?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q) ||
         s.score?.toString().includes(q)
       ).slice(0, 12)
     );
