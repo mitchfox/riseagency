@@ -41,14 +41,21 @@ export const ScatterComparisonChart = ({
   portalMetrics,
   hasPortalData,
   comparisonPlayers,
+  playerPosition,
 }: Props) => {
-  const [xMetric, setXMetric] = useState("goals_per90");
-  const [yMetric, setYMetric] = useState("xa_per90");
+  const isGK = isGoalkeeperPosition(playerPosition);
+  const activeMetrics = isGK ? ALL_GK_METRICS : ALL_METRICS;
+  const activeCategories = isGK ? GK_METRIC_CATEGORIES : METRIC_CATEGORIES;
+  const defaultX = isGK ? "gk_save_percentage" : "goals_per90";
+  const defaultY = isGK ? "gk_passes_completed" : "xa_per90";
+
+  const [xMetric, setXMetric] = useState(defaultX);
+  const [yMetric, setYMetric] = useState(defaultY);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const xMeta = ALL_METRICS.find(m => m.key === xMetric);
-  const yMeta = ALL_METRICS.find(m => m.key === yMetric);
+  const xMeta = activeMetrics.find(m => m.key === xMetric);
+  const yMeta = activeMetrics.find(m => m.key === yMetric);
 
   const points = useMemo(() => {
     const pts: PointData[] = [];
