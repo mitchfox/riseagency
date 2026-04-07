@@ -150,6 +150,7 @@ import {
   UtensilsCrossed,
   LayoutGrid,
   Monitor,
+  BarChart3,
 } from "lucide-react";
 
 const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
