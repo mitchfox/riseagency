@@ -100,11 +100,14 @@ const TransferReportView = () => {
         setPerformanceReports(analysisData || []);
 
         if (playerData.position) {
+          // Fetch all comparison players for this position, not just 10
+          const positionVariants = isGoalkeeperPosition(playerData.position)
+            ? ['GK', 'Goalkeeper', 'GOALKEEPER']
+            : [playerData.position, playerData.position.toUpperCase()];
           const { data: compData } = await supabase
             .from('comparison_players')
             .select('*')
-            .eq('position', playerData.position)
-            .limit(10);
+            .in('position', positionVariants);
           setComparisonPlayers(compData || []);
         }
 
