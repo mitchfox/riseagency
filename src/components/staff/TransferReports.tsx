@@ -9,8 +9,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, ExternalLink, Edit, Trash2, Copy, Eye, FileText, Loader2 } from "lucide-react";
+import { Plus, ExternalLink, Edit, Trash2, Copy, Eye, FileText, Loader2, GripVertical } from "lucide-react";
 import { TransferReportEditor } from "./TransferReportEditor";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TransferReport {
   id: string;
@@ -18,6 +33,7 @@ interface TransferReport {
   title: string;
   slug: string;
   included_sections: string[];
+  section_order: string[];
   content_config: Record<string, any>;
   custom_notes: string | null;
   status: string;
@@ -33,16 +49,40 @@ interface Player {
   image_url: string | null;
 }
 
-const AVAILABLE_SECTIONS = [
+const ALL_SECTIONS = [
+  { id: 'in_numbers', label: 'In Numbers' },
+  { id: 'highlights', label: 'Highlights Reel' },
   { id: 'biography', label: 'Biography & Profile' },
   { id: 'stats', label: 'Season Statistics' },
-  { id: 'form_chart', label: 'Form Chart' },
-  { id: 'graphics', label: 'Graphics & Images' },
-  { id: 'clips', label: 'Match Clips' },
-  { id: 'highlights', label: 'Highlights Reel' },
+  { id: 'data_graphics', label: 'Data Graphics & Visualisations' },
+  { id: 'form_chart', label: 'Recent Form' },
+  { id: 'tactical', label: 'Tactical History' },
+  { id: 'strengths', label: 'Strengths & Play Style' },
   { id: 'comparison', label: 'Player Comparisons' },
+  { id: 'clips', label: 'Wyscout Video Reports' },
+  { id: 'graphics', label: 'Graphics & Images' },
   { id: 'scouting_notes', label: 'Scouting Notes' },
+  { id: 'contract_info', label: 'Contract Information' },
+  { id: 'physical_profile', label: 'Physical Profile' },
+  { id: 'agent_notes', label: 'Agent Notes (Internal)' },
 ];
+
+const DEFAULT_ORDER = ALL_SECTIONS.map(s => s.id);
+
+const SortableSectionItem = ({ section, checked, onToggle }: { section: { id: string; label: string }; checked: boolean; onToggle: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2.5 rounded-md border border-border hover:bg-muted/50 transition-colors">
+      <div {...listeners} {...attributes} className="cursor-grab text-muted-foreground/40 hover:text-muted-foreground">
+        <GripVertical className="h-3.5 w-3.5" />
+      </div>
+      <Checkbox checked={checked} onCheckedChange={onToggle} />
+      <span className="text-sm flex-1">{section.label}</span>
+    </div>
+  );
+};
 
 export const TransferReports = () => {
   const [reports, setReports] = useState<TransferReport[]>([]);
@@ -54,9 +94,12 @@ export const TransferReports = () => {
 
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const [title, setTitle] = useState('');
-  const [selectedSections, setSelectedSections] = useState<string[]>(['biography', 'stats']);
+  const [selectedSections, setSelectedSections] = useState<string[]>(['in_numbers', 'highlights', 'biography', 'stats', 'data_graphics']);
+  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_ORDER);
   const [customNotes, setCustomNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => { fetchReports(); fetchPlayers(); }, []);
 
@@ -68,7 +111,6 @@ export const TransferReports = () => {
       .order('created_at', { ascending: false });
     if (error) { toast.error('Failed to load reports'); console.error(error); }
     else {
-      // Fetch player names for each report
       const playerIds = [...new Set((data || []).map(r => r.player_id))];
       const { data: playerData } = await supabase
         .from('players')
@@ -78,6 +120,7 @@ export const TransferReports = () => {
       setReports((data || []).map(r => ({
         ...r,
         included_sections: r.included_sections || [],
+        section_order: r.section_order || DEFAULT_ORDER,
         content_config: (r.content_config || {}) as Record<string, any>,
         player: playerMap.get(r.player_id) || undefined,
       })));
@@ -112,6 +155,7 @@ export const TransferReports = () => {
         title,
         slug,
         included_sections: selectedSections,
+        section_order: sectionOrder,
         content_config: {},
         custom_notes: customNotes || null,
         status: editing?.status || 'draft',
@@ -141,7 +185,8 @@ export const TransferReports = () => {
     setEditing(null);
     setSelectedPlayer('');
     setTitle('');
-    setSelectedSections(['biography', 'stats']);
+    setSelectedSections(['in_numbers', 'highlights', 'biography', 'stats', 'data_graphics']);
+    setSectionOrder(DEFAULT_ORDER);
     setCustomNotes('');
   };
 
@@ -150,6 +195,7 @@ export const TransferReports = () => {
     setSelectedPlayer(report.player_id);
     setTitle(report.title);
     setSelectedSections(report.included_sections);
+    setSectionOrder(report.section_order || DEFAULT_ORDER);
     setCustomNotes(report.custom_notes || '');
     setDialogOpen(true);
   };
@@ -182,6 +228,24 @@ export const TransferReports = () => {
     );
   };
 
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setSectionOrder(prev => {
+      const oldIndex = prev.indexOf(active.id as string);
+      const newIndex = prev.indexOf(over.id as string);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
+
+  const orderedSections = sectionOrder
+    .map(id => ALL_SECTIONS.find(s => s.id === id))
+    .filter(Boolean) as typeof ALL_SECTIONS;
+  // Add any sections not in the order
+  ALL_SECTIONS.forEach(s => {
+    if (!orderedSections.find(os => os.id === s.id)) orderedSections.push(s);
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -206,19 +270,21 @@ export const TransferReports = () => {
         <div className="grid gap-3">
           {reports.map(report => (
             <div key={report.id} className="border border-border rounded-lg p-4 bg-card flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-semibold truncate">{report.title}</h4>
-                  <Badge variant={report.status === 'published' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
-                    {report.status}
-                  </Badge>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {report.player?.image_url && (
+                  <img src={report.player.image_url} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="font-semibold truncate">{report.title}</h4>
+                    <Badge variant={report.status === 'published' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
+                      {report.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {report.player?.name || 'Unknown Player'} · {report.included_sections.length} sections
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">
-                  {report.player?.name || 'Unknown Player'} · {report.included_sections.length} sections
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(report.created_at).toLocaleDateString('en-GB')}
-                </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Button variant="ghost" size="icon" onClick={() => window.open(`/transfer-report/${report.slug}`, '_blank')} title="Preview">
@@ -230,11 +296,8 @@ export const TransferReports = () => {
                 <Button variant="ghost" size="icon" onClick={() => toggleStatus(report)} title={report.status === 'published' ? 'Unpublish' : 'Publish'}>
                   <ExternalLink className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(report)} title="Quick Edit">
-                  <Edit className="w-4 h-4" />
-                </Button>
                 <Button variant="ghost" size="icon" onClick={() => setEditorReportId(report.id)} title="Full Editor">
-                  <Eye className="w-4 h-4 text-primary" />
+                  <Edit className="w-4 h-4 text-primary" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(report.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4" />
@@ -247,7 +310,7 @@ export const TransferReports = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) resetForm(); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit' : 'Create'} Transfer Report</DialogTitle>
           </DialogHeader>
@@ -266,23 +329,26 @@ export const TransferReports = () => {
               </div>
               <div>
                 <Label>Report Title *</Label>
-                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. John Smith - Summer 2025" />
+                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. John Smith - Summer 2026" />
               </div>
             </div>
 
             <div>
-              <Label className="mb-3 block">Sections to Include</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {AVAILABLE_SECTIONS.map(section => (
-                  <label key={section.id} className="flex items-center gap-2 cursor-pointer p-2 rounded-md border border-border hover:bg-muted/50 transition-colors">
-                    <Checkbox
-                      checked={selectedSections.includes(section.id)}
-                      onCheckedChange={() => toggleSection(section.id)}
-                    />
-                    <span className="text-sm">{section.label}</span>
-                  </label>
-                ))}
-              </div>
+              <Label className="mb-3 block">Sections (drag to reorder, tick to include)</Label>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+                <SortableContext items={orderedSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {orderedSections.map(section => (
+                      <SortableSectionItem
+                        key={section.id}
+                        section={section}
+                        checked={selectedSections.includes(section.id)}
+                        onToggle={() => toggleSection(section.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
 
             <div>
@@ -304,6 +370,7 @@ export const TransferReports = () => {
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Full Editor Overlay */}
       {editorReportId && (
         <TransferReportEditor
