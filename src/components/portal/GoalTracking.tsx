@@ -97,7 +97,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
   };
 
   const usedMetrics = goals.map(g => g.metric_key);
-  const availableMetrics = ALL_METRICS.filter(m => !usedMetrics.includes(m.key));
+  const availableMetrics = activeMetrics.filter(m => !usedMetrics.includes(m.key));
 
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
