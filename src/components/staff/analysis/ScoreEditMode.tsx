@@ -203,8 +203,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${getScoreColor(s.score)}`}>
                     {s.score}
                   </span>
-                  <span className="truncate">{s.description}</span>
-                  <span className="text-white/40 ml-auto text-[10px]">{s.action_type}</span>
+                  <span className="truncate">{s.title}</span>
+                  <span className="text-white/40 ml-auto text-[10px]">{s.category}</span>
                 </button>
               ))}
             </div>
