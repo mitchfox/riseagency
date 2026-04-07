@@ -885,10 +885,13 @@ export const CreatePerformanceReportDialog = ({
       } else if (awayIsFor) {
         opponentTeam = fixture.home_team;
       } else if (playerClub) {
-        // Check if player's club matches home or away team
-        if (fixture.home_team === playerClub) {
+        // Use case-insensitive partial matching since club names may differ slightly
+        const clubLower = playerClub.toLowerCase();
+        const homeLower = fixture.home_team.toLowerCase();
+        const awayLower = fixture.away_team.toLowerCase();
+        if (homeLower.includes(clubLower) || clubLower.includes(homeLower)) {
           opponentTeam = fixture.away_team;
-        } else if (fixture.away_team === playerClub) {
+        } else if (awayLower.includes(clubLower) || clubLower.includes(awayLower)) {
           opponentTeam = fixture.home_team;
         }
       }
@@ -972,9 +975,12 @@ export const CreatePerformanceReportDialog = ({
           } else if (awayIsFor) {
             opponentTeam = fixtureData.home_team;
           } else if (playerClub) {
-            if (fixtureData.home_team === playerClub) {
+            const clubLower = playerClub.toLowerCase();
+            const homeLower = fixtureData.home_team.toLowerCase();
+            const awayLower = fixtureData.away_team.toLowerCase();
+            if (homeLower.includes(clubLower) || clubLower.includes(homeLower)) {
               opponentTeam = fixtureData.away_team;
-            } else if (fixtureData.away_team === playerClub) {
+            } else if (awayLower.includes(clubLower) || clubLower.includes(awayLower)) {
               opponentTeam = fixtureData.home_team;
             }
           }

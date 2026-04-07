@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Eye, EyeOff, ExternalLink, Save, X, Loader2, GripVertical, Shield } from "lucide-react";
+import { ExternalLink, Save, X, Loader2, GripVertical, Shield } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -126,25 +126,15 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
       custom_notes: customNotes || null,
       title,
       content_config: contentConfig,
-      status: 'published',
     }).eq('id', reportId);
     if (error) toast.error('Failed to save');
     else {
-      setReport((prev: any) => prev ? { ...prev, status: 'published' } : prev);
-      toast.success('Report updated');
+      toast.success('Report saved — changes are live');
     }
     setSaving(false);
   };
 
-  const toggleStatus = async () => {
-    const newStatus = report.status === 'published' ? 'draft' : 'published';
-    const { error } = await supabase.from('transfer_reports').update({ status: newStatus }).eq('id', reportId);
-    if (error) toast.error('Failed to update');
-    else {
-      setReport({ ...report, status: newStatus });
-      toast.success(newStatus === 'published' ? 'Report published' : 'Report unpublished');
-    }
-  };
+  // No publish/unpublish - reports are always live
 
   const toggleSection = (id: string) => {
     setSections(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
@@ -191,15 +181,9 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
         <div className="flex items-center justify-between mb-6 sticky top-0 bg-background/95 backdrop-blur-sm py-3 z-10 border-b border-border">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bebas uppercase tracking-wider">Edit Report</h2>
-            <Badge variant={report.status === 'published' ? 'default' : 'secondary'}>
-              {report.status}
-            </Badge>
+            <Badge variant="default">Live</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={toggleStatus}>
-              {report.status === 'published' ? <EyeOff className="w-4 h-4 mr-1.5" /> : <Eye className="w-4 h-4 mr-1.5" />}
-              {report.status === 'published' ? 'Unpublish' : 'Publish'}
-            </Button>
             <Button variant="outline" size="sm" onClick={() => window.open(`/transfer-report/${report.slug}`, '_blank')}>
               <ExternalLink className="w-4 h-4 mr-1.5" /> View Live
             </Button>
