@@ -29,12 +29,12 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     const fetchClips = async () => {
       const { data } = await supabase
         .from("performance_report_actions")
-        .select("id, action_type, action_score, minute, description, video_url")
+        .select("id, action_type, action_score, minute, notes, video_url")
         .eq("analysis_id", analysisId)
         .not("video_url", "is", null)
         .order("display_order", { ascending: true });
 
-      setClips((data || []).filter(c => c.video_url));
+      setClips((data || []).map((c: any) => ({ ...c, description: c.notes || '' })).filter((c: any) => c.video_url));
       setLoading(false);
     };
     fetchClips();
