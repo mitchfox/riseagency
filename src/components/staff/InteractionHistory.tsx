@@ -61,10 +61,11 @@ export const InteractionHistory = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: historyData }, { data: contactsData }, { data: profilesData }] = await Promise.all([
+    const [{ data: historyData }, { data: contactsData }, { data: profilesData }, { data: favouritesData }] = await Promise.all([
       supabase.from('interaction_history').select('*').order('interaction_date', { ascending: false }).limit(200),
-      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url').order('name'),
+      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url, is_favourite').order('name'),
       supabase.from('profiles').select('id, email, full_name'),
+      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url, is_favourite').eq('is_favourite', true).order('name'),
     ]);
 
     const contactMap = new Map((contactsData || []).map(c => [c.id, c]));
@@ -77,7 +78,13 @@ export const InteractionHistory = () => {
     }));
 
     setEntries(enriched as HistoryEntry[]);
-    setContacts(contactsData || []);
+    // Put favourites at the top of the contact list
+    const favIds = new Set((favouritesData || []).map(f => f.id));
+    const sortedContacts = [
+      ...(favouritesData || []),
+      ...(contactsData || []).filter(c => !favIds.has(c.id)),
+    ];
+    setContacts(sortedContacts);
     setStaffMembers(profilesData || []);
     setLoading(false);
   }, []);
