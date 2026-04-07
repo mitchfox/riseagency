@@ -525,36 +525,58 @@ export const PortalManagement = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {settings.hero_images.map((imgUrl, index) => (
                     <div key={index} className="relative group rounded-lg overflow-hidden border">
-                      <div className="aspect-[16/7] bg-muted">
+                      <div
+                        className="aspect-[16/7] bg-muted relative cursor-crosshair"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const xPct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                          const yPct = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                          handleFocalPointChange(index, `${xPct}% ${yPct}%`);
+                        }}
+                      >
                         <img
                           src={imgUrl}
                           alt={`Hero ${index + 1}`}
                           className="w-full h-full object-cover"
                           style={{ objectPosition: (settings.hero_focal_points[index] || 'center center').replace('-', ' ') }}
                         />
+                        {/* Focal point indicator */}
+                        {(() => {
+                          const fp = settings.hero_focal_points[index] || 'center center';
+                          const parts = fp.replace('-', ' ').split(' ');
+                          const xStr = parts[0] || '50%';
+                          const yStr = parts[1] || '50%';
+                          const toPercent = (s: string) => {
+                            if (s.endsWith('%')) return s;
+                            const map: Record<string, string> = { left: '0%', center: '50%', right: '100%', top: '0%', bottom: '100%' };
+                            return map[s] || '50%';
+                          };
+                          return (
+                            <div
+                              className="absolute w-4 h-4 border-2 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-lg"
+                              style={{ left: toPercent(xStr), top: toPercent(yStr) }}
+                            >
+                              <div className="w-1.5 h-1.5 bg-primary rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                            </div>
+                          );
+                        })()}
+                        <p className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white px-1.5 py-0.5 rounded pointer-events-none">
+                          Click to set focal point
+                        </p>
                       </div>
                       <div className="p-2 space-y-1.5">
                         <div className="flex items-center gap-1.5">
                           <Move className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <Select
-                            value={settings.hero_focal_points[index] || "center center"}
-                            onValueChange={(val) => handleFocalPointChange(index, val)}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {FOCAL_OPTIONS.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                  {opt.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <span className="text-xs text-muted-foreground">
+                            {settings.hero_focal_points[index] || 'center center'}
+                          </span>
                         </div>
                         <div className="flex gap-1">
                           <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => handleRecropHero(index)}>
                             Re-crop
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleFocalPointChange(index, '50% 50%')}>
+                            Reset
                           </Button>
                           <Button size="sm" variant="destructive" className="h-7 text-xs px-2" onClick={() => handleRemoveHeroImage(index)}>
                             <Trash2 className="h-3 w-3" />
