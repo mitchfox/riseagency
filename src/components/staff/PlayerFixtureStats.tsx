@@ -30,10 +30,19 @@ export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Pro
   const [saving, setSaving] = useState<string | null>(null);
   const [editedStats, setEditedStats] = useState<Record<string, Record<string, number>>>({});
   const [activeCategory, setActiveCategory] = useState(() => getMetricCategoriesForPosition(playerPosition)[0]?.category || "Shooting");
+  const positionCategories = getMetricCategoriesForPosition(playerPosition);
+  const positionMetrics = getMetricsForPosition(playerPosition);
 
   useEffect(() => {
     fetchAnalyses();
   }, [playerId]);
+
+  useEffect(() => {
+    const defaultCategory = positionCategories[0]?.category;
+    if (defaultCategory && !positionCategories.some(category => category.category === activeCategory)) {
+      setActiveCategory(defaultCategory);
+    }
+  }, [activeCategory, positionCategories]);
 
   const fetchAnalyses = async () => {
     setLoading(true);
@@ -119,9 +128,6 @@ export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Pro
     setSaving(null);
     fetchAnalyses();
   };
-
-  const positionCategories = getMetricCategoriesForPosition(playerPosition);
-  const positionMetrics = getMetricsForPosition(playerPosition);
 
   // Calculate averages from current data
   const averages = useMemo(() => {

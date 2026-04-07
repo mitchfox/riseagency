@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,14 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
   const [urlInput, setUrlInput] = useState("");
   const [urlParsing, setUrlParsing] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
+  const positionCategories = getMetricCategoriesForPosition(playerPosition);
+
+  useEffect(() => {
+    const defaultCategory = positionCategories[0]?.category;
+    if (defaultCategory && !positionCategories.some(category => category.category === activeCategory)) {
+      setActiveCategory(defaultCategory);
+    }
+  }, [activeCategory, positionCategories]);
 
   const handleChange = (key: string, value: string) => {
     const updated = { ...fixtureStats };
@@ -108,7 +116,7 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
 
     setAiLoading(true);
     try {
-      const categories = getMetricCategoriesForPosition(playerPosition);
+      const categories = positionCategories;
       const allMetrics = categories.flatMap(cat =>
         cat.metrics.map(m => ({ key: m.key, label: m.label }))
       );
@@ -276,16 +284,16 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
         </div>
       )}
 
-      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-        <TabsList className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${getMetricCategoriesForPosition(playerPosition).length}, 1fr)` }}>
-          {getMetricCategoriesForPosition(playerPosition).map(cat => (
+        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+          <TabsList className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${positionCategories.length}, 1fr)` }}>
+            {positionCategories.map(cat => (
             <TabsTrigger key={cat.category} value={cat.category} className="text-xs">
               {cat.category}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {getMetricCategoriesForPosition(playerPosition).map(cat => (
+          {positionCategories.map(cat => (
           <TabsContent key={cat.category} value={cat.category} className="mt-3">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {cat.metrics.map(m => {

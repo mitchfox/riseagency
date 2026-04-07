@@ -120,15 +120,32 @@ export const GK_METRIC_CATEGORIES = [
 
 export const ALL_GK_METRICS = GK_METRIC_CATEGORIES.flatMap(c => c.metrics);
 
+const normalisePositionValue = (position?: string) => (position || "").trim().toUpperCase().replace(/[^A-Z]/g, "");
+
+export const isGoalkeeperPosition = (position?: string) => {
+  const value = normalisePositionValue(position);
+  return value === 'GK' || value === 'GOALKEEPER' || value === 'KEEPER' || value === 'GOALIE';
+};
+
+export const getPositionVariants = (position?: string) => {
+  if (!position) return [];
+  if (isGoalkeeperPosition(position)) {
+    return ['GK', 'Goalkeeper', 'GOALKEEPER', 'Keeper', 'GOALIE', 'Goalie'];
+  }
+
+  const trimmed = position.trim();
+  return Array.from(new Set([trimmed, trimmed.toUpperCase()]));
+};
+
 /** Returns the correct categories based on position */
 export const getMetricCategoriesForPosition = (position?: string) => {
-  if (position?.toUpperCase() === 'GK') return GK_METRIC_CATEGORIES;
+  if (isGoalkeeperPosition(position)) return GK_METRIC_CATEGORIES;
   return METRIC_CATEGORIES;
 };
 
 /** Returns the correct flat metrics list based on position */
 export const getMetricsForPosition = (position?: string) => {
-  if (position?.toUpperCase() === 'GK') return ALL_GK_METRICS;
+  if (isGoalkeeperPosition(position)) return ALL_GK_METRICS;
   return ALL_METRICS;
 };
 
@@ -280,7 +297,7 @@ export const ComparisonPlayerData = () => {
         imageContents.push(`data:${mimeType};base64,${base64}`);
       }
 
-      const isGK = aiPosition.toUpperCase() === 'GK';
+      const isGK = isGoalkeeperPosition(aiPosition);
       const { data, error } = await invokeEdgeFunction('extract-player-stats', {
         body: { images: imageContents, isGoalkeeper: isGK }
       });
@@ -323,7 +340,7 @@ export const ComparisonPlayerData = () => {
       return;
     }
     setAiLoading(true);
-    const isGK = batchPosition.toUpperCase() === 'GK';
+    const isGK = isGoalkeeperPosition(batchPosition);
     let successCount = 0;
 
     for (let i = 0; i < batchFiles.length; i++) {

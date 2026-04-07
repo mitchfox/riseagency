@@ -57,6 +57,13 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
   const [localValue, setLocalValue] = useState(String(value ?? ""));
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const applyNegativePrefix = () => {
+    setLocalValue((prev) => {
+      const stripped = String(prev ?? "").replace(/-/g, "");
+      return stripped ? `-${stripped}` : "-";
+    });
+  };
+
   useEffect(() => {
     setLocalValue(String(value ?? ""));
   }, [value]);
@@ -85,6 +92,12 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           step="0.00001"
           value={localValue}
           onChange={(e) => setLocalValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'Subtract') {
+              e.preventDefault();
+              applyNegativePrefix();
+            }
+          }}
           onFocus={() => setDropdownOpen(true)}
           onBlur={() => { if (localValue !== String(value ?? "")) onChange(localValue); setTimeout(() => setDropdownOpen(false), 200); }}
           placeholder="Score"

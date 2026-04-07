@@ -158,7 +158,7 @@ export const TransferReports = () => {
         section_order: sectionOrder,
         content_config: {},
         custom_notes: customNotes || null,
-        status: editing?.status || 'draft',
+        status: 'published',
         created_by: userData?.user?.id || null,
       };
 

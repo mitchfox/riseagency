@@ -279,6 +279,7 @@ const Staff = () => {
   useEffect(() => {
     if (!isStaff) return;
     const urlSection = searchParams.get('section');
+    const isTrustedNetworkRole = !!currentRole && /trusted[_\s-]?network/i.test(currentRole);
 
     // For permission-managed roles, wait for permissions to load before determining initial section
     // This prevents the overview flash for roles that can't view overview
@@ -310,7 +311,7 @@ const Staff = () => {
     } catch {}
 
     // Determine which section to show
-    const section = urlSection || localStorage.getItem('staff_active_tab') || defaultSection;
+    const section = urlSection || (!isTrustedNetworkRole ? defaultSection : localStorage.getItem('staff_active_tab') || defaultSection);
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     setExpandedSection(finalSection as any);
@@ -320,7 +321,7 @@ const Staff = () => {
     const cats = buildCategories();
     const parentCat = cats.find(c => c.sections.some(s => s.id === finalSection));
     if (parentCat) setExpandedCategory(parentCat.id);
-  }, [isStaff, permissionManagedRole, permissionsLoading]);
+  }, [isStaff, permissionManagedRole, permissionsLoading, currentRole]);
 
   // Keep URL in sync with section changes from searchParams
   useEffect(() => {

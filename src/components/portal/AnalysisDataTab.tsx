@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
 import { User, Calendar, MapPin, Trophy, Pencil, Check, X } from "lucide-react";
-import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
@@ -66,11 +66,20 @@ const getStatValue = (analysis: Analysis, key: string): number | null => {
 
 export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(analyses.map(a => a.id)));
-  const [activeStatCategory, setActiveStatCategory] = useState("Shooting");
+  const positionCategories = useMemo(() => getMetricCategoriesForPosition(playerData?.position), [playerData?.position]);
+  const positionMetrics = useMemo(() => getMetricsForPosition(playerData?.position), [playerData?.position]);
+  const [activeStatCategory, setActiveStatCategory] = useState(positionCategories[0]?.category || "Shooting");
   const [editingCell, setEditingCell] = useState<{ analysisId: string; metricKey: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [seasonZoneActions, setSeasonZoneActions] = useState<Array<{ action_number: number; action_score: number; zone?: number | null; zone_details?: { zone: number; sub?: number }[] | null }>>([]);
   const [seasonZoneLoading, setSeasonZoneLoading] = useState(false);
+
+  useEffect(() => {
+    const defaultCategory = positionCategories[0]?.category;
+    if (defaultCategory && !positionCategories.some(category => category.category === activeStatCategory)) {
+      setActiveStatCategory(defaultCategory);
+    }
+  }, [activeStatCategory, positionCategories]);
 
   const toggleMatch = (id: string) => {
     setSelectedIds(prev => {
@@ -85,8 +94,8 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const selectedAnalyses = analyses.filter(a => selectedIds.has(a.id));
 
   const currentMetrics = useMemo(() => {
-    return METRIC_CATEGORIES.find(c => c.category === activeStatCategory)?.metrics || [];
-  }, [activeStatCategory]);
+    return positionCategories.find(c => c.category === activeStatCategory)?.metrics || [];
+  }, [activeStatCategory, positionCategories]);
 
   // Season averages including fixture_stats
   const seasonAverages = useMemo(() => {
@@ -100,7 +109,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
     // All metrics from all categories
-    ALL_METRICS.forEach(m => {
+    positionMetrics.forEach(m => {
       const values = selectedAnalyses
         .map(a => getStatValue(a, m.key))
         .filter((v): v is number => v != null);
@@ -117,7 +126,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     });
 
     return result;
-  }, [selectedAnalyses]);
+  }, [positionMetrics, selectedAnalyses]);
 
   const r90BarData = useMemo(() => {
     return selectedAnalyses
@@ -273,7 +282,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
           {/* Core averages from all categories */}
           {(() => {
-            const availableStats = ALL_METRICS.filter(m => seasonAverages[m.key] != null);
+            const availableStats = positionMetrics.filter(m => seasonAverages[m.key] != null);
             if (availableStats.length === 0) return null;
             return (
               <div className="mt-4 pt-4 border-t">
@@ -300,7 +309,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
           <Tabs value={activeStatCategory} onValueChange={setActiveStatCategory} className="mb-4">
             <TabsList className="grid grid-cols-4 gap-1">
-              {METRIC_CATEGORIES.map(cat => (
+              {positionCategories.map(cat => (
                 <TabsTrigger key={cat.category} value={cat.category} className="text-xs">
                   {cat.category}
                 </TabsTrigger>
