@@ -47,10 +47,13 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
     setLoading(false);
   };
 
+  const activeMetrics = useMemo(() => getMetricsForPosition(playerData?.position), [playerData?.position]);
+  const activeCategories = useMemo(() => getMetricCategoriesForPosition(playerData?.position), [playerData?.position]);
+
   const currentAverages = useMemo(() => {
     const windowAnalyses = fixtureAnalyses.slice(0, formWindow);
-    return computeAllStatAverages(windowAnalyses, ALL_METRICS);
-  }, [fixtureAnalyses, formWindow]);
+    return computeAllStatAverages(windowAnalyses, activeMetrics);
+  }, [fixtureAnalyses, formWindow, activeMetrics]);
 
   const handleAddGoal = async () => {
     if (!newMetric || !newTarget || !playerId) return;
