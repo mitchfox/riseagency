@@ -45,6 +45,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [statusTab, setStatusTab] = useState("all");
   const [clipPlayerReport, setClipPlayerReport] = useState<ActionReport | null>(null);
+  const [scoreEditReport, setScoreEditReport] = useState<ActionReport | null>(null);
   
   // Dialog states
   const [showReportEditor, setShowReportEditor] = useState(false);
