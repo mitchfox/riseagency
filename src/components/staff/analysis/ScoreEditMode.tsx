@@ -504,11 +504,11 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           </div>
         ))}
 
-        {/* Search R90 scores - z-30, behind panels */}
+        {/* Search R90 scores - z-40 so it sits above score inputs */}
         {!pendingScore && (
           <div
             ref={searchRef}
-            className="absolute left-1/2 top-1/2 z-30 w-[min(48rem,94vw)] -translate-x-1/2 -translate-y-1/2"
+            className="absolute left-1/2 top-1/2 z-40 w-[min(48rem,94vw)] -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
           >
             <div className="relative flex items-center gap-2">
               <div className="relative flex-1">
@@ -516,6 +516,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 <Input
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
+                  onMouseDown={(e) => e.stopPropagation()}
                   placeholder="Search R90 scores..."
                   className="h-11 border-border bg-background/95 pl-9 text-sm shadow-xl backdrop-blur-md"
                 />
@@ -527,6 +528,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 {searchResults.map((s) => (
                   <button
                     key={s.id}
+                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={() => queueSelectedScore(s.score)}
                     className="grid w-full grid-cols-[auto_1fr_auto] items-start gap-3 border-b border-border/60 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/60 last:border-b-0"
                   >
