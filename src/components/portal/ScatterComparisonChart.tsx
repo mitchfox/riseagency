@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ALL_METRICS, METRIC_CATEGORIES } from "@/components/staff/ComparisonPlayerData";
+import { ALL_METRICS, METRIC_CATEGORIES, ALL_GK_METRICS, GK_METRIC_CATEGORIES, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
