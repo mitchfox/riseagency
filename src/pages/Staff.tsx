@@ -1095,6 +1095,7 @@ const Staff = () => {
     legal: ['contracts', 'documents', 'compliance', 'agreements'],
     clubnetwork: ['contacts', 'clubs', 'agents', 'scouts', 'network'],
     casestudies: ['messaging', 'conversations', 'case studies', 'outreach', 'examples'],
+    transferreports: ['transfer', 'reports', 'player reports', 'shareable', 'links'],
     recruitment: ['prospects', 'signings', 'targets', 'transfers'],
     expenses: ['costs', 'receipts', 'spending', 'reimbursement'],
     athletecentre: ['athlete', 'development', 'programming', 'periodisation'],
