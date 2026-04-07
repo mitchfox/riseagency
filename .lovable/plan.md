@@ -1,102 +1,96 @@
 
-What has actually been implemented vs what is still wrong
+1. Fix the goalkeeper issue first, from the end of the flow backwards
+- In `CreatePerformanceReportDialog.tsx`, pass `playerPosition={playerPosition}` into `FixtureStatsEditor`. Right now the editor is rendered without it, so it falls back to outfield categories.
+- Keep the existing position-aware helpers in `ComparisonPlayerData.tsx` and use that single source of truth everywhere fixture stat categories are chosen.
+- Verify the same position is used when loading existing reports and when opening score/action edit from a report, so GK logic is not lost on refresh.
+- Expected result: Matthias Pieklak’s performance report editor shows GK fixture stats immediately, not outfield ones.
 
-1. Schedule
-- Partly implemented:
-  - there is now a separate `marketingschedule` section in the Staff sidebar and it appears above Marketing in `src/pages/Staff.tsx`
-- Not implemented correctly:
-  - `ScheduleManager.tsx` is still built around `scheduled_posts`, `blog_posts`, draft posts, Canva links, and template folders
-  - it is still effectively scheduling actual posts/content items, not reusable post types / templates
-  - it still has calendar-style logic and does not use the Prospect Board card/column interaction model
-  - it is still also embedded inside `PostContent.tsx`, which is why it feels like it lives inside Marketing rather than as its own distinct tool
+2. Fix the actual missing-data side of keeper comparisons
+- The database check shows Matthias is stored as `GK`, but his latest `player_analysis.fixture_stats` is null, so even correct GK UI will still show no comparison values until data exists.
+- Make the UI correctly show GK metrics and also improve empty-state messaging so it is obvious whether the problem is “wrong stat set” or “no fixture stats entered yet”.
+- Ensure portal comparisons and staff player-data views both read GK fixture keys from `fixture_stats` first, matching the existing consistency rule.
 
-2. Clip players
-- Partly implemented:
-  - report view and dialog now fetch and pass `clip_start` / `clip_end`
-  - `PerformanceReport.tsx` and `PerformanceReportDialog.tsx` do create a shared player instance and pass it down
-- Not implemented correctly:
-  - playback is still based on loading the full match URL and seeking within it
-  - that architecture cannot guarantee “only the clip and nothing else”
-  - `ActionVideoPopup`, `ClippedActionsPlayer`, and `RankedActionsPlayer` still contain local fallback hook instances
-  - staff edit popup still uses `ActionVideoPopup` without a lifted shared player
-  - current fail-closed logic only blocks some bad states; it does not remove the core problem that the source itself is still the full match
+3. Fix score edit so it stops throwing you out and losing a score
+- In `ScoreEditMode.tsx`, remove the dependency on parent refresh during normal page-to-page scoring.
+- Right now `CreatePerformanceReportDialog` passes `onSave={() => fetchExistingData()}` and `ActionReportsList` passes `onSave={() => fetchReports()}`. Those refreshes are the likely reason the overlay reopens and state drops.
+- Split behaviour into:
+  - silent background persistence for each score input
+  - local auto-advance after 4 scores are completed
+  - manual “Update report” action for parent refresh only when explicitly clicked
+  - close action that refreshes once at exit if needed
+- Keep `pendingWriteCount`, but harden auto-advance so it only advances after all 4 saves settle successfully.
 
-What I would change now
+4. Make minus-entry work consistently everywhere
+- Keep the existing `-` interception in `ScoreDropdown.tsx`.
+- Apply the same normalised minus-prefix behaviour to every direct score input that is not using `ScoreDropdown`, especially the `Input` in `ScoreEditMode.tsx`.
+- Ensure pressing `-` always prepends/remains at the start, regardless of cursor position or current value.
 
-1. Replace the Schedule tool, not patch it
-- Stop using the current `ScheduleManager` as the weekly content planner
-- Rebuild it as a true board with Monday–Sunday columns and draggable cards styled from `ProspectBoard.tsx`
-- Cards should represent post types / content templates only, such as:
-  - Highlight Reel
-  - Matchday Graphic
-  - Story Update
-  - Training Clip
-  - Player Spotlight
-  - Testimonial
-  - Behind the Scenes
-- Each card should hold:
-  - post type
-  - platform format (story/post/reel/etc.)
-  - planned day/time
-  - owner
-  - status (planned / creating / ready / posted)
-  - optional linked content-creator draft
-- Keep this as its own section above Marketing in the sidebar, and remove the embedded schedule block from `PostContent.tsx`
+5. Rebuild transfer report logic around real configuration instead of placeholders
+- `TransferReportView.tsx` is still ignoring `content_config`, using hardcoded defaults, and still reading `r90_average` in Recent Form.
+- Update it to:
+  - read `report.content_config`
+  - respect per-section visibility and options
+  - use `r90_score` for grades and displayed score values
+  - render configured comparison players instead of `comparisonPlayers.slice(0, 3)`
+  - render configured graphics selections rather than only automatic standout bars
+- This is the main reason sections appear toggled on in staff but do not appear properly on the live report.
 
-2. Split “post type planning” from “created content linking”
-- Introduce a schedule item model that is independent from `blog_posts`
-- Then optionally attach a draft/unposted content item from Content Creator to a schedule card
-- This matches your request: plan content style first, then tag created assets onto it later
+6. Bring the transfer report visuals into line with what you asked for
+- Replace the current basic highlights/video block with the same player style and control pattern used on the stars profile player.
+- Switch all gold text styling to the project’s Rise gold tokens instead of the current hardcoded yellow-like values.
+- Use black marble only as an accent in smaller areas and keep the main background dark black.
+- Make Biography, Recent Form and similar sections support shortened preview plus expand.
+- Replace Tactical History cards with the existing `FormationDisplay`-based scheme presentation so it matches the stars profile format.
 
-3. Reuse the actual Prospect Board interaction style
-- Copy the board language from `ProspectBoard.tsx`:
-  - column layout
-  - strong card styling
-  - drag/drop movement
-  - compact visual status markers
-- Adapt it for weekly scheduling instead of player stages
+7. Build the missing transfer report features that are still effectively absent
+- Add proper `contract_info` and `physical_profile` rendering in `TransferReportView.tsx` since those cases do not exist at all now.
+- Add the exclusive representation banner directly under the hero header.
+- Build actual data graphics/visualisations from player fixture stats versus comparison data rather than a single simple bar list.
+- Build real comparison controls in the editor so you can choose exactly which players are compared for each category/section.
 
-4. Stop trying to enforce clip-only playback with a full-match source
-- Do not keep patching `useSharedClipPlayer` against the full match URL
-- If the requirement is “never show the full match under any circumstance”, the player source itself must be the clip, not the match
-- New rule:
-  - report players only open if a real clip asset exists
-  - if no clip asset exists, show toast/error and do not open anything
-- No more full-video seek fallback at all
+8. Expand the transfer report editor so it actually controls the report
+- Extend `TransferReportEditor.tsx` beyond section toggles and notes.
+- Add per-section controls into `content_config`, such as:
+  - chosen comparison players by category
+  - chosen graphics/cards to include
+  - visible fields inside physical profile and contract info
+  - whether a section is collapsed by default
+  - custom section titles if needed
+- Keep drag-and-drop ordering, but make the saved order and options drive the public view fully.
 
-5. Change export/playback architecture for reports
-- For report playback, use true clip media:
-  - existing pre-trimmed clip file if available, or
-  - generate/store a clip asset once and reuse it
-- Store a dedicated clip playback URL per exported action
-- Keep `clip_start` / `clip_end` as metadata, but do not rely on them as the playback mechanism
-- This is the only way to satisfy:
-  - no full-match exposure
-  - exact clip only
-  - identical behavior in edit and view
+9. Rework staff accountability to the level you described
+- Keep the 5 fixed core staff columns visible together, but tighten layout so all fit cleanly without horizontal scrolling.
+- Separate task types more clearly: recurring, one-off, overdue, active, done today.
+- Expand task creation with much more detail: category, recurrence cadence, richer description, deadline, task type and optional notes.
+- Add autofill helpers pulling likely tasks from existing staff areas where obvious, but as suggestions not hardcoded replacements.
 
-6. Harden every report viewer to fail closed
-- `ActionVideoPopup`, `ClippedActionsPlayer`, `RankedActionsPlayer`
-- If an action has no clip asset URL:
-  - show error toast
-  - do not mount video
-  - do not attempt full-match playback
-- Remove local fallback `useSharedClipPlayer()` creation from child players so there is only one control path where needed
+10. Fix reminders and add staff customisation properly
+- Move reminders from person-level to task-level for incomplete tasks only.
+- Add profile image upload and header colour per staff member, likely stored against profile metadata or dedicated profile fields.
+- Highlight the logged-in user with the stronger Rise gold border as requested.
 
-7. Clean up what was partially done
-- Remove the schedule widget from `src/components/staff/marketing/PostContent.tsx`
-- Refactor `src/components/staff/marketing/ScheduleManager.tsx` into a real weekly board
-- Keep the sidebar placement in `src/pages/Staff.tsx`, but make the section feel separate in both navigation and content
-- Replace the current report clip playback contract across:
-  - `src/hooks/useSharedClipPlayer.ts`
-  - `src/components/ActionVideoPopup.tsx`
-  - `src/components/ClippedActionsPlayer.tsx`
-  - `src/components/report/RankedActionsPlayer.tsx`
-  - `src/pages/PerformanceReport.tsx`
-  - `src/components/PerformanceReportDialog.tsx`
-  - `src/components/staff/PerformanceActionsDialog.tsx`
+11. Fix the default staff landing behaviour cleanly
+- In `Staff.tsx`, keep `overview` above `dashboard` and make it the true default for most roles.
+- Preserve the special-case Trusted Network routing.
+- Prevent any flash to the wrong section by deriving the initial section only after role permissions and role-specific defaults are resolved.
 
-Expected outcome
-- Schedule becomes its own proper weekly board above Marketing, visually aligned with Prospect Board, and based on post types/templates rather than actual posts
-- Report clips either play as exact standalone clips or do not open at all
-- Full match video is never exposed from report clip playback again
+Technical details
+- Confirmed root cause for Pieklak: `CreatePerformanceReportDialog.tsx` renders `FixtureStatsEditor` without `playerPosition`, so the editor defaults to outfield metrics.
+- Confirmed data state: Matthias Pieklak exists as `position = 'GK'`, but his latest `player_analysis.fixture_stats` is null, so comparisons also need real data handling and clearer empty states.
+- Confirmed score edit root cause: parent refresh callbacks are still wired into `ScoreEditMode`, which can force re-fetch/reopen behaviour during editing.
+- Confirmed transfer report gaps:
+  - `TransferReportView.tsx` still uses `r90_average`
+  - `content_config` is not used
+  - `contract_info` and `physical_profile` are not rendered
+  - video player is a plain `<video>` block, not the stars-profile style player
+- Confirmed staff accountability gaps:
+  - reminders are person-level, not task-level
+  - profile image/header colour support is absent
+  - the board is still too shallow in task structure for recurring operational work
+
+Implementation order I would use
+1. Score edit stability and save-loss bug
+2. GK fixture stats wiring and GK comparison empty-state clarity
+3. Transfer report data/rendering correctness
+4. Transfer report editor controls and visuals
+5. Staff accountability rebuild and routing polish
