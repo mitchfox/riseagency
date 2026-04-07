@@ -969,29 +969,14 @@ export const CreatePerformanceReportDialog = ({
           .single();
         
         if (fixtureData) {
-          // Intelligently determine opponent based on player's club or "For" placeholder
-          let opponentTeam = fixtureData.away_team;
-          const homeIsFor = fixtureData.home_team.toLowerCase() === "for" || fixtureData.home_team.toLowerCase().includes("for ");
-          const awayIsFor = fixtureData.away_team.toLowerCase() === "for" || fixtureData.away_team.toLowerCase().includes("for ");
-          
-          if (homeIsFor) {
-            opponentTeam = fixtureData.away_team;
-          } else if (awayIsFor) {
-            opponentTeam = fixtureData.home_team;
-          } else if (playerClub) {
-            const clubLower = playerClub.toLowerCase();
-            const homeLower = fixtureData.home_team.toLowerCase();
-            const awayLower = fixtureData.away_team.toLowerCase();
-            if (homeLower.includes(clubLower) || clubLower.includes(homeLower)) {
-              opponentTeam = fixtureData.away_team;
-            } else if (awayLower.includes(clubLower) || clubLower.includes(awayLower)) {
-              opponentTeam = fixtureData.home_team;
-            }
-          }
+          const opponentTeam = deriveOpponentFromFixture(fixtureData, playerClub);
           setOpponent(opponentTeam);
           if (fixtureData.home_score !== null && fixtureData.away_score !== null) {
             setResult(`${fixtureData.home_score}-${fixtureData.away_score}`);
           } else {
+            setResult(analysisData.result || "");
+          }
+        }
             setResult(analysisData.result || "");
           }
         } else {
