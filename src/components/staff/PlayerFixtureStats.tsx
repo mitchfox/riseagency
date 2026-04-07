@@ -169,15 +169,15 @@ export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Pro
           <>
             {/* Category tabs */}
             <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <TabsList className="mx-3 md:mx-0 grid grid-cols-4 gap-1 mb-4">
-                {METRIC_CATEGORIES.map(cat => (
+              <TabsList className={`mx-3 md:mx-0 grid gap-1 mb-4`} style={{ gridTemplateColumns: `repeat(${positionCategories.length}, 1fr)` }}>
+                {positionCategories.map(cat => (
                   <TabsTrigger key={cat.category} value={cat.category} className="text-xs">
                     {cat.category}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
-              {METRIC_CATEGORIES.map(cat => (
+              {positionCategories.map(cat => (
                 <TabsContent key={cat.category} value={cat.category} className="mt-0">
                   <div className="overflow-x-auto">
                     <Table>
