@@ -353,7 +353,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 <RadarChart3D
                   playerName={playerName}
                   metrics={(() => {
-                    const radarMetrics = ALL_METRICS
+                    const radarMetrics = positionMetrics
                       .filter(m => portalMetrics[m.key] != null)
                       .slice(0, 8)
                       .map(m => {
