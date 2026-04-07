@@ -3,9 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Eye, EyeOff, ExternalLink, Save, X, Loader2, GripVertical } from "lucide-react";
+import { Eye, EyeOff, ExternalLink, Save, X, Loader2, GripVertical, Shield } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -71,11 +74,13 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
   const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_ORDER);
   const [customNotes, setCustomNotes] = useState('');
   const [title, setTitle] = useState('');
+  const [contentConfig, setContentConfig] = useState<Record<string, any>>({});
+  const [comparisonPlayers, setComparisonPlayers] = useState<any[]>([]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data } = await supabase.from('transfer_reports').select('*').eq('id', reportId).single();
       if (data) {
         setReport(data);
@@ -84,12 +89,33 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
         setCustomNotes(data.custom_notes || '');
         setTitle(data.title || '');
 
-        const { data: p } = await supabase.from('players').select('name, image_url').eq('id', data.player_id).single();
+        // Parse content_config
+        let config: Record<string, any> = {};
+        if (data.content_config) {
+          if (typeof data.content_config === 'string') {
+            try { config = JSON.parse(data.content_config); } catch {}
+          } else {
+            config = data.content_config as Record<string, any>;
+          }
+        }
+        setContentConfig(config);
+
+        const { data: p } = await supabase.from('players').select('name, image_url, position').eq('id', data.player_id).single();
         setPlayer(p);
+
+        // Fetch comparison players for the position
+        if (p?.position) {
+          const { data: compData } = await supabase
+            .from('comparison_players')
+            .select('id, name, club, position')
+            .eq('position', p.position)
+            .limit(20);
+          setComparisonPlayers(compData || []);
+        }
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [reportId]);
 
   const handleSave = async () => {
@@ -99,6 +125,7 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
       section_order: sectionOrder,
       custom_notes: customNotes || null,
       title,
+      content_config: contentConfig,
       status: 'published',
     }).eq('id', reportId);
     if (error) toast.error('Failed to save');
@@ -133,6 +160,18 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
     });
   };
 
+  const updateConfig = (key: string, value: any) => {
+    setContentConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleComparisonPlayer = (playerId: string) => {
+    const current = (contentConfig.comparison_player_ids || []) as string[];
+    const updated = current.includes(playerId)
+      ? current.filter((id: string) => id !== playerId)
+      : [...current, playerId];
+    updateConfig('comparison_player_ids', updated);
+  };
+
   const orderedSections = sectionOrder
     .map(id => ALL_SECTIONS.find(s => s.id === id))
     .filter(Boolean) as typeof ALL_SECTIONS;
@@ -143,9 +182,11 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
   if (loading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   if (!report) return null;
 
+  const selectedCompIds = (contentConfig.comparison_player_ids || []) as string[];
+
   return (
     <div className="fixed inset-0 z-[200] bg-background/95 backdrop-blur-sm overflow-y-auto">
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6 sticky top-0 bg-background/95 backdrop-blur-sm py-3 z-10 border-b border-border">
           <div className="flex items-center gap-3">
@@ -172,31 +213,45 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left - Controls */}
-          <div className="space-y-6">
-            {/* Player info */}
-            <div className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card">
-              {player?.image_url && <img src={player.image_url} alt={player.name} className="w-12 h-12 rounded-full object-cover" />}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Player info + Title row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card">
+                {player?.image_url && <img src={player.image_url} alt={player.name} className="w-12 h-12 rounded-full object-cover" />}
+                <div>
+                  <p className="font-semibold">{player?.name}</p>
+                  <p className="text-xs text-muted-foreground">/{report.slug}</p>
+                </div>
+              </div>
               <div>
-                <p className="font-semibold">{player?.name}</p>
-                <p className="text-xs text-muted-foreground">/{report.slug}</p>
+                <Label className="text-sm font-medium mb-1.5 block">Report Title</Label>
+                <Input
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                />
               </div>
             </div>
 
-            {/* Title */}
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Report Title</label>
-              <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            {/* Exclusive Representation */}
+            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
+              <div className="flex items-center gap-3">
+                <Shield className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Exclusive Representation</p>
+                  <p className="text-xs text-muted-foreground">Shows a banner on the live report</p>
+                </div>
+              </div>
+              <Switch
+                checked={!!contentConfig.exclusive_representation}
+                onCheckedChange={(checked) => updateConfig('exclusive_representation', checked)}
               />
             </div>
 
             {/* Sections - Draggable */}
             <div>
-              <label className="text-sm font-medium mb-3 block">Visible Sections (drag to reorder)</label>
+              <Label className="text-sm font-medium mb-3 block">Visible Sections (drag to reorder)</Label>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={orderedSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-1.5">
@@ -213,9 +268,131 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
               </DndContext>
             </div>
 
-            {/* Notes */}
+            {/* Comparison Player Selection */}
+            {sections.includes('comparison') && comparisonPlayers.length > 0 && (
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Comparison Players</Label>
+                <p className="text-xs text-muted-foreground mb-3">Select which players to show in the comparison table. If none selected, the first 3 will be used.</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {comparisonPlayers.map(cp => (
+                    <button
+                      key={cp.id}
+                      onClick={() => toggleComparisonPlayer(cp.id)}
+                      className={`flex items-center gap-2 p-2.5 rounded-md border text-left text-sm transition-colors ${
+                        selectedCompIds.includes(cp.id)
+                          ? 'border-primary bg-primary/10 text-foreground'
+                          : 'border-border hover:bg-muted/50 text-muted-foreground'
+                      }`}
+                    >
+                      <Checkbox checked={selectedCompIds.includes(cp.id)} className="pointer-events-none" />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-xs">{cp.name}</p>
+                        {cp.club && <p className="truncate text-[10px] text-muted-foreground">{cp.club}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Contract Information Config */}
+            {sections.includes('contract_info') && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium block">Contract Information</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Current Club</Label>
+                    <Input
+                      value={contentConfig.contract_info?.current_club || ''}
+                      onChange={e => updateConfig('contract_info', { ...(contentConfig.contract_info || {}), current_club: e.target.value })}
+                      placeholder="e.g. Bolton Wanderers"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Contract Expiry</Label>
+                    <Input
+                      value={contentConfig.contract_info?.contract_expiry || ''}
+                      onChange={e => updateConfig('contract_info', { ...(contentConfig.contract_info || {}), contract_expiry: e.target.value })}
+                      placeholder="e.g. June 2026"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Wage</Label>
+                    <Input
+                      value={contentConfig.contract_info?.wage || ''}
+                      onChange={e => updateConfig('contract_info', { ...(contentConfig.contract_info || {}), wage: e.target.value })}
+                      placeholder="e.g. £2,500 p/w"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Market Value</Label>
+                    <Input
+                      value={contentConfig.contract_info?.market_value || ''}
+                      onChange={e => updateConfig('contract_info', { ...(contentConfig.contract_info || {}), market_value: e.target.value })}
+                      placeholder="e.g. £500k"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Physical Profile Config */}
+            {sections.includes('physical_profile') && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium block">Physical Profile</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Height</Label>
+                    <Input
+                      value={contentConfig.physical_profile?.height || ''}
+                      onChange={e => updateConfig('physical_profile', { ...(contentConfig.physical_profile || {}), height: e.target.value })}
+                      placeholder="e.g. 6'2"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Weight</Label>
+                    <Input
+                      value={contentConfig.physical_profile?.weight || ''}
+                      onChange={e => updateConfig('physical_profile', { ...(contentConfig.physical_profile || {}), weight: e.target.value })}
+                      placeholder="e.g. 82kg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Preferred Foot</Label>
+                    <Input
+                      value={contentConfig.physical_profile?.preferred_foot || ''}
+                      onChange={e => updateConfig('physical_profile', { ...(contentConfig.physical_profile || {}), preferred_foot: e.target.value })}
+                      placeholder="e.g. Right"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Fitness Level</Label>
+                    <Input
+                      value={contentConfig.physical_profile?.fitness_level || ''}
+                      onChange={e => updateConfig('physical_profile', { ...(contentConfig.physical_profile || {}), fitness_level: e.target.value })}
+                      placeholder="e.g. High"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Agent Notes Config */}
+            {sections.includes('agent_notes') && (
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Agent Notes (visible on report)</Label>
+                <Textarea
+                  value={contentConfig.agent_notes || ''}
+                  onChange={e => updateConfig('agent_notes', e.target.value)}
+                  placeholder="Internal agent notes for the report..."
+                  rows={4}
+                />
+              </div>
+            )}
+
+            {/* Scouting Notes */}
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Scouting Notes (visible on report)</label>
+              <Label className="text-sm font-medium mb-1.5 block">Scouting Notes (visible on report)</Label>
               <Textarea
                 value={customNotes}
                 onChange={e => setCustomNotes(e.target.value)}
@@ -227,7 +404,7 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
 
           {/* Right - Preview */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Live Preview</label>
+            <Label className="text-sm font-medium mb-2 block">Live Preview</Label>
             <div className="rounded-lg border-2 border-border overflow-hidden sticky top-20" style={{ height: '70vh' }}>
               <iframe
                 src={`/transfer-report/${report.slug}`}
