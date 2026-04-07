@@ -271,6 +271,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     setPendingScore(score);
     setSearchQuery("");
     setSearchResults([]);
+    setSidePanel(null);
   }, []);
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -302,8 +303,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     return "bg-green-700";
   };
 
-  // Fullscreen button: outer corners
-  const getFullscreenPosition = (i: number) => {
+  const getCornerStackPosition = (i: number) => {
     switch (i) {
       case 0: return "top-1 left-1";
       case 1: return "top-1 right-1";
@@ -313,14 +313,29 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     }
   };
 
+  const getCornerStackAlignment = (i: number) => {
+    switch (i) {
+      case 0:
+      case 2:
+        return "items-start";
+      case 1:
+      case 3:
+        return "items-end";
+      default:
+        return "items-start";
+    }
+  };
+
+  const getCornerStackDirection = (i: number) => (i < 2 ? "flex-col-reverse" : "flex-col");
+
   // Score input: inner corners (near centre)
   const getScorePosition = (i: number) => {
     switch (i) {
-      case 0: return "bottom-1 right-1";
-      case 1: return "bottom-1 left-1";
-      case 2: return "top-1 right-1";
-      case 3: return "top-1 left-1";
-      default: return "bottom-1 right-1";
+      case 0: return "bottom-2 right-2";
+      case 1: return "bottom-2 left-2";
+      case 2: return "top-2 right-2";
+      case 3: return "top-2 left-2";
+      default: return "bottom-2 right-2";
     }
   };
 
@@ -364,7 +379,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             </button>
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
-                <p className="text-sm font-semibold">{sidePanel === "shot" ? "Shot Map" : "Movement Scores"}</p>
+                <p className="text-sm font-semibold">{sidePanel === "shot" ? "Shot Map" : "Box Movement & Crossing Scores"}</p>
                 <p className="text-[11px] text-muted-foreground">Select a grid score, then tap the action score box to fill.</p>
               </div>
               <button
@@ -374,11 +389,13 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 Close
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-3">
+            <div className="flex-1 min-h-0 p-3">
               {sidePanel === "shot" ? (
-                <XGPitchMap compact onScoreSelect={queueSelectedScore} />
+                <div className="h-full">
+                  <XGPitchMap compact onScoreSelect={queueSelectedScore} />
+                </div>
               ) : (
-                <div className="rounded-lg border border-border bg-card/40 min-h-[300px]">
+                <div className="h-full min-h-0 rounded-lg border border-border bg-card/40">
                   <BoxZoneMap
                     actions={pageActions}
                     actionType={currentFocusedAction?.action_type}
@@ -405,15 +422,19 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               className="absolute inset-0 h-full w-full object-contain"
             />
 
-            {/* Fullscreen button: outer corner */}
-            <div className={`absolute ${getFullscreenPosition(i)} z-20`}>
-              <button
-                onClick={() => handleFullscreen(i)}
-                className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
-                title="Fullscreen"
-              >
-                <Maximize className="h-4 w-4" />
-              </button>
+            <div className={`absolute ${getCornerStackPosition(i)} z-20`}>
+              <div className={`flex ${getCornerStackDirection(i)} ${getCornerStackAlignment(i)} gap-1`}>
+                <span className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
+                  #{pageIndex * 4 + i + 1}
+                </span>
+                <button
+                  onClick={() => handleFullscreen(i)}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
+                  title="Fullscreen"
+                >
+                  <Maximize className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Score input: inner corner */}
@@ -449,56 +470,46 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
         ))}
 
         {/* Search R90 scores - z-30, behind panels */}
-        <div
-          ref={searchRef}
-          className="absolute left-1/2 top-1/2 z-30 w-[min(48rem,94vw)] -translate-x-1/2 -translate-y-1/2"
-        >
-          <div className="relative flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search R90 scores..."
-                className="h-11 border-border bg-background/95 pl-9 text-sm shadow-xl backdrop-blur-md"
-              />
+        {!pendingScore && (
+          <div
+            ref={searchRef}
+            className="absolute left-1/2 top-1/2 z-30 w-[min(48rem,94vw)] -translate-x-1/2 -translate-y-1/2"
+          >
+            <div className="relative flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="Search R90 scores..."
+                  className="h-11 border-border bg-background/95 pl-9 text-sm shadow-xl backdrop-blur-md"
+                />
+              </div>
             </div>
+
+            {searchResults.length > 0 && (
+              <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border bg-background/95 shadow-2xl backdrop-blur-md">
+                {searchResults.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => queueSelectedScore(s.score)}
+                    className="grid w-full grid-cols-[auto_1fr_auto] items-start gap-3 border-b border-border/60 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/60 last:border-b-0"
+                  >
+                    <span className={`mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white ${getScoreColor(s.score)}`}>
+                      {s.score}
+                    </span>
+                    <span className="whitespace-normal break-words leading-snug">{s.title}</span>
+                    <span className="pt-0.5 text-[10px] text-muted-foreground">{s.category}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-
-          {pendingScore && (
-            <div className="mt-2 rounded-md border border-primary/40 bg-background/95 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur-sm">
-              Selected score <span className="font-bold text-primary">{pendingScore}</span> — click any score box to apply.
-            </div>
-          )}
-
-          {searchResults.length > 0 && (
-            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border bg-background/95 shadow-2xl backdrop-blur-md">
-              {searchResults.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => queueSelectedScore(s.score)}
-                  className="grid w-full grid-cols-[auto_1fr_auto] items-start gap-3 border-b border-border/60 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/60 last:border-b-0"
-                >
-                  <span className={`mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white ${getScoreColor(s.score)}`}>
-                    {s.score}
-                  </span>
-                  <span className="whitespace-normal break-words leading-snug">{s.title}</span>
-                  <span className="pt-0.5 text-[10px] text-muted-foreground">{s.category}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Bottom centre: action labels + tool buttons */}
+      {/* Bottom centre: tool buttons */}
       <div className="absolute bottom-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
-        {pageActions.map((action, i) => (
-          <span key={action.id} className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
-            #{pageIndex * 4 + i + 1} {action.action_type}
-          </span>
-        ))}
-        <div className="mx-1 h-5 w-px bg-border" />
         <button
           onClick={() => {
             onSave?.();
@@ -527,7 +538,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border bg-background/90 text-foreground hover:bg-muted"
           }`}
-          title="Movement"
+          title="Box movement & crossing scores"
         >
           <Move className="h-4 w-4" />
         </button>
