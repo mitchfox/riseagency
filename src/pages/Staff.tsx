@@ -285,10 +285,10 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'overview';
+    let defaultSection = 'dashboard';
     if (permissionManagedRole) {
-      // If the role can't view overview, find the first section they can view
-      if (!canView('overview')) {
+      // If the role can't view dashboard, find the first section they can view
+      if (!canView('dashboard') && !canView('overview')) {
         const viewable = getViewableSections();
         const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
         if (firstViewable) defaultSection = firstViewable;
