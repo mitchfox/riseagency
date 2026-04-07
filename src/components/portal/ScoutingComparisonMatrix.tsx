@@ -60,7 +60,7 @@ export const ScoutingComparisonMatrix = ({
   }
 
   // Only show metrics where at least 2 entities have data
-  const relevantMetrics = ALL_METRICS.filter(m => {
+  const relevantMetrics = activeMetrics.filter(m => {
     const withData = entities.filter(e => e.metrics[m.key] != null).length;
     return withData >= 2;
   });
