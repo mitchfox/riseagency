@@ -977,8 +977,6 @@ export const CreatePerformanceReportDialog = ({
             setResult(analysisData.result || "");
           }
         }
-            setResult(analysisData.result || "");
-          }
         } else {
           // Fixture not found, use stored values
           setOpponent(analysisData.opponent || "");
