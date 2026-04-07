@@ -1964,14 +1964,19 @@ const Dashboard = () => {
                                       (() => { const lc = normalizePortalLanguage(playerData?.portal_language); const lm: Record<string, string> = { fr: "fr-FR", es: "es-ES", pt: "pt-PT", de: "de-DE", it: "it-IT", pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR" }; return lm[lc] || "en-GB"; })()
                                     )}
                                   </span>
-                                  {analysis.opponent && (
-                                    <>
-                                      <span className="text-xs font-medium">vs {analysis.opponent}</span>
-                                      {analysis.result && (
-                                        <span className="text-xs text-muted-foreground">({analysis.result})</span>
-                                      )}
-                                    </>
-                                  )}
+                                  {(() => {
+                                    const statusLower = String(analysis.visibility_status || '').toLowerCase();
+                                    const hideOpponent = ['hidden', 'draft', 'clipped'].includes(statusLower);
+                                    if (hideOpponent || !analysis.opponent) return null;
+                                    return (
+                                      <>
+                                        <span className="text-xs font-medium">vs {analysis.opponent}</span>
+                                        {analysis.result && (
+                                          <span className="text-xs text-muted-foreground">({analysis.result})</span>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
                                   {(() => {
                                     const isHidden = String(analysis.visibility_status || "").toLowerCase() === "hidden";
                                     const effectiveMinutes = isHidden && (analysis.placeholder_minutes ?? 0) > 0

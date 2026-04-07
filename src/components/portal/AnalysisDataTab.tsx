@@ -349,7 +349,9 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                     />
                   </TableCell>
                   <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString('en-GB')}</TableCell>
-                  <TableCell className="text-sm font-medium">{a.opponent || '-'}</TableCell>
+                  <TableCell className="text-sm font-medium">
+                    {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}
+                  </TableCell>
                   <TableCell className="text-sm">{a.minutes_played ?? '-'}</TableCell>
                   <TableCell>
                     {a.r90_score != null ? (

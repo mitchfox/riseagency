@@ -109,8 +109,18 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
     Striker: "striker",
   };
 
-  const mappedPositionKey = position ? positionKeyMap[position] : null;
-  const translatedPosition = mappedPositionKey ? t(portalLanguage, mappedPositionKey) : position;
+  // Show position abbreviation, not full translated name
+  const positionAbbreviationMap: Record<string, string> = {
+    GK: "GK", Goalkeeper: "GK",
+    FB: "FB", "Full-Back": "FB", Fullback: "FB",
+    CB: "CB", "Centre-Back": "CB", "Center-Back": "CB",
+    CM: "CM", "Central Midfielder": "CM",
+    CDM: "CDM", "Central Defensive-Midfielder": "CDM",
+    AM: "AM", CAM: "CAM", "Attacking Midfielder": "AM",
+    W: "W", LW: "LW", RW: "RW", Winger: "W",
+    ST: "ST", CF: "CF", "Centre-Forward": "CF", Striker: "ST",
+  };
+  const translatedPosition = position ? (positionAbbreviationMap[position] || position) : null;
 
   const units = countdown ? [
     { label: t(portalLanguage, "days").toUpperCase(), value: countdown.days },
