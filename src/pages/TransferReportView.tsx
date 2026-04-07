@@ -6,6 +6,7 @@ import { Loader2, Play, ChevronDown, ChevronUp, TrendingUp, BarChart3, Award, Sh
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { METRIC_CATEGORIES, ALL_METRICS, GK_METRIC_CATEGORIES, ALL_GK_METRICS, getMetricCategoriesForPosition, getMetricsForPosition, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
+import { computeAllStatAverages } from "@/lib/statAggregation";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const GRADE_COLORS: Record<string, string> = {
