@@ -1691,7 +1691,8 @@ const Staff = () => {
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
                   <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
                   <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={canManageSection('analysis')} /></div>
-                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'dashboard' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'overview' && <StaffAccountabilityOverview isAdmin={isAdmin} userId={user?.id} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
