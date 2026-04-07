@@ -329,6 +329,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handlePlayerSelect = (playerId: string) => {
     setSelectedPlayerId(playerId);
+    try { localStorage.setItem('staff_last_player', playerId); } catch {}
     // Scroll to top when selecting a player since content is at top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
