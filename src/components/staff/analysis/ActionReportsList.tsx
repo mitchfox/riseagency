@@ -149,8 +149,22 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       report.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlayer = playerFilter === "all" || report.player_id === playerFilter;
-    return matchesSearch && matchesPlayer;
+    const status = report.visibility_status || "draft";
+    const matchesStatus = statusTab === "all" || status === statusTab;
+    return matchesSearch && matchesPlayer && matchesStatus;
   });
+
+  const statusCounts = {
+    all: reports.filter(r => {
+      const matchesSearch = r.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) || r.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPlayer = playerFilter === "all" || r.player_id === playerFilter;
+      return matchesSearch && matchesPlayer;
+    }).length,
+    draft: reports.filter(r => (r.visibility_status || "draft") === "draft").length,
+    clipped: reports.filter(r => r.visibility_status === "clipped").length,
+    hidden: reports.filter(r => r.visibility_status === "hidden").length,
+    live: reports.filter(r => r.visibility_status === "live").length,
+  };
 
   if (loading) {
     return (
