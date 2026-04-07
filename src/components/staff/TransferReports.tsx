@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, ExternalLink, Edit, Trash2, Copy, Eye, FileText, Loader2 } from "lucide-react";
+import { TransferReportEditor } from "./TransferReportEditor";
 
 interface TransferReport {
   id: string;
@@ -49,6 +50,7 @@ export const TransferReports = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TransferReport | null>(null);
+  const [editorReportId, setEditorReportId] = useState<string | null>(null);
 
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const [title, setTitle] = useState('');
@@ -228,8 +230,11 @@ export const TransferReports = () => {
                 <Button variant="ghost" size="icon" onClick={() => toggleStatus(report)} title={report.status === 'published' ? 'Unpublish' : 'Publish'}>
                   <ExternalLink className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(report)}>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(report)} title="Quick Edit">
                   <Edit className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setEditorReportId(report.id)} title="Full Editor">
+                  <Eye className="w-4 h-4 text-primary" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(report.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4" />
@@ -299,6 +304,13 @@ export const TransferReports = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Full Editor Overlay */}
+      {editorReportId && (
+        <TransferReportEditor
+          reportId={editorReportId}
+          onClose={() => { setEditorReportId(null); fetchReports(); }}
+        />
+      )}
     </div>
   );
 };
