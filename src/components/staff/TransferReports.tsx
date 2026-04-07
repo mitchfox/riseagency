@@ -304,6 +304,13 @@ export const TransferReports = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Full Editor Overlay */}
+      {editorReportId && (
+        <TransferReportEditor
+          reportId={editorReportId}
+          onClose={() => { setEditorReportId(null); fetchReports(); }}
+        />
+      )}
     </div>
   );
 };
