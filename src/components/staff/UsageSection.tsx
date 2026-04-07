@@ -82,10 +82,10 @@ export const UsageSection = () => {
   const AI_COST_PER_CALL = 0.003; // rough estimate per AI invocation in USD
 
   const aiFeatures: UsageEntry[] = [
-    { name: "AI Shell Suggestions", calls: edgeFunctionUsage["AI Shell Suggestions"] || 0, estimatedCost: "", category: "ai" },
-    { name: "Coaching Chat (AI)", calls: edgeFunctionUsage["Coaching Chat Sessions"] || 0, estimatedCost: "", category: "ai" },
-    { name: "AI Translations", calls: edgeFunctionUsage["AI Translations/Explanations"] || 0, estimatedCost: "", category: "ai" },
-    { name: "Player Stats Extraction", calls: edgeFunctionUsage["Actions Scored"] || 0, estimatedCost: "", category: "ai" },
+    { name: "AI Shell Suggestions", calls: edgeFunctionUsage["AI Shell Suggestions"] || 0, estimatedCost: "", category: "ai" as const },
+    { name: "Coaching Chat (AI)", calls: edgeFunctionUsage["Coaching Chat Sessions"] || 0, estimatedCost: "", category: "ai" as const },
+    { name: "AI Translations", calls: edgeFunctionUsage["AI Translations/Explanations"] || 0, estimatedCost: "", category: "ai" as const },
+    { name: "Player Stats Extraction", calls: edgeFunctionUsage["Actions Scored"] || 0, estimatedCost: "", category: "ai" as const },
   ].map(f => ({
     ...f,
     estimatedCost: `~$${(f.calls * AI_COST_PER_CALL).toFixed(2)}`,
