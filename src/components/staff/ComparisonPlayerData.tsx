@@ -79,6 +79,59 @@ export const METRIC_CATEGORIES = [
   },
 ];
 
+// Goalkeeper-specific metric categories
+export const GK_METRIC_CATEGORIES = [
+  {
+    category: 'Overall',
+    metrics: [
+      { key: 'gk_clean_sheets', label: 'Clean Sheets' },
+      { key: 'gk_goals_conceded', label: 'Goals Conceded' },
+      { key: 'gk_goals_conceded_inside_box', label: 'Goals Conceded Inside Box' },
+      { key: 'gk_goals_conceded_outside_box', label: 'Goals Conceded Outside Box' },
+    ]
+  },
+  {
+    category: 'Shot Performance',
+    metrics: [
+      { key: 'gk_save_percentage', label: 'Save Percentage' },
+      { key: 'gk_shots_on_target_faced', label: 'Shots On Target Faced' },
+      { key: 'gk_saves_made', label: 'Saves Made' },
+      { key: 'gk_shots_on_target_faced_inside_box', label: 'SoT Faced (Inside Box)' },
+      { key: 'gk_saves_from_inside_box', label: 'Saves from Inside Box' },
+      { key: 'gk_shots_on_target_faced_outside_box', label: 'SoT Faced (Outside Box)' },
+      { key: 'gk_saves_from_outside_box', label: 'Saves from Outside Box' },
+    ]
+  },
+  {
+    category: 'Passing+',
+    metrics: [
+      { key: 'gk_touches', label: 'Touches' },
+      { key: 'gk_passes_completed', label: 'Passes Completed' },
+      { key: 'gk_passing_accuracy', label: 'Passing Accuracy (%)' },
+      { key: 'gk_long_passes_completed', label: 'Long Passes Completed' },
+      { key: 'gk_long_pass_accuracy', label: 'Long Pass Accuracy (%)' },
+      { key: 'gk_passes_completed_opp_half', label: 'Passes Completed (Opp. Half)' },
+      { key: 'gk_possession_lost', label: 'Possession Lost' },
+      { key: 'gk_clearances', label: 'Clearances' },
+      { key: 'gk_ball_recoveries', label: 'Ball Recoveries' },
+    ]
+  },
+];
+
+export const ALL_GK_METRICS = GK_METRIC_CATEGORIES.flatMap(c => c.metrics);
+
+/** Returns the correct categories based on position */
+export const getMetricCategoriesForPosition = (position?: string) => {
+  if (position?.toUpperCase() === 'GK') return GK_METRIC_CATEGORIES;
+  return METRIC_CATEGORIES;
+};
+
+/** Returns the correct flat metrics list based on position */
+export const getMetricsForPosition = (position?: string) => {
+  if (position?.toUpperCase() === 'GK') return ALL_GK_METRICS;
+  return ALL_METRICS;
+};
+
 export const ALL_METRICS = METRIC_CATEGORIES.flatMap(c => c.metrics);
 
 interface ComparisonPlayer {
