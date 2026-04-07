@@ -20,6 +20,7 @@ interface Props {
   portalMetrics: Record<string, number | null>;
   hasPortalData: boolean;
   comparisonPlayers: ComparisonPlayer[];
+  playerPosition?: string;
 }
 
 const PORTAL_COLOUR = "hsl(43, 49%, 61%)";
