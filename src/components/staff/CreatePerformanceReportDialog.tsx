@@ -2164,6 +2164,17 @@ export const CreatePerformanceReportDialog = ({
                   Action Edit
                 </Button>
               )}
+              {analysisId && actions.some(a => a.video_url) && (
+                <Button
+                  onClick={() => setScoreEditOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Score Edit
+                </Button>
+              )}
               {analysisId && actions.some(a => a.video_url && !a.video_url.includes('/clips/') && !a.video_url.includes('/action-clips/')) && (
                 <ReExtractClipsButton
                   analysisId={analysisId}

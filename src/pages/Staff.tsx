@@ -950,6 +950,7 @@ const Staff = () => {
           { id: '_group_tracking', title: 'Tracking', isGroupLabel: true },
           { id: 'expenses', title: 'Expenses', icon: Calculator },
           { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
+          { id: 'corporationtax', title: 'Corporation Tax', icon: Building2 },
           { id: '_group_overview_fin', title: 'Overview', isGroupLabel: true },
           { id: 'budgets', title: 'Budgets', icon: PiggyBank },
           { id: 'financialreports', title: 'Reports', icon: TrendingUp },
