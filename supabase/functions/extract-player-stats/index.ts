@@ -161,12 +161,25 @@ serve(async (req) => {
     const aiData = await response.json();
     const rawText = aiData.choices?.[0]?.message?.content || "";
     
+    console.log("Raw AI response:", rawText.substring(0, 500));
+    
     let jsonStr = rawText.trim();
     if (jsonStr.startsWith("```")) {
       jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     }
     
-    const metrics = JSON.parse(jsonStr);
+    // Try to find JSON object in the response if direct parse fails
+    let metrics: Record<string, any>;
+    try {
+      metrics = JSON.parse(jsonStr);
+    } catch {
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) {
+        metrics = JSON.parse(match[0]);
+      } else {
+        throw new Error("Could not parse AI response as JSON");
+      }
+    }
 
     const cleanMetrics: Record<string, number> = {};
     for (const [key, val] of Object.entries(metrics)) {
