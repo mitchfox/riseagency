@@ -275,8 +275,9 @@ export const ComparisonPlayerData = () => {
         imageContents.push(`data:${mimeType};base64,${base64}`);
       }
 
+      const isGK = aiPosition.toUpperCase() === 'GK';
       const { data, error } = await invokeEdgeFunction('extract-player-stats', {
-        body: { images: imageContents }
+        body: { images: imageContents, isGoalkeeper: isGK }
       });
 
       if (error) throw error;
