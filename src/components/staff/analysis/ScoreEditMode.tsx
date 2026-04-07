@@ -74,7 +74,8 @@ function smartSortActions(actions: Action[]): Action[] {
   const byTime = [...withTime].sort((a, b) => a.seconds - b.seconds);
 
   // Build clusters of actions within 10s of each other
-  const clusters: Action[][] = [];
+  type ActionWithTime = Action & { seconds: number };
+  const clusters: ActionWithTime[][] = [];
   let currentCluster: typeof byTime = [];
 
   for (const action of byTime) {
