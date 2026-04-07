@@ -20,6 +20,7 @@ interface Props {
   comparisonPlayers: ComparisonPlayer[];
   selectedPlayerIds: string[];
   formWindow: number;
+  playerPosition?: string;
 }
 
 const PORTAL_COLOUR = "hsl(43, 49%, 61%)";
