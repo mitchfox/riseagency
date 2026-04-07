@@ -5,8 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// The metric keys we want to extract - must match the frontend
-const METRIC_KEYS = [
+// Outfield metric keys
+const OUTFIELD_METRIC_KEYS = [
   "goals_per90", "npxg_per90", "shots_on_target_per90", "on_target_pct",
   "created_own_shot_per90", "total_shots_per90", "shots_outside_box_per90", "shots_inside_box_per90",
   "assists_per90", "xa_per90", "key_passes_per90", "xt_via_live_passes_per90",
@@ -22,26 +22,22 @@ const METRIC_KEYS = [
   "clearances_per90", "interceptions_per90"
 ];
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+// Goalkeeper metric keys
+const GK_METRIC_KEYS = [
+  "gk_clean_sheets", "gk_goals_conceded", "gk_goals_conceded_inside_box", "gk_goals_conceded_outside_box",
+  "gk_save_percentage", "gk_shots_on_target_faced", "gk_saves_made",
+  "gk_shots_on_target_faced_inside_box", "gk_saves_from_inside_box",
+  "gk_shots_on_target_faced_outside_box", "gk_saves_from_outside_box",
+  "gk_touches", "gk_passes_completed", "gk_passing_accuracy",
+  "gk_long_passes_completed", "gk_long_pass_accuracy",
+  "gk_passes_completed_opp_half", "gk_possession_lost",
+  "gk_clearances", "gk_ball_recoveries"
+];
 
-  try {
-    const { images } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      throw new Error("No images provided");
-    }
-
-    // Build content array with all images
-    const content: any[] = [
-      {
-        type: "text",
-        text: `Extract all per-90 football statistics from these stat images. The images show stat categories like Shooting, Passing, Possession, and Defending with metric names and their per-90 values.
+const OUTFIELD_PROMPT = `Extract all per-90 football statistics from these stat images. The images show stat categories like Shooting, Passing, Possession, and Defending with metric names and their per-90 values.
 
 Return ONLY a JSON object mapping these exact keys to their numeric values. Use these keys:
-${JSON.stringify(METRIC_KEYS, null, 2)}
+${JSON.stringify(OUTFIELD_METRIC_KEYS, null, 2)}
 
 Map the image labels to these keys:
 - "Goals" -> goals_per90
@@ -85,8 +81,54 @@ Map the image labels to these keys:
 - "Interceptions" -> interceptions_per90
 
 The values shown are the per-90 numbers (the numeric value on the right side of each row, NOT the percentile bar position).
-Only include metrics you can find in the images. Return raw JSON only, no markdown.`
-      },
+Only include metrics you can find in the images. Return raw JSON only, no markdown.`;
+
+const GK_PROMPT = `Extract all goalkeeper statistics from these stat images. The images show goalkeeper-specific categories like Overall, Shot Performance, and Passing with metric names and their values.
+
+Return ONLY a JSON object mapping these exact keys to their numeric values. Use these keys:
+${JSON.stringify(GK_METRIC_KEYS, null, 2)}
+
+Map the image labels to these keys:
+- "Clean Sheets" -> gk_clean_sheets
+- "Goals Conceded" -> gk_goals_conceded
+- "Goals Conceded Inside Box" -> gk_goals_conceded_inside_box
+- "Goals Conceded Outside Box" -> gk_goals_conceded_outside_box
+- "Save Percentage" or "Save %" -> gk_save_percentage
+- "Shots On Target Faced" -> gk_shots_on_target_faced
+- "Saves Made" or "Saves" -> gk_saves_made
+- "Shots On Target Faced (Inside the Box)" or "SoT Inside Box" -> gk_shots_on_target_faced_inside_box
+- "Saves Made from Inside Box" or "Saves Inside Box" -> gk_saves_from_inside_box
+- "Shots On Target Faced (Outside the Box)" or "SoT Outside Box" -> gk_shots_on_target_faced_outside_box
+- "Saves Made from Outside Box" or "Saves Outside Box" -> gk_saves_from_outside_box
+- "Touches" -> gk_touches
+- "Passes Completed" -> gk_passes_completed
+- "Passing Accuracy" or "Passing Accuracy (%)" -> gk_passing_accuracy
+- "Long Passes Completed" -> gk_long_passes_completed
+- "Long Pass Accuracy" or "Long Pass Accuracy (%)" -> gk_long_pass_accuracy
+- "Passes completed (Opp. Half)" or "Passes Completed Opp Half" -> gk_passes_completed_opp_half
+- "Possession Lost" -> gk_possession_lost
+- "Clearances" -> gk_clearances
+- "Ball Recoveries" -> gk_ball_recoveries
+
+Extract the actual numeric values shown. Return raw JSON only, no markdown.`;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { images, isGoalkeeper } = await req.json();
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      throw new Error("No images provided");
+    }
+
+    const METRIC_KEYS = isGoalkeeper ? GK_METRIC_KEYS : OUTFIELD_METRIC_KEYS;
+    const promptText = isGoalkeeper ? GK_PROMPT : OUTFIELD_PROMPT;
+
+    const content: any[] = [
+      { type: "text", text: promptText },
       ...images.map((img: string) => ({
         type: "image_url",
         image_url: { url: img }
@@ -119,7 +161,6 @@ Only include metrics you can find in the images. Return raw JSON only, no markdo
     const aiData = await response.json();
     const rawText = aiData.choices?.[0]?.message?.content || "";
     
-    // Parse JSON from the response (handle possible markdown wrapping)
     let jsonStr = rawText.trim();
     if (jsonStr.startsWith("```")) {
       jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
@@ -127,7 +168,6 @@ Only include metrics you can find in the images. Return raw JSON only, no markdo
     
     const metrics = JSON.parse(jsonStr);
 
-    // Filter to only valid metric keys with numeric values
     const cleanMetrics: Record<string, number> = {};
     for (const [key, val] of Object.entries(metrics)) {
       if (METRIC_KEYS.includes(key) && typeof val === 'number') {
