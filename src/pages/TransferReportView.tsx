@@ -583,20 +583,24 @@ const TransferReportView = () => {
             <div className="space-y-3">
               {activeVideoReport ? (
                 <div>
-                  <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black mb-3">
-                    <video src={activeVideoReport.video_url} className="w-full aspect-video object-contain bg-black" controls playsInline autoPlay />
+                  <div className="relative aspect-video rounded-lg overflow-hidden border-4 border-[#C6A332] bg-black">
+                    <video src={activeVideoReport.video_url} className="w-full h-full object-contain" controls playsInline autoPlay />
+                    <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
+                      <span className="text-sm font-bebas text-[#C6A332] uppercase tracking-wider">{activeVideoReport.title}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bebas uppercase tracking-wider text-white">{activeVideoReport.title}</p>
-                    <button onClick={() => setActiveVideoReport(null)} className="text-xs text-[#C6A332] hover:underline">Back to list</button>
-                  </div>
+                  <button onClick={() => setActiveVideoReport(null)} className="mt-3 text-[#C6A332] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#C6A332]/80">
+                    <ChevronLeft className="h-3 w-3" /> Back to list
+                  </button>
                 </div>
               ) : (
                 <div className="grid gap-2">
                   {videoReports.map((vr: any) => (
                     <button key={vr.id} onClick={() => setActiveVideoReport(vr)}
                       className="flex items-center gap-3 p-3 rounded-lg border border-[#C6A332]/10 hover:border-[#C6A332]/30 transition-colors text-left w-full" style={{ background: 'rgba(15,15,15,0.8)' }}>
-                      <Play className="h-5 w-5 text-[#C6A332] shrink-0" />
+                      <div className="w-10 h-10 rounded border border-[#C6A332]/30 bg-[#C6A332]/10 flex items-center justify-center flex-shrink-0">
+                        <Play className="h-4 w-4 text-[#C6A332]" />
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bebas uppercase tracking-wider text-white truncate">{vr.title}</p>
                         <p className="text-[10px] text-white/40">{vr.analysis_type} · {new Date(vr.created_at).toLocaleDateString('en-GB')}</p>
