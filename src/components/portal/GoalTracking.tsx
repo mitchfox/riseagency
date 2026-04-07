@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Target, Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { METRIC_CATEGORIES, ALL_METRICS, getMetricsForPosition, getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 
 interface GoalTrackingProps {
   playerData: any;
