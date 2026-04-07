@@ -21,6 +21,7 @@ interface FixtureAnalysis {
 interface Props {
   playerId: string;
   playerName: string;
+  playerPosition?: string;
 }
 
 export const PlayerFixtureStats = ({ playerId, playerName }: Props) => {
