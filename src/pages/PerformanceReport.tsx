@@ -535,11 +535,18 @@ const PerformanceReport = () => {
         <div className="sticky top-0 z-10 bg-background border-b mb-4 py-2 flex items-center justify-between gap-2 print:hidden">
           <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-            {analysis.r90_score != null && (
-              <span className="text-sm md:text-base font-bold text-primary">
-                R90: {analysis.r90_score.toFixed(2)}
-              </span>
-            )}
+            {(() => {
+              const vs = (analysis.visibility_status || "").toLowerCase();
+              if (vs === "draft" || vs === "clipped") {
+                return <span className="text-sm md:text-base font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">R90: ?</span>;
+              }
+              if (vs === "hidden") return null;
+              return analysis.r90_score != null ? (
+                <span className="text-sm md:text-base font-bold text-primary">
+                  R90: {analysis.r90_score.toFixed(2)}
+                </span>
+              ) : null;
+            })()}
             <Button onClick={handleSaveAsWebp} variant="default" size="sm" className="px-2 md:px-3" disabled={savingImage || loading}>
               <ImageIcon className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{savingImage ? t(reportLanguage, "saving_label") : t(reportLanguage, "save_label")}</span>

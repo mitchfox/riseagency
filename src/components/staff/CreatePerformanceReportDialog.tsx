@@ -975,9 +975,12 @@ export const CreatePerformanceReportDialog = ({
           } else if (awayIsFor) {
             opponentTeam = fixtureData.home_team;
           } else if (playerClub) {
-            if (fixtureData.home_team === playerClub) {
+            const clubLower = playerClub.toLowerCase();
+            const homeLower = fixtureData.home_team.toLowerCase();
+            const awayLower = fixtureData.away_team.toLowerCase();
+            if (homeLower.includes(clubLower) || clubLower.includes(homeLower)) {
               opponentTeam = fixtureData.away_team;
-            } else if (fixtureData.away_team === playerClub) {
+            } else if (awayLower.includes(clubLower) || clubLower.includes(awayLower)) {
               opponentTeam = fixtureData.home_team;
             }
           }
