@@ -108,6 +108,11 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
         if (roles && roles.some(r => ['admin', 'staff', 'moderator'].includes(r.role))) {
           setIsStaff(true);
+          // Auto-enable edit mode if ?edit=true is in the URL
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('edit') === 'true') {
+            setIsEditing(true);
+          }
         }
       }
     };
