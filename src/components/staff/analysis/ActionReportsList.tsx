@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film } from "lucide-react";
 import { toast } from "sonner";
 import { MatchClipPlayer } from "@/components/staff/analysis/MatchClipPlayer";
+import { ScoreEditMode } from "@/components/staff/analysis/ScoreEditMode";
 import { format } from "date-fns";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
