@@ -380,7 +380,7 @@ const TransferReportView = () => {
             <SectionHeading title="Recent Form" />
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
               {displayReports.map((rpt: any) => {
-                const r90Val = rpt.r90_score ?? rpt.r90_average;
+                const r90Val = rpt.r90_score;
                 const r90Grade = r90Val != null ? getFormGrade('r90_score', r90Val) : null;
                 return (
                   <div key={rpt.id} className="rounded-lg border border-[#C6A332]/10 p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)' }}>

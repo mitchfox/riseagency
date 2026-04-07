@@ -134,15 +134,7 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
     setSaving(false);
   };
 
-  const toggleStatus = async () => {
-    const newStatus = report.status === 'published' ? 'draft' : 'published';
-    const { error } = await supabase.from('transfer_reports').update({ status: newStatus }).eq('id', reportId);
-    if (error) toast.error('Failed to update');
-    else {
-      setReport({ ...report, status: newStatus });
-      toast.success(newStatus === 'published' ? 'Report published' : 'Report unpublished');
-    }
-  };
+  // No publish/unpublish - reports are always live
 
   const toggleSection = (id: string) => {
     setSections(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
