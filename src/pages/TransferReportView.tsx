@@ -256,52 +256,79 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Highlights" />
-            <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black">
+            <div className="relative aspect-video rounded-lg overflow-hidden border-4 border-[#C6A332] bg-black">
               {highlights[currentVideoIndex]?.videoUrl ? (
-                <div className="relative group">
+                <>
                   <video
                     key={highlights[currentVideoIndex].videoUrl}
                     src={highlights[currentVideoIndex].videoUrl}
-                    className="w-full aspect-video object-contain bg-black"
+                    className="w-full h-full object-contain"
                     controls playsInline autoPlay
                     onEnded={() => setCurrentVideoIndex((currentVideoIndex + 1) % highlights.length)}
                   />
+                  {/* Club logo navigation bar — Stars profile style */}
                   {highlights.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentVideoIndex(Math.max(0, currentVideoIndex - 1))}
-                        disabled={currentVideoIndex === 0}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setCurrentVideoIndex(Math.min(highlights.length - 1, currentVideoIndex + 1))}
-                        disabled={currentVideoIndex === highlights.length - 1}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                      <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
-                        <span className="text-lg font-bebas text-[#C6A332]">{currentVideoIndex + 1}</span>
-                        <span className="text-xs text-white/40 ml-1">/ {highlights.length}</span>
+                    <div className="absolute bottom-[24px] left-1/2 -translate-x-1/2 z-10 w-full px-3 pointer-events-none">
+                      <div className="relative flex items-center justify-center gap-2">
+                        {highlights.length > 8 && (
+                          <button
+                            onClick={() => {
+                              const c = document.getElementById('tr-highlights-scroll');
+                              if (c) c.scrollBy({ left: -200, behavior: 'smooth' });
+                            }}
+                            className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#C6A332]/20 hover:bg-[#C6A332]/30 border border-[#C6A332]/40 flex items-center justify-center text-white transition-colors"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                        )}
+                        <div
+                          id="tr-highlights-scroll"
+                          className="flex gap-1.5 overflow-x-auto max-w-[calc(100%-80px)] pointer-events-auto"
+                          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                          {highlights.map((h: any, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => setCurrentVideoIndex(i)}
+                              className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/90 backdrop-blur-sm ${
+                                i === currentVideoIndex
+                                  ? 'border-[#C6A332] scale-110'
+                                  : 'border-[#C6A332]/20 hover:border-[#C6A332]/50'
+                              }`}
+                              title={h.name || `Clip ${i + 1}`}
+                            >
+                              {(h.logoUrl || h.clubLogo) ? (
+                                <img src={h.logoUrl || h.clubLogo} alt="" className="w-full h-full object-contain p-0.5" />
+                              ) : (
+                                <span className="text-[8px] font-bebas text-[#C6A332] flex items-center justify-center h-full">{i + 1}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                        {highlights.length > 8 && (
+                          <button
+                            onClick={() => {
+                              const c = document.getElementById('tr-highlights-scroll');
+                              if (c) c.scrollBy({ left: 200, behavior: 'smooth' });
+                            }}
+                            className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#C6A332]/20 hover:bg-[#C6A332]/30 border border-[#C6A332]/40 flex items-center justify-center text-white transition-colors"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
-                    </>
+                    </div>
                   )}
-                </div>
+                  {/* Counter overlay */}
+                  <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
+                    <span className="text-lg font-bebas text-[#C6A332]">{currentVideoIndex + 1}</span>
+                    <span className="text-xs text-white/40 ml-1">/ {highlights.length}</span>
+                  </div>
+                </>
               ) : (
-                <div className="aspect-video flex items-center justify-center text-white/40">No video available</div>
-              )}
-              {highlights.length > 1 && (
-                <div className="flex gap-1 p-2 bg-black/90 border-t border-[#C6A332]/20 overflow-x-auto">
-                  {highlights.map((h, i) => (
-                    <button key={i} onClick={() => setCurrentVideoIndex(i)}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-bebas uppercase tracking-wider transition-all ${
-                        i === currentVideoIndex ? 'bg-[#C6A332]/20 text-[#C6A332] border border-[#C6A332]/40' : 'text-white/50 hover:text-white/80'
-                      }`}>
-                      {h.name || `Clip ${i + 1}`}
-                    </button>
-                  ))}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <Play className="w-12 h-12 text-[#C6A332]" />
+                  <p className="text-white/40 font-bebas uppercase tracking-wider">No video available</p>
                 </div>
               )}
             </div>
