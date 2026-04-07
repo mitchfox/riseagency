@@ -1769,11 +1769,20 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     return (
       <article
         onClick={() => setViewingContact(contact)}
-        className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.2)]"
+        className={`group relative cursor-pointer overflow-hidden rounded-[1.6rem] border p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.2)] ${contact.is_favourite ? 'border-[hsl(var(--gold))]/50' : 'border-border/50'}`}
         style={softPanelStyle}
       >
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
+        <div className={`absolute inset-x-0 top-0 h-1.5 ${contact.is_favourite ? 'bg-gradient-to-r from-[hsl(var(--gold))]/80 via-[hsl(var(--gold))]/60 to-[hsl(var(--gold))]/40' : 'bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60'}`} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_36%)] opacity-90" />
+
+        {/* Favourite star */}
+        <button
+          onClick={(event) => { event.stopPropagation(); toggleFavourite(contact); }}
+          className="absolute left-4 top-4 z-10 transition-colors"
+          title={contact.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
+        >
+          <Star className={`h-4 w-4 ${contact.is_favourite ? 'fill-[hsl(var(--gold))] text-[hsl(var(--gold))]' : 'text-muted-foreground/40 hover:text-[hsl(var(--gold))]'}`} />
+        </button>
         {!isTrustNetwork && (
         <div className="absolute right-4 top-4 z-10 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider delayDuration={200}>
