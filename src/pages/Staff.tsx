@@ -99,6 +99,7 @@ import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { MusicStudio } from "@/components/staff/MusicStudio";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
+import { UsageSection } from "@/components/staff/UsageSection";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { StaffMusicPlayer } from "@/components/staff/StaffMusicPlayer";
@@ -149,6 +150,7 @@ import {
   UtensilsCrossed,
   LayoutGrid,
   Monitor,
+  BarChart3,
 } from "lucide-react";
 
 const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
@@ -177,7 +179,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -990,6 +992,7 @@ const Staff = () => {
             { id: 'activitylog', title: 'Activity Log', icon: ClipboardList },
             { id: 'dataexport', title: 'Data Export', icon: Download },
             { id: 'datasetbuilder', title: 'Dataset Builder', icon: Film },
+            { id: 'usage', title: 'Usage', icon: BarChart3 },
           ] : []),
           { id: '_group_system', title: 'System', isGroupLabel: true },
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
@@ -1746,6 +1749,7 @@ const Staff = () => {
                   {expandedSection === 'nutrition' && <NutritionSection />}
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
                   {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
+                  {expandedSection === 'usage' && isAdmin && <UsageSection />}
                 </CardContent>
               </Card>
             </div>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Search, Maximize } from "lucide-react";
+import { X, Search, Maximize, ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface ScoreEditModeProps {
   analysisId: string;
@@ -64,17 +64,23 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
 
+  const handleUpdateReport = useCallback(() => {
+    onSave?.();
+    toast.success("Report updated");
+  }, [onSave]);
+
   // Auto-advance when all 4 on screen are scored
   useEffect(() => {
     if (pageActions.length > 0 && pageActions.every(a => a.action_score && a.action_score !== "")) {
       const timer = setTimeout(() => {
         if (pageIndex < totalPages - 1) {
           setPageIndex(p => p + 1);
+          handleUpdateReport();
         }
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [pageActions, pageIndex, totalPages]);
+  }, [pageActions, pageIndex, totalPages, handleUpdateReport]);
 
   const handleScoreChange = useCallback(async (actionId: string, score: string) => {
     setActions(prev => prev.map(a => a.id === actionId ? { ...a, action_score: score } : a));
@@ -130,30 +136,27 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     return "bg-green-700";
   };
 
-  // Position helpers for the 2x2 grid:
-  // Action labels go to FAR corners, score inputs go to INNER corners (near centre)
   const getActionLabelPosition = (i: number) => {
     switch (i) {
-      case 0: return "top-2 left-2";     // top-left video → label in top-left corner
-      case 1: return "top-2 right-2";    // top-right video → label in top-right corner
-      case 2: return "bottom-2 left-2";  // bottom-left video → label in bottom-left corner
-      case 3: return "bottom-2 right-2"; // bottom-right video → label in bottom-right corner
+      case 0: return "top-2 left-2";
+      case 1: return "top-2 right-2";
+      case 2: return "bottom-2 left-2";
+      case 3: return "bottom-2 right-2";
       default: return "top-2 left-2";
     }
   };
 
   const getScoreInputPosition = (i: number) => {
     switch (i) {
-      case 0: return "bottom-2 right-2"; // top-left video → input in bottom-right (inner corner)
-      case 1: return "bottom-2 left-2";  // top-right video → input in bottom-left (inner corner)
-      case 2: return "top-2 right-2";    // bottom-left video → input in top-right (inner corner)
-      case 3: return "top-2 left-2";     // bottom-right video → input in top-left (inner corner)
-      default: return "bottom-2 right-2";
+      case 0: return "bottom-8 right-8";
+      case 1: return "bottom-8 left-8";
+      case 2: return "top-8 right-8";
+      case 3: return "top-8 left-8";
+      default: return "bottom-8 right-8";
     }
   };
 
   const getFullscreenPosition = (i: number) => {
-    // Fullscreen button goes in the remaining free corner
     switch (i) {
       case 0: return "top-2 right-2";
       case 1: return "top-2 left-2";
@@ -172,26 +175,35 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Progress bar at top centre */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
-        <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: `${completionPct}%`,
-              backgroundColor: completionPct < 30 ? '#ef4444' : completionPct < 70 ? '#f59e0b' : '#22c55e',
-            }}
-          />
+    <div className="fixed inset-0 z-50 bg-black">
+      {/* Top bar: progress + update report */}
+      <div className="absolute top-3 left-0 right-0 z-30 flex items-center justify-between px-4">
+        <div />
+        <div className="flex items-center gap-2">
+          <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${completionPct}%`,
+                backgroundColor: completionPct < 30 ? '#ef4444' : completionPct < 70 ? '#f59e0b' : '#22c55e',
+              }}
+            />
+          </div>
+          <span className="text-white text-xs font-medium">{completionPct}%</span>
+          <span className="text-white/40 text-[10px]">Page {pageIndex + 1}/{totalPages}</span>
         </div>
-        <span className="text-white text-xs font-medium">{completionPct}%</span>
-        <span className="text-white/40 text-[10px] ml-1">Page {pageIndex + 1}/{totalPages}</span>
+        <button
+          onClick={handleUpdateReport}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors"
+        >
+          <Save className="w-3 h-3" /> Update Report
+        </button>
       </div>
 
-      {/* 2x2 Grid of videos — fills entire screen */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px min-h-0 relative">
+      {/* 2x2 Grid — fills entire screen */}
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px">
         {pageActions.map((action, i) => (
-          <div key={action.id} className="relative flex flex-col bg-black overflow-hidden">
+          <div key={action.id} className="relative bg-black overflow-hidden">
             <video
               ref={el => { videoRefs.current[i] = el; }}
               src={action.video_url}
@@ -199,7 +211,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               loop
               muted
               playsInline
-              className="flex-1 w-full object-contain min-h-0"
+              className="absolute inset-0 w-full h-full object-contain"
             />
 
             {/* Action label — far corner */}
@@ -209,7 +221,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               </span>
             </div>
 
-            {/* Score input — inner corner (closest to centre) */}
+            {/* Score input — inner corner */}
             <div className={`absolute ${getScoreInputPosition(i)} z-10 flex flex-col items-center gap-1`}>
               <Input
                 value={action.action_score || ""}
@@ -220,7 +232,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               />
             </div>
 
-            {/* Fullscreen button — remaining free corner */}
+            {/* Fullscreen button */}
             <button
               onClick={() => handleFullscreen(i)}
               className={`absolute ${getFullscreenPosition(i)} z-10 p-1 bg-black/50 rounded hover:bg-black/80 transition-colors`}
@@ -230,22 +242,22 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           </div>
         ))}
 
-        {/* Central R90 search */}
+        {/* Central R90 search — wider */}
         <div
           ref={searchRef}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-72"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[420px] max-w-[90vw]"
         >
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
             <Input
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search R90 scores..."
-              className="pl-8 h-9 text-sm bg-black/90 border-white/20 text-white placeholder:text-white/40 shadow-lg shadow-black/50"
+              className="pl-9 h-10 text-sm bg-black/90 border-white/20 text-white placeholder:text-white/40 shadow-lg shadow-black/50"
             />
           </div>
           {searchResults.length > 0 && (
-            <div className="mt-1 max-h-48 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl">
+            <div className="mt-1 max-h-56 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl">
               {searchResults.map((s) => (
                 <button
                   key={s.id}
@@ -256,13 +268,13 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                     setSearchQuery("");
                     setSearchResults([]);
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-white/10 flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-white/10 flex items-center gap-3"
                 >
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${getScoreColor(s.score)}`}>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white shrink-0 ${getScoreColor(s.score)}`}>
                     {s.score}
                   </span>
-                  <span className="truncate">{s.title}</span>
-                  <span className="text-white/40 ml-auto text-[10px]">{s.category}</span>
+                  <span className="flex-1">{s.title}</span>
+                  <span className="text-white/40 text-[10px] shrink-0">{s.category}</span>
                 </button>
               ))}
             </div>
@@ -270,16 +282,32 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
         </div>
       </div>
 
+      {/* Navigation arrows — left and right edges */}
+      {pageIndex > 0 && (
+        <button
+          onClick={() => setPageIndex(p => p - 1)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </button>
+      )}
+      {pageIndex < totalPages - 1 && (
+        <button
+          onClick={() => setPageIndex(p => p + 1)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
+        >
+          <ChevronRight className="w-5 h-5 text-white" />
+        </button>
+      )}
+
       {/* Close button — bottom centre */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
-        <Button
-          size="sm"
-          variant="outline"
+        <button
           onClick={() => { onSave?.(); onClose(); }}
-          className="bg-black/80 border-white/20 text-white hover:bg-white/10 gap-1.5"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-black/80 border border-white/20 text-white text-xs hover:bg-white/10 transition-colors"
         >
           <X className="h-3.5 w-3.5" /> Close
-        </Button>
+        </button>
       </div>
     </div>
   );
