@@ -82,7 +82,7 @@ export const DatasetBuilder = () => {
     fetchFrames();
   }, [fetchClips, fetchFrames]);
 
-  const actionTypes = [...new Set(clips.map((c) => c.action_type))].sort();
+  const actionTypes = [...new Set(clips.map((c) => c.action_type))].filter(t => t && t.trim() !== "").sort();
 
   const filteredClips = clips.filter((c) => {
     if (actionFilter !== "all" && c.action_type !== actionFilter) return false;

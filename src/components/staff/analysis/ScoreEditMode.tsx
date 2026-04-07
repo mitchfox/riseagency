@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { X, Search, Maximize, ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { X, Search, Maximize, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface ScoreEditModeProps {
@@ -146,39 +146,29 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     }
   };
 
+  // Score input in inner corners — pushed further from centre
   const getScoreInputPosition = (i: number) => {
     switch (i) {
-      case 0: return "bottom-8 right-8";
-      case 1: return "bottom-8 left-8";
-      case 2: return "top-8 right-8";
-      case 3: return "top-8 left-8";
-      default: return "bottom-8 right-8";
-    }
-  };
-
-  const getFullscreenPosition = (i: number) => {
-    switch (i) {
-      case 0: return "top-2 right-2";
-      case 1: return "top-2 left-2";
-      case 2: return "bottom-2 right-2";
-      case 3: return "bottom-2 left-2";
-      default: return "top-2 right-2";
+      case 0: return "bottom-3 right-3";
+      case 1: return "bottom-3 left-3";
+      case 2: return "top-3 right-3";
+      case 3: return "top-3 left-3";
+      default: return "bottom-3 right-3";
     }
   };
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 z-[250] bg-black flex items-center justify-center">
         <div className="text-white">Loading actions...</div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      {/* Top bar: progress + update report */}
-      <div className="absolute top-3 left-0 right-0 z-30 flex items-center justify-between px-4">
-        <div />
+    <div className="fixed inset-0 z-[250] bg-black">
+      {/* Top bar: progress + update report (U button) */}
+      <div className="absolute top-3 left-0 right-0 z-30 flex items-center justify-center gap-3 px-4">
         <div className="flex items-center gap-2">
           <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
             <div
@@ -192,12 +182,6 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           <span className="text-white text-xs font-medium">{completionPct}%</span>
           <span className="text-white/40 text-[10px]">Page {pageIndex + 1}/{totalPages}</span>
         </div>
-        <button
-          onClick={handleUpdateReport}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors"
-        >
-          <Save className="w-3 h-3" /> Update Report
-        </button>
       </div>
 
       {/* 2x2 Grid — fills entire screen */}
@@ -221,8 +205,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               </span>
             </div>
 
-            {/* Score input — inner corner */}
-            <div className={`absolute ${getScoreInputPosition(i)} z-10 flex flex-col items-center gap-1`}>
+            {/* Score input + fullscreen button together in inner corner */}
+            <div className={`absolute ${getScoreInputPosition(i)} z-10 flex items-center gap-1`}>
               <Input
                 value={action.action_score || ""}
                 onChange={(e) => handleScoreChange(action.id, e.target.value)}
@@ -230,31 +214,39 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 placeholder="—"
                 className="w-14 h-7 text-xs text-center bg-black/70 border-white/20 text-white"
               />
+              <button
+                onClick={() => handleFullscreen(i)}
+                className="p-1 bg-black/50 rounded hover:bg-black/80 transition-colors"
+              >
+                <Maximize className="w-3.5 h-3.5 text-white/60" />
+              </button>
             </div>
-
-            {/* Fullscreen button */}
-            <button
-              onClick={() => handleFullscreen(i)}
-              className={`absolute ${getFullscreenPosition(i)} z-10 p-1 bg-black/50 rounded hover:bg-black/80 transition-colors`}
-            >
-              <Maximize className="w-3 h-3 text-white/60" />
-            </button>
           </div>
         ))}
 
-        {/* Central R90 search — wider */}
+        {/* Central R90 search + tiny gold U button */}
         <div
           ref={searchRef}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[420px] max-w-[90vw]"
         >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search R90 scores..."
-              className="pl-9 h-10 text-sm bg-black/90 border-white/20 text-white placeholder:text-white/40 shadow-lg shadow-black/50"
-            />
+          <div className="relative flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search R90 scores..."
+                className="pl-9 h-10 text-sm bg-black/90 border-white/20 text-white placeholder:text-white/40 shadow-lg shadow-black/50"
+              />
+            </div>
+            <button
+              onClick={handleUpdateReport}
+              className="w-8 h-8 shrink-0 rounded flex items-center justify-center text-xs font-bold transition-colors"
+              style={{ backgroundColor: 'hsl(var(--gold, 43 74% 49%))', color: '#000' }}
+              title="Update Report"
+            >
+              U
+            </button>
           </div>
           {searchResults.length > 0 && (
             <div className="mt-1 max-h-56 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl">
@@ -273,7 +265,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white shrink-0 ${getScoreColor(s.score)}`}>
                     {s.score}
                   </span>
-                  <span className="flex-1">{s.title}</span>
+                  <span className="flex-1 truncate">{s.title}</span>
                   <span className="text-white/40 text-[10px] shrink-0">{s.category}</span>
                 </button>
               ))}
