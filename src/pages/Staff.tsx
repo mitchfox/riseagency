@@ -36,6 +36,8 @@ import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
+import { StaffAccountabilityOverview } from "@/components/staff/StaffAccountabilityOverview";
+import { InteractionHistory } from "@/components/staff/InteractionHistory";
 // GoalsTasksManagement removed - replaced by VisionBoardSection
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
