@@ -713,11 +713,14 @@ export const TacticsBoard = () => {
         {/* Board */}
         <div
           ref={containerRef}
-          className="relative border-2 border-border rounded-lg overflow-hidden bg-[#1a1a1a]"
+          className="relative border-2 border-border rounded-lg overflow-hidden bg-[#1a1a1a] touch-none"
           style={{ cursor: activeTool === "draw" ? "crosshair" : activeTool === "erase" ? "not-allowed" : "default" }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
         >
           <canvas
             ref={canvasRef}
@@ -725,6 +728,7 @@ export const TacticsBoard = () => {
             height={500}
             className="w-full h-auto"
             onMouseDown={handleCanvasMouseDown}
+            onTouchStart={handleCanvasMouseDown}
           />
           
           {/* Overlaid items */}
@@ -737,13 +741,14 @@ export const TacticsBoard = () => {
               )}
               style={{ left: item.x - 16, top: item.y - 16 }}
               onMouseDown={(e) => handleItemMouseDown(e, item.id)}
+              onTouchStart={(e) => handleItemMouseDown(e, item.id)}
             >
               {item.type === "football" && <span className="text-3xl">⚽</span>}
               {item.type === "x" && (
-                <span className="text-3xl font-bold text-red-500">X</span>
+                <span className="text-3xl font-bold text-destructive">X</span>
               )}
               {item.type === "o" && (
-                <div className="w-8 h-8 rounded-full border-4 border-blue-500" />
+                <div className="w-8 h-8 rounded-full border-4 border-primary" />
               )}
             </div>
           ))}
