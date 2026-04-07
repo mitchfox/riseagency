@@ -1748,6 +1748,7 @@ const Staff = () => {
                   {expandedSection === 'nutrition' && <NutritionSection />}
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
                   {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
+                  {expandedSection === 'usage' && isAdmin && <UsageSection />}
                 </CardContent>
               </Card>
             </div>
