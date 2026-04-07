@@ -152,9 +152,10 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
       audioRef.current.preload = "auto";
     }
 
-    // Small delay to let portal render, then autoplay
+    // Start on a random track (shuffle mode)
     const timer = setTimeout(() => {
-      playTrack(0);
+      const startIndex = Math.floor(Math.random() * validTracks.length);
+      playTrack(startIndex);
     }, 1500);
 
     return () => clearTimeout(timer);
