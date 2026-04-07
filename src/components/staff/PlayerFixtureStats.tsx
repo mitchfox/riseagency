@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Save, Loader2 } from "lucide-react";
-import { METRIC_CATEGORIES, ALL_METRICS } from "./ComparisonPlayerData";
+import { METRIC_CATEGORIES, ALL_METRICS, getMetricCategoriesForPosition, getMetricsForPosition } from "./ComparisonPlayerData";
 
 interface FixtureAnalysis {
   id: string;
