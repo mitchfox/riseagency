@@ -24,7 +24,7 @@ interface Props {
   playerPosition?: string;
 }
 
-export const PlayerFixtureStats = ({ playerId, playerName }: Props) => {
+export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Props) => {
   const [analyses, setAnalyses] = useState<FixtureAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
