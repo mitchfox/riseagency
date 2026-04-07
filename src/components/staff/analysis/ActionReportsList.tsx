@@ -478,8 +478,13 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         <ScoreEditMode
           analysisId={scoreEditReport.id}
           playerName={scoreEditReport.player_name || "Unknown"}
-          onClose={() => setScoreEditReport(null)}
-          onSave={() => fetchReports()}
+          onClose={() => {
+            setScoreEditReport(null);
+            fetchReports();
+          }}
+          onSave={() => {
+            fetchReports();
+          }}
         />
       )}
     </div>

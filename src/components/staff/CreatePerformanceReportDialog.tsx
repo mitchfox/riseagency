@@ -2145,8 +2145,13 @@ export const CreatePerformanceReportDialog = ({
             <ScoreEditMode
               analysisId={analysisId}
               playerName={playerName}
-              onClose={() => setScoreEditOpen(false)}
-              onSave={() => fetchExistingData()}
+              onClose={() => {
+                setScoreEditOpen(false);
+                fetchExistingData();
+              }}
+              onSave={() => {
+                fetchExistingData();
+              }}
             />
           )}
 
