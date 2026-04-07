@@ -171,6 +171,7 @@ const App = () => {
                       {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
                       {createLocalizedRoutes('/club-direction', <ClubDirection />)}
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />
+                      <Route path="/transfer-report/:slug" element={<TransferReportView />} />
                       <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                       <Route path="/import-program" element={<ImportProgramCSV />} />
                       <Route path="/replace-program" element={<ReplaceProgram />} />
