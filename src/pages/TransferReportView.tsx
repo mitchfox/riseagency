@@ -11,7 +11,7 @@ import blackMarbleBg from "@/assets/black-marble-menu.png";
 const GRADE_COLORS: Record<string, string> = {
   'U': '#4d1a1a', 'D': '#b91c1c', 'C-': '#ef4444', 'C': '#c2410c', 'C+': '#eab308',
   'B-': '#a3e635', 'B': '#22c55e', 'B+': '#16a34a', 'A-': '#15803d',
-  'A': '#059669', 'A+': '#10b981', 'A*': '#d4af37',
+  'A': '#059669', 'A+': '#10b981', 'A*': '#C6A332',
 };
 
 const getR90Color = (score: number) => {
@@ -209,8 +209,8 @@ const TransferReportView = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-2 border-[#d4af37]/30 border-t-[#d4af37] rounded-full animate-spin" />
-          <p className="text-[#d4af37]/60 font-bebas uppercase tracking-widest text-sm">Loading Report</p>
+          <div className="w-16 h-16 border-2 border-[#C6A332]/30 border-t-[#C6A332] rounded-full animate-spin" />
+          <p className="text-[#C6A332]/60 font-bebas uppercase tracking-widest text-sm">Loading Report</p>
         </div>
       </div>
     );
@@ -220,7 +220,7 @@ const TransferReportView = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-center">
-          <h1 className="text-3xl font-bebas text-[#d4af37] mb-2">Report Unavailable</h1>
+          <h1 className="text-3xl font-bebas text-[#C6A332] mb-2">Report Unavailable</h1>
           <p className="text-white/60">{error || 'This report does not exist.'}</p>
         </div>
       </div>
@@ -242,9 +242,9 @@ const TransferReportView = () => {
             <SectionHeading title="In Numbers" />
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
               {player.topStats.map((stat: any, index: number) => (
-                <div key={index} className="relative overflow-hidden rounded-xl border border-[#d4af37]/20 p-5 transition-all hover:border-[#d4af37]/50" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(10,10,10,0.9) 100%)' }}>
+                <div key={index} className="relative overflow-hidden rounded-xl border border-[#C6A332]/20 p-5 transition-all hover:border-[#C6A332]/50" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(10,10,10,0.9) 100%)' }}>
                   <div className="text-center">
-                    <div className="text-4xl md:text-5xl font-bebas text-[#d4af37] mb-1 leading-none">{stat.value}</div>
+                    <div className="text-4xl md:text-5xl font-bebas text-[#C6A332] mb-1 leading-none">{stat.value}</div>
                     <div className="text-[10px] text-white/50 uppercase tracking-[0.15em] font-bold">{stat.label}</div>
                   </div>
                 </div>
@@ -258,7 +258,7 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Highlights" />
-            <div className="rounded-xl border border-[#d4af37]/20 overflow-hidden bg-black">
+            <div className="rounded-xl border border-[#C6A332]/20 overflow-hidden bg-black">
               {highlights[currentVideoIndex]?.videoUrl ? (
                 <video
                   key={highlights[currentVideoIndex].videoUrl}
@@ -275,7 +275,7 @@ const TransferReportView = () => {
                   {highlights.map((h, i) => (
                     <button key={i} onClick={() => setCurrentVideoIndex(i)}
                       className={`flex-shrink-0 px-3 py-1 rounded text-xs font-bebas uppercase tracking-wider transition-all ${
-                        i === currentVideoIndex ? 'bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/40' : 'text-white/50 hover:text-white/80'
+                        i === currentVideoIndex ? 'bg-[#C6A332]/20 text-[#C6A332] border border-[#C6A332]/40' : 'text-white/50 hover:text-white/80'
                       }`}>
                       {h.name || `Clip ${i + 1}`}
                     </button>
@@ -293,12 +293,12 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Biography & Profile" />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(20,20,20,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(20,20,20,0.8)' }}>
               <p className="text-white/70 leading-relaxed whitespace-pre-line text-sm">
                 {isExpanded ? player.bioText : shortBio}
               </p>
               {player.bioText.length > 300 && (
-                <button onClick={() => toggleExpand('biography')} className="mt-3 text-[#d4af37] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#d4af37]/80">
+                <button onClick={() => toggleExpand('biography')} className="mt-3 text-[#C6A332] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#C6A332]/80">
                   {isExpanded ? <><ChevronUp className="h-3 w-3" /> Show less</> : <><ChevronDown className="h-3 w-3" /> Read more</>}
                 </button>
               )}
@@ -314,8 +314,8 @@ const TransferReportView = () => {
             <SectionHeading title="Season Statistics" />
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
               {player.seasonStats.map((stat: any, idx: number) => (
-                <div key={idx} className="rounded-xl border border-[#d4af37]/20 p-5 text-center" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(10,10,10,0.9) 100%)' }}>
-                  <div className="text-4xl md:text-5xl font-bebas text-[#d4af37] mb-1 leading-none">{stat.value || "0"}</div>
+                <div key={idx} className="rounded-xl border border-[#C6A332]/20 p-5 text-center" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(10,10,10,0.9) 100%)' }}>
+                  <div className="text-4xl md:text-5xl font-bebas text-[#C6A332] mb-1 leading-none">{stat.value || "0"}</div>
                   <div className="text-[10px] text-white/50 uppercase tracking-[0.15em] font-bold">{stat.header}</div>
                 </div>
               ))}
@@ -328,8 +328,8 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Data Graphics & Visualisations" icon={<TrendingUp className="h-5 w-5" />} />
-            <div className="rounded-xl border border-[#d4af37]/15 overflow-hidden" style={{ background: 'rgba(15,15,15,0.9)' }}>
-              <div className="p-4 border-b border-[#d4af37]/10">
+            <div className="rounded-xl border border-[#C6A332]/15 overflow-hidden" style={{ background: 'rgba(15,15,15,0.9)' }}>
+              <div className="p-4 border-b border-[#C6A332]/10">
                 <p className="text-xs text-white/40 uppercase tracking-wider font-bebas">
                   <Award className="h-3 w-3 inline mr-1" />
                   Metrics where {player?.name?.split(' ').pop()} outperforms the positional average
@@ -344,12 +344,12 @@ const TransferReportView = () => {
                     <div key={idx}>
                       <div className="flex items-center justify-between text-xs mb-1.5">
                         <span className="text-white/70 uppercase tracking-wider font-bebas text-sm">{stat.label}</span>
-                        <span className="text-[#d4af37] font-bold text-sm">+{stat.pctAbove.toFixed(0)}%</span>
+                        <span className="text-[#C6A332] font-bold text-sm">+{stat.pctAbove.toFixed(0)}%</span>
                       </div>
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[9px] text-[#d4af37] w-14 text-right font-bold">{stat.playerValue.toFixed(2)}</span>
+                        <span className="text-[9px] text-[#C6A332] w-14 text-right font-bold">{stat.playerValue.toFixed(2)}</span>
                         <div className="flex-1 h-4 bg-white/5 rounded overflow-hidden">
-                          <div className="h-full rounded bg-gradient-to-r from-[#d4af37]/70 to-[#d4af37] transition-all" style={{ width: `${playerPct}%` }} />
+                          <div className="h-full rounded bg-gradient-to-r from-[#C6A332]/70 to-[#C6A332] transition-all" style={{ width: `${playerPct}%` }} />
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ const TransferReportView = () => {
               </div>
               <div className="px-4 pb-3">
                 <p className="text-[9px] text-white/25">
-                  <span className="inline-block w-3 h-1.5 bg-[#d4af37] rounded mr-1" /> {player?.name}
+                  <span className="inline-block w-3 h-1.5 bg-[#C6A332] rounded mr-1" /> {player?.name}
                   <span className="inline-block w-3 h-1.5 bg-white/20 rounded ml-3 mr-1" /> Positional average ({comparisonPlayers.length} players)
                 </p>
               </div>
@@ -384,7 +384,7 @@ const TransferReportView = () => {
                 const r90Val = rpt.r90_score ?? rpt.r90_average;
                 const r90Grade = r90Val != null ? getFormGrade('r90_score', r90Val) : null;
                 return (
-                  <div key={rpt.id} className="rounded-lg border border-[#d4af37]/10 p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)' }}>
+                  <div key={rpt.id} className="rounded-lg border border-[#C6A332]/10 p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)' }}>
                     <div>
                       <p className="font-bebas uppercase text-sm text-white tracking-wider">{rpt.opponent || 'Match'}</p>
                       <p className="text-[10px] text-white/40">{rpt.analysis_date ? new Date(rpt.analysis_date).toLocaleDateString('en-GB') : ''}</p>
@@ -407,7 +407,7 @@ const TransferReportView = () => {
               })}
             </div>
             {performanceReports.length > 6 && (
-              <button onClick={() => toggleExpand('form_chart')} className="mt-3 text-[#d4af37] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 mx-auto hover:text-[#d4af37]/80">
+              <button onClick={() => toggleExpand('form_chart')} className="mt-3 text-[#C6A332] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 mx-auto hover:text-[#C6A332]/80">
                 {isExpanded ? <><ChevronUp className="h-3 w-3" /> Show less</> : <><ChevronDown className="h-3 w-3" /> Show all {performanceReports.length} matches</>}
               </button>
             )}
@@ -426,16 +426,16 @@ const TransferReportView = () => {
                 const catMetrics = cat.metrics.filter(m => playerAverages[m.key] != null);
                 if (catMetrics.length === 0) return null;
                 return (
-                  <div key={cat.category} className="rounded-lg border border-[#d4af37]/10 overflow-hidden" style={{ background: 'rgba(15,15,15,0.8)' }}>
-                    <div className="px-4 py-2 border-b border-[#d4af37]/10">
-                      <h4 className="text-sm font-bebas uppercase tracking-wider text-[#d4af37]/70">{cat.category}</h4>
+                  <div key={cat.category} className="rounded-lg border border-[#C6A332]/10 overflow-hidden" style={{ background: 'rgba(15,15,15,0.8)' }}>
+                    <div className="px-4 py-2 border-b border-[#C6A332]/10">
+                      <h4 className="text-sm font-bebas uppercase tracking-wider text-[#C6A332]/70">{cat.category}</h4>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-white/5">
                             <th className="text-left p-2 text-white/40 font-normal">Metric</th>
-                            <th className="text-center p-2 text-[#d4af37] font-bold">{player?.name?.split(' ').pop()}</th>
+                            <th className="text-center p-2 text-[#C6A332] font-bold">{player?.name?.split(' ').pop()}</th>
                             {configuredCompPlayers.map(cp => (
                               <th key={cp.id} className="text-center p-2 text-white/50 font-normal">{cp.name?.split(' ').pop()}</th>
                             ))}
@@ -449,7 +449,7 @@ const TransferReportView = () => {
                             return (
                               <tr key={m.key} className="border-b border-white/5">
                                 <td className="p-2 text-white/60">{m.label}</td>
-                                <td className={`p-2 text-center font-bold ${pVal === maxVal ? 'text-[#d4af37]' : 'text-white/80'}`}>
+                                <td className={`p-2 text-center font-bold ${pVal === maxVal ? 'text-[#C6A332]' : 'text-white/80'}`}>
                                   {pVal?.toFixed(2) ?? '-'}
                                 </td>
                                 {configuredCompPlayers.map(cp => {
@@ -482,7 +482,7 @@ const TransferReportView = () => {
             <SectionHeading title="Tactical History" />
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {schemes.map((scheme: any, idx: number) => (
-                <div key={scheme.id || idx} className="rounded-xl border border-[#d4af37]/15 p-4 transition-all hover:border-[#d4af37]/30" style={{ background: 'rgba(15,15,15,0.8)' }}>
+                <div key={scheme.id || idx} className="rounded-xl border border-[#C6A332]/15 p-4 transition-all hover:border-[#C6A332]/30" style={{ background: 'rgba(15,15,15,0.8)' }}>
                   <div className="flex items-center gap-3 mb-3">
                     {(scheme.home_team_logo || scheme.clubLogo) && (
                       <img src={scheme.home_team_logo || scheme.clubLogo} alt="" className="w-8 h-8 object-contain" />
@@ -512,11 +512,11 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Strengths & Play Style" />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
               {Array.isArray(player.strengthsAndPlayStyle) ? (
                 <div className="flex flex-wrap gap-2">
                   {player.strengthsAndPlayStyle.map((s: string, i: number) => (
-                    <span key={i} className="px-3 py-1.5 rounded-md border border-[#d4af37]/20 bg-[#d4af37]/5 text-sm text-white/70 font-medium">{s}</span>
+                    <span key={i} className="px-3 py-1.5 rounded-md border border-[#C6A332]/20 bg-[#C6A332]/5 text-sm text-white/70 font-medium">{s}</span>
                   ))}
                 </div>
               ) : (
@@ -534,20 +534,20 @@ const TransferReportView = () => {
             <div className="space-y-3">
               {activeVideoReport ? (
                 <div>
-                  <div className="rounded-xl border border-[#d4af37]/20 overflow-hidden bg-black mb-3">
+                  <div className="rounded-xl border border-[#C6A332]/20 overflow-hidden bg-black mb-3">
                     <video src={activeVideoReport.video_url} className="w-full aspect-video object-contain" controls playsInline autoPlay />
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bebas uppercase tracking-wider text-white">{activeVideoReport.title}</p>
-                    <button onClick={() => setActiveVideoReport(null)} className="text-xs text-[#d4af37] hover:underline">Back to list</button>
+                    <button onClick={() => setActiveVideoReport(null)} className="text-xs text-[#C6A332] hover:underline">Back to list</button>
                   </div>
                 </div>
               ) : (
                 <div className="grid gap-2">
                   {videoReports.map((vr: any) => (
                     <button key={vr.id} onClick={() => setActiveVideoReport(vr)}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-[#d4af37]/10 hover:border-[#d4af37]/30 transition-colors text-left w-full" style={{ background: 'rgba(15,15,15,0.8)' }}>
-                      <Play className="h-5 w-5 text-[#d4af37] shrink-0" />
+                      className="flex items-center gap-3 p-3 rounded-lg border border-[#C6A332]/10 hover:border-[#C6A332]/30 transition-colors text-left w-full" style={{ background: 'rgba(15,15,15,0.8)' }}>
+                      <Play className="h-5 w-5 text-[#C6A332] shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bebas uppercase tracking-wider text-white truncate">{vr.title}</p>
                         <p className="text-[10px] text-white/40">{vr.analysis_type} · {new Date(vr.created_at).toLocaleDateString('en-GB')}</p>
@@ -567,7 +567,7 @@ const TransferReportView = () => {
             <SectionHeading title="Graphics & Images" />
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {galleryImages.map((img: any) => (
-                <div key={img.id} className="rounded-lg overflow-hidden border border-[#d4af37]/10 aspect-square">
+                <div key={img.id} className="rounded-lg overflow-hidden border border-[#C6A332]/10 aspect-square">
                   <img src={img.file_url || img.thumbnail_url} alt={img.title} className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -582,12 +582,12 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Scouting Notes" />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
               <p className="text-white/70 whitespace-pre-wrap leading-relaxed text-sm">
                 {isExpanded ? report.custom_notes : shortNotes}
               </p>
               {report.custom_notes.length > 300 && (
-                <button onClick={() => toggleExpand('scouting_notes')} className="mt-3 text-[#d4af37] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#d4af37]/80">
+                <button onClick={() => toggleExpand('scouting_notes')} className="mt-3 text-[#C6A332] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#C6A332]/80">
                   {isExpanded ? <><ChevronUp className="h-3 w-3" /> Show less</> : <><ChevronDown className="h-3 w-3" /> Read more</>}
                 </button>
               )}
@@ -603,7 +603,7 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Contract Information" icon={<FileText className="h-5 w-5" />} />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {contract.current_club && (
                   <div>
@@ -654,29 +654,29 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Physical Profile" icon={<Dumbbell className="h-5 w-5" />} />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {physical.height && (
-                  <div className="text-center rounded-lg border border-[#d4af37]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
-                    <div className="text-2xl font-bebas text-[#d4af37]">{physical.height}</div>
+                  <div className="text-center rounded-lg border border-[#C6A332]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
+                    <div className="text-2xl font-bebas text-[#C6A332]">{physical.height}</div>
                     <div className="text-[10px] text-white/40 uppercase tracking-wider">Height</div>
                   </div>
                 )}
                 {physical.weight && (
-                  <div className="text-center rounded-lg border border-[#d4af37]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
-                    <div className="text-2xl font-bebas text-[#d4af37]">{physical.weight}</div>
+                  <div className="text-center rounded-lg border border-[#C6A332]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
+                    <div className="text-2xl font-bebas text-[#C6A332]">{physical.weight}</div>
                     <div className="text-[10px] text-white/40 uppercase tracking-wider">Weight</div>
                   </div>
                 )}
                 {physical.preferred_foot && (
-                  <div className="text-center rounded-lg border border-[#d4af37]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
-                    <div className="text-2xl font-bebas text-[#d4af37]">{physical.preferred_foot}</div>
+                  <div className="text-center rounded-lg border border-[#C6A332]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
+                    <div className="text-2xl font-bebas text-[#C6A332]">{physical.preferred_foot}</div>
                     <div className="text-[10px] text-white/40 uppercase tracking-wider">Preferred Foot</div>
                   </div>
                 )}
                 {physical.fitness_level && (
-                  <div className="text-center rounded-lg border border-[#d4af37]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
-                    <div className="text-2xl font-bebas text-[#d4af37]">{physical.fitness_level}</div>
+                  <div className="text-center rounded-lg border border-[#C6A332]/10 p-4" style={{ background: 'rgba(212,175,55,0.04)' }}>
+                    <div className="text-2xl font-bebas text-[#C6A332]">{physical.fitness_level}</div>
                     <div className="text-[10px] text-white/40 uppercase tracking-wider">Fitness</div>
                   </div>
                 )}
@@ -692,7 +692,7 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Agent Notes" icon={<User className="h-5 w-5" />} />
-            <div className="rounded-lg border border-[#d4af37]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
+            <div className="rounded-lg border border-[#C6A332]/10 p-5" style={{ background: 'rgba(15,15,15,0.8)' }}>
               <p className="text-white/70 whitespace-pre-wrap leading-relaxed text-sm">{notes}</p>
             </div>
           </section>
@@ -712,20 +712,20 @@ const TransferReportView = () => {
       />
       <div className="min-h-screen bg-[#0a0a0a]">
         {/* Hero Header with marble accent */}
-        <div className="relative overflow-hidden border-b border-[#d4af37]/20">
+        <div className="relative overflow-hidden border-b border-[#C6A332]/20">
           <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `url(${blackMarbleBg})`, backgroundSize: 'cover' }} />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent" />
           <div className="container mx-auto px-4 py-10 max-w-5xl relative z-10">
             <div className="flex items-center gap-8">
               {player?.image_url && (
                 <div className="relative flex-shrink-0">
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-[#d4af37]">
+                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden border-2 border-[#C6A332]">
                     <img src={player.image_url} alt={player?.name} className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-[#d4af37]/50 font-bebas uppercase tracking-[0.3em] text-sm mb-1">Transfer Report</p>
+                <p className="text-[#C6A332]/50 font-bebas uppercase tracking-[0.3em] text-sm mb-1">Transfer Report</p>
                 <h1 className="text-4xl md:text-5xl font-bebas uppercase tracking-wide text-white leading-none mb-3">{player?.name}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-white/60">
                   {player?.position && <span className="font-bebas uppercase tracking-wider text-lg">{player.position}</span>}
@@ -754,11 +754,11 @@ const TransferReportView = () => {
 
         {/* Exclusive Representation Banner */}
         {isExclusive && (
-          <div className="border-b border-[#d4af37]/20" style={{ background: 'linear-gradient(90deg, rgba(212,175,55,0.12) 0%, rgba(10,10,10,0.95) 50%, rgba(212,175,55,0.12) 100%)' }}>
+          <div className="border-b border-[#C6A332]/20" style={{ background: 'linear-gradient(90deg, rgba(212,175,55,0.12) 0%, rgba(10,10,10,0.95) 50%, rgba(212,175,55,0.12) 100%)' }}>
             <div className="container mx-auto px-4 max-w-5xl py-3 text-center">
               <div className="flex items-center justify-center gap-2">
-                <Shield className="h-4 w-4 text-[#d4af37]" />
-                <span className="text-xs font-bebas uppercase tracking-[0.25em] text-[#d4af37]">Exclusive Representation by RISE Football Agency</span>
+                <Shield className="h-4 w-4 text-[#C6A332]" />
+                <span className="text-xs font-bebas uppercase tracking-[0.25em] text-[#C6A332]">Exclusive Representation by RISE Football Agency</span>
               </div>
             </div>
           </div>
@@ -771,7 +771,7 @@ const TransferReportView = () => {
             .map((id: string) => renderSection(id))}
 
           {/* Footer with marble accent */}
-          <div className="relative text-center py-10 border-t border-[#d4af37]/10 overflow-hidden">
+          <div className="relative text-center py-10 border-t border-[#C6A332]/10 overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url(${blackMarbleBg})`, backgroundSize: 'cover' }} />
             <div className="relative z-10">
               <p className="text-[10px] text-white/25 font-bebas uppercase tracking-[0.3em]">Prepared by RISE Football Agency</p>
@@ -785,11 +785,11 @@ const TransferReportView = () => {
 };
 
 const SectionHeading = ({ title, icon }: { title: string; icon?: React.ReactNode }) => (
-  <h2 className="text-2xl font-bebas text-[#d4af37] uppercase tracking-widest mb-5 flex items-center gap-3">
-    <span className="w-10 h-0.5 bg-[#d4af37]" />
+  <h2 className="text-2xl font-bebas text-[#C6A332] uppercase tracking-widest mb-5 flex items-center gap-3">
+    <span className="w-10 h-0.5 bg-[#C6A332]" />
     {icon}
     {title}
-    <span className="flex-1 h-0.5 bg-[#d4af37]/15" />
+    <span className="flex-1 h-0.5 bg-[#C6A332]/15" />
   </h2>
 );
 
