@@ -780,11 +780,12 @@ const Staff = () => {
     if (isMarketeer && !isAdmin) {
       return applyRoleVisibility([
         {
-          id: 'overview',
-          title: 'Overview',
+          id: 'dashboard',
+          title: 'Dashboard',
           icon: Calendar,
         sections: [
-            { id: 'overview', title: 'Overview', icon: Calendar },
+            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
+            { id: 'overview', title: 'Overview', icon: Users },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
             { id: 'docs', title: 'Docs', icon: FileText },
