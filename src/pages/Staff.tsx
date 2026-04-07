@@ -1731,6 +1731,7 @@ const Staff = () => {
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
                   {expandedSection === 'casestudies' && <MessagingCaseStudies />}
+                  {expandedSection === 'transferreports' && <TransferReports />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={canManageSection('transferhub')} />}
                   {expandedSection === 'portalmanagement' && <PortalManagement />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
