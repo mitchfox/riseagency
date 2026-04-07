@@ -222,12 +222,13 @@ export const InteractionHistory = () => {
               <Label>Contact *</Label>
               <Input value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search contacts..." className="mb-2" />
               <div className="max-h-32 overflow-y-auto border rounded-md divide-y">
-                {filteredContacts.slice(0, 20).map(c => (
+                {filteredContacts.slice(0, 30).map(c => (
                   <div
                     key={c.id}
                     className={`flex items-center gap-2 p-2 text-sm cursor-pointer hover:bg-accent/50 ${selectedContact === c.id ? 'bg-accent' : ''}`}
                     onClick={() => setSelectedContact(c.id)}
                   >
+                    {c.is_favourite && <Star className="h-3 w-3 fill-[hsl(var(--gold))] text-[hsl(var(--gold))] shrink-0" />}
                     <span className="font-medium">{c.name}</span>
                     {c.club_name && <span className="text-xs text-muted-foreground">{c.club_name}</span>}
                   </div>
