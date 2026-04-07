@@ -272,9 +272,7 @@ export const TransferReports = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h4 className="font-semibold truncate">{report.title}</h4>
-                    <Badge variant={report.status === 'published' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
-                      {report.status}
-                    </Badge>
+                    <Badge variant="default" className="text-[10px] shrink-0">Live</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
                     {report.player?.name || 'Unknown Player'} · {report.included_sections.length} sections
