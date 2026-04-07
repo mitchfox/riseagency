@@ -125,7 +125,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const hasPortalData = Object.values(portalMetrics).some(v => v != null);
 
   // Bar chart data for selected metric comparison
-  const selectedMetric = ALL_METRICS.find(m => m.key === selectedMetricKey);
+  const selectedMetric = positionMetrics.find(m => m.key === selectedMetricKey);
   const barData = useMemo(() => {
     if (!selectedMetric) return [];
     const isPercentage = selectedMetricKey.endsWith('_pct');
