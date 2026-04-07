@@ -94,6 +94,7 @@ import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
+import { TransferReports } from "@/components/staff/TransferReports";
 import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { MusicStudio } from "@/components/staff/MusicStudio";
