@@ -17,13 +17,13 @@ interface Action {
   action_score: string;
   minute: string;
   video_url: string;
-  display_order: number;
+  action_number: number;
 }
 
 interface R90Score {
   id: string;
-  action_type: string;
-  description: string;
+  category: string;
+  title: string;
   score: string;
 }
 
