@@ -887,7 +887,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     setFormData({
       name: "", age: "", position: "", nationality: "", current_club: "",
       age_group: "A", stage: "scouted", contact_email: "", contact_phone: "",
-      notes: "", priority: "medium",
+      notes: "", priority: "medium", probability_weight: "0", projected_revenue: "0", revenue_currency: "GBP",
     });
   };
 
