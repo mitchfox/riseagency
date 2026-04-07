@@ -120,19 +120,22 @@ export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Pro
     fetchAnalyses();
   };
 
+  const positionCategories = getMetricCategoriesForPosition(playerPosition);
+  const positionMetrics = getMetricsForPosition(playerPosition);
+
   // Calculate averages from current data
   const averages = useMemo(() => {
     const result: Record<string, number | null> = {};
-    ALL_METRICS.forEach(m => {
+    positionMetrics.forEach(m => {
       const vals = analyses
         .map(a => (editedStats[a.id] || a.fixture_stats)?.[m.key])
         .filter((v): v is number => v != null && !isNaN(v));
       result[m.key] = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
     });
     return result;
-  }, [analyses, editedStats]);
+  }, [analyses, editedStats, positionMetrics]);
 
-  const currentCategoryMetrics = METRIC_CATEGORIES.find(c => c.category === activeCategory)?.metrics || [];
+  const currentCategoryMetrics = positionCategories.find(c => c.category === activeCategory)?.metrics || [];
 
   if (loading) {
     return (
