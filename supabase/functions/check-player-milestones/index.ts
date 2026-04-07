@@ -18,15 +18,6 @@ type PlayerMilestoneCandidate = {
 
 const buildPlayerKey = (name: string, dateOfBirth: string) => `${name.trim().toLowerCase()}::${dateOfBirth}`;
 
-/**
- * Check for Player Database milestones daily:
- * 1. Players reaching contactable age (based on recruitment_age_rules)
- * 2. Players turning 18
- * 3. Player birthdays (today)
- *
- * Sources mirror the Player Database: scouting_reports,
- * player_outreach_youth and player_outreach_pro.
- */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -43,6 +34,7 @@ Deno.serve(async (req) => {
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
 
+    // --- Player milestones ---
     const [scoutingResult, youthResult, proResult] = await Promise.all([
       supabase.from('scouting_reports').select('id, player_name, date_of_birth, current_club, nationality, created_at'),
       supabase.from('player_outreach_youth').select('id, player_name, date_of_birth, current_club, nationality, created_at'),
@@ -102,10 +94,8 @@ Deno.serve(async (req) => {
         uniquePlayersMap.set(player.player_key, player);
         continue;
       }
-
       const existingCreatedAt = existing.created_at ? new Date(existing.created_at).getTime() : 0;
       const nextCreatedAt = player.created_at ? new Date(player.created_at).getTime() : 0;
-
       if (nextCreatedAt >= existingCreatedAt) {
         uniquePlayersMap.set(player.player_key, {
           ...existing,
@@ -117,12 +107,6 @@ Deno.serve(async (req) => {
     }
 
     const players = Array.from(uniquePlayersMap.values());
-
-    if (players.length === 0) {
-      return new Response(JSON.stringify({ message: 'No player database records with date_of_birth found' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     const { data: ageRules } = await supabase
       .from('recruitment_age_rules')
@@ -136,10 +120,10 @@ Deno.serve(async (req) => {
       .from('staff_notification_events')
       .select('event_type, event_data')
       .gte('created_at', `${todayStr}T00:00:00Z`)
-      .in('event_type', ['player_birthday', 'player_turning_18', 'player_contactable_age']);
+      .in('event_type', ['player_birthday', 'player_turning_18', 'player_contactable_age', 'fixture_countdown', 'program_expiring']);
 
     const alreadyNotified = new Set(
-      (existingToday || []).map((event) => `${event.event_type}-${(event.event_data as any)?.player_key ?? (event.event_data as any)?.player_id}`)
+      (existingToday || []).map((event) => `${event.event_type}-${(event.event_data as any)?.player_key ?? (event.event_data as any)?.player_id ?? (event.event_data as any)?.fixture_id ?? (event.event_data as any)?.program_id}`)
     );
 
     const notifications: Array<{
@@ -243,6 +227,104 @@ Deno.serve(async (req) => {
       }
     }
 
+    // --- Fixture countdown notifications (48h window) ---
+    const in48h = new Date(today.getTime() + 48 * 60 * 60 * 1000);
+    const { data: upcomingFixtures } = await supabase
+      .from('fixtures')
+      .select('id, home_team, away_team, match_date, match_time, competition, venue')
+      .gte('match_date', todayStr)
+      .lte('match_date', in48h.toISOString().split('T')[0])
+      .order('match_date');
+
+    for (const fixture of (upcomingFixtures || [])) {
+      const matchDateTime = new Date(`${fixture.match_date}T${fixture.match_time || '15:00'}:00`);
+      const hoursUntil = (matchDateTime.getTime() - today.getTime()) / (1000 * 60 * 60);
+
+      if (hoursUntil > 0 && hoursUntil <= 48) {
+        const key = `fixture_countdown-${fixture.id}`;
+        if (!alreadyNotified.has(key)) {
+          const hoursText = hoursUntil < 1 
+            ? `${Math.round(hoursUntil * 60)} minutes`
+            : `${Math.round(hoursUntil)} hours`;
+
+          notifications.push({
+            event_type: 'fixture_countdown',
+            title: '⚽ Match Approaching',
+            body: `${fixture.home_team} vs ${fixture.away_team} in ${hoursText}`,
+            event_data: {
+              fixture_id: fixture.id,
+              home_team: fixture.home_team,
+              away_team: fixture.away_team,
+              match_date: fixture.match_date,
+              match_time: fixture.match_time,
+              competition: fixture.competition,
+              venue: fixture.venue,
+              hours_until: Math.round(hoursUntil),
+            },
+          });
+        }
+      }
+    }
+
+    // --- Program expiry notifications (1 week or less remaining) ---
+    const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const oneWeekStr = oneWeekFromNow.toISOString().split('T')[0];
+
+    const { data: expiringPrograms } = await supabase
+      .from('player_programs')
+      .select('id, player_id, program_name, end_date, is_current, players!player_programs_player_id_fkey(name)')
+      .eq('is_current', true)
+      .lte('end_date', oneWeekStr)
+      .gte('end_date', todayStr);
+
+    for (const program of (expiringPrograms || [])) {
+      const key = `program_expiring-${program.id}`;
+      if (!alreadyNotified.has(key)) {
+        const endDate = new Date(program.end_date);
+        const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const playerName = (program as any).players?.name || 'Unknown';
+
+        notifications.push({
+          event_type: 'program_expiring',
+          title: '📋 Program Expiring Soon',
+          body: `${playerName}'s "${program.program_name}" ends in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
+          event_data: {
+            program_id: program.id,
+            player_id: program.player_id,
+            player_name: playerName,
+            program_name: program.program_name,
+            end_date: program.end_date,
+            days_remaining: daysLeft,
+          },
+        });
+      }
+    }
+
+    // --- Auto-switch future programs that start today ---
+    const { data: futurePrograms } = await supabase
+      .from('player_programs')
+      .select('id, player_id, program_name, start_date')
+      .eq('is_current', false)
+      .lte('start_date', todayStr)
+      .gte('start_date', todayStr);
+
+    for (const program of (futurePrograms || [])) {
+      // Deactivate current programs for this player
+      await supabase
+        .from('player_programs')
+        .update({ is_current: false })
+        .eq('player_id', program.player_id)
+        .eq('is_current', true);
+
+      // Activate this program
+      await supabase
+        .from('player_programs')
+        .update({ is_current: true })
+        .eq('id', program.id);
+
+      console.log(`[Player Milestones] Auto-activated program "${program.program_name}" for player ${program.player_id}`);
+    }
+
     if (notifications.length > 0) {
       const { error: insertError } = await supabase
         .from('staff_notification_events')
@@ -257,6 +339,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         players_checked: players.length,
+        fixtures_checked: (upcomingFixtures || []).length,
+        programs_auto_switched: (futurePrograms || []).length,
         notifications_created: notifications.length,
         details: notifications.map((notification) => notification.body),
       }),
