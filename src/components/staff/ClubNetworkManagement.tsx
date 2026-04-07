@@ -809,9 +809,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     if (initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
     fetchCountrySummary();
+    fetchFavourites();
     fetchProfiles();
     fetchAuxiliaryData();
-  }, [fetchAuxiliaryData, fetchCountrySummary, fetchProfiles]);
+  }, [fetchAuxiliaryData, fetchCountrySummary, fetchFavourites, fetchProfiles]);
 
   useEffect(() => {
     if (!selectedCountryKey) return;
