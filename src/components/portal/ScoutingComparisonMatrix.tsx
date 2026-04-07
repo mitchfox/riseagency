@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ALL_METRICS, METRIC_CATEGORIES } from "@/components/staff/ComparisonPlayerData";
+import { ALL_METRICS, ALL_GK_METRICS, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 
 interface ComparisonPlayer {
   id: string;
