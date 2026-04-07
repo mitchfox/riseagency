@@ -455,8 +455,8 @@ export const ComparisonPlayerData = () => {
               </div>
             </div>
 
-            {/* Metrics by category */}
-            {METRIC_CATEGORIES.map(cat => (
+            {/* Metrics by category - position aware */}
+            {getMetricCategoriesForPosition(formData.position).map(cat => (
               <div key={cat.category}>
                 <Label className="text-base font-semibold">{cat.category}</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
