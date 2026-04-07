@@ -56,7 +56,6 @@ const TransferReportView = () => {
         .from('transfer_reports')
         .select('*')
         .eq('slug', slug)
-        .eq('status', 'published')
         .maybeSingle();
 
       if (fetchError || !data) {
