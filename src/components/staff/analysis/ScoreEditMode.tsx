@@ -200,7 +200,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             onSave?.();
             onClose();
           }}
-          className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-background/90 px-3 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
+           className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-background/90 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors hover:bg-muted px-[12px] my-[600px] mx-[3px]"
         >
           <X className="h-3.5 w-3.5" /> Close
         </button>
@@ -296,7 +296,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             <div className={`absolute ${getControlGroupPosition(i)} z-20 flex items-center gap-2 ${getControlGroupLayout(i)}`}>
               <button
                 onClick={() => handleFullscreen(i)}
-                className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
+                 className="h-10 w-10 rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted flex items-center justify-center mx-0 my-0"
                 title="Fullscreen"
               >
                 <Maximize className="h-4 w-4" />
