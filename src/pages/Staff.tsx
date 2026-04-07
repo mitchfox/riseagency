@@ -1720,6 +1720,7 @@ const Staff = () => {
                   {expandedSection === 'payments' && <PaymentsManagement isAdmin={canManageSection('payments')} />}
                   {expandedSection === 'expenses' && <ExpensesManagement isAdmin={canManageSection('expenses')} />}
                   {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={canManageSection('taxrecords')} />}
+                  {expandedSection === 'corporationtax' && <CorporationTaxSection isAdmin={canManageSection('corporationtax')} />}
                   {expandedSection === 'budgets' && <BudgetsManagement isAdmin={canManageSection('budgets')} />}
                   {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
