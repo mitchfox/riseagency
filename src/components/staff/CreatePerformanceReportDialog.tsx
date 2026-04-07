@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown, TrendingUp } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
+import { ScoreEditMode } from "./analysis/ScoreEditMode";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
