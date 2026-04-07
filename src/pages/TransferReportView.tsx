@@ -143,12 +143,10 @@ const TransferReportView = () => {
   const playerAverages = useMemo(() => {
     if (!player?.position || performanceReports.length === 0) return {};
     const metrics = getMetricsForPosition(player.position);
+    const avgs = computeAllStatAverages(performanceReports, metrics);
     const result: Record<string, number> = {};
-    metrics.forEach(m => {
-      const vals = performanceReports
-        .map(r => (r.fixture_stats as Record<string, number>)?.[m.key])
-        .filter((v): v is number => v != null && !isNaN(v));
-      if (vals.length > 0) result[m.key] = vals.reduce((s, v) => s + v, 0) / vals.length;
+    Object.entries(avgs).forEach(([key, val]) => {
+      if (val != null) result[key] = val;
     });
     return result;
   }, [performanceReports, player?.position]);

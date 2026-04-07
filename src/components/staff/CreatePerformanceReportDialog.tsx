@@ -657,25 +657,39 @@ export const CreatePerformanceReportDialog = ({
   const deriveOpponentFromFixture = (fixture: { home_team: string; away_team: string }, clubName: string) => {
     const homeTeam = fixture.home_team || '';
     const awayTeam = fixture.away_team || '';
+
+    // Shortcut for placeholder "for" teams
     const homeLower = homeTeam.toLowerCase();
     const awayLower = awayTeam.toLowerCase();
-    const normalizedClub = normalizeClubName(clubName || '');
+    if (homeLower === 'for' || homeLower.includes('for ')) return awayTeam;
+    if (awayLower === 'for' || awayLower.includes('for ')) return homeTeam;
+
+    if (!clubName) return homeTeam;
+
+    const normalizedClub = normalizeClubName(clubName);
     const normalizedHome = normalizeClubName(homeTeam);
     const normalizedAway = normalizeClubName(awayTeam);
 
-    const homeIsFor = homeLower === 'for' || homeLower.includes('for ');
-    const awayIsFor = awayLower === 'for' || awayLower.includes('for ');
-    if (homeIsFor) return awayTeam;
-    if (awayIsFor) return homeTeam;
+    // Score each side for how well it matches the player's club
+    const scoreMatch = (norm: string) => {
+      if (norm === normalizedClub) return 3; // exact
+      if (norm.includes(normalizedClub) || normalizedClub.includes(norm)) return 2; // substring
+      // Check individual words overlap
+      const clubWords = normalizedClub.split(' ').filter(w => w.length > 2);
+      const normWords = norm.split(' ').filter(w => w.length > 2);
+      const overlap = clubWords.filter(w => normWords.includes(w)).length;
+      if (overlap > 0) return 1;
+      return 0;
+    };
 
-    if (normalizedClub) {
-      const homeMatches = normalizedHome === normalizedClub || normalizedHome.includes(normalizedClub) || normalizedClub.includes(normalizedHome);
-      const awayMatches = normalizedAway === normalizedClub || normalizedAway.includes(normalizedClub) || normalizedClub.includes(normalizedAway);
+    const homeScore = scoreMatch(normalizedHome);
+    const awayScore = scoreMatch(normalizedAway);
 
-      if (homeMatches && !awayMatches) return awayTeam;
-      if (awayMatches && !homeMatches) return homeTeam;
-    }
+    // The team that matches the player's club is NOT the opponent
+    if (homeScore > awayScore) return awayTeam; // home is player's club, opponent is away
+    if (awayScore > homeScore) return homeTeam; // away is player's club, opponent is home
 
+    // Tie or no match — fall back to whichever isn't the club name
     return homeTeam === clubName ? awayTeam : homeTeam;
   };
 
