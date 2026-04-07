@@ -557,8 +557,8 @@ const TransferReportView = () => {
             <div className="space-y-3">
               {activeVideoReport ? (
                 <div>
-                  <div className="rounded-xl border border-[#C6A332]/20 overflow-hidden bg-black mb-3">
-                    <video src={activeVideoReport.video_url} className="w-full aspect-video object-contain" controls playsInline autoPlay />
+                  <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black mb-3">
+                    <video src={activeVideoReport.video_url} className="w-full aspect-video object-contain bg-black" controls playsInline autoPlay />
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bebas uppercase tracking-wider text-white">{activeVideoReport.title}</p>
