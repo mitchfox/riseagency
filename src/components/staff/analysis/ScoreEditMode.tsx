@@ -131,7 +131,7 @@ function smartSortActions(actions: Action[]): Action[] {
   const result: Action[] = [];
 
   // Group singles by action type, maintaining sort order
-  const typeGroups: Map<string, Action[]> = new Map();
+  const typeGroups: Map<string, (typeof withTime)[number][]> = new Map();
   for (const a of singleClusters) {
     const key = a.action_type;
     if (!typeGroups.has(key)) typeGroups.set(key, []);
@@ -150,8 +150,7 @@ function smartSortActions(actions: Action[]): Action[] {
     result.push(...group);
   }
 
-  // Append multi-clusters (time-close groups) at the end of their classification section
-  // For simplicity, just append them sorted
+  // Append multi-clusters (time-close groups)
   for (const cluster of multiClusters) {
     result.push(...cluster);
   }
