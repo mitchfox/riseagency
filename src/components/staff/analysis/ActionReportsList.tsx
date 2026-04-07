@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio } from "lucide-react";
+import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film } from "lucide-react";
 import { toast } from "sonner";
+import { MatchClipPlayer } from "@/components/staff/analysis/MatchClipPlayer";
+import { ScoreEditMode } from "@/components/staff/analysis/ScoreEditMode";
 import { format } from "date-fns";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
@@ -40,6 +43,9 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [searchQuery, setSearchQuery] = useState("");
   const [playerFilter, setPlayerFilter] = useState(defaultPlayerId || "all");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [statusTab, setStatusTab] = useState("all");
+  const [clipPlayerReport, setClipPlayerReport] = useState<ActionReport | null>(null);
+  const [scoreEditReport, setScoreEditReport] = useState<ActionReport | null>(null);
   
   // Dialog states
   const [showReportEditor, setShowReportEditor] = useState(false);
@@ -145,8 +151,22 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       report.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlayer = playerFilter === "all" || report.player_id === playerFilter;
-    return matchesSearch && matchesPlayer;
+    const status = report.visibility_status || "draft";
+    const matchesStatus = statusTab === "all" || status === statusTab;
+    return matchesSearch && matchesPlayer && matchesStatus;
   });
+
+  const statusCounts = {
+    all: reports.filter(r => {
+      const matchesSearch = r.player_name?.toLowerCase().includes(searchQuery.toLowerCase()) || r.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPlayer = playerFilter === "all" || r.player_id === playerFilter;
+      return matchesSearch && matchesPlayer;
+    }).length,
+    draft: reports.filter(r => (r.visibility_status || "draft") === "draft").length,
+    clipped: reports.filter(r => r.visibility_status === "clipped").length,
+    hidden: reports.filter(r => r.visibility_status === "hidden").length,
+    live: reports.filter(r => r.visibility_status === "live").length,
+  };
 
   if (loading) {
     return (
@@ -208,6 +228,17 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           New Action Report
         </Button>
       </div>
+
+      {/* Status Subtabs */}
+      <Tabs value={statusTab} onValueChange={setStatusTab}>
+        <TabsList className="h-auto p-1 bg-muted/50">
+          <TabsTrigger value="all" className="text-xs px-3 py-1.5">All ({statusCounts.all})</TabsTrigger>
+          <TabsTrigger value="draft" className="text-xs px-3 py-1.5">Draft ({statusCounts.draft})</TabsTrigger>
+          <TabsTrigger value="clipped" className="text-xs px-3 py-1.5">Clipped ({statusCounts.clipped})</TabsTrigger>
+          <TabsTrigger value="hidden" className="text-xs px-3 py-1.5">Hidden ({statusCounts.hidden})</TabsTrigger>
+          <TabsTrigger value="live" className="text-xs px-3 py-1.5">Live ({statusCounts.live})</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Reports List */}
       {filteredReports.length === 0 ? (
@@ -330,6 +361,26 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                       <Eye className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">View</span>
                     </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setClipPlayerReport(report)}
+                      className="h-8 px-2 md:px-3"
+                      title="Play match clips"
+                    >
+                      <Play className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                      <span className="hidden md:inline">Play</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setScoreEditReport(report)}
+                      className="h-8 px-2 md:px-3"
+                      title="Score Edit mode"
+                    >
+                      <Film className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+                      <span className="hidden md:inline">Score</span>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -409,6 +460,26 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           open={performanceReportDialogOpen}
           onOpenChange={setPerformanceReportDialogOpen}
           analysisId={selectedReportAnalysisId}
+        />
+      )}
+
+      {/* Match Clip Player */}
+      {clipPlayerReport && (
+        <MatchClipPlayer
+          analysisId={clipPlayerReport.id}
+          playerName={clipPlayerReport.player_name || "Unknown"}
+          opponent={clipPlayerReport.opponent || "Unknown"}
+          onClose={() => setClipPlayerReport(null)}
+        />
+      )}
+
+      {/* Score Edit Mode */}
+      {scoreEditReport && (
+        <ScoreEditMode
+          analysisId={scoreEditReport.id}
+          playerName={scoreEditReport.player_name || "Unknown"}
+          onClose={() => setScoreEditReport(null)}
+          onSave={() => fetchReports()}
         />
       )}
     </div>

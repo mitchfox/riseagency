@@ -99,8 +99,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("analysis");
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(() => {
+    const urlPlayer = searchParams.get('player');
+    if (urlPlayer) return urlPlayer;
+    try { return localStorage.getItem('staff_last_player') || null; } catch { return null; }
+  });
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const urlTab = searchParams.get('tab');
+    return urlTab || "analysis";
+  });
   const [playerAnalyses, setPlayerAnalyses] = useState<Record<string, any[]>>({});
   const [playerInvoices, setPlayerInvoices] = useState<Record<string, any[]>>({});
   const [selectedAnalysisId, setSelectedAnalysisId] = useState<string | null>(null);
@@ -322,6 +329,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const handlePlayerSelect = (playerId: string) => {
     setSelectedPlayerId(playerId);
+    try { localStorage.setItem('staff_last_player', playerId); } catch {}
     // Scroll to top when selecting a player since content is at top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

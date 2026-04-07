@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
+import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
 export const StrengthPowerSpeedSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
+  const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -29,6 +31,22 @@ export const StrengthPowerSpeedSection = () => {
     };
     fetchPlayers();
   }, []);
+
+  useEffect(() => {
+    if (selectedPlayer && selectedPlayer !== "all") {
+      const fetchPrograms = async () => {
+        const { data } = await supabase
+          .from("player_programs")
+          .select("id, program_name, start_date, end_date, is_current")
+          .eq("player_id", selectedPlayer)
+          .order("start_date", { ascending: true });
+        setPlayerPrograms(data || []);
+      };
+      fetchPrograms();
+    } else {
+      setPlayerPrograms([]);
+    }
+  }, [selectedPlayer]);
 
   const currentPlayer = players.find(p => p.id === selectedPlayer);
 
@@ -70,6 +88,9 @@ export const StrengthPowerSpeedSection = () => {
 
       {selectedPlayer !== "all" && currentPlayer && (
         <div className="space-y-4">
+          {/* Visual Timeline */}
+          <SPSTimeline programs={playerPrograms} playerName={currentPlayer.name} />
+
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Testing Results</h3>
             <AddTestResultDialog
