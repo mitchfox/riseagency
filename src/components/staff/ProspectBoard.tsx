@@ -745,6 +745,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       contact_phone: prospect.contact_phone || "",
       notes: prospect.notes || "",
       priority: prospect.priority || "medium",
+      probability_weight: (prospect.probability_weight || 0).toString(),
+      projected_revenue: (prospect.projected_revenue || 0).toString(),
+      revenue_currency: prospect.revenue_currency || "GBP",
     });
     setDialogOpen(true);
   };
