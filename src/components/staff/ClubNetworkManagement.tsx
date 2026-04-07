@@ -2230,6 +2230,31 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
       <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleImportFileUpload} className="hidden" />
 
+      {/* Favourites section - shown at top of both views */}
+      {favourites.length > 0 && !searchQuery.trim() && (
+        <ScrollReveal>
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[hsl(var(--gold))]/40 backdrop-blur-2xl" style={softPanelStyle}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--gold)/0.12),transparent_40%)] opacity-80" />
+            <div className="relative z-[1] p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[hsl(var(--gold))]/30 bg-[hsl(var(--gold))]/10">
+                  <Star className="h-4 w-4 fill-[hsl(var(--gold))] text-[hsl(var(--gold))]" />
+                </div>
+                <div>
+                  <h3 className="font-bebas text-lg tracking-[0.24em] text-foreground">FAVOURITES</h3>
+                  <p className="text-xs text-muted-foreground">{favourites.length} contact{favourites.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {favourites.map((contact) => (
+                  <ContactCard key={contact.id} contact={contact} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
+
       {landingView === 'country' ? (
         <div className="space-y-4">
           {(searchQuery.trim() ? filteredRegions : regionData).map((region) => {
