@@ -60,7 +60,7 @@ const TransferReportView = () => {
         .maybeSingle();
 
       if (fetchError || !data) {
-        setError('Report not found or not yet published.');
+        setError('Report not found.');
         setLoading(false);
         return;
       }
