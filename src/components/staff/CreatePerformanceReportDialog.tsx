@@ -2048,6 +2048,7 @@ export const CreatePerformanceReportDialog = ({
             <CollapsibleContent className="mt-4">
               <FixtureStatsEditor
                 fixtureStats={fixtureStats}
+                playerPosition={playerPosition}
                 onStatsChange={(newFixtureStats) => {
                   setFixtureStats(newFixtureStats);
                   // Sync matching fixture stats to existing unified stats (don't auto-add new ones)
