@@ -477,12 +477,17 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                     void handleScoreChange(action.id, prefixNegativeScore(action.action_score || ""));
                   }
                 }}
-                onFocus={() => {
+                onFocus={(e) => {
                   setActiveActionId(action.id);
                   if (!pendingScore && !action.action_score) {
                     void handleScoreChange(action.id, "0.");
                   }
-                }}
+                  const inp = e.target as HTMLInputElement;
+                  requestAnimationFrame(() => {
+                    const len = inp.value.length;
+                    inp.setSelectionRange(len, len);
+                  });
+                }
                 onBlur={() => {
                   setActiveActionId((current) => current === action.id ? null : current);
                 }}
