@@ -170,10 +170,15 @@ serve(async (req) => {
 
     const cleanMetrics: Record<string, number> = {};
     for (const [key, val] of Object.entries(metrics)) {
-      if (METRIC_KEYS.includes(key) && typeof val === 'number') {
-        cleanMetrics[key] = val;
+      if (METRIC_KEYS.includes(key)) {
+        const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
+        if (!isNaN(num)) {
+          cleanMetrics[key] = num;
+        }
       }
     }
+
+    console.log(`Extracted ${Object.keys(cleanMetrics).length} metrics from ${isGoalkeeper ? 'GK' : 'outfield'} images. Keys: ${Object.keys(cleanMetrics).join(', ')}`);
 
     return new Response(JSON.stringify({ metrics: cleanMetrics }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
