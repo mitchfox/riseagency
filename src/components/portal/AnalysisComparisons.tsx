@@ -65,7 +65,6 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const [requestName, setRequestName] = useState("");
   const [requestingPlayer, setRequestingPlayer] = useState(false);
 
-  const playerPosition = playerData?.position || '';
   const playerName = playerData?.name || 'You';
 
   // Fetch fixture analyses with fixture_stats for the portal player
