@@ -487,7 +487,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                     const len = inp.value.length;
                     inp.setSelectionRange(len, len);
                   });
-                }
+                }}
                 onBlur={() => {
                   setActiveActionId((current) => current === action.id ? null : current);
                 }}
