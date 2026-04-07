@@ -545,62 +545,128 @@ export const ComparisonPlayerData = () => {
       </Dialog>
 
       {/* AI Extract Dialog */}
-      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+      <Dialog open={aiDialogOpen} onOpenChange={(v) => { setAiDialogOpen(v); if (!v) { setBatchMode(false); setBatchFiles([]); setBatchProgress(null); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wand2 className="w-5 h-5" /> Add Player via AI
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Upload stat images (like percentile rank screenshots) and provide the player details. AI will extract all metrics automatically.
-          </p>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Player Name *</Label>
-                <Input value={aiName} onChange={e => setAiName(e.target.value)} placeholder="e.g. Erling Haaland" />
-              </div>
-              <div>
-                <Label>Position *</Label>
-                <Select value={aiPosition} onValueChange={setAiPosition}>
-                  <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
-                  <SelectContent>
-                    {POSITIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Club</Label>
-                <Input value={aiClub} onChange={e => setAiClub(e.target.value)} placeholder="e.g. Manchester City" />
-              </div>
-              <div>
-                <Label>Season</Label>
-                <Input value={aiSeason} onChange={e => setAiSeason(e.target.value)} placeholder="2024/25" />
-              </div>
-            </div>
-            <div>
-              <Label>Stat Images *</Label>
-              <div className="mt-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={e => setAiImages(Array.from(e.target.files || []))}
-                  className="text-sm"
-                />
-              </div>
-              {aiImages.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">{aiImages.length} image(s) selected</p>
-              )}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAiDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAiExtract} disabled={aiLoading}>
-                {aiLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Extracting...</> : 'Extract & Add'}
-              </Button>
-            </div>
+
+          {/* Mode toggle */}
+          <div className="flex gap-2 mb-2">
+            <Button variant={batchMode ? 'outline' : 'default'} size="sm" onClick={() => setBatchMode(false)}>Single Player</Button>
+            <Button variant={batchMode ? 'default' : 'outline'} size="sm" onClick={() => setBatchMode(true)}>Batch Upload (up to 10)</Button>
           </div>
+
+          {!batchMode ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Upload stat images and provide the player details. AI will extract all metrics automatically.
+              </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Player Name *</Label>
+                    <Input value={aiName} onChange={e => setAiName(e.target.value)} placeholder="e.g. Erling Haaland" />
+                  </div>
+                  <div>
+                    <Label>Position *</Label>
+                    <Select value={aiPosition} onValueChange={setAiPosition}>
+                      <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
+                      <SelectContent>
+                        {POSITIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Club</Label>
+                    <Input value={aiClub} onChange={e => setAiClub(e.target.value)} placeholder="e.g. Manchester City" />
+                  </div>
+                  <div>
+                    <Label>Season</Label>
+                    <Input value={aiSeason} onChange={e => setAiSeason(e.target.value)} placeholder="2024/25" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Stat Images *</Label>
+                  <div className="mt-1">
+                    <input type="file" accept="image/*" multiple onChange={e => setAiImages(Array.from(e.target.files || []))} className="text-sm" />
+                  </div>
+                  {aiImages.length > 0 && <p className="text-xs text-muted-foreground mt-1">{aiImages.length} image(s) selected</p>}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAiDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAiExtract} disabled={aiLoading}>
+                    {aiLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Extracting...</> : 'Extract & Add'}
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Upload up to 10 stat screenshots. The filename of each image will be used as the player name (e.g. "Erling Haaland.png" becomes "Erling Haaland"). You can fill in club and other details afterwards.
+              </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Position (for all) *</Label>
+                    <Select value={batchPosition} onValueChange={setBatchPosition}>
+                      <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
+                      <SelectContent>
+                        {POSITIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Season</Label>
+                    <Input value={batchSeason} onChange={e => setBatchSeason(e.target.value)} placeholder="2024/25" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Stat Screenshots (max 10) *</Label>
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={e => {
+                        const files = Array.from(e.target.files || []).slice(0, 10);
+                        setBatchFiles(files);
+                      }}
+                      className="text-sm"
+                    />
+                  </div>
+                  {batchFiles.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-muted-foreground">{batchFiles.length} file(s) selected:</p>
+                      {batchFiles.map((f, i) => (
+                        <p key={i} className="text-xs text-foreground/80">
+                          {i + 1}. {f.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ')}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {batchProgress && (
+                  <div className="bg-primary/10 rounded-md p-3">
+                    <p className="text-sm font-medium">Processing {batchProgress.current}/{batchProgress.total}</p>
+                    <p className="text-xs text-muted-foreground">{batchProgress.name}</p>
+                    <div className="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAiDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleBatchExtract} disabled={aiLoading}>
+                    {aiLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</> : `Extract ${batchFiles.length} Player${batchFiles.length !== 1 ? 's' : ''}`}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
