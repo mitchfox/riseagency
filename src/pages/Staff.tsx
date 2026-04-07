@@ -788,8 +788,8 @@ const Staff = () => {
           title: 'Dashboard',
           icon: Calendar,
         sections: [
-            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'overview', title: 'Overview', icon: Users },
+            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
             { id: 'docs', title: 'Docs', icon: FileText },
