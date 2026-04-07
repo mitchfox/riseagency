@@ -32,7 +32,9 @@ export const ScoutingComparisonMatrix = ({
   comparisonPlayers,
   selectedPlayerIds,
   formWindow,
+  playerPosition,
 }: Props) => {
+  const activeMetrics = isGoalkeeperPosition(playerPosition) ? ALL_GK_METRICS : ALL_METRICS;
   const selectedComps = comparisonPlayers.filter(p => selectedPlayerIds.includes(p.id));
 
   // Need at least 2 entities to compare (portal player + 1 comp, or 2 comps)
