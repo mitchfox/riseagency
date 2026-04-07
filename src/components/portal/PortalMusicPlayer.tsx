@@ -88,10 +88,19 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
     });
   }, [validTracks, flashHUD]);
 
-  // Skip to next
+  // Skip to next (shuffle mode)
   const handleSkip = useCallback(() => {
     if (validTracks.length === 0) return;
-    const next = (currentIndex + 1) % validTracks.length;
+    // Find current position in shuffle order and advance
+    const shufflePos = shuffledOrder.current.indexOf(currentIndex);
+    let nextShufflePos = shufflePos + 1;
+    if (nextShufflePos >= shuffledOrder.current.length) {
+      // Reshuffle when we've played all tracks
+      shuffledOrder.current = Array.from({ length: validTracks.length }, (_, i) => i)
+        .sort(() => Math.random() - 0.5);
+      nextShufflePos = 0;
+    }
+    const next = shuffledOrder.current[nextShufflePos] ?? 0;
     playTrack(next);
   }, [currentIndex, validTracks.length, playTrack]);
 
