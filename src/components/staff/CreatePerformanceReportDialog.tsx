@@ -182,6 +182,7 @@ export const CreatePerformanceReportDialog = ({
   const [loading, setLoading] = useState(false);
   const [videoEditorOpen, setVideoEditorOpen] = useState(false);
   const [actionTypeEditorOpen, setActionTypeEditorOpen] = useState(false);
+  const [scoreEditOpen, setScoreEditOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
