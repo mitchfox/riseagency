@@ -79,7 +79,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
       if (!playerData?.id) return;
       const { data } = await supabase
         .from('player_analysis')
-        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats')
+        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats, visibility_status')
         .eq('player_id', playerData.id)
         .order('analysis_date', { ascending: false })
         .limit(20);
