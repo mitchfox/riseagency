@@ -317,6 +317,56 @@ export const ComparisonPlayerData = () => {
     }
   };
 
+  const handleBatchExtract = async () => {
+    if (!batchPosition || batchFiles.length === 0) {
+      toast.error('Please select position and at least one image');
+      return;
+    }
+    setAiLoading(true);
+    const isGK = batchPosition.toUpperCase() === 'GK';
+    let successCount = 0;
+
+    for (let i = 0; i < batchFiles.length; i++) {
+      const file = batchFiles[i];
+      const playerName = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').trim();
+      setBatchProgress({ current: i + 1, total: batchFiles.length, name: playerName });
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const base64 = btoa(new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+        const mimeType = file.type || 'image/png';
+        const imageContent = `data:${mimeType};base64,${base64}`;
+
+        const { data, error } = await invokeEdgeFunction('extract-player-stats', {
+          body: { images: [imageContent], isGoalkeeper: isGK }
+        });
+
+        if (error) { console.error(`Failed for ${playerName}:`, error); continue; }
+
+        const payload = {
+          name: playerName,
+          position: batchPosition,
+          club: null,
+          season: batchSeason,
+          metrics: data?.metrics || {},
+          r90_average: null,
+        };
+
+        const { error: insertError } = await supabase.from('comparison_players').insert(payload);
+        if (insertError) { console.error(`Insert failed for ${playerName}:`, insertError); continue; }
+        successCount++;
+      } catch (err) {
+        console.error(`Error processing ${playerName}:`, err);
+      }
+    }
+
+    toast.success(`${successCount}/${batchFiles.length} players added`);
+    setBatchProgress(null);
+    setBatchFiles([]);
+    setAiDialogOpen(false);
+    setAiLoading(false);
+    fetchPlayers();
+
   const seasons = [...new Set(players.map(p => p.season))].sort().reverse();
   const filtered = players.filter(p => {
     if (filterPosition !== 'all' && p.position !== filterPosition) return false;
