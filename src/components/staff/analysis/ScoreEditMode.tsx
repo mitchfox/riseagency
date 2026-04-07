@@ -95,7 +95,6 @@ function smartSortActions(actions: Action[]): Action[] {
 
   // Now sort clusters: first by classification priority (offensive, defensive, other),
   // then by action type within the same classification, but keep cluster order for time-close actions
-  type ActionWithTime = Action & { seconds: number };
   const classifyCluster = (cluster: ActionWithTime[]): "offensive" | "defensive" | "other" => {
     const classes = cluster.map(a => classifyAction(a.action_type));
     if (classes.includes("offensive")) return "offensive";
