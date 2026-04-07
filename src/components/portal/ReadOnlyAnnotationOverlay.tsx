@@ -40,7 +40,8 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
 
     const tick = () => {
       const time = video.currentTime;
-      const relTime = clipStart + (time - (video as any).__clipStartTime || time);
+      const clipStartTime = (video as any).__clipStartTime;
+      const relTime = clipStart + (time - (clipStartTime != null ? clipStartTime : time));
       const visible = computeVisibleElements(elements, relTime, { forceOpacity: 1 });
       setVisibleEls(visible);
       rafRef.current = requestAnimationFrame(tick);
