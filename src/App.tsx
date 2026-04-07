@@ -70,6 +70,7 @@ const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const SharedContact = lazy(() => import("./pages/SharedContact"));
+const TransferReportView = lazy(() => import("./pages/TransferReportView"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
