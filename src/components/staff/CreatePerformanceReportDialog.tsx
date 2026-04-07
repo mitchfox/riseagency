@@ -899,29 +899,7 @@ export const CreatePerformanceReportDialog = ({
     setSelectedFixtureId(fixtureId);
     const fixture = fixtures.find(f => f.id === fixtureId);
     if (fixture) {
-      // Intelligently determine opponent based on player's club or "For" placeholder
-      let opponentTeam = fixture.away_team; // Default to away team
-      
-      // First check for "For" placeholder (used to represent player's team)
-      const homeIsFor = fixture.home_team.toLowerCase() === "for" || fixture.home_team.toLowerCase().includes("for ");
-      const awayIsFor = fixture.away_team.toLowerCase() === "for" || fixture.away_team.toLowerCase().includes("for ");
-      
-      if (homeIsFor) {
-        opponentTeam = fixture.away_team;
-      } else if (awayIsFor) {
-        opponentTeam = fixture.home_team;
-      } else if (playerClub) {
-        // Use case-insensitive partial matching since club names may differ slightly
-        const clubLower = playerClub.toLowerCase();
-        const homeLower = fixture.home_team.toLowerCase();
-        const awayLower = fixture.away_team.toLowerCase();
-        if (homeLower.includes(clubLower) || clubLower.includes(homeLower)) {
-          opponentTeam = fixture.away_team;
-        } else if (awayLower.includes(clubLower) || clubLower.includes(awayLower)) {
-          opponentTeam = fixture.home_team;
-        }
-      }
-      
+      const opponentTeam = deriveOpponentFromFixture(fixture, playerClub);
       setOpponent(opponentTeam);
       if (fixture.home_score !== null && fixture.away_score !== null) {
         setResult(`${fixture.home_score}-${fixture.away_score}`);
