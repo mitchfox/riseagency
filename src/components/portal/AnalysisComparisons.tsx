@@ -584,6 +584,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
               comparisonPlayers={comparisonPlayers}
               selectedPlayerIds={selectedPlayerIds}
               formWindow={formWindow}
+              playerPosition={playerPosition}
             />
           </TabsContent>
           {/* Goals Tab */}
