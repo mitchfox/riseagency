@@ -29,9 +29,27 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
   const volume = useRef(0.35);
   const hasAutoPlayed = useRef(false);
   const failedUrls = useRef<Set<string>>(new Set());
+  const shuffledOrder = useRef<number[]>([]);
 
   const validTracks = tracks.filter(t => t.url && !failedUrls.current.has(t.url));
   const currentTrack = validTracks[currentIndex % validTracks.length] || null;
+
+  // Generate a shuffled play order
+  const getShuffledOrder = useCallback((length: number) => {
+    const indices = Array.from({ length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, []);
+
+  // Initialise shuffle order when tracks change
+  useEffect(() => {
+    if (validTracks.length > 0) {
+      shuffledOrder.current = getShuffledOrder(validTracks.length);
+    }
+  }, [validTracks.length, getShuffledOrder]);
 
   // Flash the NFSU2 HUD
   const flashHUD = useCallback(() => {
