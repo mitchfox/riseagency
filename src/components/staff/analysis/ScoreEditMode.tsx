@@ -79,7 +79,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     setActions(prev => prev.map(a => a.id === actionId ? { ...a, action_score: score } : a));
     await supabase
       .from("performance_report_actions")
-      .update({ action_score: score })
+      .update({ action_score: score } as any)
       .eq("id", actionId);
   }, []);
 
