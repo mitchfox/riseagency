@@ -133,10 +133,15 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     return selectedAnalyses
       .filter(a => a.r90_score != null)
       .sort((a, b) => a.analysis_date.localeCompare(b.analysis_date))
-      .map(a => ({
-        name: a.opponent || new Date(a.analysis_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        r90: a.r90_score,
-      }));
+      .map(a => {
+        const isHiddenOrDraft = ['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase());
+        return {
+          name: isHiddenOrDraft
+            ? new Date(a.analysis_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+            : (a.opponent || new Date(a.analysis_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })),
+          r90: Number(a.r90_score.toFixed(2)),
+        };
+      });
   }, [selectedAnalyses]);
 
   const radarData = useMemo(() => {
