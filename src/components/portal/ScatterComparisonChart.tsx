@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ALL_METRICS, METRIC_CATEGORIES } from "@/components/staff/ComparisonPlayerData";
+import { ALL_METRICS, METRIC_CATEGORIES, ALL_GK_METRICS, GK_METRIC_CATEGORIES, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -20,6 +20,7 @@ interface Props {
   portalMetrics: Record<string, number | null>;
   hasPortalData: boolean;
   comparisonPlayers: ComparisonPlayer[];
+  playerPosition?: string;
 }
 
 const PORTAL_COLOUR = "hsl(43, 49%, 61%)";
@@ -40,14 +41,21 @@ export const ScatterComparisonChart = ({
   portalMetrics,
   hasPortalData,
   comparisonPlayers,
+  playerPosition,
 }: Props) => {
-  const [xMetric, setXMetric] = useState("goals_per90");
-  const [yMetric, setYMetric] = useState("xa_per90");
+  const isGK = isGoalkeeperPosition(playerPosition);
+  const activeMetrics = isGK ? ALL_GK_METRICS : ALL_METRICS;
+  const activeCategories = isGK ? GK_METRIC_CATEGORIES : METRIC_CATEGORIES;
+  const defaultX = isGK ? "gk_save_percentage" : "goals_per90";
+  const defaultY = isGK ? "gk_passes_completed" : "xa_per90";
+
+  const [xMetric, setXMetric] = useState(defaultX);
+  const [yMetric, setYMetric] = useState(defaultY);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const xMeta = ALL_METRICS.find(m => m.key === xMetric);
-  const yMeta = ALL_METRICS.find(m => m.key === yMetric);
+  const xMeta = activeMetrics.find(m => m.key === xMetric);
+  const yMeta = activeMetrics.find(m => m.key === yMetric);
 
   const points = useMemo(() => {
     const pts: PointData[] = [];
@@ -130,7 +138,7 @@ export const ScatterComparisonChart = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {METRIC_CATEGORIES.map(cat => (
+              {activeCategories.map(cat => (
                 <div key={cat.category}>
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                   {cat.metrics.map(m => (
@@ -148,7 +156,7 @@ export const ScatterComparisonChart = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {METRIC_CATEGORIES.map(cat => (
+              {activeCategories.map(cat => (
                 <div key={cat.category}>
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                   {cat.metrics.map(m => (

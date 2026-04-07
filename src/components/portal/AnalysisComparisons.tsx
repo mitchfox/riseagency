@@ -79,12 +79,14 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
       if (!playerData?.id) return;
       const { data } = await supabase
         .from('player_analysis')
-        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats')
+        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats, visibility_status')
         .eq('player_id', playerData.id)
         .order('analysis_date', { ascending: false })
         .limit(20);
       if (data) {
-        setFixtureAnalyses(data.map(a => ({
+        // Only use live reports for comparisons
+        const liveData = data.filter(a => !a.visibility_status || a.visibility_status === 'live');
+        setFixtureAnalyses(liveData.map(a => ({
           ...a,
           r90_score: a.r90_score ?? 0,
           fixture_stats: (a.fixture_stats as Record<string, number>) || {},
@@ -357,6 +359,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
               portalMetrics={portalMetrics}
               hasPortalData={hasPortalData}
               comparisonPlayers={comparisonPlayers}
+              playerPosition={playerPosition}
             />
           </TabsContent>
 
@@ -581,6 +584,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
               comparisonPlayers={comparisonPlayers}
               selectedPlayerIds={selectedPlayerIds}
               formWindow={formWindow}
+              playerPosition={playerPosition}
             />
           </TabsContent>
           {/* Goals Tab */}

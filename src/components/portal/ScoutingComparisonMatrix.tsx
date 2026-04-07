@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ALL_METRICS, METRIC_CATEGORIES } from "@/components/staff/ComparisonPlayerData";
+import { ALL_METRICS, ALL_GK_METRICS, METRIC_CATEGORIES, GK_METRIC_CATEGORIES, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 
 interface ComparisonPlayer {
   id: string;
@@ -20,6 +20,7 @@ interface Props {
   comparisonPlayers: ComparisonPlayer[];
   selectedPlayerIds: string[];
   formWindow: number;
+  playerPosition?: string;
 }
 
 const PORTAL_COLOUR = "hsl(43, 49%, 61%)";
@@ -31,7 +32,9 @@ export const ScoutingComparisonMatrix = ({
   comparisonPlayers,
   selectedPlayerIds,
   formWindow,
+  playerPosition,
 }: Props) => {
+  const activeMetrics = isGoalkeeperPosition(playerPosition) ? ALL_GK_METRICS : ALL_METRICS;
   const selectedComps = comparisonPlayers.filter(p => selectedPlayerIds.includes(p.id));
 
   // Need at least 2 entities to compare (portal player + 1 comp, or 2 comps)
@@ -57,7 +60,7 @@ export const ScoutingComparisonMatrix = ({
   }
 
   // Only show metrics where at least 2 entities have data
-  const relevantMetrics = ALL_METRICS.filter(m => {
+  const relevantMetrics = activeMetrics.filter(m => {
     const withData = entities.filter(e => e.metrics[m.key] != null).length;
     return withData >= 2;
   });
@@ -96,7 +99,7 @@ export const ScoutingComparisonMatrix = ({
       </div>
 
       {/* Stat Rows */}
-      {METRIC_CATEGORIES.map(cat => {
+      {(isGoalkeeperPosition(playerPosition) ? GK_METRIC_CATEGORIES : METRIC_CATEGORIES).map(cat => {
         const catMetrics = relevantMetrics.filter(m => cat.metrics.some(cm => cm.key === m.key));
         if (catMetrics.length === 0) return null;
 
