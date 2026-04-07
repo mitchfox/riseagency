@@ -227,6 +227,17 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         </Button>
       </div>
 
+      {/* Status Subtabs */}
+      <Tabs value={statusTab} onValueChange={setStatusTab}>
+        <TabsList className="h-auto p-1 bg-muted/50">
+          <TabsTrigger value="all" className="text-xs px-3 py-1.5">All ({statusCounts.all})</TabsTrigger>
+          <TabsTrigger value="draft" className="text-xs px-3 py-1.5">Draft ({statusCounts.draft})</TabsTrigger>
+          <TabsTrigger value="clipped" className="text-xs px-3 py-1.5">Clipped ({statusCounts.clipped})</TabsTrigger>
+          <TabsTrigger value="hidden" className="text-xs px-3 py-1.5">Hidden ({statusCounts.hidden})</TabsTrigger>
+          <TabsTrigger value="live" className="text-xs px-3 py-1.5">Live ({statusCounts.live})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Reports List */}
       {filteredReports.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
