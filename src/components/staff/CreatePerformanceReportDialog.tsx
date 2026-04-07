@@ -2146,7 +2146,7 @@ export const CreatePerformanceReportDialog = ({
             minutesPlayed={minutesPlayed}
           />
 
-          {/* Score Edit Mode */}
+           {/* Score Edit Mode */}
           {scoreEditOpen && analysisId && (
             <ScoreEditMode
               analysisId={analysisId}
@@ -2156,7 +2156,8 @@ export const CreatePerformanceReportDialog = ({
                 fetchExistingData();
               }}
               onSave={() => {
-                fetchExistingData();
+                // Silent save — do NOT call fetchExistingData here
+                // to avoid re-rendering the parent and kicking user out of score edit
               }}
             />
           )}
