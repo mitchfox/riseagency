@@ -355,17 +355,22 @@ export const TacticsBoard = () => {
 
   }, [paths, currentPath, arrows, arrowStart, activeTool]);
 
-  const getCanvasCoords = (e: React.MouseEvent) => {
+  const getCanvasCoords = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = 'touches' in e ? e.touches[0]?.clientX ?? e.changedTouches[0]?.clientX ?? 0 : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0]?.clientY ?? e.changedTouches[0]?.clientY ?? 0 : e.clientY;
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     };
   };
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+  const handleCanvasMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (activeTool === "draw") {
@@ -375,7 +380,6 @@ export const TacticsBoard = () => {
       setArrowStart(coords);
     } else if (activeTool === "erase") {
       saveToHistory();
-      // Check if clicking on an arrow
       const clickedArrowIndex = arrows.findIndex(arrow => {
         const dist = pointToLineDistance(coords, arrow);
         return dist < 15;
@@ -384,7 +388,6 @@ export const TacticsBoard = () => {
         setArrows(prev => prev.filter((_, i) => i !== clickedArrowIndex));
       }
       
-      // Check if clicking on a path
       const clickedPathIndex = paths.findIndex(path => {
         return path.points.some(point => {
           const dist = Math.sqrt(Math.pow(point.x - coords.x, 2) + Math.pow(point.y - coords.y, 2));
@@ -397,7 +400,8 @@ export const TacticsBoard = () => {
     }
   };
 
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+  const handleCanvasMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (isDrawing && activeTool === "draw") {
@@ -405,7 +409,8 @@ export const TacticsBoard = () => {
     }
   };
 
-  const handleCanvasMouseUp = (e: React.MouseEvent) => {
+  const handleCanvasMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (isDrawing && activeTool === "draw") {
@@ -450,40 +455,37 @@ export const TacticsBoard = () => {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const handleItemMouseDown = (e: React.MouseEvent, itemId: string) => {
+  const handleItemMouseDown = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
+    if ('touches' in e) e.preventDefault();
+    e.stopPropagation();
     if (activeTool === "select") {
-      e.stopPropagation();
       const item = items.find(i => i.id === itemId);
       if (!item) return;
-      
       setDraggingItem(itemId);
       const container = containerRef.current;
       if (container) {
         const rect = container.getBoundingClientRect();
-        setDragOffset({
-          x: e.clientX - rect.left - item.x,
-          y: e.clientY - rect.top - item.y,
-        });
+        const clientX = 'touches' in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
+        setDragOffset({ x: clientX - rect.left - item.x, y: clientY - rect.top - item.y });
       }
     } else if (activeTool === "erase") {
-      e.stopPropagation();
       saveToHistory();
       setItems(prev => prev.filter(i => i.id !== itemId));
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     if (draggingItem && activeTool === "select") {
       const container = containerRef.current;
       if (container) {
         const rect = container.getBoundingClientRect();
+        const clientX = 'touches' in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
         setItems(prev => prev.map(item => {
           if (item.id === draggingItem) {
-            return {
-              ...item,
-              x: e.clientX - rect.left - dragOffset.x,
-              y: e.clientY - rect.top - dragOffset.y,
-            };
+            return { ...item, x: clientX - rect.left - dragOffset.x, y: clientY - rect.top - dragOffset.y };
           }
           return item;
         }));
@@ -492,7 +494,7 @@ export const TacticsBoard = () => {
     handleCanvasMouseMove(e);
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
     if (draggingItem) {
       saveToHistory();
     }
@@ -711,11 +713,14 @@ export const TacticsBoard = () => {
         {/* Board */}
         <div
           ref={containerRef}
-          className="relative border-2 border-border rounded-lg overflow-hidden bg-[#1a1a1a]"
+          className="relative border-2 border-border rounded-lg overflow-hidden bg-[#1a1a1a] touch-none"
           style={{ cursor: activeTool === "draw" ? "crosshair" : activeTool === "erase" ? "not-allowed" : "default" }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
         >
           <canvas
             ref={canvasRef}
@@ -723,6 +728,7 @@ export const TacticsBoard = () => {
             height={500}
             className="w-full h-auto"
             onMouseDown={handleCanvasMouseDown}
+            onTouchStart={handleCanvasMouseDown}
           />
           
           {/* Overlaid items */}
@@ -735,13 +741,14 @@ export const TacticsBoard = () => {
               )}
               style={{ left: item.x - 16, top: item.y - 16 }}
               onMouseDown={(e) => handleItemMouseDown(e, item.id)}
+              onTouchStart={(e) => handleItemMouseDown(e, item.id)}
             >
               {item.type === "football" && <span className="text-3xl">⚽</span>}
               {item.type === "x" && (
-                <span className="text-3xl font-bold text-red-500">X</span>
+                <span className="text-3xl font-bold text-destructive">X</span>
               )}
               {item.type === "o" && (
-                <div className="w-8 h-8 rounded-full border-4 border-blue-500" />
+                <div className="w-8 h-8 rounded-full border-4 border-primary" />
               )}
             </div>
           ))}

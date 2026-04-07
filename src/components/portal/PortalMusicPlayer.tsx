@@ -29,9 +29,27 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
   const volume = useRef(0.35);
   const hasAutoPlayed = useRef(false);
   const failedUrls = useRef<Set<string>>(new Set());
+  const shuffledOrder = useRef<number[]>([]);
 
   const validTracks = tracks.filter(t => t.url && !failedUrls.current.has(t.url));
   const currentTrack = validTracks[currentIndex % validTracks.length] || null;
+
+  // Generate a shuffled play order
+  const getShuffledOrder = useCallback((length: number) => {
+    const indices = Array.from({ length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, []);
+
+  // Initialise shuffle order when tracks change
+  useEffect(() => {
+    if (validTracks.length > 0) {
+      shuffledOrder.current = getShuffledOrder(validTracks.length);
+    }
+  }, [validTracks.length, getShuffledOrder]);
 
   // Flash the NFSU2 HUD
   const flashHUD = useCallback(() => {
@@ -70,10 +88,19 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
     });
   }, [validTracks, flashHUD]);
 
-  // Skip to next
+  // Skip to next (shuffle mode)
   const handleSkip = useCallback(() => {
     if (validTracks.length === 0) return;
-    const next = (currentIndex + 1) % validTracks.length;
+    // Find current position in shuffle order and advance
+    const shufflePos = shuffledOrder.current.indexOf(currentIndex);
+    let nextShufflePos = shufflePos + 1;
+    if (nextShufflePos >= shuffledOrder.current.length) {
+      // Reshuffle when we've played all tracks
+      shuffledOrder.current = Array.from({ length: validTracks.length }, (_, i) => i)
+        .sort(() => Math.random() - 0.5);
+      nextShufflePos = 0;
+    }
+    const next = shuffledOrder.current[nextShufflePos] ?? 0;
     playTrack(next);
   }, [currentIndex, validTracks.length, playTrack]);
 
@@ -125,9 +152,10 @@ export const PortalMusicPlayer = ({ tracks, enabled }: PortalMusicPlayerProps) =
       audioRef.current.preload = "auto";
     }
 
-    // Small delay to let portal render, then autoplay
+    // Start on a random track (shuffle mode)
     const timer = setTimeout(() => {
-      playTrack(0);
+      const startIndex = Math.floor(Math.random() * validTracks.length);
+      playTrack(startIndex);
     }, 1500);
 
     return () => clearTimeout(timer);
