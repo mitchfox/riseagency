@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { METRIC_CATEGORIES } from "./ComparisonPlayerData";
+import { METRIC_CATEGORIES, GK_METRIC_CATEGORIES, getMetricCategoriesForPosition } from "./ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
