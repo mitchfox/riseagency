@@ -42,17 +42,17 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       const [actionsRes, scoresRes] = await Promise.all([
         supabase
           .from("performance_report_actions")
-          .select("id, action_type, action_score, minute, video_url, display_order")
+          .select("id, action_type, action_score, minute, video_url, action_number")
           .eq("analysis_id", analysisId)
           .not("video_url", "is", null)
-          .order("display_order", { ascending: true }),
+          .order("action_number", { ascending: true }),
         supabase
-          .from("r90_action_scores")
-          .select("id, action_type, description, score")
-          .order("action_type"),
+          .from("r90_ratings")
+          .select("id, category, title, score")
+          .order("category"),
       ]);
-      setActions((actionsRes.data || []) as Action[]);
-      setR90Scores((scoresRes.data || []) as R90Score[]);
+      setActions((actionsRes.data || []) as unknown as Action[]);
+      setR90Scores((scoresRes.data || []) as unknown as R90Score[]);
       setLoading(false);
     };
     fetchData();
