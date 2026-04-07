@@ -94,7 +94,8 @@ function smartSortActions(actions: Action[]): Action[] {
 
   // Now sort clusters: first by classification priority (offensive, defensive, other),
   // then by action type within the same classification, but keep cluster order for time-close actions
-  const classifyCluster = (cluster: Action[]): "offensive" | "defensive" | "other" => {
+  type ActionWithTime = Action & { seconds: number };
+  const classifyCluster = (cluster: ActionWithTime[]): "offensive" | "defensive" | "other" => {
     const classes = cluster.map(a => classifyAction(a.action_type));
     if (classes.includes("offensive")) return "offensive";
     if (classes.includes("defensive")) return "defensive";
@@ -103,12 +104,9 @@ function smartSortActions(actions: Action[]): Action[] {
 
   const classPriority = { offensive: 0, defensive: 1, other: 2 };
 
-  // For single-action clusters, group by action type
-  // For multi-action clusters (time-close), keep them together
-  const singleClusters = clusters.filter(c => c.length === 1).map(c => c[0]);
-  const multiClusters = clusters.filter(c => c.length > 1);
+  const singleClusters: ActionWithTime[] = clusters.filter(c => c.length === 1).map(c => c[0]);
+  const multiClusters: ActionWithTime[][] = clusters.filter(c => c.length > 1);
 
-  // Sort singles by class then action type
   singleClusters.sort((a, b) => {
     const ca = classifyAction(a.action_type);
     const cb = classifyAction(b.action_type);
@@ -118,7 +116,6 @@ function smartSortActions(actions: Action[]): Action[] {
     return a.seconds - b.seconds;
   });
 
-  // Sort multi-clusters by their class priority then by earliest time
   multiClusters.sort((a, b) => {
     const ca = classifyCluster(a);
     const cb = classifyCluster(b);
@@ -126,8 +123,6 @@ function smartSortActions(actions: Action[]): Action[] {
     return a[0].seconds - b[0].seconds;
   });
 
-  // Merge: interleave single clusters grouped by type, inserting multi-clusters at appropriate positions
-  // Simple approach: build type groups from singles, then insert multi-clusters by their earliest time
   const result: Action[] = [];
 
   // Group singles by action type, maintaining sort order
