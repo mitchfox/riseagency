@@ -62,9 +62,10 @@ interface FixtureStatsEditorProps {
   actions?: PerformanceActionForAI[];
   previousFixtureStats?: Record<string, number>;
   onAddToMatchStats?: (fixtureKey: string, label: string, value: number) => void;
+  playerPosition?: string;
 }
 
-export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats, onAddToMatchStats }: FixtureStatsEditorProps) => {
+export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats, onAddToMatchStats, playerPosition }: FixtureStatsEditorProps) => {
   const [activeCategory, setActiveCategory] = useState("Shooting");
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiLoading, setAiLoading] = useState(false);
