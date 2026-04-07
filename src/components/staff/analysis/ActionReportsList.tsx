@@ -472,6 +472,16 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           onClose={() => setClipPlayerReport(null)}
         />
       )}
+
+      {/* Score Edit Mode */}
+      {scoreEditReport && (
+        <ScoreEditMode
+          analysisId={scoreEditReport.id}
+          playerName={scoreEditReport.player_name || "Unknown"}
+          onClose={() => setScoreEditReport(null)}
+          onSave={() => fetchReports()}
+        />
+      )}
     </div>
   );
 };
