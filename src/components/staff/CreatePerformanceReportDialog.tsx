@@ -2139,6 +2139,16 @@ export const CreatePerformanceReportDialog = ({
             minutesPlayed={minutesPlayed}
           />
 
+          {/* Score Edit Mode */}
+          {scoreEditOpen && analysisId && (
+            <ScoreEditMode
+              analysisId={analysisId}
+              playerName={playerName}
+              onClose={() => setScoreEditOpen(false)}
+              onSave={() => fetchExistingData()}
+            />
+          )}
+
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
