@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search, ScatterChart } from "lucide-react";
-import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { METRIC_CATEGORIES, ALL_METRICS, getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
 import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
 import { ScatterComparisonChart } from "@/components/portal/ScatterComparisonChart";
