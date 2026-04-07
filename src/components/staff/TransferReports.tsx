@@ -207,12 +207,7 @@ export const TransferReports = () => {
     else { toast.success('Deleted'); fetchReports(); }
   };
 
-  const toggleStatus = async (report: TransferReport) => {
-    const newStatus = report.status === 'published' ? 'draft' : 'published';
-    const { error } = await supabase.from('transfer_reports').update({ status: newStatus }).eq('id', report.id);
-    if (error) toast.error('Failed to update status');
-    else { toast.success(`Report ${newStatus === 'published' ? 'published' : 'unpublished'}`); fetchReports(); }
-  };
+  // Reports are always live — no publish/unpublish needed
 
   const copyLink = (slug: string) => {
     const url = `${window.location.origin}/transfer-report/${slug}`;
