@@ -99,6 +99,7 @@ import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { MusicStudio } from "@/components/staff/MusicStudio";
 import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
 import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
+import { UsageSection } from "@/components/staff/UsageSection";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { StaffMusicPlayer } from "@/components/staff/StaffMusicPlayer";
