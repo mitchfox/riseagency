@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { X, Search, Maximize, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Search, Maximize, ChevronLeft, ChevronRight, Crosshair, Move } from "lucide-react";
 import { toast } from "sonner";
 import { XGPitchMap } from "@/components/staff/XGPitchMap";
 import { BoxZoneMap } from "@/components/staff/BoxZoneMap";
+import { useVideoPreloader } from "@/hooks/useVideoPreloader";
+import { parseMinuteToSeconds } from "@/lib/actionSorting";
 
 interface ScoreEditModeProps {
   analysisId: string;
@@ -28,6 +30,127 @@ interface R90Score {
   category: string;
   title: string;
   score: string;
+}
+
+const OFFENSIVE_TYPES = new Set([
+  "shot", "shots", "goal", "goals", "assist", "assists",
+  "dribble", "dribbles", "take on", "take ons", "take-on",
+  "cross", "crosses", "crossing", "through ball", "through balls",
+  "key pass", "key passes", "chance created", "chances created",
+  "pass into final third", "progressive pass", "progressive passes",
+  "attacking cross", "attacking crosses",
+]);
+
+const DEFENSIVE_TYPES = new Set([
+  "tackle", "tackles", "interception", "interceptions",
+  "clearance", "clearances", "block", "blocks", "blocked",
+  "recovery", "recoveries", "ball recovery",
+  "applied pressure", "applied pressures", "pressure",
+  "aerial duel", "aerial duels", "ground duel", "ground duels",
+  "defensive action", "defensive actions",
+]);
+
+function classifyAction(type: string): "offensive" | "defensive" | "other" {
+  const lower = type.toLowerCase().trim();
+  if (OFFENSIVE_TYPES.has(lower)) return "offensive";
+  if (DEFENSIVE_TYPES.has(lower)) return "defensive";
+  return "other";
+}
+
+function smartSortActions(actions: Action[]): Action[] {
+  if (actions.length === 0) return actions;
+
+  // Check if all actions have action_type
+  const allHaveType = actions.every(a => a.action_type && a.action_type.trim() !== "");
+  if (!allHaveType) return actions;
+
+  // First, group actions that are within 10 seconds of each other
+  const withTime = actions.map(a => ({
+    ...a,
+    seconds: parseMinuteToSeconds(a.minute),
+  }));
+
+  // Sort by time first to find clusters
+  const byTime = [...withTime].sort((a, b) => a.seconds - b.seconds);
+
+  // Build clusters of actions within 10s of each other
+  type ActionWithTime = Action & { seconds: number };
+  const clusters: ActionWithTime[][] = [];
+  let currentCluster: typeof byTime = [];
+
+  for (const action of byTime) {
+    if (currentCluster.length === 0) {
+      currentCluster.push(action);
+    } else {
+      const lastTime = currentCluster[currentCluster.length - 1].seconds;
+      if (action.seconds !== Infinity && lastTime !== Infinity && Math.abs(action.seconds - lastTime) <= 10) {
+        currentCluster.push(action);
+      } else {
+        clusters.push(currentCluster);
+        currentCluster = [action];
+      }
+    }
+  }
+  if (currentCluster.length > 0) clusters.push(currentCluster);
+
+  // Now sort clusters: first by classification priority (offensive, defensive, other),
+  // then by action type within the same classification, but keep cluster order for time-close actions
+  const classifyCluster = (cluster: ActionWithTime[]): "offensive" | "defensive" | "other" => {
+    const classes = cluster.map(a => classifyAction(a.action_type));
+    if (classes.includes("offensive")) return "offensive";
+    if (classes.includes("defensive")) return "defensive";
+    return "other";
+  };
+
+  const classPriority = { offensive: 0, defensive: 1, other: 2 };
+
+  const singleClusters: ActionWithTime[] = clusters.filter(c => c.length === 1).map(c => c[0]);
+  const multiClusters: ActionWithTime[][] = clusters.filter(c => c.length > 1);
+
+  singleClusters.sort((a, b) => {
+    const ca = classifyAction(a.action_type);
+    const cb = classifyAction(b.action_type);
+    if (classPriority[ca] !== classPriority[cb]) return classPriority[ca] - classPriority[cb];
+    const typeCompare = a.action_type.localeCompare(b.action_type);
+    if (typeCompare !== 0) return typeCompare;
+    return a.seconds - b.seconds;
+  });
+
+  multiClusters.sort((a, b) => {
+    const ca = classifyCluster(a);
+    const cb = classifyCluster(b);
+    if (classPriority[ca] !== classPriority[cb]) return classPriority[ca] - classPriority[cb];
+    return a[0].seconds - b[0].seconds;
+  });
+
+  const result: Action[] = [];
+
+  // Group singles by action type, maintaining sort order
+  const typeGroups: Map<string, (typeof withTime)[number][]> = new Map();
+  for (const a of singleClusters) {
+    const key = a.action_type;
+    if (!typeGroups.has(key)) typeGroups.set(key, []);
+    typeGroups.get(key)!.push(a);
+  }
+
+  // Build ordered list: type groups sorted by classification
+  const orderedTypes = [...typeGroups.entries()].sort((a, b) => {
+    const ca = classifyAction(a[0]);
+    const cb = classifyAction(b[0]);
+    if (classPriority[ca] !== classPriority[cb]) return classPriority[ca] - classPriority[cb];
+    return a[0].localeCompare(b[0]);
+  });
+
+  for (const [, group] of orderedTypes) {
+    result.push(...group);
+  }
+
+  // Append multi-clusters (time-close groups)
+  for (const cluster of multiClusters) {
+    result.push(...cluster);
+  }
+
+  return result;
 }
 
 export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: ScoreEditModeProps) => {
@@ -58,12 +181,27 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           .select("id, category, title, score")
           .order("category"),
       ]);
-      setActions((actionsRes.data || []) as unknown as Action[]);
+      const rawActions = (actionsRes.data || []) as unknown as Action[];
+      setActions(smartSortActions(rawActions));
       setR90Scores((scoresRes.data || []) as unknown as R90Score[]);
       setLoading(false);
     };
     fetchData();
   }, [analysisId]);
+
+  // Preload next page videos
+  const allVideoUrls = useMemo(() => actions.map(a => a.video_url).filter(Boolean), [actions]);
+  const { preloadNextVideos } = useVideoPreloader({
+    videos: allVideoUrls,
+    preloadCount: 4,
+    enabled: true,
+  });
+
+  // Trigger preload when page changes
+  useEffect(() => {
+    const currentLastIndex = (pageIndex + 1) * 4 - 1;
+    preloadNextVideos(currentLastIndex);
+  }, [pageIndex, preloadNextVideos]);
 
   const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
   const totalPages = Math.ceil(actions.length / 4);
@@ -78,10 +216,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
@@ -166,59 +302,34 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     return "bg-green-700";
   };
 
-  const getActionLabelPosition = (i: number) => {
+  // Fullscreen button: outer corners
+  const getFullscreenPosition = (i: number) => {
     switch (i) {
-      case 0: return "top-2 left-2";
-      case 1: return "top-2 right-2";
-      case 2: return "bottom-2 left-2";
-      case 3: return "bottom-2 right-2";
-      default: return "top-2 left-2";
+      case 0: return "top-1 left-1";
+      case 1: return "top-1 right-1";
+      case 2: return "bottom-1 left-1";
+      case 3: return "bottom-1 right-1";
+      default: return "top-1 left-1";
     }
   };
 
-  const getControlGroupPosition = (i: number) => {
+  // Score input: inner corners (near centre)
+  const getScorePosition = (i: number) => {
     switch (i) {
-      case 0: return "bottom-14 right-8";
-      case 1: return "bottom-14 left-8";
-      case 2: return "top-14 right-8";
-      case 3: return "top-14 left-8";
-      default: return "bottom-14 right-8";
+      case 0: return "bottom-1 right-1";
+      case 1: return "bottom-1 left-1";
+      case 2: return "top-1 right-1";
+      case 3: return "top-1 left-1";
+      default: return "bottom-1 right-1";
     }
-  };
-
-  const getControlGroupLayout = (i: number) => {
-    return i === 0 || i === 2 ? "flex-row" : "flex-row-reverse";
   };
 
   const currentFocusedAction = pageActions.find((action) => action.id === activeActionId) || pageActions[0];
 
   const overlayContent = (
     <div className="fixed inset-0 z-[1000] bg-background text-foreground">
-      <div className="absolute top-3 left-4 z-40 flex items-center gap-2">
-        <button
-          onClick={() => {
-            onSave?.();
-            onClose();
-          }}
-           className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-background/90 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors hover:bg-muted px-[12px] my-[600px] mx-[3px]"
-        >
-          <X className="h-3.5 w-3.5" /> Close
-        </button>
-        <button
-          onClick={() => setSidePanel((current) => current === "shot" ? null : "shot")}
-          className={`h-9 rounded-md border px-3 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors ${sidePanel === "shot" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background/90 hover:bg-muted"}`}
-        >
-          Shot Map
-        </button>
-        <button
-          onClick={() => setSidePanel((current) => current === "movement" ? null : "movement")}
-          className={`h-9 rounded-md border px-3 text-xs font-medium shadow-lg backdrop-blur-sm transition-colors ${sidePanel === "movement" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background/90 hover:bg-muted"}`}
-        >
-          Movement
-        </button>
-      </div>
-
-      <div className="absolute top-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 px-4">
+      {/* Top centre: progress bar + update button */}
+      <div className="absolute top-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
         <div className="flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1.5 shadow-lg backdrop-blur-sm">
           <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
             <div
@@ -229,11 +340,19 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           <span className="text-xs font-medium">{completionPct}%</span>
           <span className="text-[10px] text-muted-foreground">Page {pageIndex + 1}/{totalPages}</span>
         </div>
+        <button
+          onClick={handleUpdateReport}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground shadow-lg transition-opacity hover:opacity-90"
+          title="Update report"
+        >
+          U
+        </button>
       </div>
 
+      {/* Side panel for Shot Map / Movement - z-50 to be above search */}
       {sidePanel && (
         <div
-          className={`absolute ${panelSide === "left" ? "left-4" : "right-4"} top-16 bottom-4 z-30 w-[min(46vw,760px)] min-w-[420px] max-w-[760px]`}
+          className={`absolute ${panelSide === "left" ? "left-2" : "right-2"} top-12 bottom-12 z-50 w-[min(46vw,760px)] min-w-[380px] max-w-[760px]`}
         >
           <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background/95 shadow-2xl backdrop-blur-md">
             <button
@@ -246,7 +365,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div>
                 <p className="text-sm font-semibold">{sidePanel === "shot" ? "Shot Map" : "Movement Scores"}</p>
-                <p className="text-[11px] text-muted-foreground">Select a grid score, then tap the action score box you want to fill.</p>
+                <p className="text-[11px] text-muted-foreground">Select a grid score, then tap the action score box to fill.</p>
               </div>
               <button
                 onClick={() => setSidePanel(null)}
@@ -255,13 +374,11 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 Close
               </button>
             </div>
-            <div className="flex-1 overflow-hidden p-3">
+            <div className="flex-1 overflow-auto p-3">
               {sidePanel === "shot" ? (
-                <div className="h-full overflow-auto">
-                  <XGPitchMap compact onScoreSelect={queueSelectedScore} />
-                </div>
+                <XGPitchMap compact onScoreSelect={queueSelectedScore} />
               ) : (
-                <div className="h-full overflow-auto rounded-lg border border-border bg-card/40">
+                <div className="rounded-lg border border-border bg-card/40 min-h-[300px]">
                   <BoxZoneMap
                     actions={pageActions}
                     actionType={currentFocusedAction?.action_type}
@@ -274,6 +391,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
         </div>
       )}
 
+      {/* Video grid */}
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-border/40">
         {pageActions.map((action, i) => (
           <div key={action.id} className="relative overflow-hidden bg-black">
@@ -287,27 +405,26 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               className="absolute inset-0 h-full w-full object-contain"
             />
 
-            <div className={`absolute ${getActionLabelPosition(i)} z-10`}>
-              <span className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
-                #{pageIndex * 4 + i + 1} {action.action_type}
-              </span>
-            </div>
-
-            <div className={`absolute ${getControlGroupPosition(i)} z-20 flex items-center gap-2 ${getControlGroupLayout(i)}`}>
+            {/* Fullscreen button: outer corner */}
+            <div className={`absolute ${getFullscreenPosition(i)} z-20`}>
               <button
                 onClick={() => handleFullscreen(i)}
-                 className="h-10 w-10 rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted flex items-center justify-center mx-0 my-0"
+                className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
                 title="Fullscreen"
               >
                 <Maximize className="h-4 w-4" />
               </button>
+            </div>
+
+            {/* Score input: inner corner */}
+            <div className={`absolute ${getScorePosition(i)} z-20`}>
               <Input
                 value={action.action_score || ""}
                 onChange={(e) => void handleScoreChange(action.id, e.target.value)}
                 onFocus={() => {
                   setActiveActionId(action.id);
                   if (!pendingScore && !action.action_score) {
-                    void handleScoreChange(action.id, "0");
+                    void handleScoreChange(action.id, "0.");
                   }
                 }}
                 onBlur={() => {
@@ -321,15 +438,20 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                   }
                 }}
                 placeholder="Score"
-                className={`h-10 w-24 rounded-md bg-background/88 px-2 text-center text-sm font-semibold text-foreground shadow-lg backdrop-blur-sm ${pendingScore ? "border-2 border-primary ring-2 ring-primary/40" : "border-border"}`}
+                className={`h-9 w-28 rounded-md bg-background/90 px-2 text-center text-sm font-semibold text-foreground shadow-lg backdrop-blur-sm ${
+                  pendingScore
+                    ? "border-2 border-primary ring-2 ring-primary/40"
+                    : "border border-border"
+                }`}
               />
             </div>
           </div>
         ))}
 
+        {/* Search R90 scores - z-30, behind panels */}
         <div
           ref={searchRef}
-          className="absolute left-1/2 top-1/2 z-30 w-[min(44rem,92vw)] -translate-x-1/2 -translate-y-1/2"
+          className="absolute left-1/2 top-1/2 z-30 w-[min(48rem,94vw)] -translate-x-1/2 -translate-y-1/2"
         >
           <div className="relative flex items-center gap-2">
             <div className="relative flex-1">
@@ -341,23 +463,16 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 className="h-11 border-border bg-background/95 pl-9 text-sm shadow-xl backdrop-blur-md"
               />
             </div>
-            <button
-              onClick={handleUpdateReport}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground shadow-lg transition-opacity hover:opacity-90"
-              title="Update report"
-            >
-              U
-            </button>
           </div>
 
           {pendingScore && (
-            <div className="mt-2 rounded-md border border-primary/40 bg-background/92 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur-sm">
-              Selected score <span className="font-bold text-primary">{pendingScore}</span> — click any score box to apply it.
+            <div className="mt-2 rounded-md border border-primary/40 bg-background/95 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur-sm">
+              Selected score <span className="font-bold text-primary">{pendingScore}</span> — click any score box to apply.
             </div>
           )}
 
           {searchResults.length > 0 && (
-            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border bg-background/96 shadow-2xl backdrop-blur-md">
+            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border bg-background/95 shadow-2xl backdrop-blur-md">
               {searchResults.map((s) => (
                 <button
                   key={s.id}
@@ -376,10 +491,53 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
         </div>
       </div>
 
+      {/* Bottom centre: action labels + tool buttons */}
+      <div className="absolute bottom-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
+        {pageActions.map((action, i) => (
+          <span key={action.id} className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
+            #{pageIndex * 4 + i + 1} {action.action_type}
+          </span>
+        ))}
+        <div className="mx-1 h-5 w-px bg-border" />
+        <button
+          onClick={() => {
+            onSave?.();
+            onClose();
+          }}
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
+          title="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setSidePanel((current) => current === "shot" ? null : "shot")}
+          className={`flex h-9 w-9 items-center justify-center rounded-md border shadow-lg backdrop-blur-sm transition-colors ${
+            sidePanel === "shot"
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border bg-background/90 text-foreground hover:bg-muted"
+          }`}
+          title="Shot Map"
+        >
+          <Crosshair className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setSidePanel((current) => current === "movement" ? null : "movement")}
+          className={`flex h-9 w-9 items-center justify-center rounded-md border shadow-lg backdrop-blur-sm transition-colors ${
+            sidePanel === "movement"
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border bg-background/90 text-foreground hover:bg-muted"
+          }`}
+          title="Movement"
+        >
+          <Move className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Prev/Next page buttons */}
       {pageIndex > 0 && (
         <button
           onClick={() => setPageIndex(p => p - 1)}
-          className="absolute left-3 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/82 text-foreground shadow-xl backdrop-blur-sm transition-colors hover:bg-muted"
+          className="absolute left-3 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 text-foreground shadow-xl backdrop-blur-sm transition-colors hover:bg-muted"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -387,7 +545,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       {pageIndex < totalPages - 1 && (
         <button
           onClick={() => setPageIndex(p => p + 1)}
-          className="absolute right-3 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/82 text-foreground shadow-xl backdrop-blur-sm transition-colors hover:bg-muted"
+          className="absolute right-3 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/80 text-foreground shadow-xl backdrop-blur-sm transition-colors hover:bg-muted"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
