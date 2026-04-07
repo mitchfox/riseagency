@@ -257,23 +257,47 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Highlights" />
-            <div className="rounded-xl border border-[#C6A332]/20 overflow-hidden bg-black">
+            <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black">
               {highlights[currentVideoIndex]?.videoUrl ? (
-                <video
-                  key={highlights[currentVideoIndex].videoUrl}
-                  src={highlights[currentVideoIndex].videoUrl}
-                  className="w-full aspect-video object-contain"
-                  controls playsInline autoPlay
-                  onEnded={() => setCurrentVideoIndex((currentVideoIndex + 1) % highlights.length)}
-                />
+                <div className="relative group">
+                  <video
+                    key={highlights[currentVideoIndex].videoUrl}
+                    src={highlights[currentVideoIndex].videoUrl}
+                    className="w-full aspect-video object-contain bg-black"
+                    controls playsInline autoPlay
+                    onEnded={() => setCurrentVideoIndex((currentVideoIndex + 1) % highlights.length)}
+                  />
+                  {highlights.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentVideoIndex(Math.max(0, currentVideoIndex - 1))}
+                        disabled={currentVideoIndex === 0}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentVideoIndex(Math.min(highlights.length - 1, currentVideoIndex + 1))}
+                        disabled={currentVideoIndex === highlights.length - 1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                      <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
+                        <span className="text-lg font-bebas text-[#C6A332]">{currentVideoIndex + 1}</span>
+                        <span className="text-xs text-white/40 ml-1">/ {highlights.length}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <div className="aspect-video flex items-center justify-center text-white/40">No video available</div>
               )}
               {highlights.length > 1 && (
-                <div className="flex gap-1 p-2 bg-black/80 overflow-x-auto">
+                <div className="flex gap-1 p-2 bg-black/90 border-t border-[#C6A332]/20 overflow-x-auto">
                   {highlights.map((h, i) => (
                     <button key={i} onClick={() => setCurrentVideoIndex(i)}
-                      className={`flex-shrink-0 px-3 py-1 rounded text-xs font-bebas uppercase tracking-wider transition-all ${
+                      className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-bebas uppercase tracking-wider transition-all ${
                         i === currentVideoIndex ? 'bg-[#C6A332]/20 text-[#C6A332] border border-[#C6A332]/40' : 'text-white/50 hover:text-white/80'
                       }`}>
                       {h.name || `Clip ${i + 1}`}
