@@ -90,6 +90,7 @@ interface Contact {
   longitude: number | null;
   image_url: string | null;
   notes: string | null;
+  is_favourite?: boolean;
 }
 
 interface ClubRating {
