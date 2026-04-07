@@ -807,6 +807,8 @@ const Staff = () => {
           sections: [
 { id: 'clubnetwork', title: 'Network', icon: Network },
             { id: 'playerlist', title: 'Player List', icon: Users },
+            { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
+            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
             { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
