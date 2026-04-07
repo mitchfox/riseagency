@@ -542,6 +542,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     contact_phone: "",
     notes: "",
     priority: "medium" as 'low' | 'medium' | 'high',
+    probability_weight: "0",
+    projected_revenue: "0",
+    revenue_currency: "GBP",
   });
 
   const sensors = useSensors(
