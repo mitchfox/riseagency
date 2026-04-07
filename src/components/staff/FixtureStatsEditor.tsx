@@ -277,8 +277,8 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
       )}
 
       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-        <TabsList className="grid grid-cols-4 gap-1">
-          {METRIC_CATEGORIES.map(cat => (
+        <TabsList className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${getMetricCategoriesForPosition(playerPosition).length}, 1fr)` }}>
+          {getMetricCategoriesForPosition(playerPosition).map(cat => (
             <TabsTrigger key={cat.category} value={cat.category} className="text-xs">
               {cat.category}
             </TabsTrigger>
