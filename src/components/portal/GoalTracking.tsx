@@ -48,14 +48,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
 
   const currentAverages = useMemo(() => {
     const windowAnalyses = fixtureAnalyses.slice(0, formWindow);
-    const result: Record<string, number | null> = {};
-    ALL_METRICS.forEach(m => {
-      const vals = windowAnalyses
-        .map(a => a.fixture_stats?.[m.key])
-        .filter((v): v is number => v != null && !isNaN(v));
-      result[m.key] = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-    });
-    return result;
+    return computeAllStatAverages(windowAnalyses, ALL_METRICS);
   }, [fixtureAnalyses, formWindow]);
 
   const handleAddGoal = async () => {
