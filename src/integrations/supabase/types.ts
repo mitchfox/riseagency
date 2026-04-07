@@ -1302,6 +1302,69 @@ export type Database = {
           },
         ]
       }
+      corporation_tax_records: {
+        Row: {
+          accounting_period_end: string
+          accounting_period_start: string
+          allowable_adjustment: number | null
+          benefits_in_kind: number | null
+          contractor_fees: number | null
+          created_at: string
+          director_loan_balance: number | null
+          disallowable_portion: number | null
+          dividends: number | null
+          employer_ni: number | null
+          employer_pension: number | null
+          gross_salary: number | null
+          id: string
+          notes: string | null
+          role: string
+          service_type: string | null
+          staff_name: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_period_end?: string
+          accounting_period_start?: string
+          allowable_adjustment?: number | null
+          benefits_in_kind?: number | null
+          contractor_fees?: number | null
+          created_at?: string
+          director_loan_balance?: number | null
+          disallowable_portion?: number | null
+          dividends?: number | null
+          employer_ni?: number | null
+          employer_pension?: number | null
+          gross_salary?: number | null
+          id?: string
+          notes?: string | null
+          role?: string
+          service_type?: string | null
+          staff_name: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_period_end?: string
+          accounting_period_start?: string
+          allowable_adjustment?: number | null
+          benefits_in_kind?: number | null
+          contractor_fees?: number | null
+          created_at?: string
+          director_loan_balance?: number | null
+          disallowable_portion?: number | null
+          dividends?: number | null
+          employer_ni?: number | null
+          employer_pension?: number | null
+          gross_salary?: number | null
+          id?: string
+          notes?: string | null
+          role?: string
+          service_type?: string | null
+          staff_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_marketing_resources: {
         Row: {
           color: string | null
