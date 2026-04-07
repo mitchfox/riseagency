@@ -366,6 +366,7 @@ export const ComparisonPlayerData = () => {
     setAiDialogOpen(false);
     setAiLoading(false);
     fetchPlayers();
+  };
 
   const seasons = [...new Set(players.map(p => p.season))].sort().reverse();
   const filtered = players.filter(p => {
