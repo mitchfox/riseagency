@@ -42,6 +42,9 @@ interface Prospect {
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
   date_of_birth: string | null;
+  probability_weight: number | null;
+  projected_revenue: number | null;
+  revenue_currency: string | null;
   _source: 'prospects' | 'players';
 }
 
