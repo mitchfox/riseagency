@@ -147,7 +147,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
       ) : (
         <div className="space-y-4">
           {goals.map(goal => {
-            const metric = ALL_METRICS.find(m => m.key === goal.metric_key);
+            const metric = activeMetrics.find(m => m.key === goal.metric_key);
             const current = currentAverages[goal.metric_key];
             const isPercentage = goal.metric_key.endsWith('_pct');
             const progress = current != null && goal.target_value > 0
