@@ -230,8 +230,11 @@ export const TransferReports = () => {
                 <Button variant="ghost" size="icon" onClick={() => toggleStatus(report)} title={report.status === 'published' ? 'Unpublish' : 'Publish'}>
                   <ExternalLink className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(report)}>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(report)} title="Quick Edit">
                   <Edit className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setEditorReportId(report.id)} title="Full Editor">
+                  <Eye className="w-4 h-4 text-primary" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(report.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4" />
