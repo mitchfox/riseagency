@@ -99,9 +99,13 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
       section_order: sectionOrder,
       custom_notes: customNotes || null,
       title,
+      status: 'published',
     }).eq('id', reportId);
     if (error) toast.error('Failed to save');
-    else toast.success('Report updated');
+    else {
+      setReport((prev: any) => prev ? { ...prev, status: 'published' } : prev);
+      toast.success('Report updated');
+    }
     setSaving(false);
   };
 

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search, ScatterChart } from "lucide-react";
-import { METRIC_CATEGORIES, ALL_METRICS, getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
+import { getMetricCategoriesForPosition, getMetricsForPosition, getPositionVariants, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
 import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
 import { ScatterComparisonChart } from "@/components/portal/ScatterComparisonChart";
@@ -67,6 +67,12 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
 
   const playerName = playerData?.name || 'You';
 
+  useEffect(() => {
+    if (positionMetrics.length > 0 && !positionMetrics.some(metric => metric.key === selectedMetricKey)) {
+      setSelectedMetricKey(positionMetrics[0].key);
+    }
+  }, [positionMetrics, selectedMetricKey]);
+
   // Fetch fixture analyses with fixture_stats for the portal player
   useEffect(() => {
     const fetchFixtureData = async () => {
@@ -90,12 +96,21 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
 
   useEffect(() => {
     const fetchComps = async () => {
-      const { data } = await supabase
-        .from('comparison_players')
-        .select('*')
-        .eq('position', playerPosition)
-        .order('name');
-      if (data) setComparisonPlayers(data.map(p => ({ ...p, metrics: (p.metrics || {}) as Record<string, number> })));
+      const positionVariants = getPositionVariants(playerPosition);
+      let query = supabase.from('comparison_players').select('*').order('name');
+
+      if (positionVariants.length > 0) {
+        query = query.in('position', positionVariants);
+      }
+
+      const { data } = await query;
+      if (data) {
+        const filteredPlayers = data.filter((player) => {
+          if (isGoalkeeperPosition(playerPosition)) return isGoalkeeperPosition(player.position);
+          return player.position === playerPosition;
+        });
+        setComparisonPlayers(filteredPlayers.map(p => ({ ...p, metrics: (p.metrics || {}) as Record<string, number> })));
+      }
     };
     if (playerPosition) fetchComps();
   }, [playerPosition]);

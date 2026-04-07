@@ -157,6 +157,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const [actions, setActions] = useState<Action[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pendingWriteCount, setPendingWriteCount] = useState(0);
   const [r90Scores, setR90Scores] = useState<R90Score[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<R90Score[]>([]);
@@ -166,6 +167,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const [panelSide, setPanelSide] = useState<"left" | "right">("left");
   const searchRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const lastAutoAdvanceSignatureRef = useRef("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -230,25 +232,45 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     }
   }, [activeActionId, pageActions]);
 
+  useEffect(() => {
+    lastAutoAdvanceSignatureRef.current = "";
+  }, [pageIndex]);
+
   // Auto-advance when all 4 on screen are scored
   useEffect(() => {
-    if (!activeActionId && pageActions.length > 0 && pageActions.every(a => a.action_score && a.action_score !== "")) {
-      const timer = setTimeout(() => {
-        if (pageIndex < totalPages - 1) {
-          setPageIndex(p => p + 1);
-          handleUpdateReport();
-        }
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [activeActionId, pageActions, pageIndex, totalPages, handleUpdateReport]);
+    if (activeActionId || pendingWriteCount > 0 || pageActions.length === 0) return;
+    if (!pageActions.every(a => a.action_score && a.action_score !== "")) return;
+
+    const signature = pageActions.map(action => `${action.id}:${action.action_score}`).join('|');
+    if (lastAutoAdvanceSignatureRef.current === signature) return;
+
+    lastAutoAdvanceSignatureRef.current = signature;
+    const timer = setTimeout(() => {
+      toast.success(pageIndex < totalPages - 1 ? "Report autosaved, moving to next 4 clips" : "Report autosaved");
+      if (pageIndex < totalPages - 1) {
+        setPageIndex(p => p + 1);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [activeActionId, pageActions, pageIndex, pendingWriteCount, totalPages]);
+
+  const prefixNegativeScore = useCallback((value: string) => {
+    const stripped = String(value || "").replace(/-/g, "");
+    return stripped ? `-${stripped}` : "-";
+  }, []);
 
   const handleScoreChange = useCallback(async (actionId: string, score: string) => {
     setActions(prev => prev.map(a => a.id === actionId ? { ...a, action_score: score } : a));
-    await supabase
+    setPendingWriteCount(count => count + 1);
+    const { error } = await supabase
       .from("performance_report_actions")
       .update({ action_score: score } as any)
       .eq("id", actionId);
+    if (error) {
+      toast.error("Failed to save action score");
+    }
+    setPendingWriteCount(count => Math.max(0, count - 1));
   }, []);
 
   const handleSearch = useCallback((query: string) => {
@@ -442,6 +464,12 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
               <Input
                 value={action.action_score || ""}
                 onChange={(e) => void handleScoreChange(action.id, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                    void handleScoreChange(action.id, prefixNegativeScore(action.action_score || ""));
+                  }
+                }}
                 onFocus={() => {
                   setActiveActionId(action.id);
                   if (!pendingScore && !action.action_score) {
