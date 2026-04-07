@@ -440,7 +440,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {METRIC_CATEGORIES.map(cat => (
+                        {positionCategories.map(cat => (
                           <div key={cat.category}>
                             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                             {cat.metrics.map(m => (
