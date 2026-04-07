@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
-import { Loader2, Play, ChevronDown, ChevronUp, TrendingUp, BarChart3, Award, Shield, FileText, User, Dumbbell, ChevronLeft, ChevronRight, Maximize } from "lucide-react";
+import { Loader2, Play, ChevronDown, ChevronUp, TrendingUp, BarChart3, Award, Shield, FileText, User, Dumbbell, ChevronLeft, ChevronRight } from "lucide-react";
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { METRIC_CATEGORIES, ALL_METRICS, GK_METRIC_CATEGORIES, ALL_GK_METRICS, getMetricCategoriesForPosition, getMetricsForPosition, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
