@@ -55,7 +55,10 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const [formWindow, setFormWindow] = useState<number>(5);
   const [subTab, setSubTab] = useState<string>("scatter");
   const [fixtureAnalyses, setFixtureAnalyses] = useState<Analysis[]>([]);
-  const [selectedMetricKey, setSelectedMetricKey] = useState<string>('goals_per90');
+  const playerPosition = playerData?.position || '';
+  const positionCategories = getMetricCategoriesForPosition(playerPosition);
+  const positionMetrics = getMetricsForPosition(playerPosition);
+  const [selectedMetricKey, setSelectedMetricKey] = useState<string>(positionMetrics[0]?.key || 'goals_per90');
   const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   const [showRequestDialog, setShowRequestDialog] = useState(false);
