@@ -210,10 +210,15 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
 
-  const handleUpdateReport = useCallback(() => {
+  const handleUpdateReport = useCallback(async () => {
+    // Save all current scores silently without leaving score edit
+    const updates = actions.filter(a => a.action_score).map(a =>
+      supabase.from("performance_report_actions").update({ action_score: a.action_score } as any).eq("id", a.id)
+    );
+    await Promise.all(updates);
     onSave?.();
-    toast.success("Report updated");
-  }, [onSave]);
+    toast.success("Report updated", { style: { zIndex: 100000 } });
+  }, [onSave, actions]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
