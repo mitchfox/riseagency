@@ -647,6 +647,38 @@ export const CreatePerformanceReportDialog = ({
     setDescriptionsByType(result.descriptionsByType);
   };
 
+  const normalizeClubName = (value: string) => value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\b(fc|afc|cf|sc|ac|sk|fk|club|football)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const deriveOpponentFromFixture = (fixture: { home_team: string; away_team: string }, clubName: string) => {
+    const homeTeam = fixture.home_team || '';
+    const awayTeam = fixture.away_team || '';
+    const homeLower = homeTeam.toLowerCase();
+    const awayLower = awayTeam.toLowerCase();
+    const normalizedClub = normalizeClubName(clubName || '');
+    const normalizedHome = normalizeClubName(homeTeam);
+    const normalizedAway = normalizeClubName(awayTeam);
+
+    const homeIsFor = homeLower === 'for' || homeLower.includes('for ');
+    const awayIsFor = awayLower === 'for' || awayLower.includes('for ');
+    if (homeIsFor) return awayTeam;
+    if (awayIsFor) return homeTeam;
+
+    if (normalizedClub) {
+      const homeMatches = normalizedHome === normalizedClub || normalizedHome.includes(normalizedClub) || normalizedClub.includes(normalizedHome);
+      const awayMatches = normalizedAway === normalizedClub || normalizedAway.includes(normalizedClub) || normalizedClub.includes(normalizedAway);
+
+      if (homeMatches && !awayMatches) return awayTeam;
+      if (awayMatches && !homeMatches) return homeTeam;
+    }
+
+    return homeTeam === clubName ? awayTeam : homeTeam;
+  };
+
   const fetchPlayerClub = async () => {
     try {
       const { data, error } = await supabase
@@ -659,19 +691,16 @@ export const CreatePerformanceReportDialog = ({
       setPlayerClub(data?.club || "");
       setPlayerPosition(data?.position || "");
       
-      // Fetch all stats for the add dialog
       const { data: allStatsData, error: allStatsError } = await supabase
         .from("performance_statistics")
         .select("id, stat_name, stat_key, description")
         .order("stat_name");
       
       if (!allStatsError && allStatsData) {
-        // Filter out per90 stats from manual selection
         const nonPer90Stats = allStatsData.filter(stat => !stat.stat_key.endsWith('_per90'));
         setAllStats(nonPer90Stats);
       }
       
-      // Fetch hidden stats for this player
       const { data: hiddenStats } = await supabase
         .from("player_hidden_stats")
         .select("stat_key")
@@ -680,7 +709,6 @@ export const CreatePerformanceReportDialog = ({
       const hiddenKeys = hiddenStats?.map(h => h.stat_key) || [];
       setHiddenStatKeys(hiddenKeys);
       
-      // Fetch available stats for this position
       if (data?.position) {
         const { data: stats, error: statsError } = await supabase
           .from("performance_statistics")
@@ -690,8 +718,6 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
-          // Only auto-select position stats in CREATE mode, not edit mode
-          // In edit mode, selectedStatKeys will be set by fetchExistingData
           if (!analysisId) {
             const nonPer90Keys = stats
               .filter(s => !s.stat_key.endsWith('_per90') && !hiddenKeys.includes(s.stat_key))
