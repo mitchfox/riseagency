@@ -66,7 +66,7 @@ interface FixtureStatsEditorProps {
 }
 
 export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previousFixtureStats, onAddToMatchStats, playerPosition }: FixtureStatsEditorProps) => {
-  const [activeCategory, setActiveCategory] = useState("Shooting");
+  const [activeCategory, setActiveCategory] = useState(() => getMetricCategoriesForPosition(playerPosition)[0]?.category || "Shooting");
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiLoading, setAiLoading] = useState(false);
   const [urlInput, setUrlInput] = useState("");
