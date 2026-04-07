@@ -50,6 +50,7 @@ export const TransferReports = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TransferReport | null>(null);
+  const [editorReportId, setEditorReportId] = useState<string | null>(null);
 
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const [title, setTitle] = useState('');
