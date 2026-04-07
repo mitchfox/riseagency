@@ -108,7 +108,8 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
 
     setAiLoading(true);
     try {
-      const allMetrics = METRIC_CATEGORIES.flatMap(cat =>
+      const categories = getMetricCategoriesForPosition(playerPosition);
+      const allMetrics = categories.flatMap(cat =>
         cat.metrics.map(m => ({ key: m.key, label: m.label }))
       );
 
