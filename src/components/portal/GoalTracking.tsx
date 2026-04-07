@@ -112,7 +112,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
             <SelectValue placeholder="Select metric..." />
           </SelectTrigger>
           <SelectContent>
-            {METRIC_CATEGORIES.map(cat => (
+            {activeCategories.map(cat => (
               <div key={cat.category}>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                 {cat.metrics.filter(m => !usedMetrics.includes(m.key)).map(m => (
