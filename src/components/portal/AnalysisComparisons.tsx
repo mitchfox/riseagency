@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Users, BarChart3, Target, Box, Crosshair, ChevronsUpDown, X, Search, ScatterChart } from "lucide-react";
-import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { METRIC_CATEGORIES, ALL_METRICS, getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { GoalTracking } from "@/components/portal/GoalTracking";
 import { ScoutingComparisonMatrix } from "@/components/portal/ScoutingComparisonMatrix";
 import { ScatterComparisonChart } from "@/components/portal/ScatterComparisonChart";
@@ -55,14 +55,16 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const [formWindow, setFormWindow] = useState<number>(5);
   const [subTab, setSubTab] = useState<string>("scatter");
   const [fixtureAnalyses, setFixtureAnalyses] = useState<Analysis[]>([]);
-  const [selectedMetricKey, setSelectedMetricKey] = useState<string>('goals_per90');
+  const playerPosition = playerData?.position || '';
+  const positionCategories = getMetricCategoriesForPosition(playerPosition);
+  const positionMetrics = getMetricsForPosition(playerPosition);
+  const [selectedMetricKey, setSelectedMetricKey] = useState<string>(positionMetrics[0]?.key || 'goals_per90');
   const [playerSearchOpen, setPlayerSearchOpen] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [requestName, setRequestName] = useState("");
   const [requestingPlayer, setRequestingPlayer] = useState(false);
 
-  const playerPosition = playerData?.position || '';
   const playerName = playerData?.name || 'You';
 
   // Fetch fixture analyses with fixture_stats for the portal player
@@ -110,19 +112,19 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   const portalMetrics = useMemo(() => {
     const windowAnalyses = fixtureAnalyses.slice(0, formWindow);
     const result: Record<string, number | null> = {};
-    ALL_METRICS.forEach(m => {
+    positionMetrics.forEach(m => {
       const vals = windowAnalyses
         .map(a => a.fixture_stats?.[m.key])
         .filter((v): v is number => v != null && !isNaN(v));
       result[m.key] = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
     });
     return result;
-  }, [fixtureAnalyses, formWindow]);
+  }, [fixtureAnalyses, formWindow, positionMetrics]);
 
   const hasPortalData = Object.values(portalMetrics).some(v => v != null);
 
   // Bar chart data for selected metric comparison
-  const selectedMetric = ALL_METRICS.find(m => m.key === selectedMetricKey);
+  const selectedMetric = positionMetrics.find(m => m.key === selectedMetricKey);
   const barData = useMemo(() => {
     if (!selectedMetric) return [];
     const isPercentage = selectedMetricKey.endsWith('_pct');
@@ -350,7 +352,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 <RadarChart3D
                   playerName={playerName}
                   metrics={(() => {
-                    const radarMetrics = ALL_METRICS
+                    const radarMetrics = positionMetrics
                       .filter(m => portalMetrics[m.key] != null)
                       .slice(0, 8)
                       .map(m => {
@@ -379,7 +381,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
               </p>
             ) : (
               <div className="space-y-6">
-                {METRIC_CATEGORIES.map(cat => {
+                {positionCategories.map(cat => {
                   const metricsWithValues = cat.metrics.filter(m => portalMetrics[m.key] != null);
                   if (metricsWithValues.length === 0) return null;
 
@@ -437,7 +439,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {METRIC_CATEGORIES.map(cat => (
+                        {positionCategories.map(cat => (
                           <div key={cat.category}>
                             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                             {cat.metrics.map(m => (
@@ -489,7 +491,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 </div>
 
                 {/* Comparison Table by Category */}
-                {METRIC_CATEGORIES.map(cat => {
+                {positionCategories.map(cat => {
                   const catMetrics = cat.metrics.filter(m =>
                     (hasPortalData && portalMetrics[m.key] != null) ||
                     selectedComps.some(cp => cp.metrics[m.key] != null)

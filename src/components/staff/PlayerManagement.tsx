@@ -2379,6 +2379,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <PlayerFixtureStats
                       playerId={selectedPlayerId!}
                       playerName={players.find(p => p.id === selectedPlayerId)?.name || 'Player'}
+                      playerPosition={players.find(p => p.id === selectedPlayerId)?.position || undefined}
                     />
                   </TabsContent>
 

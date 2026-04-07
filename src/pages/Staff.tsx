@@ -285,13 +285,17 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'dashboard';
+    let defaultSection = 'overview';
     if (permissionManagedRole) {
-      // If the role can't view dashboard, find the first section they can view
-      if (!canView('dashboard') && !canView('overview')) {
-        const viewable = getViewableSections();
-        const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
-        if (firstViewable) defaultSection = firstViewable;
+      // If the role can't view overview, try dashboard, then first viewable
+      if (!canView('overview')) {
+        if (canView('dashboard')) {
+          defaultSection = 'dashboard';
+        } else {
+          const viewable = getViewableSections();
+          const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
+          if (firstViewable) defaultSection = firstViewable;
+        }
       }
     }
     
@@ -784,8 +788,8 @@ const Staff = () => {
           title: 'Dashboard',
           icon: Calendar,
         sections: [
-            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'overview', title: 'Overview', icon: Users },
+            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
             { id: 'docs', title: 'Docs', icon: FileText },
@@ -853,8 +857,8 @@ const Staff = () => {
         title: 'Dashboard',
         icon: Calendar,
         sections: [
-          { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: 'overview', title: 'Overview', icon: Users },
+          { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
           { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'meetings', title: 'Meetings', icon: Users },
