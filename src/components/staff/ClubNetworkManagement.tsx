@@ -555,7 +555,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [avatarUploadTarget, setAvatarUploadTarget] = useState<Contact | null>(null);
   const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+   const [formData, setFormData] = useState({
     name: '',
     club_name: '',
     position: '',
@@ -568,6 +568,38 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     image_url: '',
     notes: '',
   });
+
+  const [favourites, setFavourites] = useState<Contact[]>([]);
+
+  // Fetch favourite contacts
+  const fetchFavourites = useCallback(async () => {
+    const { data } = await supabase
+      .from('club_network_contacts')
+      .select('*')
+      .eq('is_favourite', true)
+      .order('name');
+    setFavourites((data || []) as Contact[]);
+  }, []);
+
+  const toggleFavourite = async (contact: Contact) => {
+    const newVal = !contact.is_favourite;
+    const { error } = await supabase.from('club_network_contacts').update({ is_favourite: newVal }).eq('id', contact.id);
+    if (error) { toast.error('Failed to update favourite'); return; }
+    // Update local state everywhere
+    const updater = (c: Contact) => c.id === contact.id ? { ...c, is_favourite: newVal } : c;
+    setContacts(prev => prev.map(updater));
+    setFavourites(prev => newVal ? [...prev, { ...contact, is_favourite: true }].sort((a, b) => a.name.localeCompare(b.name)) : prev.filter(f => f.id !== contact.id));
+    // Update caches
+    const nextCountryCache = new Map(countryContactsCacheRef.current);
+    nextCountryCache.forEach((contacts, key) => { nextCountryCache.set(key, contacts.map(updater)); });
+    countryContactsCacheRef.current = nextCountryCache;
+    setCountryContactsCache(nextCountryCache);
+    const nextRoleCache = new Map(roleContactsCacheRef.current);
+    nextRoleCache.forEach((contacts, key) => { nextRoleCache.set(key, contacts.map(updater)); });
+    roleContactsCacheRef.current = nextRoleCache;
+    setRoleContactsCache(nextRoleCache);
+    toast.success(newVal ? 'Added to favourites' : 'Removed from favourites');
+  };
 
   // Lightweight summary: only fields needed for counts and landing cards
   const fetchCountrySummary = useCallback(async () => {
