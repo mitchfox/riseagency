@@ -857,8 +857,8 @@ const Staff = () => {
         title: 'Dashboard',
         icon: Calendar,
         sections: [
-          { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: 'overview', title: 'Overview', icon: Users },
+          { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
           { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'meetings', title: 'Meetings', icon: Users },
