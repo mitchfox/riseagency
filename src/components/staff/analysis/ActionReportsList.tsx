@@ -450,6 +450,16 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           analysisId={selectedReportAnalysisId}
         />
       )}
+
+      {/* Match Clip Player */}
+      {clipPlayerReport && (
+        <MatchClipPlayer
+          analysisId={clipPlayerReport.id}
+          playerName={clipPlayerReport.player_name || "Unknown"}
+          opponent={clipPlayerReport.opponent || "Unknown"}
+          onClose={() => setClipPlayerReport(null)}
+        />
+      )}
     </div>
   );
 };
