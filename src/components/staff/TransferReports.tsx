@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, ExternalLink, Edit, Trash2, Copy, Eye, FileText, Loader2 } from "lucide-react";
+import { TransferReportEditor } from "./TransferReportEditor";
 
 interface TransferReport {
   id: string;
