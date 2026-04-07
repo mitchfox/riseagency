@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { X, Search, Maximize } from "lucide-react";
 
 interface ScoreEditModeProps {
   analysisId: string;
@@ -36,6 +36,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const [searchResults, setSearchResults] = useState<R90Score[]>([]);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +113,11 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [handleClickOutside]);
 
+  const handleFullscreen = (index: number) => {
+    const video = videoRefs.current[index];
+    if (video) video.requestFullscreen?.();
+  };
+
   const getScoreColor = (score: string) => {
     const n = parseFloat(score);
     if (isNaN(n)) return "bg-muted";
@@ -124,6 +130,39 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     return "bg-green-700";
   };
 
+  // Position helpers for the 2x2 grid:
+  // Action labels go to FAR corners, score inputs go to INNER corners (near centre)
+  const getActionLabelPosition = (i: number) => {
+    switch (i) {
+      case 0: return "top-2 left-2";     // top-left video → label in top-left corner
+      case 1: return "top-2 right-2";    // top-right video → label in top-right corner
+      case 2: return "bottom-2 left-2";  // bottom-left video → label in bottom-left corner
+      case 3: return "bottom-2 right-2"; // bottom-right video → label in bottom-right corner
+      default: return "top-2 left-2";
+    }
+  };
+
+  const getScoreInputPosition = (i: number) => {
+    switch (i) {
+      case 0: return "bottom-2 right-2"; // top-left video → input in bottom-right (inner corner)
+      case 1: return "bottom-2 left-2";  // top-right video → input in bottom-left (inner corner)
+      case 2: return "top-2 right-2";    // bottom-left video → input in top-right (inner corner)
+      case 3: return "top-2 left-2";     // bottom-right video → input in top-left (inner corner)
+      default: return "bottom-2 right-2";
+    }
+  };
+
+  const getFullscreenPosition = (i: number) => {
+    // Fullscreen button goes in the remaining free corner
+    switch (i) {
+      case 0: return "top-2 right-2";
+      case 1: return "top-2 left-2";
+      case 2: return "bottom-2 right-2";
+      case 3: return "bottom-2 left-2";
+      default: return "top-2 right-2";
+    }
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
@@ -134,60 +173,79 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-b border-white/10">
-        <span className="text-white text-sm font-medium">Score Edit — {playerName}</span>
-        <div className="flex items-center gap-4">
-          <span className="text-white/60 text-xs">Page {pageIndex + 1}/{totalPages}</span>
-          <Button size="sm" variant="ghost" className="text-white" onClick={() => { onSave?.(); onClose(); }}>
-            <X className="h-4 w-4" />
-          </Button>
+      {/* Progress bar at top centre */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+        <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${completionPct}%`,
+              backgroundColor: completionPct < 30 ? '#ef4444' : completionPct < 70 ? '#f59e0b' : '#22c55e',
+            }}
+          />
         </div>
+        <span className="text-white text-xs font-medium">{completionPct}%</span>
+        <span className="text-white/40 text-[10px] ml-1">Page {pageIndex + 1}/{totalPages}</span>
       </div>
 
-      {/* 2x2 Grid of videos */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1 p-1 min-h-0 relative">
+      {/* 2x2 Grid of videos — fills entire screen */}
+      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-px min-h-0 relative">
         {pageActions.map((action, i) => (
-          <div key={action.id} className="relative flex flex-col bg-black rounded overflow-hidden">
+          <div key={action.id} className="relative flex flex-col bg-black overflow-hidden">
             <video
+              ref={el => { videoRefs.current[i] = el; }}
               src={action.video_url}
-              controls
-              autoPlay={i === 0}
-              muted={i > 0}
+              autoPlay
+              loop
+              muted
+              playsInline
               className="flex-1 w-full object-contain min-h-0"
             />
-            {/* Action number & score input in the central corner */}
-            <div className={`absolute ${i === 0 ? 'bottom-2 right-2' : i === 1 ? 'bottom-2 left-2' : i === 2 ? 'top-2 right-2' : 'top-2 left-2'} flex flex-col items-center gap-1 z-10`}>
+
+            {/* Action label — far corner */}
+            <div className={`absolute ${getActionLabelPosition(i)} z-10`}>
               <span className="text-white/80 text-[10px] font-bold bg-black/60 px-1.5 py-0.5 rounded">
                 #{pageIndex * 4 + i + 1} {action.action_type}
               </span>
+            </div>
+
+            {/* Score input — inner corner (closest to centre) */}
+            <div className={`absolute ${getScoreInputPosition(i)} z-10 flex flex-col items-center gap-1`}>
               <Input
                 value={action.action_score || ""}
                 onChange={(e) => handleScoreChange(action.id, e.target.value)}
                 onFocus={() => setActiveActionId(action.id)}
-                placeholder="Score"
-                className="w-16 h-7 text-xs text-center bg-black/70 border-white/20 text-white"
+                placeholder="—"
+                className="w-14 h-7 text-xs text-center bg-black/70 border-white/20 text-white"
               />
             </div>
+
+            {/* Fullscreen button — remaining free corner */}
+            <button
+              onClick={() => handleFullscreen(i)}
+              className={`absolute ${getFullscreenPosition(i)} z-10 p-1 bg-black/50 rounded hover:bg-black/80 transition-colors`}
+            >
+              <Maximize className="w-3 h-3 text-white/60" />
+            </button>
           </div>
         ))}
 
         {/* Central R90 search */}
         <div
           ref={searchRef}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-64"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-72"
         >
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/50" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" />
             <Input
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search R90 scores..."
-              className="pl-7 h-8 text-xs bg-black/80 border-white/20 text-white placeholder:text-white/40"
+              className="pl-8 h-9 text-sm bg-black/90 border-white/20 text-white placeholder:text-white/40 shadow-lg shadow-black/50"
             />
           </div>
           {searchResults.length > 0 && (
-            <div className="mt-1 max-h-48 overflow-y-auto bg-black/90 border border-white/20 rounded-md">
+            <div className="mt-1 max-h-48 overflow-y-auto bg-black/95 border border-white/20 rounded-md shadow-xl">
               {searchResults.map((s) => (
                 <button
                   key={s.id}
@@ -212,39 +270,15 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
         </div>
       </div>
 
-      {/* Navigation footer */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black/90 border-t border-white/10">
+      {/* Close button — bottom centre */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
         <Button
           size="sm"
-          variant="ghost"
-          className="text-white"
-          disabled={pageIndex === 0}
-          onClick={() => setPageIndex(p => p - 1)}
+          variant="outline"
+          onClick={() => { onSave?.(); onClose(); }}
+          className="bg-black/80 border-white/20 text-white hover:bg-white/10 gap-1.5"
         >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${completionPct}%`,
-                backgroundColor: completionPct < 30 ? '#ef4444' : completionPct < 70 ? '#f59e0b' : '#22c55e',
-              }}
-            />
-          </div>
-          <span className="text-white text-xs font-medium">{completionPct}%</span>
-        </div>
-
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-white"
-          disabled={pageIndex >= totalPages - 1}
-          onClick={() => setPageIndex(p => p + 1)}
-        >
-          Next <ChevronRight className="h-4 w-4 ml-1" />
+          <X className="h-3.5 w-3.5" /> Close
         </Button>
       </div>
     </div>

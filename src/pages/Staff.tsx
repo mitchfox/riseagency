@@ -60,6 +60,7 @@ import { useStaffNotifications } from "@/hooks/useStaffNotifications";
 import { TransferHub } from "@/components/staff/TransferHub";
 import { ExpensesManagement } from "@/components/staff/ExpensesManagement";
 import { TaxRecordsManagement } from "@/components/staff/TaxRecordsManagement";
+import { CorporationTaxSection } from "@/components/staff/CorporationTaxSection";
 import { BudgetsManagement } from "@/components/staff/BudgetsManagement";
 import { FinancialReports } from "@/components/staff/FinancialReports";
 import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
@@ -176,7 +177,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -950,6 +951,7 @@ const Staff = () => {
           { id: '_group_tracking', title: 'Tracking', isGroupLabel: true },
           { id: 'expenses', title: 'Expenses', icon: Calculator },
           { id: 'taxrecords', title: 'Tax Records', icon: FileSpreadsheet },
+          { id: 'corporationtax', title: 'Corporation Tax', icon: Building2 },
           { id: '_group_overview_fin', title: 'Overview', isGroupLabel: true },
           { id: 'budgets', title: 'Budgets', icon: PiggyBank },
           { id: 'financialreports', title: 'Reports', icon: TrendingUp },
@@ -1718,6 +1720,7 @@ const Staff = () => {
                   {expandedSection === 'payments' && <PaymentsManagement isAdmin={canManageSection('payments')} />}
                   {expandedSection === 'expenses' && <ExpensesManagement isAdmin={canManageSection('expenses')} />}
                   {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={canManageSection('taxrecords')} />}
+                  {expandedSection === 'corporationtax' && <CorporationTaxSection isAdmin={canManageSection('corporationtax')} />}
                   {expandedSection === 'budgets' && <BudgetsManagement isAdmin={canManageSection('budgets')} />}
                   {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}

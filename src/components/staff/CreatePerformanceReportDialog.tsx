@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown, TrendingUp } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
+import { ScoreEditMode } from "./analysis/ScoreEditMode";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -182,6 +183,7 @@ export const CreatePerformanceReportDialog = ({
   const [loading, setLoading] = useState(false);
   const [videoEditorOpen, setVideoEditorOpen] = useState(false);
   const [actionTypeEditorOpen, setActionTypeEditorOpen] = useState(false);
+  const [scoreEditOpen, setScoreEditOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
@@ -2137,6 +2139,16 @@ export const CreatePerformanceReportDialog = ({
             minutesPlayed={minutesPlayed}
           />
 
+          {/* Score Edit Mode */}
+          {scoreEditOpen && analysisId && (
+            <ScoreEditMode
+              analysisId={analysisId}
+              playerName={playerName}
+              onClose={() => setScoreEditOpen(false)}
+              onSave={() => fetchExistingData()}
+            />
+          )}
+
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
@@ -2161,6 +2173,17 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <List className="h-3.5 w-3.5" />
                   Action Edit
+                </Button>
+              )}
+              {analysisId && actions.some(a => a.video_url) && (
+                <Button
+                  onClick={() => setScoreEditOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Score Edit
                 </Button>
               )}
               {analysisId && actions.some(a => a.video_url && !a.video_url.includes('/clips/') && !a.video_url.includes('/action-clips/')) && (
