@@ -355,13 +355,17 @@ export const TacticsBoard = () => {
 
   }, [paths, currentPath, arrows, arrowStart, activeTool]);
 
-  const getCanvasCoords = (e: React.MouseEvent) => {
+  const getCanvasCoords = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = 'touches' in e ? e.touches[0]?.clientX ?? e.changedTouches[0]?.clientX ?? 0 : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0]?.clientY ?? e.changedTouches[0]?.clientY ?? 0 : e.clientY;
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     };
   };
 
