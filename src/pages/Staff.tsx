@@ -60,6 +60,7 @@ import { useStaffNotifications } from "@/hooks/useStaffNotifications";
 import { TransferHub } from "@/components/staff/TransferHub";
 import { ExpensesManagement } from "@/components/staff/ExpensesManagement";
 import { TaxRecordsManagement } from "@/components/staff/TaxRecordsManagement";
+import { CorporationTaxSection } from "@/components/staff/CorporationTaxSection";
 import { BudgetsManagement } from "@/components/staff/BudgetsManagement";
 import { FinancialReports } from "@/components/staff/FinancialReports";
 import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
