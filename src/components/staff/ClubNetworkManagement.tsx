@@ -59,6 +59,7 @@ import {
   Pin,
   Clock,
   Lock,
+  Star,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
