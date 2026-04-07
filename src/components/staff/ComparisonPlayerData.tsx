@@ -160,6 +160,11 @@ export const ComparisonPlayerData = () => {
   const [aiPosition, setAiPosition] = useState('');
   const [aiSeason, setAiSeason] = useState('2024/25');
   const [aiClub, setAiClub] = useState('');
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchPosition, setBatchPosition] = useState('');
+  const [batchSeason, setBatchSeason] = useState('2024/25');
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; name: string } | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
