@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, MessageSquare, Mail, Phone, Users, Search, Loader2, Clock, Trash2, Calendar } from "lucide-react";
+import { Plus, MessageSquare, Mail, Phone, Users, Search, Loader2, Clock, Trash2, Calendar, Star } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { format } from "date-fns";
 
@@ -61,10 +61,11 @@ export const InteractionHistory = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: historyData }, { data: contactsData }, { data: profilesData }] = await Promise.all([
+    const [{ data: historyData }, { data: contactsData }, { data: profilesData }, { data: favouritesData }] = await Promise.all([
       supabase.from('interaction_history').select('*').order('interaction_date', { ascending: false }).limit(200),
-      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url').order('name'),
+      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url, is_favourite').order('name'),
       supabase.from('profiles').select('id, email, full_name'),
+      supabase.from('club_network_contacts').select('id, name, club_name, position, image_url, is_favourite').eq('is_favourite', true).order('name'),
     ]);
 
     const contactMap = new Map((contactsData || []).map(c => [c.id, c]));
@@ -77,7 +78,13 @@ export const InteractionHistory = () => {
     }));
 
     setEntries(enriched as HistoryEntry[]);
-    setContacts(contactsData || []);
+    // Put favourites at the top of the contact list
+    const favIds = new Set((favouritesData || []).map(f => f.id));
+    const sortedContacts = [
+      ...(favouritesData || []),
+      ...(contactsData || []).filter(c => !favIds.has(c.id)),
+    ];
+    setContacts(sortedContacts);
     setStaffMembers(profilesData || []);
     setLoading(false);
   }, []);
@@ -215,12 +222,13 @@ export const InteractionHistory = () => {
               <Label>Contact *</Label>
               <Input value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search contacts..." className="mb-2" />
               <div className="max-h-32 overflow-y-auto border rounded-md divide-y">
-                {filteredContacts.slice(0, 20).map(c => (
+                {filteredContacts.slice(0, 30).map(c => (
                   <div
                     key={c.id}
                     className={`flex items-center gap-2 p-2 text-sm cursor-pointer hover:bg-accent/50 ${selectedContact === c.id ? 'bg-accent' : ''}`}
                     onClick={() => setSelectedContact(c.id)}
                   >
+                    {c.is_favourite && <Star className="h-3 w-3 fill-[hsl(var(--gold))] text-[hsl(var(--gold))] shrink-0" />}
                     <span className="font-medium">{c.name}</span>
                     {c.club_name && <span className="text-xs text-muted-foreground">{c.club_name}</span>}
                   </div>

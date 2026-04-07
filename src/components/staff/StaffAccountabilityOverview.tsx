@@ -168,7 +168,7 @@ const StaffColumn = ({
               {(member.full_name || member.email).charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold truncate">{member.full_name || member.email.split('@')[0]}</p>
+              <p className="text-xs font-semibold truncate">{(member.full_name || member.email.split('@')[0]).split(' ')[0]}</p>
               <p className="text-[9px] text-muted-foreground">{activeTasks.length} active · {completionRate}%</p>
             </div>
           </div>

@@ -59,6 +59,7 @@ import {
   Pin,
   Clock,
   Lock,
+  Star,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -89,6 +90,7 @@ interface Contact {
   longitude: number | null;
   image_url: string | null;
   notes: string | null;
+  is_favourite?: boolean;
 }
 
 interface ClubRating {
@@ -553,7 +555,7 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   const [avatarUploadTarget, setAvatarUploadTarget] = useState<Contact | null>(null);
   const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+   const [formData, setFormData] = useState({
     name: '',
     club_name: '',
     position: '',
@@ -566,6 +568,38 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     image_url: '',
     notes: '',
   });
+
+  const [favourites, setFavourites] = useState<Contact[]>([]);
+
+  // Fetch favourite contacts
+  const fetchFavourites = useCallback(async () => {
+    const { data } = await supabase
+      .from('club_network_contacts')
+      .select('*')
+      .eq('is_favourite', true)
+      .order('name');
+    setFavourites((data || []) as Contact[]);
+  }, []);
+
+  const toggleFavourite = async (contact: Contact) => {
+    const newVal = !contact.is_favourite;
+    const { error } = await supabase.from('club_network_contacts').update({ is_favourite: newVal }).eq('id', contact.id);
+    if (error) { toast.error('Failed to update favourite'); return; }
+    // Update local state everywhere
+    const updater = (c: Contact) => c.id === contact.id ? { ...c, is_favourite: newVal } : c;
+    setContacts(prev => prev.map(updater));
+    setFavourites(prev => newVal ? [...prev, { ...contact, is_favourite: true }].sort((a, b) => a.name.localeCompare(b.name)) : prev.filter(f => f.id !== contact.id));
+    // Update caches
+    const nextCountryCache = new Map(countryContactsCacheRef.current);
+    nextCountryCache.forEach((contacts, key) => { nextCountryCache.set(key, contacts.map(updater)); });
+    countryContactsCacheRef.current = nextCountryCache;
+    setCountryContactsCache(nextCountryCache);
+    const nextRoleCache = new Map(roleContactsCacheRef.current);
+    nextRoleCache.forEach((contacts, key) => { nextRoleCache.set(key, contacts.map(updater)); });
+    roleContactsCacheRef.current = nextRoleCache;
+    setRoleContactsCache(nextRoleCache);
+    toast.success(newVal ? 'Added to favourites' : 'Removed from favourites');
+  };
 
   // Lightweight summary: only fields needed for counts and landing cards
   const fetchCountrySummary = useCallback(async () => {
@@ -775,9 +809,10 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     if (initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
     fetchCountrySummary();
+    fetchFavourites();
     fetchProfiles();
     fetchAuxiliaryData();
-  }, [fetchAuxiliaryData, fetchCountrySummary, fetchProfiles]);
+  }, [fetchAuxiliaryData, fetchCountrySummary, fetchFavourites, fetchProfiles]);
 
   useEffect(() => {
     if (!selectedCountryKey) return;
@@ -1734,11 +1769,20 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     return (
       <article
         onClick={() => setViewingContact(contact)}
-        className="group relative cursor-pointer overflow-hidden rounded-[1.6rem] border border-border/50 p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.2)]"
+        className={`group relative cursor-pointer overflow-hidden rounded-[1.6rem] border p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.2)] ${contact.is_favourite ? 'border-[hsl(var(--gold))]/50' : 'border-border/50'}`}
         style={softPanelStyle}
       >
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60" />
+        <div className={`absolute inset-x-0 top-0 h-1.5 ${contact.is_favourite ? 'bg-gradient-to-r from-[hsl(var(--gold))]/80 via-[hsl(var(--gold))]/60 to-[hsl(var(--gold))]/40' : 'bg-gradient-to-r from-primary/80 via-accent/80 to-primary/60'}`} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_36%)] opacity-90" />
+
+        {/* Favourite star */}
+        <button
+          onClick={(event) => { event.stopPropagation(); toggleFavourite(contact); }}
+          className="absolute left-4 top-4 z-10 transition-colors"
+          title={contact.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
+        >
+          <Star className={`h-4 w-4 ${contact.is_favourite ? 'fill-[hsl(var(--gold))] text-[hsl(var(--gold))]' : 'text-muted-foreground/40 hover:text-[hsl(var(--gold))]'}`} />
+        </button>
         {!isTrustNetwork && (
         <div className="absolute right-4 top-4 z-10 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
           <TooltipProvider delayDuration={200}>
@@ -2185,6 +2229,31 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
       </ScrollReveal>
 
       <input ref={fileInputRef} type="file" accept=".vcf,text/vcard,text/x-vcard" onChange={handleImportFileUpload} className="hidden" />
+
+      {/* Favourites section - shown at top of both views */}
+      {favourites.length > 0 && !searchQuery.trim() && (
+        <ScrollReveal>
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[hsl(var(--gold))]/40 backdrop-blur-2xl" style={softPanelStyle}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--gold)/0.12),transparent_40%)] opacity-80" />
+            <div className="relative z-[1] p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[hsl(var(--gold))]/30 bg-[hsl(var(--gold))]/10">
+                  <Star className="h-4 w-4 fill-[hsl(var(--gold))] text-[hsl(var(--gold))]" />
+                </div>
+                <div>
+                  <h3 className="font-bebas text-lg tracking-[0.24em] text-foreground">FAVOURITES</h3>
+                  <p className="text-xs text-muted-foreground">{favourites.length} contact{favourites.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {favourites.map((contact) => (
+                  <ContactCard key={contact.id} contact={contact} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
 
       {landingView === 'country' ? (
         <div className="space-y-4">
