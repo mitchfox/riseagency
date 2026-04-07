@@ -455,40 +455,37 @@ export const TacticsBoard = () => {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const handleItemMouseDown = (e: React.MouseEvent, itemId: string) => {
+  const handleItemMouseDown = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
+    if ('touches' in e) e.preventDefault();
+    e.stopPropagation();
     if (activeTool === "select") {
-      e.stopPropagation();
       const item = items.find(i => i.id === itemId);
       if (!item) return;
-      
       setDraggingItem(itemId);
       const container = containerRef.current;
       if (container) {
         const rect = container.getBoundingClientRect();
-        setDragOffset({
-          x: e.clientX - rect.left - item.x,
-          y: e.clientY - rect.top - item.y,
-        });
+        const clientX = 'touches' in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
+        setDragOffset({ x: clientX - rect.left - item.x, y: clientY - rect.top - item.y });
       }
     } else if (activeTool === "erase") {
-      e.stopPropagation();
       saveToHistory();
       setItems(prev => prev.filter(i => i.id !== itemId));
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     if (draggingItem && activeTool === "select") {
       const container = containerRef.current;
       if (container) {
         const rect = container.getBoundingClientRect();
+        const clientX = 'touches' in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
         setItems(prev => prev.map(item => {
           if (item.id === draggingItem) {
-            return {
-              ...item,
-              x: e.clientX - rect.left - dragOffset.x,
-              y: e.clientY - rect.top - dragOffset.y,
-            };
+            return { ...item, x: clientX - rect.left - dragOffset.x, y: clientY - rect.top - dragOffset.y };
           }
           return item;
         }));
@@ -497,7 +494,7 @@ export const TacticsBoard = () => {
     handleCanvasMouseMove(e);
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
     if (draggingItem) {
       saveToHistory();
     }
