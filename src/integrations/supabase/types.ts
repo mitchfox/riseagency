@@ -5612,6 +5612,63 @@ export type Database = {
         }
         Relationships: []
       }
+      transfer_reports: {
+        Row: {
+          content_config: Json
+          created_at: string
+          created_by: string | null
+          custom_notes: string | null
+          id: string
+          included_sections: string[]
+          player_id: string
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_config?: Json
+          created_at?: string
+          created_by?: string | null
+          custom_notes?: string | null
+          id?: string
+          included_sections?: string[]
+          player_id: string
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_config?: Json
+          created_at?: string
+          created_by?: string | null
+          custom_notes?: string | null
+          id?: string
+          included_sections?: string[]
+          player_id?: string
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transfermarkt_shortlist: {
         Row: {
           added_to_outreach: boolean
