@@ -492,7 +492,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
                 </div>
 
                 {/* Comparison Table by Category */}
-                {METRIC_CATEGORIES.map(cat => {
+                {positionCategories.map(cat => {
                   const catMetrics = cat.metrics.filter(m =>
                     (hasPortalData && portalMetrics[m.key] != null) ||
                     selectedComps.some(cp => cp.metrics[m.key] != null)
