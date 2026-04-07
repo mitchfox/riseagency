@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, MessageSquare, Mail, Phone, Users, Search, Loader2, Clock, Trash2, Calendar } from "lucide-react";
+import { Plus, MessageSquare, Mail, Phone, Users, Search, Loader2, Clock, Trash2, Calendar, Star } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { format } from "date-fns";
 
