@@ -369,7 +369,8 @@ export const TacticsBoard = () => {
     };
   };
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+  const handleCanvasMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (activeTool === "draw") {
@@ -379,7 +380,6 @@ export const TacticsBoard = () => {
       setArrowStart(coords);
     } else if (activeTool === "erase") {
       saveToHistory();
-      // Check if clicking on an arrow
       const clickedArrowIndex = arrows.findIndex(arrow => {
         const dist = pointToLineDistance(coords, arrow);
         return dist < 15;
@@ -388,7 +388,6 @@ export const TacticsBoard = () => {
         setArrows(prev => prev.filter((_, i) => i !== clickedArrowIndex));
       }
       
-      // Check if clicking on a path
       const clickedPathIndex = paths.findIndex(path => {
         return path.points.some(point => {
           const dist = Math.sqrt(Math.pow(point.x - coords.x, 2) + Math.pow(point.y - coords.y, 2));
@@ -401,7 +400,8 @@ export const TacticsBoard = () => {
     }
   };
 
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+  const handleCanvasMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (isDrawing && activeTool === "draw") {
@@ -409,7 +409,8 @@ export const TacticsBoard = () => {
     }
   };
 
-  const handleCanvasMouseUp = (e: React.MouseEvent) => {
+  const handleCanvasMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) e.preventDefault();
     const coords = getCanvasCoords(e);
 
     if (isDrawing && activeTool === "draw") {
