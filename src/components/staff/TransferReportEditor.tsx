@@ -181,8 +181,7 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
         <div className="flex items-center justify-between mb-6 sticky top-0 bg-background/95 backdrop-blur-sm py-3 z-10 border-b border-border">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bebas uppercase tracking-wider">Edit Report</h2>
-            <Badge variant={report.status === 'published' ? 'default' : 'secondary'}>
-              <Badge variant="default">Live</Badge>
+            <Badge variant="default">Live</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => window.open(`/transfer-report/${report.slug}`, '_blank')}>
