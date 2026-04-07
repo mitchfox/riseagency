@@ -639,6 +639,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             priority: 'medium' as const,
             linked_player_id: p.id,
             date_of_birth: p.date_of_birth,
+            probability_weight: 0,
+            projected_revenue: 0,
+            revenue_currency: 'GBP',
             _source: 'players' as const,
           };
         });
