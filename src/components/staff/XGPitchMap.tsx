@@ -74,7 +74,12 @@ const getXGOpacity = (value: number): number => {
   return 0.7;
 };
 
-export const XGPitchMap = ({ compact = false }: { compact?: boolean }) => {
+const formatXGScore = (value: number) => {
+  if (value <= 0) return "0";
+  return parseFloat(value.toFixed(value < 0.01 ? 3 : 2)).toString();
+};
+
+export const XGPitchMap = ({ compact = false, onScoreSelect }: { compact?: boolean; onScoreSelect?: (score: string) => void }) => {
   const [zoomed, setZoomed] = useState(true);
   const displayGrid = zoomed ? XG_GRID.slice(0, 7) : XG_GRID;
   const displayLabels = zoomed ? ROW_LABELS.slice(0, 7) : ROW_LABELS;
@@ -140,12 +145,14 @@ export const XGPitchMap = ({ compact = false }: { compact?: boolean }) => {
                       {row.map((value, colIndex) => (
                         <Tooltip key={`${rowIndex}-${colIndex}`}>
                           <TooltipTrigger asChild>
-                            <div
-                              className={`border border-slate-600/20 p-1.5 md:p-2 text-center text-[10px] md:text-xs font-mono cursor-default transition-all hover:scale-110 hover:z-20 hover:shadow-lg ${getXGColor(value)}`}
+                            <button
+                              type="button"
+                              className={`w-full border border-slate-600/20 p-1.5 md:p-2 text-center text-[10px] md:text-xs font-mono transition-all hover:scale-110 hover:z-20 hover:shadow-lg ${onScoreSelect ? "cursor-pointer" : "cursor-default"} ${getXGColor(value)}`}
                               style={{ opacity: getXGOpacity(value) }}
+                              onClick={() => onScoreSelect?.(formatXGScore(value))}
                             >
                               {value >= 0.01 ? value.toFixed(2) : value > 0 ? value.toFixed(3) : "—"}
-                            </div>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
                             <p className="font-semibold">{displayLabels[rowIndex]} · {COL_LABELS[colIndex]}</p>
