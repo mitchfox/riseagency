@@ -924,6 +924,7 @@ const Staff = () => {
           { id: '_group_network', title: 'Network', isGroupLabel: true },
           { id: 'clubnetwork', title: 'Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
+          { id: 'interactionhistory', title: 'Interaction History', icon: MessageSquare },
            { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
