@@ -126,12 +126,10 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
       custom_notes: customNotes || null,
       title,
       content_config: contentConfig,
-      status: 'published',
     }).eq('id', reportId);
     if (error) toast.error('Failed to save');
     else {
-      setReport((prev: any) => prev ? { ...prev, status: 'published' } : prev);
-      toast.success('Report updated');
+      toast.success('Report saved — changes are live');
     }
     setSaving(false);
   };
