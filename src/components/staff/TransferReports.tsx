@@ -286,7 +286,7 @@ export const TransferReports = () => {
                 <Button variant="ghost" size="icon" onClick={() => copyLink(report.slug)} title="Copy link">
                   <Copy className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => toggleStatus(report)} title={report.status === 'published' ? 'Unpublish' : 'Publish'}>
+                <Button variant="ghost" size="icon" onClick={() => window.open(`/transfer-report/${report.slug}`, '_blank')} title="View Live">
                   <ExternalLink className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setEditorReportId(report.id)} title="Full Editor">
