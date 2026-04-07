@@ -23,6 +23,7 @@ interface Analysis {
   result: string | null;
   striker_stats?: any;
   fixture_stats?: any;
+  visibility_status?: string;
 }
 
 interface Props {
