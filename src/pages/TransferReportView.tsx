@@ -196,6 +196,15 @@ const TransferReportView = () => {
     } catch { return {}; }
   }, [player?.bio]);
 
+  // Get comparison players to show - use content_config if available
+  const configuredCompPlayers = useMemo(() => {
+    const ids = contentConfig?.comparison_player_ids as string[] | undefined;
+    if (ids && ids.length > 0) {
+      return comparisonPlayers.filter(cp => ids.includes(cp.id));
+    }
+    return comparisonPlayers.slice(0, 3);
+  }, [contentConfig, comparisonPlayers]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
@@ -223,15 +232,6 @@ const TransferReportView = () => {
 
   // Determine exclusivity from content_config or bio
   const isExclusive = contentConfig?.exclusive_representation ?? parsedBio?.exclusive_representation ?? false;
-
-  // Get comparison players to show - use content_config if available
-  const configuredCompPlayers = useMemo(() => {
-    const ids = contentConfig?.comparison_player_ids as string[] | undefined;
-    if (ids && ids.length > 0) {
-      return comparisonPlayers.filter(cp => ids.includes(cp.id));
-    }
-    return comparisonPlayers.slice(0, 3);
-  }, [contentConfig, comparisonPlayers]);
 
   const renderSection = (sectionId: string) => {
     switch (sectionId) {
