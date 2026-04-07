@@ -70,6 +70,7 @@ const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const SharedContact = lazy(() => import("./pages/SharedContact"));
+const TransferReportView = lazy(() => import("./pages/TransferReportView"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 // Loading fallback component
@@ -170,6 +171,7 @@ const App = () => {
                       {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
                       {createLocalizedRoutes('/club-direction', <ClubDirection />)}
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />
+                      <Route path="/transfer-report/:slug" element={<TransferReportView />} />
                       <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                       <Route path="/import-program" element={<ImportProgramCSV />} />
                       <Route path="/replace-program" element={<ReplaceProgram />} />

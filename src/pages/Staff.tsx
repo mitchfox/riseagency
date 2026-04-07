@@ -94,6 +94,7 @@ import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
+import { TransferReports } from "@/components/staff/TransferReports";
 import { PortalManagement } from "@/components/staff/PortalManagement";
 import { VideoCompressor } from "@/components/staff/VideoCompressor";
 import { MusicStudio } from "@/components/staff/MusicStudio";
@@ -179,7 +180,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'transferreports' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -806,6 +807,8 @@ const Staff = () => {
           sections: [
 { id: 'clubnetwork', title: 'Network', icon: Network },
             { id: 'playerlist', title: 'Player List', icon: Users },
+            { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
+            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
             { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
@@ -917,7 +920,8 @@ const Staff = () => {
           { id: '_group_network', title: 'Network', isGroupLabel: true },
           { id: 'clubnetwork', title: 'Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
-          { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
+           { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
+           { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
@@ -1093,6 +1097,7 @@ const Staff = () => {
     legal: ['contracts', 'documents', 'compliance', 'agreements'],
     clubnetwork: ['contacts', 'clubs', 'agents', 'scouts', 'network'],
     casestudies: ['messaging', 'conversations', 'case studies', 'outreach', 'examples'],
+    transferreports: ['transfer', 'reports', 'player reports', 'shareable', 'links'],
     recruitment: ['prospects', 'signings', 'targets', 'transfers'],
     expenses: ['costs', 'receipts', 'spending', 'reimbursement'],
     athletecentre: ['athlete', 'development', 'programming', 'periodisation'],
@@ -1729,6 +1734,7 @@ const Staff = () => {
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
                   {expandedSection === 'casestudies' && <MessagingCaseStudies />}
+                  {expandedSection === 'transferreports' && <TransferReports />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={canManageSection('transferhub')} />}
                   {expandedSection === 'portalmanagement' && <PortalManagement />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
