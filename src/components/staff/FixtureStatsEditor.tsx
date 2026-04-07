@@ -285,7 +285,7 @@ export const FixtureStatsEditor = ({ fixtureStats, onStatsChange, actions, previ
           ))}
         </TabsList>
 
-        {METRIC_CATEGORIES.map(cat => (
+        {getMetricCategoriesForPosition(playerPosition).map(cat => (
           <TabsContent key={cat.category} value={cat.category} className="mt-3">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {cat.metrics.map(m => {
