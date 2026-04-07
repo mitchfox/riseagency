@@ -207,12 +207,7 @@ export const TransferReports = () => {
     else { toast.success('Deleted'); fetchReports(); }
   };
 
-  const toggleStatus = async (report: TransferReport) => {
-    const newStatus = report.status === 'published' ? 'draft' : 'published';
-    const { error } = await supabase.from('transfer_reports').update({ status: newStatus }).eq('id', report.id);
-    if (error) toast.error('Failed to update status');
-    else { toast.success(`Report ${newStatus === 'published' ? 'published' : 'unpublished'}`); fetchReports(); }
-  };
+  // Reports are always live — no publish/unpublish needed
 
   const copyLink = (slug: string) => {
     const url = `${window.location.origin}/transfer-report/${slug}`;
@@ -277,9 +272,7 @@ export const TransferReports = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h4 className="font-semibold truncate">{report.title}</h4>
-                    <Badge variant={report.status === 'published' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
-                      {report.status}
-                    </Badge>
+                    <Badge variant="default" className="text-[10px] shrink-0">Live</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
                     {report.player?.name || 'Unknown Player'} · {report.included_sections.length} sections
@@ -293,7 +286,7 @@ export const TransferReports = () => {
                 <Button variant="ghost" size="icon" onClick={() => copyLink(report.slug)} title="Copy link">
                   <Copy className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => toggleStatus(report)} title={report.status === 'published' ? 'Unpublish' : 'Publish'}>
+                <Button variant="ghost" size="icon" onClick={() => window.open(`/transfer-report/${report.slug}`, '_blank')} title="View Live">
                   <ExternalLink className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => setEditorReportId(report.id)} title="Full Editor">

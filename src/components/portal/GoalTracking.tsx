@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { computeAllStatAverages } from "@/lib/statAggregation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Target, Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { METRIC_CATEGORIES, ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { METRIC_CATEGORIES, ALL_METRICS, getMetricsForPosition, getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 
 interface GoalTrackingProps {
   playerData: any;
@@ -46,17 +47,13 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
     setLoading(false);
   };
 
+  const activeMetrics = useMemo(() => getMetricsForPosition(playerData?.position), [playerData?.position]);
+  const activeCategories = useMemo(() => getMetricCategoriesForPosition(playerData?.position), [playerData?.position]);
+
   const currentAverages = useMemo(() => {
     const windowAnalyses = fixtureAnalyses.slice(0, formWindow);
-    const result: Record<string, number | null> = {};
-    ALL_METRICS.forEach(m => {
-      const vals = windowAnalyses
-        .map(a => a.fixture_stats?.[m.key])
-        .filter((v): v is number => v != null && !isNaN(v));
-      result[m.key] = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-    });
-    return result;
-  }, [fixtureAnalyses, formWindow]);
+    return computeAllStatAverages(windowAnalyses, activeMetrics);
+  }, [fixtureAnalyses, formWindow, activeMetrics]);
 
   const handleAddGoal = async () => {
     if (!newMetric || !newTarget || !playerId) return;
@@ -100,7 +97,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
   };
 
   const usedMetrics = goals.map(g => g.metric_key);
-  const availableMetrics = ALL_METRICS.filter(m => !usedMetrics.includes(m.key));
+  const availableMetrics = activeMetrics.filter(m => !usedMetrics.includes(m.key));
 
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -115,7 +112,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
             <SelectValue placeholder="Select metric..." />
           </SelectTrigger>
           <SelectContent>
-            {METRIC_CATEGORIES.map(cat => (
+            {activeCategories.map(cat => (
               <div key={cat.category}>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{cat.category}</div>
                 {cat.metrics.filter(m => !usedMetrics.includes(m.key)).map(m => (
@@ -150,7 +147,7 @@ export const GoalTracking = ({ playerData, fixtureAnalyses, formWindow }: GoalTr
       ) : (
         <div className="space-y-4">
           {goals.map(goal => {
-            const metric = ALL_METRICS.find(m => m.key === goal.metric_key);
+            const metric = activeMetrics.find(m => m.key === goal.metric_key);
             const current = currentAverages[goal.metric_key];
             const isPercentage = goal.metric_key.endsWith('_pct');
             const progress = current != null && goal.target_value > 0

@@ -6,6 +6,7 @@ import { Loader2, Play, ChevronDown, ChevronUp, TrendingUp, BarChart3, Award, Sh
 import { parsePlayerBio, parsePlayerHighlights } from "@/lib/playerDataParser";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { METRIC_CATEGORIES, ALL_METRICS, GK_METRIC_CATEGORIES, ALL_GK_METRICS, getMetricCategoriesForPosition, getMetricsForPosition, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
+import { computeAllStatAverages } from "@/lib/statAggregation";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 
 const GRADE_COLORS: Record<string, string> = {
@@ -59,7 +60,7 @@ const TransferReportView = () => {
         .maybeSingle();
 
       if (fetchError || !data) {
-        setError('Report not found or not yet published.');
+        setError('Report not found.');
         setLoading(false);
         return;
       }
@@ -99,11 +100,14 @@ const TransferReportView = () => {
         setPerformanceReports(analysisData || []);
 
         if (playerData.position) {
+          // Fetch all comparison players for this position, not just 10
+          const positionVariants = isGoalkeeperPosition(playerData.position)
+            ? ['GK', 'Goalkeeper', 'GOALKEEPER']
+            : [playerData.position, playerData.position.toUpperCase()];
           const { data: compData } = await supabase
             .from('comparison_players')
             .select('*')
-            .eq('position', playerData.position)
-            .limit(10);
+            .in('position', positionVariants);
           setComparisonPlayers(compData || []);
         }
 
@@ -142,12 +146,10 @@ const TransferReportView = () => {
   const playerAverages = useMemo(() => {
     if (!player?.position || performanceReports.length === 0) return {};
     const metrics = getMetricsForPosition(player.position);
+    const avgs = computeAllStatAverages(performanceReports, metrics);
     const result: Record<string, number> = {};
-    metrics.forEach(m => {
-      const vals = performanceReports
-        .map(r => (r.fixture_stats as Record<string, number>)?.[m.key])
-        .filter((v): v is number => v != null && !isNaN(v));
-      if (vals.length > 0) result[m.key] = vals.reduce((s, v) => s + v, 0) / vals.length;
+    Object.entries(avgs).forEach(([key, val]) => {
+      if (val != null) result[key] = val;
     });
     return result;
   }, [performanceReports, player?.position]);
@@ -257,52 +259,79 @@ const TransferReportView = () => {
         return (
           <section key={sectionId}>
             <SectionHeading title="Highlights" />
-            <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black">
+            <div className="relative aspect-video rounded-lg overflow-hidden border-4 border-[#C6A332] bg-black">
               {highlights[currentVideoIndex]?.videoUrl ? (
-                <div className="relative group">
+                <>
                   <video
                     key={highlights[currentVideoIndex].videoUrl}
                     src={highlights[currentVideoIndex].videoUrl}
-                    className="w-full aspect-video object-contain bg-black"
+                    className="w-full h-full object-contain"
                     controls playsInline autoPlay
                     onEnded={() => setCurrentVideoIndex((currentVideoIndex + 1) % highlights.length)}
                   />
+                  {/* Club logo navigation bar — Stars profile style */}
                   {highlights.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentVideoIndex(Math.max(0, currentVideoIndex - 1))}
-                        disabled={currentVideoIndex === 0}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setCurrentVideoIndex(Math.min(highlights.length - 1, currentVideoIndex + 1))}
-                        disabled={currentVideoIndex === highlights.length - 1}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 border border-[#C6A332]/50 text-[#C6A332] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                      <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
-                        <span className="text-lg font-bebas text-[#C6A332]">{currentVideoIndex + 1}</span>
-                        <span className="text-xs text-white/40 ml-1">/ {highlights.length}</span>
+                    <div className="absolute bottom-[24px] left-1/2 -translate-x-1/2 z-10 w-full px-3 pointer-events-none">
+                      <div className="relative flex items-center justify-center gap-2">
+                        {highlights.length > 8 && (
+                          <button
+                            onClick={() => {
+                              const c = document.getElementById('tr-highlights-scroll');
+                              if (c) c.scrollBy({ left: -200, behavior: 'smooth' });
+                            }}
+                            className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#C6A332]/20 hover:bg-[#C6A332]/30 border border-[#C6A332]/40 flex items-center justify-center text-white transition-colors"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                        )}
+                        <div
+                          id="tr-highlights-scroll"
+                          className="flex gap-1.5 overflow-x-auto max-w-[calc(100%-80px)] pointer-events-auto"
+                          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                          {highlights.map((h: any, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => setCurrentVideoIndex(i)}
+                              className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-black/90 backdrop-blur-sm ${
+                                i === currentVideoIndex
+                                  ? 'border-[#C6A332] scale-110'
+                                  : 'border-[#C6A332]/20 hover:border-[#C6A332]/50'
+                              }`}
+                              title={h.name || `Clip ${i + 1}`}
+                            >
+                              {(h.logoUrl || h.clubLogo) ? (
+                                <img src={h.logoUrl || h.clubLogo} alt="" className="w-full h-full object-contain p-0.5" />
+                              ) : (
+                                <span className="text-[8px] font-bebas text-[#C6A332] flex items-center justify-center h-full">{i + 1}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                        {highlights.length > 8 && (
+                          <button
+                            onClick={() => {
+                              const c = document.getElementById('tr-highlights-scroll');
+                              if (c) c.scrollBy({ left: 200, behavior: 'smooth' });
+                            }}
+                            className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#C6A332]/20 hover:bg-[#C6A332]/30 border border-[#C6A332]/40 flex items-center justify-center text-white transition-colors"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
-                    </>
+                    </div>
                   )}
-                </div>
+                  {/* Counter overlay */}
+                  <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
+                    <span className="text-lg font-bebas text-[#C6A332]">{currentVideoIndex + 1}</span>
+                    <span className="text-xs text-white/40 ml-1">/ {highlights.length}</span>
+                  </div>
+                </>
               ) : (
-                <div className="aspect-video flex items-center justify-center text-white/40">No video available</div>
-              )}
-              {highlights.length > 1 && (
-                <div className="flex gap-1 p-2 bg-black/90 border-t border-[#C6A332]/20 overflow-x-auto">
-                  {highlights.map((h, i) => (
-                    <button key={i} onClick={() => setCurrentVideoIndex(i)}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded text-xs font-bebas uppercase tracking-wider transition-all ${
-                        i === currentVideoIndex ? 'bg-[#C6A332]/20 text-[#C6A332] border border-[#C6A332]/40' : 'text-white/50 hover:text-white/80'
-                      }`}>
-                      {h.name || `Clip ${i + 1}`}
-                    </button>
-                  ))}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <Play className="w-12 h-12 text-[#C6A332]" />
+                  <p className="text-white/40 font-bebas uppercase tracking-wider">No video available</p>
                 </div>
               )}
             </div>
@@ -557,20 +586,24 @@ const TransferReportView = () => {
             <div className="space-y-3">
               {activeVideoReport ? (
                 <div>
-                  <div className="rounded-xl border-2 border-[#C6A332] overflow-hidden bg-black mb-3">
-                    <video src={activeVideoReport.video_url} className="w-full aspect-video object-contain bg-black" controls playsInline autoPlay />
+                  <div className="relative aspect-video rounded-lg overflow-hidden border-4 border-[#C6A332] bg-black">
+                    <video src={activeVideoReport.video_url} className="w-full h-full object-contain" controls playsInline autoPlay />
+                    <div className="absolute top-3 left-3 bg-black/80 border border-[#C6A332]/30 rounded-lg px-3 py-1.5">
+                      <span className="text-sm font-bebas text-[#C6A332] uppercase tracking-wider">{activeVideoReport.title}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bebas uppercase tracking-wider text-white">{activeVideoReport.title}</p>
-                    <button onClick={() => setActiveVideoReport(null)} className="text-xs text-[#C6A332] hover:underline">Back to list</button>
-                  </div>
+                  <button onClick={() => setActiveVideoReport(null)} className="mt-3 text-[#C6A332] text-xs font-bebas uppercase tracking-wider flex items-center gap-1 hover:text-[#C6A332]/80">
+                    <ChevronLeft className="h-3 w-3" /> Back to list
+                  </button>
                 </div>
               ) : (
                 <div className="grid gap-2">
                   {videoReports.map((vr: any) => (
                     <button key={vr.id} onClick={() => setActiveVideoReport(vr)}
                       className="flex items-center gap-3 p-3 rounded-lg border border-[#C6A332]/10 hover:border-[#C6A332]/30 transition-colors text-left w-full" style={{ background: 'rgba(15,15,15,0.8)' }}>
-                      <Play className="h-5 w-5 text-[#C6A332] shrink-0" />
+                      <div className="w-10 h-10 rounded border border-[#C6A332]/30 bg-[#C6A332]/10 flex items-center justify-center flex-shrink-0">
+                        <Play className="h-4 w-4 text-[#C6A332]" />
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bebas uppercase tracking-wider text-white truncate">{vr.title}</p>
                         <p className="text-[10px] text-white/40">{vr.analysis_type} · {new Date(vr.created_at).toLocaleDateString('en-GB')}</p>

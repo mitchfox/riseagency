@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { computeAllStatAverages, computeStatAverage } from "@/lib/statAggregation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -109,21 +110,17 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     const mins = selectedAnalyses.filter(a => a.minutes_played != null).map(a => a.minutes_played!);
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
-    // All metrics from all categories
-    positionMetrics.forEach(m => {
-      const values = selectedAnalyses
-        .map(a => getStatValue(a, m.key))
-        .filter((v): v is number => v != null);
-      if (values.length > 0) result[m.key] = values.reduce((s, v) => s + v, 0) / values.length;
+    // All metrics from all categories using centralised aggregation
+    const allAvgs = computeAllStatAverages(selectedAnalyses, positionMetrics);
+    Object.entries(allAvgs).forEach(([key, val]) => {
+      if (val != null) result[key] = val;
     });
 
     // Also check STAT_DEFS for striker_stats
     STAT_DEFS.forEach(sd => {
-      if (result[sd.key] != null) return; // Already calculated
-      const values = selectedAnalyses
-        .filter(a => a.striker_stats?.[sd.key] != null)
-        .map(a => Number(a.striker_stats[sd.key]));
-      if (values.length > 0) result[sd.key] = values.reduce((s, v) => s + v, 0) / values.length;
+      if (result[sd.key] != null) return;
+      const avg = computeStatAverage(selectedAnalyses, sd.key);
+      if (avg != null) result[sd.key] = avg;
     });
 
     return result;

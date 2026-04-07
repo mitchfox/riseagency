@@ -103,13 +103,15 @@ export const TransferReportEditor = ({ reportId, onClose }: TransferReportEditor
         const { data: p } = await supabase.from('players').select('name, image_url, position').eq('id', data.player_id).single();
         setPlayer(p);
 
-        // Fetch comparison players for the position
+        // Fetch all comparison players for the position
         if (p?.position) {
+          const positionVariants = p.position.toLowerCase() === 'gk' || p.position.toLowerCase() === 'goalkeeper'
+            ? ['GK', 'Goalkeeper', 'GOALKEEPER']
+            : [p.position, p.position.toUpperCase()];
           const { data: compData } = await supabase
             .from('comparison_players')
             .select('id, name, club, position')
-            .eq('position', p.position)
-            .limit(20);
+            .in('position', positionVariants);
           setComparisonPlayers(compData || []);
         }
       }

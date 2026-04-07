@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { computeAllStatAverages } from "@/lib/statAggregation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -128,14 +129,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
   // Compute portal player's per-90 averages from last N fixtures
   const portalMetrics = useMemo(() => {
     const windowAnalyses = fixtureAnalyses.slice(0, formWindow);
-    const result: Record<string, number | null> = {};
-    positionMetrics.forEach(m => {
-      const vals = windowAnalyses
-        .map(a => a.fixture_stats?.[m.key])
-        .filter((v): v is number => v != null && !isNaN(v));
-      result[m.key] = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-    });
-    return result;
+    return computeAllStatAverages(windowAnalyses, positionMetrics);
   }, [fixtureAnalyses, formWindow, positionMetrics]);
 
   const hasPortalData = Object.values(portalMetrics).some(v => v != null);
