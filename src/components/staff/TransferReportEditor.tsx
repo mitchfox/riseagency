@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Eye, EyeOff, ExternalLink, Save, X, Loader2, GripVertical, Shield } from "lucide-react";
+import { ExternalLink, Save, X, Loader2, GripVertical, Shield } from "lucide-react";
 import {
   DndContext,
   closestCenter,
