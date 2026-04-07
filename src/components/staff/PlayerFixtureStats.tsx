@@ -29,7 +29,7 @@ export const PlayerFixtureStats = ({ playerId, playerName, playerPosition }: Pro
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [editedStats, setEditedStats] = useState<Record<string, Record<string, number>>>({});
-  const [activeCategory, setActiveCategory] = useState("Shooting");
+  const [activeCategory, setActiveCategory] = useState(() => getMetricCategoriesForPosition(playerPosition)[0]?.category || "Shooting");
 
   useEffect(() => {
     fetchAnalyses();
