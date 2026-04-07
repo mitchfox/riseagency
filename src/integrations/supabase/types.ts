@@ -1787,6 +1787,50 @@ export type Database = {
         }
         Relationships: []
       }
+      interaction_history: {
+        Row: {
+          contact_id: string
+          created_at: string
+          follow_up_date: string | null
+          id: string
+          interaction_date: string
+          interaction_type: string
+          key_notes: string | null
+          staff_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          key_notes?: string | null
+          staff_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          key_notes?: string | null
+          staff_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interaction_history_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "club_network_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -4136,7 +4180,10 @@ export type Database = {
           notes: string | null
           position: string | null
           priority: string | null
+          probability_weight: number | null
           profile_image_url: string | null
+          projected_revenue: number | null
+          revenue_currency: string | null
           stage: string
           updated_at: string
         }
@@ -4156,7 +4203,10 @@ export type Database = {
           notes?: string | null
           position?: string | null
           priority?: string | null
+          probability_weight?: number | null
           profile_image_url?: string | null
+          projected_revenue?: number | null
+          revenue_currency?: string | null
           stage?: string
           updated_at?: string
         }
@@ -4176,7 +4226,10 @@ export type Database = {
           notes?: string | null
           position?: string | null
           priority?: string | null
+          probability_weight?: number | null
           profile_image_url?: string | null
+          projected_revenue?: number | null
+          revenue_currency?: string | null
           stage?: string
           updated_at?: string
         }
@@ -5621,6 +5674,7 @@ export type Database = {
           id: string
           included_sections: string[]
           player_id: string
+          section_order: string[] | null
           slug: string
           status: string
           title: string
@@ -5634,6 +5688,7 @@ export type Database = {
           id?: string
           included_sections?: string[]
           player_id: string
+          section_order?: string[] | null
           slug: string
           status?: string
           title: string
@@ -5647,6 +5702,7 @@ export type Database = {
           id?: string
           included_sections?: string[]
           player_id?: string
+          section_order?: string[] | null
           slug?: string
           status?: string
           title?: string

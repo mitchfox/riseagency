@@ -42,6 +42,9 @@ interface Prospect {
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
   date_of_birth: string | null;
+  probability_weight: number | null;
+  projected_revenue: number | null;
+  revenue_currency: string | null;
   _source: 'prospects' | 'players';
 }
 
@@ -539,6 +542,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     contact_phone: "",
     notes: "",
     priority: "medium" as 'low' | 'medium' | 'high',
+    probability_weight: "0",
+    projected_revenue: "0",
+    revenue_currency: "GBP",
   });
 
   const sensors = useSensors(
@@ -636,6 +642,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             priority: 'medium' as const,
             linked_player_id: p.id,
             date_of_birth: p.date_of_birth,
+            probability_weight: 0,
+            projected_revenue: 0,
+            revenue_currency: 'GBP',
             _source: 'players' as const,
           };
         });
@@ -736,6 +745,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       contact_phone: prospect.contact_phone || "",
       notes: prospect.notes || "",
       priority: prospect.priority || "medium",
+      probability_weight: (prospect.probability_weight || 0).toString(),
+      projected_revenue: (prospect.projected_revenue || 0).toString(),
+      revenue_currency: prospect.revenue_currency || "GBP",
     });
     setDialogOpen(true);
   };
@@ -875,7 +887,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     setFormData({
       name: "", age: "", position: "", nationality: "", current_club: "",
       age_group: "A", stage: "scouted", contact_email: "", contact_phone: "",
-      notes: "", priority: "medium",
+      notes: "", priority: "medium", probability_weight: "0", projected_revenue: "0", revenue_currency: "GBP",
     });
   };
 

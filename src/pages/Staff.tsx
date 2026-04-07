@@ -36,6 +36,8 @@ import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
 import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
 import { StaffSchedule } from "@/components/staff/StaffSchedule";
 import { StaffOverview } from "@/components/staff/StaffOverview";
+import { StaffAccountabilityOverview } from "@/components/staff/StaffAccountabilityOverview";
+import { InteractionHistory } from "@/components/staff/InteractionHistory";
 // GoalsTasksManagement removed - replaced by VisionBoardSection
 import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
 import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
@@ -180,7 +182,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'transferreports' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -283,10 +285,10 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'overview';
+    let defaultSection = 'dashboard';
     if (permissionManagedRole) {
-      // If the role can't view overview, find the first section they can view
-      if (!canView('overview')) {
+      // If the role can't view dashboard, find the first section they can view
+      if (!canView('dashboard') && !canView('overview')) {
         const viewable = getViewableSections();
         const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
         if (firstViewable) defaultSection = firstViewable;
@@ -778,11 +780,12 @@ const Staff = () => {
     if (isMarketeer && !isAdmin) {
       return applyRoleVisibility([
         {
-          id: 'overview',
-          title: 'Overview',
+          id: 'dashboard',
+          title: 'Dashboard',
           icon: Calendar,
         sections: [
-            { id: 'overview', title: 'Overview', icon: Calendar },
+            { id: 'dashboard', title: 'Dashboard', icon: Calendar },
+            { id: 'overview', title: 'Overview', icon: Users },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
             { id: 'docs', title: 'Docs', icon: FileText },
@@ -846,11 +849,12 @@ const Staff = () => {
     // Full staff/admin sections
     return applyRoleVisibility([
       {
-        id: 'overview',
-        title: 'Overview',
+        id: 'dashboard',
+        title: 'Dashboard',
         icon: Calendar,
         sections: [
-          { id: 'overview', title: 'Overview', icon: Calendar },
+          { id: 'dashboard', title: 'Dashboard', icon: Calendar },
+          { id: 'overview', title: 'Overview', icon: Users },
           { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
           { id: 'schedule', title: 'Schedule', icon: Calendar },
           { id: 'meetings', title: 'Meetings', icon: Users },
@@ -920,6 +924,7 @@ const Staff = () => {
           { id: '_group_network', title: 'Network', isGroupLabel: true },
           { id: 'clubnetwork', title: 'Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
+          { id: 'interactionhistory', title: 'Interaction History', icon: MessageSquare },
            { id: 'casestudies', title: 'Case Studies', icon: MessageSquare },
            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
@@ -1686,7 +1691,8 @@ const Staff = () => {
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
                   <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
                   <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={canManageSection('analysis')} /></div>
-                  {expandedSection === 'overview' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'dashboard' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'overview' && <StaffAccountabilityOverview isAdmin={isAdmin} userId={user?.id} />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
@@ -1735,6 +1741,7 @@ const Staff = () => {
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
                   {expandedSection === 'casestudies' && <MessagingCaseStudies />}
                   {expandedSection === 'transferreports' && <TransferReports />}
+                  {expandedSection === 'interactionhistory' && <InteractionHistory />}
                   {expandedSection === 'transferhub' && <TransferHub isAdmin={canManageSection('transferhub')} />}
                   {expandedSection === 'portalmanagement' && <PortalManagement />}
                   {expandedSection === 'athletecentre' && <AthleteCentre />}
