@@ -424,6 +424,9 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
             <div className={`absolute ${getCornerStackPosition(i)} z-20`}>
               <div className={`flex ${getCornerStackDirection(i)} ${getCornerStackAlignment(i)} gap-1`}>
+                <span className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
+                  #{pageIndex * 4 + i + 1}{action.action_type ? ` ${action.action_type}` : ""}
+                </span>
                 <button
                   onClick={() => handleFullscreen(i)}
                   className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-muted"
@@ -431,9 +434,6 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 >
                   <Maximize className="h-4 w-4" />
                 </button>
-                <span className="rounded bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground shadow-md backdrop-blur-sm">
-                  #{pageIndex * 4 + i + 1}{action.action_type ? ` ${action.action_type}` : ""}
-                </span>
               </div>
             </div>
 
