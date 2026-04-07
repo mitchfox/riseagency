@@ -5572,9 +5572,14 @@ export type Database = {
           category: string | null
           completed: boolean
           created_at: string
+          deadline: string | null
+          description: string | null
           display_order: number
           id: string
+          is_recurring: boolean
+          last_completed_at: string | null
           priority: string
+          recurrence_label: string | null
           title: string
           updated_at: string
         }
@@ -5583,9 +5588,14 @@ export type Database = {
           category?: string | null
           completed?: boolean
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           display_order?: number
           id?: string
+          is_recurring?: boolean
+          last_completed_at?: string | null
           priority?: string
+          recurrence_label?: string | null
           title: string
           updated_at?: string
         }
@@ -5594,9 +5604,14 @@ export type Database = {
           category?: string | null
           completed?: boolean
           created_at?: string
+          deadline?: string | null
+          description?: string | null
           display_order?: number
           id?: string
+          is_recurring?: boolean
+          last_completed_at?: string | null
           priority?: string
+          recurrence_label?: string | null
           title?: string
           updated_at?: string
         }
