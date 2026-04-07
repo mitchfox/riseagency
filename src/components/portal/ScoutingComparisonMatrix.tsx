@@ -99,7 +99,7 @@ export const ScoutingComparisonMatrix = ({
       </div>
 
       {/* Stat Rows */}
-      {METRIC_CATEGORIES.map(cat => {
+      {(isGoalkeeperPosition(playerPosition) ? GK_METRIC_CATEGORIES : METRIC_CATEGORIES).map(cat => {
         const catMetrics = relevantMetrics.filter(m => cat.metrics.some(cm => cm.key === m.key));
         if (catMetrics.length === 0) return null;
 
