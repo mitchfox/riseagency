@@ -991,6 +991,7 @@ const Staff = () => {
             { id: 'activitylog', title: 'Activity Log', icon: ClipboardList },
             { id: 'dataexport', title: 'Data Export', icon: Download },
             { id: 'datasetbuilder', title: 'Dataset Builder', icon: Film },
+            { id: 'usage', title: 'Usage', icon: BarChart3 },
           ] : []),
           { id: '_group_system', title: 'System', isGroupLabel: true },
           { id: 'pwainstall', title: 'PWA Install', icon: Download },
