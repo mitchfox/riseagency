@@ -17,8 +17,12 @@ export function useVideoPreloader({
     if (!enabled || !url || preloadedRef.current.has(url)) return;
     preloadedRef.current.add(url);
 
-    // Warm browser HTTP cache with a simple fetch — no media element overhead
-    fetch(url, { mode: 'cors', cache: 'force-cache' }).catch(() => {});
+    // Use a hidden video element to actually buffer the media data
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.src = url;
+    video.load();
   }, [enabled]);
 
   const preloadNextVideos = useCallback((currentIndex: number) => {
