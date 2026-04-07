@@ -236,7 +236,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     lastAutoAdvanceSignatureRef.current = "";
   }, [pageIndex]);
 
-  // Auto-advance when all 4 on screen are scored
+  // Auto-advance when all 4 on screen are scored — no parent refresh, just local advance
   useEffect(() => {
     if (activeActionId || pendingWriteCount > 0 || pageActions.length === 0) return;
     if (!pageActions.every(a => a.action_score && a.action_score !== "")) return;
@@ -246,11 +246,13 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
     lastAutoAdvanceSignatureRef.current = signature;
     const timer = setTimeout(() => {
-      toast.success(pageIndex < totalPages - 1 ? "Report autosaved, moving to next 4 clips" : "Report autosaved");
       if (pageIndex < totalPages - 1) {
+        toast.success("Autosaved, moving to next 4 clips");
         setPageIndex(p => p + 1);
+      } else {
+        toast.success("All clips scored — autosaved");
       }
-    }, 250);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [activeActionId, pageActions, pageIndex, pendingWriteCount, totalPages]);
