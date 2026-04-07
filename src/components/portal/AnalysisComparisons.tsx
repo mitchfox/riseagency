@@ -382,7 +382,7 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
               </p>
             ) : (
               <div className="space-y-6">
-                {METRIC_CATEGORIES.map(cat => {
+                {positionCategories.map(cat => {
                   const metricsWithValues = cat.metrics.filter(m => portalMetrics[m.key] != null);
                   if (metricsWithValues.length === 0) return null;
 
