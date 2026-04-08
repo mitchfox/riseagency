@@ -194,6 +194,11 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     fetchData();
   }, [analysisId]);
 
+  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
+  const totalPages = Math.ceil(actions.length / 4);
+  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
+  const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
+
   // Preload next page videos
   const allVideoUrls = useMemo(() => {
     return actions.map(a => {
@@ -215,7 +220,6 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
   // Clip boundary enforcement for each of the 4 tiles
   useEffect(() => {
-    // Clear old intervals
     clipIntervalsRef.current.forEach(id => { if (id) clearInterval(id); });
     clipIntervalsRef.current = [null, null, null, null];
 
@@ -226,7 +230,6 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       const { clipStart, clipEnd } = instruction;
       const vid = videoRefs.current[i];
       if (vid) {
-        // Seek to clip start on load
         const onLoaded = () => {
           vid.currentTime = clipStart;
           vid.play().catch(() => {});
@@ -256,11 +259,6 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   }, [pageActions]);
 
   const lastAutoAdvanceSignatureRef = useRef("");
-
-  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
-  const totalPages = Math.ceil(actions.length / 4);
-  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
-  const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
 
   const handleUpdateReport = useCallback(async () => {
     // Save all current scores silently without leaving score edit
