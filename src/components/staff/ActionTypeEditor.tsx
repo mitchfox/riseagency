@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
 import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -464,8 +465,9 @@ export const ActionTypeEditor = ({
     setVideoPlaying(false);
     setVideoZoom(1);
     setVideoPan({ x: 0, y: 0 });
-    loadedUrlRef.current = action.video_url;
-    vid.src = action.video_url;
+    const resolvedUrl = getEditPlaybackUrl(action);
+    loadedUrlRef.current = resolvedUrl || '';
+    vid.src = resolvedUrl || '';
     vid.load();
   }, [selectedActionIndex]);
 
@@ -475,7 +477,8 @@ export const ActionTypeEditor = ({
     const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
     if (currentClipIdx === -1) return;
     const nextIdx = (currentClipIdx + 1) % categoryClips.length;
-    const nextUrl = categoryClips[nextIdx]?.action.video_url;
+    const nextAction = categoryClips[nextIdx]?.action;
+    const nextUrl = nextAction ? getEditPlaybackUrl(nextAction) : null;
     if (!nextUrl) return;
     const preload = preloadVideoRef.current;
     if (preload && preload.src !== nextUrl) {

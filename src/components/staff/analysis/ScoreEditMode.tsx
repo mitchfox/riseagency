@@ -8,6 +8,7 @@ import { XGPitchMap } from "@/components/staff/XGPitchMap";
 import { BoxZoneMap } from "@/components/staff/BoxZoneMap";
 import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
+import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
 
 interface ScoreEditModeProps {
   analysisId: string;
@@ -23,6 +24,8 @@ interface Action {
   minute: string;
   video_url: string;
   action_number: number;
+  clip_start: number | null;
+  clip_end: number | null;
 }
 
 interface R90Score {
@@ -174,7 +177,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       const [actionsRes, scoresRes] = await Promise.all([
         supabase
           .from("performance_report_actions")
-          .select("id, action_type, action_score, minute, video_url, action_number")
+          .select("id, action_type, action_score, minute, video_url, action_number, clip_start, clip_end")
           .eq("analysis_id", analysisId)
           .not("video_url", "is", null)
           .order("action_number", { ascending: true }),
@@ -443,7 +446,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           <div key={action.id} className="relative overflow-hidden bg-black">
             <video
               ref={el => { videoRefs.current[i] = el; }}
-              src={action.video_url}
+              src={getEditPlaybackUrl(action) || ''}
               autoPlay
               loop
               muted

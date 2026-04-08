@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { X, SkipForward, SkipBack, Repeat } from "lucide-react";
+import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
 
 interface MatchClipPlayerProps {
   analysisId: string;
@@ -17,6 +18,8 @@ interface ClipAction {
   minute: string;
   description: string;
   video_url: string;
+  clip_start: number | null;
+  clip_end: number | null;
 }
 
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
@@ -29,7 +32,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     const fetchClips = async () => {
       const { data } = await supabase
         .from("performance_report_actions")
-        .select("id, action_type, action_score, minute, notes, video_url")
+        .select("id, action_type, action_score, minute, notes, video_url, clip_start, clip_end")
         .eq("analysis_id", analysisId)
         .not("video_url", "is", null)
         .order("display_order", { ascending: true });
@@ -125,7 +128,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
           <video
             ref={videoRef}
             key={currentClip.video_url}
-            src={currentClip.video_url}
+            src={getEditPlaybackUrl(currentClip) || ''}
             controls
             autoPlay
             onEnded={handleVideoEnded}
