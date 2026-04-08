@@ -351,6 +351,8 @@ export const ActionTypeEditor = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
+  const clipBoundsRef = useRef<{ start: number; end: number } | null>(null);
+  const clipEnforcementRef = useRef<number | null>(null);
   const pitchGridKeyRef = useRef(0);
   // Mobile-specific state
   const [mobileActionListOpen, setMobileActionListOpen] = useState(true);
