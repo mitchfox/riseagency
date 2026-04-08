@@ -1,85 +1,37 @@
 
-Root cause
+## Fix: Score Edit stability, zero-score handling, and data tab persistence
 
-The edit screens are still showing the full match because they are not actually using the same playback system as the report view.
+### Problems identified
 
-Right now:
-- `PerformanceReport.tsx` opens clips through `ActionVideoPopup` + `useSharedClipPlayer`
-- that player loads the source once, seeks to `clip_start`, enforces `clip_end` and blocks playback outside the window
+**1. Runtime crash: "Cannot access 'pageActions' before initialization"**
+`pageActions` is a plain `const` derived inline (line 197). Several `useEffect` hooks reference it in their dependency arrays, creating new array references every render. While the declaration order looks correct, the transpiled output may cause a TDZ issue. Fix: wrap `pageActions` in `useMemo` to stabilise the reference and guarantee initialisation order.
 
-But the edit screens still use plain `<video>` elements:
-- `ActionTypeEditor.tsx`
-- `ScoreEditMode.tsx`
-- `MatchClipPlayer.tsx`
+**2. Score "0" or "0.00" treated as empty**
+Multiple places use `a.action_score && ...` which is falsy for numeric `0`. The DB column may return numeric `0` rather than string `"0"`.
+- Line 199: `scoredCount` filter — `a.action_score && a.action_score !== ""` → numeric 0 fails
+- Line 265: `handleUpdateReport` filter — `a.action_score` → numeric 0 excluded from save
+- Line 297: auto-advance check — `a.action_score && a.action_score !== ""` → never auto-advances
+- Line 529: display — `action.action_score || ""` → shows empty for numeric 0
 
-Those screens were changed to use `getEditPlaybackUrl(...)`, but that helper returns a `#t=start,end` media fragment for full-match URLs. That still points at the full match file, so the browser can still expose the full video. It is not the same as the report view.
+Fix: change all checks to `a.action_score != null && String(a.action_score) !== ""`. Coerce to string consistently.
 
-What I would change
+**3. Auto-advance / save resets page index**
+The `onSave` callback is correctly empty, but the `onClose` handler calls `fetchExistingData()` which re-renders the parent. If a save triggers `onClose` instead of `onSave` (e.g. via keyboard shortcut or the Update button flow), the component remounts and `pageIndex` resets to 0. Ensure `handleUpdateReport` never calls `onClose`.
 
-1. Stop using media-fragment playback for edit mode
-- Retire `getEditPlaybackUrl(...)` from edit surfaces for any action with `clip_start` / `clip_end`
-- Keep it only as a fallback helper if needed for genuine standalone trimmed clip files
+**4. Data tab resets to home screen**
+`CoachingDataSection` is conditionally rendered via `{expandedSection === 'coachingdata' && <CoachingDataSection />}`. Switching to another tab unmounts it, losing `inlineReport` state. Fix: persist `inlineReport` to localStorage (using the existing session persistence pattern) and restore on mount.
 
-2. Create one shared edit playback layer that mirrors report-view behaviour
-- Add a small reusable edit-mode clip player wrapper around `useSharedClipPlayer`
-- Input: `video_url`, `clip_start`, `clip_end`
-- Behaviour:
-  - standalone trimmed clip URL -> play directly
-  - full match + clip bounds -> play via shared clip player with strict boundary enforcement
-  - full match without bounds -> blocked state
+### Changes
 
-3. Rewire `ActionTypeEditor.tsx`
-- Replace direct `vid.src = resolvedUrl` loading with shared-player clip playback
-- Preserve the existing editor layout, zoom and controls
-- On action change, call the shared player with `{ videoUrl, clipStart, clipEnd }`
-- Keep hidden preloading, but preload the real source that the shared player will use
+**File 1: `src/components/staff/analysis/ScoreEditMode.tsx`**
+- Wrap `pageActions` in `useMemo(() => actions.slice(pageIndex * 4, pageIndex * 4 + 4), [actions, pageIndex])`
+- Change `scoredCount` filter to `a.action_score != null && String(a.action_score) !== ""`
+- Change `handleUpdateReport` filter to `a.action_score != null && String(a.action_score) !== ""`
+- Change auto-advance check to same pattern
+- Change score display from `action.action_score || ""` to `action.action_score != null ? String(action.action_score) : ""`
 
-4. Rewire `ScoreEditMode.tsx`
-- Replace each tile’s direct `src={getEditPlaybackUrl(action)}` with the same strict clip playback approach
-- Each of the four visible tiles should only ever play the clip window or standalone clip file
-- Keep page advance and background save behaviour unchanged
-
-5. Rewire `MatchClipPlayer.tsx`
-- Remove direct `<video src=...>` playback
-- Use the same shared clip logic as the report viewer so looping and next/previous operate on the clip only
-
-6. Keep the current report viewer as the reference implementation
-- Use `ActionVideoPopup.tsx`, `ClippedActionsPlayer.tsx` and `RankedActionsPlayer.tsx` as the behavioural source of truth
-- Do not create a third playback behaviour for staff edit mode
-
-7. Tighten the clip utility API
-- Keep `hasPlayableClip(...)` and `getPlaybackMode(...)`
-- Add a helper that returns structured playback instructions instead of a URL, for example:
-```text
-standalone -> { mode: "standalone", src }
-clipped -> { mode: "clipped", videoUrl, clipStart, clipEnd }
-blocked -> { mode: "blocked" }
-```
-- This avoids future regressions where another screen falls back to raw `video_url`
-
-Files to update
-
-- `src/lib/clipVideoUtils.ts`
-- `src/components/staff/ActionTypeEditor.tsx`
-- `src/components/staff/analysis/ScoreEditMode.tsx`
-- `src/components/staff/analysis/MatchClipPlayer.tsx`
-- possibly a new small shared component/hook for staff edit playback if needed
-
-Technical details
-
-- The current issue is not that the clip data is missing. `clip_start` and `clip_end` are already being fetched in the edit screens.
-- The issue is that browser `#t=` fragments are not strict clip playback.
-- If you want edit mode to work exactly like report view, it must use `useSharedClipPlayer` or the same underlying enforcement logic.
-- This will make staff edit mode match what you see when viewing the report, even when the stored `video_url` is still the source match file.
-
-Validation I would do after implementation
-
-- Open a report in normal view and note one action clip
-- Open the same action in:
-  - Action Edit
-  - Score Edit
-  - Match Clip Player
-- Confirm each starts inside the same clip window and cannot drift into the full match
-- Confirm next/previous and auto-advance still feel instant
-- Confirm standalone trimmed clips still play normally
-- Confirm full-match URLs with no bounds are blocked instead of exposing the match
+**File 2: `src/components/staff/CoachingDataSection.tsx`**
+- On `inlineReport` change, persist to `localStorage` key `coachingdata_inline_report`
+- On mount, restore from that key
+- On close/success, clear the key
+- This ensures switching tabs and coming back preserves the open report
