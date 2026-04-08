@@ -782,8 +782,9 @@ export const ActionTypeEditor = ({
 
   const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
 
-  // Motivational messages based on streak
-  const streakMessage = streak >= 20 ? "🔥 Unstoppable!" : streak >= 10 ? "🔥 On fire!" : streak >= 5 ? "⚡ Great pace!" : null;
+  // Productivity timer
+  const totalScoredCount = useMemo(() => actions.filter(a => a.action_score && a.action_score.trim() !== "").length, [actions]);
+  const { message: timerMessage } = useProductivityTimer({ totalActions: actions.length, scoredCount: totalScoredCount });
 
   // Mobile helper: select action and close list
   const mobileSelectAction = (actionIndex: number) => {
