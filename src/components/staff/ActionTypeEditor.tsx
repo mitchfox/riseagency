@@ -407,11 +407,12 @@ export const ActionTypeEditor = ({
   }, [actions]);
 
   const sidebarGroups = useMemo(() => {
-    const result: Record<string, { category: string; items: { action: PerformanceAction; index: number }[] }[]> = {
-      'Key Actions': [], 'Offensive': [], 'Defensive': [], 'Other': [],
-    };
+    const result: Record<string, { category: string; items: { action: PerformanceAction; index: number }[] }[]> = {};
+    GROUP_ORDER.forEach(g => { result[g] = []; });
     groupedActions.forEach(([category, items]) => {
-      result[getActionGroup(category)].push({ category, items });
+      const group = getActionGroup(category);
+      if (!result[group]) result[group] = [];
+      result[group].push({ category, items });
     });
     return result;
   }, [groupedActions]);
