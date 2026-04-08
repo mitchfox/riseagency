@@ -31,7 +31,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     const fetchClips = async () => {
       const { data } = await supabase
         .from("performance_report_actions")
-        .select("id, action_type, action_score, minute, notes, video_url")
+        .select("id, action_type, action_score, minute, notes, video_url, clip_start, clip_end")
         .eq("analysis_id", analysisId)
         .not("video_url", "is", null)
         .order("display_order", { ascending: true });
