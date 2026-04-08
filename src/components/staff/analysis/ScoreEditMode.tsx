@@ -261,14 +261,13 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const lastAutoAdvanceSignatureRef = useRef("");
 
   const handleUpdateReport = useCallback(async () => {
-    // Save all current scores silently without leaving score edit
+    // Save all current scores silently without leaving score edit — never call onSave/onClose
     const updates = actions.filter(a => a.action_score != null && String(a.action_score) !== "").map(a =>
       supabase.from("performance_report_actions").update({ action_score: String(a.action_score) } as any).eq("id", a.id)
     );
     await Promise.all(updates);
-    onSave?.();
     toast.success("Report updated", { style: { zIndex: 100000 } });
-  }, [onSave, actions]);
+  }, [actions]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
