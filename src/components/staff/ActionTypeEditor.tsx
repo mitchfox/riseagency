@@ -144,19 +144,30 @@ const isBoxZoneType = (type: string) =>
 const isXGType = (type: string) =>
   XG_MAP_TYPES.some(t => canonicalActionType(type).toLowerCase().includes(t));
 
-const OFFENSIVE_PATTERNS = ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward', 'movement', 'assist', 'goal'];
-const DEFENSIVE_PATTERNS = ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'];
-const KEY_PATTERNS = ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'];
+const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [
+  { group: 'Key Actions', patterns: ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'] },
+  { group: 'Passing', patterns: ['pass', 'through ball', 'ball retention', 'switch', 'distribution'] },
+  { group: 'Movement', patterns: ['offer', 'movement', 'run', 'carry', 'progressive carry', 'rotation'] },
+  { group: 'Shooting', patterns: ['shot', 'headed shot', 'shot assist', 'shot blocked'] },
+  { group: 'Crossing & Wide Play', patterns: ['cross', 'attacking cross', 'front post', 'back post', 'wide', 'overlap'] },
+  { group: 'Pressing & Pressure', patterns: ['press', 'applied pressure', 'defensive positioning', 'closing down'] },
+  { group: 'Regains & Interceptions', patterns: ['regain', 'interception', 'recovery', 'ball recovery', 'turnover won'] },
+  { group: 'Defending', patterns: ['tackle', 'clearance', 'block', 'header', 'duel', 'aerial', 'defensive'] },
+  { group: 'Dribbling', patterns: ['dribble', 'take on', 'take-on', 'skill'] },
+];
 
-function getActionGroup(type: string): 'Key Actions' | 'Offensive' | 'Defensive' | 'Other' {
+function getActionGroup(type: string): string {
   const lower = type.toLowerCase();
-  if (KEY_PATTERNS.some(p => lower.includes(p))) return 'Key Actions';
-  if (DEFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Defensive';
-  if (OFFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Offensive';
+  for (const rule of ACTION_CATEGORY_RULES) {
+    if (rule.patterns.some(p => lower.includes(p))) return rule.group;
+  }
   return 'Other';
 }
 
-const GROUP_ORDER: ('Key Actions' | 'Offensive' | 'Defensive' | 'Other')[] = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+const GROUP_ORDER = [
+  'Key Actions', 'Passing', 'Movement', 'Shooting', 'Crossing & Wide Play',
+  'Pressing & Pressure', 'Regains & Interceptions', 'Defending', 'Dribbling', 'Other'
+];
 
 let scoresByTypeCache: Record<string, { value: string; count: number }[]> = {};
 
