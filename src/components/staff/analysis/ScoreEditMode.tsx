@@ -199,6 +199,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const totalPages = Math.ceil(actions.length / 4);
   const scoredCount = actions.filter(a => a.action_score != null && String(a.action_score) !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
+  const { message: timerMessage } = useProductivityTimer({ totalActions: actions.length, scoredCount });
 
   // Preload next page videos
   const allVideoUrls = useMemo(() => {
