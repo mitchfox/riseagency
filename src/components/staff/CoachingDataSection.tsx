@@ -34,7 +34,20 @@ export const CoachingDataSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null; representation_status?: string | null }[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
-  const [inlineReport, setInlineReport] = useState<InlineReportState | null>(null);
+  const [inlineReport, setInlineReportRaw] = useState<InlineReportState | null>(() => {
+    try {
+      const saved = localStorage.getItem("coachingdata_inline_report");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const setInlineReport = useCallback((val: InlineReportState | null) => {
+    setInlineReportRaw(val);
+    if (val) {
+      localStorage.setItem("coachingdata_inline_report", JSON.stringify(val));
+    } else {
+      localStorage.removeItem("coachingdata_inline_report");
+    }
+  }, []);
   const [reportsKey, setReportsKey] = useState(0);
 
   useEffect(() => {
