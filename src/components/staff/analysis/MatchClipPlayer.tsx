@@ -27,6 +27,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const clipEnforcementRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchClips = async () => {
@@ -43,23 +44,73 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     fetchClips();
   }, [analysisId]);
 
+  useEffect(() => {
+    return () => {
+      if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
+    };
+  }, []);
+
   const currentClip = clips[currentIndex];
 
-  const goToClip = useCallback((index: number) => {
-    setCurrentIndex(index);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
-    }
+  const startEnforcement = useCallback((start: number, end: number) => {
+    if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
+    clipEnforcementRef.current = window.setInterval(() => {
+      const vid = videoRef.current;
+      if (!vid) return;
+      if (vid.currentTime >= end) {
+        vid.currentTime = start;
+      }
+      if (vid.currentTime < start - 0.5) {
+        vid.currentTime = start;
+      }
+    }, 100);
   }, []);
+
+  const goToClip = useCallback((index: number) => {
+    if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
+    setCurrentIndex(index);
+  }, []);
+
+  // Set up playback whenever currentClip changes
+  useEffect(() => {
+    const vid = videoRef.current;
+    const clip = currentClip;
+    if (!vid || !clip) return;
+
+    const instruction = getPlaybackInstruction(clip);
+    if (instruction.mode === 'blocked') return;
+
+    vid.src = instruction.src;
+    vid.load();
+
+    const onLoaded = () => {
+      if (instruction.mode === 'clipped') {
+        vid.currentTime = instruction.clipStart;
+        startEnforcement(instruction.clipStart, instruction.clipEnd);
+      }
+      vid.play().catch(() => {});
+    };
+
+    vid.addEventListener('loadeddata', onLoaded, { once: true });
+
+    return () => {
+      vid.removeEventListener('loadeddata', onLoaded);
+    };
+  }, [currentClip, startEnforcement]);
 
   const handleVideoEnded = useCallback(() => {
     // Loop current clip
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+    const vid = videoRef.current;
+    const clip = currentClip;
+    if (!vid || !clip) return;
+    const instruction = getPlaybackInstruction(clip);
+    if (instruction.mode === 'clipped') {
+      vid.currentTime = instruction.clipStart;
+    } else {
+      vid.currentTime = 0;
     }
-  }, []);
+    vid.play().catch(() => {});
+  }, [currentClip]);
 
   if (loading) {
     return (
