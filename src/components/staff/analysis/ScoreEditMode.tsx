@@ -531,7 +531,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'Subtract') {
                     e.preventDefault();
-                    void handleScoreChange(action.id, prefixNegativeScore(action.action_score || ""));
+                    void handleScoreChange(action.id, prefixNegativeScore(action.action_score != null ? String(action.action_score) : ""));
                   }
                 }}
                 onFocus={(e) => {
