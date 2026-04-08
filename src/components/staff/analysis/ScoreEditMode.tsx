@@ -194,9 +194,9 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     fetchData();
   }, [analysisId]);
 
-  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
+  const pageActions = useMemo(() => actions.slice(pageIndex * 4, pageIndex * 4 + 4), [actions, pageIndex]);
   const totalPages = Math.ceil(actions.length / 4);
-  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
+  const scoredCount = actions.filter(a => a.action_score != null && String(a.action_score) !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
 
   // Preload next page videos
