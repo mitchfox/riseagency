@@ -262,8 +262,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
   const handleUpdateReport = useCallback(async () => {
     // Save all current scores silently without leaving score edit
-    const updates = actions.filter(a => a.action_score).map(a =>
-      supabase.from("performance_report_actions").update({ action_score: a.action_score } as any).eq("id", a.id)
+    const updates = actions.filter(a => a.action_score != null && String(a.action_score) !== "").map(a =>
+      supabase.from("performance_report_actions").update({ action_score: String(a.action_score) } as any).eq("id", a.id)
     );
     await Promise.all(updates);
     onSave?.();
