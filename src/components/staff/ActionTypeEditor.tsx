@@ -1042,8 +1042,8 @@ export const ActionTypeEditor = ({
             <span className="text-xs text-muted-foreground">
               {actions.length} actions · {groupedActions.length} types
             </span>
-            {streakMessage && (
-              <span className="text-xs font-bold text-amber-400 animate-pulse">{streakMessage}</span>
+            {timerMessage && (
+              <span className="text-xs font-medium text-amber-400">{timerMessage}</span>
             )}
           </div>
           {/* Live R90 Score - top centre */}
