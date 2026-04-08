@@ -434,6 +434,9 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           </div>
           <span className="text-xs font-medium">{completionPct}%</span>
           <span className="text-[10px] text-muted-foreground">Page {pageIndex + 1}/{totalPages}</span>
+          {timerMessage && (
+            <span className="text-[10px] font-medium text-amber-400 ml-1">{timerMessage}</span>
+          )}
         </div>
         <button
           onClick={handleUpdateReport}
