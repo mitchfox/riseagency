@@ -176,7 +176,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       const [actionsRes, scoresRes] = await Promise.all([
         supabase
           .from("performance_report_actions")
-          .select("id, action_type, action_score, minute, video_url, action_number")
+          .select("id, action_type, action_score, minute, video_url, action_number, clip_start, clip_end")
           .eq("analysis_id", analysisId)
           .not("video_url", "is", null)
           .order("action_number", { ascending: true }),
