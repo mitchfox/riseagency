@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { X, SkipForward, SkipBack, Repeat } from "lucide-react";
-import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
+import { getPlaybackInstruction } from "@/lib/clipVideoUtils";
 
 interface MatchClipPlayerProps {
   analysisId: string;

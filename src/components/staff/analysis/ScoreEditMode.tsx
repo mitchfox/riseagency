@@ -493,15 +493,22 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-border/40">
         {pageActions.map((action, i) => (
           <div key={action.id} className="relative overflow-hidden bg-black">
-            <video
-              ref={el => { videoRefs.current[i] = el; }}
-              src={getEditPlaybackUrl(action) || ''}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full object-contain"
-            />
+            {(() => {
+              const instruction = getPlaybackInstruction(action);
+              const videoSrc = instruction.mode !== 'blocked' ? instruction.src : '';
+              const shouldLoop = instruction.mode === 'standalone';
+              return (
+                <video
+                  ref={el => { videoRefs.current[i] = el; }}
+                  src={videoSrc}
+                  autoPlay
+                  loop={shouldLoop}
+                  muted
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+              );
+            })()}
 
             <div className={`absolute ${getCornerStackPosition(i)} z-20`}>
               <div className={`flex ${getCornerStackDirection(i)} ${getCornerStackAlignment(i)} gap-1`}>
