@@ -464,8 +464,9 @@ export const ActionTypeEditor = ({
     setVideoPlaying(false);
     setVideoZoom(1);
     setVideoPan({ x: 0, y: 0 });
-    loadedUrlRef.current = action.video_url;
-    vid.src = action.video_url;
+    const resolvedUrl = getEditPlaybackUrl(action);
+    loadedUrlRef.current = resolvedUrl || '';
+    vid.src = resolvedUrl || '';
     vid.load();
   }, [selectedActionIndex]);
 
