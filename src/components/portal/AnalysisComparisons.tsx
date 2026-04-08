@@ -85,9 +85,8 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
         .order('analysis_date', { ascending: false })
         .limit(20);
       if (data) {
-        // Only use live reports for comparisons
-        const liveData = data.filter(a => !a.visibility_status || a.visibility_status === 'live');
-        setFixtureAnalyses(liveData.map(a => ({
+        // Use ALL reports with fixture_stats for stat comparisons (visibility only affects R90 display)
+        setFixtureAnalyses(data.filter(a => a.fixture_stats != null).map(a => ({
           ...a,
           r90_score: a.r90_score ?? 0,
           fixture_stats: (a.fixture_stats as Record<string, number>) || {},

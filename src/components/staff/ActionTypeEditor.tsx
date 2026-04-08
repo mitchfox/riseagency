@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useProductivityTimer } from "@/hooks/useProductivityTimer";
 import { getPlaybackInstruction, type PlaybackInstruction } from "@/lib/clipVideoUtils";
 import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -143,19 +144,30 @@ const isBoxZoneType = (type: string) =>
 const isXGType = (type: string) =>
   XG_MAP_TYPES.some(t => canonicalActionType(type).toLowerCase().includes(t));
 
-const OFFENSIVE_PATTERNS = ['shot', 'cross', 'dribble', 'pass', 'carry', 'through ball', 'progressive', 'touch', 'ball retention', 'chance', 'attacking', 'offensive', 'forward', 'movement', 'assist', 'goal'];
-const DEFENSIVE_PATTERNS = ['tackle', 'interception', 'clearance', 'block', 'header', 'recovery', 'regain', 'defensive', 'press', 'duel'];
-const KEY_PATTERNS = ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'];
+const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [
+  { group: 'Key Actions', patterns: ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'] },
+  { group: 'Passing', patterns: ['pass', 'through ball', 'ball retention', 'switch', 'distribution'] },
+  { group: 'Movement', patterns: ['offer', 'movement', 'run', 'carry', 'progressive carry', 'rotation'] },
+  { group: 'Shooting', patterns: ['shot', 'headed shot', 'shot assist', 'shot blocked'] },
+  { group: 'Crossing & Wide Play', patterns: ['cross', 'attacking cross', 'front post', 'back post', 'wide', 'overlap'] },
+  { group: 'Pressing & Pressure', patterns: ['press', 'applied pressure', 'defensive positioning', 'closing down'] },
+  { group: 'Regains & Interceptions', patterns: ['regain', 'interception', 'recovery', 'ball recovery', 'turnover won'] },
+  { group: 'Defending', patterns: ['tackle', 'clearance', 'block', 'header', 'duel', 'aerial', 'defensive'] },
+  { group: 'Dribbling', patterns: ['dribble', 'take on', 'take-on', 'skill'] },
+];
 
-function getActionGroup(type: string): 'Key Actions' | 'Offensive' | 'Defensive' | 'Other' {
+function getActionGroup(type: string): string {
   const lower = type.toLowerCase();
-  if (KEY_PATTERNS.some(p => lower.includes(p))) return 'Key Actions';
-  if (DEFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Defensive';
-  if (OFFENSIVE_PATTERNS.some(p => lower.includes(p))) return 'Offensive';
+  for (const rule of ACTION_CATEGORY_RULES) {
+    if (rule.patterns.some(p => lower.includes(p))) return rule.group;
+  }
   return 'Other';
 }
 
-const GROUP_ORDER: ('Key Actions' | 'Offensive' | 'Defensive' | 'Other')[] = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
+const GROUP_ORDER = [
+  'Key Actions', 'Passing', 'Movement', 'Shooting', 'Crossing & Wide Play',
+  'Pressing & Pressure', 'Regains & Interceptions', 'Defending', 'Dribbling', 'Other'
+];
 
 let scoresByTypeCache: Record<string, { value: string; count: number }[]> = {};
 
@@ -247,10 +259,10 @@ const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating
         onChange={e => { setQuery(e.target.value); setShowDropdown(true); }}
         onFocus={() => setShowDropdown(true)}
         placeholder="R90 search..."
-        className="h-7 text-xs w-28"
+        className="h-7 text-xs w-44"
       />
       {showDropdown && filtered.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 z-50 w-64 max-h-48 overflow-y-auto bg-popover border rounded-md shadow-lg">
+        <div className="absolute top-full left-0 mt-1 z-50 w-80 max-h-48 overflow-y-auto bg-popover border rounded-md shadow-lg">
           {filtered.map((r, i) => (
             <button
               key={i}
@@ -395,11 +407,12 @@ export const ActionTypeEditor = ({
   }, [actions]);
 
   const sidebarGroups = useMemo(() => {
-    const result: Record<string, { category: string; items: { action: PerformanceAction; index: number }[] }[]> = {
-      'Key Actions': [], 'Offensive': [], 'Defensive': [], 'Other': [],
-    };
+    const result: Record<string, { category: string; items: { action: PerformanceAction; index: number }[] }[]> = {};
+    GROUP_ORDER.forEach(g => { result[g] = []; });
     groupedActions.forEach(([category, items]) => {
-      result[getActionGroup(category)].push({ category, items });
+      const group = getActionGroup(category);
+      if (!result[group]) result[group] = [];
+      result[group].push({ category, items });
     });
     return result;
   }, [groupedActions]);
@@ -781,8 +794,9 @@ export const ActionTypeEditor = ({
 
   const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
 
-  // Motivational messages based on streak
-  const streakMessage = streak >= 20 ? "🔥 Unstoppable!" : streak >= 10 ? "🔥 On fire!" : streak >= 5 ? "⚡ Great pace!" : null;
+  // Productivity timer
+  const totalScoredCount = useMemo(() => actions.filter(a => a.action_score && a.action_score.trim() !== "").length, [actions]);
+  const { message: timerMessage } = useProductivityTimer({ totalActions: actions.length, scoredCount: totalScoredCount });
 
   // Mobile helper: select action and close list
   const mobileSelectAction = (actionIndex: number) => {
@@ -1040,8 +1054,8 @@ export const ActionTypeEditor = ({
             <span className="text-xs text-muted-foreground">
               {actions.length} actions · {groupedActions.length} types
             </span>
-            {streakMessage && (
-              <span className="text-xs font-bold text-amber-400 animate-pulse">{streakMessage}</span>
+            {timerMessage && (
+              <span className="text-xs font-medium text-amber-400">{timerMessage}</span>
             )}
           </div>
           {/* Live R90 Score - top centre */}

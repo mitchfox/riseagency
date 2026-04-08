@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useProductivityTimer } from "@/hooks/useProductivityTimer";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -198,6 +199,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const totalPages = Math.ceil(actions.length / 4);
   const scoredCount = actions.filter(a => a.action_score != null && String(a.action_score) !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
+  const { message: timerMessage } = useProductivityTimer({ totalActions: actions.length, scoredCount });
 
   // Preload next page videos
   const allVideoUrls = useMemo(() => {
@@ -261,14 +263,13 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const lastAutoAdvanceSignatureRef = useRef("");
 
   const handleUpdateReport = useCallback(async () => {
-    // Save all current scores silently without leaving score edit
+    // Save all current scores silently without leaving score edit — never call onSave/onClose
     const updates = actions.filter(a => a.action_score != null && String(a.action_score) !== "").map(a =>
       supabase.from("performance_report_actions").update({ action_score: String(a.action_score) } as any).eq("id", a.id)
     );
     await Promise.all(updates);
-    onSave?.();
     toast.success("Report updated", { style: { zIndex: 100000 } });
-  }, [onSave, actions]);
+  }, [actions]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
@@ -433,6 +434,9 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           </div>
           <span className="text-xs font-medium">{completionPct}%</span>
           <span className="text-[10px] text-muted-foreground">Page {pageIndex + 1}/{totalPages}</span>
+          {timerMessage && (
+            <span className="text-[10px] font-medium text-amber-400 ml-1">{timerMessage}</span>
+          )}
         </div>
         <button
           onClick={handleUpdateReport}
