@@ -170,7 +170,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const [panelSide, setPanelSide] = useState<"left" | "right">("left");
   const searchRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const lastAutoAdvanceSignatureRef = useRef("");
+  const clipIntervalsRef = useRef<(number | null)[]>([null, null, null, null]);
 
   useEffect(() => {
     const fetchData = async () => {
