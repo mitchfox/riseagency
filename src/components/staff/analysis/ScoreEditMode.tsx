@@ -526,7 +526,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             {/* Score input: inner corner */}
             <div className={`absolute ${getScorePosition(i)} z-20`}>
               <Input
-                value={action.action_score || ""}
+                value={action.action_score != null ? String(action.action_score) : ""}
                 onChange={(e) => void handleScoreChange(action.id, e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'Subtract') {
