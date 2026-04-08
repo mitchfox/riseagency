@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useProductivityTimer } from "@/hooks/useProductivityTimer";
 import { getPlaybackInstruction, type PlaybackInstruction } from "@/lib/clipVideoUtils";
 import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
