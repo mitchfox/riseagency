@@ -23,6 +23,8 @@ interface Action {
   minute: string;
   video_url: string;
   action_number: number;
+  clip_start: number | null;
+  clip_end: number | null;
 }
 
 interface R90Score {
