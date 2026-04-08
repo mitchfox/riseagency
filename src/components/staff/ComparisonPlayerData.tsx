@@ -419,6 +419,12 @@ export const ComparisonPlayerData = () => {
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
+        <Input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search players..."
+          className="w-[200px]"
+        />
         <Select value={filterPosition} onValueChange={setFilterPosition}>
           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Position" /></SelectTrigger>
           <SelectContent>
