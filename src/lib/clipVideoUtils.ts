@@ -71,9 +71,45 @@ export const getPlaybackMode = (action: {
 };
 
 /**
+ * Structured playback instruction for any component that needs to play a clip.
+ * This replaces raw URL resolution with explicit mode + data.
+ */
+export type PlaybackInstruction =
+  | { mode: 'standalone'; src: string }
+  | { mode: 'clipped'; src: string; clipStart: number; clipEnd: number }
+  | { mode: 'blocked' };
+
+export const getPlaybackInstruction = (action: {
+  video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
+}): PlaybackInstruction => {
+  if (!action.video_url) return { mode: 'blocked' };
+
+  // Standalone trimmed clip — play directly
+  if (isStandaloneTrimmedClip(action.video_url)) {
+    return { mode: 'standalone', src: action.video_url };
+  }
+
+  // Full match URL with boundaries — clipped playback
+  const hasBounds = action.clip_start != null && action.clip_end != null
+    && action.clip_end > action.clip_start;
+  if (hasBounds) {
+    return { mode: 'clipped', src: action.video_url, clipStart: action.clip_start!, clipEnd: action.clip_end! };
+  }
+
+  // Full match URL without boundaries — blocked
+  if (isFullMatchUrl(action.video_url)) return { mode: 'blocked' };
+
+  // Unknown URL type — treat as standalone
+  return { mode: 'standalone', src: action.video_url };
+};
+
+/**
  * Resolve the correct playback URL for edit-mode components.
  * Returns a standalone clip URL, a media-fragment URL for clipped windows,
  * or null if the action cannot be played.
+ * @deprecated Use getPlaybackInstruction instead for strict boundary enforcement
  */
 export const getEditPlaybackUrl = (action: {
   video_url?: string | null;

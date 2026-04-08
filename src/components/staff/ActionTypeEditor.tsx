@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
+import { getPlaybackInstruction, type PlaybackInstruction } from "@/lib/clipVideoUtils";
 import ReactDOM from "react-dom";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -351,6 +351,8 @@ export const ActionTypeEditor = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const loadedUrlRef = useRef<string | null>(null);
+  const clipBoundsRef = useRef<{ start: number; end: number } | null>(null);
+  const clipEnforcementRef = useRef<number | null>(null);
   const pitchGridKeyRef = useRef(0);
   // Mobile-specific state
   const [mobileActionListOpen, setMobileActionListOpen] = useState(true);
@@ -440,36 +442,92 @@ export const ActionTypeEditor = ({
     }
   }, [selectedActionIndex]);
 
+  // Cleanup clip enforcement on unmount
+  useEffect(() => {
+    return () => {
+      if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
+    };
+  }, []);
+
+  const startClipEnforcement = useCallback((start: number, end: number) => {
+    if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
+    clipBoundsRef.current = { start, end };
+    clipEnforcementRef.current = window.setInterval(() => {
+      const vid = videoRef.current;
+      const bounds = clipBoundsRef.current;
+      if (!vid || !bounds) return;
+      if (vid.currentTime >= bounds.end) {
+        vid.currentTime = bounds.start;
+      }
+      if (vid.currentTime < bounds.start - 0.5) {
+        vid.currentTime = bounds.start;
+      }
+    }, 100);
+  }, []);
+
+  const stopClipEnforcement = useCallback(() => {
+    if (clipEnforcementRef.current) {
+      clearInterval(clipEnforcementRef.current);
+      clipEnforcementRef.current = null;
+    }
+    clipBoundsRef.current = null;
+  }, []);
+
   useEffect(() => {
     if (selectedActionIndex === null) {
       setVideoReady(false);
       setVideoPlaying(false);
+      stopClipEnforcement();
       return;
     }
     const action = actions[selectedActionIndex];
     if (!action?.video_url) {
       setVideoReady(false);
       setVideoPlaying(false);
+      stopClipEnforcement();
       return;
     }
     const vid = videoRef.current;
     if (!vid) return;
 
-    if (loadedUrlRef.current === action.video_url && vid.readyState >= 2) {
+    const instruction = getPlaybackInstruction(action);
+    if (instruction.mode === 'blocked') {
+      setVideoReady(false);
+      setVideoPlaying(false);
+      stopClipEnforcement();
+      return;
+    }
+
+    const src = instruction.src;
+
+    // Same source already loaded — just seek if needed
+    if (loadedUrlRef.current === src && vid.readyState >= 2) {
+      if (instruction.mode === 'clipped') {
+        vid.currentTime = instruction.clipStart;
+        startClipEnforcement(instruction.clipStart, instruction.clipEnd);
+      } else {
+        stopClipEnforcement();
+        vid.currentTime = 0;
+      }
       setVideoReady(true);
       vid.play().then(() => setVideoPlaying(true)).catch(() => {});
       return;
     }
 
+    // Different source — load it
     setVideoReady(false);
     setVideoPlaying(false);
     setVideoZoom(1);
     setVideoPan({ x: 0, y: 0 });
-    const resolvedUrl = getEditPlaybackUrl(action);
-    loadedUrlRef.current = resolvedUrl || '';
-    vid.src = resolvedUrl || '';
+    stopClipEnforcement();
+    loadedUrlRef.current = src;
+    vid.src = src;
     vid.load();
-  }, [selectedActionIndex]);
+
+    if (instruction.mode === 'clipped') {
+      clipBoundsRef.current = { start: instruction.clipStart, end: instruction.clipEnd };
+    }
+  }, [selectedActionIndex, startClipEnforcement, stopClipEnforcement]);
 
   // Preload next clip
   useEffect(() => {
@@ -478,11 +536,13 @@ export const ActionTypeEditor = ({
     if (currentClipIdx === -1) return;
     const nextIdx = (currentClipIdx + 1) % categoryClips.length;
     const nextAction = categoryClips[nextIdx]?.action;
-    const nextUrl = nextAction ? getEditPlaybackUrl(nextAction) : null;
-    if (!nextUrl) return;
+    if (!nextAction) return;
+    const nextInstruction = getPlaybackInstruction(nextAction);
+    if (nextInstruction.mode === 'blocked') return;
+    const nextSrc = nextInstruction.src;
     const preload = preloadVideoRef.current;
-    if (preload && preload.src !== nextUrl) {
-      preload.src = nextUrl;
+    if (preload && preload.src !== nextSrc) {
+      preload.src = nextSrc;
       preload.load();
     }
   }, [selectedActionIndex, categoryClips]);
@@ -490,8 +550,15 @@ export const ActionTypeEditor = ({
   const handleCanPlay = useCallback(() => {
     setVideoReady(true);
     const vid = videoRef.current;
-    if (vid) vid.play().then(() => setVideoPlaying(true)).catch(() => {});
-  }, []);
+    if (!vid) return;
+    // Seek to clip start if we have bounds waiting
+    const bounds = clipBoundsRef.current;
+    if (bounds) {
+      vid.currentTime = bounds.start;
+      startClipEnforcement(bounds.start, bounds.end);
+    }
+    vid.play().then(() => setVideoPlaying(true)).catch(() => {});
+  }, [startClipEnforcement]);
 
   const togglePlayPause = useCallback(() => {
     const vid = videoRef.current;

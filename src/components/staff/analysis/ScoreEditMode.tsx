@@ -8,7 +8,7 @@ import { XGPitchMap } from "@/components/staff/XGPitchMap";
 import { BoxZoneMap } from "@/components/staff/BoxZoneMap";
 import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
-import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
+import { getPlaybackInstruction } from "@/lib/clipVideoUtils";
 
 interface ScoreEditModeProps {
   analysisId: string;
@@ -170,7 +170,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const [panelSide, setPanelSide] = useState<"left" | "right">("left");
   const searchRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const lastAutoAdvanceSignatureRef = useRef("");
+  const clipIntervalsRef = useRef<(number | null)[]>([null, null, null, null]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -194,8 +194,18 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     fetchData();
   }, [analysisId]);
 
+  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
+  const totalPages = Math.ceil(actions.length / 4);
+  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
+  const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
+
   // Preload next page videos
-  const allVideoUrls = useMemo(() => actions.map(a => a.video_url).filter(Boolean), [actions]);
+  const allVideoUrls = useMemo(() => {
+    return actions.map(a => {
+      const instr = getPlaybackInstruction(a);
+      return instr.mode !== 'blocked' ? instr.src : null;
+    }).filter(Boolean) as string[];
+  }, [actions]);
   const { preloadNextVideos } = useVideoPreloader({
     videos: allVideoUrls,
     preloadCount: 4,
@@ -208,10 +218,47 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     preloadNextVideos(currentLastIndex);
   }, [pageIndex, preloadNextVideos]);
 
-  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
-  const totalPages = Math.ceil(actions.length / 4);
-  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
-  const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
+  // Clip boundary enforcement for each of the 4 tiles
+  useEffect(() => {
+    clipIntervalsRef.current.forEach(id => { if (id) clearInterval(id); });
+    clipIntervalsRef.current = [null, null, null, null];
+
+    pageActions.forEach((action, i) => {
+      const instruction = getPlaybackInstruction(action);
+      if (instruction.mode !== 'clipped') return;
+
+      const { clipStart, clipEnd } = instruction;
+      const vid = videoRefs.current[i];
+      if (vid) {
+        const onLoaded = () => {
+          vid.currentTime = clipStart;
+          vid.play().catch(() => {});
+        };
+        if (vid.readyState >= 2) {
+          vid.currentTime = clipStart;
+        } else {
+          vid.addEventListener('loadeddata', onLoaded, { once: true });
+        }
+      }
+
+      clipIntervalsRef.current[i] = window.setInterval(() => {
+        const v = videoRefs.current[i];
+        if (!v) return;
+        if (v.currentTime >= clipEnd) {
+          v.currentTime = clipStart;
+        }
+        if (v.currentTime < clipStart - 0.5) {
+          v.currentTime = clipStart;
+        }
+      }, 100);
+    });
+
+    return () => {
+      clipIntervalsRef.current.forEach(id => { if (id) clearInterval(id); });
+    };
+  }, [pageActions]);
+
+  const lastAutoAdvanceSignatureRef = useRef("");
 
   const handleUpdateReport = useCallback(async () => {
     // Save all current scores silently without leaving score edit
@@ -444,15 +491,22 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-border/40">
         {pageActions.map((action, i) => (
           <div key={action.id} className="relative overflow-hidden bg-black">
-            <video
-              ref={el => { videoRefs.current[i] = el; }}
-              src={getEditPlaybackUrl(action) || ''}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full object-contain"
-            />
+            {(() => {
+              const instruction = getPlaybackInstruction(action);
+              const videoSrc = instruction.mode !== 'blocked' ? instruction.src : '';
+              const shouldLoop = instruction.mode === 'standalone';
+              return (
+                <video
+                  ref={el => { videoRefs.current[i] = el; }}
+                  src={videoSrc}
+                  autoPlay
+                  loop={shouldLoop}
+                  muted
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+              );
+            })()}
 
             <div className={`absolute ${getCornerStackPosition(i)} z-20`}>
               <div className={`flex ${getCornerStackDirection(i)} ${getCornerStackAlignment(i)} gap-1`}>
