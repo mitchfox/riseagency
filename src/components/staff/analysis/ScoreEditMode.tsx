@@ -294,7 +294,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   // Auto-advance when all 4 on screen are scored — no parent refresh, just local advance
   useEffect(() => {
     if (activeActionId || pendingWriteCount > 0 || pageActions.length === 0) return;
-    if (!pageActions.every(a => a.action_score && a.action_score !== "")) return;
+    if (!pageActions.every(a => a.action_score != null && String(a.action_score) !== "")) return;
 
     const signature = pageActions.map(action => `${action.id}:${action.action_score}`).join('|');
     if (lastAutoAdvanceSignatureRef.current === signature) return;
