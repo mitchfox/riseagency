@@ -8,7 +8,7 @@ import { XGPitchMap } from "@/components/staff/XGPitchMap";
 import { BoxZoneMap } from "@/components/staff/BoxZoneMap";
 import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
-import { getEditPlaybackUrl } from "@/lib/clipVideoUtils";
+import { getPlaybackInstruction } from "@/lib/clipVideoUtils";
 
 interface ScoreEditModeProps {
   analysisId: string;
