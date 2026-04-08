@@ -178,10 +178,8 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         {currentClip && (
           <video
             ref={videoRef}
-            key={currentClip.video_url}
-            src={getEditPlaybackUrl(currentClip) || ''}
+            key={currentClip.id}
             controls
-            autoPlay
             onEnded={handleVideoEnded}
             className="max-h-full max-w-full"
           />
