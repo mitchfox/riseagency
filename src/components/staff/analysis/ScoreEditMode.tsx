@@ -194,9 +194,9 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     fetchData();
   }, [analysisId]);
 
-  const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
+  const pageActions = useMemo(() => actions.slice(pageIndex * 4, pageIndex * 4 + 4), [actions, pageIndex]);
   const totalPages = Math.ceil(actions.length / 4);
-  const scoredCount = actions.filter(a => a.action_score && a.action_score !== "").length;
+  const scoredCount = actions.filter(a => a.action_score != null && String(a.action_score) !== "").length;
   const completionPct = actions.length > 0 ? Math.round((scoredCount / actions.length) * 100) : 0;
 
   // Preload next page videos
@@ -262,8 +262,8 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
 
   const handleUpdateReport = useCallback(async () => {
     // Save all current scores silently without leaving score edit
-    const updates = actions.filter(a => a.action_score).map(a =>
-      supabase.from("performance_report_actions").update({ action_score: a.action_score } as any).eq("id", a.id)
+    const updates = actions.filter(a => a.action_score != null && String(a.action_score) !== "").map(a =>
+      supabase.from("performance_report_actions").update({ action_score: String(a.action_score) } as any).eq("id", a.id)
     );
     await Promise.all(updates);
     onSave?.();
@@ -294,7 +294,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   // Auto-advance when all 4 on screen are scored — no parent refresh, just local advance
   useEffect(() => {
     if (activeActionId || pendingWriteCount > 0 || pageActions.length === 0) return;
-    if (!pageActions.every(a => a.action_score && a.action_score !== "")) return;
+    if (!pageActions.every(a => a.action_score != null && String(a.action_score) !== "")) return;
 
     const signature = pageActions.map(action => `${action.id}:${action.action_score}`).join('|');
     if (lastAutoAdvanceSignatureRef.current === signature) return;
@@ -526,12 +526,12 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
             {/* Score input: inner corner */}
             <div className={`absolute ${getScorePosition(i)} z-20`}>
               <Input
-                value={action.action_score || ""}
+                value={action.action_score != null ? String(action.action_score) : ""}
                 onChange={(e) => void handleScoreChange(action.id, e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === '-' || e.key === 'Subtract') {
                     e.preventDefault();
-                    void handleScoreChange(action.id, prefixNegativeScore(action.action_score || ""));
+                    void handleScoreChange(action.id, prefixNegativeScore(action.action_score != null ? String(action.action_score) : ""));
                   }
                 }}
                 onFocus={(e) => {
