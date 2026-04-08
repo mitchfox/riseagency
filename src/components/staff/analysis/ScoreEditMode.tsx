@@ -195,7 +195,12 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   }, [analysisId]);
 
   // Preload next page videos
-  const allVideoUrls = useMemo(() => actions.map(a => a.video_url).filter(Boolean), [actions]);
+  const allVideoUrls = useMemo(() => {
+    return actions.map(a => {
+      const instr = getPlaybackInstruction(a);
+      return instr.mode !== 'blocked' ? instr.src : null;
+    }).filter(Boolean) as string[];
+  }, [actions]);
   const { preloadNextVideos } = useVideoPreloader({
     videos: allVideoUrls,
     preloadCount: 4,
@@ -207,6 +212,50 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
     const currentLastIndex = (pageIndex + 1) * 4 - 1;
     preloadNextVideos(currentLastIndex);
   }, [pageIndex, preloadNextVideos]);
+
+  // Clip boundary enforcement for each of the 4 tiles
+  useEffect(() => {
+    // Clear old intervals
+    clipIntervalsRef.current.forEach(id => { if (id) clearInterval(id); });
+    clipIntervalsRef.current = [null, null, null, null];
+
+    pageActions.forEach((action, i) => {
+      const instruction = getPlaybackInstruction(action);
+      if (instruction.mode !== 'clipped') return;
+
+      const { clipStart, clipEnd } = instruction;
+      const vid = videoRefs.current[i];
+      if (vid) {
+        // Seek to clip start on load
+        const onLoaded = () => {
+          vid.currentTime = clipStart;
+          vid.play().catch(() => {});
+        };
+        if (vid.readyState >= 2) {
+          vid.currentTime = clipStart;
+        } else {
+          vid.addEventListener('loadeddata', onLoaded, { once: true });
+        }
+      }
+
+      clipIntervalsRef.current[i] = window.setInterval(() => {
+        const v = videoRefs.current[i];
+        if (!v) return;
+        if (v.currentTime >= clipEnd) {
+          v.currentTime = clipStart;
+        }
+        if (v.currentTime < clipStart - 0.5) {
+          v.currentTime = clipStart;
+        }
+      }, 100);
+    });
+
+    return () => {
+      clipIntervalsRef.current.forEach(id => { if (id) clearInterval(id); });
+    };
+  }, [pageActions]);
+
+  const lastAutoAdvanceSignatureRef = useRef("");
 
   const pageActions = actions.slice(pageIndex * 4, pageIndex * 4 + 4);
   const totalPages = Math.ceil(actions.length / 4);
