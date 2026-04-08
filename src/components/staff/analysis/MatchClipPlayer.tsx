@@ -17,6 +17,8 @@ interface ClipAction {
   minute: string;
   description: string;
   video_url: string;
+  clip_start: number | null;
+  clip_end: number | null;
 }
 
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
