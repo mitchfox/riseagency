@@ -248,10 +248,10 @@ const R90InlineSearch = ({ allR90Ratings, onSelect }: { allR90Ratings: R90Rating
         onChange={e => { setQuery(e.target.value); setShowDropdown(true); }}
         onFocus={() => setShowDropdown(true)}
         placeholder="R90 search..."
-        className="h-7 text-xs w-28"
+        className="h-7 text-xs w-44"
       />
       {showDropdown && filtered.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 z-50 w-64 max-h-48 overflow-y-auto bg-popover border rounded-md shadow-lg">
+        <div className="absolute top-full left-0 mt-1 z-50 w-80 max-h-48 overflow-y-auto bg-popover border rounded-md shadow-lg">
           {filtered.map((r, i) => (
             <button
               key={i}
