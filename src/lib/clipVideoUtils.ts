@@ -69,3 +69,32 @@ export const getPlaybackMode = (action: {
   
   return 'blocked';
 };
+
+/**
+ * Resolve the correct playback URL for edit-mode components.
+ * Returns a standalone clip URL, a media-fragment URL for clipped windows,
+ * or null if the action cannot be played.
+ */
+export const getEditPlaybackUrl = (action: {
+  video_url?: string | null;
+  clip_start?: number | null;
+  clip_end?: number | null;
+}): string | null => {
+  if (!action.video_url) return null;
+
+  // Already a standalone trimmed clip — use directly
+  if (isStandaloneTrimmedClip(action.video_url)) return action.video_url;
+
+  // Full match URL with boundaries — use media fragment
+  const hasBounds = action.clip_start != null && action.clip_end != null
+    && action.clip_end > action.clip_start;
+  if (hasBounds && isFullMatchUrl(action.video_url)) {
+    return `${action.video_url}#t=${action.clip_start},${action.clip_end}`;
+  }
+
+  // Full match URL without boundaries — blocked
+  if (isFullMatchUrl(action.video_url)) return null;
+
+  // Unknown URL type — allow direct playback
+  return action.video_url;
+};

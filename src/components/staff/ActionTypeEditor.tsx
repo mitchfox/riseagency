@@ -476,7 +476,8 @@ export const ActionTypeEditor = ({
     const currentClipIdx = categoryClips.findIndex(c => c.index === selectedActionIndex);
     if (currentClipIdx === -1) return;
     const nextIdx = (currentClipIdx + 1) % categoryClips.length;
-    const nextUrl = categoryClips[nextIdx]?.action.video_url;
+    const nextAction = categoryClips[nextIdx]?.action;
+    const nextUrl = nextAction ? getEditPlaybackUrl(nextAction) : null;
     if (!nextUrl) return;
     const preload = preloadVideoRef.current;
     if (preload && preload.src !== nextUrl) {

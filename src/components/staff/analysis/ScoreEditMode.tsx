@@ -445,7 +445,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
           <div key={action.id} className="relative overflow-hidden bg-black">
             <video
               ref={el => { videoRefs.current[i] = el; }}
-              src={action.video_url}
+              src={getEditPlaybackUrl(action) || ''}
               autoPlay
               loop
               muted
