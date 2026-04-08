@@ -386,9 +386,14 @@ export const ComparisonPlayerData = () => {
   };
 
   const seasons = [...new Set(players.map(p => p.season))].sort().reverse();
+  const [searchQuery, setSearchQuery] = useState('');
   const filtered = players.filter(p => {
     if (filterPosition !== 'all' && p.position !== filterPosition) return false;
     if (filterSeason !== 'all' && p.season !== filterSeason) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      if (!p.name.toLowerCase().includes(q) && !(p.club || '').toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
