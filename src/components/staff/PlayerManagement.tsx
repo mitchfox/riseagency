@@ -2222,13 +2222,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                   className="rounded-lg overflow-hidden text-white flex flex-col md:flex-row md:items-stretch"
                                 >
                                   {/* R90 Score - Horizontal on Mobile, Vertical on Desktop */}
-                                  {analysis.r90_score !== null && analysis.r90_score !== undefined && (
+                                  {(() => {
+                                    const isHidden = String(analysis.visibility_status || '').toLowerCase() === 'hidden';
+                                    const effectiveR90 = isHidden && analysis.placeholder_raw_score != null && (analysis.placeholder_minutes ?? 0) > 0
+                                      ? (analysis.placeholder_raw_score / analysis.placeholder_minutes) * 90
+                                      : analysis.r90_score;
+                                    if (effectiveR90 === null || effectiveR90 === undefined) return null;
+                                    return (
                                     <>
                                       {/* Mobile: Horizontal R90 */}
-                                      <div className={`md:hidden ${getR90ColorClass(analysis.r90_score)} p-3`}>
+                                      <div className={`md:hidden ${getR90ColorClass(effectiveR90)} p-3`}>
                                         <div className="flex items-center justify-center gap-2 mb-2">
                                           <div className="text-3xl font-bold">
-                                            {analysis.r90_score.toFixed(2)}
+                                            {effectiveR90.toFixed(2)}
                                           </div>
                                           <TrendingUp className="w-8 h-8 text-white" strokeWidth={2.5} />
                                         </div>
@@ -2236,17 +2242,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       </div>
                                       
                                       {/* Desktop: Vertical R90 */}
-                                      <div className={`hidden md:flex ${getR90ColorClass(analysis.r90_score)} items-center justify-center p-4 flex-shrink-0`}>
+                                      <div className={`hidden md:flex ${getR90ColorClass(effectiveR90)} items-center justify-center p-4 flex-shrink-0`}>
                                         <div className="text-center">
                                           <TrendingUp className="w-8 h-8 text-white mx-auto mb-2" strokeWidth={2.5} />
                                           <div className="text-4xl font-bold">
-                                            {analysis.r90_score.toFixed(2)}
+                                            {effectiveR90.toFixed(2)}
                                           </div>
                                           <div className="text-xs opacity-80">R90</div>
                                         </div>
                                       </div>
                                     </>
-                                  )}
+                                    );
+                                  })()}
                                   
                                   {/* Match info and stats with black background */}
                                   <div className="bg-black flex-1 p-3 md:p-4">
