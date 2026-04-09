@@ -1347,9 +1347,10 @@ const Staff = () => {
           {/* Right side: music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
-            {/* Theme is locked to dark for staff portal */}
             {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
+            </>
+          )}
         </div>
       </header>
 
