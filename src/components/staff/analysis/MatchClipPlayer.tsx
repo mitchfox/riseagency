@@ -115,11 +115,11 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
   // Compute average score per action type for current clip
   const avgScoreForType = useMemo(() => {
-    if (!currentClip) return null;
-    const currentType = currentClip.action_type.toLowerCase();
+    if (!currentClip?.action_type) return null;
+    const currentType = (currentClip.action_type || '').toLowerCase();
+    if (!currentType) return null;
     const matching = clips.filter(c => {
-      const t = c.action_type.toLowerCase();
-      // Include if either type contains the other or they share a keyword
+      const t = (c.action_type || '').toLowerCase();
       return t === currentType || t.includes(currentType) || currentType.includes(t);
     });
     if (matching.length === 0) return null;
