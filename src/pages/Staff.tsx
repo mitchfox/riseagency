@@ -190,6 +190,7 @@ const Staff = () => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
