@@ -215,6 +215,8 @@ const VideoItem = ({
   onMoveToPoint,
   onAnnotationSaved,
   existingAnnotationId,
+  clipNotes,
+  pointTitles,
 }: {
   url: string;
   onRemove: () => void;
@@ -226,17 +228,18 @@ const VideoItem = ({
   onMoveToPoint: (targetPointIndex: number) => void;
   onAnnotationSaved?: (annotationProjectId: string) => void;
   existingAnnotationId?: string;
+  clipNotes?: string;
+  pointTitles?: string[];
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
   const [annotateOpen, setAnnotateOpen] = useState(false);
   const [annotateSeekTime, setAnnotateSeekTime] = useState<number | undefined>(undefined);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
-  const [annotationVersion, setAnnotationVersion] = useState(0); // bump to refresh preview
+  const [annotationVersion, setAnnotationVersion] = useState(0);
   const [moveOpen, setMoveOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLDivElement>(null);
 
-  // Load existing annotation project if one exists
   useEffect(() => {
     if (existingAnnotationId && !annotationProject) {
       supabase
@@ -260,7 +263,6 @@ const VideoItem = ({
   }, [existingAnnotationId]);
 
   const handleOpenAnnotate = () => {
-    // Capture current video time from the preview before opening
     let currentVideoTime: number | undefined;
     const videoEl = videoPreviewRef.current?.querySelector('video') as HTMLVideoElement | null;
     if (videoEl) {
@@ -307,8 +309,7 @@ const VideoItem = ({
       if (error) throw error;
 
       setAnnotationProject(proj);
-      setAnnotationVersion(v => v + 1); // force preview refresh
-      // Store the annotation project ID on the point data so it persists
+      setAnnotationVersion(v => v + 1);
       onAnnotationSaved?.(proj.id);
       toast.success("Annotations saved — remember to save the analysis to persist the link");
     } catch (err: any) {
@@ -316,10 +317,8 @@ const VideoItem = ({
     }
   };
 
-  // Build list of other points to move to
   const otherPoints = Array.from({ length: totalPoints }, (_, i) => i).filter(i => i !== pointIndex);
 
-  // Get preloaded elements from local state for preview (avoids refetch)
   const previewElements = useMemo(() => {
     if (!annotationProject?.klips) return undefined;
     return annotationProject.klips.flatMap((klip: any) => klip.elements || []);
@@ -364,6 +363,26 @@ const VideoItem = ({
           </div>
         </div>
       </div>
+
+      {/* Clip notes display with copy button */}
+      {clipNotes && clipNotes.trim() && (
+        <div className="mt-1.5 flex items-start gap-1.5 bg-muted/50 rounded px-2 py-1.5 border border-border/30">
+          <p className="text-[11px] text-muted-foreground flex-1 leading-snug line-clamp-3">{clipNotes}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0 shrink-0"
+            onClick={() => {
+              navigator.clipboard.writeText(clipNotes);
+              toast.success("Notes copied");
+            }}
+            title="Copy notes"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </Button>
+        </div>
+      )}
+
       <div className="absolute top-1 right-1 flex gap-1 z-10">
         <Button
           variant="secondary"
@@ -414,7 +433,7 @@ const VideoItem = ({
             <SelectContent>
               {otherPoints.map((i) => (
                 <SelectItem key={i} value={String(i)}>
-                  Move to Point {i + 1}
+                  Move to {pointTitles?.[i]?.trim() ? `"${pointTitles[i]}"` : `Point ${i + 1}`}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -794,35 +813,46 @@ const SortablePointCard = ({
                 const allVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
                 return (
                   <div className={`mt-2 ${allVideos.length < 4 ? 'flex gap-3' : 'grid grid-cols-2 md:grid-cols-3 gap-3'}`}>
-                    {allVideos.map((url, vidIndex) => (
-                      <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
-                        <VideoItem
-                          url={url}
-                          pointIndex={index}
-                          totalPoints={totalPoints}
-                          existingAnnotationId={point.annotation_ids?.[url]}
-                          existingCrop={point.video_crops?.[url]}
-                          onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
-                          onAnnotationSaved={(annotationId) => {
-                            const currentIds = point.annotation_ids || {};
-                            updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
-                          }}
-                          onCropSaved={(crop) => {
-                            const currentCrops = point.video_crops || {};
-                            updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
-                          }}
-                          onRemove={() => {
-                            const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                            updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
-                          }}
-                          onTrimComplete={(newUrl) => {
-                            const currentVideos = [...(point.video_urls || (point.video_url ? [point.video_url] : []))];
-                            currentVideos[vidIndex] = newUrl;
-                            updatePoint(index, "video_urls", currentVideos);
-                          }}
-                        />
-                      </div>
-                    ))}
+                    {allVideos.map((url, vidIndex) => {
+                      // Find matching clip notes for this URL
+                      const matchingClip = performanceReportClips.find(c => c.video_url === url);
+                      // Build point titles array for move dropdown
+                      const allPointTitles = Array.from({ length: totalPoints }, (_, pi) => {
+                        const pts = (window as any).__currentFormPoints;
+                        return pts?.[pi]?.title || '';
+                      });
+                      return (
+                        <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
+                          <VideoItem
+                            url={url}
+                            pointIndex={index}
+                            totalPoints={totalPoints}
+                            existingAnnotationId={point.annotation_ids?.[url]}
+                            existingCrop={point.video_crops?.[url]}
+                            clipNotes={matchingClip?.notes}
+                            pointTitles={allPointTitles}
+                            onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
+                            onAnnotationSaved={(annotationId) => {
+                              const currentIds = point.annotation_ids || {};
+                              updatePoint(index, "annotation_ids", { ...currentIds, [url]: annotationId });
+                            }}
+                            onCropSaved={(crop) => {
+                              const currentCrops = point.video_crops || {};
+                              updatePoint(index, "video_crops", { ...currentCrops, [url]: crop });
+                            }}
+                            onRemove={() => {
+                              const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
+                              updatePoint(index, "video_urls", currentVideos.filter((_, i) => i !== vidIndex));
+                            }}
+                            onTrimComplete={(newUrl) => {
+                              const currentVideos = [...(point.video_urls || (point.video_url ? [point.video_url] : []))];
+                              currentVideos[vidIndex] = newUrl;
+                              updatePoint(index, "video_urls", currentVideos);
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })()}
