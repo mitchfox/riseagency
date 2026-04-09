@@ -687,24 +687,46 @@ const SortablePointCard = ({
                       <SelectValue placeholder="Add from R90 clips..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {performanceReportClips
+                      {[...performanceReportClips]
                         .filter(clip => clip.video_url)
-                        .map((clip) => (
-                          <SelectItem key={clip.id} value={clip.video_url!}>
-                            <div className="flex items-center gap-2">
-                              <Film className="w-3 h-3" />
-                              <span>
-                                {clip.action_type || 'Action'} #{clip.action_number}
-                                {clip.minute ? ` (${clip.minute}')` : ''}
-                              </span>
-                              {clip.action_score !== undefined && clip.action_score !== null && (
-                                <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white ${getActionScoreBgColor(clip.action_score)}`}>
-                                  {clip.action_score}
-                                </span>
-                              )}
+                        .sort((a, b) => {
+                          const aNoted = a.notes && a.notes.trim() ? 1 : 0;
+                          const bNoted = b.notes && b.notes.trim() ? 1 : 0;
+                          if (bNoted !== aNoted) return bNoted - aNoted;
+                          return (a.action_number || 0) - (b.action_number || 0);
+                        })
+                        .map((clip, idx, arr) => {
+                          const isNoted = clip.notes && clip.notes.trim();
+                          const prevNoted = idx > 0 && arr[idx - 1].notes && arr[idx - 1].notes!.trim();
+                          const showDivider = idx > 0 && !isNoted && prevNoted;
+                          return (
+                            <div key={clip.id}>
+                              {showDivider && <div className="my-1 mx-2 border-t border-border/50" />}
+                              <SelectItem value={clip.video_url!}>
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <Film className="w-3 h-3 shrink-0" />
+                                    {isNoted && <span className="text-[9px] px-1 py-0 rounded bg-primary/20 text-primary font-medium shrink-0">Noted</span>}
+                                    <span>
+                                      {clip.action_type || 'Action'} #{clip.action_number}
+                                      {clip.minute ? ` (${clip.minute}')` : ''}
+                                    </span>
+                                    {clip.action_score !== undefined && clip.action_score !== null && (
+                                      <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold text-white ${getActionScoreBgColor(clip.action_score)}`}>
+                                        {clip.action_score}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isNoted && (
+                                    <span className="text-[10px] text-muted-foreground pl-5 truncate max-w-[400px]">
+                                      {clip.notes}
+                                    </span>
+                                  )}
+                                </div>
+                              </SelectItem>
                             </div>
-                          </SelectItem>
-                        ))}
+                          );
+                        })}
                     </SelectContent>
                   </Select>
                 </div>
