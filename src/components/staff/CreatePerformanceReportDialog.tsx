@@ -689,8 +689,8 @@ export const CreatePerformanceReportDialog = ({
     if (homeScore > awayScore) return awayTeam; // home is player's club, opponent is away
     if (awayScore > homeScore) return homeTeam; // away is player's club, opponent is home
 
-    // Tie or no match — fall back to whichever isn't the club name
-    return homeTeam === clubName ? awayTeam : homeTeam;
+    // Tie or no match — don't guess, let the user type it
+    return "";
   };
 
   const fetchPlayerClub = async () => {

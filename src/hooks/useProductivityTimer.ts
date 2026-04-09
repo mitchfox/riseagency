@@ -10,18 +10,19 @@ type TimerMode = "avg_per_action" | "time_remaining" | "avg_per_10";
 const TIMER_MODES: TimerMode[] = ["avg_per_action", "time_remaining", "avg_per_10"];
 
 export const useProductivityTimer = ({ totalActions, scoredCount }: ProductivityTimerOptions) => {
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [, setTick] = useState(0);
   const startTimeRef = useRef(Date.now());
   const startScoredRef = useRef(scoredCount);
   const [mode] = useState<TimerMode>(() => TIMER_MODES[Math.floor(Math.random() * TIMER_MODES.length)]);
 
+  // Force re-render every 200ms for smooth ticking (avoids browser throttling of 1s intervals)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
+    const interval = setInterval(() => setTick(t => t + 1), 200);
     return () => clearInterval(interval);
   }, []);
 
+  // Derive elapsed from wall clock on every render – always accurate
+  const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
   const actionsThisSession = Math.max(0, scoredCount - startScoredRef.current);
   const remaining = totalActions - scoredCount;
 
