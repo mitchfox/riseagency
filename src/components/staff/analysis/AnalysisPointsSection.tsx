@@ -527,6 +527,7 @@ const SortablePointCard = ({
   performanceReportClips,
   videoAnalysisClips,
   concepts,
+  allPointTitles,
 }: SortablePointCardProps) => {
   const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
   const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
@@ -1155,6 +1156,7 @@ export const AnalysisPointsSection = ({
                   performanceReportClips={performanceReportClips}
                   videoAnalysisClips={vaClips}
                   concepts={concepts}
+                  allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
                 />
                 {/* Add Point + Save between each point */}
                 <div className="flex items-center gap-2 my-2">
