@@ -1672,7 +1672,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 pt-20 pwa-content-offset ${
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 ${headerCollapsed ? 'pt-14' : 'pt-20'} pwa-content-offset ${
           sidebarCollapsed ? 'ml-0' : isMobile ? 'ml-14' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[70px]' : ''}`}>
           {expandedSection ? (
