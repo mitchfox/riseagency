@@ -505,6 +505,7 @@ interface SortablePointCardProps {
   performanceReportClips: PerformanceReportAction[];
   videoAnalysisClips: VideoAnalysisClip[];
   concepts: CoachingConcept[];
+  allPointTitles: string[];
 }
 
 const SortablePointCard = ({
