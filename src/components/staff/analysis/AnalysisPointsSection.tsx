@@ -1139,7 +1139,8 @@ export const AnalysisPointsSection = ({
                     toVideos.push(movedUrl);
                     newPoints[toPointIdx].video_urls = toVideos;
                     setFormData({ ...formData, points: newPoints });
-                    toast.success(`Video moved to Point ${toPointIdx + 1}`);
+                    const targetTitle = newPoints[toPointIdx]?.title?.trim();
+                    toast.success(`Video moved to ${targetTitle ? `"${targetTitle}"` : `Point ${toPointIdx + 1}`}`);
                   }}
                   handleImageUpload={handleImageUpload}
                   handleVideoUploadForPoint={handleVideoUploadForPoint}
