@@ -190,6 +190,7 @@ const Staff = () => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
@@ -1153,17 +1154,23 @@ const Staff = () => {
       />
 
       {/* Header with Logo - always visible */}
-       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top">
-        <div className="flex items-center h-16 px-4 relative">
-          {/* Centre logo — absolutely positioned, never moves */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? 'h-10' : ''}`}>
+        <div className={`flex items-center ${headerCollapsed ? 'h-10' : 'h-16'} px-4 relative`}>
+          {/* Centre logo — clickable to collapse/expand */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
+            onClick={() => setHeaderCollapsed(prev => !prev)}
+            title={headerCollapsed ? 'Show header' : 'Hide header'}
+          >
             <img
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className="h-9 w-auto"
+              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200`}
             />
           </div>
 
+          {!headerCollapsed && (
+            <>
           {/* Left side: open tabs — stops before logo */}
           <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4"
             style={{ maxWidth: 'calc(50% - 60px)' }}
@@ -1340,9 +1347,10 @@ const Staff = () => {
           {/* Right side: music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
-            {/* Theme is locked to dark for staff portal */}
             {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
+            </>
+          )}
         </div>
       </header>
 
@@ -1498,7 +1506,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar */}
-        <div className={`fixed ${isMobile ? 'top-14' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
+        <div className={`fixed ${headerCollapsed ? 'top-10' : isMobile ? 'top-14' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : isMobile ? 'w-14' : 'w-14 md:w-24'
         }`}>
           {/* Pinned Sections */}
@@ -1664,7 +1672,7 @@ const Staff = () => {
         </div>
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 pt-20 pwa-content-offset ${
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 ${headerCollapsed ? 'pt-14' : 'pt-20'} pwa-content-offset ${
           sidebarCollapsed ? 'ml-0' : isMobile ? 'ml-14' : 'ml-14 md:ml-24'
         } ${isMobile ? 'pb-[70px]' : ''}`}>
           {expandedSection ? (
