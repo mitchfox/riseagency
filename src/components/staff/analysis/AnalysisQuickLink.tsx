@@ -225,8 +225,8 @@ export const AnalysisQuickLink = ({
       playerTeam = "away";
     }
 
-    // Determine opponent name
-    const opponentName = playerTeam === "home" ? fixture.away_team : playerTeam === "away" ? fixture.home_team : fixture.away_team;
+    // Determine opponent name — don't guess if we can't match the player's team
+    const opponentName = playerTeam === "home" ? fixture.away_team : playerTeam === "away" ? fixture.home_team : "";
 
     const updateData: any = {
       ...formData,
