@@ -816,13 +816,7 @@ const SortablePointCard = ({
                 return (
                   <div className={`mt-2 ${allVideos.length < 4 ? 'flex gap-3' : 'grid grid-cols-2 md:grid-cols-3 gap-3'}`}>
                     {allVideos.map((url, vidIndex) => {
-                      // Find matching clip notes for this URL
                       const matchingClip = performanceReportClips.find(c => c.video_url === url);
-                      // Build point titles array for move dropdown
-                      const allPointTitles = Array.from({ length: totalPoints }, (_, pi) => {
-                        const pts = (window as any).__currentFormPoints;
-                        return pts?.[pi]?.title || '';
-                      });
                       return (
                         <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
                           <VideoItem
