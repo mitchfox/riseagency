@@ -1154,17 +1154,23 @@ const Staff = () => {
       />
 
       {/* Header with Logo - always visible */}
-       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top">
-        <div className="flex items-center h-16 px-4 relative">
-          {/* Centre logo — absolutely positioned, never moves */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? 'h-10' : ''}`}>
+        <div className={`flex items-center ${headerCollapsed ? 'h-10' : 'h-16'} px-4 relative`}>
+          {/* Centre logo — clickable to collapse/expand */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
+            onClick={() => setHeaderCollapsed(prev => !prev)}
+            title={headerCollapsed ? 'Show header' : 'Hide header'}
+          >
             <img
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className="h-9 w-auto"
+              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200`}
             />
           </div>
 
+          {!headerCollapsed && (
+            <>
           {/* Left side: open tabs — stops before logo */}
           <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4"
             style={{ maxWidth: 'calc(50% - 60px)' }}
