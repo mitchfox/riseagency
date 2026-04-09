@@ -1506,7 +1506,7 @@ const Staff = () => {
         </button>
 
         {/* Left Sidebar */}
-        <div className={`fixed ${isMobile ? 'top-14' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
+        <div className={`fixed ${headerCollapsed ? 'top-10' : isMobile ? 'top-14' : 'top-16'} left-0 bottom-0 border-r bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 pwa-sidebar-top ${
           sidebarCollapsed ? 'w-0 border-0 opacity-0 pointer-events-none' : isMobile ? 'w-14' : 'w-14 md:w-24'
         }`}>
           {/* Pinned Sections */}
