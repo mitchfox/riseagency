@@ -73,6 +73,7 @@ interface PerformanceReportAction {
   action_number?: number;
   minute?: number;
   action_score?: number;
+  notes?: string;
 }
 
 interface VideoAnalysisClip {
