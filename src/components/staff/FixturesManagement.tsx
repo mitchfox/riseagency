@@ -274,6 +274,17 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </div>
 
             <div>
+              <Label>Kick-off Time</Label>
+              <Input
+                type="time"
+                value={formData.match_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, match_time: e.target.value })
+                }
+                placeholder="e.g., 15:00"
+              />
+            </div>
+
               <Label>Competition</Label>
               <Input
                 value={formData.competition}
