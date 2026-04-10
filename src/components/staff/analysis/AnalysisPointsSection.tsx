@@ -1090,7 +1090,7 @@ export const AnalysisPointsSection = ({
         {/* Add Point button when no points exist */}
         {(!formData.points || formData.points.length === 0) && (
           <div className="flex items-center gap-2 my-2">
-            <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+            <Button onClick={() => addPoint()} variant="outline" size="sm" className="flex-1">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Add {analysisType === "concept" ? "Images" : "Point"}
             </Button>
@@ -1154,9 +1154,9 @@ export const AnalysisPointsSection = ({
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
                 />
-                {/* Add Point + Save between each point */}
+                {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">
-                  <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+                  <Button onClick={() => addPoint(index)} variant="outline" size="sm" className="flex-1">
                     <Plus className="w-3.5 h-3.5 mr-1.5" />
                     Add {analysisType === "concept" ? "Images" : "Point"}
                   </Button>
