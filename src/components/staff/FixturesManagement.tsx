@@ -41,6 +41,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     home_score: null as number | null,
     away_score: null as number | null,
     match_date: new Date(),
+    match_time: "",
     competition: "",
     venue: "",
   });

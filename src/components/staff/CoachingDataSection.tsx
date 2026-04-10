@@ -31,6 +31,7 @@ interface InlineReportState {
 
 export const CoachingDataSection = () => {
   const [activeTab, setActiveTab] = useState("reports");
+  const [defaultStatusTab] = useState("draft");
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; image_url: string | null; representation_status?: string | null }[]>([]);
   const [analyses, setAnalyses] = useState<PlayerAnalysis[]>([]);
