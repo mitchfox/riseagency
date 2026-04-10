@@ -240,6 +240,7 @@ const VideoItem = ({
   const [annotateSeekTime, setAnnotateSeekTime] = useState<number | undefined>(undefined);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0);
+  const [videoLoaded, setVideoLoaded] = useState(!lazyLoad);
   const [moveOpen, setMoveOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLDivElement>(null);
 
