@@ -285,6 +285,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
               />
             </div>
 
+            <div>
               <Label>Competition</Label>
               <Input
                 value={formData.competition}
