@@ -89,7 +89,7 @@ interface VideoAnalysisClip {
 interface PointsSectionProps {
   formData: any;
   setFormData: (data: any) => void;
-  addPoint: () => void;
+  addPoint: (insertAfterIndex?: number) => void;
   removePoint: (index: number) => void;
   updatePoint: (index: number, field: keyof Point, value: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>, field: string, pointIndex?: number, isMultiple?: boolean) => Promise<void>;
@@ -688,6 +688,7 @@ const SortablePointCard = ({
                   <Input
                     type="file"
                     accept="video/*"
+                    multiple
                     onChange={(e) => handleVideoUploadForPoint(e, index)}
                     disabled={uploadingImage}
                   />

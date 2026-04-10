@@ -789,14 +789,16 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     }
   };
 
-  const addPoint = () => {
-    setFormData({
-      ...formData,
-      points: [
-        ...(formData.points || []),
-        { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] },
-      ],
-    });
+  const addPoint = (insertAfterIndex?: number) => {
+    const newPoint = { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] };
+    const currentPoints = formData.points || [];
+    if (insertAfterIndex !== undefined && insertAfterIndex >= 0) {
+      const newPoints = [...currentPoints];
+      newPoints.splice(insertAfterIndex + 1, 0, newPoint);
+      setFormData({ ...formData, points: newPoints });
+    } else {
+      setFormData({ ...formData, points: [...currentPoints, newPoint] });
+    }
   };
 
   const removePoint = (index: number) => {
