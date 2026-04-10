@@ -76,6 +76,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: fixture.home_score,
         away_score: fixture.away_score,
         match_date: new Date(fixture.match_date),
+        match_time: (fixture as any).match_time || "",
         competition: fixture.competition || "",
         venue: fixture.venue || "",
       });
@@ -87,6 +88,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: null,
         away_score: null,
         match_date: new Date(),
+        match_time: "",
         competition: "",
         venue: "",
       });
@@ -103,6 +105,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       home_score: null,
       away_score: null,
       match_date: new Date(),
+      match_time: "",
       competition: "",
       venue: "",
     });
