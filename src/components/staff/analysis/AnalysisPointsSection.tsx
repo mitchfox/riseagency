@@ -834,6 +834,7 @@ const SortablePointCard = ({
                         <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
                           <VideoItem
                             url={url}
+                            lazyLoad={typeof window !== 'undefined' && window.innerWidth < 768}
                             pointIndex={index}
                             totalPoints={totalPoints}
                             existingAnnotationId={point.annotation_ids?.[url]}
