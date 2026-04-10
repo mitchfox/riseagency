@@ -346,7 +346,15 @@ const VideoItem = ({
       <div className="overflow-hidden rounded border-2 border-primary bg-background/20">
         <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
           <div style={cropShiftStyle}>
-            {hasAnnotation ? (
+            {!videoLoaded ? (
+              <button
+                onClick={() => setVideoLoaded(true)}
+                className="w-full aspect-video bg-muted/80 flex flex-col items-center justify-center gap-2 rounded"
+              >
+                <Play className="w-8 h-8 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Tap to load video</span>
+              </button>
+            ) : hasAnnotation ? (
               <ReadOnlyAnnotationPlayback
                 key={`preview-${annotationVersion}`}
                 videoUrl={url}
