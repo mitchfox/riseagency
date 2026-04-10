@@ -218,6 +218,7 @@ const VideoItem = ({
   existingAnnotationId,
   clipNotes,
   pointTitles,
+  lazyLoad = false,
 }: {
   url: string;
   onRemove: () => void;
@@ -231,6 +232,7 @@ const VideoItem = ({
   existingAnnotationId?: string;
   clipNotes?: string;
   pointTitles?: string[];
+  lazyLoad?: boolean;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
