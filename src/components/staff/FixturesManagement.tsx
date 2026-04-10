@@ -119,6 +119,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: formData.home_score,
         away_score: formData.away_score,
         match_date: format(formData.match_date, "yyyy-MM-dd"),
+        match_time: formData.match_time || null,
         competition: formData.competition || null,
         venue: formData.venue || null,
       };
