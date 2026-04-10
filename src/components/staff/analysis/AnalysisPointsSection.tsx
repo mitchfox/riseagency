@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen, Crop, Maximize } from "lucide-react";
+import { Plus, X, Sparkles, ChevronDown, Film, GripVertical, Scissors, PenLine, Loader2, ArrowUp, ArrowDown, ArrowRightLeft, BookOpen, Crop, Maximize, Play } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   Collapsible,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -89,7 +90,7 @@ interface VideoAnalysisClip {
 interface PointsSectionProps {
   formData: any;
   setFormData: (data: any) => void;
-  addPoint: () => void;
+  addPoint: (insertAfterIndex?: number) => void;
   removePoint: (index: number) => void;
   updatePoint: (index: number, field: keyof Point, value: any) => void;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>, field: string, pointIndex?: number, isMultiple?: boolean) => Promise<void>;
@@ -217,6 +218,7 @@ const VideoItem = ({
   existingAnnotationId,
   clipNotes,
   pointTitles,
+  lazyLoad = false,
 }: {
   url: string;
   onRemove: () => void;
@@ -230,6 +232,7 @@ const VideoItem = ({
   existingAnnotationId?: string;
   clipNotes?: string;
   pointTitles?: string[];
+  lazyLoad?: boolean;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
@@ -237,6 +240,7 @@ const VideoItem = ({
   const [annotateSeekTime, setAnnotateSeekTime] = useState<number | undefined>(undefined);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
   const [annotationVersion, setAnnotationVersion] = useState(0);
+  const [videoLoaded, setVideoLoaded] = useState(!lazyLoad);
   const [moveOpen, setMoveOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLDivElement>(null);
 
@@ -342,7 +346,15 @@ const VideoItem = ({
       <div className="overflow-hidden rounded border-2 border-primary bg-background/20">
         <div style={hasCrop ? { overflow: 'hidden' } : undefined}>
           <div style={cropShiftStyle}>
-            {hasAnnotation ? (
+            {!videoLoaded ? (
+              <button
+                onClick={() => setVideoLoaded(true)}
+                className="w-full aspect-video bg-muted/80 flex flex-col items-center justify-center gap-2 rounded"
+              >
+                <Play className="w-8 h-8 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Tap to load video</span>
+              </button>
+            ) : hasAnnotation ? (
               <ReadOnlyAnnotationPlayback
                 key={`preview-${annotationVersion}`}
                 videoUrl={url}
@@ -688,6 +700,7 @@ const SortablePointCard = ({
                   <Input
                     type="file"
                     accept="video/*"
+                    multiple
                     onChange={(e) => handleVideoUploadForPoint(e, index)}
                     disabled={uploadingImage}
                   />
@@ -821,6 +834,7 @@ const SortablePointCard = ({
                         <div key={vidIndex} className={allVideos.length < 4 ? 'flex-1 min-w-0' : ''}>
                           <VideoItem
                             url={url}
+                            lazyLoad={typeof window !== 'undefined' && window.innerWidth < 768}
                             pointIndex={index}
                             totalPoints={totalPoints}
                             existingAnnotationId={point.annotation_ids?.[url]}
@@ -1089,7 +1103,7 @@ export const AnalysisPointsSection = ({
         {/* Add Point button when no points exist */}
         {(!formData.points || formData.points.length === 0) && (
           <div className="flex items-center gap-2 my-2">
-            <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+            <Button onClick={() => addPoint()} variant="outline" size="sm" className="flex-1">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Add {analysisType === "concept" ? "Images" : "Point"}
             </Button>
@@ -1153,9 +1167,9 @@ export const AnalysisPointsSection = ({
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
                 />
-                {/* Add Point + Save between each point */}
+                {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">
-                  <Button onClick={addPoint} variant="outline" size="sm" className="flex-1">
+                  <Button onClick={() => addPoint(index)} variant="outline" size="sm" className="flex-1">
                     <Plus className="w-3.5 h-3.5 mr-1.5" />
                     Add {analysisType === "concept" ? "Images" : "Point"}
                   </Button>

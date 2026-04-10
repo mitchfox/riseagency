@@ -41,6 +41,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     home_score: null as number | null,
     away_score: null as number | null,
     match_date: new Date(),
+    match_time: "",
     competition: "",
     venue: "",
   });
@@ -75,6 +76,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: fixture.home_score,
         away_score: fixture.away_score,
         match_date: new Date(fixture.match_date),
+        match_time: (fixture as any).match_time || "",
         competition: fixture.competition || "",
         venue: fixture.venue || "",
       });
@@ -86,6 +88,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: null,
         away_score: null,
         match_date: new Date(),
+        match_time: "",
         competition: "",
         venue: "",
       });
@@ -102,6 +105,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       home_score: null,
       away_score: null,
       match_date: new Date(),
+      match_time: "",
       competition: "",
       venue: "",
     });
@@ -115,6 +119,7 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         home_score: formData.home_score,
         away_score: formData.away_score,
         match_date: format(formData.match_date, "yyyy-MM-dd"),
+        match_time: formData.match_time || null,
         competition: formData.competition || null,
         venue: formData.venue || null,
       };
@@ -266,6 +271,18 @@ export const FixturesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div>
+              <Label>Kick-off Time</Label>
+              <Input
+                type="time"
+                value={formData.match_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, match_time: e.target.value })
+                }
+                placeholder="e.g., 15:00"
+              />
             </div>
 
             <div>

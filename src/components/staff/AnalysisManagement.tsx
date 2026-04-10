@@ -614,20 +614,13 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   };
 
   const handleVideoUploadForPoint = async (event: React.ChangeEvent<HTMLInputElement>, pointIndex: number) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
-      toast.error("This file exceeds the 50GB upload limit");
-      return;
-    }
+    const fileArray = Array.from(files).slice(0, 10); // Max 10 files
 
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
       const { data: session } = await supabase.auth.getSession();
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const token = session.session?.access_token;
@@ -636,31 +629,48 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         throw new Error("Please sign in again before uploading");
       }
 
-      await new Promise<void>((resolve, reject) => {
-        const upload = new tus.Upload(file, {
-          endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
-          retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            authorization: `Bearer ${token}`,
-            'x-upsert': 'false'
-          },
-          uploadDataDuringCreation: false,
-          removeFingerprintOnSuccess: true,
-          metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },
-          chunkSize: 6 * 1024 * 1024,
-          onError: (error) => reject(new Error(error.message)),
-          onSuccess: () => resolve(),
-        });
-        upload.start();
-      });
+      const uploadedUrls: string[] = [];
 
-      const { data: { publicUrl } } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
-      const updatedPoints = [...(formData.points || [])];
-      const currentVideos = updatedPoints[pointIndex].video_urls || (updatedPoints[pointIndex].video_url ? [updatedPoints[pointIndex].video_url] : []);
-      updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_urls: [...currentVideos, publicUrl], video_url: undefined };
-      setFormData({ ...formData, points: updatedPoints });
-      toast.success("Video uploaded successfully");
+      for (const file of fileArray) {
+        if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+          toast.error(`${file.name} exceeds the 50GB upload limit — skipped`);
+          continue;
+        }
+
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        await new Promise<void>((resolve, reject) => {
+          const upload = new tus.Upload(file, {
+            endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+            retryDelays: [0, 3000, 5000, 10000, 20000],
+            headers: {
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              authorization: `Bearer ${token}`,
+              'x-upsert': 'false'
+            },
+            uploadDataDuringCreation: false,
+            removeFingerprintOnSuccess: true,
+            metadata: { bucketName: 'analysis-videos', objectName: filePath, contentType: file.type || 'video/mp4' },
+            chunkSize: 6 * 1024 * 1024,
+            onError: (error) => reject(new Error(error.message)),
+            onSuccess: () => resolve(),
+          });
+          upload.start();
+        });
+
+        const { data: { publicUrl } } = supabase.storage.from("analysis-videos").getPublicUrl(filePath);
+        uploadedUrls.push(publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        const updatedPoints = [...(formData.points || [])];
+        const currentVideos = updatedPoints[pointIndex].video_urls || (updatedPoints[pointIndex].video_url ? [updatedPoints[pointIndex].video_url] : []);
+        updatedPoints[pointIndex] = { ...updatedPoints[pointIndex], video_urls: [...currentVideos, ...uploadedUrls], video_url: undefined };
+        setFormData({ ...formData, points: updatedPoints });
+        toast.success(`${uploadedUrls.length} video${uploadedUrls.length > 1 ? 's' : ''} uploaded`);
+      }
     } catch (error: any) {
       toast.error("Failed to upload video");
       console.error(error);
@@ -789,14 +799,16 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     }
   };
 
-  const addPoint = () => {
-    setFormData({
-      ...formData,
-      points: [
-        ...(formData.points || []),
-        { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] },
-      ],
-    });
+  const addPoint = (insertAfterIndex?: number) => {
+    const newPoint = { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] };
+    const currentPoints = formData.points || [];
+    if (insertAfterIndex !== undefined && insertAfterIndex >= 0) {
+      const newPoints = [...currentPoints];
+      newPoints.splice(insertAfterIndex + 1, 0, newPoint);
+      setFormData({ ...formData, points: newPoints });
+    } else {
+      setFormData({ ...formData, points: [...currentPoints, newPoint] });
+    }
   };
 
   const removePoint = (index: number) => {

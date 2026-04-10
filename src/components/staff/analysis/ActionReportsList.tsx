@@ -43,7 +43,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [searchQuery, setSearchQuery] = useState("");
   const [playerFilter, setPlayerFilter] = useState(defaultPlayerId || "all");
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
-  const [statusTab, setStatusTab] = useState("all");
+  const [statusTab, setStatusTab] = useState("draft");
   const [clipPlayerReport, setClipPlayerReport] = useState<ActionReport | null>(null);
   const [scoreEditReport, setScoreEditReport] = useState<ActionReport | null>(null);
   

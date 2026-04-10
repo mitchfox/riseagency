@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { X, SkipForward, SkipBack, Maximize, Minimize, Play, Pause, ChevronDown, ChevronUp, Pencil, ArrowUpDown, ListOrdered, Layers } from "lucide-react";
@@ -7,6 +8,7 @@ import { AnnotationToolbar } from "@/components/staff/annotations/AnnotationTool
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import { AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 import { AnnotationTool } from "@/components/staff/annotations/AnnotationEditor";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchClipPlayerProps {
   analysisId: string;
@@ -38,7 +40,6 @@ const getScoreColor = (score: string) => {
   return "bg-green-700";
 };
 
-// Action category rules (matching ActionTypeEditor)
 const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [
   { group: 'Key Actions', patterns: ['goal', 'assist', 'key pass', 'penalty', 'big chance', 'chance created'] },
   { group: 'Passing', patterns: ['pass', 'through ball', 'ball retention', 'switch', 'distribution'] },
@@ -66,6 +67,35 @@ function getActionGroup(type: string): string {
 
 type SortMode = 'match' | 'score' | 'type';
 
+/**
+ * Compute the actual rendered video content area within a contain-fitted video element.
+ */
+function getVideoContentRect(video: HTMLVideoElement) {
+  const { videoWidth, videoHeight, clientWidth, clientHeight } = video;
+  if (!videoWidth || !videoHeight) return { left: 0, top: 0, width: clientWidth, height: clientHeight };
+
+  const videoAspect = videoWidth / videoHeight;
+  const containerAspect = clientWidth / clientHeight;
+
+  let renderWidth: number, renderHeight: number, offsetX: number, offsetY: number;
+
+  if (containerAspect > videoAspect) {
+    // Letterboxed (black bars on sides)
+    renderHeight = clientHeight;
+    renderWidth = clientHeight * videoAspect;
+    offsetX = (clientWidth - renderWidth) / 2;
+    offsetY = 0;
+  } else {
+    // Pillarboxed (black bars top/bottom)
+    renderWidth = clientWidth;
+    renderHeight = clientWidth / videoAspect;
+    offsetX = 0;
+    offsetY = (clientHeight - renderHeight) / 2;
+  }
+
+  return { left: offsetX, top: offsetY, width: renderWidth, height: renderHeight };
+}
+
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -77,6 +107,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const videoRef = useRef<HTMLVideoElement>(null);
   const clipEnforcementRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Annotation state – temporary, never saved
   const [drawingMode, setDrawingMode] = useState(false);
@@ -88,6 +119,26 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [linkSource, setLinkSource] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [videoRect, setVideoRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
+
+  // Update video content rect on resize / load
+  const updateVideoRect = useCallback(() => {
+    const vid = videoRef.current;
+    if (vid) setVideoRect(getVideoContentRect(vid));
+  }, []);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.addEventListener('loadeddata', updateVideoRect);
+    vid.addEventListener('resize', updateVideoRect);
+    window.addEventListener('resize', updateVideoRect);
+    return () => {
+      vid.removeEventListener('loadeddata', updateVideoRect);
+      vid.removeEventListener('resize', updateVideoRect);
+      window.removeEventListener('resize', updateVideoRect);
+    };
+  }, [updateVideoRect, currentIndex]);
 
   useEffect(() => {
     const fetchClips = async () => {
@@ -113,7 +164,6 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
   const currentClip = clips[currentIndex];
 
-  // Compute average score per action type for current clip
   const avgScoreForType = useMemo(() => {
     if (!currentClip?.action_type) return null;
     const currentType = (currentClip.action_type || '').toLowerCase();
@@ -128,7 +178,6 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     return (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
   }, [currentClip, clips]);
 
-  // Sorted clip list
   const sortedClipIndices = useMemo(() => {
     const indices = clips.map((_, i) => i);
     if (clipListSort === 'score') {
@@ -200,11 +249,12 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         startEnforcement(instruction.clipStart, instruction.clipEnd);
       }
       vid.play().then(() => setIsPlaying(true)).catch(() => {});
+      updateVideoRect();
     };
 
     vid.addEventListener('loadeddata', onLoaded, { once: true });
     return () => vid.removeEventListener('loadeddata', onLoaded);
-  }, [currentClip, startEnforcement]);
+  }, [currentClip, startEnforcement, updateVideoRect]);
 
   const handleVideoEnded = useCallback(() => {
     const vid = videoRef.current;
@@ -280,14 +330,12 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     return () => el.removeEventListener('wheel', handler);
   }, []);
 
-  // Left-click on video to toggle drawing mode (pause + draw)
+  // Left-click on video to toggle drawing mode
   const handleVideoAreaClick = useCallback((e: React.MouseEvent) => {
-    // Don't trigger if clicking on buttons/controls or if in drawing mode (canvas handles clicks)
     if (drawingMode) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="button"]')) return;
     
-    // Enter drawing mode on left click on video
     const vid = videoRef.current;
     if (vid && !vid.paused) {
       vid.pause();
@@ -320,7 +368,6 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
           return !prev;
         });
       }
-      // Backspace to delete selected annotation
       if ((e.key === 'Backspace' || e.key === 'Delete') && selectedId && drawingMode) {
         e.preventDefault();
         setElements(prev => prev.filter(el => el.id !== selectedId));
@@ -331,70 +378,79 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     return () => window.removeEventListener('keydown', onKey);
   }, [currentIndex, clips.length, goToClip, togglePlay, onClose, elements.length, drawingMode, clearAnnotations, selectedId]);
 
-  // After adding an annotation element, reset tool to select
   const handleToolUsed = useCallback(() => {
     setActiveTool('select');
   }, []);
 
+  // Lock body scroll while clip player is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#0a0c10] flex items-center justify-center">
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] bg-[#0a0c10] flex items-center justify-center">
         <div className="text-white/60 text-sm animate-pulse">Loading clips...</div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
   if (clips.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#0a0c10] flex flex-col items-center justify-center gap-4">
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] bg-[#0a0c10] flex flex-col items-center justify-center gap-4">
         <p className="text-white/60">No clips available for this report.</p>
         <Button variant="outline" onClick={onClose}>Close</Button>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div ref={containerRef} className="fixed inset-0 z-50 bg-[#0a0c10] flex flex-col overflow-hidden">
-      {/* Top bar - minimal */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#12151c] border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-5 rounded-full bg-[#C6A332]" />
-          <div>
+  return createPortal(
+    <div ref={containerRef} className="fixed inset-0 z-[9999] bg-[#0a0c10] flex flex-col" style={{ overflow: 'hidden' }}>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 bg-[#12151c] border-b border-white/5 shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="w-1.5 h-5 rounded-full bg-[#C6A332] shrink-0" />
+          <div className="truncate">
             <span className="text-white text-sm font-medium">{playerName}</span>
-            <span className="text-white/30 mx-2">vs</span>
+            <span className="text-white/30 mx-1 md:mx-2">vs</span>
             <span className="text-white/70 text-sm">{opponent}</span>
           </div>
-          <span className="text-white/20 text-xs ml-2">
-            Clip {currentIndex + 1} of {clips.length}
+          <span className="text-white/20 text-xs shrink-0">
+            {currentIndex + 1}/{clips.length}
           </span>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10"
+        <div className="flex items-center gap-0.5 md:gap-1">
+          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 p-0"
             disabled={currentIndex === 0} onClick={() => goToClip(currentIndex - 1)}>
             <SkipBack className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10"
+          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 p-0"
             onClick={togglePlay}>
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10"
+          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 p-0"
             disabled={currentIndex >= clips.length - 1} onClick={() => goToClip(currentIndex + 1)}>
             <SkipForward className="h-4 w-4" />
           </Button>
 
-          <div className="w-px h-5 bg-white/10 mx-1" />
+          {!isMobile && (
+            <>
+              <div className="w-px h-5 bg-white/10 mx-0.5" />
+              <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 p-0"
+                onClick={toggleFullscreen}>
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
+            </>
+          )}
 
-          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10"
-            onClick={toggleFullscreen}>
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
-
-          {/* Rise Gold X close button */}
           <Button
             size="sm"
             variant="ghost"
-            className="text-[#C6A332] hover:text-[#C6A332] hover:bg-[#C6A332]/10 ml-1"
+            className="text-[#C6A332] hover:text-[#C6A332] hover:bg-[#C6A332]/10 h-8 w-8 p-0 ml-0.5"
             onClick={onClose}
           >
             <X className="h-5 w-5" />
@@ -404,8 +460,8 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
       {/* Main area */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Left: annotation toolbar (visible when drawing) */}
-        {drawingMode && (
+        {/* Left: annotation toolbar (visible when drawing, hide on mobile to save space) */}
+        {drawingMode && !isMobile && (
           <AnnotationToolbar
             activeTool={activeTool}
             setActiveTool={setActiveTool}
@@ -436,49 +492,56 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
                 playsInline
               />
 
-              {/* SVG annotation canvas overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                style={{ transform: `scale(${zoom})` }}>
-                <div className="relative" style={{ width: videoRef.current?.clientWidth || '100%', height: videoRef.current?.clientHeight || '100%' }}>
-                  <div style={{ pointerEvents: drawingMode ? 'auto' : 'none' }} className="absolute inset-0">
-                    <AnnotationCanvas
-                      elements={elements}
-                      setElements={setElements}
-                      activeTool={drawingMode ? activeTool : 'select'}
-                      activeColor={activeColor}
-                      strokeWidth={strokeWidth}
-                      fillOpacity={fillOpacity}
-                      selectedId={selectedId}
-                      setSelectedId={setSelectedId}
-                      videoRef={videoRef}
-                      linkSource={linkSource}
-                      setLinkSource={setLinkSource}
-                      klipOffset={0}
-                      isDrawingMode={drawingMode}
-                      onToolUsed={handleToolUsed}
-                    />
-                  </div>
+              {/* Annotation canvas — sized to actual video content area, not the element */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: videoRect.left,
+                  top: videoRect.top,
+                  width: videoRect.width || '100%',
+                  height: videoRect.height || '100%',
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'center center',
+                }}
+              >
+                <div style={{ pointerEvents: drawingMode ? 'auto' : 'none' }} className="absolute inset-0">
+                  <AnnotationCanvas
+                    elements={elements}
+                    setElements={setElements}
+                    activeTool={drawingMode ? activeTool : 'select'}
+                    activeColor={activeColor}
+                    strokeWidth={strokeWidth}
+                    fillOpacity={fillOpacity}
+                    selectedId={selectedId}
+                    setSelectedId={setSelectedId}
+                    videoRef={videoRef}
+                    linkSource={linkSource}
+                    setLinkSource={setLinkSource}
+                    klipOffset={0}
+                    isDrawingMode={drawingMode}
+                    onToolUsed={handleToolUsed}
+                  />
                 </div>
               </div>
 
-              {/* Floating action score badge – top right, always visible */}
-              <div className="absolute top-4 right-4 flex flex-col items-end gap-1 z-20">
+              {/* Floating action score badge */}
+              <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-1 z-20">
                 {currentClip.action_score != null && String(currentClip.action_score) !== "" ? (
                   <>
-                    <span className={`px-3 py-1.5 rounded-lg text-lg font-bold text-white shadow-lg ${getScoreColor(String(currentClip.action_score))}`}>
+                    <span className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-base md:text-lg font-bold text-white shadow-lg ${getScoreColor(String(currentClip.action_score))}`}>
                       {currentClip.action_score}
                     </span>
-                    <span className="text-white/70 text-[10px] bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm font-medium">
+                    <span className="text-white/70 text-[9px] md:text-[10px] bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm font-medium">
                       {currentClip.action_type}
                     </span>
                     {avgScoreForType && (
-                      <span className="text-white/40 text-[9px] bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+                      <span className="text-white/40 text-[8px] md:text-[9px] bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
                         Avg: {avgScoreForType}
                       </span>
                     )}
                   </>
                 ) : (
-                  <span className="text-white/50 text-[10px] bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+                  <span className="text-white/50 text-[9px] md:text-[10px] bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
                     {currentClip.action_type}
                   </span>
                 )}
@@ -486,8 +549,8 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
               {/* Drawing mode indicator */}
               {drawingMode && (
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#C6A332]/90 text-white text-[10px] px-3 py-1 rounded-full flex items-center gap-1.5 z-30 backdrop-blur-sm">
-                  <Pencil className="w-3 h-3" /> Drawing — right-click or Esc to clear
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#C6A332]/90 text-white text-[9px] md:text-[10px] px-3 py-1 rounded-full flex items-center gap-1.5 z-30 backdrop-blur-sm">
+                  <Pencil className="w-3 h-3" /> {isMobile ? 'Drawing' : 'Drawing — right-click or Esc to clear'}
                 </div>
               )}
             </>
@@ -499,25 +562,26 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
       {currentClip && (
         <div className="bg-[#12151c] border-t border-white/5 shrink-0">
           {/* Action info row */}
-          <div className="px-4 py-2 flex items-center gap-3">
-            <span className={`px-2 py-0.5 rounded text-xs font-bold text-white ${getScoreColor(String(currentClip.action_score))}`}>
+          <div className="px-3 md:px-4 py-2 flex items-center gap-2 md:gap-3">
+            <span className={`px-2 py-0.5 rounded text-xs font-bold text-white shrink-0 ${getScoreColor(String(currentClip.action_score))}`}>
               {currentClip.action_score != null && String(currentClip.action_score) !== "" ? currentClip.action_score : "—"}
             </span>
-            <span className="text-white text-sm font-medium">{currentClip.action_type}</span>
-            {currentClip.minute && <span className="text-white/30 text-xs">{currentClip.minute}'</span>}
-            {currentClip.description && (
+            <span className="text-white text-xs md:text-sm font-medium truncate">{currentClip.action_type}</span>
+            {currentClip.minute && <span className="text-white/30 text-xs shrink-0">{currentClip.minute}'</span>}
+            {!isMobile && currentClip.description && (
               <span className="text-white/20 text-xs ml-2 truncate max-w-[300px]">{currentClip.description}</span>
             )}
 
-            {/* Expand/collapse clip list */}
             <div className="ml-auto flex items-center gap-1">
-              <span className="text-white/10 text-[10px] hidden lg:inline">
-                Click video to draw · Right-click clear · ←→ clips · Space play · Scroll zoom
-              </span>
-              <Button size="sm" variant="ghost" className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] gap-1"
+              {!isMobile && (
+                <span className="text-white/10 text-[10px] hidden lg:inline">
+                  Click to draw · Right-click clear · ←→ clips · Space play · Scroll zoom
+                </span>
+              )}
+              <Button size="sm" variant="ghost" className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] gap-1 h-7"
                 onClick={() => setShowClipList(!showClipList)}>
                 {showClipList ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                {showClipList ? 'Hide' : 'All Actions'}
+                {showClipList ? 'Hide' : 'All'}
               </Button>
             </div>
           </div>
@@ -525,35 +589,23 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
           {/* Expandable clip list */}
           {showClipList && (
             <div className="border-t border-white/5">
-              {/* Sort controls */}
-              <div className="flex items-center gap-1 px-4 py-1.5 border-b border-white/5">
+              <div className="flex items-center gap-1 px-3 md:px-4 py-1.5 border-b border-white/5">
                 <span className="text-[10px] text-white/30 uppercase tracking-wider mr-2">Sort:</span>
-                <Button
-                  size="sm" variant="ghost"
-                  className={`text-[10px] h-6 px-2 ${clipListSort === 'match' ? 'text-[#C6A332] bg-[#C6A332]/10' : 'text-white/40 hover:text-white'}`}
-                  onClick={() => setClipListSort('match')}
-                >
-                  <ListOrdered className="w-3 h-3 mr-1" /> Match Order
-                </Button>
-                <Button
-                  size="sm" variant="ghost"
-                  className={`text-[10px] h-6 px-2 ${clipListSort === 'score' ? 'text-[#C6A332] bg-[#C6A332]/10' : 'text-white/40 hover:text-white'}`}
-                  onClick={() => setClipListSort('score')}
-                >
-                  <ArrowUpDown className="w-3 h-3 mr-1" /> Score
-                </Button>
-                <Button
-                  size="sm" variant="ghost"
-                  className={`text-[10px] h-6 px-2 ${clipListSort === 'type' ? 'text-[#C6A332] bg-[#C6A332]/10' : 'text-white/40 hover:text-white'}`}
-                  onClick={() => setClipListSort('type')}
-                >
-                  <Layers className="w-3 h-3 mr-1" /> Type
-                </Button>
+                {(['match', 'score', 'type'] as SortMode[]).map(mode => (
+                  <Button
+                    key={mode}
+                    size="sm" variant="ghost"
+                    className={`text-[10px] h-6 px-2 ${clipListSort === mode ? 'text-[#C6A332] bg-[#C6A332]/10' : 'text-white/40 hover:text-white'}`}
+                    onClick={() => setClipListSort(mode)}
+                  >
+                    {mode === 'match' && <><ListOrdered className="w-3 h-3 mr-1" /> Match</>}
+                    {mode === 'score' && <><ArrowUpDown className="w-3 h-3 mr-1" /> Score</>}
+                    {mode === 'type' && <><Layers className="w-3 h-3 mr-1" /> Type</>}
+                  </Button>
+                ))}
               </div>
-              {/* Clip items */}
-              <div className="max-h-[200px] overflow-y-auto">
+              <div className="max-h-[35vh] md:max-h-[200px] overflow-y-auto">
                 {clipListSort === 'type' ? (
-                  // Grouped by type
                   (() => {
                     const groups: Record<string, number[]> = {};
                     clips.forEach((clip, i) => {
@@ -582,15 +634,15 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
-// Small clip list item component
 const ClipListItem = ({ clip, index, isActive, onClick }: { clip: ClipAction; index: number; isActive: boolean; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm transition-colors border-b border-white/[0.03] ${
+    className={`w-full text-left px-3 md:px-4 py-2 flex items-center gap-2 text-sm transition-colors border-b border-white/[0.03] ${
       isActive
         ? "bg-[#C6A332]/10 border-l-2 border-l-[#C6A332]"
         : "text-white/50 hover:bg-white/[0.03] border-l-2 border-l-transparent"
