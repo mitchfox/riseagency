@@ -2828,6 +2828,7 @@ export type Database = {
         Row: {
           analysis_date: string
           analysis_writer_id: string | null
+          club_logo_url: string | null
           created_at: string
           estimated_ready_at: string | null
           fixture_id: string | null
@@ -2837,6 +2838,7 @@ export type Database = {
           minutes_played: number | null
           notes: string | null
           opponent: string | null
+          opposition_color: string | null
           pdf_url: string | null
           performance_overview: string | null
           placeholder_minutes: number | null
@@ -2856,6 +2858,7 @@ export type Database = {
         Insert: {
           analysis_date: string
           analysis_writer_id?: string | null
+          club_logo_url?: string | null
           created_at?: string
           estimated_ready_at?: string | null
           fixture_id?: string | null
@@ -2865,6 +2868,7 @@ export type Database = {
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
+          opposition_color?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
           placeholder_minutes?: number | null
@@ -2884,6 +2888,7 @@ export type Database = {
         Update: {
           analysis_date?: string
           analysis_writer_id?: string | null
+          club_logo_url?: string | null
           created_at?: string
           estimated_ready_at?: string | null
           fixture_id?: string | null
@@ -2893,6 +2898,7 @@ export type Database = {
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
+          opposition_color?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
           placeholder_minutes?: number | null
