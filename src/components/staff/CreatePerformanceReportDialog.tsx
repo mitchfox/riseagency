@@ -1981,6 +1981,30 @@ export const CreatePerformanceReportDialog = ({
                 placeholder="e.g., W 2-1"
               />
             </div>
+            <div>
+              <Label htmlFor="clubLogo">Club Logo URL</Label>
+              <Input
+                id="clubLogo"
+                value={clubLogoUrl}
+                onChange={(e) => setClubLogoUrl(e.target.value)}
+                placeholder="https://... or leave blank"
+              />
+            </div>
+            <div>
+              <Label htmlFor="oppositionColor">Opposition Colour</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="oppositionColor"
+                  value={oppositionColor}
+                  onChange={(e) => setOppositionColor(e.target.value)}
+                  placeholder="e.g., #E63946 or red"
+                  className="flex-1"
+                />
+                {oppositionColor && (
+                  <div className="w-10 h-10 rounded border" style={{ backgroundColor: oppositionColor }} />
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Optional Striker Stats */}
