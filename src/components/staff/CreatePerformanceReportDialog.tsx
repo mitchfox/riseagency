@@ -236,6 +236,8 @@ export const CreatePerformanceReportDialog = ({
   const [opponent, setOpponent] = useState("");
   const [result, setResult] = useState("");
   const [performanceOverview, setPerformanceOverview] = useState("");
+  const [clubLogoUrl, setClubLogoUrl] = useState("");
+  const [oppositionColor, setOppositionColor] = useState("");
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {

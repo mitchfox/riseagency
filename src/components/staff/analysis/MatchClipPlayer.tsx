@@ -481,29 +481,18 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         >
           {currentClip && (
             <>
-              <video
-                ref={videoRef}
-                key={currentClip.id}
-                onEnded={handleVideoEnded}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                className="max-h-full max-w-full transition-transform duration-150"
-                style={{ objectFit: 'contain', transform: `scale(${zoom})` }}
-                playsInline
-              />
+              <div className="relative w-full aspect-video max-h-full" style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}>
+                <video
+                  ref={videoRef}
+                  key={currentClip.id}
+                  onEnded={handleVideoEnded}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  className="w-full h-full object-fill block"
+                  playsInline
+                />
 
-              {/* Annotation canvas — sized to actual video content area, not the element */}
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  left: videoRect.left,
-                  top: videoRect.top,
-                  width: videoRect.width || '100%',
-                  height: videoRect.height || '100%',
-                  transform: `scale(${zoom})`,
-                  transformOrigin: 'center center',
-                }}
-              >
+                {/* Annotation canvas — matches video exactly via object-fill parity */}
                 <div style={{ pointerEvents: drawingMode ? 'auto' : 'none' }} className="absolute inset-0">
                   <AnnotationCanvas
                     elements={elements}
