@@ -973,6 +973,8 @@ export const CreatePerformanceReportDialog = ({
         setReportLanguage((analysisData as any).translated_content.language);
       }
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
+      setClubLogoUrl((analysisData as any).club_logo_url || "");
+      setOppositionColor((analysisData as any).opposition_color || "");
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
