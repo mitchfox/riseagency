@@ -67,35 +67,7 @@ function getActionGroup(type: string): string {
 
 type SortMode = 'match' | 'score' | 'type';
 
-/**
- * Compute the actual rendered video content area within a contain-fitted video element.
- */
-function getVideoContentRect(video: HTMLVideoElement) {
-  const { videoWidth, videoHeight, clientWidth, clientHeight } = video;
-  if (!videoWidth || !videoHeight) return { left: 0, top: 0, width: clientWidth, height: clientHeight };
-
-  const videoAspect = videoWidth / videoHeight;
-  const containerAspect = clientWidth / clientHeight;
-
-  let renderWidth: number, renderHeight: number, offsetX: number, offsetY: number;
-
-  if (containerAspect > videoAspect) {
-    // Letterboxed (black bars on sides)
-    renderHeight = clientHeight;
-    renderWidth = clientHeight * videoAspect;
-    offsetX = (clientWidth - renderWidth) / 2;
-    offsetY = 0;
-  } else {
-    // Pillarboxed (black bars top/bottom)
-    renderWidth = clientWidth;
-    renderHeight = clientWidth / videoAspect;
-    offsetX = 0;
-    offsetY = (clientHeight - renderHeight) / 2;
-  }
-
-  return { left: offsetX, top: offsetY, width: renderWidth, height: renderHeight };
-}
-
+type SortMode = 'match' | 'score' | 'type';
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -117,28 +89,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const [fillOpacity, setFillOpacity] = useState(0.3);
   const [elements, setElements] = useState<AnnotationElement[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [linkSource, setLinkSource] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [videoRect, setVideoRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
-
-  // Update video content rect on resize / load
-  const updateVideoRect = useCallback(() => {
-    const vid = videoRef.current;
-    if (vid) setVideoRect(getVideoContentRect(vid));
-  }, []);
-
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    vid.addEventListener('loadeddata', updateVideoRect);
-    vid.addEventListener('resize', updateVideoRect);
-    window.addEventListener('resize', updateVideoRect);
-    return () => {
-      vid.removeEventListener('loadeddata', updateVideoRect);
-      vid.removeEventListener('resize', updateVideoRect);
-      window.removeEventListener('resize', updateVideoRect);
-    };
-  }, [updateVideoRect, currentIndex]);
 
   useEffect(() => {
     const fetchClips = async () => {
