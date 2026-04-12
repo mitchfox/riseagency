@@ -75,6 +75,8 @@ interface AnalysisDetails {
   estimated_ready_at?: string | null;
   translated_content?: any | null;
   show_descriptions?: boolean;
+  club_logo_url?: string | null;
+  opposition_color?: string | null;
 }
 
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
@@ -196,7 +198,7 @@ const PerformanceReport = () => {
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, show_descriptions, players!inner (name)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name)")
           .eq("id", analysisId)
           .single(),
         supabase
@@ -226,6 +228,8 @@ const PerformanceReport = () => {
         estimated_ready_at: (analysisResult.data as any).estimated_ready_at,
         translated_content: (analysisResult.data as any).translated_content,
         show_descriptions: (analysisResult.data as any).show_descriptions !== false,
+        club_logo_url: (analysisResult.data as any).club_logo_url || null,
+        opposition_color: (analysisResult.data as any).opposition_color || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
