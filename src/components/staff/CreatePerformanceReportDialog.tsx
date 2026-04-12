@@ -1531,6 +1531,8 @@ export const CreatePerformanceReportDialog = ({
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
             show_descriptions: showDescriptions,
+            club_logo_url: clubLogoUrl || null,
+            opposition_color: oppositionColor || null,
           } as any)
           .eq("id", analysisId);
 
@@ -1604,6 +1606,8 @@ export const CreatePerformanceReportDialog = ({
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
             show_descriptions: showDescriptions,
+            club_logo_url: clubLogoUrl || null,
+            opposition_color: oppositionColor || null,
           } as any)
           .select()
           .single();
