@@ -67,7 +67,8 @@ function getActionGroup(type: string): string {
 
 type SortMode = 'match' | 'score' | 'type';
 
-type SortMode = 'match' | 'score' | 'type';
+
+
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
