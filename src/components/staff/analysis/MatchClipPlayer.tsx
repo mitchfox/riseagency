@@ -90,6 +90,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const [elements, setElements] = useState<AnnotationElement[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [linkSource, setLinkSource] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClips = async () => {
@@ -200,12 +201,11 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         startEnforcement(instruction.clipStart, instruction.clipEnd);
       }
       vid.play().then(() => setIsPlaying(true)).catch(() => {});
-      updateVideoRect();
     };
 
     vid.addEventListener('loadeddata', onLoaded, { once: true });
     return () => vid.removeEventListener('loadeddata', onLoaded);
-  }, [currentClip, startEnforcement, updateVideoRect]);
+  }, [currentClip, startEnforcement]);
 
   const handleVideoEnded = useCallback(() => {
     const vid = videoRef.current;
