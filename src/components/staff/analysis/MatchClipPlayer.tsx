@@ -67,34 +67,7 @@ function getActionGroup(type: string): string {
 
 type SortMode = 'match' | 'score' | 'type';
 
-/**
- * Compute the actual rendered video content area within a contain-fitted video element.
- */
-function getVideoContentRect(video: HTMLVideoElement) {
-  const { videoWidth, videoHeight, clientWidth, clientHeight } = video;
-  if (!videoWidth || !videoHeight) return { left: 0, top: 0, width: clientWidth, height: clientHeight };
 
-  const videoAspect = videoWidth / videoHeight;
-  const containerAspect = clientWidth / clientHeight;
-
-  let renderWidth: number, renderHeight: number, offsetX: number, offsetY: number;
-
-  if (containerAspect > videoAspect) {
-    // Letterboxed (black bars on sides)
-    renderHeight = clientHeight;
-    renderWidth = clientHeight * videoAspect;
-    offsetX = (clientWidth - renderWidth) / 2;
-    offsetY = 0;
-  } else {
-    // Pillarboxed (black bars top/bottom)
-    renderWidth = clientWidth;
-    renderHeight = clientWidth / videoAspect;
-    offsetX = 0;
-    offsetY = (clientHeight - renderHeight) / 2;
-  }
-
-  return { left: offsetX, top: offsetY, width: renderWidth, height: renderHeight };
-}
 
 export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
@@ -117,28 +90,8 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   const [fillOpacity, setFillOpacity] = useState(0.3);
   const [elements, setElements] = useState<AnnotationElement[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [linkSource, setLinkSource] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [videoRect, setVideoRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
-
-  // Update video content rect on resize / load
-  const updateVideoRect = useCallback(() => {
-    const vid = videoRef.current;
-    if (vid) setVideoRect(getVideoContentRect(vid));
-  }, []);
-
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    vid.addEventListener('loadeddata', updateVideoRect);
-    vid.addEventListener('resize', updateVideoRect);
-    window.addEventListener('resize', updateVideoRect);
-    return () => {
-      vid.removeEventListener('loadeddata', updateVideoRect);
-      vid.removeEventListener('resize', updateVideoRect);
-      window.removeEventListener('resize', updateVideoRect);
-    };
-  }, [updateVideoRect, currentIndex]);
+  const [linkSource, setLinkSource] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClips = async () => {
@@ -249,12 +202,11 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         startEnforcement(instruction.clipStart, instruction.clipEnd);
       }
       vid.play().then(() => setIsPlaying(true)).catch(() => {});
-      updateVideoRect();
     };
 
     vid.addEventListener('loadeddata', onLoaded, { once: true });
     return () => vid.removeEventListener('loadeddata', onLoaded);
-  }, [currentClip, startEnforcement, updateVideoRect]);
+  }, [currentClip, startEnforcement]);
 
   const handleVideoEnded = useCallback(() => {
     const vid = videoRef.current;
@@ -481,29 +433,18 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         >
           {currentClip && (
             <>
-              <video
-                ref={videoRef}
-                key={currentClip.id}
-                onEnded={handleVideoEnded}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                className="max-h-full max-w-full transition-transform duration-150"
-                style={{ objectFit: 'contain', transform: `scale(${zoom})` }}
-                playsInline
-              />
+              <div className="relative w-full aspect-video max-h-full" style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}>
+                <video
+                  ref={videoRef}
+                  key={currentClip.id}
+                  onEnded={handleVideoEnded}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  className="w-full h-full object-fill block"
+                  playsInline
+                />
 
-              {/* Annotation canvas — sized to actual video content area, not the element */}
-              <div
-                className="absolute pointer-events-none"
-                style={{
-                  left: videoRect.left,
-                  top: videoRect.top,
-                  width: videoRect.width || '100%',
-                  height: videoRect.height || '100%',
-                  transform: `scale(${zoom})`,
-                  transformOrigin: 'center center',
-                }}
-              >
+                {/* Annotation canvas — matches video exactly via object-fill parity */}
                 <div style={{ pointerEvents: drawingMode ? 'auto' : 'none' }} className="absolute inset-0">
                   <AnnotationCanvas
                     elements={elements}

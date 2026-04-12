@@ -236,6 +236,8 @@ export const CreatePerformanceReportDialog = ({
   const [opponent, setOpponent] = useState("");
   const [result, setResult] = useState("");
   const [performanceOverview, setPerformanceOverview] = useState("");
+  const [clubLogoUrl, setClubLogoUrl] = useState("");
+  const [oppositionColor, setOppositionColor] = useState("");
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -947,7 +949,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color")
         .eq("id", analysisId)
         .single();
 
@@ -971,6 +973,8 @@ export const CreatePerformanceReportDialog = ({
         setReportLanguage((analysisData as any).translated_content.language);
       }
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
+      setClubLogoUrl((analysisData as any).club_logo_url || "");
+      setOppositionColor((analysisData as any).opposition_color || "");
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
@@ -1527,6 +1531,8 @@ export const CreatePerformanceReportDialog = ({
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
             show_descriptions: showDescriptions,
+            club_logo_url: clubLogoUrl || null,
+            opposition_color: oppositionColor || null,
           } as any)
           .eq("id", analysisId);
 
@@ -1600,6 +1606,8 @@ export const CreatePerformanceReportDialog = ({
             estimated_ready_at: visibilityStatus === "draft" ? estimatedReadyAt : null,
             translated_content: translatedContent,
             show_descriptions: showDescriptions,
+            club_logo_url: clubLogoUrl || null,
+            opposition_color: oppositionColor || null,
           } as any)
           .select()
           .single();
@@ -1972,6 +1980,30 @@ export const CreatePerformanceReportDialog = ({
                 onChange={(e) => setResult(e.target.value)}
                 placeholder="e.g., W 2-1"
               />
+            </div>
+            <div>
+              <Label htmlFor="clubLogo">Club Logo URL</Label>
+              <Input
+                id="clubLogo"
+                value={clubLogoUrl}
+                onChange={(e) => setClubLogoUrl(e.target.value)}
+                placeholder="https://... or leave blank"
+              />
+            </div>
+            <div>
+              <Label htmlFor="oppositionColor">Opposition Colour</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="oppositionColor"
+                  value={oppositionColor}
+                  onChange={(e) => setOppositionColor(e.target.value)}
+                  placeholder="e.g., #E63946 or red"
+                  className="flex-1"
+                />
+                {oppositionColor && (
+                  <div className="w-10 h-10 rounded border" style={{ backgroundColor: oppositionColor }} />
+                )}
+              </div>
             </div>
           </div>
 
