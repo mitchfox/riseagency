@@ -1646,16 +1646,24 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleAttachClipToAction = async (actionId: string) => {
     if (!attachClip || !selectedVideo) return;
+    // Close dialog immediately so user can continue working
+    setShowAttachDialog(false);
+    const clipRef = attachClip;
+    const videoRef2 = selectedVideo;
+    setAttachClip(null);
+    
+    const toastId = toast.loading("Extracting and attaching clip...", { duration: Infinity });
     try {
       let clipUrl: string;
       try {
-        clipUrl = await extractClipFile(selectedVideo.video_url, attachClip.id, attachClip.start, attachClip.end);
+        clipUrl = await extractClipFile(videoRef2.video_url, clipRef.id, clipRef.start, clipRef.end);
+        toast.loading("Uploading clip...", { id: toastId });
       } catch (err) {
         console.error('Clip extraction failed, using fragment URL:', err);
-        clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+        clipUrl = `${videoRef2.video_url}#t=${clipRef.start},${clipRef.end}`;
       }
       
-      const annotations = getClipAnnotations(attachClip.id);
+      const annotations = getClipAnnotations(clipRef.id);
       const updateData: any = { video_url: clipUrl };
       if (annotations) updateData.clip_annotations = annotations;
 
@@ -1664,11 +1672,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         .update(updateData)
         .eq("id", actionId);
       if (error) throw error;
-      toast.success("Clip attached to action");
-      setShowAttachDialog(false);
-      setAttachClip(null);
+      toast.success("Clip attached to action", { id: toastId });
     } catch (err: any) {
-      toast.error(err.message || "Failed to attach clip");
+      toast.error(err.message || "Failed to attach clip", { id: toastId });
     }
   };
 
