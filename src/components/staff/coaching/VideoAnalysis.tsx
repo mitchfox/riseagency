@@ -1680,6 +1680,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleInsertNewActionWithClip = async (insertAfterNumber: number, reportAnalysisId: string) => {
     if (!attachClip || !selectedVideo) return;
+    // Close dialog immediately so user can continue working
+    setShowAttachDialog(false);
+    const clipRef = attachClip;
+    const videoRef2 = selectedVideo;
+    setAttachClip(null);
+    
+    const toastId = toast.loading("Creating action with clip...", { duration: Infinity });
     try {
       // Shift existing actions that come after the insert position
       const { data: actionsToShift } = await supabase
@@ -1700,28 +1707,30 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       let clipUrl: string;
       try {
-        clipUrl = await extractClipFile(selectedVideo.video_url, attachClip.id, attachClip.start, attachClip.end);
+        toast.loading("Extracting clip...", { id: toastId });
+        clipUrl = await extractClipFile(videoRef2.video_url, clipRef.id, clipRef.start, clipRef.end);
+        toast.loading("Uploading clip...", { id: toastId });
       } catch (err) {
         console.error('Clip extraction failed, using fragment URL:', err);
-        clipUrl = `${selectedVideo.video_url}#t=${attachClip.start},${attachClip.end}`;
+        clipUrl = `${videoRef2.video_url}#t=${clipRef.start},${clipRef.end}`;
       }
       
-      const annotations = getClipAnnotations(attachClip.id);
+      const annotations = getClipAnnotations(clipRef.id);
       const insertData: any = {
         analysis_id: reportAnalysisId,
         action_number: insertAfterNumber + 1,
-        action_type: attachClip.action_type ? toTitleCase(attachClip.action_type) : "",
-        action_description: attachClip.action_description || "",
-        notes: attachClip.notes || null,
+        action_type: clipRef.action_type ? toTitleCase(clipRef.action_type) : "",
+        action_description: clipRef.action_description || "",
+        notes: clipRef.notes || null,
         video_url: clipUrl,
         is_successful: true,
-        minute: parseClipMinuteToNumber(attachClip.minute) ?? getMatchMinute(attachClip.start, selectedVideo.match_minute_offset),
+        minute: parseClipMinuteToNumber(clipRef.minute) ?? getMatchMinute(clipRef.start, videoRef2.match_minute_offset),
       };
-      if (attachClip.action_score != null) insertData.action_score = attachClip.action_score;
+      if (clipRef.action_score != null) insertData.action_score = clipRef.action_score;
       if (annotations) insertData.clip_annotations = annotations;
-      if (attachClip.zone_details?.length) {
-        insertData.zone_details = attachClip.zone_details;
-        insertData.zone = attachClip.zone_details[0].zone;
+      if (clipRef.zone_details?.length) {
+        insertData.zone_details = clipRef.zone_details;
+        insertData.zone = clipRef.zone_details[0].zone;
       }
 
       const { error } = await supabase
@@ -1729,11 +1738,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         .insert(insertData);
 
       if (error) throw error;
-      toast.success("New action created with clip attached");
-      setShowAttachDialog(false);
-      setAttachClip(null);
+      toast.success("New action created with clip attached", { id: toastId });
     } catch (err: any) {
-      toast.error(err.message || "Failed to create action");
+      toast.error(err.message || "Failed to create action", { id: toastId });
     }
   };
 
