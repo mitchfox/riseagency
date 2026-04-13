@@ -5577,11 +5577,13 @@ export type Database = {
           assigned_to: string[] | null
           category: string | null
           completed: boolean
+          completion_log: string[] | null
           created_at: string
           deadline: string | null
           description: string | null
           display_order: number
           id: string
+          image_url: string | null
           is_recurring: boolean
           last_completed_at: string | null
           priority: string
@@ -5593,11 +5595,13 @@ export type Database = {
           assigned_to?: string[] | null
           category?: string | null
           completed?: boolean
+          completion_log?: string[] | null
           created_at?: string
           deadline?: string | null
           description?: string | null
           display_order?: number
           id?: string
+          image_url?: string | null
           is_recurring?: boolean
           last_completed_at?: string | null
           priority?: string
@@ -5609,11 +5613,13 @@ export type Database = {
           assigned_to?: string[] | null
           category?: string | null
           completed?: boolean
+          completion_log?: string[] | null
           created_at?: string
           deadline?: string | null
           description?: string | null
           display_order?: number
           id?: string
+          image_url?: string | null
           is_recurring?: boolean
           last_completed_at?: string | null
           priority?: string

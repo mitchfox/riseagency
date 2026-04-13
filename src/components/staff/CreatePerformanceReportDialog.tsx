@@ -1982,26 +1982,77 @@ export const CreatePerformanceReportDialog = ({
               />
             </div>
             <div>
-              <Label htmlFor="clubLogo">Club Logo URL</Label>
-              <Input
-                id="clubLogo"
-                value={clubLogoUrl}
-                onChange={(e) => setClubLogoUrl(e.target.value)}
-                placeholder="https://... or leave blank"
-              />
+              <Label htmlFor="clubLogo">Club Logo</Label>
+              <div className="flex items-center gap-2">
+                {clubLogoUrl && (
+                  <img src={clubLogoUrl} alt="Club logo" className="h-10 w-10 object-contain rounded border" />
+                )}
+                <div className="flex-1 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        const ext = file.name.split('.').pop() || 'png';
+                        const fileName = `club-logos/${Date.now()}.${ext}`;
+                        const { error } = await supabase.storage.from('club-logos').upload(fileName, file, { cacheControl: '31536000', upsert: true });
+                        if (error) { toast.error('Failed to upload logo'); return; }
+                        const { data: { publicUrl } } = supabase.storage.from('club-logos').getPublicUrl(fileName);
+                        setClubLogoUrl(publicUrl);
+                        toast.success('Logo uploaded');
+                      };
+                      input.click();
+                    }}
+                  >
+                    Upload
+                  </Button>
+                  {clubLogoUrl && (
+                    <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setClubLogoUrl("")}>
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
             <div>
               <Label htmlFor="oppositionColor">Opposition Colour</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={oppositionColor || '#cccccc'}
+                  onChange={(e) => setOppositionColor(e.target.value)}
+                  className="h-10 w-12 rounded border cursor-pointer bg-transparent p-0.5"
+                />
                 <Input
                   id="oppositionColor"
                   value={oppositionColor}
                   onChange={(e) => setOppositionColor(e.target.value)}
-                  placeholder="e.g., #E63946 or red"
+                  placeholder="#E63946"
                   className="flex-1"
                 />
-                {oppositionColor && (
-                  <div className="w-10 h-10 rounded border" style={{ backgroundColor: oppositionColor }} />
+                {'EyeDropper' in window && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs shrink-0"
+                    onClick={async () => {
+                      try {
+                        const dropper = new (window as any).EyeDropper();
+                        const result = await dropper.open();
+                        setOppositionColor(result.sRGBHex);
+                      } catch {}
+                    }}
+                  >
+                    Pick
+                  </Button>
                 )}
               </div>
             </div>
