@@ -31,15 +31,18 @@ interface ClipAction {
 const getScoreColor = (score: string) => {
   const n = parseFloat(score);
   if (isNaN(n)) return "bg-muted";
-  if (n <= -1) return "bg-red-900";
-  if (n < -0.5) return "bg-red-700";
-  if (n < 0) return "bg-red-500";
-  if (n === 0) return "bg-gray-500";
-  if (n < 0.5) return "bg-orange-500";
-  if (n < 1.0) return "bg-yellow-500";
-  if (n < 1.5) return "bg-lime-500";
-  if (n < 2.0) return "bg-green-500";
-  return "bg-emerald-600";
+  if (n < 0) return "bg-[hsl(0,84%,30%)]";      // Dark Red (U)
+  if (n < 0.2) return "bg-[hsl(0,84%,45%)]";     // Red (D)
+  if (n < 0.4) return "bg-[hsl(0,84%,60%)]";     // Light Red (C-)
+  if (n < 0.6) return "bg-[hsl(25,75%,45%)]";    // Orange-Brown (C)
+  if (n < 0.8) return "bg-[hsl(40,85%,50%)]";    // Yellow-Orange (C+)
+  if (n < 1.0) return "bg-[hsl(60,70%,50%)]";    // Yellow-Green (B-)
+  if (n < 1.2) return "bg-[hsl(142,76%,36%)]";   // Green (B)
+  if (n < 1.4) return "bg-[hsl(142,70%,40%)]";   // Green (B+)
+  if (n < 1.6) return "bg-[hsl(142,65%,45%)]";   // Green (A-)
+  if (n < 1.8) return "bg-[hsl(142,70%,50%)]";   // Green (A)
+  if (n < 2.2) return "bg-[hsl(142,76%,55%)]";   // Green (A+)
+  return "bg-[hsl(43,96%,56%)]";                  // Rise Gold (A*)
 };
 
 const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [
