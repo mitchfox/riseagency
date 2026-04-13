@@ -31,13 +31,15 @@ interface ClipAction {
 const getScoreColor = (score: string) => {
   const n = parseFloat(score);
   if (isNaN(n)) return "bg-muted";
-  if (n < 0) return "bg-red-950";
-  if (n < 0.4) return "bg-red-600";
-  if (n < 0.8) return "bg-orange-500";
-  if (n < 1.0) return "bg-yellow-400";
-  if (n < 1.4) return "bg-lime-400";
-  if (n < 1.8) return "bg-green-500";
-  return "bg-green-700";
+  if (n <= -1) return "bg-red-900";
+  if (n < -0.5) return "bg-red-700";
+  if (n < 0) return "bg-red-500";
+  if (n === 0) return "bg-gray-500";
+  if (n < 0.5) return "bg-orange-500";
+  if (n < 1.0) return "bg-yellow-500";
+  if (n < 1.5) return "bg-lime-500";
+  if (n < 2.0) return "bg-green-500";
+  return "bg-emerald-600";
 };
 
 const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [

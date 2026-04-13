@@ -174,7 +174,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [purging, setPurging] = useState(false);
 
   // Playback speed
-  const SPEED_STEPS = [0.25, 0.5, 1, 2, 4, 8];
+  const SPEED_STEPS = [0.25, 0.5, 1, 2, 4];
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
