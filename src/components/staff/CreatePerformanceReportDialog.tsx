@@ -915,8 +915,6 @@ export const CreatePerformanceReportDialog = ({
     setSelectedFixtureId(fixtureId);
     const fixture = fixtures.find(f => f.id === fixtureId);
     if (fixture) {
-      const opponentTeam = deriveOpponentFromFixture(fixture, playerClub);
-      setOpponent(opponentTeam);
       if (fixture.home_score !== null && fixture.away_score !== null) {
         setResult(`${fixture.home_score}-${fixture.away_score}`);
       }
