@@ -985,8 +985,8 @@ export const CreatePerformanceReportDialog = ({
           .single();
         
         if (fixtureData) {
-          const opponentTeam = deriveOpponentFromFixture(fixtureData, playerClub);
-          setOpponent(opponentTeam);
+          // Always use stored opponent name, never auto-derive from fixture
+          setOpponent(analysisData.opponent || "");
           if (fixtureData.home_score !== null && fixtureData.away_score !== null) {
             setResult(`${fixtureData.home_score}-${fixtureData.away_score}`);
           } else {
