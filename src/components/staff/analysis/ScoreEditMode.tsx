@@ -422,9 +422,17 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
   const currentFocusedAction = pageActions.find((action) => action.id === activeActionId) || pageActions[0];
 
   const overlayContent = (
-    <div className="fixed inset-0 z-[1000] bg-background text-foreground">
+    <div
+      className="fixed inset-0 z-[1000] box-border bg-background p-3 text-foreground"
+      style={{
+        paddingTop: "max(env(safe-area-inset-top), 12px)",
+        paddingBottom: "max(env(safe-area-inset-bottom), 12px)",
+        paddingLeft: "max(env(safe-area-inset-left), 12px)",
+        paddingRight: "max(env(safe-area-inset-right), 12px)",
+      }}
+    >
       {/* Top centre: progress bar + update button */}
-      <div className="absolute top-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute left-1/2 top-0 z-40 flex -translate-x-1/2 items-center gap-2">
         <div className="flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1.5 shadow-lg backdrop-blur-sm">
           <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
             <div
@@ -450,7 +458,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       {/* Side panel for Shot Map / Movement - z-50 to be above search */}
       {sidePanel && (
         <div
-          className={`absolute ${panelSide === "left" ? "left-2" : "right-2"} top-12 bottom-12 z-50 w-[min(46vw,760px)] min-w-[380px] max-w-[760px]`}
+          className={`absolute ${panelSide === "left" ? "left-2" : "right-2"} top-14 bottom-14 z-50 w-[min(46vw,760px)] min-w-[320px] max-w-[760px]`}
         >
           <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background/95 shadow-2xl backdrop-blur-md">
             <button
@@ -612,7 +620,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       </div>
 
       {/* Bottom centre: tool buttons */}
-      <div className="absolute bottom-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute bottom-0 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
         <button
           onClick={() => {
             onSave?.();
