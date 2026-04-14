@@ -83,6 +83,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
   const [open, setOpen] = useState(false);
   const [expandedZone, setExpandedZone] = useState<number | null>(null);
   const showPass = isPassAction(actionType);
+  const showDefend = isDefendAction(actionType);
 
   // Direction is stored on the first point only
   const currentDirection = value.length > 0 ? value[0].direction : undefined;
