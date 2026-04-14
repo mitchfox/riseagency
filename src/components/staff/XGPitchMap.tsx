@@ -108,8 +108,8 @@ export const XGPitchMap = ({ compact = false, onScoreSelect }: { compact?: boole
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="relative w-full overflow-x-auto">
-          <div className={`${compact ? "" : "min-w-[500px]"} mx-auto`}>
+        <div className="relative w-full overflow-hidden">
+          <div className={`${compact ? "max-w-full" : "min-w-[500px]"} mx-auto`}>
             {/* Pitch container */}
             <div className="relative border-2 border-slate-700 bg-emerald-800/20 rounded overflow-hidden">
               {/* Pitch markings overlay */}
@@ -147,7 +147,7 @@ export const XGPitchMap = ({ compact = false, onScoreSelect }: { compact?: boole
                           <TooltipTrigger asChild>
                             <button
                               type="button"
-                              className={`w-full border border-slate-600/20 p-1.5 md:p-2 text-center text-[10px] md:text-xs font-mono transition-all hover:scale-110 hover:z-20 hover:shadow-lg ${onScoreSelect ? "cursor-pointer" : "cursor-default"} ${getXGColor(value)}`}
+                              className={`w-full border border-slate-600/20 ${compact ? "p-0.5 md:p-1" : "p-1.5 md:p-2"} text-center ${compact ? "text-[8px] md:text-[10px]" : "text-[10px] md:text-xs"} font-mono transition-all hover:scale-110 hover:z-20 hover:shadow-lg ${onScoreSelect ? "cursor-pointer" : "cursor-default"} ${getXGColor(value)}`}
                               style={{ opacity: getXGOpacity(value) }}
                               onClick={() => onScoreSelect?.(formatXGScore(value))}
                             >
