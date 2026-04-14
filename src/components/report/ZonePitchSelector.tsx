@@ -197,6 +197,28 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
                   )}
                 </button>
               )}
+              {/* Shot direction toggle for defending actions */}
+              {showDefend && value.length > 0 && (
+                <button
+                  onClick={toggleShotDirection}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                    currentShotDirection 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-accent'
+                  }`}
+                  title={currentShotDirection ? `Shot: ${currentShotDirection} (click to change)` : "Add shot direction"}
+                >
+                  {currentShotDirection === "left" ? (
+                    <><ArrowLeft className="h-3 w-3" /> Left</>
+                  ) : currentShotDirection === "centre" ? (
+                    <><ArrowUp className="h-3 w-3" /> Centre</>
+                  ) : currentShotDirection === "right" ? (
+                    <><ArrowRight className="h-3 w-3" /> Right</>
+                  ) : (
+                    <><ArrowLeft className="h-3 w-3 opacity-50" /> Shot</>
+                  )}
+                </button>
+              )}
               {expandedZone && (
                 <button
                   onClick={() => setExpandedZone(null)}
