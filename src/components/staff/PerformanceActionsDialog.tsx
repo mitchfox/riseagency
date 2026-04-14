@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+import { hasPlayableClip } from "@/lib/clipVideoUtils";
 import { ReExtractClipsButton } from "./ReExtractClipsButton";
 import { toTitleCase } from "@/lib/titleCase";
 
