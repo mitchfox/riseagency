@@ -88,10 +88,16 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
       <div className="relative">
         <Input
           ref={inputRef}
-          type="number"
-          step="0.00001"
+          type="text"
+          inputMode="decimal"
           value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
+          onChange={(e) => {
+            // Allow digits, dots, minus sign, and empty
+            const v = e.target.value;
+            if (v === '' || v === '-' || v === '-.' || /^-?\d*\.?\d*$/.test(v)) {
+              setLocalValue(v);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === '-' || e.key === 'Subtract') {
               e.preventDefault();

@@ -1475,7 +1475,20 @@ export const CreatePerformanceReportDialog = ({
       // Calculate R90 from actions (safe when no minutes)
       const rawScore = actions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
       const parsedMins = parseInt(minutesPlayed);
-      const calculatedR90 = parsedMins > 0 ? (rawScore / parsedMins) * 90 : null;
+      // Scores of exactly 1.00 or -1.00 (goals/conceded) are not per-90 adjusted
+      const fixedScoreActions = actions.filter(a => {
+        const s = parseFloat(a.action_score);
+        return s === 1 || s === -1;
+      });
+      const variableScoreActions = actions.filter(a => {
+        const s = parseFloat(a.action_score);
+        return s !== 1 && s !== -1;
+      });
+      const fixedTotal = fixedScoreActions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
+      const variableTotal = variableScoreActions.reduce((sum, a) => sum + (parseFloat(a.action_score) || 0), 0);
+      const calculatedR90 = parsedMins > 0
+        ? ((variableTotal / parsedMins) * 90) + fixedTotal
+        : null;
       
       // Prepare striker stats JSONB - from unified stats editor
       let strikerStatsJson: Record<string, any> | null = null;
@@ -1967,7 +1980,7 @@ export const CreatePerformanceReportDialog = ({
                 id="opponent"
                 value={getDisplayValue('opponent', opponent)}
                 onChange={(e) => !isTranslatedView && setOpponent(e.target.value)}
-                placeholder="Auto-filled from fixture"
+                placeholder="Enter opponent name"
                 readOnly={isTranslatedView}
                 className={isTranslatedView ? "bg-muted/50" : ""}
               />
