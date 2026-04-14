@@ -36,6 +36,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
     dob: "",
     position: "",
     message: "",
+    videoLinks: [""],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
