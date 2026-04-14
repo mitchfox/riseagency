@@ -8,6 +8,7 @@ export interface ZonePoint {
   zone: number;       // 1-18 major zone
   sub?: number;       // 1-9 sub-zone within major zone
   direction?: "forward" | "backward"; // pass direction (only on first point)
+  shotDirection?: "left" | "centre" | "right"; // shot direction for defending actions
 }
 
 interface ZonePitchSelectorProps {
@@ -41,10 +42,23 @@ const PASS_KEYWORDS = [
   "distribution", "assist", "key pass", "ball over the top",
 ];
 
+const DEFEND_KEYWORDS = [
+  "tackle", "clearance", "block", "header", "duel", "aerial",
+  "defensive", "interception", "recovery", "ball recovery",
+  "applied pressure", "press", "closing down", "regain",
+  "1v1 defending", "defending", "ground duel",
+];
+
 const isPassAction = (actionType?: string): boolean => {
   if (!actionType) return false;
   const lower = actionType.toLowerCase();
   return PASS_KEYWORDS.some(kw => lower.includes(kw));
+};
+
+const isDefendAction = (actionType?: string): boolean => {
+  if (!actionType) return false;
+  const lower = actionType.toLowerCase();
+  return DEFEND_KEYWORDS.some(kw => lower.includes(kw));
 };
 
 const getMultiplierColor = (zone: number): string => {
