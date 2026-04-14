@@ -495,7 +495,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
       analysisId: a.id,
       minutesPlayed: a.minutes_played,
-      strikerStats: a.striker_stats
+      strikerStats: a.striker_stats,
+      per: (a as any).placeholder_per as number | null,
+      sr: (a as any).placeholder_sr as number | null,
     }));
 
   // Calculate max Y-axis value
