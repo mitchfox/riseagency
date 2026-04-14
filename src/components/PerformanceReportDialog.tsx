@@ -967,7 +967,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     {analysis.r90_score !== null 
                       ? analysis.r90_score.toFixed(2)
                       : analysis.minutes_played && actions.length > 0
-                        ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                        ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
                         : "N/A"
                     }
                   </p>
