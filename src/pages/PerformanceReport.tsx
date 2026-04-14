@@ -701,6 +701,18 @@ const PerformanceReport = () => {
               <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
               <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
             </div>
+            {(analysis as any).placeholder_per != null && (
+              <div className="text-center p-2 bg-accent/10 rounded-lg">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">PER</p>
+                <p className="text-base md:text-2xl font-bold">{Number((analysis as any).placeholder_per).toFixed(2)}</p>
+              </div>
+            )}
+            {(analysis as any).placeholder_sr != null && (
+              <div className="text-center p-2 bg-accent/10 rounded-lg">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">SR</p>
+                <p className="text-base md:text-2xl font-bold">{Number((analysis as any).placeholder_sr).toFixed(1)}</p>
+              </div>
+            )}
           </div>
 
           {/* Match Statistics - Collapsible */}
