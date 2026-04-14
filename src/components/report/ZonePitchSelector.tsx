@@ -366,6 +366,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
           <div className="text-[9px] text-muted-foreground">
             <p>Click a zone to place sub-zone points. Multiple points per action supported.</p>
             {showPass && <p className="text-primary">Pass action — use the direction toggle above to set forward/backward.</p>}
+            {showDefend && <p className="text-primary">Defending action — use the shot direction toggle above to set left/centre/right.</p>}
           </div>
         </div>
       </PopoverContent>
