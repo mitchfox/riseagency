@@ -620,7 +620,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       </div>
 
       {/* Bottom centre: tool buttons */}
-      <div className="absolute bottom-0 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute bottom-1 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
         <button
           onClick={() => {
             onSave?.();
