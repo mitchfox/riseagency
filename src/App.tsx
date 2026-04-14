@@ -68,6 +68,7 @@ const Jobs = lazy(() => import("./pages/Jobs"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
+const RequestRepresentation = lazy(() => import("./pages/RequestRepresentation"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const SharedContact = lazy(() => import("./pages/SharedContact"));
 const TransferReportView = lazy(() => import("./pages/TransferReportView"));
