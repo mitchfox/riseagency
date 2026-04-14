@@ -432,7 +432,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       }}
     >
       {/* Top centre: progress bar + update button */}
-      <div className="absolute left-1/2 top-0 z-40 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute left-1/2 top-1 z-40 flex -translate-x-1/2 items-center gap-2">
         <div className="flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1.5 shadow-lg backdrop-blur-sm">
           <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
             <div
@@ -620,7 +620,7 @@ export const ScoreEditMode = ({ analysisId, playerName, onClose, onSave }: Score
       </div>
 
       {/* Bottom centre: tool buttons */}
-      <div className="absolute bottom-0 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute bottom-1 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
         <button
           onClick={() => {
             onSave?.();

@@ -1,13 +1,14 @@
 import { useState, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowUp, ArrowDown, ChevronUp as NavUp, ChevronDown as NavDown, ChevronLeft as NavLeft, ChevronRight as NavRight } from "lucide-react";
+import { MapPin, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ChevronUp as NavUp, ChevronDown as NavDown, ChevronLeft as NavLeft, ChevronRight as NavRight } from "lucide-react";
 import { OFFENSIVE_ZONE_MULTIPLIERS } from "@/lib/zoneMultipliers";
 
 export interface ZonePoint {
   zone: number;       // 1-18 major zone
   sub?: number;       // 1-9 sub-zone within major zone
   direction?: "forward" | "backward"; // pass direction (only on first point)
+  shotDirection?: "left" | "centre" | "right"; // shot direction for defending actions
 }
 
 interface ZonePitchSelectorProps {
@@ -41,10 +42,23 @@ const PASS_KEYWORDS = [
   "distribution", "assist", "key pass", "ball over the top",
 ];
 
+const DEFEND_KEYWORDS = [
+  "tackle", "clearance", "block", "header", "duel", "aerial",
+  "defensive", "interception", "recovery", "ball recovery",
+  "applied pressure", "press", "closing down", "regain",
+  "1v1 defending", "defending", "ground duel",
+];
+
 const isPassAction = (actionType?: string): boolean => {
   if (!actionType) return false;
   const lower = actionType.toLowerCase();
   return PASS_KEYWORDS.some(kw => lower.includes(kw));
+};
+
+const isDefendAction = (actionType?: string): boolean => {
+  if (!actionType) return false;
+  const lower = actionType.toLowerCase();
+  return DEFEND_KEYWORDS.some(kw => lower.includes(kw));
 };
 
 const getMultiplierColor = (zone: number): string => {
@@ -69,9 +83,11 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
   const [open, setOpen] = useState(false);
   const [expandedZone, setExpandedZone] = useState<number | null>(null);
   const showPass = isPassAction(actionType);
+  const showDefend = isDefendAction(actionType);
 
   // Direction is stored on the first point only
   const currentDirection = value.length > 0 ? value[0].direction : undefined;
+  const currentShotDirection = value.length > 0 ? value[0].shotDirection : undefined;
 
   const hasZone = (zone: number, sub?: number): boolean => {
     return value.some(p => p.zone === zone && (sub === undefined || p.sub === sub));
@@ -108,6 +124,28 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
       return rest;
     }));
   }, [value, onChange, currentDirection]);
+
+  const toggleShotDirection = useCallback(() => {
+    if (value.length === 0) return;
+    const newDir: "left" | "centre" | "right" | undefined = 
+      currentShotDirection === "left" ? "centre" : 
+      currentShotDirection === "centre" ? "right" : 
+      currentShotDirection === "right" ? undefined : 
+      "left";
+    onChange(value.map((p, i) => {
+      if (i === 0) {
+        const updated = { ...p };
+        if (newDir) {
+          updated.shotDirection = newDir;
+        } else {
+          delete updated.shotDirection;
+        }
+        return updated;
+      }
+      const { shotDirection, ...rest } = p;
+      return rest;
+    }));
+  }, [value, onChange, currentShotDirection]);
 
   const zoneCount = (zone: number): number => {
     return value.filter(p => p.zone === zone).length;
@@ -156,6 +194,28 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
                     <><ArrowDown className="h-3 w-3" /> Back</>
                   ) : (
                     <><ArrowUp className="h-3 w-3 opacity-50" /> Dir</>
+                  )}
+                </button>
+              )}
+              {/* Shot direction toggle for defending actions */}
+              {showDefend && value.length > 0 && (
+                <button
+                  onClick={toggleShotDirection}
+                  className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                    currentShotDirection 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground hover:bg-accent'
+                  }`}
+                  title={currentShotDirection ? `Shot: ${currentShotDirection} (click to change)` : "Add shot direction"}
+                >
+                  {currentShotDirection === "left" ? (
+                    <><ArrowLeft className="h-3 w-3" /> Left</>
+                  ) : currentShotDirection === "centre" ? (
+                    <><ArrowUp className="h-3 w-3" /> Centre</>
+                  ) : currentShotDirection === "right" ? (
+                    <><ArrowRight className="h-3 w-3" /> Right</>
+                  ) : (
+                    <><ArrowLeft className="h-3 w-3 opacity-50" /> Shot</>
                   )}
                 </button>
               )}
@@ -306,6 +366,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
           <div className="text-[9px] text-muted-foreground">
             <p>Click a zone to place sub-zone points. Multiple points per action supported.</p>
             {showPass && <p className="text-primary">Pass action — use the direction toggle above to set forward/backward.</p>}
+            {showDefend && <p className="text-primary">Defending action — use the shot direction toggle above to set left/centre/right.</p>}
           </div>
         </div>
       </PopoverContent>

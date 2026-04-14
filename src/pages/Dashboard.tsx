@@ -73,6 +73,8 @@ interface Analysis {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  placeholder_per?: number | null;
+  placeholder_sr?: number | null;
   tagged_analyses?: any[];
 }
 

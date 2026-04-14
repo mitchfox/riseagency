@@ -150,6 +150,8 @@ interface PlayerAnalysis {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  placeholder_per?: number | null;
+  placeholder_sr?: number | null;
   video_url?: string | null;
 }
 
@@ -307,6 +309,16 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               )}
               {stats.crossing_movement_xC_per90 !== undefined && (
                 <div className="text-xs text-white/70">Crossing Movement xC: {stats.crossing_movement_xC_per90.toFixed(2)}</div>
+              )}
+            </div>
+          )}
+          {(data.per != null || data.sr != null) && (
+            <div className="space-y-1 pt-2 border-t border-white/20">
+              {data.per != null && (
+                <div className="text-xs text-white/70">PER: {Number(data.per).toFixed(2)}</div>
+              )}
+              {data.sr != null && (
+                <div className="text-xs text-white/70">SR: {Number(data.sr).toFixed(1)}</div>
               )}
             </div>
           )}
@@ -495,7 +507,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
       displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
       analysisId: a.id,
       minutesPlayed: a.minutes_played,
-      strikerStats: a.striker_stats
+      strikerStats: a.striker_stats,
+      per: (a as any).placeholder_per as number | null,
+      sr: (a as any).placeholder_sr as number | null,
     }));
 
   // Calculate max Y-axis value
