@@ -347,8 +347,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
     if (config) return config.name;
     
-    // Fallback to formatted key
-    return key
+    // Strip gk_ prefix for goalkeeper stats
+    const displayKey = key.startsWith('gk_') ? key.slice(3) : key;
+    return displayKey
       .replace(/_/g, ' ')
       .replace(/([A-Z])/g, ' $1')
       .replace(/^./, str => str.toUpperCase())
