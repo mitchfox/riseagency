@@ -173,6 +173,47 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           </div>
 
           <div className="space-y-2">
+            <Label>{t('representation.video_links', 'Match Video Links')} <span className="text-muted-foreground text-xs">({t('representation.video_links_hint', 'Full match videos preferred, highlights also accepted')})</span></Label>
+            {formData.videoLinks.map((link, idx) => (
+              <div key={idx} className="flex gap-2">
+                <Input
+                  value={link}
+                  onChange={(e) => {
+                    const updated = [...formData.videoLinks];
+                    updated[idx] = e.target.value;
+                    setFormData({ ...formData, videoLinks: updated });
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+                {formData.videoLinks.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="flex-shrink-0"
+                    onClick={() => {
+                      const updated = formData.videoLinks.filter((_, i) => i !== idx);
+                      setFormData({ ...formData, videoLinks: updated });
+                    }}
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFormData({ ...formData, videoLinks: [...formData.videoLinks, ""] })}
+              className="text-xs"
+            >
+              + {t('representation.add_another_link', 'Add another link')}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="message">{t('representation.additional_info', 'Additional Information')}</Label>
             <Textarea
               id="message"
