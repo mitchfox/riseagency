@@ -57,7 +57,7 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
       });
       
       onOpenChange(false);
-      setFormData({ name: "", phone: "", email: "", currentClub: "", dob: "", position: "", message: "" });
+      setFormData({ name: "", phone: "", email: "", currentClub: "", dob: "", position: "", message: "", videoLinks: [""] });
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
