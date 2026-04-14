@@ -87,6 +87,7 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
 
   // Direction is stored on the first point only
   const currentDirection = value.length > 0 ? value[0].direction : undefined;
+  const currentShotDirection = value.length > 0 ? value[0].shotDirection : undefined;
 
   const hasZone = (zone: number, sub?: number): boolean => {
     return value.some(p => p.zone === zone && (sub === undefined || p.sub === sub));
