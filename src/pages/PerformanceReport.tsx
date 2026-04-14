@@ -640,64 +640,38 @@ const PerformanceReport = () => {
               </div>
             </div>
 
-            {/* Clipped Actions Button */}
+            {/* Video Options Row - Noted Actions, Full Match, Ranked Clips */}
             {reportClips.length > 0 && (
+              <div className="grid grid-cols-3 gap-1 md:gap-2">
+                {reportClips.some(a => a.notes) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
+                    className="text-xs font-semibold w-full"
+                  >
+                    <MessageSquareText className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "noted_actions")}
+                  </Button>
+                )}
                 <Button
                   variant="default"
                   size="sm"
-                  className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2 w-fit"
-                  onClick={() => openClipCollection(setShowClippedActions)}
+                  onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
+                  className="text-xs font-semibold w-full bg-risegold hover:bg-risegold/90 text-black"
                 >
-                  <Play className="h-4 w-4" />
-                  {reportClips.length} {t(reportLanguage, "clips_label")}
+                  <Film className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "full_match_video")}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
+                  className="text-xs font-semibold w-full"
+                >
+                  <Award className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "ranked_actions")}
+                </Button>
+              </div>
             )}
           </div>
-
-          {/* Graphics Buttons Row */}
-          {actions.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }} className="text-xs">
-                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "r90_flow")}
-              </Button>
-              <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
-                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
-              </Button>
-              {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
-                <>
-                  <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "pitch_heatmap")}
-                  </Button>
-                  <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); }} className="text-xs">
-                    <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "zone_performance")}
-                  </Button>
-                  <Button variant={showTimelapse ? "default" : "outline"} size="sm" onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
-                    <Timer className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "match_timelapse")}
-                  </Button>
-                </>
-              )}
-              {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
-                <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
-                  <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "chance_creation_flow")}
-                </Button>
-              )}
-              {reportClips.length > 0 && (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }} className="text-xs">
-                    <Film className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "full_match_video")}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }} className="text-xs">
-                    <Award className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "ranked_actions")}
-                  </Button>
-                  {reportClips.some(a => a.notes) && (
-                    <Button variant="outline" size="sm" onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }} className="text-xs">
-                      <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "noted_actions")}
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
 
           {/* R90 Flow Chart */}
           {showR90Flow && analysis.minutes_played && (
