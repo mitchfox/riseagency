@@ -70,6 +70,8 @@ interface AnalysisDetails {
   placeholder_sr?: number | null;
   translated_content?: { language: string; fields: Record<string, string> } | null;
   show_descriptions?: boolean;
+  club_logo_url?: string | null;
+  opposition_color?: string | null;
 }
 
 interface PerformanceReportDialogProps {
@@ -179,7 +181,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, players!inner (name)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name)")
           .eq("id", id)
           .single(),
         supabase
@@ -208,6 +210,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         placeholder_sr: (analysisResult.data as any).placeholder_sr,
         translated_content: (analysisResult.data as any).translated_content || null,
         show_descriptions: (analysisResult.data as any).show_descriptions !== false,
+        club_logo_url: (analysisResult.data as any).club_logo_url || null,
+        opposition_color: (analysisResult.data as any).opposition_color || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
