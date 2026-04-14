@@ -983,6 +983,19 @@ const PerformanceReport = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Back to Top Button */}
+          <div className="flex justify-center pt-4 pb-2">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-risegold hover:bg-risegold/90 text-black font-semibold"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <ArrowUp className="h-4 w-4 mr-1.5" />
+              Back to Top
+            </Button>
+          </div>
         </div>
         </div>
         )}
