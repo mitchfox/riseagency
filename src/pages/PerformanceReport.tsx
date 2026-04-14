@@ -336,7 +336,9 @@ const PerformanceReport = () => {
     const keyLower = key.toLowerCase();
     config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
     if (config) return config.name;
-    return key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+    // Strip gk_ prefix for goalkeeper stats
+    const displayKey = key.startsWith('gk_') ? key.slice(3) : key;
+    return displayKey.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
   };
 
   // Get advanced stats from striker_stats, excluding internal fields
