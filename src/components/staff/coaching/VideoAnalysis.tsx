@@ -1350,6 +1350,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
       toast.success(`Clips linked to report. They'll be available for selection when editing.`);
       setShowExportDialog(false);
+      // Refresh linked report IDs so export buttons appear immediately
+      fetchLinkedReports();
     } catch (err: any) {
       toast.error(err.message || "Failed to link clips");
     }

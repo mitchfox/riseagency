@@ -24,6 +24,7 @@ import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
+import { hasPlayableClip } from "@/lib/clipVideoUtils";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -69,6 +70,8 @@ interface AnalysisDetails {
   placeholder_sr?: number | null;
   translated_content?: { language: string; fields: Record<string, string> } | null;
   show_descriptions?: boolean;
+  club_logo_url?: string | null;
+  opposition_color?: string | null;
 }
 
 interface PerformanceReportDialogProps {
@@ -113,13 +116,13 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const sharedClipPlayer = useSharedClipPlayer();
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url) {
+    if (!hasPlayableClip(action)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
 
     const translated = getTranslatedActionData(action);
-    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoUrl(action.video_url!);
     setSelectedVideoTitle(`#${action.action_number} - ${translated.action_type}`);
     setSelectedClipStart(action.clip_start ?? null);
     setSelectedClipEnd(action.clip_end ?? null);
@@ -178,7 +181,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, players!inner (name)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name)")
           .eq("id", id)
           .single(),
         supabase
@@ -207,6 +210,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         placeholder_sr: (analysisResult.data as any).placeholder_sr,
         translated_content: (analysisResult.data as any).translated_content || null,
         show_descriptions: (analysisResult.data as any).show_descriptions !== false,
+        club_logo_url: (analysisResult.data as any).club_logo_url || null,
+        opposition_color: (analysisResult.data as any).opposition_color || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -239,6 +244,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
   const calculateRScore = (): number => {
     return actions.reduce((sum, action) => sum + (action.action_score ?? 0), 0);
+  };
+
+  const calculateR90FromActions = (mins: number): number => {
+    const fixedTotal = actions
+      .filter(a => a.action_score === 1 || a.action_score === -1)
+      .reduce((sum, a) => sum + a.action_score, 0);
+    const variableTotal = actions
+      .filter(a => a.action_score !== 1 && a.action_score !== -1)
+      .reduce((sum, a) => sum + (a.action_score ?? 0), 0);
+    return ((variableTotal / mins) * 90) + fixedTotal;
   };
 
   const calculateXGChain = (): number => {
@@ -724,6 +739,22 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </div>
               )}
             <div ref={contentRef} className="space-y-2 md:space-y-3 bg-background p-2 md:p-4 rounded-lg overflow-x-hidden">
+              {/* Opposition branding strip */}
+              {analysis.opposition_color && (
+                <div
+                  className="w-full h-10 md:h-12 rounded-lg flex items-center justify-center relative overflow-hidden"
+                  style={{ backgroundColor: analysis.opposition_color }}
+                >
+                  {analysis.club_logo_url && (
+                    <img
+                      src={analysis.club_logo_url}
+                      alt="Club logo"
+                      className="h-7 md:h-9 object-contain drop-shadow-lg"
+                      crossOrigin="anonymous"
+                    />
+                  )}
+                </div>
+              )}
               {/* Player Info with Clipped Actions Button */}
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
@@ -936,7 +967,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     {analysis.r90_score !== null 
                       ? analysis.r90_score.toFixed(2)
                       : analysis.minutes_played && actions.length > 0
-                        ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                        ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
                         : "N/A"
                     }
                   </p>

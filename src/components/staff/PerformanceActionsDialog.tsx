@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ActionVideoUpload } from "./ActionVideoUpload";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+import { hasPlayableClip } from "@/lib/clipVideoUtils";
 import { ReExtractClipsButton } from "./ReExtractClipsButton";
 import { toTitleCase } from "@/lib/titleCase";
 
@@ -101,12 +102,12 @@ export const PerformanceActionsDialog = ({
   const [actionCategory, setActionCategory] = useState<string | null>(null);
 
   const openClip = (action: PerformanceAction) => {
-    if (!action.video_url || !hasPlayableClipWindow(action.clip_start, action.clip_end)) {
+    if (!hasPlayableClip(action)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
       return;
     }
 
-    setSelectedVideoUrl(action.video_url);
+    setSelectedVideoUrl(action.video_url!);
     setSelectedVideoTitle(`#${action.action_number} - ${action.action_type}`);
     setSelectedClipStart(action.clip_start ?? null);
     setSelectedClipEnd(action.clip_end ?? null);

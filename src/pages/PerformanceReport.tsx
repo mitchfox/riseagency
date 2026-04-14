@@ -261,6 +261,17 @@ const PerformanceReport = () => {
     return actions.reduce((sum, action) => sum + (action.action_score ?? 0), 0);
   };
 
+  const calculateR90FromActions = (mins: number): number => {
+    // Scores of exactly 1.00 or -1.00 are not per-90 adjusted
+    const fixedTotal = actions
+      .filter(a => a.action_score === 1 || a.action_score === -1)
+      .reduce((sum, a) => sum + a.action_score, 0);
+    const variableTotal = actions
+      .filter(a => a.action_score !== 1 && a.action_score !== -1)
+      .reduce((sum, a) => sum + (a.action_score ?? 0), 0);
+    return ((variableTotal / mins) * 90) + fixedTotal;
+  };
+
   const calculateXGChain = (): number => {
     return actions.reduce((sum, action) => {
       const score = action.action_score ?? 0;
@@ -735,7 +746,7 @@ const PerformanceReport = () => {
                 {analysis.r90_score !== null
                   ? analysis.r90_score.toFixed(2)
                   : analysis.minutes_played && actions.length > 0
-                    ? ((calculateRScore() / analysis.minutes_played) * 90).toFixed(2)
+                    ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
                     : "N/A"
                 }
               </p>

@@ -766,8 +766,9 @@ export const ActionTypeEditor = ({
         return;
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    // Use capture phase so hotkeys fire before any focused element consumes them
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
   }, [open, selectedActionIndex, togglePlayPause, goToAction, goToClip, copyFromSimilar, applyQuickScore]);
 
   const getScoreCounts = (items: { action: PerformanceAction; index: number }[]) => {
