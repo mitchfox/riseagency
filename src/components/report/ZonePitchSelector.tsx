@@ -125,6 +125,28 @@ export const ZonePitchSelector = ({ value, onChange, actionType, compact = false
     }));
   }, [value, onChange, currentDirection]);
 
+  const toggleShotDirection = useCallback(() => {
+    if (value.length === 0) return;
+    const newDir: "left" | "centre" | "right" | undefined = 
+      currentShotDirection === "left" ? "centre" : 
+      currentShotDirection === "centre" ? "right" : 
+      currentShotDirection === "right" ? undefined : 
+      "left";
+    onChange(value.map((p, i) => {
+      if (i === 0) {
+        const updated = { ...p };
+        if (newDir) {
+          updated.shotDirection = newDir;
+        } else {
+          delete updated.shotDirection;
+        }
+        return updated;
+      }
+      const { shotDirection, ...rest } = p;
+      return rest;
+    }));
+  }, [value, onChange, currentShotDirection]);
+
   const zoneCount = (zone: number): number => {
     return value.filter(p => p.zone === zone).length;
   };
