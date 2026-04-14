@@ -310,6 +310,16 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               )}
             </div>
           )}
+          {(data.per != null || data.sr != null) && (
+            <div className="space-y-1 pt-2 border-t border-white/20">
+              {data.per != null && (
+                <div className="text-xs text-white/70">PER: {Number(data.per).toFixed(2)}</div>
+              )}
+              {data.sr != null && (
+                <div className="text-xs text-white/70">SR: {Number(data.sr).toFixed(1)}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
