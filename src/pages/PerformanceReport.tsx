@@ -152,7 +152,7 @@ const PerformanceReport = () => {
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
   const sharedClipPlayer = useSharedClipPlayer();
-
+  const [showMatchStats, setShowMatchStats] = useState(false);
   const openClip = (action: PerformanceAction) => {
     if (!hasPlayableVideo(action)) {
       toast.error('Clip unavailable. Full match playback has been blocked.');
