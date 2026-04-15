@@ -520,27 +520,33 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     if (!canManage || !form.post_type) return;
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('marketing_schedule_items')
-        .insert({
-          post_type: form.post_type,
-          day_of_week: form.day_of_week,
-          scheduled_time: form.scheduled_time || null,
-          platform_format: form.platform_format,
-          owner_id: form.owner_id || null,
-          status: form.status,
-          linked_draft_id: form.linked_draft_id || null,
-          notes: form.notes || null,
-          image_url: form.image_url || null,
-        });
-      if (error) throw error;
-      toast.success('Added to schedule');
+      const payload = {
+        post_type: form.post_type,
+        day_of_week: form.day_of_week,
+        scheduled_time: form.scheduled_time || null,
+        platform_format: form.platform_format,
+        owner_id: form.owner_id || null,
+        status: form.status,
+        linked_draft_id: form.linked_draft_id || null,
+        notes: form.notes || null,
+        image_url: form.image_url || null,
+      };
+      if (editingItem) {
+        const { error } = await supabase.from('marketing_schedule_items').update(payload).eq('id', editingItem.id);
+        if (error) throw error;
+        toast.success('Updated');
+      } else {
+        const { error } = await supabase.from('marketing_schedule_items').insert(payload);
+        if (error) throw error;
+        toast.success('Added to schedule');
+      }
       setShowDialog(false);
+      setEditingItem(null);
       resetForm();
       fetchItems();
     } catch (err) {
       console.error('Error:', err);
-      toast.error('Failed to add item');
+      toast.error(editingItem ? 'Failed to update' : 'Failed to add item');
     } finally {
       setSaving(false);
     }
@@ -563,6 +569,8 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
   };
 
   const openAddForDay = (day: string) => {
+    setEditingItem(null);
+    resetForm();
     setForm(prev => ({ ...prev, day_of_week: day }));
     setShowDialog(true);
   };
