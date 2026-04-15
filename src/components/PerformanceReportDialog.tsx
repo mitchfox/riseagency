@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer, ChevronDown, ChevronUp, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -25,6 +25,7 @@ import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 import { hasPlayableClip } from "@/lib/clipVideoUtils";
+import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -47,6 +48,7 @@ interface PerformanceAction {
   clip_end?: number | null;
   zone?: number | null;
   zone_details?: any | null;
+  recorded_stat?: unknown;
 }
 
 interface StrikerStats {
@@ -114,6 +116,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
   const sharedClipPlayer = useSharedClipPlayer();
+  const [showMatchStats, setShowMatchStats] = useState(false);
+  const [showShotMap, setShowShotMap] = useState(false);
 
   const openClip = (action: PerformanceAction) => {
     if (!hasPlayableClip(action)) {
@@ -186,7 +190,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat")
           .eq("analysis_id", id)
           .order("action_number", { ascending: true })
       ]);
@@ -840,39 +844,44 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </div>
               </div>
 
-              {/* Advanced Stats (Match Statistics) */}
+              {/* Advanced Stats (Match Statistics) - Collapsible */}
               {advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
-                  <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 md:p-4">
-                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
-                      {advancedStats.map((stat) => {
-                        const isGoals = stat.key === 'goals';
-                        const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
-                        const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
-                        return (
-                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
-                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
-                          {stat.isPaired ? (
-                            <>
-                              <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
-                              <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
-                            </>
-                          ) : (
-                            <p className="text-sm md:text-lg font-bold">{stat.value}</p>
-                          )}
-                          {stat.per90Value !== undefined && (
-                            <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
-                              {t(reportLanguage, "per_90")}: {stat.per90Value}
-                            </p>
-                          )}
-                        </div>
-                        );
-                      })}
+                  <CardHeader className="py-1.5 md:py-2 cursor-pointer" onClick={() => setShowMatchStats(!showMatchStats)}>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
+                      {showMatchStats ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                     </div>
-                  </CardContent>
+                  </CardHeader>
+                  {showMatchStats && (
+                    <CardContent className="p-2 md:p-4">
+                      <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                        {advancedStats.map((stat) => {
+                          const isGoals = stat.key === 'goals';
+                          const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
+                          const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
+                          return (
+                          <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
+                            <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
+                            {stat.isPaired ? (
+                              <>
+                                <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
+                                <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
+                              </>
+                            ) : (
+                              <p className="text-sm md:text-lg font-bold">{stat.value}</p>
+                            )}
+                            {stat.per90Value !== undefined && (
+                              <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
+                                {t(reportLanguage, "per_90")}: {stat.per90Value}
+                              </p>
+                            )}
+                          </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  )}
                 </Card>
               )}
 
@@ -928,6 +937,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
                     {t(reportLanguage, "period_grade_map")}
                   </Button>
+                  {hasShotMapData(actions) && (
+                    <Button
+                      variant={showShotMap ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => { setShowShotMap(!showShotMap); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); setShowZonePerformance(false); setShowTimelapse(false); setShowChanceCreation(false); }}
+                      className="text-xs"
+                    >
+                      <Crosshair className="h-3.5 w-3.5 mr-1.5" />Shot Map
+                    </Button>
+                  )}
                   {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                     <>
                       <Button
@@ -972,6 +991,53 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     </Button>
                   )}
                 </div>
+              )}
+
+              {/* R90 Flow Chart */}
+              {showR90Flow && analysis.minutes_played && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Action Heatmap */}
+              {showHeatmap && analysis.minutes_played && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Shot Map */}
+              {showShotMap && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} /></CardContent></Card>
+              )}
+
+              {/* Pitch Heatmap */}
+              {showPitchHeatmap && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Zone Performance */}
+              {showZonePerformance && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} language={reportLanguage} onSelectZone={(zone, sub) => {
+                  const zoneActions = filterActionsByZone(actions, zone, sub);
+                  const clips = zoneActions.filter(a => hasPlayableClip(a)).map(a => ({
+                    id: a.id, action_number: a.action_number, action_type: a.action_type,
+                    action_description: a.action_description, video_url: a.video_url!, minute: a.minute,
+                    notes: a.notes, clip_start: a.clip_start, clip_end: a.clip_end,
+                  }));
+                  if (clips.length > 0) {
+                    setZonePlayerTitle(`Zone ${zone}${sub ? `.${sub}` : ''}`);
+                    setZonePlayerClips(clips);
+                    setShowZonePlayer(true);
+                  }
+                }} /></CardContent></Card>
+              )}
+
+              {/* Match Timelapse */}
+              {showTimelapse && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><MatchTimelapse actions={actions} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Chance Creation Flow */}
+              {showChanceCreation && analysis.striker_stats && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} /></CardContent></Card>
               )}
 
               {/* Performance Overview */}
