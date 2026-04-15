@@ -66,8 +66,19 @@ function countCompletions(log: string[] | null, since: Date): number {
   return log.filter(ts => new Date(ts) >= since).length;
 }
 
+interface ScheduleTaskItem {
+  id: string;
+  post_type: string;
+  day_of_week: string;
+  scheduled_time: string | null;
+  owner_id: string | null;
+  status: string | null;
+  platform_format: string | null;
+}
+
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const [tasks, setTasks] = useState<StaffTask[]>([]);
+  const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStaffIndex, setActiveStaffIndex] = useState(0);
