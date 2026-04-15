@@ -75,6 +75,10 @@ interface ScheduleTaskItem {
   status: string | null;
   platform_format: string | null;
   image_url: string | null;
+  linked_draft_id: string | null;
+  draft_title: string | null;
+  draft_image_url: string | null;
+  effective_assigned_to: string[];
 }
 
 type TaskFeedItem =
@@ -122,22 +126,60 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: draftsData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, linked_draft_id'),
+      supabase.from('blog_posts').select('id, title, assigned_to, image_url, image_url_internal'),
     ]);
 
-    const coreProfiles = (profilesData || []).filter(p => CORE_STAFF_IDS.includes(p.id));
-    coreProfiles.sort((a, b) => CORE_STAFF_IDS.indexOf(a.id) - CORE_STAFF_IDS.indexOf(b.id));
+    const draftMap = new Map((draftsData || []).map((draft: any) => [draft.id, draft]));
+
+    const normalisedScheduleItems = ((scheduleData || []) as any[]).map((item) => {
+      const linkedDraft = item.linked_draft_id ? draftMap.get(item.linked_draft_id) : null;
+      const effectiveAssignedTo = Array.from(
+        new Set([item.owner_id, linkedDraft?.assigned_to].filter(Boolean) as string[]),
+      );
+
+      return {
+        ...item,
+        draft_title: linkedDraft?.title || null,
+        draft_image_url: linkedDraft?.image_url_internal || linkedDraft?.image_url || null,
+        effective_assigned_to: effectiveAssignedTo,
+      } as ScheduleTaskItem;
+    });
+
+    const relevantProfileIds = new Set<string>(CORE_STAFF_IDS);
+    (tasksData || []).forEach((task: any) => {
+      (task.assigned_to || []).forEach((id: string) => relevantProfileIds.add(id));
+    });
+    normalisedScheduleItems.forEach((item) => {
+      item.effective_assigned_to.forEach((id) => relevantProfileIds.add(id));
+    });
+
+    const visibleProfiles = (profilesData || []).filter((profile) => relevantProfileIds.has(profile.id));
+    visibleProfiles.sort((a, b) => {
+      const aCoreIndex = CORE_STAFF_IDS.indexOf(a.id);
+      const bCoreIndex = CORE_STAFF_IDS.indexOf(b.id);
+      const aIsCore = aCoreIndex >= 0;
+      const bIsCore = bCoreIndex >= 0;
+
+      if (aIsCore && bIsCore) return aCoreIndex - bCoreIndex;
+      if (aIsCore) return -1;
+      if (bIsCore) return 1;
+
+      const aName = a.full_name || a.email || "";
+      const bName = b.full_name || b.email || "";
+      return aName.localeCompare(bName);
+    });
 
     setTasks((tasksData || []) as StaffTask[]);
-    setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
-    setStaffMembers(coreProfiles);
+    setScheduleItems(normalisedScheduleItems);
+    setStaffMembers(visibleProfiles);
 
     // Auto-select logged-in user
     if (userId) {
-      const idx = coreProfiles.findIndex(p => p.id === userId);
+      const idx = visibleProfiles.findIndex(p => p.id === userId);
       if (idx >= 0) setActiveStaffIndex(idx);
     }
     setLoading(false);
@@ -147,19 +189,20 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const activeMember = staffMembers[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
-  const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
+  const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.effective_assigned_to.includes(activeMember.id)) : [];
   const memberTaskFeed: TaskFeedItem[] = activeMember
     ? [
         ...memberTasks.map((task) => ({ ...task, kind: "task" as const })),
         ...memberScheduleItems.map((item) => ({
           kind: "schedule" as const,
           id: `schedule-${item.id}`,
-          title: item.post_type,
+          title: item.draft_title || item.post_type,
           description: [
+            item.draft_title && item.draft_title !== item.post_type ? `Scheduled as: ${item.post_type}` : null,
             item.platform_format ? `Format: ${item.platform_format}` : null,
             item.status ? `Status: ${item.status}` : null,
           ].filter(Boolean).join(" • ") || null,
-          assigned_to: item.owner_id ? [item.owner_id] : [],
+          assigned_to: item.effective_assigned_to,
           completed: (item.status || "").toLowerCase() === "posted",
           priority: "medium",
           category: "Marketing",
@@ -170,7 +213,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           is_recurring: false,
           recurrence_label: null,
           last_completed_at: null,
-          image_url: item.image_url,
+          image_url: item.image_url || item.draft_image_url,
           completion_log: null,
           scheduleItem: item,
         })),
@@ -476,7 +519,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             const isCurrent = m.id === userId;
             const memberTaskCount =
               tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
-              scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
+              scheduleItems.filter(s => s.effective_assigned_to.includes(m.id) && (s.status || "").toLowerCase() !== "posted").length;
             return (
               <button
                 key={m.id}
