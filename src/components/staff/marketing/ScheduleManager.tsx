@@ -657,7 +657,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
                   <Button size="sm" variant="outline" onClick={() => setShowCustomTypeDialog(true)}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> New Post Type
                   </Button>
-                  <Button size="sm" onClick={() => setShowDialog(true)}>
+                  <Button size="sm" onClick={() => { setEditingItem(null); resetForm(); setShowDialog(true); }}>
                     <Plus className="h-4 w-4 mr-1" /> Add to Schedule
                   </Button>
                 </div>
