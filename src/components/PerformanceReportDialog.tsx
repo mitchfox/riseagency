@@ -844,39 +844,44 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </div>
               </div>
 
-              {/* Advanced Stats (Match Statistics) */}
+              {/* Advanced Stats (Match Statistics) - Collapsible */}
               {advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
-                  <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 md:p-4">
-                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
-                      {advancedStats.map((stat) => {
-                        const isGoals = stat.key === 'goals';
-                        const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
-                        const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
-                        return (
-                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
-                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
-                          {stat.isPaired ? (
-                            <>
-                              <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
-                              <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
-                            </>
-                          ) : (
-                            <p className="text-sm md:text-lg font-bold">{stat.value}</p>
-                          )}
-                          {stat.per90Value !== undefined && (
-                            <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
-                              {t(reportLanguage, "per_90")}: {stat.per90Value}
-                            </p>
-                          )}
-                        </div>
-                        );
-                      })}
+                  <CardHeader className="py-1.5 md:py-2 cursor-pointer" onClick={() => setShowMatchStats(!showMatchStats)}>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
+                      {showMatchStats ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                     </div>
-                  </CardContent>
+                  </CardHeader>
+                  {showMatchStats && (
+                    <CardContent className="p-2 md:p-4">
+                      <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                        {advancedStats.map((stat) => {
+                          const isGoals = stat.key === 'goals';
+                          const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
+                          const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
+                          return (
+                          <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
+                            <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
+                            {stat.isPaired ? (
+                              <>
+                                <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
+                                <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
+                              </>
+                            ) : (
+                              <p className="text-sm md:text-lg font-bold">{stat.value}</p>
+                            )}
+                            {stat.per90Value !== undefined && (
+                              <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
+                                {t(reportLanguage, "per_90")}: {stat.per90Value}
+                              </p>
+                            )}
+                          </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  )}
                 </Card>
               )}
 
