@@ -329,16 +329,22 @@ const PerformanceReport = () => {
     }
   };
 
-  // Format stat key to readable label using config lookup
+  // Format stat key to readable label using config lookup — strip all GK prefixes
   const formatStatLabel = (key: string): string => {
-    let config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === key);
-    if (config) return config.name;
-    const keyLower = key.toLowerCase();
+    // Strip any gk/GK/Gk prefix first
+    let cleanKey = key.replace(/^gk[_\s]*/i, '');
+    let config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === cleanKey);
+    if (config) {
+      // Also strip GK from config name if present
+      return config.name.replace(/^Gk\s+/i, '');
+    }
+    config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key === key);
+    if (config) return config.name.replace(/^Gk\s+/i, '');
+    const keyLower = cleanKey.toLowerCase();
     config = STAT_TYPE_CONFIGS.find((c: StatTypeConfig) => c.key.toLowerCase() === keyLower);
-    if (config) return config.name;
-    // Strip gk_ prefix for goalkeeper stats
-    const displayKey = key.startsWith('gk_') ? key.slice(3) : key;
-    return displayKey.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+    if (config) return config.name.replace(/^Gk\s+/i, '');
+    // Manual title case
+    return cleanKey.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   };
 
   // Get advanced stats from striker_stats, excluding internal fields
