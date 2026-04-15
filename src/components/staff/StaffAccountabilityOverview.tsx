@@ -456,7 +456,49 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             </div>
           )}
 
-          {/* Recurring done */}
+          {/* Schedule items */}
+          {memberScheduleItems.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-[hsl(var(--gold))]" /> Scheduled Content ({memberScheduleItems.length})
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {memberScheduleItems.map(item => (
+                  <div key={item.id} className="group rounded-xl border-2 border-[hsl(var(--gold))]/20 bg-[hsl(var(--gold))]/5 p-4 transition-all">
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm">{item.post_type}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
+                            {item.day_of_week.charAt(0).toUpperCase() + item.day_of_week.slice(1)}
+                          </Badge>
+                          {item.platform_format && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.platform_format}</Badge>
+                          )}
+                          {item.scheduled_time && (
+                            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {item.scheduled_time}
+                            </span>
+                          )}
+                          {item.status && (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.status}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <a
+                        href="/staff?section=schedule"
+                        className="shrink-0 flex items-center gap-1 text-[10px] text-[hsl(var(--gold))] hover:underline"
+                        title="Open in Schedule"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {recurringDone.length > 0 && (
             <div>
               <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
