@@ -74,6 +74,7 @@ interface ScheduleTaskItem {
   owner_id: string | null;
   status: string | null;
   platform_format: string | null;
+  image_url: string | null;
 }
 
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
@@ -101,7 +102,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
     ]);
 
     const coreProfiles = (profilesData || []).filter(p => CORE_STAFF_IDS.includes(p.id));
