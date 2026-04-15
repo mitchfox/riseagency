@@ -101,13 +101,13 @@ const getStatusLabel = (status: string) => {
 
 // ---- Draggable Card ----
 const ScheduleCard = ({
-  item, canManage, owners, draft, onDelete, isDragging, onClickDraft,
+  item, canManage, owners, draft, onEdit, isDragging, onClickDraft,
 }: {
   item: ScheduleItem;
   canManage: boolean;
   owners: Record<string, string>;
   draft?: DraftPost | null;
-  onDelete: (id: string) => void;
+  onEdit: (item: ScheduleItem) => void;
   isDragging?: boolean;
   onClickDraft?: (draft: DraftPost) => void;
 }) => {
@@ -255,9 +255,9 @@ const ScheduleCard = ({
               size="sm"
               variant="ghost"
               className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
             >
-              <Trash2 className="h-3 w-3 text-destructive/70" />
+              <Pencil className="h-3 w-3 text-muted-foreground" />
             </Button>
           )}
         </div>
@@ -294,7 +294,7 @@ const DragOverlayCard = ({ item }: { item: ScheduleItem }) => {
 
 // ---- Droppable Column ----
 const DayColumn = ({
-  dayId, dayLabel, items, canManage, owners, draftsMap, onDelete, onAdd, isOver, onClickDraft,
+  dayId, dayLabel, items, canManage, owners, draftsMap, onEdit, onAdd, isOver, onClickDraft,
 }: {
   dayId: string;
   dayLabel: string;
@@ -302,7 +302,7 @@ const DayColumn = ({
   canManage: boolean;
   owners: Record<string, string>;
   draftsMap: Record<string, DraftPost>;
-  onDelete: (id: string) => void;
+  onEdit: (item: ScheduleItem) => void;
   onAdd: (day: string) => void;
   isOver: boolean;
   onClickDraft?: (draft: DraftPost) => void;
@@ -351,7 +351,7 @@ const DayColumn = ({
               canManage={canManage}
               owners={owners}
               draft={item.linked_draft_id ? draftsMap[item.linked_draft_id] : null}
-              onDelete={onDelete}
+              onEdit={onEdit}
               onClickDraft={onClickDraft}
             />
           ))
