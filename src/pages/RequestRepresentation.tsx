@@ -185,9 +185,8 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.08, duration: 0.42 }}
                 className="mx-auto w-full max-w-sm"
               >
-                <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-primary">Request Representation</p>
                 <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl">RISE WITH US</h1>
-                <p className="mt-4 max-w-[32ch] text-sm leading-relaxed text-foreground/84">
+                <p className="mt-4 text-sm leading-relaxed text-foreground/84">
                   Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                 </p>
               </motion.div>
@@ -236,7 +235,7 @@ const RequestRepresentation = () => {
 
               <MarbleIconPanel icon={CARD_META.find((card) => card.key === activeCard)!.icon} title={cardContent[activeCard].title} />
 
-              <h2 className="mt-1.5 font-bebas text-3xl uppercase leading-none tracking-[0.14em]">{cardContent[activeCard].title}</h2>
+              <h2 className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.14em]">{cardContent[activeCard].title}</h2>
 
               <div className="mt-5 space-y-2.5">
                 {cardContent[activeCard].points.map((point, index) => (
@@ -333,7 +332,6 @@ const RequestRepresentation = () => {
                           <Icon className="h-4.5 w-4.5 text-primary" />
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-primary/80">{card.eyebrow}</p>
                           <p className="mt-1 font-bebas text-lg uppercase leading-none tracking-[0.1em]">{card.title}</p>
                         </div>
                       </div>

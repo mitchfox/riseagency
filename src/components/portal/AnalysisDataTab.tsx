@@ -213,13 +213,14 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
     const numVal = editValue === "" ? null : parseFloat(editValue);
     
-    // Update fixture_stats
+    const updatedStrikerStats = { ...(analysis.striker_stats || {}), [metricKey]: numVal };
     const updatedFixtureStats = { ...(analysis.fixture_stats || {}), [metricKey]: numVal };
+    if (numVal === null) delete updatedStrikerStats[metricKey];
     if (numVal === null) delete updatedFixtureStats[metricKey];
 
     const { error } = await supabase
       .from("player_analysis")
-      .update({ fixture_stats: updatedFixtureStats })
+      .update({ fixture_stats: updatedFixtureStats, striker_stats: updatedStrikerStats })
       .eq("id", analysisId);
 
     if (error) {
@@ -227,6 +228,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     } else {
       // Update local state
       analysis.fixture_stats = updatedFixtureStats;
+      analysis.striker_stats = updatedStrikerStats;
       toast.success("Saved");
     }
     setEditingCell(null);
