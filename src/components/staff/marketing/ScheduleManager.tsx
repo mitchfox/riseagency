@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Loader2, Clock3, User, Link2, GripVertical, Image as ImageIcon, Upload } from "lucide-react";
+import { Plus, Trash2, Loader2, Clock3, User, Link2, GripVertical, Image as ImageIcon, Upload, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -372,6 +372,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [showCustomTypeDialog, setShowCustomTypeDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeItem, setActiveItem] = useState<ScheduleItem | null>(null);
   const [overDay, setOverDay] = useState<string | null>(null);
@@ -673,7 +674,21 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
                     canManage={canManage}
                     owners={owners}
                     draftsMap={draftsMap}
-                    onDelete={handleDelete}
+                    onEdit={(item) => {
+                      setEditingItem(item);
+                      setForm({
+                        post_type: item.post_type,
+                        day_of_week: item.day_of_week,
+                        scheduled_time: item.scheduled_time || '',
+                        platform_format: item.platform_format || 'post',
+                        owner_id: item.owner_id || '',
+                        status: item.status || 'planned',
+                        linked_draft_id: item.linked_draft_id || '',
+                        notes: item.notes || '',
+                        image_url: item.image_url || '',
+                      });
+                      setShowDialog(true);
+                    }}
                     onAdd={openAddForDay}
                     isOver={overDay === day.id}
                     onClickDraft={handleClickDraft}
