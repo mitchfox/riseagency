@@ -32,7 +32,6 @@ const DETAIL_CONTENT: Record<CardKey, {
   development: {
     title: "Career Development",
     eyebrow: "A clearer path forward",
-    image: omotoyeJourney,
     image: tyreseOmotoye,
     points: [
       "Development plans built around your actual performances",
@@ -313,7 +312,6 @@ const RequestRepresentation = () => {
                       type="button"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.04 * index, duration: 0.3 }}
                        whileHover={{ scale: 1.03, rotateX: [0, 8, -6, 0], rotateY: index % 2 === 0 ? [0, -10, 8, 0] : [0, 10, -8, 0], y: [0, -6, 0] }}
                        whileTap={{ scale: 0.96, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }}
                        transition={{ delay: 0.04 * index, duration: 0.45 }}

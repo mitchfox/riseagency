@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Loader2, Clock3, User, Link2, GripVertical, Image as ImageIcon, Upload } from "lucide-react";
+import { Plus, Trash2, Loader2, Clock3, User, Link2, GripVertical, Image as ImageIcon, Upload, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -101,13 +101,13 @@ const getStatusLabel = (status: string) => {
 
 // ---- Draggable Card ----
 const ScheduleCard = ({
-  item, canManage, owners, draft, onDelete, isDragging, onClickDraft,
+  item, canManage, owners, draft, onEdit, isDragging, onClickDraft,
 }: {
   item: ScheduleItem;
   canManage: boolean;
   owners: Record<string, string>;
   draft?: DraftPost | null;
-  onDelete: (id: string) => void;
+  onEdit: (item: ScheduleItem) => void;
   isDragging?: boolean;
   onClickDraft?: (draft: DraftPost) => void;
 }) => {
@@ -255,9 +255,9 @@ const ScheduleCard = ({
               size="sm"
               variant="ghost"
               className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
             >
-              <Trash2 className="h-3 w-3 text-destructive/70" />
+              <Pencil className="h-3 w-3 text-muted-foreground" />
             </Button>
           )}
         </div>
@@ -294,7 +294,7 @@ const DragOverlayCard = ({ item }: { item: ScheduleItem }) => {
 
 // ---- Droppable Column ----
 const DayColumn = ({
-  dayId, dayLabel, items, canManage, owners, draftsMap, onDelete, onAdd, isOver, onClickDraft,
+  dayId, dayLabel, items, canManage, owners, draftsMap, onEdit, onAdd, isOver, onClickDraft,
 }: {
   dayId: string;
   dayLabel: string;
@@ -302,7 +302,7 @@ const DayColumn = ({
   canManage: boolean;
   owners: Record<string, string>;
   draftsMap: Record<string, DraftPost>;
-  onDelete: (id: string) => void;
+  onEdit: (item: ScheduleItem) => void;
   onAdd: (day: string) => void;
   isOver: boolean;
   onClickDraft?: (draft: DraftPost) => void;
@@ -351,7 +351,7 @@ const DayColumn = ({
               canManage={canManage}
               owners={owners}
               draft={item.linked_draft_id ? draftsMap[item.linked_draft_id] : null}
-              onDelete={onDelete}
+              onEdit={onEdit}
               onClickDraft={onClickDraft}
             />
           ))
@@ -372,6 +372,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [showCustomTypeDialog, setShowCustomTypeDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeItem, setActiveItem] = useState<ScheduleItem | null>(null);
   const [overDay, setOverDay] = useState<string | null>(null);
@@ -519,27 +520,33 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     if (!canManage || !form.post_type) return;
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('marketing_schedule_items')
-        .insert({
-          post_type: form.post_type,
-          day_of_week: form.day_of_week,
-          scheduled_time: form.scheduled_time || null,
-          platform_format: form.platform_format,
-          owner_id: form.owner_id || null,
-          status: form.status,
-          linked_draft_id: form.linked_draft_id || null,
-          notes: form.notes || null,
-          image_url: form.image_url || null,
-        });
-      if (error) throw error;
-      toast.success('Added to schedule');
+      const payload = {
+        post_type: form.post_type,
+        day_of_week: form.day_of_week,
+        scheduled_time: form.scheduled_time || null,
+        platform_format: form.platform_format,
+        owner_id: form.owner_id || null,
+        status: form.status,
+        linked_draft_id: form.linked_draft_id || null,
+        notes: form.notes || null,
+        image_url: form.image_url || null,
+      };
+      if (editingItem) {
+        const { error } = await supabase.from('marketing_schedule_items').update(payload).eq('id', editingItem.id);
+        if (error) throw error;
+        toast.success('Updated');
+      } else {
+        const { error } = await supabase.from('marketing_schedule_items').insert(payload);
+        if (error) throw error;
+        toast.success('Added to schedule');
+      }
       setShowDialog(false);
+      setEditingItem(null);
       resetForm();
       fetchItems();
     } catch (err) {
       console.error('Error:', err);
-      toast.error('Failed to add item');
+      toast.error(editingItem ? 'Failed to update' : 'Failed to add item');
     } finally {
       setSaving(false);
     }
@@ -562,6 +569,8 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
   };
 
   const openAddForDay = (day: string) => {
+    setEditingItem(null);
+    resetForm();
     setForm(prev => ({ ...prev, day_of_week: day }));
     setShowDialog(true);
   };
@@ -648,7 +657,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
                   <Button size="sm" variant="outline" onClick={() => setShowCustomTypeDialog(true)}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> New Post Type
                   </Button>
-                  <Button size="sm" onClick={() => setShowDialog(true)}>
+                  <Button size="sm" onClick={() => { setEditingItem(null); resetForm(); setShowDialog(true); }}>
                     <Plus className="h-4 w-4 mr-1" /> Add to Schedule
                   </Button>
                 </div>
@@ -673,7 +682,21 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
                     canManage={canManage}
                     owners={owners}
                     draftsMap={draftsMap}
-                    onDelete={handleDelete}
+                    onEdit={(item) => {
+                      setEditingItem(item);
+                      setForm({
+                        post_type: item.post_type,
+                        day_of_week: item.day_of_week,
+                        scheduled_time: item.scheduled_time || '',
+                        platform_format: item.platform_format || 'post',
+                        owner_id: item.owner_id || '',
+                        status: item.status || 'planned',
+                        linked_draft_id: item.linked_draft_id || '',
+                        notes: item.notes || '',
+                        image_url: item.image_url || '',
+                      });
+                      setShowDialog(true);
+                    }}
                     onAdd={openAddForDay}
                     isOver={overDay === day.id}
                     onClickDraft={handleClickDraft}
@@ -698,12 +721,12 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
         </Card>
       </div>
 
-      {/* Add to Schedule Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      {/* Add/Edit Schedule Dialog */}
+      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) { setEditingItem(null); resetForm(); } }}>
         <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add to Schedule</DialogTitle>
-            <DialogDescription>Choose a content type and assign it to a day</DialogDescription>
+            <DialogTitle>{editingItem ? 'Edit Schedule Item' : 'Add to Schedule'}</DialogTitle>
+            <DialogDescription>{editingItem ? 'Update the details for this scheduled item' : 'Choose a content type and assign it to a day'}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Image upload */}
@@ -827,11 +850,34 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving || !form.post_type}>
-                {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Adding...</> : 'Add to Schedule'}
-              </Button>
+            <div className="flex items-center justify-between pt-2">
+              {editingItem ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    if (!confirm('Remove this from the schedule?')) return;
+                    try {
+                      const { error } = await supabase.from('marketing_schedule_items').delete().eq('id', editingItem.id);
+                      if (error) throw error;
+                      toast.success('Removed');
+                      setShowDialog(false);
+                      setEditingItem(null);
+                      resetForm();
+                      fetchItems();
+                    } catch { toast.error('Failed to remove'); }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                </Button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
+                <Button type="submit" disabled={saving || !form.post_type}>
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving...</> : editingItem ? 'Save Changes' : 'Add to Schedule'}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
