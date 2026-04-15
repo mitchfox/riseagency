@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check } from "lucide-react";
+import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check, ExternalLink } from "lucide-react";
 import { format, isPast, isToday, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { createPortal } from "react-dom";
 
