@@ -74,6 +74,7 @@ interface ScheduleTaskItem {
   owner_id: string | null;
   status: string | null;
   platform_format: string | null;
+  image_url: string | null;
 }
 
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
@@ -101,7 +102,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
     ]);
 
     const coreProfiles = (profilesData || []).filter(p => CORE_STAFF_IDS.includes(p.id));
@@ -464,34 +465,41 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {memberScheduleItems.map(item => (
-                  <div key={item.id} className="group rounded-xl border-2 border-[hsl(var(--gold))]/20 bg-[hsl(var(--gold))]/5 p-4 transition-all">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-sm">{item.post_type}</p>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
-                            {item.day_of_week.charAt(0).toUpperCase() + item.day_of_week.slice(1)}
-                          </Badge>
-                          {item.platform_format && (
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.platform_format}</Badge>
-                          )}
-                          {item.scheduled_time && (
-                            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                              <Clock className="h-2.5 w-2.5" /> {item.scheduled_time}
-                            </span>
-                          )}
-                          {item.status && (
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.status}</Badge>
-                          )}
-                        </div>
+                  <div key={item.id} className="group rounded-xl border-2 border-[hsl(var(--gold))]/20 bg-[hsl(var(--gold))]/5 overflow-hidden transition-all">
+                    {item.image_url && (
+                      <div className="h-28 overflow-hidden">
+                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
                       </div>
-                      <a
-                        href="/staff?section=schedule"
-                        className="shrink-0 flex items-center gap-1 text-[10px] text-[hsl(var(--gold))] hover:underline"
-                        title="Open in Schedule"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                    )}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm">{item.post_type}</p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
+                              {item.day_of_week.charAt(0).toUpperCase() + item.day_of_week.slice(1)}
+                            </Badge>
+                            {item.platform_format && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.platform_format}</Badge>
+                            )}
+                            {item.scheduled_time && (
+                              <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" /> {item.scheduled_time}
+                              </span>
+                            )}
+                            {item.status && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.status}</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <a
+                          href="/staff?section=schedule"
+                          className="shrink-0 flex items-center gap-1 text-[10px] text-[hsl(var(--gold))] hover:underline"
+                          title="Open in Schedule"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -580,8 +588,59 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                 <Input type="date" value={newDeadline} onChange={e => setNewDeadline(e.target.value)} />
               </div>
               <div>
-                <Label>Image URL</Label>
-                <Input value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} placeholder="https://..." />
+                <Label>Image</Label>
+                {newImageUrl ? (
+                  <div className="relative w-full h-28 rounded-lg overflow-hidden border border-border">
+                    <img src={newImageUrl} alt="" className="w-full h-full object-cover" />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-1 right-1 h-6 text-[10px]"
+                      onClick={() => setNewImageUrl('')}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-16 border-dashed flex flex-col gap-1"
+                      onClick={() => document.getElementById('task-image-upload')?.click()}
+                    >
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Upload image</span>
+                    </Button>
+                    <input
+                      id="task-image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const ext = file.name.split('.').pop();
+                          const fileName = `tasks/${Date.now()}.${ext}`;
+                          const { error: uploadError } = await supabase.storage
+                            .from('marketing-gallery')
+                            .upload(fileName, file, { cacheControl: '31536000', upsert: false });
+                          if (uploadError) throw uploadError;
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('marketing-gallery')
+                            .getPublicUrl(fileName);
+                          setNewImageUrl(publicUrl);
+                          toast.success('Image uploaded');
+                        } catch (err) {
+                          console.error(err);
+                          toast.error('Failed to upload image');
+                        }
+                      }}
+                    />
+                  </>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 mt-5">

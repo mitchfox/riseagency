@@ -770,21 +770,144 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   </div>
                 </div>
                 
-                {/* Clipped Actions Button */}
+                {/* Video Options Row - directly below player info */}
                 {reportClips.length > 0 && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="bg-risegold hover:bg-risegold/90 text-black font-semibold flex items-center gap-2"
-                    onClick={() => openClipCollection(setShowClippedActions)}
-                  >
-                    <Play className="h-4 w-4" />
-                    {reportClips.length} {t(reportLanguage, "clips_label")}
-                  </Button>
+                  <div className="grid grid-cols-3 gap-2">
+                    {reportClips.some(a => a.notes) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 text-xs font-semibold"
+                        onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
+                      >
+                        <MessageSquareText className="h-3.5 w-3.5 mr-1" />
+                        {t(reportLanguage, "noted_actions")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-10 text-xs font-semibold bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))]/90 text-black"
+                      onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
+                    >
+                      <Film className="h-3.5 w-3.5 mr-1" />
+                      {t(reportLanguage, "full_match_video")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 text-xs font-semibold"
+                      onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
+                    >
+                      <Award className="h-3.5 w-3.5 mr-1" />
+                      {t(reportLanguage, "ranked_actions")}
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              {/* Graphics Buttons Row */}
+              {/* Key Stats */}
+              <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
+                  <p className="text-base md:text-2xl font-bold">
+                    {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
+                  </p>
+                </div>
+                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4 relative">
+                  <div className="flex items-center justify-center gap-1 mb-0.5 md:mb-1">
+                    <p className="text-[10px] md:text-sm opacity-90">R90</p>
+                    <button
+                      onClick={() => setShowR90Info(true)}
+                      className="opacity-50 hover:opacity-100 transition-opacity"
+                      title="How is R90 calculated?"
+                    >
+                      <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-lg md:text-3xl font-bold">
+                    {analysis.r90_score !== null 
+                      ? analysis.r90_score.toFixed(2)
+                      : analysis.minutes_played && actions.length > 0
+                        ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
+                        : "N/A"
+                    }
+                  </p>
+                </div>
+                <div className="text-center p-2">
+                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
+                  <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
+                </div>
+              </div>
+
+              {/* Advanced Stats (Match Statistics) */}
+              {advancedStats.length > 0 && (
+                <Card className="overflow-hidden">
+                  <CardHeader className="py-1.5 md:py-2">
+                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 md:p-4">
+                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                      {advancedStats.map((stat) => {
+                        const isGoals = stat.key === 'goals';
+                        const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
+                        const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
+                        return (
+                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
+                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
+                          {stat.isPaired ? (
+                            <>
+                              <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
+                              <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
+                            </>
+                          ) : (
+                            <p className="text-sm md:text-lg font-bold">{stat.value}</p>
+                          )}
+                          {stat.per90Value !== undefined && (
+                            <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
+                              {t(reportLanguage, "per_90")}: {stat.per90Value}
+                            </p>
+                          )}
+                        </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Auto-Calculated Ratios */}
+              {calculatedStats.length > 0 && (
+                <Card className="overflow-hidden border-primary/20">
+                  <CardHeader className="py-1.5 md:py-2 bg-primary/5">
+                    <CardTitle className="text-sm md:text-lg flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span className="text-primary">{t(reportLanguage, "calculated_ratios")}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 md:p-4">
+                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
+                      {calculatedStats.map((stat) => (
+                        <div key={stat.key} className="text-center p-1.5 md:p-3 bg-primary/5 rounded border border-primary/10">
+                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate" title={stat.description}>
+                            {stat.displayName}
+                          </p>
+                          <p className="text-sm md:text-lg font-bold text-primary">
+                            {stat.key.includes('pct') || stat.key.includes('completion') || stat.key.includes('success')
+                              ? `${stat.value.toFixed(1)}%`
+                              : stat.value.toFixed(2)}
+                          </p>
+                          <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
+                            {stat.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Graphics Buttons Row - between match stats and actions */}
               {actions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -848,195 +971,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       {t(reportLanguage, "chance_creation_flow")}
                     </Button>
                   )}
-                  {reportClips.length > 0 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
-                        className="text-xs"
-                      >
-                        <Film className="h-3.5 w-3.5 mr-1.5" />
-                        {t(reportLanguage, "full_match_video")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
-                        className="text-xs"
-                      >
-                        <Award className="h-3.5 w-3.5 mr-1.5" />
-                        {t(reportLanguage, "ranked_actions")}
-                      </Button>
-                      {reportClips.some(a => a.notes) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
-                          className="text-xs"
-                        >
-                          <MessageSquareText className="h-3.5 w-3.5 mr-1.5" />
-                          {t(reportLanguage, "noted_actions")}
-                        </Button>
-                      )}
-                    </>
-                  )}
                 </div>
-              )}
-
-              {/* R90 Flow Chart */}
-              {showR90Flow && analysis.minutes_played && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Action Heatmap */}
-              {showHeatmap && analysis.minutes_played && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} />
-                  </CardContent>
-              </Card>
-              )}
-
-              {/* Pitch Heatmap */}
-              {showPitchHeatmap && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <PitchHeatmap actions={actions} language={reportLanguage} />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Zone Performance */}
-              {showZonePerformance && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <ZonePerformance actions={actions} language={reportLanguage} onSelectZone={handleOpenZoneClips} />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Match Timelapse */}
-              {showTimelapse && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <MatchTimelapse actions={actions} language={reportLanguage} />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Chance Creation Flow */}
-              {showChanceCreation && analysis.striker_stats && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-3 md:p-6">
-                    <ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} />
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Key Stats */}
-              <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
-                <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
-                  <p className="text-base md:text-2xl font-bold">
-                    {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
-                  </p>
-                </div>
-                <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4 relative">
-                  <div className="flex items-center justify-center gap-1 mb-0.5 md:mb-1">
-                    <p className="text-[10px] md:text-sm opacity-90">R90</p>
-                    <button
-                      onClick={() => setShowR90Info(true)}
-                      className="opacity-50 hover:opacity-100 transition-opacity"
-                      title="How is R90 calculated?"
-                    >
-                      <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-lg md:text-3xl font-bold">
-                    {analysis.r90_score !== null 
-                      ? analysis.r90_score.toFixed(2)
-                      : analysis.minutes_played && actions.length > 0
-                        ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
-                        : "N/A"
-                    }
-                  </p>
-                </div>
-                <div className="text-center p-2">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "mins_short")}</p>
-                  <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
-                </div>
-              </div>
-
-              {/* Advanced Stats */}
-              {advancedStats.length > 0 && (
-                <Card className="overflow-hidden">
-                  <CardHeader className="py-1.5 md:py-2">
-                    <CardTitle className="text-sm md:text-lg">{t(reportLanguage, "match_statistics")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 md:p-4">
-                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
-                      {advancedStats.map((stat) => {
-                        const isGoals = stat.key === 'goals';
-                        const goalsValue = isGoals ? (stat.isPaired ? stat.successful : stat.value) : 0;
-                        const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
-                        return (
-                        <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
-                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
-                          {stat.isPaired ? (
-                            <>
-                              <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
-                              <p className="text-[9px] md:text-xs text-muted-foreground">{stat.successful}/{stat.attempted}</p>
-                            </>
-                          ) : (
-                            <p className="text-sm md:text-lg font-bold">{stat.value}</p>
-                          )}
-                          {stat.per90Value !== undefined && (
-                            <p className="text-[8px] md:text-xs text-muted-foreground mt-0.5">
-                              {t(reportLanguage, "per_90")}: {stat.per90Value}
-                            </p>
-                          )}
-                        </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Auto-Calculated Ratios */}
-              {calculatedStats.length > 0 && (
-                <Card className="overflow-hidden border-primary/20">
-                  <CardHeader className="py-1.5 md:py-2 bg-primary/5">
-                    <CardTitle className="text-sm md:text-lg flex items-center gap-2">
-                      <Calculator className="h-4 w-4 text-primary" />
-                      <span className="text-primary">{t(reportLanguage, "calculated_ratios")}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 md:p-4">
-                    <div className="grid grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
-                      {calculatedStats.map((stat) => (
-                        <div key={stat.key} className="text-center p-1.5 md:p-3 bg-primary/5 rounded border border-primary/10">
-                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate" title={stat.description}>
-                            {stat.displayName}
-                          </p>
-                          <p className="text-sm md:text-lg font-bold text-primary">
-                            {stat.key.includes('pct') || stat.key.includes('completion') || stat.key.includes('success')
-                              ? `${stat.value.toFixed(1)}%`
-                              : stat.value.toFixed(2)}
-                          </p>
-                          <p className="text-[8px] md:text-[10px] text-muted-foreground mt-0.5">
-                            {stat.description}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
               )}
 
               {/* Performance Overview */}

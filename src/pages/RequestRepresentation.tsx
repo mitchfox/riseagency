@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, MessageCircle, ChevronLeft, Video, TrendingUp, Users, Dumbbell, Shield, BarChart3 } from "lucide-react";
+import { ArrowRight, MessageCircle, ChevronLeft, Video, TrendingUp, Users, Shield, BarChart3, FileText, Handshake, Target, Search } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,15 @@ import requestRepresentationHero from "@/assets/request-representation-hero-uplo
 import omotoyeCelebrating from "@/assets/omotoye-celebrating.png";
 import omotoyeJourney from "@/assets/omotoye-journey.jpg";
 import tyreseOmotoye from "@/assets/tyrese-omotoye.png";
+import riseAnalysis from "@/assets/rise-analysis.jpg";
+import riseDevelopment from "@/assets/rise-development.jpg";
+import clubNetwork from "@/assets/club-network.jpg";
+import workingTogether from "@/assets/working-together.jpg";
+import riseTunnel from "@/assets/rise-tunnel.jpg";
+import clubStrategy from "@/assets/club-strategy.jpg";
 
 type AgeGroup = null | "under18" | "18plus";
-type CardKey = "analysis" | "development" | "network" | "coaching" | "marketing" | "process";
+type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting";
 
 const DETAIL_CONTENT: Record<CardKey, {
   title: string;
@@ -18,32 +24,22 @@ const DETAIL_CONTENT: Record<CardKey, {
   image?: string;
   points: string[];
 }> = {
-  analysis: {
-    title: "Performance Analysis",
-    eyebrow: "See what clubs actually need to see",
-    image: omotoyeCelebrating,
+  performance: {
+    title: "Performance",
+    eyebrow: "Analysis, coaching and development combined",
+    image: riseAnalysis,
     points: [
-      "Full match analysis with clips attached to actions",
+      "Full match analysis with clips attached to every action",
       "R90 scoring built to show real impact on the game",
-      "Reports that are clean, visual and easy to share",
-      "A process that shows more than a standard highlight reel",
-    ],
-  },
-  development: {
-    title: "Career Development",
-    eyebrow: "A clearer path forward",
-    image: tyreseOmotoye,
-    points: [
-      "Development plans built around your actual performances",
-      "Coaching support shaped by what the footage shows",
-      "Clear targets instead of vague feedback",
-      "Regular reviews so your next steps stay obvious",
+      "Position-specific coaching shaped by what the footage shows",
+      "Development plans built around actual performance data",
+      "Clear targets and regular reviews so progress stays visible",
     ],
   },
   network: {
     title: "Club Network",
     eyebrow: "Connections backed by proper evidence",
-    image: omotoyeCelebrating,
+    image: clubNetwork,
     points: [
       "We present players with context, not noise",
       "Reports and clips help make introductions stronger",
@@ -51,21 +47,10 @@ const DETAIL_CONTENT: Record<CardKey, {
       "Everything is built to show your level properly",
     ],
   },
-  coaching: {
-    title: "Coaching & Fitness",
-    eyebrow: "Support beyond a single report",
-    image: omotoyeJourney,
-    points: [
-      "Position-specific work based on what your game needs",
-      "Training ideas that connect to match performance",
-      "Physical support with development in mind",
-      "A more joined up process around your football",
-    ],
-  },
-  marketing: {
+  brand: {
     title: "Marketing & Brand",
     eyebrow: "Your profile should look as strong as your football",
-    image: tyreseOmotoye,
+    image: riseDevelopment,
     points: [
       "Sharper presentation for players who want to stand out",
       "Better visual content for sharing your level",
@@ -73,38 +58,66 @@ const DETAIL_CONTENT: Record<CardKey, {
       "A more professional feel when your profile is viewed",
     ],
   },
-  process: {
-    title: "How It Starts",
-    eyebrow: "Simple and direct",
+  fees: {
+    title: "Fees",
+    eyebrow: "Transparent and straightforward",
+    image: workingTogether,
+    points: [
+      "Under 18s are not charged any commission",
+      "For players 18 and over, industry standard commission applies",
+      "No hidden costs or upfront payments",
+      "Everything is discussed and agreed before any work begins",
+    ],
+  },
+  agreement: {
+    title: "Representation Agreement",
+    eyebrow: "Clear terms from the start",
+    image: riseTunnel,
+    points: [
+      "A formal agreement outlines what we provide and what is expected",
+      "Duration, scope and responsibilities are all clearly defined",
+      "Parental or guardian involvement for under 18s is standard",
+      "You can ask questions about any part of the agreement before signing",
+    ],
+  },
+  expectations: {
+    title: "Expectations",
+    eyebrow: "What we ask from you",
+    image: tyreseOmotoye,
+    points: [
+      "Commitment to your own development on and off the pitch",
+      "Regular communication so we can work effectively together",
+      "Professionalism in training, matches and interactions",
+      "Openness to feedback and willingness to improve",
+    ],
+  },
+  scouting: {
+    title: "Scouting Process",
+    eyebrow: "How we assess players",
+    image: clubStrategy,
     points: [
       "You send your details and recent footage",
-      "We assess whether there is a fit",
-      "If there is, we take a deeper look at your game",
-      "Then we discuss the right next step with you",
+      "We assess whether there is a fit based on your level and position",
+      "If there is potential, we take a deeper look at your game",
+      "Then we discuss the right next step with you directly",
     ],
   },
 };
 
 const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Video; image?: string }> = [
-  { key: "analysis", title: "Analysis", icon: Video, image: omotoyeCelebrating },
-  { key: "development", title: "Development", icon: TrendingUp, image: omotoyeJourney },
-  { key: "network", title: "Club Network", icon: Users, image: tyreseOmotoye },
-  { key: "coaching", title: "Coaching", icon: Dumbbell, image: omotoyeCelebrating },
-  { key: "marketing", title: "Brand", icon: Shield, image: omotoyeJourney },
-  { key: "process", title: "How It Starts", icon: BarChart3, image: tyreseOmotoye },
+  { key: "performance", title: "Performance", icon: Video, image: riseAnalysis },
+  { key: "network", title: "Club Network", icon: Users, image: clubNetwork },
+  { key: "brand", title: "Brand", icon: Shield, image: riseDevelopment },
+  { key: "fees", title: "Fees", icon: BarChart3, image: workingTogether },
+  { key: "agreement", title: "Agreement", icon: FileText, image: riseTunnel },
+  { key: "expectations", title: "Expectations", icon: Target, image: tyreseOmotoye },
+  { key: "scouting", title: "Scouting", icon: Search, image: clubStrategy },
 ];
 
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [showForm, setShowForm] = useState(false);
-
-  const commissionText = useMemo(() => {
-    if (ageGroup === "under18") {
-      return "For under 18s the focus is on guidance, progression and showing your football properly. No commission is charged.";
-    }
-    return "For players 18 and over we focus on presenting your level properly and creating the right opportunities. Industry standard commission applies.";
-  }, [ageGroup]);
 
   const openWhatsApp = () => {
     window.open("https://wa.me/447340184399?text=Hi%2C%20I%27d%20like%20to%20request%20representation.", "_blank");
@@ -128,8 +141,8 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.4 }}
             className="relative min-h-[100dvh]"
           >
-             <img
-               src={requestRepresentationHero}
+            <img
+              src={requestRepresentationHero}
               alt="Player walking towards the pitch"
               className="absolute inset-0 h-full w-full object-cover"
               width={1200}
@@ -143,15 +156,12 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.15, duration: 0.5 }}
                 className="mx-auto w-full max-w-sm"
               >
-                 <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-primary">
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                   Request Representation
                 </p>
                 <h1 className="font-bebas text-5xl uppercase leading-none tracking-wider sm:text-6xl">
-                   REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
+                  REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
                 </h1>
-                 <p className="mt-3 max-w-xs text-sm leading-relaxed text-foreground/80">
-                   Show your level properly with a sharper route into analysis, development, exposure and genuine football opportunities.
-                </p>
               </motion.div>
 
               <motion.div
@@ -162,7 +172,7 @@ const RequestRepresentation = () => {
               >
                 <Button
                   size="lg"
-                   className="h-14 rounded-2xl bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider hover:bg-primary/90"
+                  className="h-14 rounded-2xl bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setAgeGroup("under18")}
                 >
                   Under 18
@@ -170,7 +180,7 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                   className="h-14 rounded-2xl border-border bg-background/70 font-bebas text-lg uppercase tracking-wider text-foreground backdrop-blur-md hover:bg-primary hover:text-primary-foreground"
+                  className="h-14 rounded-2xl border-border bg-background/70 font-bebas text-lg uppercase tracking-wider text-foreground backdrop-blur-md hover:bg-primary hover:text-primary-foreground"
                   onClick={() => setAgeGroup("18plus")}
                 >
                   18 and Over
@@ -214,7 +224,7 @@ const RequestRepresentation = () => {
                 </motion.div>
               )}
 
-               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
                 {DETAIL_CONTENT[activeCard].eyebrow}
               </p>
               <h2 className="mt-1.5 font-bebas text-3xl uppercase leading-none tracking-wider">
@@ -238,10 +248,10 @@ const RequestRepresentation = () => {
               <div className="mt-auto grid gap-2.5 pt-6 pb-2">
                 <Button
                   size="lg"
-                   className="h-13 rounded-2xl bg-primary text-primary-foreground font-bebas text-base uppercase tracking-wider hover:bg-primary/90"
+                  className="h-13 rounded-2xl bg-primary text-primary-foreground font-bebas text-base uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setShowForm(true)}
                 >
-                   Start the Conversation <ArrowRight className="ml-2 h-4 w-4" />
+                  Start the Conversation <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
                   size="lg"
@@ -267,30 +277,25 @@ const RequestRepresentation = () => {
           >
             <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col">
               {/* Hero banner */}
-               <div className="relative mb-4 overflow-hidden rounded-2xl">
-                 <img src={requestRepresentationHero} alt="" className="h-40 w-full object-cover" width={1200} height={800} />
+              <div className="relative mb-4 overflow-hidden rounded-2xl">
+                <img src={requestRepresentationHero} alt="" className="h-40 w-full object-cover" width={1200} height={800} />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                   <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">
                     {ageGroup === "under18" ? "Under 18" : "18+"}
                   </p>
-                   <h1 className="font-bebas text-3xl uppercase leading-none tracking-wider">Realise Potential</h1>
+                  <h1 className="font-bebas text-3xl uppercase leading-none tracking-wider">Realise Potential</h1>
                 </div>
-              </div>
-
-              {/* Commission info */}
-               <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
-                <p className="text-sm leading-relaxed text-foreground/80">{commissionText}</p>
               </div>
 
               {/* CTA row */}
               <div className="mb-4 grid grid-cols-2 gap-2.5">
                 <Button
                   size="lg"
-                   className="h-12 rounded-xl bg-primary text-primary-foreground font-bebas text-sm uppercase tracking-wider hover:bg-primary/90"
+                  className="h-12 rounded-xl bg-primary text-primary-foreground font-bebas text-sm uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setShowForm(true)}
                 >
-                   Start Here
+                  Start Here
                 </Button>
                 <Button
                   size="lg"
@@ -312,9 +317,9 @@ const RequestRepresentation = () => {
                       type="button"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                       whileHover={{ scale: 1.03, rotateX: [0, 8, -6, 0], rotateY: index % 2 === 0 ? [0, -10, 8, 0] : [0, 10, -8, 0], y: [0, -6, 0] }}
-                       whileTap={{ scale: 0.96, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }}
-                       transition={{ delay: 0.04 * index, duration: 0.45 }}
+                      whileHover={{ scale: 1.03, rotateX: [0, 8, -6, 0], rotateY: index % 2 === 0 ? [0, -10, 8, 0] : [0, 10, -8, 0], y: [0, -6, 0] }}
+                      whileTap={{ scale: 0.96, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }}
+                      transition={{ delay: 0.04 * index, duration: 0.45 }}
                       onClick={() => setActiveCard(card.key)}
                       className="group relative min-h-[120px] overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all"
                       style={{ transformStyle: "preserve-3d" }}
@@ -333,12 +338,11 @@ const RequestRepresentation = () => {
                       )}
                       <div className={`absolute inset-0 ${card.image ? "bg-gradient-to-t from-card via-card/70 to-transparent" : "bg-gradient-to-br from-card to-background"}`} />
                       <div className="relative flex h-full flex-col justify-between p-3.5">
-                         <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/40 bg-background/60 backdrop-blur-sm">
-                           <Icon className="h-3.5 w-3.5 text-primary" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/40 bg-background/60 backdrop-blur-sm">
+                          <Icon className="h-3.5 w-3.5 text-primary" />
                         </div>
                         <div>
                           <p className="font-bebas text-base uppercase leading-none tracking-wide">{card.title}</p>
-                          <p className="mt-0.5 text-[10px] text-muted-foreground">Tap to explore</p>
                         </div>
                       </div>
                     </motion.button>
@@ -354,7 +358,7 @@ const RequestRepresentation = () => {
                   className="h-12 w-full rounded-xl font-bebas text-sm uppercase tracking-wider"
                   onClick={() => setShowForm(true)}
                 >
-                   Open the Form <ArrowRight className="ml-2 h-4 w-4" />
+                  Open the Form <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
