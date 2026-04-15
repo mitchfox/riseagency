@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,7 @@ type TaskFeedItem =
     });
 
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -411,7 +413,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => window.location.assign(`/staff?section=schedule&scheduleItem=${task.scheduleItem.id}`)}
+                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)}
                   title="Edit"
                 >
                   <Pencil className="h-3 w-3" />
@@ -420,7 +422,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => window.location.assign(`/staff?section=schedule&scheduleItem=${task.scheduleItem.id}`)}
+                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)}
                   title="Open in Schedule"
                 >
                   <ExternalLink className="h-3 w-3 text-[hsl(var(--gold))]" />

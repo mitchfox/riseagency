@@ -59,15 +59,17 @@ CRITICAL RULES FOR xC (EXPECTED CONTRIBUTION) STATS:
 - triple_threat_xC: Actions where a player is in a "triple threat" position. Look for: "triple threat", "last line" (often involves triple threat positioning), "in behind" (triple threat is either last line or in behind).
 
 CRITICAL RULES FOR SCORE STATS:
-- npxG (non-penalty expected goals): Can ONLY come from shots that are NOT penalties. If a player had 0 shots, npxG MUST be 0. If they only had penalty shots, npxG MUST be 0. npxG is always <= xG.
-- xA (expected assists): Requires the teammate to ACTUALLY take a shot after the pass. xA is typically LESS than xT because xT measures the threat created by moving the ball forward, while xA only counts when a shot actually followed. xA can NEVER be greater than xT.
-- xG: Only comes from shots taken by the player.
+- npxG (non-penalty expected goals): ONLY actual shots or headed shots by the player can contribute. Do not invent xG values. Use the summed action_score from qualifying non-penalty shot actions only. If there are no qualifying actions, npxG MUST be 0.
+- xA (expected assists): ONLY actual shot assists can contribute. Do not invent values. Use the summed action_score from qualifying shot assist actions only. If there are no shot assists, xA MUST be 0.
+- xT (expected threat): Use the summed action_score from genuine progressive actions such as progressive passes, progressive dribbles, carries and crosses. Do not invent extra threat beyond the recorded action_score values.
+- xG: Only comes from actual shots taken by the player and must stay grounded in the recorded action_score values.
+- xA can NEVER be greater than xT.
 
 RULES:
 - Be LENIENT. If an action could contribute to a stat, include it.
 - For success_fail stats, estimate both successful and total attempts.
 - For count stats, count relevant actions.
-- For score stats (xG, xA, npxG), estimate reasonable decimal values respecting the constraints above.
+- For score stats (xG, xA, npxG, xT), use only sums grounded in the recorded action_score values from qualifying actions.
 - Only suggest stats that have clear evidence in the actions.
 - List which action numbers contribute to each stat.${existingStatsText}`;
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Crosshair } from "lucide-react";
 import type { ShotMapData } from "@/components/report/ShotMapSelector";
 
@@ -15,10 +15,10 @@ const PARENT_GRID: Array<Array<number | null>> = [
 const GOAL_ZONES = new Set(Array.from({ length: 15 }, (_, index) => index + 1));
 
 const OUTCOME_STYLES: Record<string, string> = {
-  goal: "border-primary bg-primary",
-  saved: "border-secondary bg-secondary",
-  missed: "border-destructive bg-destructive",
-  blocked: "border-accent bg-accent",
+  goal: "border-destructive bg-destructive",
+  saved: "border-primary bg-primary",
+  missed: "border-muted-foreground bg-muted-foreground",
+  blocked: "border-secondary bg-secondary",
   default: "border-border bg-muted",
 };
 
@@ -34,6 +34,9 @@ interface ShotMapCarrier {
   action_number?: number;
   minute?: number | null;
   action_type?: string | null;
+  action_description?: string | null;
+  action_score?: number | null;
+  notes?: string | null;
   recorded_stat?: unknown;
   shot_map?: ShotMapData | null;
 }
@@ -47,6 +50,11 @@ interface ShotPoint {
   top: number;
   stackIndex: number;
   actionLabel: string;
+  actionType: string;
+  actionDescription: string | null;
+  actionScore: number | null;
+  minute: number | null;
+  notes: string | null;
 }
 
 export const extractShotMapFromRecordedStat = (recordedStat?: unknown): ShotMapData | null => {
@@ -91,10 +99,13 @@ const formatActionLabel = (action: ShotMapCarrier, shotMap: ShotMapData) => {
   const numberPrefix = action.action_number ? `#${action.action_number}` : "Shot";
   const minuteLabel = action.minute != null ? ` • ${action.minute}'` : "";
   const outcomeLabel = shotMap.outcome ? ` • ${shotMap.outcome}` : "";
-  return `${numberPrefix}${minuteLabel}${outcomeLabel}`;
+  const scoreLabel = typeof action.action_score === "number" ? ` • ${action.action_score.toFixed(2)}` : "";
+  return `${numberPrefix}${minuteLabel}${outcomeLabel}${scoreLabel}`;
 };
 
 export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
+  const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
+
   const shotPoints = useMemo<ShotPoint[]>(() => {
     const stackMap = new Map<string, number>();
 
@@ -118,9 +129,16 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
         top: position.top,
         stackIndex,
         actionLabel: formatActionLabel(action, shotMap),
+        actionType: action.action_type ?? "Shot",
+        actionDescription: action.action_description ?? null,
+        actionScore: typeof action.action_score === "number" ? action.action_score : null,
+        minute: action.minute ?? null,
+        notes: action.notes ?? null,
       }];
     });
   }, [actions]);
+
+  const selectedShot = shotPoints.find((shot) => shot.id === selectedShotId) ?? null;
 
   if (shotPoints.length === 0) {
     return (
@@ -136,6 +154,19 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
     <div className="space-y-4">
       <div className="mx-auto flex max-w-[430px] flex-col gap-3">
         <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--background)))] p-3 shadow-sm">
+          <div
+            className="pointer-events-none absolute rounded-[1rem] border-2 border-foreground"
+            style={{
+              left: "calc(14.2857% + 12px)",
+              top: "calc(20% + 12px)",
+              width: "calc(71.4285% - 24px)",
+              height: "calc(60% - 24px)",
+              backgroundImage: [
+                "repeating-linear-gradient(to right, transparent 0, transparent calc(20% - 1px), hsl(var(--foreground) / 0.15) calc(20% - 1px), hsl(var(--foreground) / 0.15) 20%)",
+                "repeating-linear-gradient(to bottom, transparent 0, transparent calc(33.333% - 1px), hsl(var(--foreground) / 0.15) calc(33.333% - 1px), hsl(var(--foreground) / 0.15) 33.333%)",
+              ].join(", "),
+            }}
+          />
           <div className="absolute inset-3 grid grid-cols-7 grid-rows-5 gap-1">
             {PARENT_GRID.flatMap((row, rowIndex) =>
               row.map((zone, colIndex) => {
@@ -147,14 +178,14 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
                 return (
                   <div
                     key={zone}
-                    className={`rounded-md border ${isGoalZone ? "border-primary/35 bg-primary/10" : "border-border/55 bg-muted/30"}`}
+                    className={`rounded-md border ${isGoalZone ? "border-foreground/10 bg-transparent" : "border-border/55 bg-muted/20"}`}
                   />
                 );
               }),
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-3">
+          <div className="absolute inset-3">
             {shotPoints.map((shot) => {
               const styleKey = shot.outcome || "default";
               const styleClass = OUTCOME_STYLES[styleKey] || OUTCOME_STYLES.default;
@@ -162,12 +193,15 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
               const radius = shot.stackIndex === 0 ? 0 : 6;
               const offsetX = Math.cos(angle) * radius;
               const offsetY = Math.sin(angle) * radius;
+              const isSelected = selectedShotId === shot.id;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={shot.id}
                   title={shot.actionLabel}
-                  className={`absolute h-3.5 w-3.5 rounded-full border-2 shadow-[0_0_0_2px_hsl(var(--background))] ${styleClass}`}
+                  onClick={() => setSelectedShotId((current) => current === shot.id ? null : shot.id)}
+                  className={`absolute h-3.5 w-3.5 rounded-full border-2 shadow-[0_0_0_2px_hsl(var(--background))] ${styleClass} ${isSelected ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""}`}
                   style={{
                     left: `${shot.left}%`,
                     top: `${shot.top}%`,
@@ -178,6 +212,24 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
             })}
           </div>
         </div>
+
+        {selectedShot && (
+          <div className="rounded-xl border border-border/60 bg-card/40 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">{selectedShot.actionLabel}</p>
+                <p className="text-xs text-muted-foreground">{selectedShot.actionType}</p>
+              </div>
+              {selectedShot.actionScore != null && (
+                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                  {selectedShot.actionScore.toFixed(2)}
+                </span>
+              )}
+            </div>
+            {selectedShot.actionDescription && <p className="mt-2 text-xs text-foreground/85">{selectedShot.actionDescription}</p>}
+            {selectedShot.notes && <p className="mt-2 text-xs text-muted-foreground">{selectedShot.notes}</p>}
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card/40 px-3 py-2">
           {OUTCOME_LABELS.map((item) => (

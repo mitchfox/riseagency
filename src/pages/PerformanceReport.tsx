@@ -145,7 +145,7 @@ const PerformanceReport = () => {
   const [showTimelapse, setShowTimelapse] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
-  const [showShotMap, setShowShotMap] = useState(false);
+  const [showShotMap, setShowShotMap] = useState(true);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
   const [showZonePlayer, setShowZonePlayer] = useState(false);
   const [zonePlayerTitle, setZonePlayerTitle] = useState("");
@@ -1021,7 +1021,7 @@ const PerformanceReport = () => {
             <Button
               variant="default"
               size="sm"
-              className="bg-risegold hover:bg-risegold/90 text-black font-semibold"
+              className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <ArrowUp className="h-4 w-4 mr-1.5" />
@@ -1137,7 +1137,7 @@ const PerformanceReport = () => {
         <Button
           variant="default"
           size="sm"
-          className="bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 font-semibold"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <ArrowUp className="h-3.5 w-3.5 mr-1.5" /> Back to Top

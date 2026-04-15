@@ -117,7 +117,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
   const sharedClipPlayer = useSharedClipPlayer();
   const [showMatchStats, setShowMatchStats] = useState(false);
-  const [showShotMap, setShowShotMap] = useState(false);
+  const [showShotMap, setShowShotMap] = useState(true);
 
   const openClip = (action: PerformanceAction) => {
     if (!hasPlayableClip(action)) {
@@ -922,7 +922,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <Button
                     variant={showR90Flow ? "default" : "outline"}
                     size="sm"
-                    onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); setShowPitchHeatmap(false); setShowChanceCreation(false); }}
+                    onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); setShowPitchHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }}
                     className="text-xs"
                   >
                     <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
@@ -931,7 +931,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <Button
                     variant={showHeatmap ? "default" : "outline"}
                     size="sm"
-                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowPitchHeatmap(false); setShowChanceCreation(false); }}
+                    onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowPitchHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }}
                     className="text-xs"
                   >
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
@@ -952,7 +952,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant={showPitchHeatmap ? "default" : "outline"}
                         size="sm"
-                        onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }}
                         className="text-xs"
                       >
                         <MapPin className="h-3.5 w-3.5 mr-1.5" />
@@ -961,7 +961,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant={showZonePerformance ? "default" : "outline"}
                         size="sm"
-                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); }}
+                        onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); setShowShotMap(false); }}
                         className="text-xs"
                       >
                         <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />
@@ -970,7 +970,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                       <Button
                         variant={showTimelapse ? "default" : "outline"}
                         size="sm"
-                        onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }}
+                        onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }}
                         className="text-xs"
                       >
                         <Timer className="h-3.5 w-3.5 mr-1.5" />
@@ -983,7 +983,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); }}
+                      onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); setShowShotMap(false); }}
                       className="text-xs"
                     >
                       <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
