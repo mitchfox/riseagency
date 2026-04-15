@@ -188,7 +188,7 @@ const RequestRepresentation = () => {
                 <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-primary">Request Representation</p>
                 <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl">RISE WITH US</h1>
                 <p className="mt-4 max-w-[32ch] text-sm leading-relaxed text-foreground/84">
-                  REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
+                  Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                 </p>
               </motion.div>
 
@@ -208,7 +208,8 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-14 rounded-2xl border-border bg-background/70 font-bebas text-lg uppercase tracking-[0.14em] text-foreground backdrop-blur-md hover:bg-primary hover:text-primary-foreground"
+                  className="h-14 rounded-2xl border-border font-bebas text-lg uppercase tracking-[0.14em] text-foreground backdrop-blur-md"
+                  style={marbleStyle}
                   onClick={() => setAgeGroup("over18")}
                 >
                   Over 18
@@ -235,7 +236,6 @@ const RequestRepresentation = () => {
 
               <MarbleIconPanel icon={CARD_META.find((card) => card.key === activeCard)!.icon} title={cardContent[activeCard].title} />
 
-              <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.22em] text-primary">{cardContent[activeCard].eyebrow}</p>
               <h2 className="mt-1.5 font-bebas text-3xl uppercase leading-none tracking-[0.14em]">{cardContent[activeCard].title}</h2>
 
               <div className="mt-5 space-y-2.5">
@@ -288,7 +288,7 @@ const RequestRepresentation = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Request Representation</p>
                   <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em]">RISE WITH US</h1>
                   <p className="mt-2 max-w-[32ch] text-xs leading-relaxed text-foreground/80">
-                    REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
+                      Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                   </p>
                 </div>
               </div>

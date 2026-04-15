@@ -63,7 +63,7 @@ const OUTCOMES: Array<{ label: string; value: ShotMapData["outcome"] }> = [
 
 export const isShotMapAction = (actionType?: string | null) => {
   const lower = (actionType || "").toLowerCase();
-  return lower.includes("shot") || lower.includes("save");
+  return lower.includes("shot") || lower.includes("save") || lower.includes("goal conceded");
 };
 
 export const ShotMapSelector = ({ value, onChange, compact = false }: ShotMapSelectorProps) => {
