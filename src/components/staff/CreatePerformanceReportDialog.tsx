@@ -38,6 +38,7 @@ import { logActivity } from "@/lib/activityLogger";
 import { ReportLanguageSelector, TranslatedContent } from "./ReportLanguageSelector";
 import { parseMinuteToSeconds } from "@/lib/actionSorting";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
+import { ShotMapSelector, type ShotMapData, isShotMapAction } from "@/components/report/ShotMapSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
 
@@ -130,8 +131,35 @@ interface PerformanceAction {
   recorded_stat?: RecordedStat | RecordedStat[] | null;
   zone?: number | null;
   zone_details?: ZonePoint[] | null;
+  shot_map?: ShotMapData | null;
   is_first_half?: boolean;
 }
+
+const SHOT_MAP_STAT_KEY = "__shot_map";
+
+const extractShotMapFromRecordedStat = (recordedStat?: RecordedStat | RecordedStat[] | null): ShotMapData | null => {
+  const stats = Array.isArray(recordedStat) ? recordedStat : recordedStat ? [recordedStat] : [];
+  const shotMapEntry = stats.find((stat: any) => stat?.stat_type === SHOT_MAP_STAT_KEY && stat?.shot_map);
+  return (shotMapEntry as any)?.shot_map || null;
+};
+
+const stripShotMapFromRecordedStat = (recordedStat?: RecordedStat | RecordedStat[] | null): RecordedStat | RecordedStat[] | null => {
+  const stats = Array.isArray(recordedStat) ? recordedStat : recordedStat ? [recordedStat] : [];
+  const filtered = stats.filter((stat: any) => stat?.stat_type !== SHOT_MAP_STAT_KEY);
+  return filtered.length > 0 ? filtered : null;
+};
+
+const mergeShotMapIntoRecordedStat = (
+  recordedStat?: RecordedStat | RecordedStat[] | null,
+  shotMap?: ShotMapData | null,
+): RecordedStat | RecordedStat[] | null => {
+  const stats = Array.isArray(recordedStat) ? recordedStat : recordedStat ? [recordedStat] : [];
+  const filtered = stats.filter((stat: any) => stat?.stat_type !== SHOT_MAP_STAT_KEY);
+  if (shotMap?.zone) {
+    filtered.push({ stat_type: SHOT_MAP_STAT_KEY, mode: "count", shot_map: shotMap } as any);
+  }
+  return filtered.length > 0 ? filtered : null;
+};
 
 interface SortableStatItemProps {
   id: string;
@@ -1218,9 +1246,10 @@ export const CreatePerformanceReportDialog = ({
             video_url: action.video_url || null,
             clip_start: (action as any).clip_start ?? null,
             clip_end: (action as any).clip_end ?? null,
-            recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
+            recorded_stat: stripShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
+            shot_map: extractShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
           }));
         skipNextActionSyncRef.current = true;
         setActions(sortActionsChronologically(mappedActions));
@@ -1309,9 +1338,10 @@ export const CreatePerformanceReportDialog = ({
             video_url: action.video_url || null,
             clip_start: (action as any).clip_start ?? null,
             clip_end: (action as any).clip_end ?? null,
-            recorded_stat: action.recorded_stat as unknown as RecordedStat | null,
+            recorded_stat: stripShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
+            shot_map: extractShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
           }));
         setActions(sortActionsChronologically(mappedActions));
       }
@@ -1646,7 +1676,7 @@ export const CreatePerformanceReportDialog = ({
             video_url: a.video_url || preserved?.video_url || null,
             clip_start: a.clip_start ?? preserved?.clip_start ?? null,
             clip_end: a.clip_end ?? preserved?.clip_end ?? null,
-            recorded_stat: (a.recorded_stat || null) as any,
+            recorded_stat: mergeShotMapIntoRecordedStat((a.recorded_stat || null) as any, a.shot_map || null) as any,
             zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
             zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
           };
@@ -2333,6 +2363,13 @@ export const CreatePerformanceReportDialog = ({
                         actionType={action.action_type}
                         compact
                       />
+                      {isShotMapAction(action.action_type) && (
+                        <ShotMapSelector
+                          value={action.shot_map || null}
+                          onChange={(shotMap) => updateAction(index, 'shot_map', shotMap as any)}
+                          compact
+                        />
+                      )}
                       <ActionStatRecorder
                         currentStat={action.recorded_stat || null}
                         onStatRecorded={(stat) => updateAction(index, 'recorded_stat', stat)}
@@ -2735,12 +2772,18 @@ export const CreatePerformanceReportDialog = ({
                      <div className="flex items-center gap-2 rounded-md border bg-card/50 p-2">
                       {/* Zone selector - own bordered box */}
                       <div className="flex items-center rounded-md border border-[hsl(43,49%,61%)]/30 bg-background px-2 py-1 shrink-0">
-                        <div className="w-6 flex justify-center">
+                        <div className="flex items-center gap-1">
                           <ZonePitchSelector
                             value={action.zone_details || (action.zone ? [{ zone: action.zone }] : [])}
                             onChange={(zd) => { updateAction(index, 'zone_details', zd as any); updateAction(index, 'zone', (zd.length ? zd[0].zone : null) as any); }}
                             actionType={action.action_type}
                           />
+                          {isShotMapAction(action.action_type) && (
+                            <ShotMapSelector
+                              value={action.shot_map || null}
+                              onChange={(shotMap) => updateAction(index, 'shot_map', shotMap as any)}
+                            />
+                          )}
                         </div>
                       </div>
 
