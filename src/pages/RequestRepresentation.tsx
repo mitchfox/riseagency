@@ -4,9 +4,10 @@ import { ArrowRight, MessageCircle, ChevronLeft, Video, TrendingUp, Users, Dumbb
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
-import riseTunnel from "@/assets/rise-tunnel.jpg";
-import riseAnalysis from "@/assets/rise-analysis.jpg";
-import riseDevelopment from "@/assets/rise-development.jpg";
+import requestRepresentationHero from "@/assets/request-representation-hero-uploaded.png";
+import omotoyeCelebrating from "@/assets/omotoye-celebrating.png";
+import omotoyeJourney from "@/assets/omotoye-journey.jpg";
+import tyreseOmotoye from "@/assets/tyrese-omotoye.png";
 
 type AgeGroup = null | "under18" | "18plus";
 type CardKey = "analysis" | "development" | "network" | "coaching" | "marketing" | "process";
@@ -20,7 +21,7 @@ const DETAIL_CONTENT: Record<CardKey, {
   analysis: {
     title: "Performance Analysis",
     eyebrow: "See what clubs actually need to see",
-    image: riseAnalysis,
+    image: omotoyeCelebrating,
     points: [
       "Full match analysis with clips attached to actions",
       "R90 scoring built to show real impact on the game",
@@ -31,7 +32,8 @@ const DETAIL_CONTENT: Record<CardKey, {
   development: {
     title: "Career Development",
     eyebrow: "A clearer path forward",
-    image: riseDevelopment,
+    image: omotoyeJourney,
+    image: tyreseOmotoye,
     points: [
       "Development plans built around your actual performances",
       "Coaching support shaped by what the footage shows",
@@ -42,6 +44,7 @@ const DETAIL_CONTENT: Record<CardKey, {
   network: {
     title: "Club Network",
     eyebrow: "Connections backed by proper evidence",
+    image: omotoyeCelebrating,
     points: [
       "We present players with context, not noise",
       "Reports and clips help make introductions stronger",
@@ -52,6 +55,7 @@ const DETAIL_CONTENT: Record<CardKey, {
   coaching: {
     title: "Coaching & Fitness",
     eyebrow: "Support beyond a single report",
+    image: omotoyeJourney,
     points: [
       "Position-specific work based on what your game needs",
       "Training ideas that connect to match performance",
@@ -62,6 +66,7 @@ const DETAIL_CONTENT: Record<CardKey, {
   marketing: {
     title: "Marketing & Brand",
     eyebrow: "Your profile should look as strong as your football",
+    image: tyreseOmotoye,
     points: [
       "Sharper presentation for players who want to stand out",
       "Better visual content for sharing your level",
@@ -82,12 +87,12 @@ const DETAIL_CONTENT: Record<CardKey, {
 };
 
 const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Video; image?: string }> = [
-  { key: "analysis", title: "Analysis", icon: Video, image: riseAnalysis },
-  { key: "development", title: "Development", icon: TrendingUp, image: riseDevelopment },
-  { key: "network", title: "Club Network", icon: Users },
-  { key: "coaching", title: "Coaching", icon: Dumbbell },
-  { key: "marketing", title: "Brand", icon: Shield },
-  { key: "process", title: "How It Starts", icon: BarChart3 },
+  { key: "analysis", title: "Analysis", icon: Video, image: omotoyeCelebrating },
+  { key: "development", title: "Development", icon: TrendingUp, image: omotoyeJourney },
+  { key: "network", title: "Club Network", icon: Users, image: tyreseOmotoye },
+  { key: "coaching", title: "Coaching", icon: Dumbbell, image: omotoyeCelebrating },
+  { key: "marketing", title: "Brand", icon: Shield, image: omotoyeJourney },
+  { key: "process", title: "How It Starts", icon: BarChart3, image: tyreseOmotoye },
 ];
 
 const RequestRepresentation = () => {
@@ -124,8 +129,8 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.4 }}
             className="relative min-h-[100dvh]"
           >
-            <img
-              src={riseTunnel}
+             <img
+               src={requestRepresentationHero}
               alt="Player walking towards the pitch"
               className="absolute inset-0 h-full w-full object-cover"
               width={1200}
@@ -139,14 +144,14 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.15, duration: 0.5 }}
                 className="mx-auto w-full max-w-sm"
               >
-                <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-[hsl(var(--gold))]">
+                 <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                   Request Representation
                 </p>
                 <h1 className="font-bebas text-5xl uppercase leading-none tracking-wider sm:text-6xl">
-                  Rise With Us
+                   REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
                 </h1>
-                <p className="mt-3 max-w-xs text-sm leading-relaxed text-foreground/75">
-                  A cleaner way to show your football, your level and where you can go next.
+                 <p className="mt-3 max-w-xs text-sm leading-relaxed text-foreground/80">
+                   Show your level properly with a sharper route into analysis, development, exposure and genuine football opportunities.
                 </p>
               </motion.div>
 
@@ -158,7 +163,7 @@ const RequestRepresentation = () => {
               >
                 <Button
                   size="lg"
-                  className="h-14 rounded-2xl bg-[hsl(var(--gold))] text-background font-bebas text-lg uppercase tracking-wider hover:bg-[hsl(var(--gold))]/90"
+                   className="h-14 rounded-2xl bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setAgeGroup("under18")}
                 >
                   Under 18
@@ -166,7 +171,7 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-14 rounded-2xl border-foreground/25 bg-background/70 font-bebas text-lg uppercase tracking-wider backdrop-blur-md hover:bg-background/90"
+                   className="h-14 rounded-2xl border-border bg-background/70 font-bebas text-lg uppercase tracking-wider text-foreground backdrop-blur-md hover:bg-primary hover:text-primary-foreground"
                   onClick={() => setAgeGroup("18plus")}
                 >
                   18 and Over
@@ -210,7 +215,7 @@ const RequestRepresentation = () => {
                 </motion.div>
               )}
 
-              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[hsl(var(--gold))]">
+               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">
                 {DETAIL_CONTENT[activeCard].eyebrow}
               </p>
               <h2 className="mt-1.5 font-bebas text-3xl uppercase leading-none tracking-wider">
@@ -234,10 +239,10 @@ const RequestRepresentation = () => {
               <div className="mt-auto grid gap-2.5 pt-6 pb-2">
                 <Button
                   size="lg"
-                  className="h-13 rounded-2xl bg-[hsl(var(--gold))] text-background font-bebas text-base uppercase tracking-wider hover:bg-[hsl(var(--gold))]/90"
+                   className="h-13 rounded-2xl bg-primary text-primary-foreground font-bebas text-base uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setShowForm(true)}
                 >
-                  Apply Now <ArrowRight className="ml-2 h-4 w-4" />
+                   Start the Conversation <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
                   size="lg"
@@ -263,19 +268,19 @@ const RequestRepresentation = () => {
           >
             <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col">
               {/* Hero banner */}
-              <div className="relative mb-4 overflow-hidden rounded-2xl">
-                <img src={riseTunnel} alt="" className="h-40 w-full object-cover" width={1200} height={800} />
+               <div className="relative mb-4 overflow-hidden rounded-2xl">
+                 <img src={requestRepresentationHero} alt="" className="h-40 w-full object-cover" width={1200} height={800} />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[hsl(var(--gold))]">
+                   <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">
                     {ageGroup === "under18" ? "Under 18" : "18+"}
                   </p>
-                  <h1 className="font-bebas text-3xl uppercase leading-none tracking-wider">Rise With Us</h1>
+                   <h1 className="font-bebas text-3xl uppercase leading-none tracking-wider">Realise Potential</h1>
                 </div>
               </div>
 
               {/* Commission info */}
-              <div className="mb-4 rounded-xl border border-[hsl(var(--gold))]/20 bg-[hsl(var(--gold))]/5 p-3.5">
+               <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
                 <p className="text-sm leading-relaxed text-foreground/80">{commissionText}</p>
               </div>
 
@@ -283,10 +288,10 @@ const RequestRepresentation = () => {
               <div className="mb-4 grid grid-cols-2 gap-2.5">
                 <Button
                   size="lg"
-                  className="h-12 rounded-xl bg-[hsl(var(--gold))] text-background font-bebas text-sm uppercase tracking-wider hover:bg-[hsl(var(--gold))]/90"
+                   className="h-12 rounded-xl bg-primary text-primary-foreground font-bebas text-sm uppercase tracking-wider hover:bg-primary/90"
                   onClick={() => setShowForm(true)}
                 >
-                  Apply Now
+                   Start Here
                 </Button>
                 <Button
                   size="lg"
@@ -309,7 +314,9 @@ const RequestRepresentation = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.04 * index, duration: 0.3 }}
-                      whileTap={{ scale: 0.96, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }}
+                       whileHover={{ scale: 1.03, rotateX: [0, 8, -6, 0], rotateY: index % 2 === 0 ? [0, -10, 8, 0] : [0, 10, -8, 0], y: [0, -6, 0] }}
+                       whileTap={{ scale: 0.96, rotateX: 4, rotateY: index % 2 === 0 ? -3 : 3 }}
+                       transition={{ delay: 0.04 * index, duration: 0.45 }}
                       onClick={() => setActiveCard(card.key)}
                       className="group relative min-h-[120px] overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all"
                       style={{ transformStyle: "preserve-3d" }}
@@ -328,8 +335,8 @@ const RequestRepresentation = () => {
                       )}
                       <div className={`absolute inset-0 ${card.image ? "bg-gradient-to-t from-card via-card/70 to-transparent" : "bg-gradient-to-br from-card to-background"}`} />
                       <div className="relative flex h-full flex-col justify-between p-3.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/40 bg-background/60 backdrop-blur-sm">
-                          <Icon className="h-3.5 w-3.5 text-[hsl(var(--gold))]" />
+                         <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/40 bg-background/60 backdrop-blur-sm">
+                           <Icon className="h-3.5 w-3.5 text-primary" />
                         </div>
                         <div>
                           <p className="font-bebas text-base uppercase leading-none tracking-wide">{card.title}</p>
@@ -349,7 +356,7 @@ const RequestRepresentation = () => {
                   className="h-12 w-full rounded-xl font-bebas text-sm uppercase tracking-wider"
                   onClick={() => setShowForm(true)}
                 >
-                  Start Your Application <ArrowRight className="ml-2 h-4 w-4" />
+                   Open the Form <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
