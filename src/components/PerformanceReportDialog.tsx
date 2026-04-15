@@ -937,6 +937,16 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
                     {t(reportLanguage, "period_grade_map")}
                   </Button>
+                  {hasShotMapData(actions) && (
+                    <Button
+                      variant={showShotMap ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => { setShowShotMap(!showShotMap); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); setShowZonePerformance(false); setShowTimelapse(false); setShowChanceCreation(false); }}
+                      className="text-xs"
+                    >
+                      <Crosshair className="h-3.5 w-3.5 mr-1.5" />Shot Map
+                    </Button>
+                  )}
                   {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                     <>
                       <Button
