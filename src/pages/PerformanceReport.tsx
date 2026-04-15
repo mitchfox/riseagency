@@ -1117,6 +1117,18 @@ const PerformanceReport = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Back to Top */}
+      <div className="flex justify-center py-6">
+        <Button
+          variant="default"
+          size="sm"
+          className="bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 font-semibold"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <ArrowUp className="h-3.5 w-3.5 mr-1.5" /> Back to Top
+        </Button>
+      </div>
     </div>
   );
 };
