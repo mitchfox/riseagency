@@ -98,15 +98,17 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: tasksData }, { data: profilesData }] = await Promise.all([
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format'),
     ]);
 
     const coreProfiles = (profilesData || []).filter(p => CORE_STAFF_IDS.includes(p.id));
     coreProfiles.sort((a, b) => CORE_STAFF_IDS.indexOf(a.id) - CORE_STAFF_IDS.indexOf(b.id));
 
     setTasks((tasksData || []) as StaffTask[]);
+    setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(coreProfiles);
 
     // Auto-select logged-in user
@@ -121,6 +123,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const activeMember = staffMembers[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
+  const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
   const activeTasks = memberTasks.filter(t => !t.completed || t.is_recurring);
   const completedTasks = memberTasks.filter(t => t.completed && !t.is_recurring);
   const overdueTasks = activeTasks.filter(t => !t.completed && t.deadline && isPast(new Date(t.deadline)));
