@@ -993,6 +993,53 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 </div>
               )}
 
+              {/* R90 Flow Chart */}
+              {showR90Flow && analysis.minutes_played && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><R90FlowChart actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Action Heatmap */}
+              {showHeatmap && analysis.minutes_played && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Shot Map */}
+              {showShotMap && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} /></CardContent></Card>
+              )}
+
+              {/* Pitch Heatmap */}
+              {showPitchHeatmap && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><PitchHeatmap actions={actions} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Zone Performance */}
+              {showZonePerformance && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ZonePerformance actions={actions} language={reportLanguage} onSelectZone={(zone, sub) => {
+                  const zoneActions = filterActionsByZone(actions, zone, sub);
+                  const clips = zoneActions.filter(a => hasPlayableClip(a)).map(a => ({
+                    id: a.id, action_number: a.action_number, action_type: a.action_type,
+                    action_description: a.action_description, video_url: a.video_url!, minute: a.minute,
+                    notes: a.notes, clip_start: a.clip_start, clip_end: a.clip_end,
+                  }));
+                  if (clips.length > 0) {
+                    setZonePlayerTitle(`Zone ${zone}${sub ? `.${sub}` : ''}`);
+                    setZonePlayerClips(clips);
+                    setShowZonePlayer(true);
+                  }
+                }} /></CardContent></Card>
+              )}
+
+              {/* Match Timelapse */}
+              {showTimelapse && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><MatchTimelapse actions={actions} language={reportLanguage} /></CardContent></Card>
+              )}
+
+              {/* Chance Creation Flow */}
+              {showChanceCreation && analysis.striker_stats && (
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ChanceCreationFlow strikerStats={analysis.striker_stats as Record<string, any>} language={reportLanguage} /></CardContent></Card>
+              )}
+
               {/* Performance Overview */}
               {analysis.performance_overview && (
                 <Card className="overflow-hidden">
