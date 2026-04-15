@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Crosshair } from "lucide-react";
 import type { ShotMapData } from "@/components/report/ShotMapSelector";
 
@@ -15,11 +15,11 @@ const PARENT_GRID: Array<Array<number | null>> = [
 const GOAL_ZONES = new Set(Array.from({ length: 15 }, (_, index) => index + 1));
 
 const OUTCOME_STYLES: Record<string, string> = {
-  goal: "border-primary bg-primary",
-  saved: "border-secondary bg-secondary",
-  missed: "border-destructive bg-destructive",
+  goal: "border-destructive bg-destructive",
+  saved: "border-primary bg-primary",
+  missed: "border-muted-foreground bg-muted-foreground",
   blocked: "border-accent bg-accent",
-  default: "border-border bg-muted",
+  default: "border-border bg-secondary",
 };
 
 const OUTCOME_LABELS: Array<{ label: string; key: NonNullable<ShotMapData["outcome"]> | "default" }> = [
@@ -33,7 +33,10 @@ interface ShotMapCarrier {
   id: string;
   action_number?: number;
   minute?: number | null;
+  action_score?: number | null;
   action_type?: string | null;
+  action_description?: string | null;
+  notes?: string | null;
   recorded_stat?: unknown;
   shot_map?: ShotMapData | null;
 }
@@ -47,6 +50,10 @@ interface ShotPoint {
   top: number;
   stackIndex: number;
   actionLabel: string;
+  actionScore: number | null;
+  actionType: string | null;
+  actionDescription: string | null;
+  notes: string | null;
 }
 
 export const extractShotMapFromRecordedStat = (recordedStat?: unknown): ShotMapData | null => {
@@ -95,6 +102,8 @@ const formatActionLabel = (action: ShotMapCarrier, shotMap: ShotMapData) => {
 };
 
 export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
+  const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
+
   const shotPoints = useMemo<ShotPoint[]>(() => {
     const stackMap = new Map<string, number>();
 
@@ -118,9 +127,26 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
         top: position.top,
         stackIndex,
         actionLabel: formatActionLabel(action, shotMap),
+        actionScore: action.action_score ?? null,
+        actionType: action.action_type ?? null,
+        actionDescription: action.action_description ?? null,
+        notes: action.notes ?? null,
       }];
     });
   }, [actions]);
+
+  useEffect(() => {
+    if (!shotPoints.length) {
+      setSelectedShotId(null);
+      return;
+    }
+
+    if (!selectedShotId || !shotPoints.some((shot) => shot.id === selectedShotId)) {
+      setSelectedShotId(shotPoints[0].id);
+    }
+  }, [selectedShotId, shotPoints]);
+
+  const selectedShot = shotPoints.find((shot) => shot.id === selectedShotId) || shotPoints[0] || null;
 
   if (shotPoints.length === 0) {
     return (
@@ -135,45 +161,74 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
   return (
     <div className="space-y-4">
       <div className="mx-auto flex max-w-[430px] flex-col gap-3">
-        <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--background)))] p-3 shadow-sm">
-          <div className="absolute inset-3 grid grid-cols-7 grid-rows-5 gap-1">
-            {PARENT_GRID.flatMap((row, rowIndex) =>
-              row.map((zone, colIndex) => {
-                if (!zone) {
-                  return <div key={`empty-${rowIndex}-${colIndex}`} />;
-                }
+        <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[radial-gradient(circle_at_top,hsl(var(--card)),hsl(var(--background))_72%)] p-3 shadow-sm">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,hsl(var(--foreground)/0.06),transparent_28%),linear-gradient(180deg,hsl(var(--background)/0.08),hsl(var(--background)/0.3))]" />
+          <svg viewBox="0 0 700 500" className="absolute inset-0 h-full w-full" aria-hidden="true">
+            <defs>
+              <pattern id="shot-map-net" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 0 0 L 40 0 M 0 0 L 0 40" stroke="hsl(var(--foreground) / 0.16)" strokeWidth="2" />
+              </pattern>
+            </defs>
+            <path d="M180 110 H520 V350 H180 Z" fill="url(#shot-map-net)" />
+            <path d="M180 110 H520 V350 H180 Z" fill="hsl(var(--foreground) / 0.03)" stroke="hsl(var(--foreground))" strokeWidth="10" strokeLinejoin="round" />
+            <path d="M180 350 L140 410" stroke="hsl(var(--foreground) / 0.7)" strokeWidth="8" strokeLinecap="round" />
+            <path d="M520 350 L560 410" stroke="hsl(var(--foreground) / 0.7)" strokeWidth="8" strokeLinecap="round" />
+            <path d="M140 410 H560" stroke="hsl(var(--foreground) / 0.35)" strokeWidth="6" strokeLinecap="round" />
+            {[1, 2, 3, 4].map((column) => (
+              <line
+                key={`v-${column}`}
+                x1={180 + column * 68}
+                y1="110"
+                x2={180 + column * 68}
+                y2="350"
+                stroke="hsl(var(--foreground) / 0.18)"
+                strokeWidth="2"
+              />
+            ))}
+            {[1, 2].map((row) => (
+              <line
+                key={`h-${row}`}
+                x1="180"
+                y1={110 + row * 80}
+                x2="520"
+                y2={110 + row * 80}
+                stroke="hsl(var(--foreground) / 0.18)"
+                strokeWidth="2"
+              />
+            ))}
+          </svg>
 
-                const isGoalZone = GOAL_ZONES.has(zone);
-                return (
-                  <div
-                    key={zone}
-                    className={`rounded-md border ${isGoalZone ? "border-primary/35 bg-primary/10" : "border-border/55 bg-muted/30"}`}
-                  />
-                );
-              }),
+          <div className="absolute inset-3 grid grid-cols-7 grid-rows-5 gap-1 opacity-0">
+            {PARENT_GRID.flatMap((row, rowIndex) =>
+              row.map((zone, colIndex) => <div key={`${zone}-${rowIndex}-${colIndex}`} />),
             )}
           </div>
 
-          <div className="pointer-events-none absolute inset-3">
+          <div className="absolute inset-3">
             {shotPoints.map((shot) => {
               const styleKey = shot.outcome || "default";
               const styleClass = OUTCOME_STYLES[styleKey] || OUTCOME_STYLES.default;
               const angle = shot.stackIndex * 1.3;
-              const radius = shot.stackIndex === 0 ? 0 : 6;
+              const radius = shot.stackIndex === 0 ? 0 : 7;
               const offsetX = Math.cos(angle) * radius;
               const offsetY = Math.sin(angle) * radius;
+              const isSelected = selectedShot?.id === shot.id;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={shot.id}
                   title={shot.actionLabel}
-                  className={`absolute h-3.5 w-3.5 rounded-full border-2 shadow-[0_0_0_2px_hsl(var(--background))] ${styleClass}`}
+                  onClick={() => setSelectedShotId(shot.id)}
+                  className={`absolute h-4 w-4 rounded-full border-2 shadow-[0_0_0_2px_hsl(var(--background))] transition-transform ${styleClass} ${isSelected ? "scale-125" : "hover:scale-110"}`}
                   style={{
                     left: `${shot.left}%`,
                     top: `${shot.top}%`,
                     transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
                   }}
-                />
+                >
+                  <span className="sr-only">{shot.actionLabel}</span>
+                </button>
               );
             })}
           </div>
@@ -187,6 +242,31 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
             </div>
           ))}
         </div>
+
+        {selectedShot && (
+          <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Selected Shot</p>
+                <p className="text-sm font-semibold">{selectedShot.actionLabel}</p>
+              </div>
+              {selectedShot.actionScore != null && (
+                <div className="rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-semibold">
+                  Score {selectedShot.actionScore.toFixed(3)}
+                </div>
+              )}
+            </div>
+            {selectedShot.actionType && (
+              <p className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-primary">{selectedShot.actionType}</p>
+            )}
+            {selectedShot.actionDescription && (
+              <p className="mt-2 text-sm text-foreground/85">{selectedShot.actionDescription}</p>
+            )}
+            {selectedShot.notes && (
+              <p className="mt-2 text-sm text-muted-foreground">{selectedShot.notes}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
