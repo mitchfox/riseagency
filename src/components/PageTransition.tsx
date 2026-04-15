@@ -15,18 +15,15 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
   const { setIsTransitioning: setGlobalTransitioning } = useTransition();
 
   useEffect(() => {
-    // If the URL changed but our displayed location hasn't, start a queued transition
     if (location.pathname === displayLocation.pathname) return;
 
     setIsTransitioning(true);
     setGlobalTransitioning(true);
 
-    // After 1s (transition out), switch the rendered route
     const showNewTimer = setTimeout(() => {
       setDisplayLocation(location);
     }, 1000);
 
-    // After 2s total, end the overlay
     const endTimer = setTimeout(() => {
       setIsTransitioning(false);
       setGlobalTransitioning(false);
@@ -38,60 +35,87 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
     };
   }, [location, displayLocation, setGlobalTransitioning]);
 
+  const useRiseSliderTransition =
+    location.pathname.startsWith("/request-representation") || displayLocation.pathname.startsWith("/request-representation");
+
   return (
     <>
-      {/* Render routes based on the queued displayLocation */}
       {children(displayLocation)}
 
-      {/* Shader transition overlay */}
       {isTransitioning && (
-        <div 
-          className="fixed inset-0 z-[200] pointer-events-none" 
+        <div
+          className="fixed inset-0 z-[200] pointer-events-none"
           key={location.pathname}
           style={{
-            animation: "overlayFadeIn 0.3s ease-out forwards, overlayFadeOut 0.3s ease-out 1.7s forwards",
+            animation: "overlayFadeIn 0.2s ease-out forwards, overlayFadeOut 0.25s ease-out 1.75s forwards",
           }}
         >
-          {/* Shader background */}
-          <div className="absolute inset-0 z-10">
-            <ShaderAnimation />
-          </div>
-
-          {/* Logo on top of shader */}
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <img
-              src={logo}
-              alt="RISE"
-              className="h-16 md:h-20"
-              style={{
-                animation:
-                  "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.8s forwards, logoFadeOut 0.4s ease-out 1.3s forwards",
-                opacity: 0,
-              }}
-            />
-          </div>
+          {useRiseSliderTransition ? (
+            <div className="absolute inset-0 overflow-hidden bg-background">
+              <div
+                className="absolute inset-y-0 left-0 w-full bg-primary"
+                style={{ animation: "riseSliderCover 0.72s cubic-bezier(0.77, 0, 0.175, 1) forwards" }}
+              />
+              <div
+                className="absolute inset-y-0 left-0 w-full bg-background"
+                style={{ animation: "riseSliderReveal 0.86s cubic-bezier(0.77, 0, 0.175, 1) 0.45s forwards" }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="RISE"
+                  className="h-16 md:h-20"
+                  style={{
+                    animation:
+                      "logoFadeIn 0.26s ease-out forwards, logoPulse 0.28s ease-out 0.72s forwards, logoFadeOut 0.34s ease-out 1.22s forwards",
+                    opacity: 0,
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="absolute inset-0 z-10">
+                <ShaderAnimation />
+              </div>
+              <div className="absolute inset-0 z-20 flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="RISE"
+                  className="h-16 md:h-20"
+                  style={{
+                    animation:
+                      "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.8s forwards, logoFadeOut 0.4s ease-out 1.3s forwards",
+                    opacity: 0,
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 
       <style>{`
         @keyframes overlayFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-        
+
         @keyframes overlayFadeOut {
-          from {
-            opacity: 1;
-          }
-          to {
-            opacity: 0;
-          }
+          from { opacity: 1; }
+          to { opacity: 0; }
         }
-        
+
+        @keyframes riseSliderCover {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0%); }
+        }
+
+        @keyframes riseSliderReveal {
+          from { transform: translateX(0%); }
+          to { transform: translateX(100%); }
+        }
+
         @keyframes logoFadeIn {
           from {
             opacity: 0;
@@ -102,19 +126,13 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
             transform: scale(1);
           }
         }
-        
+
         @keyframes logoPulse {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.08);
-          }
-          100% {
-            transform: scale(1);
-          }
+          0% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
         }
-        
+
         @keyframes logoFadeOut {
           from {
             opacity: 1;

@@ -77,6 +77,29 @@ interface ScheduleTaskItem {
   image_url: string | null;
 }
 
+type TaskFeedItem =
+  | ({ kind: "task" } & StaffTask)
+  | ({
+      kind: "schedule";
+      title: string;
+      description: string | null;
+      assigned_to: string[];
+      completed: boolean;
+      priority: string;
+      category: string | null;
+      display_order: number;
+      created_at: string;
+      updated_at: string;
+      deadline: string | null;
+      is_recurring: boolean;
+      recurrence_label: string | null;
+      last_completed_at: string | null;
+      image_url: string | null;
+      completion_log: string[] | null;
+      scheduleItem: ScheduleTaskItem;
+      id: string;
+    });
+
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
@@ -125,11 +148,40 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const activeMember = staffMembers[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
   const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
-  const activeTasks = memberTasks.filter(t => !t.completed || t.is_recurring);
-  const completedTasks = memberTasks.filter(t => t.completed && !t.is_recurring);
-  const overdueTasks = activeTasks.filter(t => !t.completed && t.deadline && isPast(new Date(t.deadline)));
-  const pendingTasks = activeTasks.filter(t => !t.completed && !(t.deadline && isPast(new Date(t.deadline))));
-  const recurringDone = activeTasks.filter(t => t.completed && t.is_recurring);
+  const memberTaskFeed: TaskFeedItem[] = activeMember
+    ? [
+        ...memberTasks.map((task) => ({ ...task, kind: "task" as const })),
+        ...memberScheduleItems.map((item) => ({
+          kind: "schedule" as const,
+          id: `schedule-${item.id}`,
+          title: item.post_type,
+          description: [
+            item.platform_format ? `Format: ${item.platform_format}` : null,
+            item.status ? `Status: ${item.status}` : null,
+          ].filter(Boolean).join(" • ") || null,
+          assigned_to: item.owner_id ? [item.owner_id] : [],
+          completed: (item.status || "").toLowerCase() === "posted",
+          priority: "medium",
+          category: "Marketing",
+          display_order: 0,
+          created_at: "",
+          updated_at: "",
+          deadline: null,
+          is_recurring: false,
+          recurrence_label: null,
+          last_completed_at: null,
+          image_url: item.image_url,
+          completion_log: null,
+          scheduleItem: item,
+        })),
+      ]
+    : [];
+  const activeTasks = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
+  const completedTasks = memberTaskFeed.filter(t => t.completed && !t.is_recurring);
+  const overdueTasks = activeTasks.filter((t) => t.kind === "task" && !t.completed && t.deadline && isPast(new Date(t.deadline)));
+  const pendingTasks = activeTasks.filter((t) => !(t.kind === "task" && !t.completed && t.deadline && isPast(new Date(t.deadline))));
+  const recurringActiveTasks = activeTasks.filter((t): t is Extract<TaskFeedItem, { kind: "task" }> => t.kind === "task" && t.is_recurring && !t.completed);
+  const recurringDone = activeTasks.filter((t): t is Extract<TaskFeedItem, { kind: "task" }> => t.kind === "task" && t.completed && t.is_recurring);
 
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -270,68 +322,123 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
-  const TaskCard = ({ task }: { task: StaffTask }) => {
-    const isOverdue = task.deadline && !task.completed && isPast(new Date(task.deadline));
-    const taskWeekCount = countCompletions(task.completion_log, weekStart);
+  const TaskCard = ({ task }: { task: TaskFeedItem }) => {
+    const isScheduleTask = task.kind === "schedule";
+    const isOverdue = !isScheduleTask && task.deadline && !task.completed && isPast(new Date(task.deadline));
+    const taskWeekCount = !isScheduleTask ? countCompletions(task.completion_log, weekStart) : 0;
 
     return (
       <div className={`group rounded-xl border-2 p-4 transition-all ${
-        isOverdue ? 'border-destructive/50 bg-destructive/5' : priorityColors[task.priority] || 'border-border/50 bg-card/30'
+        isScheduleTask
+          ? 'border-[hsl(var(--gold))]/25 bg-[hsl(var(--gold))]/5'
+          : isOverdue
+            ? 'border-destructive/50 bg-destructive/5'
+            : priorityColors[task.priority] || 'border-border/50 bg-card/30'
       }`}>
-        {(task as any).image_url && (
-          <div className="mb-3 rounded-lg overflow-hidden h-32 bg-muted">
-            <img src={(task as any).image_url} alt="" className="w-full h-full object-cover" />
+        {task.image_url && (
+          <div className="mb-3 h-32 overflow-hidden rounded-lg bg-muted">
+            <img src={task.image_url} alt="" className="h-full w-full object-cover" />
           </div>
         )}
         <div className="flex items-start gap-3">
-          <Checkbox
-            checked={task.completed}
-            onCheckedChange={(checked) => handleToggleComplete(task.id, !!checked)}
-            className="mt-1 shrink-0"
-          />
-          <div className="flex-1 min-w-0">
+          {isScheduleTask ? (
+            <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[hsl(var(--gold))]/40 bg-[hsl(var(--gold))]/10">
+              <Calendar className="h-3 w-3 text-[hsl(var(--gold))]" />
+            </div>
+          ) : (
+            <Checkbox
+              checked={task.completed}
+              onCheckedChange={(checked) => handleToggleComplete(task.id, !!checked)}
+              className="mt-1 shrink-0"
+            />
+          )}
+          <div className="min-w-0 flex-1">
             <p className={`font-semibold text-sm ${task.completed && !task.is_recurring ? 'line-through opacity-50' : ''}`}>
               {task.title}
             </p>
             {task.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
             )}
-            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${priorityBadgeColors[task.priority] || ''}`}>
-                {task.priority}
-              </Badge>
-              {task.category && (
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.category}</Badge>
-              )}
-              {task.is_recurring && (
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">
-                  <RotateCcw className="h-2.5 w-2.5 mr-0.5" />
-                  {task.recurrence_label || 'Recurring'}
-                </Badge>
-              )}
-              {task.deadline && (
-                <span className={`text-[9px] flex items-center gap-0.5 ${isOverdue ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
-                  <Clock className="h-2.5 w-2.5" />
-                  {format(new Date(task.deadline), 'dd MMM')}
-                </span>
-              )}
-              {taskWeekCount > 0 && (
-                <span className="text-[9px] text-emerald-400 flex items-center gap-0.5">
-                  <CheckCircle2 className="h-2.5 w-2.5" /> {taskWeekCount} this week
-                </span>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {isScheduleTask ? (
+                <>
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
+                    Scheduled
+                  </Badge>
+                  {task.category && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.category}</Badge>}
+                  {task.scheduleItem.platform_format && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.scheduleItem.platform_format}</Badge>}
+                  <span className="text-[9px] text-muted-foreground">{task.scheduleItem.day_of_week.charAt(0).toUpperCase() + task.scheduleItem.day_of_week.slice(1)}</span>
+                  {task.scheduleItem.scheduled_time && (
+                    <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" /> {task.scheduleItem.scheduled_time}
+                    </span>
+                  )}
+                  {task.scheduleItem.status && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.scheduleItem.status}</Badge>}
+                </>
+              ) : (
+                <>
+                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${priorityBadgeColors[task.priority] || ''}`}>
+                    {task.priority}
+                  </Badge>
+                  {task.category && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.category}</Badge>
+                  )}
+                  {task.is_recurring && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">
+                      <RotateCcw className="h-2.5 w-2.5 mr-0.5" />
+                      {task.recurrence_label || 'Recurring'}
+                    </Badge>
+                  )}
+                  {task.deadline && (
+                    <span className={`text-[9px] flex items-center gap-0.5 ${isOverdue ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                      <Clock className="h-2.5 w-2.5" />
+                      {format(new Date(task.deadline), 'dd MMM')}
+                    </span>
+                  )}
+                  {taskWeekCount > 0 && (
+                    <span className="text-[9px] text-emerald-400 flex items-center gap-0.5">
+                      <CheckCircle2 className="h-2.5 w-2.5" /> {taskWeekCount} this week
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditTask(task)} title="Edit">
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleLogCompletion(task.id)} title="Log done">
-              <Check className="h-3 w-3 text-emerald-400" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(task.id)} title="Delete">
-              <Trash2 className="h-3 w-3 text-destructive" />
-            </Button>
+          <div className="flex shrink-0 flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            {isScheduleTask ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => window.location.assign(`/staff?section=schedule&scheduleItem=${task.scheduleItem.id}`)}
+                  title="Edit"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => window.location.assign(`/staff?section=schedule&scheduleItem=${task.scheduleItem.id}`)}
+                  title="Open in Schedule"
+                >
+                  <ExternalLink className="h-3 w-3 text-[hsl(var(--gold))]" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditTask(task)} title="Edit">
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleLogCompletion(task.id)} title="Log done">
+                  <Check className="h-3 w-3 text-emerald-400" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(task.id)} title="Delete">
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -367,7 +474,9 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           {staffMembers.map((m, i) => {
             const isActive = i === activeStaffIndex;
             const isCurrent = m.id === userId;
-            const memberTaskCount = tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length;
+            const memberTaskCount =
+              tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
+              scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
             return (
               <button
                 key={m.id}
@@ -413,11 +522,11 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           </div>
 
           {/* Quick action buttons for recurring tasks */}
-          {activeTasks.filter(t => t.is_recurring && !t.completed).length > 0 && (
+          {recurringActiveTasks.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Log</p>
               <div className="flex flex-wrap gap-2">
-                {activeTasks.filter(t => t.is_recurring && !t.completed).map(task => (
+                {recurringActiveTasks.map(task => (
                   <Button
                     key={task.id}
                     variant="outline"
@@ -457,56 +566,6 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             </div>
           )}
 
-          {/* Schedule items */}
-          {memberScheduleItems.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-[hsl(var(--gold))]" /> Scheduled Content ({memberScheduleItems.length})
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {memberScheduleItems.map(item => (
-                  <div key={item.id} className="group rounded-xl border-2 border-[hsl(var(--gold))]/20 bg-[hsl(var(--gold))]/5 overflow-hidden transition-all">
-                    {item.image_url && (
-                      <div className="h-28 overflow-hidden">
-                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm">{item.post_type}</p>
-                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
-                              {item.day_of_week.charAt(0).toUpperCase() + item.day_of_week.slice(1)}
-                            </Badge>
-                            {item.platform_format && (
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.platform_format}</Badge>
-                            )}
-                            {item.scheduled_time && (
-                              <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                                <Clock className="h-2.5 w-2.5" /> {item.scheduled_time}
-                              </span>
-                            )}
-                            {item.status && (
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.status}</Badge>
-                            )}
-                          </div>
-                        </div>
-                        <a
-                          href="/staff?section=schedule"
-                          className="shrink-0 flex items-center gap-1 text-[10px] text-[hsl(var(--gold))] hover:underline"
-                          title="Open in Schedule"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {recurringDone.length > 0 && (
             <div>
               <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -530,7 +589,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             </div>
           )}
 
-          {memberTasks.length === 0 && (
+          {memberTaskFeed.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">No tasks assigned</p>
           )}
 
