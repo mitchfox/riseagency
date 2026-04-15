@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, MessageSquareText, Filter, X, ImageIcon, MapPin, Grid3X3, Timer, ArrowUp, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, MessageSquareText, Filter, X, ImageIcon, MapPin, Grid3X3, Timer, ArrowUp, ChevronDown, ChevronUp, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { SEO } from "@/components/SEO";
@@ -22,6 +22,7 @@ import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { ChanceCreationFlow } from "@/components/report/ChanceCreationFlow";
 import { MatchTimelapse } from "@/components/report/MatchTimelapse";
 import { RankedActionsPlayer } from "@/components/report/RankedActionsPlayer";
+import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
 import { toTitleCase } from "@/lib/titleCase";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { sortActionsByMinute } from "@/lib/actionSorting";
@@ -51,6 +52,7 @@ interface PerformanceAction {
   clip_end?: number | null;
   zone?: number | null;
   zone_details?: any[] | null;
+  recorded_stat?: unknown;
 }
 
 interface StrikerStats {
@@ -143,6 +145,7 @@ const PerformanceReport = () => {
   const [showTimelapse, setShowTimelapse] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
+  const [showShotMap, setShowShotMap] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
   const [showZonePlayer, setShowZonePlayer] = useState(false);
   const [zonePlayerTitle, setZonePlayerTitle] = useState("");
@@ -203,7 +206,7 @@ const PerformanceReport = () => {
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat")
           .eq("analysis_id", analysisId)
           .order("action_number", { ascending: true })
       ]);
@@ -491,6 +494,8 @@ const PerformanceReport = () => {
 
   const reportClips = actions.filter((action) => hasPlayableVideo(action));
   const filteredReportClips = filteredActions.filter((action) => hasPlayableVideo(action));
+  const hasNotedClips = reportClips.some((action) => !!action.notes);
+  const hasAnyShotMap = hasShotMapData(actions);
 
   const hasActiveFilters = filterTypes.length > 0 || filterRating !== null || filterHasNotes;
 
@@ -649,16 +654,15 @@ const PerformanceReport = () => {
             {/* Video Options Row - Noted Actions, Full Match, Ranked Clips */}
             {reportClips.length > 0 && (
               <div className="grid grid-cols-3 gap-1 md:gap-2">
-                {reportClips.some(a => a.notes) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
-                    className="text-xs font-semibold w-full"
-                  >
-                    <MessageSquareText className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "noted_actions")}
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!hasNotedClips}
+                  onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
+                  className="text-xs font-semibold w-full"
+                >
+                  <MessageSquareText className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "noted_actions")}
+                </Button>
                 <Button
                   variant="default"
                   size="sm"
@@ -739,7 +743,7 @@ const PerformanceReport = () => {
                       const hasGoalBorder = isGoals && typeof goalsValue === 'number' && goalsValue >= 1;
                       return (
                         <div key={stat.key} className={`text-center p-1.5 md:p-3 bg-accent/10 rounded ${hasGoalBorder ? 'ring-2 ring-gold' : ''}`}>
-                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 capitalize truncate">{formatStatLabel(stat.key)}</p>
+                          <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 truncate">{formatStatLabel(stat.key)}</p>
                           {stat.isPaired ? (
                             <>
                               <p className="text-sm md:text-lg font-bold">{stat.percentage}%</p>
@@ -802,27 +806,32 @@ const PerformanceReport = () => {
           {/* Graphics Buttons Row - between match stats and actions */}
           {actions.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); }} className="text-xs">
+              <Button variant={showR90Flow ? "default" : "outline"} size="sm" onClick={() => { setShowR90Flow(!showR90Flow); setShowHeatmap(false); setShowShotMap(false); }} className="text-xs">
                 <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "r90_flow")}
               </Button>
-              <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); }} className="text-xs">
+              <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowHeatmap(!showHeatmap); setShowR90Flow(false); setShowChanceCreation(false); setShowPitchHeatmap(false); setShowShotMap(false); }} className="text-xs">
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "period_grade_map")}
               </Button>
+              {hasAnyShotMap && (
+                <Button variant={showShotMap ? "default" : "outline"} size="sm" onClick={() => { setShowShotMap(!showShotMap); setShowR90Flow(false); setShowHeatmap(false); setShowPitchHeatmap(false); setShowZonePerformance(false); setShowTimelapse(false); setShowChanceCreation(false); }} className="text-xs">
+                  <Crosshair className="h-3.5 w-3.5 mr-1.5" />Shot Map
+                </Button>
+              )}
               {actions.some(a => a.zone || (a.zone_details && a.zone_details.length > 0)) && (
                 <>
-                  <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
+                  <Button variant={showPitchHeatmap ? "default" : "outline"} size="sm" onClick={() => { setShowPitchHeatmap(!showPitchHeatmap); setShowZonePerformance(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }} className="text-xs">
                     <MapPin className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "pitch_heatmap")}
                   </Button>
-                  <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); }} className="text-xs">
+                  <Button variant={showZonePerformance ? "default" : "outline"} size="sm" onClick={() => { setShowZonePerformance(!showZonePerformance); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowTimelapse(false); setShowShotMap(false); }} className="text-xs">
                     <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "zone_performance")}
                   </Button>
-                  <Button variant={showTimelapse ? "default" : "outline"} size="sm" onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); }} className="text-xs">
+                  <Button variant={showTimelapse ? "default" : "outline"} size="sm" onClick={() => { setShowTimelapse(!showTimelapse); setShowZonePerformance(false); setShowPitchHeatmap(false); setShowR90Flow(false); setShowHeatmap(false); setShowChanceCreation(false); setShowShotMap(false); }} className="text-xs">
                     <Timer className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "match_timelapse")}
                   </Button>
                 </>
               )}
               {analysis.striker_stats && ['crossing_movement_xC', 'movement_in_behind_xC', 'movement_down_side_xC', 'triple_threat_xC', 'movement_to_feet_xC'].some(k => (analysis.striker_stats as any)?.[k] > 0) && (
-                <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); }} className="text-xs">
+                <Button variant="outline" size="sm" onClick={() => { setShowChanceCreation(!showChanceCreation); setShowR90Flow(false); setShowHeatmap(false); setShowShotMap(false); }} className="text-xs">
                   <TrendingUp className="h-3.5 w-3.5 mr-1.5" />{t(reportLanguage, "chance_creation_flow")}
                 </Button>
               )}
@@ -837,6 +846,11 @@ const PerformanceReport = () => {
           {/* Action Heatmap */}
           {showHeatmap && analysis.minutes_played && (
             <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ActionHeatmap actions={actions} minutesPlayed={analysis.minutes_played} language={reportLanguage} /></CardContent></Card>
+          )}
+
+          {/* Shot Map */}
+          {showShotMap && (
+            <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} /></CardContent></Card>
           )}
 
           {/* Pitch Heatmap */}

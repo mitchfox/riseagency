@@ -568,6 +568,36 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
     setForm({ post_type: '', day_of_week: 'monday', scheduled_time: '', platform_format: 'post', owner_id: '', status: 'planned', linked_draft_id: '', notes: '', image_url: '' });
   };
 
+  const openEditor = useCallback((item: ScheduleItem) => {
+    setEditingItem(item);
+    setForm({
+      post_type: item.post_type,
+      day_of_week: item.day_of_week,
+      scheduled_time: item.scheduled_time || '',
+      platform_format: item.platform_format || 'post',
+      owner_id: item.owner_id || '',
+      status: item.status || 'planned',
+      linked_draft_id: item.linked_draft_id || '',
+      notes: item.notes || '',
+      image_url: item.image_url || '',
+    });
+    setShowDialog(true);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const scheduleItemId = params.get('scheduleItem');
+    if (!scheduleItemId || items.length === 0) return;
+
+    const targetItem = items.find((item) => item.id === scheduleItemId);
+    if (!targetItem) return;
+
+    openEditor(targetItem);
+    params.delete('scheduleItem');
+    const query = params.toString();
+    window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, [items, openEditor]);
+
   const openAddForDay = (day: string) => {
     setEditingItem(null);
     resetForm();
@@ -682,21 +712,7 @@ export const ScheduleManager = ({ canManage }: ScheduleManagerProps) => {
                     canManage={canManage}
                     owners={owners}
                     draftsMap={draftsMap}
-                    onEdit={(item) => {
-                      setEditingItem(item);
-                      setForm({
-                        post_type: item.post_type,
-                        day_of_week: item.day_of_week,
-                        scheduled_time: item.scheduled_time || '',
-                        platform_format: item.platform_format || 'post',
-                        owner_id: item.owner_id || '',
-                        status: item.status || 'planned',
-                        linked_draft_id: item.linked_draft_id || '',
-                        notes: item.notes || '',
-                        image_url: item.image_url || '',
-                      });
-                      setShowDialog(true);
-                    }}
+                    onEdit={openEditor}
                     onAdd={openAddForDay}
                     isOver={overDay === day.id}
                     onClickDraft={handleClickDraft}
