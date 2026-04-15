@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer, ChevronDown, ChevronUp, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -25,6 +25,7 @@ import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 import { hasPlayableClip } from "@/lib/clipVideoUtils";
+import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -47,6 +48,7 @@ interface PerformanceAction {
   clip_end?: number | null;
   zone?: number | null;
   zone_details?: any | null;
+  recorded_stat?: unknown;
 }
 
 interface StrikerStats {
@@ -114,6 +116,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterRating, setFilterRating] = useState<string | null>(null);
   const [filterHasNotes, setFilterHasNotes] = useState(false);
   const sharedClipPlayer = useSharedClipPlayer();
+  const [showMatchStats, setShowMatchStats] = useState(false);
+  const [showShotMap, setShowShotMap] = useState(false);
 
   const openClip = (action: PerformanceAction) => {
     if (!hasPlayableClip(action)) {
@@ -186,7 +190,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat")
           .eq("analysis_id", id)
           .order("action_number", { ascending: true })
       ]);
