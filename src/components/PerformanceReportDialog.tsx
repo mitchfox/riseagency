@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade, getXGGrade, getXAGrade, getRegainsGrade, getInterceptionsGrade, getXGChainGrade, getProgressivePassesGrade, getPPTurnoversRatioGrade } from "@/lib/gradeCalculations";
-import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer, ChevronDown, ChevronUp, Crosshair, ArrowUp } from "lucide-react";
+import { Download, X, ImageIcon, Video, Play, Calculator, TrendingUp, BarChart3, Film, Award, HelpCircle, Link2, MessageSquareText, Filter, Lock, MapPin, Grid3X3, Timer, ChevronDown, ChevronUp, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
@@ -1424,21 +1424,6 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           </div>
         </DialogContent>
       </Dialog>
-
-      {open && (
-        <Button
-          type="button"
-          size="icon"
-          className="fixed bottom-4 right-4 z-[120] h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-[0_14px_34px_hsl(var(--background)/0.45)] hover:bg-primary/90 md:bottom-6 md:right-6"
-          onClick={() => {
-            contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          aria-label="Back to top"
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
-      )}
     </Dialog>
   );
 };

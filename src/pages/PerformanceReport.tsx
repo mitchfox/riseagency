@@ -1132,18 +1132,17 @@ const PerformanceReport = () => {
         </DialogContent>
       </Dialog>
 
-      <Button
-        type="button"
-        size="icon"
-        className="fixed bottom-4 right-4 z-40 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-[0_14px_34px_hsl(var(--background)/0.45)] hover:bg-primary/90 md:bottom-6 md:right-6"
-        onClick={() => {
-          contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        aria-label="Back to top"
-      >
-        <ArrowUp className="h-4 w-4" />
-      </Button>
+      {/* Back to Top */}
+      <div className="flex justify-center py-6">
+        <Button
+          variant="default"
+          size="sm"
+          className="bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 font-semibold"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <ArrowUp className="h-3.5 w-3.5 mr-1.5" /> Back to Top
+        </Button>
+      </div>
     </div>
   );
 };

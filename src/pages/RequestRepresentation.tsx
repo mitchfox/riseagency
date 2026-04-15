@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowRight, MessageCircle, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ShieldCheck, CheckCircle2, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, MessageCircle, ChevronLeft, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ShieldCheck } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
-import blackMarbleBg from "@/assets/black-marble-bg.png";
-import logo from "@/assets/logo.png";
+import requestRepresentationHero from "@/assets/request-representation-hero-uploaded.png";
 
 type AgeGroup = null | "under18" | "over18";
 type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting";
-type PanelKey = "offer" | "fit" | "process" | "request";
 
 const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Gauge; eyebrow: string }> = [
   { key: "performance", title: "Performance", icon: Gauge, eyebrow: "Real analysis, real evidence" },
@@ -23,38 +21,12 @@ const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Gauge; eyebro
 
 const marbleStyle = {
   backgroundImage: [
-    "radial-gradient(circle at 18% 18%, hsl(var(--primary) / 0.18), transparent 28%)",
-    "radial-gradient(circle at 80% 22%, hsl(var(--foreground) / 0.1), transparent 24%)",
-    "radial-gradient(circle at 68% 78%, hsl(var(--primary) / 0.1), transparent 22%)",
+    "radial-gradient(circle at 18% 18%, hsl(var(--gold) / 0.18), transparent 28%)",
+    "radial-gradient(circle at 80% 22%, hsl(var(--foreground) / 0.12), transparent 24%)",
+    "radial-gradient(circle at 68% 78%, hsl(var(--gold) / 0.12), transparent 22%)",
     "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--card)) 48%, hsl(var(--background)) 100%)",
   ].join(", "),
 };
-
-const NAV_ITEMS: Array<{ key: PanelKey; label: string }> = [
-  { key: "offer", label: "What We Offer" },
-  { key: "fit", label: "Who It’s For" },
-  { key: "process", label: "How It Works" },
-  { key: "request", label: "Your Request" },
-];
-
-const PROCESS_STEPS = [
-  {
-    title: "Share the basics",
-    text: "Tell us your age group, position, club situation and what you want help with so we can assess properly.",
-  },
-  {
-    title: "Send proper evidence",
-    text: "Recent footage, match context and the right details let us judge level without guesswork.",
-  },
-  {
-    title: "We review the fit",
-    text: "We assess the football, the level, the pathway and whether there is a genuine fit with the agency.",
-  },
-  {
-    title: "Direct next step",
-    text: "If there is a fit, we speak clearly about the next stage instead of dragging the process out.",
-  },
-];
 
 const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
   performance: {
@@ -170,14 +142,11 @@ const MarbleIconPanel = ({ icon: Icon, title }: { icon: typeof Gauge; title: str
 );
 
 const RequestRepresentation = () => {
-  const shouldReduceMotion = useReducedMotion();
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
-  const [activeCard, setActiveCard] = useState<CardKey>("performance");
-  const [activePanel, setActivePanel] = useState<PanelKey>("offer");
+  const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const cardContent = useMemo(() => (ageGroup ? getCardContent(ageGroup) : null), [ageGroup]);
-  const activeMeta = CARD_META.find((card) => card.key === activeCard) || CARD_META[0];
 
   const openWhatsApp = () => {
     window.open("https://wa.me/447340184399?text=Hi%2C%20I%27d%20like%20to%20request%20representation.", "_blank");
@@ -190,217 +159,203 @@ const RequestRepresentation = () => {
         description="Request representation from RISE Football Agency. Performance support, club introductions and player guidance."
       />
 
-      <section className="relative min-h-[100dvh] overflow-hidden px-4 py-4 md:px-6 md:py-6">
-        <img src={blackMarbleBg} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.28),hsl(var(--background)/0.82)_55%,hsl(var(--background)))]" />
-        {!shouldReduceMotion && (
-          <>
-            <motion.div className="absolute left-[10%] top-[12%] h-32 w-32 rounded-full bg-primary/10 blur-3xl" animate={{ scale: [1, 1.15, 1], opacity: [0.35, 0.55, 0.35] }} transition={{ duration: 6, repeat: Infinity }} />
-            <motion.div className="absolute bottom-[14%] right-[6%] h-40 w-40 rounded-full bg-primary/10 blur-3xl" animate={{ scale: [1.05, 0.9, 1.05], opacity: [0.25, 0.45, 0.25] }} transition={{ duration: 7, repeat: Infinity }} />
-          </>
-        )}
+      <AnimatePresence mode="wait">
+        {!ageGroup ? (
+          <motion.section
+            key="request-age"
+            initial={{ opacity: 0, x: 36 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -36 }}
+            transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+            className="relative min-h-[100dvh]"
+          >
+            <img
+              src={requestRepresentationHero}
+              alt="Player walking out towards the pitch"
+              className="absolute inset-0 h-full w-full object-cover"
+              width={1400}
+              height={900}
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.16),hsl(var(--background)/0.68)_52%,hsl(var(--background))_100%)]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-2rem)] max-w-6xl flex-col gap-4 rounded-[2rem] border border-border/60 bg-background/55 p-4 backdrop-blur-md md:p-6">
-          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-            <div className="rounded-[1.8rem] border border-border/50 bg-card/45 p-5 md:p-7" style={marbleStyle}>
-              <img src={logo} alt="RISE Football Agency" className="h-10 w-auto" />
-              <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">Request Representation</p>
-              <h1 className="mt-3 font-bebas text-5xl uppercase leading-none tracking-[0.12em] md:text-7xl">RISE WITH US</h1>
-              <div className="mt-4 max-w-[34ch] space-y-1 text-sm leading-relaxed text-foreground/82 md:text-base">
-                <p className="font-medium">Realise potential with our experienced intermediary</p>
-                <p className="text-foreground/66">and English Premier League star performance team.</p>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                <Button size="lg" className="h-12 rounded-xl font-bebas uppercase tracking-[0.14em]" onClick={() => setActivePanel("request")}>
-                  Start Request <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button size="lg" variant="outline" className="h-12 rounded-xl font-bebas uppercase tracking-[0.14em]" onClick={openWhatsApp}>
-                  <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
-                </Button>
-              </div>
-            </div>
+            <div className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-5 pb-10 pt-10">
+              <motion.div
+                initial={{ opacity: 0, y: 28 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08, duration: 0.42 }}
+                className="mx-auto w-full max-w-sm"
+              >
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.24em] text-primary">Request Representation</p>
+                <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl">RISE WITH US</h1>
+                <p className="mt-4 max-w-[32ch] text-sm leading-relaxed text-foreground/84">
+                  REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
+                </p>
+              </motion.div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {NAV_ITEMS.map((item, index) => (
-                <motion.button
-                  key={item.key}
-                  type="button"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: shouldReduceMotion ? 0 : index * 0.05, duration: 0.28 }}
-                  onClick={() => setActivePanel(item.key)}
-                  className={`rounded-[1.35rem] border p-4 text-left transition-all ${activePanel === item.key ? "border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.22)]" : "border-border/60 bg-card/35 hover:border-primary/35 hover:bg-card/60"}`}
+              <motion.div
+                initial={{ opacity: 0, y: 28 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16, duration: 0.42 }}
+                className="mx-auto mt-8 grid w-full max-w-sm gap-3"
+              >
+                <Button
+                  size="lg"
+                  className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setAgeGroup("under18")}
                 >
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-primary">Panel {index + 1}</p>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="font-bebas text-xl uppercase tracking-[0.08em]">{item.label}</p>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </motion.button>
-              ))}
+                  Under 18
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 rounded-2xl border-border bg-background/70 font-bebas text-lg uppercase tracking-[0.14em] text-foreground backdrop-blur-md hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => setAgeGroup("over18")}
+                >
+                  Over 18
+                </Button>
+              </motion.div>
             </div>
-          </div>
+          </motion.section>
+        ) : activeCard && cardContent ? (
+          <motion.section
+            key={`detail-${activeCard}`}
+            initial={{ opacity: 0, x: 42 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -42 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            className="min-h-[100dvh] px-4 py-5"
+          >
+            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col">
+              <button
+                onClick={() => setActiveCard(null)}
+                className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Back
+              </button>
 
-          <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[0.88fr_1.12fr]">
-            <div className="overflow-hidden rounded-[1.7rem] border border-border/60 bg-card/40 p-3">
-              <div className="grid grid-cols-2 gap-2">
-                {CARD_META.map((card) => {
+              <MarbleIconPanel icon={CARD_META.find((card) => card.key === activeCard)!.icon} title={cardContent[activeCard].title} />
+
+              <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.22em] text-primary">{cardContent[activeCard].eyebrow}</p>
+              <h2 className="mt-1.5 font-bebas text-3xl uppercase leading-none tracking-[0.14em]">{cardContent[activeCard].title}</h2>
+
+              <div className="mt-5 space-y-2.5">
+                {cardContent[activeCard].points.map((point, index) => (
+                  <motion.div
+                    key={point}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.24 }}
+                    className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84"
+                  >
+                    {point}
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-auto grid gap-2.5 pb-2 pt-6">
+                <Button
+                  size="lg"
+                  className="h-13 rounded-2xl bg-primary font-bebas text-base uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setShowForm(true)}
+                >
+                  Start the Conversation <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-13 rounded-2xl font-bebas text-base uppercase tracking-[0.14em]"
+                  onClick={openWhatsApp}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp Us
+                </Button>
+              </div>
+            </div>
+          </motion.section>
+        ) : cardContent ? (
+          <motion.section
+            key="request-hub"
+            initial={{ opacity: 0, x: 36 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -36 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            className="min-h-[100dvh] px-4 py-5"
+          >
+            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col">
+              <div className="relative overflow-hidden rounded-[1.8rem] border border-border/60">
+                <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover" width={1400} height={900} />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.18),hsl(var(--background)/0.28),hsl(var(--background)/0.92))]" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Request Representation</p>
+                  <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em]">RISE WITH US</h1>
+                  <p className="mt-2 max-w-[32ch] text-xs leading-relaxed text-foreground/80">
+                    REALISE POTENTIAL WITH OUR EXPERIENCED INTERMEDIARY &amp; ENGLISH PREMIER-LEAGUE STAR PERFORMANCE TEAM.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-4 mt-4 grid grid-cols-2 gap-2.5">
+                <Button
+                  size="lg"
+                  className="h-12 rounded-xl bg-primary font-bebas text-sm uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setShowForm(true)}
+                >
+                  Start Here
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 rounded-xl font-bebas text-sm uppercase tracking-[0.14em]"
+                  onClick={openWhatsApp}
+                >
+                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> WhatsApp
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {CARD_META.map((card, index) => {
                   const Icon = card.icon;
                   return (
-                    <button
+                    <motion.button
                       key={card.key}
                       type="button"
-                      onClick={() => {
-                        setActiveCard(card.key);
-                        setActivePanel("offer");
-                      }}
-                      className={`group relative overflow-hidden rounded-[1.25rem] border p-3 text-left transition-all ${activeCard === card.key ? "border-primary bg-primary/10" : "border-border/50 bg-background/55 hover:border-primary/30"}`}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ scale: 1.03, rotateX: [0, 8, -6, 0], rotateY: index % 2 === 0 ? [0, -9, 7, 0] : [0, 9, -7, 0], y: [0, -5, 0] }}
+                      whileTap={{ scale: 0.97, rotateX: 3, rotateY: index % 2 === 0 ? -3 : 3 }}
+                      transition={{ delay: index * 0.04, duration: 0.42 }}
+                      onClick={() => setActiveCard(card.key)}
+                      className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-left"
+                      style={{ ...marbleStyle, transformStyle: "preserve-3d" }}
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10">
-                        <Icon className="h-4 w-4 text-primary" />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06),hsl(var(--background)/0.74))]" />
+                      <div className="relative flex min-h-[132px] flex-col justify-between">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)]">
+                          <Icon className="h-4.5 w-4.5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-primary/80">{card.eyebrow}</p>
+                          <p className="mt-1 font-bebas text-lg uppercase leading-none tracking-[0.1em]">{card.title}</p>
+                        </div>
                       </div>
-                      <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-primary/75">{card.eyebrow}</p>
-                      <p className="mt-1 font-bebas text-lg uppercase leading-none tracking-[0.08em]">{card.title}</p>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
-            </div>
 
-            <div className="min-h-0 overflow-hidden rounded-[1.7rem] border border-border/60 bg-card/40">
-              <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-primary">{NAV_ITEMS.find((item) => item.key === activePanel)?.label}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Click through each panel rather than scrolling through one long page.</p>
-                </div>
-                <div className="flex items-center gap-2 rounded-full border border-border/50 bg-background/60 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setAgeGroup("under18")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${ageGroup === "under18" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Under 18
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAgeGroup("over18")}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${ageGroup === "over18" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Over 18
-                  </button>
-                </div>
-              </div>
-
-              <div className="max-h-[52dvh] overflow-y-auto p-4 md:p-5">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${activePanel}-${activeCard}-${ageGroup}`}
-                    initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16, scale: shouldReduceMotion ? 1 : 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10, scale: shouldReduceMotion ? 1 : 0.98 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4"
-                  >
-                    {activePanel === "offer" && cardContent && (
-                      <>
-                        <MarbleIconPanel icon={activeMeta.icon} title={cardContent[activeCard].title} />
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.22em] text-primary">{cardContent[activeCard].eyebrow}</p>
-                          <h2 className="mt-2 font-bebas text-3xl uppercase tracking-[0.1em]">{cardContent[activeCard].title}</h2>
-                        </div>
-                        <div className="grid gap-2.5">
-                          {cardContent[activeCard].points.map((point, index) => (
-                            <motion.div key={point} initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: shouldReduceMotion ? 0 : index * 0.04, duration: 0.22 }} className="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm leading-relaxed text-foreground/84">
-                              {point}
-                            </motion.div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    {activePanel === "fit" && (
-                      <div className="space-y-4">
-                        <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                          <p className="text-[10px] uppercase tracking-[0.22em] text-primary">Who It’s For</p>
-                          <h2 className="mt-2 font-bebas text-3xl uppercase tracking-[0.1em]">{ageGroup === "under18" ? "Young players with serious intent" : "Players ready for proper representation"}</h2>
-                          <p className="mt-3 text-sm leading-relaxed text-foreground/82">
-                            {ageGroup === "under18"
-                              ? "This route is for ambitious young players who want clear feedback, evidence-based performance support and proper structure around development. Parent or guardian involvement stays part of the process where needed."
-                              : "This route is for players who want clear standards, direct communication, real performance support and a representation process built around evidence rather than noise."}
-                          </p>
-                        </div>
-                        <div className="grid gap-2.5 sm:grid-cols-2">
-                          {(ageGroup === "under18"
-                            ? [
-                                "Evidence-led reporting and review",
-                                "Family kept clear on process",
-                                "Development before empty hype",
-                                "Structured support and standards",
-                              ]
-                            : [
-                                "Direct feedback and proper standards",
-                                "Clarity on fees and agreement",
-                                "Performance support with substance",
-                                "A sharper route into club conversations",
-                              ]
-                          ).map((item) => (
-                            <div key={item} className="rounded-2xl border border-border/60 bg-card/45 p-4 text-sm text-foreground/82">
-                              <div className="flex items-start gap-2">
-                                <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                                <span>{item}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {activePanel === "process" && (
-                      <div className="space-y-3">
-                        {PROCESS_STEPS.map((step, index) => (
-                          <motion.button key={step.title} type="button" initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: shouldReduceMotion ? 0 : index * 0.05, duration: 0.24 }} className="w-full rounded-2xl border border-border/60 bg-background/60 p-4 text-left hover:border-primary/35">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="text-[10px] uppercase tracking-[0.22em] text-primary">Step {index + 1}</p>
-                                <h2 className="mt-2 font-bebas text-2xl uppercase tracking-[0.08em]">{step.title}</h2>
-                                <p className="mt-2 text-sm leading-relaxed text-foreground/82">{step.text}</p>
-                              </div>
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 text-primary">
-                                {index + 1}
-                              </div>
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
-                    )}
-
-                    {activePanel === "request" && (
-                      <div className="space-y-4">
-                        <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                          <p className="text-[10px] uppercase tracking-[0.22em] text-primary">Your Request</p>
-                          <h2 className="mt-2 font-bebas text-3xl uppercase tracking-[0.1em]">Move forward with clarity</h2>
-                          <p className="mt-3 text-sm leading-relaxed text-foreground/82">Use the form if you want a proper review. If you need to speak first, use WhatsApp and we can point you in the right direction quickly.</p>
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <Button size="lg" className="h-14 rounded-2xl font-bebas uppercase tracking-[0.14em]" onClick={() => setShowForm(true)}>
-                            Start Request <ArrowRight className="ml-2 h-4 w-4" />
-                          </Button>
-                          <Button size="lg" variant="outline" className="h-14 rounded-2xl font-bebas uppercase tracking-[0.14em]" onClick={openWhatsApp}>
-                            <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
-                          </Button>
-                        </div>
-                        <div className="rounded-2xl border border-border/60 bg-card/45 p-4 text-sm leading-relaxed text-foreground/82">
-                          The clearest requests usually include recent footage, current club level, position, age group and what kind of support you are actually looking for.
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+              <div className="mt-auto pb-2 pt-5">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full rounded-xl font-bebas text-sm uppercase tracking-[0.14em]"
+                  onClick={() => setShowForm(true)}
+                >
+                  Open the Form <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </motion.section>
+        ) : null}
+      </AnimatePresence>
 
       <RepresentationDialog open={showForm} onOpenChange={setShowForm} />
     </div>
