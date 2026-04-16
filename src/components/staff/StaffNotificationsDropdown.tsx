@@ -144,8 +144,8 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       const rawType = notification.event_type;
       // Merge turning_18 into birthdays
       const eventType = MERGE_MAP[rawType] || rawType;
-      const config = CATEGORY_CONFIG[eventType] || { label: "Other", icon: Bell };
-      
+      const config = CATEGORY_CONFIG[eventType] || { label: titleCaseFromEventType(eventType), icon: Bell };
+
       if (!groups.has(eventType)) {
         groups.set(eventType, {
           category: eventType,
