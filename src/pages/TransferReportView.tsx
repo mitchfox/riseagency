@@ -692,6 +692,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                 </div>
               )}
               {configuredCompPlayers.length > 0 && Object.keys(playerAverages).length > 0 ? (
+                <div className="space-y-4">
                   {categories.map(cat => {
                     const catMetrics = cat.metrics.filter(m => !hiddenStats[`comp_${m.key}`] && playerAverages[m.key] != null);
                     if (catMetrics.length === 0) return null;
