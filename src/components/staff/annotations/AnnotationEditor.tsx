@@ -595,23 +595,41 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     if (!video) return;
     video.pause();
     setIsPlaying(false);
-    setDrawingTimestamp(video.currentTime);
     // Save current elements so we can revert on cancel
     setDrawingStartElements(activeKlip?.elements || []);
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+
+    // Wait for the video to settle on the exact displayed frame before capturing
+    const captureFrame = () => {
+      const exactTime = video.currentTime;
+      setDrawingTimestamp(exactTime);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0);
+          setFreezeFrameUrl(canvas.toDataURL('image/jpeg', 0.85));
+        }
+      } catch {
+        setFreezeFrameUrl(null);
       }
-    } catch {
-      setFreezeFrameUrl(null);
+      setDrawingMode(true);
+      setActiveTool('select');
+    };
+
+    // If video is already paused and settled, use requestAnimationFrame to ensure the frame is rendered
+    if (video.readyState >= 2) {
+      requestAnimationFrame(() => captureFrame());
+    } else {
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked);
+        requestAnimationFrame(() => captureFrame());
+      };
+      video.addEventListener('seeked', onSeeked);
+      // Re-trigger seek to current position to force a settled frame
+      video.currentTime = video.currentTime;
     }
-    setDrawingMode(true);
-    setActiveTool('select');
   }, [activeKlip]);
 
   const saveDrawing = useCallback(() => {
@@ -835,6 +853,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                 muted={muted}
                 playsInline
                 preload="auto"
+                loop
                 onClick={drawingMode ? undefined : togglePlay}
                 onError={() => {
                   if (project.videoUrl.startsWith('blob:')) {
@@ -843,6 +862,17 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                   }
                 }}
               />
+              {/* Play/pause overlay — shows when paused and not in drawing mode */}
+              {!isPlaying && !drawingMode && !videoError && !playbackFreezeActive && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center z-15 cursor-pointer bg-black/20"
+                  onClick={togglePlay}
+                >
+                  <div className="w-16 h-16 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                    <Play className="w-8 h-8 text-white ml-1" />
+                  </div>
+                </div>
+              )}
               {/* Re-upload overlay when video expired */}
               {videoError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 gap-3">

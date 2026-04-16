@@ -42,8 +42,8 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
 
     const tick = () => {
       const time = video.currentTime;
-      const clipStartTime = (video as any).__clipStartTime;
-      const relTime = clipStart + (time - (clipStartTime != null ? clipStartTime : time));
+      // Use explicit clipStart prop — don't rely on __clipStartTime which is never set
+      const relTime = time - clipStart;
 
       // Detect loop: currentTime jumped backwards significantly
       if (prevTimeRef.current > 0 && time < prevTimeRef.current - 0.5) {
