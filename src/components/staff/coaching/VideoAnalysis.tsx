@@ -2853,7 +2853,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   )}
                 </>
               ) : (
-                <><Upload className="h-4 w-4 mr-2" /> Upload Match Video</>
+                <><Upload className="h-4 w-4 mr-2" /> Upload Match Video{uploadFiles.length > 1 ? 's' : ''}</>
               )}
             </Button>
             {creating && uploadProgress > 0 && (
