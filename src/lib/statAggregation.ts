@@ -1,12 +1,27 @@
 /**
  * Centralised fixture-stat aggregation rules.
  *
- * - Raw count stats: blank/null counts as 0
- * - Percentage stats (_pct, accuracy, percentage): blank/null is excluded
+ * Both raw count stats and percentage stats now exclude rows where the
+ * metric key is missing entirely (i.e. the fixture wasn't coded for that
+ * metric at all). An explicit value of 0 IS counted — only true absence
+ * is excluded. This avoids dragging averages down to 0 for goalkeeper
+ * metrics like clean sheets when older fixtures predate the metric set.
  *
  * This single source of truth is used across portal, comparisons,
  * transfer reports and performance report views for both outfield and GK.
  */
+
+// Aliases between legacy and current stat keys (e.g. clean_sheets ↔ gk_clean_sheets)
+const STAT_KEY_ALIASES: Record<string, string[]> = {
+  gk_clean_sheets: ['clean_sheets'],
+  clean_sheets: ['gk_clean_sheets'],
+  gk_saves_made: ['saves'],
+  saves: ['gk_saves_made'],
+  gk_save_percentage: ['save_percentage'],
+  save_percentage: ['gk_save_percentage'],
+  gk_goals_conceded: ['goals_conceded'],
+  goals_conceded: ['gk_goals_conceded'],
+};
 
 const PERCENTAGE_PATTERNS = [
   '_pct',
@@ -29,8 +44,11 @@ export const isPercentageMetric = (key: string): boolean => {
 export const getStatValue = (analysis: any, key: string): number | null => {
   const fs = analysis?.fixture_stats as Record<string, any> | null;
   const ss = analysis?.striker_stats as Record<string, any> | null;
-  if (fs?.[key] != null) return Number(fs[key]);
-  if (ss?.[key] != null) return Number(ss[key]);
+  const keysToTry = [key, ...(STAT_KEY_ALIASES[key] || [])];
+  for (const k of keysToTry) {
+    if (fs?.[k] != null) return Number(fs[k]);
+    if (ss?.[k] != null) return Number(ss[k]);
+  }
   return null;
 };
 
@@ -48,27 +66,20 @@ export const getStatValue = (analysis: any, key: string): number | null => {
 export const computeStatAverage = (
   analyses: any[],
   metricKey: string,
-  totalGames?: number,
+  _totalGames?: number,
 ): number | null => {
   if (analyses.length === 0) return null;
 
-  const isPct = isPercentageMetric(metricKey);
+  // Both raw and percentage averages now use only rows that actually have a
+  // value for this metric. Explicit 0 still counts; only missing keys are
+  // excluded. This prevents older fixtures (which never tracked the metric)
+  // from dragging the average to zero.
+  const vals = analyses
+    .map(a => getStatValue(a, metricKey))
+    .filter((v): v is number => v != null && !isNaN(v));
 
-  if (isPct) {
-    // Percentage stats: only average over games that have an explicit value
-    const vals = analyses
-      .map(a => getStatValue(a, metricKey))
-      .filter((v): v is number => v != null && !isNaN(v));
-    return vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
-  }
-
-  // Raw count stats: null = 0, average over all games
-  const games = totalGames ?? analyses.length;
-  const sum = analyses.reduce((acc, a) => {
-    const v = getStatValue(a, metricKey);
-    return acc + (v != null && !isNaN(v) ? v : 0);
-  }, 0);
-  return games > 0 ? sum / games : null;
+  if (vals.length === 0) return null;
+  return vals.reduce((s, v) => s + v, 0) / vals.length;
 };
 
 /**
