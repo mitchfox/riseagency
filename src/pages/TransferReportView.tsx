@@ -435,7 +435,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
             <section>
               <SectionHeading title="Match Highlights" />
               {highlights.length > 0 ? (
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-black" style={{ border: `4px solid ${RISE_GOLD}` }}>
+                <div className="relative aspect-video rounded-2xl overflow-hidden bg-black" style={{ border: `4px solid ${RISE_GOLD}` }}>
                   {highlights[currentVideoIndex]?.videoUrl ? (
                     <>
                       <video
@@ -505,7 +505,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
             <section>
               <SectionHeading title="Biography & Profile" />
               {bio ? (
-                <div className="rounded-lg p-5" style={{ background: 'rgba(20,20,20,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                <div className="rounded-2xl p-5" style={{ background: 'rgba(20,20,20,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
                   <p className="text-white/70 leading-relaxed whitespace-pre-line text-sm md:text-base">
                     {isExpanded ? bio : shortBio}
                   </p>
@@ -1150,7 +1150,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
             <div className="flex items-center gap-8">
               {player?.image_url && (
                 <div className="relative flex-shrink-0">
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden" style={{ border: `2px solid ${RISE_GOLD}` }}>
+                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden" style={{ border: `2px solid ${RISE_GOLD}` }}>
                     <img src={player.image_url} alt={player?.name} className="w-full h-full object-cover" />
                   </div>
                 </div>
