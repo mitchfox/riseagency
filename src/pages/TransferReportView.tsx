@@ -1306,6 +1306,28 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
           </div>
         )}
 
+        {/* Quick Navigation Menu */}
+        <div className="sticky top-12 z-40 backdrop-blur-md" style={{ background: 'rgba(10,10,10,0.85)', borderBottom: `1px solid ${RISE_GOLD}1a` }}>
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-1 overflow-x-auto py-2" style={{ scrollbarWidth: 'none' }}>
+              {sectionsToRender.map((id: string) => {
+                const label = ALL_SECTIONS.find(s => s.id === id)?.label;
+                if (!label) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bebas uppercase tracking-wider transition-colors hover:opacity-80"
+                    style={{ color: `${RISE_GOLD}b3`, background: `${RISE_GOLD}0d`, border: `1px solid ${RISE_GOLD}1a` }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Content */}
         <div className="container mx-auto px-4 py-10 max-w-5xl space-y-12">
           {sectionsToRender.map((id: string) => renderSection(id))}
