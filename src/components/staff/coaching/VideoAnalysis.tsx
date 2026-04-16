@@ -491,8 +491,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, [knownActionTypes, actionTypeFrequency]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setUploadFile(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files).slice(0, 10);
+    if (fileArray.length === 1) {
+      setUploadFile(fileArray[0]);
+      setUploadFiles([]);
+    } else {
+      setUploadFile(fileArray[0]);
+      setUploadFiles(fileArray);
+    }
   };
 
   const handleCreate = async () => {
