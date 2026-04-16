@@ -12,40 +12,26 @@
   if (!isPWA || isLovablePreview) return;
 
   const currentPathname = window.location.pathname;
-
-  // Don't force-redirect from the public landing page (prevents reload loops on mobile preview)
-  if (currentPathname === '/') return;
-
   const currentFullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-  const ALLOWED_SCOPES = ['/portal', '/staff'] as const;
   const LAST_ROUTE_KEY = 'pwa_last_route';
-  const LAST_SCOPE_KEY = 'pwa_last_scope';
+  const HOME_ROUTES = new Set(['/', '/index.html']);
 
-  const getScope = (pathname: string) =>
-    ALLOWED_SCOPES.find(scope => pathname === scope || pathname.startsWith(`${scope}/`)) ?? null;
-
-  const currentScope = getScope(currentPathname);
-
-  // Persist last valid in-scope location
-  if (currentScope) {
-    localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
-    localStorage.setItem(LAST_SCOPE_KEY, currentScope);
+  // Persist any non-trivial route the user lands on so we can return to it on next launch
+  if (!HOME_ROUTES.has(currentPathname)) {
+    try {
+      localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
+    } catch {}
     return;
   }
 
-  // If user lands outside allowed PWA scopes, force them back into portal/staff
-  const savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
-  const savedScope = localStorage.getItem(LAST_SCOPE_KEY);
-  const validSavedRoute =
-    !!savedRoute && ALLOWED_SCOPES.some(scope => savedRoute === scope || savedRoute.startsWith(`${scope}/`));
-  const fallbackScope =
-    savedScope && ALLOWED_SCOPES.includes(savedScope as (typeof ALLOWED_SCOPES)[number])
-      ? savedScope
-      : '/portal';
+  // Cold-start landed on root — restore last visited route if we have one
+  let savedRoute: string | null = null;
+  try {
+    savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
+  } catch {}
 
-  const redirectTarget = validSavedRoute ? savedRoute! : fallbackScope;
-  if (redirectTarget !== currentFullPath) {
-    window.location.replace(redirectTarget);
+  if (savedRoute && savedRoute !== currentFullPath && !HOME_ROUTES.has(savedRoute.split('?')[0].split('#')[0])) {
+    window.location.replace(savedRoute);
   }
 })();
 

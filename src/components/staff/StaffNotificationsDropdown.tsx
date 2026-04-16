@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake, ExternalLink } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake, ExternalLink, AlertOctagon, Activity, MessageSquare, Pencil, UserPlus } from "lucide-react";
 import { ImprovementReportDialog } from "./ImprovementReportDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,8 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   calendar_event: { label: "Calendar Events", icon: Calendar },
   task_assigned: { label: "Tasks Assigned", icon: CheckSquare },
   task_completed: { label: "Tasks Completed", icon: CheckSquare },
+  task_reminder: { label: "Task Reminders", icon: Bell },
+  schedule_item_completed: { label: "Schedule Items Completed", icon: CheckSquare },
   goal_added: { label: "Goals Added", icon: Target },
   portal_login: { label: "Portal Logins", icon: LogIn },
   portal_performance_view: { label: "Performance Views", icon: BarChart3 },
@@ -54,9 +56,24 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   portal_club_submission: { label: "Club Suggestions", icon: Building2 },
   performance_improvement: { label: "Performance Improvements", icon: TrendingUp },
   contract_signed: { label: "Contracts Signed", icon: PenLine },
+  contract_event: { label: "Contract Events", icon: PenLine },
   comparison_request: { label: "Comparison Requests", icon: GitCompare },
   player_birthday: { label: "Player Birthdays", icon: Cake },
   player_turning_18: { label: "Player Birthdays", icon: Cake },
+  error_report: { label: "Error Reports", icon: AlertOctagon },
+  staff_activity: { label: "Staff Activity", icon: Activity },
+  message_sent: { label: "Messages Sent", icon: MessageSquare },
+  player_updated: { label: "Player Updates", icon: Pencil },
+  player_created: { label: "New Players", icon: UserPlus },
+};
+
+// Friendly fallback label derivation when an event_type is not pre-registered
+const titleCaseFromEventType = (eventType: string): string => {
+  return eventType
+    .split(/[_-]/g)
+    .filter(Boolean)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(" ");
 };
 
 export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdownProps) => {
@@ -127,8 +144,8 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       const rawType = notification.event_type;
       // Merge turning_18 into birthdays
       const eventType = MERGE_MAP[rawType] || rawType;
-      const config = CATEGORY_CONFIG[eventType] || { label: "Other", icon: Bell };
-      
+      const config = CATEGORY_CONFIG[eventType] || { label: titleCaseFromEventType(eventType), icon: Bell };
+
       if (!groups.has(eventType)) {
         groups.set(eventType, {
           category: eventType,
@@ -254,7 +271,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "player_turning_18":
         return "Player Turning 18";
       default:
-        return "Notification";
+        return titleCaseFromEventType(notification.event_type);
     }
   };
 

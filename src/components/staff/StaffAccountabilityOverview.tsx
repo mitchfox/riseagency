@@ -103,11 +103,18 @@ type TaskFeedItem =
       id: string;
     });
 
+interface ActivityLogEntry {
+  user_id: string;
+  created_at: string;
+  action: string;
+}
+
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStaffIndex, setActiveStaffIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -146,10 +153,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
+    const yearStart2 = new Date(new Date().getFullYear(), 0, 1).toISOString();
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
+      supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
     ]);
 
     // Only admins on My Tasks
@@ -160,6 +169,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setTasks((tasksData || []) as StaffTask[]);
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(adminProfiles);
+    setActivityLog((activityData || []) as ActivityLogEntry[]);
 
     if (userId) {
       const idx = adminProfiles.findIndex(p => p.id === userId);
@@ -252,12 +262,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       if (completed) {
-        const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+        const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
+        const categoryStr = task.category ? ` (${task.category})` : '';
         supabase.from('staff_notification_events').insert({
           event_type: 'task_completed',
-          title: 'Task Completed',
-          body: `${memberName} completed: ${task.title}`,
-          event_data: { user_id: activeMember?.id, task_title: task.title },
+          title: `${memberName} completed a task`,
+          body: `${memberName} marked "${task.title}"${categoryStr} as done`,
+          event_data: { user_id: activeMember?.id, user_name: memberName, task_id: task.id, task_title: task.title, category: task.category },
         }).then(() => {});
       }
     }
@@ -276,12 +287,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       toast.success("Task logged as done");
-      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
+      const categoryStr = task.category ? ` (${task.category})` : '';
       supabase.from('staff_notification_events').insert({
         event_type: 'task_completed',
-        title: 'Task Completed',
-        body: `${memberName} completed: ${task.title}`,
-        event_data: { user_id: activeMember?.id, task_title: task.title },
+        title: `${memberName} completed a task`,
+        body: `${memberName} logged "${task.title}"${categoryStr} as done`,
+        event_data: { user_id: activeMember?.id, user_name: memberName, task_id: task.id, task_title: task.title, category: task.category },
       }).then(() => {});
     }
   };
@@ -293,13 +305,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, status: 'posted' } : s));
       toast.success("Marked as done");
-      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
       const item = scheduleItems.find(s => s.id === realId);
       supabase.from('staff_notification_events').insert({
-        event_type: 'task_completed',
-        title: 'Schedule Item Completed',
-        body: `${memberName} completed: ${item?.post_type || 'Post'}`,
-        event_data: { user_id: activeMember?.id, task_title: item?.post_type },
+        event_type: 'schedule_item_completed',
+        title: `${memberName} completed a schedule item`,
+        body: `${memberName} posted "${item?.post_type || 'Post'}" (${item?.platform_format || 'social'})`,
+        event_data: { user_id: activeMember?.id, user_name: memberName, schedule_item_id: realId, post_type: item?.post_type, platform_format: item?.platform_format },
       }).then(() => {});
     }
   };
@@ -570,15 +582,29 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     );
   };
 
-  // ── Leaderboard data ──
+  // ── Leaderboard data: tasks + posted schedule items + activity log entries ──
   const leaderboardData = visibleStaff.map(m => {
     const mTasks = tasks.filter(t => t.assigned_to?.includes(m.id));
+    const taskAll = mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0);
+    const taskFour = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0);
+    const taskWeek = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
+
+    const mSchedule = scheduleItems.filter(s => s.owner_id === m.id && (s.status || '').toLowerCase() === 'posted');
+    const scheduleAll = mSchedule.length;
+    const scheduleFour = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= fourWeeksAgo).length;
+    const scheduleWeek = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= weekStart).length;
+
+    const mActivity = activityLog.filter(a => a.user_id === m.id);
+    const activityAll = mActivity.length;
+    const activityFour = mActivity.filter(a => new Date(a.created_at) >= fourWeeksAgo).length;
+    const activityWeek = mActivity.filter(a => new Date(a.created_at) >= weekStart).length;
+
     return {
       id: m.id,
       name: getDisplayName(m),
-      allTime: mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0),
-      fourWeeks: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0),
-      lastWeek: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0),
+      allTime: taskAll + scheduleAll + activityAll,
+      fourWeeks: taskFour + scheduleFour + activityFour,
+      lastWeek: taskWeek + scheduleWeek + activityWeek,
     };
   }).sort((a, b) => b.allTime - a.allTime);
 
