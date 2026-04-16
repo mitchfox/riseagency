@@ -103,11 +103,18 @@ type TaskFeedItem =
       id: string;
     });
 
+interface ActivityLogEntry {
+  user_id: string;
+  created_at: string;
+  action: string;
+}
+
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStaffIndex, setActiveStaffIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -146,10 +153,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }] = await Promise.all([
+    const yearStart2 = new Date(new Date().getFullYear(), 0, 1).toISOString();
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
+      supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
     ]);
 
     // Only admins on My Tasks
@@ -160,6 +169,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setTasks((tasksData || []) as StaffTask[]);
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(adminProfiles);
+    setActivityLog((activityData || []) as ActivityLogEntry[]);
 
     if (userId) {
       const idx = adminProfiles.findIndex(p => p.id === userId);
