@@ -223,6 +223,10 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Strong aerial presence
 • Fast counter attacks
 • Set piece threat"
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -234,6 +238,10 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Weak on the left flank
 • Slow to transition
 • Vulnerable to through balls"
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
