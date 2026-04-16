@@ -1,73 +1,58 @@
 
+Implementation plan
 
-## Plan: Annotation Fixes, Transfer Report Enhancements & Persistent Tool Settings
+1. Fix analysis editor spellcheck properly
+- Audit every analysis text field that staff actually types into: title, overview, strengths, weaknesses, matchups, point paragraphs, scheme paragraphs and any rename fields inside the annotation workspace
+- Add explicit browser text-entry attributes on those inputs and textareas instead of relying on shared defaults only: `spellCheck`, `autoCorrect`, `autoCapitalize`, sensible `lang`
+- Check any fullscreen/dialog wrappers that may be preventing native spellcheck UI from appearing and apply the same attributes there
 
-### Issues Identified
+2. Correct comparison stat averaging for goalkeeper and legacy keys
+- Rework the comparison aggregation path so it does not blindly average against rows with no usable stat payload for that metric
+- Add stat-key normalisation/aliases for goalkeeper data, especially legacy keys such as `clean_sheets` vs `gk_clean_sheets`
+- Use that shared normaliser in transfer report comparisons and any other comparison view using `computeAllStatAverages`
+- Validate the Matthias Pieklak case specifically so clean sheets resolve from the saved season data instead of showing `0.00`
 
-**Annotations — 4 critical bugs:**
-1. **Fullscreen:** `AnalysisVideoReports.tsx` line 422 calls `requestFullscreen()` on `videoRef.current?.closest('.relative')` which finds the inner `<div className="relative max-h-full max-w-full">` — this div wraps the video but the `ReadOnlyAnnotationOverlay` is inside it, so it *should* work. However, the `ReadOnlyAnnotationOverlay` renders `null` when `visibleEls.length === 0` (line 63), and in fullscreen the video restarts from 0 — the `loopKey` reset detection may not fire properly because `prevTimeRef` was tracking the old time. The real issue: annotations only show once because SVG `<animate>` elements with `fill="freeze"` only run once and never reset.
-2. **Loop replay (all contexts):** SVG `<animate fill="freeze">` elements in `ReadOnlyAnnotationOverlay` run once and never replay. The `loopKey` state is incremented on loop detection but it's never used as a React `key` on the SVG or the elements, so React doesn't remount them.
-3. **Timing drift:** `drawingTimestamp` captures `video.currentTime` which is correct, but annotations store `appearAt` relative to the klip start. The `startDrawing` function (line 593) sets `drawingTimestamp = video.currentTime` (absolute), but `effectiveOffset` (line 105) is `drawingTimestamp - activeKlip.startTime`. When new elements are placed, `AnnotationCanvas` sets `appearAt = klipOffset` which is `currentTime - activeKlip.startTime`. This should be correct IF `currentTime` matches `drawingTimestamp`. The issue is that when the video loops and `currentTime` resets, `triggeredTimesRef` still contains old times — annotations won't re-trigger in the editor. Also the `effectiveOffset` calculation is fine but the playback freeze mechanism captures the wrong set of elements.
-4. **Editor loop:** The editor video has `loop` attribute but when it loops, `triggeredTimesRef` is never cleared, so annotations never re-trigger on subsequent loops.
+3. Make the countdown depend on real kick-off time only
+- Remove the fake `23:59` fallback from the countdown logic
+- If a fixture has no saved kick-off time, do not pretend there is one
+- Keep the countdown driven from the fixture record so saved analysis/fixture kick-off time is what controls the countdown
 
-**Transfer Report — 5 items:**
-1. Data graphics section only shows bar charts — needs varied visualisations
-2. Individual stat visibility toggles don't work correctly (wrong items hidden)
-3. Recent form colours not reflecting actual performance grade
-4. Comparison player names not clickable to swap
-5. No quick navigation menu after hero
+4. Rebuild pre-match image cropping to match the real visible hero area
+- Stop using the current square crop for pre-match match images
+- Create a dedicated pre-match crop mode that mirrors the actual analysis hero layout from `AnalysisViewer`
+- Add visible safe-area guides for the top dark fade and bottom gold arch/name overlay so you can crop to what is genuinely visible on the live page
+- Keep post-match and logo crop behaviour separate so only pre-match hero cropping changes
 
----
+5. Fix the annotation regression in the actual playback path
+- The current playback is showing freeze-frame annotations after playback resumes because the recent reveal logic is wrong for this viewer
+- Change `ReadOnlyAnnotationPlayback` so freeze-frame annotations render on the frozen frame only, at full opacity, and are not shown again once playback resumes
+- Keep the loop reset logic that now works, but separate freeze rendering from resumed-play rendering so repeats stay stable
+- Make the freeze frame use a dedicated visible element set with `forceOpacity` so annotations cannot disappear during the pause
 
-### Implementation
+6. Keep editor and preview timing aligned
+- Reuse the same clip-relative timing rules between the annotation editor and read-only preview
+- Preserve the current loop fix, but remove the post-freeze replay behaviour that caused the wrong annotation state
+- Verify fullscreen preview and mini preview use the same rendering rules
 
-#### 1. Fix Annotation Loop Replay (all contexts)
-**`ReadOnlyAnnotationOverlay.tsx`:**
-- Use `loopKey` as the `key` on the root SVG element so React remounts all `<animate>` elements on loop
-- Remove `fill="freeze"` from draw-once animations (lines, arrows) and replace with `fill="freeze"` but ensure the SVG is keyed properly
-- The `key={loopKey}` on the SVG wrapper forces React to destroy and recreate all animate elements
+Files likely to update
+- `src/components/staff/analysis/AnalysisPointsSection.tsx`
+- `src/components/staff/analysis/AnalysisMatchDetails.tsx`
+- `src/components/staff/analysis/AnalysisOverviewSection.tsx`
+- `src/components/staff/annotations/AnnotationEditor.tsx`
+- `src/components/portal/ReadOnlyAnnotationPlayback.tsx`
+- `src/components/portal/NextFixtureCountdown.tsx`
+- `src/lib/statAggregation.ts`
+- likely one shared stat-normalisation helper used by transfer report/portal comparisons
 
-#### 2. Fix Annotation Fullscreen
-**`AnalysisVideoReports.tsx`:**
-- Add a `ref` to the `<div className="relative max-h-full max-w-full">` container (line 433)
-- Use that ref directly for `requestFullscreen()` instead of the fragile `.closest('.relative')` lookup
+Technical notes
+- The spellcheck issue is not because the shared `Input` and `Textarea` lack `spellCheck` since they already include it. The fix needs to target the actual analysis-editor fields and any browser-level conditions around them.
+- The comparison bug is likely a mix of denominator choice and missing legacy GK key mapping, not just a display bug.
+- The crop mismatch is real: the editor crops to a square while the live pre-match hero is a fixed-height wide image with overlays hiding part of the frame.
+- The annotation bug is also real in code: the current playback marks elements as “revealed” after the freeze, which causes them to appear during resumed playback instead of only on the freeze frame.
 
-#### 3. Fix Annotation Loop in Editor
-**`AnnotationEditor.tsx`:**
-- On video `timeupdate` or the RAF loop, detect when `currentTime` resets (jumps backward significantly) and clear `triggeredTimesRef`
-- This ensures annotations re-trigger on every loop iteration
-
-#### 4. Fix Annotation Timing
-The timestamp capture looks correct after the previous fix. The remaining issue is that `effectiveOffset` during playback uses `klipOffset = currentTime - activeKlip.startTime`. If `activeKlip.startTime` is 0 (auto-created "Full Video" klip), then `klipOffset = currentTime` which is correct. Annotations with `appearAt` set during drawing should match. I'll add a guard to ensure the drawing timestamp is captured only after the seek has fully settled using `requestVideoFrameCallback` where supported.
-
-#### 5. Persist Last Colour & Stroke
-Already implemented (lines 49-65) — `localStorage` stores `annotation-last-colour` and `annotation-last-stroke`. This is working. No change needed.
-
-#### 6. Transfer Report — Data Graphics Visibility Toggles Fix
-The `toggleStatVisibility` function (line 306) works correctly — it toggles `hiddenStats[key]`. But the data_graphics section (line 561) checks `hiddenStats[data_${stat.key}]` only for filtering standoutStats *before* render — it doesn't filter. The hidden stats should filter out the stat AND still show it greyed out so it can be toggled back.
-
-**Fix:** In data_graphics section, render ALL stats but grey out hidden ones. Same for form, strengths, and comparison metrics.
-
-#### 7. Transfer Report — Form Colours
-Line 641-648: The form grade uses `getFormGrade('r90', r90Val)` which returns a grade object with `.color`. The R90 colour square uses `getR90Color()` which returns Tailwind classes. Check that `getFormGrade` returns accurate grades. The display looks correct in code — will verify the grade thresholds match expectations.
-
-#### 8. Transfer Report — Clickable Comparison Player Names
-In the comparison section (line 714-717), player names are shown as `<th>` headers. Make them clickable in both edit and view mode — clicking opens a dropdown of available comparison players to swap that slot.
-
-#### 9. Transfer Report — Quick Navigation Menu
-Add a sticky section just after the hero with anchor links to each visible section. Clicking scrolls smoothly to that section. Each section gets an `id` attribute.
-
-#### 10. Transfer Report — Richer Data Visualisations
-Replace the simple bar chart layout with a mix of:
-- **Radar/spider chart** for the top 6 standout metrics (SVG-based)
-- **Horizontal comparison bars** for remaining metrics (current style but improved)
-- Individual visibility toggles on each metric row
-
----
-
-### Files to edit
-- `src/components/portal/ReadOnlyAnnotationOverlay.tsx` — key SVG on loopKey
-- `src/components/portal/AnalysisVideoReports.tsx` — fullscreen ref fix
-- `src/components/staff/annotations/AnnotationEditor.tsx` — clear triggeredTimes on loop, improve timestamp capture
-- `src/pages/TransferReportView.tsx` — quick nav, data graphics radar, visibility fix, clickable comparison names, form colour fix
-
+Validation after implementation
+- Confirm spellcheck suggestions appear in the analysis editor text fields
+- Confirm the Matthias Pieklak clean-sheet value matches the saved season data
+- Confirm the countdown only runs to an actual saved kick-off time
+- Confirm pre-match crop guides match the live hero image and overlays
+- Confirm freeze-frame annotations show during the pause, do not show after playback resumes, and still replay correctly on every loop
