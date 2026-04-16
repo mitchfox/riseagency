@@ -208,6 +208,10 @@ export const AnalysisOverviewSection = ({
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
                 placeholder="Key tactical information about the match..."
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
