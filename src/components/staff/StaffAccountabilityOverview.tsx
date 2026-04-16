@@ -252,12 +252,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       if (completed) {
-        const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+        const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
+        const categoryStr = task.category ? ` (${task.category})` : '';
         supabase.from('staff_notification_events').insert({
           event_type: 'task_completed',
-          title: 'Task Completed',
-          body: `${memberName} completed: ${task.title}`,
-          event_data: { user_id: activeMember?.id, task_title: task.title },
+          title: `${memberName} completed a task`,
+          body: `${memberName} marked "${task.title}"${categoryStr} as done`,
+          event_data: { user_id: activeMember?.id, user_name: memberName, task_id: task.id, task_title: task.title, category: task.category },
         }).then(() => {});
       }
     }
@@ -276,12 +277,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       toast.success("Task logged as done");
-      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
+      const categoryStr = task.category ? ` (${task.category})` : '';
       supabase.from('staff_notification_events').insert({
         event_type: 'task_completed',
-        title: 'Task Completed',
-        body: `${memberName} completed: ${task.title}`,
-        event_data: { user_id: activeMember?.id, task_title: task.title },
+        title: `${memberName} completed a task`,
+        body: `${memberName} logged "${task.title}"${categoryStr} as done`,
+        event_data: { user_id: activeMember?.id, user_name: memberName, task_id: task.id, task_title: task.title, category: task.category },
       }).then(() => {});
     }
   };
@@ -293,13 +295,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, status: 'posted' } : s));
       toast.success("Marked as done");
-      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
       const item = scheduleItems.find(s => s.id === realId);
       supabase.from('staff_notification_events').insert({
-        event_type: 'task_completed',
-        title: 'Schedule Item Completed',
-        body: `${memberName} completed: ${item?.post_type || 'Post'}`,
-        event_data: { user_id: activeMember?.id, task_title: item?.post_type },
+        event_type: 'schedule_item_completed',
+        title: `${memberName} completed a schedule item`,
+        body: `${memberName} posted "${item?.post_type || 'Post'}" (${item?.platform_format || 'social'})`,
+        event_data: { user_id: activeMember?.id, user_name: memberName, schedule_item_id: realId, post_type: item?.post_type, platform_format: item?.platform_format },
       }).then(() => {});
     }
   };

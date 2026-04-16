@@ -271,7 +271,7 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
       case "player_turning_18":
         return "Player Turning 18";
       default:
-        return "Notification";
+        return titleCaseFromEventType(notification.event_type);
     }
   };
 
