@@ -508,9 +508,14 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1.5" /> Add Task
-            </Button>
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setManagePeopleOpen(true)}>
+                <Settings2 className="h-4 w-4" />
+              </Button>
+              <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1.5" /> Add Task
+              </Button>
+            </>
           )}
           <Button size="sm" variant="ghost" onClick={() => setFullscreen(!fullscreen)}>
             {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
