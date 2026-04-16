@@ -87,6 +87,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   // Per-section stat visibility toggles
   const [hiddenStats, setHiddenStats] = useState<Record<string, boolean>>({});
+  const [swappingCompSlot, setSwappingCompSlot] = useState<number | null>(null);
 
   const toggleExpand = (id: string) => setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -241,13 +242,13 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
     return result;
   }, [performanceReports, player?.position]);
 
-  const standoutStats = useMemo(() => {
+  // All stats for data graphics — including hidden ones for toggling
+  const allDataStats = useMemo(() => {
     if (Object.keys(playerAverages).length === 0 || comparisonPlayers.length === 0) return [];
     const metrics = getMetricsForPosition(player?.position);
     const results: { key: string; label: string; playerValue: number; compAvg: number; pctAbove: number; }[] = [];
 
     metrics.forEach(m => {
-      if (hiddenStats[`data_${m.key}`]) return;
       const pVal = playerAverages[m.key];
       if (pVal == null) return;
       const compVals = comparisonPlayers
@@ -263,7 +264,11 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
     });
 
     return results.sort((a, b) => b.pctAbove - a.pctAbove).slice(0, 12);
-  }, [playerAverages, comparisonPlayers, player?.position, hiddenStats]);
+  }, [playerAverages, comparisonPlayers, player?.position]);
+
+  const standoutStats = useMemo(() => {
+    return allDataStats.filter(s => !hiddenStats[`data_${s.key}`]);
+  }, [allDataStats, hiddenStats]);
 
   const getFormGrade = (metricKey: string, value: number): { grade: string; color: string } | null => {
     // Normalise the key to match what's in the DB
@@ -409,7 +414,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'in_numbers':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-in_numbers">
               <SectionHeading title="In Numbers" />
               {player?.topStats && player.topStats.length > 0 ? (
                 <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
@@ -432,7 +437,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'highlights':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-highlights">
               <SectionHeading title="Match Highlights" />
               {highlights.length > 0 ? (
                 <div className="relative aspect-video rounded-2xl overflow-hidden bg-black" style={{ border: `4px solid ${RISE_GOLD}` }}>
@@ -502,7 +507,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const shortBio = bio.length > 300 ? bio.slice(0, 300) + '...' : bio;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-biography">
               <SectionHeading title="Biography & Profile" />
               {bio ? (
                 <div className="rounded-2xl p-5" style={{ background: 'rgba(20,20,20,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
@@ -526,7 +531,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'stats':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-stats">
               <SectionHeading title="Season Statistics" />
               {player?.seasonStats && player.seasonStats.length > 0 ? (
                 <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -547,60 +552,124 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'data_graphics':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-data_graphics">
               <SectionHeading title="Data Graphics & Visualisations" icon={<TrendingUp className="h-5 w-5" />} />
-              {standoutStats.length > 0 ? (
-                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
-                  <div className="p-4" style={{ borderBottom: `1px solid ${RISE_GOLD}1a` }}>
-                    <p className="text-xs text-white/40 uppercase tracking-wider font-bebas">
-                      <Award className="h-3 w-3 inline mr-1" />
-                      Metrics where {player?.name?.split(' ').pop()} outperforms the positional average
-                    </p>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {standoutStats.map((stat, idx) => {
-                      const maxVal = Math.max(stat.playerValue, stat.compAvg) * 1.2;
-                      const playerPct = (stat.playerValue / maxVal) * 100;
-                      const compPct = (stat.compAvg / maxVal) * 100;
-                      // Highlight the strongest — the player's value with a gold background
-                      const isStrongest = stat.pctAbove > 20;
-                      return (
-                        <div key={idx} className="relative">
-                          {isEditing && (
-                            <button onClick={() => toggleStatVisibility(`data_${stat.key}`)} className="absolute -left-6 top-1 z-10 text-white/30 hover:text-white/60">
-                              {hiddenStats[`data_${stat.key}`] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </button>
-                          )}
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-white/70 uppercase tracking-wider font-bebas text-sm md:text-base">{stat.label}</span>
-                            <span className="font-bold text-sm md:text-base" style={{ color: RISE_GOLD }}>+{stat.pctAbove.toFixed(0)}%</span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-[10px] w-14 text-right font-bold" style={{ color: RISE_GOLD }}>{stat.playerValue.toFixed(2)}</span>
-                            <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden relative">
-                              <div className="h-full rounded transition-all" style={{ width: `${playerPct}%`, background: isStrongest ? `linear-gradient(90deg, ${RISE_GOLD}b3, ${RISE_GOLD})` : `linear-gradient(90deg, ${RISE_GOLD}80, ${RISE_GOLD})` }} />
-                              {isStrongest && (
-                                <div className="absolute inset-y-0 right-2 flex items-center">
-                                  <span className="text-[8px] font-bold text-black/70">★</span>
-                                </div>
-                              )}
+              {allDataStats.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Radar chart for top 6 visible stats */}
+                  {standoutStats.length >= 3 && (
+                    <div className="rounded-xl overflow-hidden p-5" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
+                      <p className="text-xs text-white/40 uppercase tracking-wider font-bebas mb-4">
+                        <Award className="h-3 w-3 inline mr-1" />
+                        Performance Radar — Top Metrics
+                      </p>
+                      <div className="flex justify-center">
+                        <svg viewBox="-130 -130 260 260" className="w-full max-w-[400px] aspect-square">
+                          {/* Grid rings */}
+                          {[0.25, 0.5, 0.75, 1].map(scale => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const pts = Array.from({ length: radarN }, (_, i) => {
+                              const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                              return `${Math.cos(angle) * 100 * scale},${Math.sin(angle) * 100 * scale}`;
+                            }).join(' ');
+                            return <polygon key={scale} points={pts} fill="none" stroke="white" strokeOpacity={0.08} strokeWidth={0.5} />;
+                          })}
+                          {/* Axis lines */}
+                          {standoutStats.slice(0, 8).map((_, i) => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                            return <line key={i} x1={0} y1={0} x2={Math.cos(angle) * 100} y2={Math.sin(angle) * 100} stroke="white" strokeOpacity={0.06} strokeWidth={0.5} />;
+                          })}
+                          {/* Player value polygon */}
+                          {(() => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const maxPct = Math.max(...standoutStats.slice(0, 8).map(s => s.pctAbove));
+                            const pts = standoutStats.slice(0, 8).map((s, i) => {
+                              const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                              const r = Math.min((s.pctAbove / Math.max(maxPct, 50)) * 100, 100);
+                              return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
+                            }).join(' ');
+                            return (
+                              <>
+                                <polygon points={pts} fill={RISE_GOLD} fillOpacity={0.15} stroke={RISE_GOLD} strokeWidth={1.5} strokeOpacity={0.8} />
+                                {standoutStats.slice(0, 8).map((s, i) => {
+                                  const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                                  const r = Math.min((s.pctAbove / Math.max(maxPct, 50)) * 100, 100);
+                                  return <circle key={i} cx={Math.cos(angle) * r} cy={Math.sin(angle) * r} r={3} fill={RISE_GOLD} />;
+                                })}
+                              </>
+                            );
+                          })()}
+                          {/* Labels */}
+                          {standoutStats.slice(0, 8).map((s, i) => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                            const lx = Math.cos(angle) * 118;
+                            const ly = Math.sin(angle) * 118;
+                            return (
+                              <text key={i} x={lx} y={ly} fill="white" fillOpacity={0.6} fontSize={7} textAnchor="middle" dominantBaseline="central" fontFamily="Bebas Neue, sans-serif" letterSpacing={0.5}>
+                                {s.label.length > 14 ? s.label.slice(0, 12) + '…' : s.label}
+                              </text>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bar charts for all stats with visibility toggles */}
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
+                    <div className="p-4" style={{ borderBottom: `1px solid ${RISE_GOLD}1a` }}>
+                      <p className="text-xs text-white/40 uppercase tracking-wider font-bebas">
+                        <Award className="h-3 w-3 inline mr-1" />
+                        Metrics where {player?.name?.split(' ').pop()} outperforms the positional average
+                      </p>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {allDataStats.map((stat, idx) => {
+                        const isHidden = hiddenStats[`data_${stat.key}`];
+                        const maxVal = Math.max(stat.playerValue, stat.compAvg) * 1.2;
+                        const playerPct = (stat.playerValue / maxVal) * 100;
+                        const compPct = (stat.compAvg / maxVal) * 100;
+                        const isStrongest = stat.pctAbove > 20;
+                        return (
+                          <div key={idx} className={`relative transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
+                            {isEditing && (
+                              <button onClick={() => toggleStatVisibility(`data_${stat.key}`)} className="absolute -left-6 top-1 z-10 text-white/30 hover:text-white/60">
+                                {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              </button>
+                            )}
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-white/70 uppercase tracking-wider font-bebas text-sm md:text-base">{stat.label}</span>
+                              <span className="font-bold text-sm md:text-base" style={{ color: RISE_GOLD }}>+{stat.pctAbove.toFixed(0)}%</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] w-14 text-right font-bold" style={{ color: RISE_GOLD }}>{stat.playerValue.toFixed(2)}</span>
+                              <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden relative">
+                                <div className="h-full rounded transition-all" style={{ width: `${playerPct}%`, background: isStrongest ? `linear-gradient(90deg, ${RISE_GOLD}b3, ${RISE_GOLD})` : `linear-gradient(90deg, ${RISE_GOLD}80, ${RISE_GOLD})` }} />
+                                {isStrongest && (
+                                  <div className="absolute inset-y-0 right-2 flex items-center">
+                                    <span className="text-[8px] font-bold text-black/70">★</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-white/30 w-14 text-right">{stat.compAvg.toFixed(2)}</span>
+                              <div className="flex-1 h-3 bg-white/5 rounded overflow-hidden">
+                                <div className="h-full rounded bg-white/20 transition-all" style={{ width: `${compPct}%` }} />
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-white/30 w-14 text-right">{stat.compAvg.toFixed(2)}</span>
-                            <div className="flex-1 h-3 bg-white/5 rounded overflow-hidden">
-                              <div className="h-full rounded bg-white/20 transition-all" style={{ width: `${compPct}%` }} />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="px-4 pb-3">
-                    <p className="text-[10px] text-white/25">
-                      <span className="inline-block w-3 h-1.5 rounded mr-1" style={{ background: RISE_GOLD }} /> {player?.name}
-                      <span className="inline-block w-3 h-1.5 bg-white/20 rounded ml-3 mr-1" /> Positional average ({comparisonPlayers.length} players)
-                    </p>
+                        );
+                      })}
+                    </div>
+                    <div className="px-4 pb-3">
+                      <p className="text-[10px] text-white/25">
+                        <span className="inline-block w-3 h-1.5 rounded mr-1" style={{ background: RISE_GOLD }} /> {player?.name}
+                        <span className="inline-block w-3 h-1.5 bg-white/20 rounded ml-3 mr-1" /> Positional average ({comparisonPlayers.length} players)
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -615,20 +684,22 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const displayReports = isExpanded ? performanceReports.slice(0, 20) : performanceReports.slice(0, 6);
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-form_chart">
               <SectionHeading title="Recent Form" />
               {performanceReports.length > 0 ? (
                 <>
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                     {displayReports.map((rpt: any) => {
-                      if (hiddenStats[`form_${rpt.id}`]) return null;
+                      const isHidden = hiddenStats[`form_${rpt.id}`];
+                      // In view mode skip hidden, in edit mode show greyed out
+                      if (isHidden && !isEditing) return null;
                       const r90Val = rpt.r90_score;
                       const r90Grade = r90Val != null ? getFormGrade('r90', r90Val) : null;
                       return (
-                        <div key={rpt.id} className="relative rounded-2xl p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                        <div key={rpt.id} className={`relative rounded-2xl p-3 flex items-center justify-between transition-opacity ${isHidden ? 'opacity-30' : ''}`} style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
                           {isEditing && (
                             <button onClick={() => toggleStatVisibility(`form_${rpt.id}`)} className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 text-white/30 hover:text-white/60">
-                              <Eye className="w-3 h-3" />
+                              {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                             </button>
                           )}
                           <div>
@@ -643,7 +714,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                               </div>
                             )}
                             {r90Val != null && (
-                              <div className={`w-10 h-10 rounded ${getR90Color(r90Val)} flex items-center justify-center`}>
+                              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: r90Val >= 0.08 ? '#22c55e' : r90Val >= 0.05 ? '#eab308' : r90Val >= 0.02 ? '#f97316' : '#ef4444' }}>
                                 <span className="text-[11px] font-bold text-white">{r90Val.toFixed(2)}</span>
                               </div>
                             )}
@@ -668,34 +739,11 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
 
       case 'comparison': {
         const categories = getMetricCategoriesForPosition(player?.position);
+        // swappingCompSlot state is lifted to component level
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-comparison">
               <SectionHeading title="Player Comparisons" icon={<BarChart3 className="h-5 w-5" />} />
-              {isEditing && comparisonPlayers.length > 0 && (
-                <div className="mb-4">
-                  <label className="text-[11px] text-white/40 uppercase tracking-wider font-bebas mb-2 block">Select Comparison Players</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {comparisonPlayers.map(cp => {
-                      const selected = ((editContentConfig.comparison_player_ids || []) as string[]).includes(cp.id);
-                      return (
-                        <button
-                          key={cp.id}
-                          onClick={() => {
-                            const current = (editContentConfig.comparison_player_ids || []) as string[];
-                            const updated = selected ? current.filter((id: string) => id !== cp.id) : [...current, cp.id];
-                            updateEditConfig('comparison_player_ids', updated);
-                          }}
-                          className="px-2.5 py-1 rounded text-[11px] transition-colors"
-                          style={selected ? { background: `${RISE_GOLD}20`, border: `1px solid ${RISE_GOLD}60`, color: RISE_GOLD } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
-                        >
-                          {cp.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
               {configuredCompPlayers.length > 0 && Object.keys(playerAverages).length > 0 ? (
                 <div className="space-y-4">
                   {categories.map(cat => {
@@ -712,8 +760,37 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                               <tr style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}>
                                 <th className="text-left p-2.5 text-white/40 font-normal">Metric</th>
                                 <th className="text-center p-2.5 font-bold" style={{ color: RISE_GOLD }}>{player?.name?.split(' ').pop()}</th>
-                                {configuredCompPlayers.map(cp => (
-                                  <th key={cp.id} className="text-center p-2.5 text-white/50 font-normal">{cp.name?.split(' ').pop()}</th>
+                                {configuredCompPlayers.map((cp, cpIdx) => (
+                                  <th key={cp.id} className="text-center p-2.5 relative">
+                                    <button
+                                      onClick={() => setSwappingCompSlot(swappingCompSlot === cpIdx ? null : cpIdx)}
+                                      className="text-white/50 font-normal hover:underline cursor-pointer transition-colors"
+                                      style={swappingCompSlot === cpIdx ? { color: RISE_GOLD } : {}}
+                                      title="Click to swap player"
+                                    >
+                                      {cp.name?.split(' ').pop()}
+                                    </button>
+                                    {swappingCompSlot === cpIdx && (
+                                      <div className="absolute top-full left-1/2 -translate-x-1/2 z-30 mt-1 w-48 max-h-48 overflow-y-auto rounded-lg shadow-xl" style={{ background: 'rgba(20,20,20,0.98)', border: `1px solid ${RISE_GOLD}40` }}>
+                                        {comparisonPlayers.filter(p => !configuredCompPlayers.some(c => c.id === p.id)).map(p => (
+                                          <button
+                                            key={p.id}
+                                            onClick={() => {
+                                              const currentIds = (editContentConfig.comparison_player_ids || configuredCompPlayers.map((c: any) => c.id)) as string[];
+                                              const updated = [...currentIds];
+                                              updated[cpIdx] = p.id;
+                                              updateEditConfig('comparison_player_ids', updated);
+                                              setSwappingCompSlot(null);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs text-white/70 hover:text-white transition-colors"
+                                            style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}
+                                          >
+                                            {p.name} <span className="text-white/30">· {p.club}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </th>
                                 ))}
                               </tr>
                             </thead>
@@ -727,11 +804,6 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                                     <td className="p-2.5 text-white/60">{m.label}</td>
                                     <td className="p-2.5 text-center font-bold" style={pVal === maxVal ? { color: RISE_GOLD, background: `${RISE_GOLD}15` } : { color: 'rgba(255,255,255,0.8)' }}>
                                       {pVal?.toFixed(2) ?? '-'}
-                                      {isEditing && (
-                                        <button onClick={() => toggleStatVisibility(`comp_${m.key}`)} className="ml-1 opacity-0 group-hover:opacity-100">
-                                          <Eye className="w-2.5 h-2.5 inline" />
-                                        </button>
-                                      )}
                                     </td>
                                     {configuredCompPlayers.map(cp => {
                                       const val = (cp.metrics as Record<string, number>)?.[m.key];
@@ -763,7 +835,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const schemes = tacticalSchemes.length > 0 ? tacticalSchemes : (player?.tacticalFormations || []);
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-tactical">
               <SectionHeading title="Tactical History" />
               {schemes.length > 0 ? (
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -800,20 +872,21 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'strengths':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-strengths">
               <SectionHeading title="Strengths & Play Style" />
               {player?.strengthsAndPlayStyle ? (
                 <div className="rounded-2xl p-5" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
                   {Array.isArray(player.strengthsAndPlayStyle) ? (
                     <div className="flex flex-wrap gap-2">
                       {player.strengthsAndPlayStyle.map((s: string, i: number) => {
-                        if (hiddenStats[`strength_${i}`]) return null;
+                        const isHidden = hiddenStats[`strength_${i}`];
+                        if (isHidden && !isEditing) return null;
                         return (
-                          <span key={i} className="relative px-3 py-1.5 rounded-md text-sm text-white/70 font-medium" style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>
+                          <span key={i} className={`relative px-3 py-1.5 rounded-md text-sm text-white/70 font-medium transition-opacity ${isHidden ? 'opacity-30' : ''}`} style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>
                             {s}
                             {isEditing && (
                               <button onClick={() => toggleStatVisibility(`strength_${i}`)} className="ml-1.5 text-white/30 hover:text-white/60">
-                                <Eye className="w-2.5 h-2.5 inline" />
+                                {isHidden ? <EyeOff className="w-2.5 h-2.5 inline" /> : <Eye className="w-2.5 h-2.5 inline" />}
                               </button>
                             )}
                           </span>
@@ -834,7 +907,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'clips':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-clips">
               <SectionHeading title="Wyscout Video Reports" />
               {videoReports.length > 0 ? (
                 <div className="space-y-3">
@@ -877,7 +950,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'graphics':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-graphics">
               <SectionHeading title="Graphics & Images" />
               {galleryImages.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -900,7 +973,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const shortNotes = notes && notes.length > 300 ? notes.slice(0, 300) + '...' : notes;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-scouting_notes">
               <SectionHeading title="Scouting Notes" />
               {isEditing ? (
                 <Textarea
@@ -933,7 +1006,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const hasData = contract?.current_club || contract?.contract_expiry || contract?.wage || contract?.market_value || contract?.agent;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-contract_info">
               <SectionHeading title="Contract Information" icon={<FileText className="h-5 w-5" />} />
               {isEditing ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -984,7 +1057,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const hasData = physical?.height || physical?.weight || physical?.preferred_foot || physical?.fitness_level;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-physical_profile">
               <SectionHeading title="Physical Profile" icon={<Dumbbell className="h-5 w-5" />} />
               {isEditing ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1032,7 +1105,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const notes = isEditing ? (editContentConfig.agent_notes || '') : (contentConfig?.agent_notes || '');
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-agent_notes">
               <SectionHeading title="Agent Notes" icon={<User className="h-5 w-5" />} />
               {isEditing ? (
                 <Textarea
@@ -1233,6 +1306,28 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
             </div>
           </div>
         )}
+
+        {/* Quick Navigation Menu */}
+        <div className="sticky top-12 z-40 backdrop-blur-md" style={{ background: 'rgba(10,10,10,0.85)', borderBottom: `1px solid ${RISE_GOLD}1a` }}>
+          <div className="container mx-auto px-4 max-w-5xl">
+            <div className="flex items-center gap-1 overflow-x-auto py-2" style={{ scrollbarWidth: 'none' }}>
+              {sectionsToRender.map((id: string) => {
+                const label = ALL_SECTIONS.find(s => s.id === id)?.label;
+                if (!label) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bebas uppercase tracking-wider transition-colors hover:opacity-80"
+                    style={{ color: `${RISE_GOLD}b3`, background: `${RISE_GOLD}0d`, border: `1px solid ${RISE_GOLD}1a` }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         {/* Content */}
         <div className="container mx-auto px-4 py-10 max-w-5xl space-y-12">

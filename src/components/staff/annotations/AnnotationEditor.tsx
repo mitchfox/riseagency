@@ -189,10 +189,18 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     const video = videoRef.current;
     if (!video) return;
     let rafId: number;
+    let prevTime = 0;
     const updateTime = () => {
-      setCurrentTime(video.currentTime);
+      const t = video.currentTime;
+      // Detect loop reset: time jumped backwards significantly — clear triggered annotations
+      if (prevTime > 0 && t < prevTime - 0.5) {
+        triggeredTimesRef.current.clear();
+        freezeElementIdsRef.current.clear();
+      }
+      prevTime = t;
+      setCurrentTime(t);
       // Enforce clip constraint end boundary during playback
-      if (clipConstraint && video.currentTime >= clipConstraint.end) {
+      if (clipConstraint && t >= clipConstraint.end) {
         video.pause();
         video.currentTime = clipConstraint.end;
         setIsPlaying(false);
@@ -204,11 +212,19 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     const onLoaded = () => setDuration(clipConstraint ? clipConstraint.end - clipConstraint.start : video.duration);
     const onEnded = () => { setIsPlaying(false); cancelAnimationFrame(rafId); };
     const onTime = () => setCurrentTime(video.currentTime);
+    // Detect loop via 'seeking' event when the video loops natively
+    const onSeeking = () => {
+      if (video.loop && prevTime > 1 && video.currentTime < 0.5) {
+        triggeredTimesRef.current.clear();
+        freezeElementIdsRef.current.clear();
+      }
+    };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
     video.addEventListener('timeupdate', onTime);
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('ended', onEnded);
+    video.addEventListener('seeking', onSeeking);
     return () => {
       cancelAnimationFrame(rafId);
       video.removeEventListener('play', onPlay);
@@ -216,6 +232,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       video.removeEventListener('timeupdate', onTime);
       video.removeEventListener('loadedmetadata', onLoaded);
       video.removeEventListener('ended', onEnded);
+      video.removeEventListener('seeking', onSeeking);
     };
   }, []);
 
@@ -598,7 +615,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // Save current elements so we can revert on cancel
     setDrawingStartElements(activeKlip?.elements || []);
 
-    // Wait for the video to settle on the exact displayed frame before capturing
+    // Capture the exact frame currently displayed — use requestVideoFrameCallback if available
     const captureFrame = () => {
       const exactTime = video.currentTime;
       setDrawingTimestamp(exactTime);
@@ -618,17 +635,27 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       setActiveTool('select');
     };
 
-    // If video is already paused and settled, use requestAnimationFrame to ensure the frame is rendered
-    if (video.readyState >= 2) {
-      requestAnimationFrame(() => captureFrame());
-    } else {
-      const onSeeked = () => {
-        video.removeEventListener('seeked', onSeeked);
-        requestAnimationFrame(() => captureFrame());
-      };
-      video.addEventListener('seeked', onSeeked);
-      // Re-trigger seek to current position to force a settled frame
+    // Use requestVideoFrameCallback for frame-accurate capture when available
+    if ('requestVideoFrameCallback' in video) {
+      (video as any).requestVideoFrameCallback((_now: number, metadata: any) => {
+        if (metadata?.mediaTime != null) {
+          (video as HTMLVideoElement).currentTime = metadata.mediaTime;
+        }
+        captureFrame();
+      });
       video.currentTime = video.currentTime;
+    } else {
+      const v = video as HTMLVideoElement;
+      if (v.readyState >= 2) {
+        requestAnimationFrame(() => captureFrame());
+      } else {
+        const onSeeked = () => {
+          v.removeEventListener('seeked', onSeeked);
+          requestAnimationFrame(() => captureFrame());
+        };
+        v.addEventListener('seeked', onSeeked);
+        v.currentTime = v.currentTime;
+      }
     }
   }, [activeKlip]);
 

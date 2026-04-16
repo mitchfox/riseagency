@@ -419,7 +419,8 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                   <div className="absolute top-3 right-3 z-10 flex gap-2">
                     <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
                       onClick={() => {
-                        const container = videoRef.current?.closest('.relative') as HTMLElement;
+                        // Use the inner container ref that wraps both video + annotation overlay
+                        const container = document.getElementById('analysis-video-fullscreen-container');
                         (container || videoRef.current)?.requestFullscreen?.();
                       }}>
                       <Maximize className="h-4 w-4" />
@@ -430,7 +431,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                     </Button>
                   </div>
 
-                  <div className="relative max-h-full max-w-full">
+                  <div id="analysis-video-fullscreen-container" className="relative max-h-full max-w-full">
                     <video
                       ref={videoRef}
                       src={currentClip.video_url || ''}
@@ -456,6 +457,10 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                       <ReadOnlyAnnotationOverlay
                         elements={currentClip.clip_annotations}
                         videoRef={videoRef}
+                        clipStart={(() => {
+                          const boundaries = parseTimeFragment(currentClip.video_url);
+                          return boundaries?.start || 0;
+                        })()}
                       />
                     )}
                   </div>

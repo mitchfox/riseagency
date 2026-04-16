@@ -60,7 +60,8 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
     return () => cancelAnimationFrame(rafRef.current);
   }, [elements, videoRef, clipStart]);
 
-  if (visibleEls.length === 0) return null;
+  // Always render the SVG container so it's present in fullscreen — just render empty if no elements
+  // This prevents the overlay from unmounting/remounting which breaks fullscreen
 
   const renderElement = (el: ComputedAnnotationElement) => {
     const x = el.computedX;
