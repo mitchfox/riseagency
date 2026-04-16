@@ -189,10 +189,18 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     const video = videoRef.current;
     if (!video) return;
     let rafId: number;
+    let prevTime = 0;
     const updateTime = () => {
-      setCurrentTime(video.currentTime);
+      const t = video.currentTime;
+      // Detect loop reset: time jumped backwards significantly — clear triggered annotations
+      if (prevTime > 0 && t < prevTime - 0.5) {
+        triggeredTimesRef.current.clear();
+        freezeElementIdsRef.current.clear();
+      }
+      prevTime = t;
+      setCurrentTime(t);
       // Enforce clip constraint end boundary during playback
-      if (clipConstraint && video.currentTime >= clipConstraint.end) {
+      if (clipConstraint && t >= clipConstraint.end) {
         video.pause();
         video.currentTime = clipConstraint.end;
         setIsPlaying(false);
@@ -204,11 +212,19 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     const onLoaded = () => setDuration(clipConstraint ? clipConstraint.end - clipConstraint.start : video.duration);
     const onEnded = () => { setIsPlaying(false); cancelAnimationFrame(rafId); };
     const onTime = () => setCurrentTime(video.currentTime);
+    // Detect loop via 'seeking' event when the video loops natively
+    const onSeeking = () => {
+      if (video.loop && prevTime > 1 && video.currentTime < 0.5) {
+        triggeredTimesRef.current.clear();
+        freezeElementIdsRef.current.clear();
+      }
+    };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
     video.addEventListener('timeupdate', onTime);
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('ended', onEnded);
+    video.addEventListener('seeking', onSeeking);
     return () => {
       cancelAnimationFrame(rafId);
       video.removeEventListener('play', onPlay);
@@ -216,6 +232,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       video.removeEventListener('timeupdate', onTime);
       video.removeEventListener('loadedmetadata', onLoaded);
       video.removeEventListener('ended', onEnded);
+      video.removeEventListener('seeking', onSeeking);
     };
   }, []);
 
