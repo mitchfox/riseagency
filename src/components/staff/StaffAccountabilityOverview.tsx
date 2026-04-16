@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check, ExternalLink, Settings2, EyeOff } from "lucide-react";
-import { format, isPast, isToday, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check, ExternalLink, Trophy, ListTodo, LayoutGrid } from "lucide-react";
+import { format, isPast, isToday, startOfWeek, startOfMonth, startOfYear, addDays, isSameDay } from "date-fns";
 import { createPortal } from "react-dom";
 
 interface StaffTask {
@@ -61,6 +61,8 @@ const priorityBadgeColors: Record<string, string> = {
 };
 
 const TASK_CATEGORIES = ['Networking', 'Recruitment', 'Marketing', 'Content', 'Admin', 'Coaching', 'Analysis', 'Finance', 'Other'];
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 function countCompletions(log: string[] | null, since: Date): number {
   if (!log || log.length === 0) return 0;
@@ -121,20 +123,21 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const [newRecurrenceLabel, setNewRecurrenceLabel] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
-  const [managePeopleOpen, setManagePeopleOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"tasks" | "schedule" | "leaderboard">("tasks");
   const [dragItem, setDragItem] = useState<{ id: string; kind: "task" | "schedule" } | null>(null);
-
-  // Manage people settings from localStorage
-  const [hiddenStaff, setHiddenStaff] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem("staff_hidden_ids") || "[]"); } catch { return []; }
+  const [staffAvatars, setStaffAvatars] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("staff_avatars") || "{}"); } catch { return {}; }
   });
   const [staffAliases, setStaffAliases] = useState<Record<string, string>>(() => {
     try { return JSON.parse(localStorage.getItem("staff_aliases") || "{}"); } catch { return {}; }
   });
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
 
-  const saveHiddenStaff = (ids: string[]) => {
-    setHiddenStaff(ids);
-    localStorage.setItem("staff_hidden_ids", JSON.stringify(ids));
+  const saveStaffAvatars = (avatars: Record<string, string>) => {
+    setStaffAvatars(avatars);
+    localStorage.setItem("staff_avatars", JSON.stringify(avatars));
   };
   const saveStaffAliases = (aliases: Record<string, string>) => {
     setStaffAliases(aliases);
@@ -149,17 +152,17 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url'),
     ]);
 
-    const coreProfiles = (profilesData || []).filter(p => CORE_STAFF_IDS.includes(p.id));
-    coreProfiles.sort((a, b) => CORE_STAFF_IDS.indexOf(a.id) - CORE_STAFF_IDS.indexOf(b.id));
+    // Only admins on My Tasks
+    const adminIds = new Set(CORE_STAFF_IDS);
+    const adminProfiles = (profilesData || []).filter(p => adminIds.has(p.id));
+    adminProfiles.sort((a, b) => CORE_STAFF_IDS.indexOf(a.id) - CORE_STAFF_IDS.indexOf(b.id));
 
     setTasks((tasksData || []) as StaffTask[]);
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
-    setStaffMembers(coreProfiles);
+    setStaffMembers(adminProfiles);
 
-    // Auto-select logged-in user (index within visible staff)
     if (userId) {
-      const visibleProfiles = coreProfiles.filter(p => !hiddenStaff.includes(p.id));
-      const idx = visibleProfiles.findIndex(p => p.id === userId);
+      const idx = adminProfiles.findIndex(p => p.id === userId);
       if (idx >= 0) setActiveStaffIndex(idx);
     }
     setLoading(false);
@@ -167,7 +170,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const visibleStaff = staffMembers.filter(m => !hiddenStaff.includes(m.id));
+  const visibleStaff = staffMembers;
   const activeMember = visibleStaff[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
   const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
@@ -178,14 +181,11 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           kind: "schedule" as const,
           id: `schedule-${item.id}`,
           title: item.post_type,
-          description: [
-            item.platform_format ? `Format: ${item.platform_format}` : null,
-            item.status ? `Status: ${item.status}` : null,
-          ].filter(Boolean).join(" • ") || null,
+          description: null,
           assigned_to: item.owner_id ? [item.owner_id] : [],
           completed: (item.status || "").toLowerCase() === "posted",
           priority: "medium",
-          category: "Marketing",
+          category: null,
           display_order: 0,
           created_at: "",
           updated_at: "",
@@ -199,19 +199,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         })),
       ]
     : [];
-  const activeTasks = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
-  const completedTasks = memberTaskFeed.filter(t => t.completed && !t.is_recurring);
-  const overdueTasks = activeTasks.filter((t) => t.kind === "task" && !t.completed && t.deadline && isPast(new Date(t.deadline)));
-  const pendingTasks = activeTasks.filter((t) => !(t.kind === "task" && !t.completed && t.deadline && isPast(new Date(t.deadline))));
-  const recurringActiveTasks = activeTasks.filter((t): t is Extract<TaskFeedItem, { kind: "task" }> => t.kind === "task" && t.is_recurring && !t.completed);
-  const recurringDone = activeTasks.filter((t): t is Extract<TaskFeedItem, { kind: "task" }> => t.kind === "task" && t.completed && t.is_recurring);
 
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const yearStart = startOfYear(now);
+  const fourWeeksAgo = addDays(now, -28);
 
-  // Count completions across all tasks for this member
   const weekCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
   const monthCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, monthStart), 0);
   const yearCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, yearStart), 0);
@@ -249,18 +243,23 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const updates: any = { completed };
     if (completed) {
       updates.last_completed_at = new Date().toISOString();
-      // Append to completion_log
       const currentLog = (task.completion_log || []) as string[];
       updates.completion_log = [...currentLog, new Date().toISOString()];
-    }
-    if (task.is_recurring && completed) {
-      updates.last_completed_at = new Date().toISOString();
     }
 
     const { error } = await supabase.from('staff_tasks').update(updates).eq('id', id);
     if (error) toast.error("Failed to update");
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+      if (completed) {
+        const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+        supabase.from('staff_notification_events').insert({
+          event_type: 'task_completed',
+          title: 'Task Completed',
+          body: `${memberName} completed: ${task.title}`,
+          event_data: { user_id: activeMember?.id, task_title: task.title },
+        }).then(() => {});
+      }
     }
   };
 
@@ -277,6 +276,31 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else {
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
       toast.success("Task logged as done");
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      supabase.from('staff_notification_events').insert({
+        event_type: 'task_completed',
+        title: 'Task Completed',
+        body: `${memberName} completed: ${task.title}`,
+        event_data: { user_id: activeMember?.id, task_title: task.title },
+      }).then(() => {});
+    }
+  };
+
+  const handleMarkScheduleDone = async (scheduleId: string) => {
+    const realId = scheduleId.replace("schedule-", "");
+    const { error } = await supabase.from('marketing_schedule_items').update({ status: 'posted' }).eq('id', realId);
+    if (error) toast.error("Failed to mark as done");
+    else {
+      setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, status: 'posted' } : s));
+      toast.success("Marked as done");
+      const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || 'Someone';
+      const item = scheduleItems.find(s => s.id === realId);
+      supabase.from('staff_notification_events').insert({
+        event_type: 'task_completed',
+        title: 'Schedule Item Completed',
+        body: `${memberName} completed: ${item?.post_type || 'Post'}`,
+        event_data: { user_id: activeMember?.id, task_title: item?.post_type },
+      }).then(() => {});
     }
   };
 
@@ -367,138 +391,366 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     else toast.success("Reminder sent");
   };
 
+  const handleAvatarUpload = async (staffId: string, file: File) => {
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `staff-avatars/${staffId}_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('marketing-gallery')
+        .upload(fileName, file, { cacheControl: '31536000', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('marketing-gallery')
+        .getPublicUrl(fileName);
+      saveStaffAvatars({ ...staffAvatars, [staffId]: publicUrl });
+      toast.success('Avatar uploaded');
+    } catch {
+      toast.error('Failed to upload avatar');
+    }
+  };
+
+  const getDisplayName = (m: StaffMember) => staffAliases[m.id] || (m.full_name || m.email.split('@')[0]).split(' ')[0];
+
+  // Group tasks by day
+  const getDayKey = (item: TaskFeedItem): string => {
+    if (item.kind === "schedule") {
+      return item.scheduleItem.day_of_week.toLowerCase();
+    }
+    if (item.deadline) {
+      const d = new Date(item.deadline);
+      return DAY_NAMES[d.getDay()];
+    }
+    return "anytime";
+  };
+
+  const todayDayName = DAY_NAMES[now.getDay()];
+
+  const groupTasksByDay = (feed: TaskFeedItem[]) => {
+    const groups: Record<string, TaskFeedItem[]> = { anytime: [] };
+    const dayOrder: string[] = [];
+
+    // Build day order starting from today
+    for (let i = 0; i < 7; i++) {
+      const dayIdx = (now.getDay() + i) % 7;
+      const dayName = DAY_NAMES[dayIdx];
+      dayOrder.push(dayName);
+      groups[dayName] = [];
+    }
+
+    feed.forEach(item => {
+      const key = getDayKey(item);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+
+    return { groups, dayOrder };
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
+  const StaffAvatar = ({ staffId, size = "sm" }: { staffId: string; size?: "sm" | "lg" }) => {
+    const avatar = staffAvatars[staffId];
+    const member = staffMembers.find(m => m.id === staffId);
+    const initials = (member?.full_name || member?.email || "?").charAt(0).toUpperCase();
+    const sizeClass = size === "lg" ? "h-10 w-10 text-sm" : "h-6 w-6 text-[9px]";
+
+    return (
+      <div className={`relative ${sizeClass} rounded-full overflow-hidden bg-muted border border-border/50 flex items-center justify-center shrink-0`}>
+        {avatar ? (
+          <img src={avatar} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="font-bold text-muted-foreground">{initials}</span>
+        )}
+        {isAdmin && (
+          <label className="absolute inset-0 cursor-pointer opacity-0 hover:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+            <span className="text-white text-[8px]">+</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleAvatarUpload(staffId, file);
+              }}
+            />
+          </label>
+        )}
+      </div>
+    );
+  };
+
   const TaskCard = ({ task }: { task: TaskFeedItem }) => {
     const isScheduleTask = task.kind === "schedule";
     const isOverdue = !isScheduleTask && task.deadline && !task.completed && isPast(new Date(task.deadline));
-    const taskWeekCount = !isScheduleTask ? countCompletions(task.completion_log, weekStart) : 0;
 
     return (
       <div
         draggable={isAdmin}
         onDragStart={() => {
-          const realId = isScheduleTask ? task.id : task.id;
-          setDragItem({ id: realId, kind: isScheduleTask ? "schedule" : "task" });
+          setDragItem({ id: isScheduleTask ? task.id : task.id, kind: isScheduleTask ? "schedule" : "task" });
         }}
-        className={`group rounded-xl border-2 p-4 transition-all ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} ${
-        isScheduleTask
-          ? 'border-[hsl(var(--gold))]/25 bg-[hsl(var(--gold))]/5'
-          : isOverdue
-            ? 'border-destructive/50 bg-destructive/5'
-            : priorityColors[task.priority] || 'border-border/50 bg-card/30'
+        className={`group rounded-xl border-2 p-3 transition-all ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} ${
+        isOverdue
+          ? 'border-destructive/50 bg-destructive/5'
+          : priorityColors[task.priority] || 'border-border/50 bg-card/30'
       }`}>
         {task.image_url && (
-          <div className="mb-3 h-32 overflow-hidden rounded-lg bg-muted">
+          <div className="mb-2 h-24 overflow-hidden rounded-lg bg-muted">
             <img src={task.image_url} alt="" className="h-full w-full object-cover" />
           </div>
         )}
-        <div className="flex items-start gap-3">
-          {isScheduleTask ? (
-            <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[hsl(var(--gold))]/40 bg-[hsl(var(--gold))]/10">
-              <Calendar className="h-3 w-3 text-[hsl(var(--gold))]" />
-            </div>
-          ) : (
-            <Checkbox
-              checked={task.completed}
-              onCheckedChange={(checked) => handleToggleComplete(task.id, !!checked)}
-              className="mt-1 shrink-0"
-            />
-          )}
+        <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <p className={`font-semibold text-sm ${task.completed && !task.is_recurring ? 'line-through opacity-50' : ''}`}>
+            <p className={`font-semibold text-xs ${task.completed && !task.is_recurring ? 'line-through opacity-50' : ''}`}>
               {task.title}
             </p>
             {task.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>
+              <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">{task.description}</p>
             )}
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {isScheduleTask ? (
-                <>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/20">
-                    Scheduled
-                  </Badge>
-                  {task.category && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.category}</Badge>}
-                  {task.scheduleItem.platform_format && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.scheduleItem.platform_format}</Badge>}
-                  <span className="text-[9px] text-muted-foreground">{task.scheduleItem.day_of_week.charAt(0).toUpperCase() + task.scheduleItem.day_of_week.slice(1)}</span>
-                  {task.scheduleItem.scheduled_time && (
-                    <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                      <Clock className="h-2.5 w-2.5" /> {task.scheduleItem.scheduled_time}
-                    </span>
-                  )}
-                  {task.scheduleItem.status && <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.scheduleItem.status}</Badge>}
-                </>
-              ) : (
-                <>
-                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${priorityBadgeColors[task.priority] || ''}`}>
-                    {task.priority}
-                  </Badge>
-                  {task.category && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">{task.category}</Badge>
-                  )}
-                  {task.is_recurring && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">
-                      <RotateCcw className="h-2.5 w-2.5 mr-0.5" />
-                      {task.recurrence_label || 'Recurring'}
-                    </Badge>
-                  )}
-                  {task.deadline && (
-                    <span className={`text-[9px] flex items-center gap-0.5 ${isOverdue ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
-                      <Clock className="h-2.5 w-2.5" />
-                      {format(new Date(task.deadline), 'dd MMM')}
-                    </span>
-                  )}
-                  {taskWeekCount > 0 && (
-                    <span className="text-[9px] text-emerald-400 flex items-center gap-0.5">
-                      <CheckCircle2 className="h-2.5 w-2.5" /> {taskWeekCount} this week
-                    </span>
-                  )}
-                </>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              <Badge variant="outline" className={`text-[8px] px-1 py-0 ${priorityBadgeColors[task.priority] || ''}`}>
+                {task.priority}
+              </Badge>
+              {task.is_recurring && (
+                <Badge variant="outline" className="text-[8px] px-1 py-0 bg-primary/10 text-primary border-primary/20">
+                  <RotateCcw className="h-2 w-2 mr-0.5" />
+                  {task.recurrence_label || 'Recurring'}
+                </Badge>
+              )}
+              {task.deadline && (
+                <span className={`text-[8px] flex items-center gap-0.5 ${isOverdue ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                  <Clock className="h-2 w-2" />
+                  {format(new Date(task.deadline), 'dd MMM')}
+                </span>
+              )}
+              {isScheduleTask && task.scheduleItem.scheduled_time && (
+                <span className="text-[8px] text-muted-foreground flex items-center gap-0.5">
+                  <Clock className="h-2 w-2" /> {task.scheduleItem.scheduled_time}
+                </span>
               )}
             </div>
           </div>
-          <div className="flex shrink-0 flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-            {isScheduleTask ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)}
-                  title="Edit"
-                >
-                  <Pencil className="h-3 w-3" />
+          <div className="flex shrink-0 flex-col gap-0.5">
+            {/* Done button — always visible */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30"
+              onClick={() => {
+                if (isScheduleTask) handleMarkScheduleDone(task.id);
+                else if (task.is_recurring) handleLogCompletion(task.id);
+                else handleToggleComplete(task.id, true);
+              }}
+              title="Mark done"
+            >
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+            </Button>
+            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              {isScheduleTask ? (
+                <Button variant="ghost" size="icon" className="h-5 w-5"
+                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)} title="Edit">
+                  <Pencil className="h-2.5 w-2.5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)}
-                  title="Open in Schedule"
-                >
-                  <ExternalLink className="h-3 w-3 text-[hsl(var(--gold))]" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditTask(task)} title="Edit">
-                  <Pencil className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleLogCompletion(task.id)} title="Log done">
-                  <Check className="h-3 w-3 text-emerald-400" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(task.id)} title="Delete">
-                  <Trash2 className="h-3 w-3 text-destructive" />
-                </Button>
-              </>
-            )}
+              ) : (
+                <>
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditTask(task)} title="Edit">
+                    <Pencil className="h-2.5 w-2.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleDelete(task.id)} title="Delete">
+                    <Trash2 className="h-2.5 w-2.5 text-destructive" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
   };
+
+  // ── Leaderboard data ──
+  const leaderboardData = visibleStaff.map(m => {
+    const mTasks = tasks.filter(t => t.assigned_to?.includes(m.id));
+    return {
+      id: m.id,
+      name: getDisplayName(m),
+      allTime: mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0),
+      fourWeeks: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0),
+      lastWeek: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0),
+    };
+  }).sort((a, b) => b.allTime - a.allTime);
+
+  // ── Day-grouped active tasks ──
+  const activeFeed = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
+  const { groups: dayGroups, dayOrder } = groupTasksByDay(activeFeed);
+
+  const renderTasksTab = () => (
+    <>
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border bg-card/50 p-3 text-center">
+          <p className="text-2xl font-bold text-[hsl(var(--gold))]">{weekCount}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Week</p>
+        </div>
+        <div className="rounded-xl border bg-card/50 p-3 text-center">
+          <p className="text-2xl font-bold text-primary">{monthCount}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Month</p>
+        </div>
+        <div className="rounded-xl border bg-card/50 p-3 text-center">
+          <p className="text-2xl font-bold text-foreground">{yearCount}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Year</p>
+        </div>
+      </div>
+
+      {/* Quick Log for recurring */}
+      {memberTasks.filter(t => t.is_recurring && !t.completed).length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Log</p>
+          <div className="flex flex-wrap gap-2">
+            {memberTasks.filter(t => t.is_recurring && !t.completed).map(task => (
+              <Button key={task.id} variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => handleLogCompletion(task.id)}>
+                <CheckCircle2 className="h-3 w-3" /> {task.title}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Day-by-day groups */}
+      {/* Anytime first */}
+      {dayGroups.anytime && dayGroups.anytime.length > 0 && (
+        <DaySection label="Anytime" tasks={dayGroups.anytime} defaultOpen />
+      )}
+
+      {dayOrder.map((dayName, idx) => {
+        const dayTasks = dayGroups[dayName] || [];
+        if (dayTasks.length === 0) return null;
+        const dayLabel = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+        const isToday2 = dayName === todayDayName;
+        const defaultOpen = idx < 3; // Next 3 days open
+        return (
+          <DaySection
+            key={dayName}
+            label={isToday2 ? `${dayLabel} (Today)` : dayLabel}
+            tasks={dayTasks}
+            defaultOpen={defaultOpen}
+            highlight={isToday2}
+          />
+        );
+      })}
+
+      {activeFeed.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-8">No tasks assigned</p>
+      )}
+
+      {/* Remind button */}
+      {activeMember && activeMember.id !== userId && (
+        <div className="flex justify-end pt-2">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => handleRemind(activeMember.id)}>
+            <Bell className="h-3 w-3 text-[hsl(var(--gold))]" /> Send Reminder
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  const DaySection = ({ label, tasks: dayTasks, defaultOpen = true, highlight = false }: {
+    label: string; tasks: TaskFeedItem[]; defaultOpen?: boolean; highlight?: boolean;
+  }) => {
+    const isCollapsed = collapsedDays.has(label);
+    const isOpen = defaultOpen ? !isCollapsed : isCollapsed; // Toggle logic relative to default
+
+    return (
+      <div>
+        <button
+          className={`flex items-center gap-2 w-full text-left mb-2 ${highlight ? 'text-[hsl(var(--gold))]' : 'text-muted-foreground'}`}
+          onClick={() => {
+            setCollapsedDays(prev => {
+              const next = new Set(prev);
+              if (next.has(label)) next.delete(label);
+              else next.add(label);
+              return next;
+            });
+          }}
+        >
+          <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+          <span className="text-[10px] opacity-60">({dayTasks.length})</span>
+          <span className="text-[10px]">{isOpen ? '▾' : '▸'}</span>
+        </button>
+        {isOpen && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            {dayTasks.map(task => <TaskCard key={task.id} task={task} />)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderScheduleTab = () => (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Full schedule board available in <button className="text-primary underline" onClick={() => navigate('/staff?section=marketingschedule')}>Marketing & Brand</button>
+      </p>
+      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
+        const dayItems = scheduleItems.filter(s => s.day_of_week.toLowerCase() === day);
+        if (dayItems.length === 0) return null;
+        return (
+          <div key={day}>
+            <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${day === todayDayName ? 'text-[hsl(var(--gold))]' : 'text-muted-foreground'}`}>
+              {day.charAt(0).toUpperCase() + day.slice(1)} {day === todayDayName && '(Today)'}
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              {dayItems.map(item => (
+                <div key={item.id} className={`rounded-xl border p-3 ${item.status === 'posted' ? 'opacity-40' : ''}`}>
+                  <p className="text-xs font-semibold">{item.post_type}</p>
+                  {item.platform_format && <p className="text-[10px] text-muted-foreground">{item.platform_format}</p>}
+                  {item.scheduled_time && <p className="text-[10px] text-muted-foreground">{item.scheduled_time}</p>}
+                  {item.owner_id && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <StaffAvatar staffId={item.owner_id} />
+                      <span className="text-[9px] text-muted-foreground">{getDisplayName(staffMembers.find(m => m.id === item.owner_id) || { id: '', email: '', full_name: '' })}</span>
+                    </div>
+                  )}
+                  {item.status !== 'posted' && (
+                    <Button size="sm" variant="outline" className="mt-2 h-6 text-[10px] gap-1" onClick={() => handleMarkScheduleDone(`schedule-${item.id}`)}>
+                      <Check className="h-2.5 w-2.5" /> Done
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderLeaderboardTab = () => (
+    <div className="space-y-4">
+      <div className="rounded-xl border bg-card/50 overflow-hidden">
+        <div className="grid grid-cols-5 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-bold border-b border-border/50">
+          <span className="col-span-2">Staff</span>
+          <span className="text-center">All Time</span>
+          <span className="text-center">4 Weeks</span>
+          <span className="text-center">This Week</span>
+        </div>
+        {leaderboardData.map((entry, idx) => (
+          <div key={entry.id} className={`grid grid-cols-5 gap-2 px-4 py-3 items-center ${idx === 0 ? 'bg-[hsl(var(--gold))]/5' : ''} ${idx < leaderboardData.length - 1 ? 'border-b border-border/30' : ''}`}>
+            <div className="col-span-2 flex items-center gap-2">
+              {idx === 0 && <Trophy className="h-3.5 w-3.5 text-[hsl(var(--gold))]" />}
+              <StaffAvatar staffId={entry.id} />
+              <span className="text-sm font-medium truncate">{entry.name}</span>
+            </div>
+            <p className="text-center text-sm font-bold">{entry.allTime}</p>
+            <p className="text-center text-sm font-bold text-primary">{entry.fourWeeks}</p>
+            <p className="text-center text-sm font-bold text-[hsl(var(--gold))]">{entry.lastWeek}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const mainContent = (
     <div className={`space-y-4 ${fullscreen ? 'p-6' : ''}`}>
@@ -509,14 +761,9 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <>
-              <Button size="sm" variant="ghost" onClick={() => setManagePeopleOpen(true)}>
-                <Settings2 className="h-4 w-4" />
-              </Button>
-              <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
-                <Plus className="h-4 w-4 mr-1.5" /> Add Task
-              </Button>
-            </>
+            <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1.5" /> Add Task
+            </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => setFullscreen(!fullscreen)}>
             {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -524,148 +771,100 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         </div>
       </div>
 
-      {/* Staff slider */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex === 0}
-          onClick={() => setActiveStaffIndex(prev => Math.max(0, prev - 1))}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 flex gap-2 overflow-x-auto py-1 scrollbar-hide">
-          {visibleStaff.map((m, i) => {
-            const isActive = i === activeStaffIndex;
-            const isCurrent = m.id === userId;
-            const memberTaskCount =
-              tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
-              scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
-            const displayName = staffAliases[m.id] || (m.full_name || m.email.split('@')[0]).split(' ')[0];
-            return (
-              <button
-                key={m.id}
-                onClick={() => setActiveStaffIndex(i)}
-                onDragOver={(e) => { if (dragItem && isAdmin) e.preventDefault(); }}
-                onDrop={() => handleDropOnStaff(m.id)}
-                className={`shrink-0 px-4 py-2 rounded-xl border-2 transition-all text-sm font-medium ${
-                  isActive
-                    ? isCurrent
-                      ? 'border-[hsl(var(--gold))] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]'
-                      : 'border-primary bg-primary/10 text-primary'
-                    : 'border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                {displayName}
-                {memberTaskCount > 0 && (
-                  <span className="ml-1.5 text-[10px] opacity-70">{memberTaskCount}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= visibleStaff.length - 1}
-          onClick={() => setActiveStaffIndex(prev => Math.min(visibleStaff.length - 1, prev + 1))}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+        {([
+          { key: "tasks" as const, label: "Tasks", icon: ListTodo },
+          { key: "schedule" as const, label: "Schedule", icon: Calendar },
+          { key: "leaderboard" as const, label: "Leaderboard", icon: Trophy },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              activeTab === tab.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <tab.icon className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {activeMember && (
-        <>
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl border bg-card/50 p-3 text-center">
-              <p className="text-2xl font-bold text-[hsl(var(--gold))]">{weekCount}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Week</p>
-            </div>
-            <div className="rounded-xl border bg-card/50 p-3 text-center">
-              <p className="text-2xl font-bold text-primary">{monthCount}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Month</p>
-            </div>
-            <div className="rounded-xl border bg-card/50 p-3 text-center">
-              <p className="text-2xl font-bold text-foreground">{yearCount}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">This Year</p>
-            </div>
+      {/* Staff slider (only for tasks tab) */}
+      {activeTab === "tasks" && (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex === 0}
+            onClick={() => setActiveStaffIndex(prev => Math.max(0, prev - 1))}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 flex gap-2 overflow-x-auto py-1 scrollbar-hide">
+            {visibleStaff.map((m, i) => {
+              const isActive = i === activeStaffIndex;
+              const isCurrent = m.id === userId;
+              const memberTaskCount =
+                tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
+                scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
+              const displayName = getDisplayName(m);
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setActiveStaffIndex(i)}
+                  onDragOver={(e) => { if (dragItem && isAdmin) e.preventDefault(); }}
+                  onDrop={() => handleDropOnStaff(m.id)}
+                  onDoubleClick={() => {
+                    if (isAdmin) {
+                      setEditingStaffId(m.id);
+                      setEditingName(staffAliases[m.id] || m.full_name || '');
+                    }
+                  }}
+                  className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all text-sm font-medium ${
+                    isActive
+                      ? isCurrent
+                        ? 'border-[hsl(var(--gold))] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]'
+                        : 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-border'
+                  }`}
+                >
+                  <StaffAvatar staffId={m.id} />
+                  {editingStaffId === m.id ? (
+                    <input
+                      className="bg-transparent border-b border-current text-sm w-20 outline-none"
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      onBlur={() => {
+                        if (editingName.trim()) saveStaffAliases({ ...staffAliases, [m.id]: editingName.trim() });
+                        setEditingStaffId(null);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          if (editingName.trim()) saveStaffAliases({ ...staffAliases, [m.id]: editingName.trim() });
+                          setEditingStaffId(null);
+                        }
+                      }}
+                      autoFocus
+                      onClick={e => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span>{displayName}</span>
+                  )}
+                  {memberTaskCount > 0 && (
+                    <span className="text-[10px] opacity-70">{memberTaskCount}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-
-          {/* Quick action buttons for recurring tasks */}
-          {recurringActiveTasks.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Log</p>
-              <div className="flex flex-wrap gap-2">
-                {recurringActiveTasks.map(task => (
-                  <Button
-                    key={task.id}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs gap-1.5"
-                    onClick={() => handleLogCompletion(task.id)}
-                  >
-                    <CheckCircle2 className="h-3 w-3" />
-                    {task.title}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Overdue */}
-          {overdueTasks.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-destructive uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5" /> Overdue ({overdueTasks.length})
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {overdueTasks.map(task => <TaskCard key={task.id} task={task} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Active */}
-          {pendingTasks.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Active ({pendingTasks.length})
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {pendingTasks.map(task => <TaskCard key={task.id} task={task} />)}
-              </div>
-            </div>
-          )}
-
-          {recurringDone.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Done Today ({recurringDone.length})
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-60">
-                {recurringDone.map(task => <TaskCard key={task.id} task={task} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Completed one-off */}
-          {completedTasks.length > 0 && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">{completedTasks.length} completed</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 opacity-40">
-                {completedTasks.slice(0, 6).map(task => (
-                  <div key={task.id} className="text-xs p-2 rounded-lg bg-muted/30 line-through truncate">{task.title}</div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {memberTaskFeed.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">No tasks assigned</p>
-          )}
-
-          {/* Remind button for other staff */}
-          {activeMember.id !== userId && (
-            <div className="flex justify-end pt-2">
-              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => handleRemind(activeMember.id)}>
-                <Bell className="h-3 w-3 text-[hsl(var(--gold))]" /> Send Reminder
-              </Button>
-            </div>
-          )}
-        </>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= visibleStaff.length - 1}
+            onClick={() => setActiveStaffIndex(prev => Math.min(visibleStaff.length - 1, prev + 1))}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       )}
+
+      {activeTab === "tasks" && activeMember && renderTasksTab()}
+      {activeTab === "schedule" && renderScheduleTab()}
+      {activeTab === "leaderboard" && renderLeaderboardTab()}
 
       {/* Add / Edit Task Dialog */}
       <Dialog open={addOpen || !!editingTask} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditingTask(null); resetForm(); } }}>
@@ -714,24 +913,11 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                 {newImageUrl ? (
                   <div className="relative w-full h-28 rounded-lg overflow-hidden border border-border">
                     <img src={newImageUrl} alt="" className="w-full h-full object-cover" />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-1 right-1 h-6 text-[10px]"
-                      onClick={() => setNewImageUrl('')}
-                    >
-                      Remove
-                    </Button>
+                    <Button type="button" size="sm" variant="destructive" className="absolute top-1 right-1 h-6 text-[10px]" onClick={() => setNewImageUrl('')}>Remove</Button>
                   </div>
                 ) : (
                   <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full h-16 border-dashed flex flex-col gap-1"
-                      onClick={() => document.getElementById('task-image-upload')?.click()}
-                    >
+                    <Button type="button" variant="outline" className="w-full h-16 border-dashed flex flex-col gap-1" onClick={() => document.getElementById('task-image-upload')?.click()}>
                       <Image className="h-4 w-4 text-muted-foreground" />
                       <span className="text-xs text-muted-foreground">Upload image</span>
                     </Button>
@@ -746,19 +932,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                         try {
                           const ext = file.name.split('.').pop();
                           const fileName = `tasks/${Date.now()}.${ext}`;
-                          const { error: uploadError } = await supabase.storage
-                            .from('marketing-gallery')
-                            .upload(fileName, file, { cacheControl: '31536000', upsert: false });
+                          const { error: uploadError } = await supabase.storage.from('marketing-gallery').upload(fileName, file, { cacheControl: '31536000', upsert: false });
                           if (uploadError) throw uploadError;
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('marketing-gallery')
-                            .getPublicUrl(fileName);
+                          const { data: { publicUrl } } = supabase.storage.from('marketing-gallery').getPublicUrl(fileName);
                           setNewImageUrl(publicUrl);
                           toast.success('Image uploaded');
-                        } catch (err) {
-                          console.error(err);
-                          toast.error('Failed to upload image');
-                        }
+                        } catch { toast.error('Failed to upload image'); }
                       }}
                     />
                   </>
@@ -775,7 +954,6 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
               </div>
             </div>
 
-            {/* Assign to (only for new tasks) */}
             {!editingTask && (
               <div>
                 <Label>Assign To *</Label>
@@ -784,12 +962,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                     <button
                       key={m.id}
                       onClick={() => toggleAssignee(m.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                         newAssignees.includes(m.id)
                           ? 'bg-[hsl(var(--gold))]/20 border-[hsl(var(--gold))]/40 text-[hsl(var(--gold))]'
                           : 'bg-card border-border/50 text-muted-foreground hover:text-foreground'
                       }`}
                     >
+                      <StaffAvatar staffId={m.id} />
                       {m.full_name || m.email.split('@')[0]}
                     </button>
                   ))}
@@ -820,42 +999,6 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                 </Button>
               )}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Manage People Dialog */}
-      <Dialog open={managePeopleOpen} onOpenChange={setManagePeopleOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Manage People</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {staffMembers.map(m => {
-              const isHidden = hiddenStaff.includes(m.id);
-              const alias = staffAliases[m.id] || "";
-              return (
-                <div key={m.id} className={`flex items-center gap-3 rounded-lg border p-3 ${isHidden ? 'opacity-50' : ''}`}>
-                  <Checkbox
-                    checked={!isHidden}
-                    onCheckedChange={(checked) => {
-                      if (checked) saveHiddenStaff(hiddenStaff.filter(id => id !== m.id));
-                      else saveHiddenStaff([...hiddenStaff, m.id]);
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{m.full_name || m.email}</p>
-                    <Input
-                      value={alias}
-                      onChange={(e) => saveStaffAliases({ ...staffAliases, [m.id]: e.target.value })}
-                      placeholder="Display alias"
-                      className="mt-1 h-7 text-xs"
-                    />
-                  </div>
-                  {isHidden && <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />}
-                </div>
-              );
-            })}
           </div>
         </DialogContent>
       </Dialog>

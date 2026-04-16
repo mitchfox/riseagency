@@ -31,7 +31,9 @@ const getContrastColor = (hex: string): string => {
  *  Rendering now matches AnnotationCanvas / ReadOnlyAnnotationPlayback exactly. */
 export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }: Props) => {
   const [visibleEls, setVisibleEls] = useState<ComputedAnnotationElement[]>([]);
+  const [loopKey, setLoopKey] = useState(0);
   const rafRef = useRef<number>(0);
+  const prevTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (!elements || elements.length === 0) return;
@@ -42,6 +44,13 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
       const time = video.currentTime;
       const clipStartTime = (video as any).__clipStartTime;
       const relTime = clipStart + (time - (clipStartTime != null ? clipStartTime : time));
+
+      // Detect loop: currentTime jumped backwards significantly
+      if (prevTimeRef.current > 0 && time < prevTimeRef.current - 0.5) {
+        setLoopKey(k => k + 1);
+      }
+      prevTimeRef.current = time;
+
       const visible = computeVisibleElements(elements, relTime, { forceOpacity: 1 });
       setVisibleEls(visible);
       rafRef.current = requestAnimationFrame(tick);
@@ -455,6 +464,7 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
 
   return (
     <svg
+      key={loopKey}
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 100 100"
       preserveAspectRatio="none"

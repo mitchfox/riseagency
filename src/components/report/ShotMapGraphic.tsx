@@ -81,10 +81,10 @@ export const hasShotMapData = (actions: ShotMapCarrier[]) => {
   return actions.some((action) => !!getShotMapFromAction(action)?.zone);
 };
 
-// Goal frame occupies the centre of the graphic
-const GOAL_LEFT = 0.18;
-const GOAL_RIGHT = 0.82;
-const GOAL_TOP = 0.18;
+// Goal frame occupies the centre of the graphic — wider to look like a real goal
+const GOAL_LEFT = 0.12;
+const GOAL_RIGHT = 0.88;
+const GOAL_TOP = 0.22;
 const GOAL_BOTTOM = 0.82;
 
 const getPointPosition = (zone: number, detail?: number | null): { x: number; y: number } | null => {
@@ -174,7 +174,7 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
     <div className="space-y-4">
       <div className="mx-auto flex max-w-[430px] flex-col gap-3">
         {/* Goal frame SVG */}
-        <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[hsl(var(--background))]">
+        <div className="relative aspect-[2/1] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[hsl(var(--background))]">
           <svg
             viewBox="0 0 100 100"
             preserveAspectRatio="none"
@@ -232,6 +232,11 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
               const offsetY = Math.sin(angle) * radius;
               const isSelected = selectedShotId === shot.id;
 
+              // Deterministic pseudo-random jitter ±2px seeded from ID
+              const hash = shot.id.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+              const jitterX = ((hash % 5) - 2);
+              const jitterY = (((hash >> 8) % 5) - 2);
+
               return (
                 <button
                   type="button"
@@ -242,7 +247,7 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
                   style={{
                     left: `${shot.x * 100}%`,
                     top: `${shot.y * 100}%`,
-                    transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+                    transform: `translate(calc(-50% + ${offsetX + jitterX}px), calc(-50% + ${offsetY + jitterY}px))`,
                     backgroundColor: color,
                     border: isSelected ? "2px solid white" : "2px solid rgba(0,0,0,0.3)",
                     boxShadow: isSelected

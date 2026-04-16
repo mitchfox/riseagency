@@ -418,12 +418,14 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
       for (let i = 0; i < accepted.length; i++) {
         const clip = accepted[i];
         const sanitised = clip.title.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "Clip";
-        const fileName = `${i + 1}. ${sanitised}.mp4`;
         setExportProgress(Math.round((i / accepted.length) * 80));
         try {
           const cleanUrl = clip.videoUrl.split("#")[0];
           const response = await fetch(cleanUrl);
           const blob = await response.blob();
+          const contentType = blob.type || response.headers.get("content-type") || "";
+          const ext = contentType.includes("webm") ? "webm" : "mp4";
+          const fileName = `${i + 1}. ${sanitised}.${ext}`;
           folder.file(fileName, blob);
         } catch { toast.error(`Could not download: ${clip.title}`); }
       }

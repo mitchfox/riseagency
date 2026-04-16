@@ -1253,7 +1253,7 @@ const Staff = () => {
                                 setTabsVersion(v => v + 1);
                               }}
                               onClick={() => handleSectionToggle(tabId as any)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 cursor-grab active:cursor-grabbing ${
+                              className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 cursor-grab active:cursor-grabbing ${
                                 isActive
                                   ? 'border-risegold text-risegold bg-risegold/10'
                                   : 'border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40'
@@ -1261,6 +1261,14 @@ const Staff = () => {
                             >
                               <TabIcon className="w-3.5 h-3.5 shrink-0" />
                               {!isMobile && <span className="truncate max-w-[90px]">{sec.title}</span>}
+                              {openTabs.length >= 2 && (
+                                <span
+                                  className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                                >
+                                  ×
+                                </span>
+                              )}
                             </button>
                           </PopoverTrigger>
                           <PopoverContent side="bottom" align="start" className="w-auto p-2 flex items-center gap-2">

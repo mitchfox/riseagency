@@ -429,7 +429,10 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
           throw new Error(`Failed to fetch clip: ${clip.newName || `Clip ${i + 1}`}`);
         }
         const blob = await response.blob();
-        zip.file(clip.newName || `${i + 1}.mp4`, blob);
+        const contentType = blob.type || response.headers.get("content-type") || "";
+        const ext = contentType.includes("webm") ? "webm" : "mp4";
+        const baseName = clip.newName ? clip.newName.replace(/\.(mp4|webm|mov)$/i, "") : `${i + 1}`;
+        zip.file(`${baseName}.${ext}`, blob);
       }
 
       const zipBlob = await zip.generateAsync({ type: "blob" });

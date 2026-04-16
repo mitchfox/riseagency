@@ -3611,6 +3611,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="dateOfBirth_basic" className="text-sm">Date of Birth</Label>
+                        <Input
+                          id="dateOfBirth_basic"
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                          className="h-10 sm:h-11"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="nationality" className="text-sm">Nationality *</Label>
                         <Input
                           id="nationality"
