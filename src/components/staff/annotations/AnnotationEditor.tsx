@@ -853,6 +853,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                 muted={muted}
                 playsInline
                 preload="auto"
+                loop
                 onClick={drawingMode ? undefined : togglePlay}
                 onError={() => {
                   if (project.videoUrl.startsWith('blob:')) {
