@@ -638,23 +638,24 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // Use requestVideoFrameCallback for frame-accurate capture when available
     if ('requestVideoFrameCallback' in video) {
       (video as any).requestVideoFrameCallback((_now: number, metadata: any) => {
-        // metadata.mediaTime is the exact media time of the displayed frame
         if (metadata?.mediaTime != null) {
-          video.currentTime = metadata.mediaTime;
+          (video as HTMLVideoElement).currentTime = metadata.mediaTime;
         }
         captureFrame();
       });
-      // Force a frame render by re-seeking to current position
       video.currentTime = video.currentTime;
-    } else if (video.readyState >= 2) {
-      requestAnimationFrame(() => captureFrame());
     } else {
-      const onSeeked = () => {
-        video.removeEventListener('seeked', onSeeked);
+      const v = video as HTMLVideoElement;
+      if (v.readyState >= 2) {
         requestAnimationFrame(() => captureFrame());
-      };
-      video.addEventListener('seeked', onSeeked);
-      video.currentTime = video.currentTime;
+      } else {
+        const onSeeked = () => {
+          v.removeEventListener('seeked', onSeeked);
+          requestAnimationFrame(() => captureFrame());
+        };
+        v.addEventListener('seeked', onSeeked);
+        v.currentTime = v.currentTime;
+      }
     }
   }, [activeKlip]);
 
