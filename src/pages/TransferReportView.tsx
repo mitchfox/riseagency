@@ -551,60 +551,124 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'data_graphics':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-data_graphics">
               <SectionHeading title="Data Graphics & Visualisations" icon={<TrendingUp className="h-5 w-5" />} />
-              {standoutStats.length > 0 ? (
-                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
-                  <div className="p-4" style={{ borderBottom: `1px solid ${RISE_GOLD}1a` }}>
-                    <p className="text-xs text-white/40 uppercase tracking-wider font-bebas">
-                      <Award className="h-3 w-3 inline mr-1" />
-                      Metrics where {player?.name?.split(' ').pop()} outperforms the positional average
-                    </p>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {standoutStats.map((stat, idx) => {
-                      const maxVal = Math.max(stat.playerValue, stat.compAvg) * 1.2;
-                      const playerPct = (stat.playerValue / maxVal) * 100;
-                      const compPct = (stat.compAvg / maxVal) * 100;
-                      // Highlight the strongest — the player's value with a gold background
-                      const isStrongest = stat.pctAbove > 20;
-                      return (
-                        <div key={idx} className="relative">
-                          {isEditing && (
-                            <button onClick={() => toggleStatVisibility(`data_${stat.key}`)} className="absolute -left-6 top-1 z-10 text-white/30 hover:text-white/60">
-                              {hiddenStats[`data_${stat.key}`] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </button>
-                          )}
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-white/70 uppercase tracking-wider font-bebas text-sm md:text-base">{stat.label}</span>
-                            <span className="font-bold text-sm md:text-base" style={{ color: RISE_GOLD }}>+{stat.pctAbove.toFixed(0)}%</span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-[10px] w-14 text-right font-bold" style={{ color: RISE_GOLD }}>{stat.playerValue.toFixed(2)}</span>
-                            <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden relative">
-                              <div className="h-full rounded transition-all" style={{ width: `${playerPct}%`, background: isStrongest ? `linear-gradient(90deg, ${RISE_GOLD}b3, ${RISE_GOLD})` : `linear-gradient(90deg, ${RISE_GOLD}80, ${RISE_GOLD})` }} />
-                              {isStrongest && (
-                                <div className="absolute inset-y-0 right-2 flex items-center">
-                                  <span className="text-[8px] font-bold text-black/70">★</span>
-                                </div>
-                              )}
+              {allDataStats.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Radar chart for top 6 visible stats */}
+                  {standoutStats.length >= 3 && (
+                    <div className="rounded-xl overflow-hidden p-5" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
+                      <p className="text-xs text-white/40 uppercase tracking-wider font-bebas mb-4">
+                        <Award className="h-3 w-3 inline mr-1" />
+                        Performance Radar — Top Metrics
+                      </p>
+                      <div className="flex justify-center">
+                        <svg viewBox="-130 -130 260 260" className="w-full max-w-[400px] aspect-square">
+                          {/* Grid rings */}
+                          {[0.25, 0.5, 0.75, 1].map(scale => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const pts = Array.from({ length: radarN }, (_, i) => {
+                              const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                              return `${Math.cos(angle) * 100 * scale},${Math.sin(angle) * 100 * scale}`;
+                            }).join(' ');
+                            return <polygon key={scale} points={pts} fill="none" stroke="white" strokeOpacity={0.08} strokeWidth={0.5} />;
+                          })}
+                          {/* Axis lines */}
+                          {standoutStats.slice(0, 8).map((_, i) => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                            return <line key={i} x1={0} y1={0} x2={Math.cos(angle) * 100} y2={Math.sin(angle) * 100} stroke="white" strokeOpacity={0.06} strokeWidth={0.5} />;
+                          })}
+                          {/* Player value polygon */}
+                          {(() => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const maxPct = Math.max(...standoutStats.slice(0, 8).map(s => s.pctAbove));
+                            const pts = standoutStats.slice(0, 8).map((s, i) => {
+                              const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                              const r = Math.min((s.pctAbove / Math.max(maxPct, 50)) * 100, 100);
+                              return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
+                            }).join(' ');
+                            return (
+                              <>
+                                <polygon points={pts} fill={RISE_GOLD} fillOpacity={0.15} stroke={RISE_GOLD} strokeWidth={1.5} strokeOpacity={0.8} />
+                                {standoutStats.slice(0, 8).map((s, i) => {
+                                  const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                                  const r = Math.min((s.pctAbove / Math.max(maxPct, 50)) * 100, 100);
+                                  return <circle key={i} cx={Math.cos(angle) * r} cy={Math.sin(angle) * r} r={3} fill={RISE_GOLD} />;
+                                })}
+                              </>
+                            );
+                          })()}
+                          {/* Labels */}
+                          {standoutStats.slice(0, 8).map((s, i) => {
+                            const radarN = Math.min(standoutStats.length, 8);
+                            const angle = (i / radarN) * Math.PI * 2 - Math.PI / 2;
+                            const lx = Math.cos(angle) * 118;
+                            const ly = Math.sin(angle) * 118;
+                            return (
+                              <text key={i} x={lx} y={ly} fill="white" fillOpacity={0.6} fontSize={7} textAnchor="middle" dominantBaseline="central" fontFamily="Bebas Neue, sans-serif" letterSpacing={0.5}>
+                                {s.label.length > 14 ? s.label.slice(0, 12) + '…' : s.label}
+                              </text>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bar charts for all stats with visibility toggles */}
+                  <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${RISE_GOLD}26`, background: 'rgba(15,15,15,0.9)' }}>
+                    <div className="p-4" style={{ borderBottom: `1px solid ${RISE_GOLD}1a` }}>
+                      <p className="text-xs text-white/40 uppercase tracking-wider font-bebas">
+                        <Award className="h-3 w-3 inline mr-1" />
+                        Metrics where {player?.name?.split(' ').pop()} outperforms the positional average
+                      </p>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {allDataStats.map((stat, idx) => {
+                        const isHidden = hiddenStats[`data_${stat.key}`];
+                        const maxVal = Math.max(stat.playerValue, stat.compAvg) * 1.2;
+                        const playerPct = (stat.playerValue / maxVal) * 100;
+                        const compPct = (stat.compAvg / maxVal) * 100;
+                        const isStrongest = stat.pctAbove > 20;
+                        return (
+                          <div key={idx} className={`relative transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
+                            {isEditing && (
+                              <button onClick={() => toggleStatVisibility(`data_${stat.key}`)} className="absolute -left-6 top-1 z-10 text-white/30 hover:text-white/60">
+                                {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                              </button>
+                            )}
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-white/70 uppercase tracking-wider font-bebas text-sm md:text-base">{stat.label}</span>
+                              <span className="font-bold text-sm md:text-base" style={{ color: RISE_GOLD }}>+{stat.pctAbove.toFixed(0)}%</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[10px] w-14 text-right font-bold" style={{ color: RISE_GOLD }}>{stat.playerValue.toFixed(2)}</span>
+                              <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden relative">
+                                <div className="h-full rounded transition-all" style={{ width: `${playerPct}%`, background: isStrongest ? `linear-gradient(90deg, ${RISE_GOLD}b3, ${RISE_GOLD})` : `linear-gradient(90deg, ${RISE_GOLD}80, ${RISE_GOLD})` }} />
+                                {isStrongest && (
+                                  <div className="absolute inset-y-0 right-2 flex items-center">
+                                    <span className="text-[8px] font-bold text-black/70">★</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-white/30 w-14 text-right">{stat.compAvg.toFixed(2)}</span>
+                              <div className="flex-1 h-3 bg-white/5 rounded overflow-hidden">
+                                <div className="h-full rounded bg-white/20 transition-all" style={{ width: `${compPct}%` }} />
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-white/30 w-14 text-right">{stat.compAvg.toFixed(2)}</span>
-                            <div className="flex-1 h-3 bg-white/5 rounded overflow-hidden">
-                              <div className="h-full rounded bg-white/20 transition-all" style={{ width: `${compPct}%` }} />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="px-4 pb-3">
-                    <p className="text-[10px] text-white/25">
-                      <span className="inline-block w-3 h-1.5 rounded mr-1" style={{ background: RISE_GOLD }} /> {player?.name}
-                      <span className="inline-block w-3 h-1.5 bg-white/20 rounded ml-3 mr-1" /> Positional average ({comparisonPlayers.length} players)
-                    </p>
+                        );
+                      })}
+                    </div>
+                    <div className="px-4 pb-3">
+                      <p className="text-[10px] text-white/25">
+                        <span className="inline-block w-3 h-1.5 rounded mr-1" style={{ background: RISE_GOLD }} /> {player?.name}
+                        <span className="inline-block w-3 h-1.5 bg-white/20 rounded ml-3 mr-1" /> Positional average ({comparisonPlayers.length} players)
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
