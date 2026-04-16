@@ -418,7 +418,10 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                   {/* Close + fullscreen */}
                   <div className="absolute top-3 right-3 z-10 flex gap-2">
                     <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
-                      onClick={() => videoRef.current?.requestFullscreen?.()}>
+                      onClick={() => {
+                        const container = videoRef.current?.closest('.relative') as HTMLElement;
+                        (container || videoRef.current)?.requestFullscreen?.();
+                      }}>
                       <Maximize className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
