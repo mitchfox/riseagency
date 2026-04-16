@@ -32,6 +32,7 @@ import { AnalysisSchemeSection } from "./analysis/AnalysisSchemeSection";
 import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
 import { AnalysisOverviewSection } from "./analysis/AnalysisOverviewSection";
 import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
+import { FFFPackageHeader } from "./FFFPackageHeader";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
 
