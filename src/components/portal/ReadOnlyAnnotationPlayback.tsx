@@ -121,7 +121,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Detect any backward jump (loop, seek, clip restart) and reset triggers
       if (!freezeActiveRef.current && prevTime > 0 && now < prevTime - 0.5) {
         triggeredTimesRef.current.clear();
+        revealedIdsRef.current.clear();
         lastFreezeTriggerTimeRef.current = -1;
+        // Force SVG remount so <animate> nodes restart cleanly on every replay
+        setLoopCycleKey(k => k + 1);
       }
 
       internalLoopRef.current = false;
