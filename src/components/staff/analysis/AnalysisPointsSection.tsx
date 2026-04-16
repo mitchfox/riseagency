@@ -34,7 +34,7 @@ import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEdito
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { supabase } from "@/integrations/supabase/client";
-import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+
 import { toast } from "sonner";
 import {
   DndContext,
@@ -486,13 +486,19 @@ const VideoItem = ({
           )}
         </DialogContent>
       </Dialog>
-      <ActionVideoPopup
-        open={fullscreenOpen}
-        onOpenChange={setFullscreenOpen}
-        videoUrl={url}
-        actionTitle=""
-        forceStandalone
-      />
+      <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full p-0 overflow-hidden bg-black">
+          <VisuallyHidden><DialogTitle>Fullscreen Preview</DialogTitle></VisuallyHidden>
+          {fullscreenOpen && (
+            <ReadOnlyAnnotationPlayback
+              videoUrl={url}
+              annotationProjectId={!previewElements?.length ? existingAnnotationId : undefined}
+              preloadedElements={previewElements?.length ? previewElements : undefined}
+              className="w-full max-h-[90vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
