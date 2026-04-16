@@ -156,9 +156,10 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(coreProfiles);
 
-    // Auto-select logged-in user
+    // Auto-select logged-in user (index within visible staff)
     if (userId) {
-      const idx = coreProfiles.findIndex(p => p.id === userId);
+      const visibleProfiles = coreProfiles.filter(p => !hiddenStaff.includes(p.id));
+      const idx = visibleProfiles.findIndex(p => p.id === userId);
       if (idx >= 0) setActiveStaffIndex(idx);
     }
     setLoading(false);
