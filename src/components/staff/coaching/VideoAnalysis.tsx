@@ -2836,8 +2836,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 ) : (
                   <div className="text-center space-y-1 p-4">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Drop or click to upload full match</p>
-                    <p className="text-[10px] text-muted-foreground">No size limit. Auto-deletes after 7 days (clips/notes kept).</p>
+                    <p className="text-sm text-muted-foreground">Drop or click to upload match videos</p>
+                    <p className="text-[10px] text-muted-foreground">Up to 10 at once. No size limit. Auto-deletes after 7 days (clips/notes kept).</p>
                   </div>
                 )}
               </div>
@@ -2845,7 +2845,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             <Button onClick={handleCreate} disabled={!newTitle || !uploadFile || creating} className="w-full mt-4">
               {creating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading{uploadFiles.length > 1 ? ` ${uploadFiles.length} videos` : ''}...
                   {uploadFile && (
                     <span className="ml-2 text-xs opacity-80">
                       {(uploadedBytes / (1024 * 1024)).toFixed(1)} / {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB
