@@ -15,6 +15,7 @@ import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { ScoreEditMode } from "./analysis/ScoreEditMode";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
+import { FFFPackageHeader } from "./FFFPackageHeader";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { toTitleCase } from "@/lib/titleCase";
