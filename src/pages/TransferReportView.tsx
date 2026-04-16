@@ -75,9 +75,9 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
   const [gradeConfigs, setGradeConfigs] = useState<any[]>([]);
   const [tacticalSchemes, setTacticalSchemes] = useState<any[]>([]);
 
-  // Edit mode state
-  const [isEditing, setIsEditing] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
+  // Edit mode state — honour externalEditMode prop immediately
+  const [isEditing, setIsEditing] = useState(!!externalEditMode);
+  const [isStaff, setIsStaff] = useState(!!externalEditMode);
   const [editSections, setEditSections] = useState<string[]>([]);
   const [editSectionOrder, setEditSectionOrder] = useState<string[]>([]);
   const [editContentConfig, setEditContentConfig] = useState<Record<string, any>>({});
