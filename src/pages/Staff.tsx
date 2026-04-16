@@ -1352,8 +1352,16 @@ const Staff = () => {
             })()}
           </div>
 
-          {/* Right side: music + notifications — always far right */}
+          {/* Right side: home + music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Home"
+              onClick={() => window.open('/', '_blank')}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
             {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
             {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
