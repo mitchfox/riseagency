@@ -763,14 +763,14 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                                 {configuredCompPlayers.map((cp, cpIdx) => (
                                   <th key={cp.id} className="text-center p-2.5 relative">
                                     <button
-                                      onClick={() => setSwappingSlot(swappingSlot === cpIdx ? null : cpIdx)}
+                                      onClick={() => setSwappingCompSlot(swappingCompSlot === cpIdx ? null : cpIdx)}
                                       className="text-white/50 font-normal hover:underline cursor-pointer transition-colors"
-                                      style={swappingSlot === cpIdx ? { color: RISE_GOLD } : {}}
+                                      style={swappingCompSlot === cpIdx ? { color: RISE_GOLD } : {}}
                                       title="Click to swap player"
                                     >
                                       {cp.name?.split(' ').pop()}
                                     </button>
-                                    {swappingSlot === cpIdx && (
+                                    {swappingCompSlot === cpIdx && (
                                       <div className="absolute top-full left-1/2 -translate-x-1/2 z-30 mt-1 w-48 max-h-48 overflow-y-auto rounded-lg shadow-xl" style={{ background: 'rgba(20,20,20,0.98)', border: `1px solid ${RISE_GOLD}40` }}>
                                         {comparisonPlayers.filter(p => !configuredCompPlayers.some(c => c.id === p.id)).map(p => (
                                           <button
@@ -780,7 +780,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                                               const updated = [...currentIds];
                                               updated[cpIdx] = p.id;
                                               updateEditConfig('comparison_player_ids', updated);
-                                              setSwappingSlot(null);
+                                              setSwappingCompSlot(null);
                                             }}
                                             className="w-full text-left px-3 py-2 text-xs text-white/70 hover:text-white transition-colors"
                                             style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}
