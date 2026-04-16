@@ -1,58 +1,63 @@
 
+Audit findings:
+- Transfer report editing is only partially done. Some per-stat toggles exist, but not for all requested items. Comparison player selection exists only in the top settings panel, not as an easy inline picker. Section reordering is not implemented. Corner rounding is still inconsistent. Some gold styling is using invalid dynamic Tailwind strings, so it will not reliably render as Rise Gold.
+- Existing staff accounts still have no name edit UI. `StaffAccountManagement.tsx` only allows phone, role, reset password and delete.
+- Analysis editor preview mode is still not implemented. `AnnotationEditor.tsx` still loads as a live video player and toggles playback directly on the video.
+- The annotation drift is very likely timing-related, not size-related. Two concrete causes are visible in code:
+  1. `computeVisibleElements()` shows annotations up to 0.25s early, which is enough to make moving annotations look misplaced.
+  2. `ReadOnlyAnnotationOverlay.tsx` is using a broken `__clipStartTime` path that is never set, so clip-relative timing is not reliable.
+  3. `AnnotationEditor.tsx` captures `drawingTimestamp` from `video.currentTime` without waiting for the exact displayed frame after seek/pause, so the saved annotation time can be slightly off from the frame the user thinks they paused on.
 
-## Plan: Fix Shot Map, My Tasks, Annotations & Remaining UI
+Implementation plan:
 
-### 1. Shot Map — Stop Auto-Displaying
-Both `PerformanceReport.tsx` and `PerformanceReportDialog.tsx` set `showShotMap` to `true` by default. Change both to `false`. The button already only appears when shot map data exists — this just stops it opening automatically.
+1. Fix annotation timing at the source
+- In `src/lib/annotationRenderUtils.ts`, remove the built-in 0.25s early-visibility tolerance from normal rendering.
+- Split “exact visibility” from “group freeze/reveal” logic so playback uses exact `appearAt`, while freeze batching still works separately if needed.
+- Keep all viewers and export using the same exact timing path.
 
-### 2. Shot Map — Visual Overhaul (Look Like a Real Goal)
-Rewrite the rendering in `ShotMapGraphic.tsx`:
-- Replace grid squares with a proper **white goal frame** (crossbar + posts) around the 15 in-goal zones, with a subtle net grid pattern inside
-- Off-target zones (16-31) shown as a lighter area outside the frame
-- **Outcome colours:** Goal = red, Saved = Rise Gold, Missed = grey, Blocked = blue (#3b82f6)
-- **Selected shot:** white border ring. No shot selected by default (detail card only renders when one is clicked)
-- Clicking a marker reveals action score, minute, type, description and notes
+2. Lock annotation capture to the exact paused frame
+- In `src/components/staff/annotations/AnnotationEditor.tsx`, change seek/freeze flow so annotation mode only starts after the video has actually landed on the requested frame (`seeked` or `requestVideoFrameCallback`).
+- When opening from analysis editor with `initialSeekTime`, wait for the seek to settle before setting `drawingTimestamp`.
+- When entering drawing mode, capture the displayed frame first, then store that exact media time as the annotation timestamp.
+- This removes the “I paused here but the annotation saved slightly earlier/later” problem.
 
-### 3. Shot Map — Goal Conceded Actions
-In `ShotMapSelector.tsx`, extend the eligible action check so any action containing "Goal Conceded" in its type also gets the shot map option.
+3. Fix read-only annotation playback alignment everywhere
+- In `src/components/portal/ReadOnlyAnnotationOverlay.tsx`, stop relying on `__clipStartTime`.
+- Pass real clip-relative timing in explicitly from the player, or parse the clip start consistently from the playback source.
+- Update `AnalysisVideoReports.tsx` and any annotation-enabled popup/player to provide the correct clip start context so saved annotation times line up with the actual clip frame.
+- Recheck fullscreen playback after this so the same timing/render path is used in normal and fullscreen states.
 
-### 4. My Tasks — Drag & Drop Reassignment
-In `StaffAccountabilityOverview.tsx`:
-- Make `TaskCard` draggable (`draggable`, `onDragStart` stores task/schedule item ID and type)
-- Make staff member tabs droppable (`onDragOver`, `onDrop`). On drop: update `assigned_to` for tasks or `owner_id` for schedule items in the database, then refresh
-- Admin-only: add a **"Manage People"** settings dialog to hide staff members or set display aliases (persisted in `localStorage`)
-- Fix the schedule Edit button: currently navigates to `/staff?section=...` which refreshes the page. Switch to programmatic section switching via state or proper `navigate` with `replace`
+4. Add analysis editor preview mode
+- In `src/components/staff/annotations/AnnotationEditor.tsx`, switch the default experience to a poster/preview frame.
+- The clip should stay paused until clicked, then play on loop until clicked again.
+- Keep annotation tools and frame stepping intact once the user starts editing.
+- If needed, adjust the caller in `src/components/staff/analysis/AnalysisPointsSection.tsx` so it opens into this paused-preview state consistently.
 
-### 5. Annotation Scaling Audit
-All renderers use `viewBox="0 0 100 100"` with `preserveAspectRatio="none"` and `absolute inset-0`. This scales correctly as long as the parent container matches the video dimensions. Audit all 5 places annotations render:
-- **AnnotationEditor** — has `aspect-video` container with `object-fill` video. Fine.
-- **MatchClipPlayer** — `aspect-video` container, `object-fill` video, annotation div `absolute inset-0`. Fine.
-- **VideoAnalysis** — Same pattern. Fine.
-- **ReadOnlyAnnotationPlayback** — Self-contained component with its own video. Will verify container sizing.
-- **ReadOnlyAnnotationOverlay** (in `AnalysisVideoReports.tsx`) — Overlays on the portal video player. Verify the parent is `relative` and sized to the video. Fix if needed.
-- **ActionVideoPopup** — Currently has NO annotation overlay at all. If clips have annotations, they won't show here. Will add `ReadOnlyAnnotationOverlay` if clip has annotation data.
+5. Finish transfer report improvements
+- In `src/pages/TransferReportView.tsx`:
+  - increase corner rounding on highlights, biography, profile and similar content cards
+  - extend individual visibility toggles to the remaining requested items: specific recent-form matches, specific strengths/play-style items and any remaining stat rows
+  - move comparison-player changing into the comparison section itself so it is easy to swap players there while editing
+  - add up/down reorder buttons beside the section visibility controls in `SectionEditWrapper`
+  - replace invalid dynamic Tailwind gold classes with inline styles or valid class tokens so every gold accent uses exact Rise Gold `#C6A332`
 
-### 6. Request Representation — Final Fixes
-- Remove the "Request Representation" eyebrow text on the hub page (line 287)
-- Subtitle text and button widths already align within `max-w-sm`. Confirmed correct.
-- Over 18 button already uses marble background. Confirmed.
+6. Add existing staff account name editing
+- In `src/components/staff/StaffAccountManagement.tsx`, add inline editing for `profiles.full_name` on existing accounts, matching the current phone edit pattern.
+- Keep it admin-only and refresh the list after save.
+- This will give you a proper edit path on existing staff accounts rather than only during account creation.
 
-### 7. Performance Report — Back to Top Button
-Already exists with Rise Gold primary styling. Confirmed working.
+Files to update:
+- `src/lib/annotationRenderUtils.ts`
+- `src/components/staff/annotations/AnnotationEditor.tsx`
+- `src/components/portal/ReadOnlyAnnotationOverlay.tsx`
+- `src/components/portal/AnalysisVideoReports.tsx`
+- `src/components/staff/analysis/AnalysisPointsSection.tsx`
+- `src/pages/TransferReportView.tsx`
+- `src/components/staff/StaffAccountManagement.tsx`
 
-### 8. Match Statistics — Collapsible
-`showMatchStats` state already exists defaulting to `false` in the dialog. Verify the collapsible toggle is properly wired in both the dialog and public report.
-
----
-
-**Files to edit:**
-- `src/components/report/ShotMapGraphic.tsx`
-- `src/pages/PerformanceReport.tsx`
-- `src/components/PerformanceReportDialog.tsx`
-- `src/components/report/ShotMapSelector.tsx`
-- `src/components/staff/StaffAccountabilityOverview.tsx`
-- `src/pages/RequestRepresentation.tsx`
-- `src/components/portal/ReadOnlyAnnotationOverlay.tsx` (audit)
-- `src/components/portal/AnalysisVideoReports.tsx` (audit)
-- `src/components/ActionVideoPopup.tsx` (add annotation overlay if needed)
-
+Validation after implementation:
+- Compare the paused frame in the analysis editor against the saved annotation frame and verify there is no visible drift
+- Verify the same annotation sits in the same place in editor, normal playback and fullscreen playback
+- Check moving/keyframed annotations specifically, since they are most sensitive to timing errors
+- Test transfer report editing end to end: hide/show single stats, swap comparison players, reorder sections, confirm rounding and confirm all gold is exact Rise Gold
+- Test editing an existing staff account name and confirm the update persists on reload
