@@ -45,6 +45,8 @@ export const StaffAccountManagement = () => {
   });
   const [editingPhone, setEditingPhone] = useState<{ userId: string; phone: string } | null>(null);
   const [savingPhone, setSavingPhone] = useState(false);
+  const [editingName, setEditingName] = useState<{ userId: string; name: string } | null>(null);
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     checkAdminRole();
@@ -307,6 +309,27 @@ export const StaffAccountManagement = () => {
     }
   };
 
+  const handleSaveName = async (userId: string, fullName: string) => {
+    setSavingName(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName || null })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.success("Name updated");
+      setEditingName(null);
+      fetchExistingAccounts();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      toast.error(errorMessage);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner size="md" className="py-8" />;
   }
@@ -351,8 +374,46 @@ export const StaffAccountManagement = () => {
                       <p className="font-medium text-sm md:text-base break-all">{account.profiles?.email || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs md:text-sm text-muted-foreground">Full Name</p>
-                      <p className="font-medium text-sm md:text-base">{account.profiles?.full_name || 'N/A'}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground mb-1">Full Name</p>
+                      {editingName?.userId === account.user_id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            value={editingName.name}
+                            onChange={(e) => setEditingName({ ...editingName, name: e.target.value })}
+                            placeholder="Full name"
+                            className="h-8 text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleSaveName(account.user_id, editingName.name)}
+                            disabled={savingName}
+                          >
+                            {savingName ? "..." : "Save"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8"
+                            onClick={() => setEditingName(null)}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <div
+                          className="font-medium text-sm md:text-base cursor-pointer hover:text-primary"
+                          onClick={() => setEditingName({
+                            userId: account.user_id,
+                            name: account.profiles?.full_name || ''
+                          })}
+                        >
+                          {account.profiles?.full_name || (
+                            <span className="text-muted-foreground italic">Click to edit</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs md:text-sm text-muted-foreground mb-1">Phone Number</p>
