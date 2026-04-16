@@ -53,6 +53,12 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const [freezeActive, setFreezeActive] = useState(false);
   const [freezeFrameUrl, setFreezeFrameUrl] = useState<string | null>(null);
   const [freezePhase, setFreezePhase] = useState<'idle' | 'showing' | 'fading'>('idle');
+  // Loop cycle key — increments on every backward jump to force SVG remount
+  // so all SVG <animate> elements restart cleanly each replay.
+  const [loopCycleKey, setLoopCycleKey] = useState(0);
+  // IDs of annotations already revealed in the current loop cycle —
+  // used to skip the fade-in animation when playback resumes after a freeze.
+  const revealedIdsRef = useRef<Set<string>>(new Set());
 
   // Use refs to avoid RAF dependency on state
   const freezeActiveRef = useRef(false);
