@@ -738,34 +738,11 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
 
       case 'comparison': {
         const categories = getMetricCategoriesForPosition(player?.position);
+        const [swappingSlot, setSwappingSlot] = useState<number | null>(null);
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-comparison">
               <SectionHeading title="Player Comparisons" icon={<BarChart3 className="h-5 w-5" />} />
-              {isEditing && comparisonPlayers.length > 0 && (
-                <div className="mb-4">
-                  <label className="text-[11px] text-white/40 uppercase tracking-wider font-bebas mb-2 block">Select Comparison Players</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {comparisonPlayers.map(cp => {
-                      const selected = ((editContentConfig.comparison_player_ids || []) as string[]).includes(cp.id);
-                      return (
-                        <button
-                          key={cp.id}
-                          onClick={() => {
-                            const current = (editContentConfig.comparison_player_ids || []) as string[];
-                            const updated = selected ? current.filter((id: string) => id !== cp.id) : [...current, cp.id];
-                            updateEditConfig('comparison_player_ids', updated);
-                          }}
-                          className="px-2.5 py-1 rounded text-[11px] transition-colors"
-                          style={selected ? { background: `${RISE_GOLD}20`, border: `1px solid ${RISE_GOLD}60`, color: RISE_GOLD } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
-                        >
-                          {cp.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
               {configuredCompPlayers.length > 0 && Object.keys(playerAverages).length > 0 ? (
                 <div className="space-y-4">
                   {categories.map(cat => {
@@ -782,8 +759,37 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                               <tr style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}>
                                 <th className="text-left p-2.5 text-white/40 font-normal">Metric</th>
                                 <th className="text-center p-2.5 font-bold" style={{ color: RISE_GOLD }}>{player?.name?.split(' ').pop()}</th>
-                                {configuredCompPlayers.map(cp => (
-                                  <th key={cp.id} className="text-center p-2.5 text-white/50 font-normal">{cp.name?.split(' ').pop()}</th>
+                                {configuredCompPlayers.map((cp, cpIdx) => (
+                                  <th key={cp.id} className="text-center p-2.5 relative">
+                                    <button
+                                      onClick={() => setSwappingSlot(swappingSlot === cpIdx ? null : cpIdx)}
+                                      className="text-white/50 font-normal hover:underline cursor-pointer transition-colors"
+                                      style={swappingSlot === cpIdx ? { color: RISE_GOLD } : {}}
+                                      title="Click to swap player"
+                                    >
+                                      {cp.name?.split(' ').pop()}
+                                    </button>
+                                    {swappingSlot === cpIdx && (
+                                      <div className="absolute top-full left-1/2 -translate-x-1/2 z-30 mt-1 w-48 max-h-48 overflow-y-auto rounded-lg shadow-xl" style={{ background: 'rgba(20,20,20,0.98)', border: `1px solid ${RISE_GOLD}40` }}>
+                                        {comparisonPlayers.filter(p => !configuredCompPlayers.some(c => c.id === p.id)).map(p => (
+                                          <button
+                                            key={p.id}
+                                            onClick={() => {
+                                              const currentIds = (editContentConfig.comparison_player_ids || configuredCompPlayers.map((c: any) => c.id)) as string[];
+                                              const updated = [...currentIds];
+                                              updated[cpIdx] = p.id;
+                                              updateEditConfig('comparison_player_ids', updated);
+                                              setSwappingSlot(null);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs text-white/70 hover:text-white transition-colors"
+                                            style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}
+                                          >
+                                            {p.name} <span className="text-white/30">· {p.club}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </th>
                                 ))}
                               </tr>
                             </thead>
@@ -797,11 +803,6 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                                     <td className="p-2.5 text-white/60">{m.label}</td>
                                     <td className="p-2.5 text-center font-bold" style={pVal === maxVal ? { color: RISE_GOLD, background: `${RISE_GOLD}15` } : { color: 'rgba(255,255,255,0.8)' }}>
                                       {pVal?.toFixed(2) ?? '-'}
-                                      {isEditing && (
-                                        <button onClick={() => toggleStatVisibility(`comp_${m.key}`)} className="ml-1 opacity-0 group-hover:opacity-100">
-                                          <Eye className="w-2.5 h-2.5 inline" />
-                                        </button>
-                                      )}
                                     </td>
                                     {configuredCompPlayers.map(cp => {
                                       const val = (cp.metrics as Record<string, number>)?.[m.key];
