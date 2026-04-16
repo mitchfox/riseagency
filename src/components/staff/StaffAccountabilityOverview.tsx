@@ -121,6 +121,25 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const [newRecurrenceLabel, setNewRecurrenceLabel] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [managePeopleOpen, setManagePeopleOpen] = useState(false);
+  const [dragItem, setDragItem] = useState<{ id: string; kind: "task" | "schedule" } | null>(null);
+
+  // Manage people settings from localStorage
+  const [hiddenStaff, setHiddenStaff] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("staff_hidden_ids") || "[]"); } catch { return []; }
+  });
+  const [staffAliases, setStaffAliases] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("staff_aliases") || "{}"); } catch { return {}; }
+  });
+
+  const saveHiddenStaff = (ids: string[]) => {
+    setHiddenStaff(ids);
+    localStorage.setItem("staff_hidden_ids", JSON.stringify(ids));
+  };
+  const saveStaffAliases = (aliases: Record<string, string>) => {
+    setStaffAliases(aliases);
+    localStorage.setItem("staff_aliases", JSON.stringify(aliases));
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
