@@ -582,15 +582,29 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     );
   };
 
-  // ── Leaderboard data ──
+  // ── Leaderboard data: tasks + posted schedule items + activity log entries ──
   const leaderboardData = visibleStaff.map(m => {
     const mTasks = tasks.filter(t => t.assigned_to?.includes(m.id));
+    const taskAll = mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0);
+    const taskFour = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0);
+    const taskWeek = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
+
+    const mSchedule = scheduleItems.filter(s => s.owner_id === m.id && (s.status || '').toLowerCase() === 'posted');
+    const scheduleAll = mSchedule.length;
+    const scheduleFour = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= fourWeeksAgo).length;
+    const scheduleWeek = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= weekStart).length;
+
+    const mActivity = activityLog.filter(a => a.user_id === m.id);
+    const activityAll = mActivity.length;
+    const activityFour = mActivity.filter(a => new Date(a.created_at) >= fourWeeksAgo).length;
+    const activityWeek = mActivity.filter(a => new Date(a.created_at) >= weekStart).length;
+
     return {
       id: m.id,
       name: getDisplayName(m),
-      allTime: mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0),
-      fourWeeks: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0),
-      lastWeek: mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0),
+      allTime: taskAll + scheduleAll + activityAll,
+      fourWeeks: taskFour + scheduleFour + activityFour,
+      lastWeek: taskWeek + scheduleWeek + activityWeek,
     };
   }).sort((a, b) => b.allTime - a.allTime);
 
