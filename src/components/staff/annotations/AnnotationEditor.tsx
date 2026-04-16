@@ -862,6 +862,17 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                   }
                 }}
               />
+              {/* Play/pause overlay — shows when paused and not in drawing mode */}
+              {!isPlaying && !drawingMode && !videoError && !playbackFreezeActive && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center z-15 cursor-pointer bg-black/20"
+                  onClick={togglePlay}
+                >
+                  <div className="w-16 h-16 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/20">
+                    <Play className="w-8 h-8 text-white ml-1" />
+                  </div>
+                </div>
+              )}
               {/* Re-upload overlay when video expired */}
               {videoError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 gap-3">
