@@ -801,12 +801,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const now = Date.now();
     const sevenDays = now + 7 * 86400000;
     const memberId = activeMember?.id;
-    const upcomingTasks = (memberId ? tasks.filter(t => t.assigned_to?.includes(memberId) && !t.completed && t.due_date) : [])
+    const upcomingTasks = (memberId ? tasks.filter(t => t.assigned_to?.includes(memberId) && !t.completed && t.deadline) : [])
       .filter(t => {
-        const dt = new Date(t.due_date as any).getTime();
+        const dt = new Date(t.deadline as any).getTime();
         return dt >= now && dt <= sevenDays;
       })
-      .sort((a, b) => new Date(a.due_date as any).getTime() - new Date(b.due_date as any).getTime());
+      .sort((a, b) => new Date(a.deadline as any).getTime() - new Date(b.deadline as any).getTime());
 
     const items = [
       ...fixtures.map(f => ({
@@ -819,7 +819,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       ...upcomingTasks.map(t => ({
         kind: 'task' as const,
         key: `t-${t.id}`,
-        date: new Date(t.due_date as any),
+        date: new Date(t.deadline as any),
         title: t.title,
         sub: t.category || 'Task',
       })),
