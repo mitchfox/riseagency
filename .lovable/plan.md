@@ -1,37 +1,58 @@
 
-## Fix: Score Edit stability, zero-score handling, and data tab persistence
 
-### Problems identified
+## Plan: Fix Shot Map, My Tasks, Annotations & Remaining UI
 
-**1. Runtime crash: "Cannot access 'pageActions' before initialization"**
-`pageActions` is a plain `const` derived inline (line 197). Several `useEffect` hooks reference it in their dependency arrays, creating new array references every render. While the declaration order looks correct, the transpiled output may cause a TDZ issue. Fix: wrap `pageActions` in `useMemo` to stabilise the reference and guarantee initialisation order.
+### 1. Shot Map — Stop Auto-Displaying
+Both `PerformanceReport.tsx` and `PerformanceReportDialog.tsx` set `showShotMap` to `true` by default. Change both to `false`. The button already only appears when shot map data exists — this just stops it opening automatically.
 
-**2. Score "0" or "0.00" treated as empty**
-Multiple places use `a.action_score && ...` which is falsy for numeric `0`. The DB column may return numeric `0` rather than string `"0"`.
-- Line 199: `scoredCount` filter — `a.action_score && a.action_score !== ""` → numeric 0 fails
-- Line 265: `handleUpdateReport` filter — `a.action_score` → numeric 0 excluded from save
-- Line 297: auto-advance check — `a.action_score && a.action_score !== ""` → never auto-advances
-- Line 529: display — `action.action_score || ""` → shows empty for numeric 0
+### 2. Shot Map — Visual Overhaul (Look Like a Real Goal)
+Rewrite the rendering in `ShotMapGraphic.tsx`:
+- Replace grid squares with a proper **white goal frame** (crossbar + posts) around the 15 in-goal zones, with a subtle net grid pattern inside
+- Off-target zones (16-31) shown as a lighter area outside the frame
+- **Outcome colours:** Goal = red, Saved = Rise Gold, Missed = grey, Blocked = blue (#3b82f6)
+- **Selected shot:** white border ring. No shot selected by default (detail card only renders when one is clicked)
+- Clicking a marker reveals action score, minute, type, description and notes
 
-Fix: change all checks to `a.action_score != null && String(a.action_score) !== ""`. Coerce to string consistently.
+### 3. Shot Map — Goal Conceded Actions
+In `ShotMapSelector.tsx`, extend the eligible action check so any action containing "Goal Conceded" in its type also gets the shot map option.
 
-**3. Auto-advance / save resets page index**
-The `onSave` callback is correctly empty, but the `onClose` handler calls `fetchExistingData()` which re-renders the parent. If a save triggers `onClose` instead of `onSave` (e.g. via keyboard shortcut or the Update button flow), the component remounts and `pageIndex` resets to 0. Ensure `handleUpdateReport` never calls `onClose`.
+### 4. My Tasks — Drag & Drop Reassignment
+In `StaffAccountabilityOverview.tsx`:
+- Make `TaskCard` draggable (`draggable`, `onDragStart` stores task/schedule item ID and type)
+- Make staff member tabs droppable (`onDragOver`, `onDrop`). On drop: update `assigned_to` for tasks or `owner_id` for schedule items in the database, then refresh
+- Admin-only: add a **"Manage People"** settings dialog to hide staff members or set display aliases (persisted in `localStorage`)
+- Fix the schedule Edit button: currently navigates to `/staff?section=...` which refreshes the page. Switch to programmatic section switching via state or proper `navigate` with `replace`
 
-**4. Data tab resets to home screen**
-`CoachingDataSection` is conditionally rendered via `{expandedSection === 'coachingdata' && <CoachingDataSection />}`. Switching to another tab unmounts it, losing `inlineReport` state. Fix: persist `inlineReport` to localStorage (using the existing session persistence pattern) and restore on mount.
+### 5. Annotation Scaling Audit
+All renderers use `viewBox="0 0 100 100"` with `preserveAspectRatio="none"` and `absolute inset-0`. This scales correctly as long as the parent container matches the video dimensions. Audit all 5 places annotations render:
+- **AnnotationEditor** — has `aspect-video` container with `object-fill` video. Fine.
+- **MatchClipPlayer** — `aspect-video` container, `object-fill` video, annotation div `absolute inset-0`. Fine.
+- **VideoAnalysis** — Same pattern. Fine.
+- **ReadOnlyAnnotationPlayback** — Self-contained component with its own video. Will verify container sizing.
+- **ReadOnlyAnnotationOverlay** (in `AnalysisVideoReports.tsx`) — Overlays on the portal video player. Verify the parent is `relative` and sized to the video. Fix if needed.
+- **ActionVideoPopup** — Currently has NO annotation overlay at all. If clips have annotations, they won't show here. Will add `ReadOnlyAnnotationOverlay` if clip has annotation data.
 
-### Changes
+### 6. Request Representation — Final Fixes
+- Remove the "Request Representation" eyebrow text on the hub page (line 287)
+- Subtitle text and button widths already align within `max-w-sm`. Confirmed correct.
+- Over 18 button already uses marble background. Confirmed.
 
-**File 1: `src/components/staff/analysis/ScoreEditMode.tsx`**
-- Wrap `pageActions` in `useMemo(() => actions.slice(pageIndex * 4, pageIndex * 4 + 4), [actions, pageIndex])`
-- Change `scoredCount` filter to `a.action_score != null && String(a.action_score) !== ""`
-- Change `handleUpdateReport` filter to `a.action_score != null && String(a.action_score) !== ""`
-- Change auto-advance check to same pattern
-- Change score display from `action.action_score || ""` to `action.action_score != null ? String(action.action_score) : ""`
+### 7. Performance Report — Back to Top Button
+Already exists with Rise Gold primary styling. Confirmed working.
 
-**File 2: `src/components/staff/CoachingDataSection.tsx`**
-- On `inlineReport` change, persist to `localStorage` key `coachingdata_inline_report`
-- On mount, restore from that key
-- On close/success, clear the key
-- This ensures switching tabs and coming back preserves the open report
+### 8. Match Statistics — Collapsible
+`showMatchStats` state already exists defaulting to `false` in the dialog. Verify the collapsible toggle is properly wired in both the dialog and public report.
+
+---
+
+**Files to edit:**
+- `src/components/report/ShotMapGraphic.tsx`
+- `src/pages/PerformanceReport.tsx`
+- `src/components/PerformanceReportDialog.tsx`
+- `src/components/report/ShotMapSelector.tsx`
+- `src/components/staff/StaffAccountabilityOverview.tsx`
+- `src/pages/RequestRepresentation.tsx`
+- `src/components/portal/ReadOnlyAnnotationOverlay.tsx` (audit)
+- `src/components/portal/AnalysisVideoReports.tsx` (audit)
+- `src/components/ActionVideoPopup.tsx` (add annotation overlay if needed)
+
