@@ -87,6 +87,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   // Per-section stat visibility toggles
   const [hiddenStats, setHiddenStats] = useState<Record<string, boolean>>({});
+  const [swappingCompSlot, setSwappingCompSlot] = useState<number | null>(null);
 
   const toggleExpand = (id: string) => setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 
