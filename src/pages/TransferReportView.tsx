@@ -241,13 +241,13 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
     return result;
   }, [performanceReports, player?.position]);
 
-  const standoutStats = useMemo(() => {
+  // All stats for data graphics — including hidden ones for toggling
+  const allDataStats = useMemo(() => {
     if (Object.keys(playerAverages).length === 0 || comparisonPlayers.length === 0) return [];
     const metrics = getMetricsForPosition(player?.position);
     const results: { key: string; label: string; playerValue: number; compAvg: number; pctAbove: number; }[] = [];
 
     metrics.forEach(m => {
-      if (hiddenStats[`data_${m.key}`]) return;
       const pVal = playerAverages[m.key];
       if (pVal == null) return;
       const compVals = comparisonPlayers
@@ -263,7 +263,11 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
     });
 
     return results.sort((a, b) => b.pctAbove - a.pctAbove).slice(0, 12);
-  }, [playerAverages, comparisonPlayers, player?.position, hiddenStats]);
+  }, [playerAverages, comparisonPlayers, player?.position]);
+
+  const standoutStats = useMemo(() => {
+    return allDataStats.filter(s => !hiddenStats[`data_${s.key}`]);
+  }, [allDataStats, hiddenStats]);
 
   const getFormGrade = (metricKey: string, value: number): { grade: string; color: string } | null => {
     // Normalise the key to match what's in the DB

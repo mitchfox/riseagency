@@ -615,7 +615,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // Save current elements so we can revert on cancel
     setDrawingStartElements(activeKlip?.elements || []);
 
-    // Wait for the video to settle on the exact displayed frame before capturing
+    // Capture the exact frame currently displayed — use requestVideoFrameCallback if available
     const captureFrame = () => {
       const exactTime = video.currentTime;
       setDrawingTimestamp(exactTime);
@@ -635,8 +635,18 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       setActiveTool('select');
     };
 
-    // If video is already paused and settled, use requestAnimationFrame to ensure the frame is rendered
-    if (video.readyState >= 2) {
+    // Use requestVideoFrameCallback for frame-accurate capture when available
+    if ('requestVideoFrameCallback' in video) {
+      (video as any).requestVideoFrameCallback((_now: number, metadata: any) => {
+        // metadata.mediaTime is the exact media time of the displayed frame
+        if (metadata?.mediaTime != null) {
+          video.currentTime = metadata.mediaTime;
+        }
+        captureFrame();
+      });
+      // Force a frame render by re-seeking to current position
+      video.currentTime = video.currentTime;
+    } else if (video.readyState >= 2) {
       requestAnimationFrame(() => captureFrame());
     } else {
       const onSeeked = () => {
@@ -644,7 +654,6 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         requestAnimationFrame(() => captureFrame());
       };
       video.addEventListener('seeked', onSeeked);
-      // Re-trigger seek to current position to force a settled frame
       video.currentTime = video.currentTime;
     }
   }, [activeKlip]);
