@@ -341,21 +341,50 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
 
   const isExclusive = contentConfig?.exclusive_representation ?? parsedBio?.exclusive_representation ?? false;
 
+  const moveSection = (sectionId: string, direction: 'up' | 'down') => {
+    setEditSectionOrder(prev => {
+      const idx = prev.indexOf(sectionId);
+      if (idx < 0) return prev;
+      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      return next;
+    });
+  };
+
   // Section edit overlay wrapper
   const SectionEditWrapper = ({ sectionId, children }: { sectionId: string; children: React.ReactNode }) => {
     if (!isEditing) return <>{children}</>;
     const isVisible = editSections.includes(sectionId);
     const sectionLabel = ALL_SECTIONS.find(s => s.id === sectionId)?.label || sectionId;
+    const idx = editSectionOrder.indexOf(sectionId);
     return (
       <div className={`relative group ${!isVisible ? 'opacity-30' : ''}`}>
         <div className="absolute -top-2 -right-2 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
+            onClick={() => moveSection(sectionId, 'up')}
+            disabled={idx <= 0}
+            className="flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-sm border transition-colors disabled:opacity-20"
+            style={{ background: `${RISE_GOLD}20`, borderColor: `${RISE_GOLD}40`, color: RISE_GOLD }}
+          >
+            <ChevronUp className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => moveSection(sectionId, 'down')}
+            disabled={idx >= editSectionOrder.length - 1}
+            className="flex items-center justify-center w-6 h-6 rounded-full backdrop-blur-sm border transition-colors disabled:opacity-20"
+            style={{ background: `${RISE_GOLD}20`, borderColor: `${RISE_GOLD}40`, color: RISE_GOLD }}
+          >
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          <button
             onClick={() => toggleEditSection(sectionId)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm border transition-colors ${
-              isVisible 
-                ? `bg-[${RISE_GOLD}]/20 border-[${RISE_GOLD}]/40 text-[${RISE_GOLD}]`
-                : 'bg-red-500/20 border-red-500/40 text-red-400'
-            }`}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm border transition-colors"
+            style={isVisible
+              ? { background: `${RISE_GOLD}33`, borderColor: `${RISE_GOLD}66`, color: RISE_GOLD }
+              : { background: 'rgba(239,68,68,0.2)', borderColor: 'rgba(239,68,68,0.4)', color: '#f87171' }
+            }
           >
             {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
             {isVisible ? 'Visible' : 'Hidden'}
