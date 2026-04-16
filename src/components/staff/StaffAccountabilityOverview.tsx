@@ -376,7 +376,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const taskWeekCount = !isScheduleTask ? countCompletions(task.completion_log, weekStart) : 0;
 
     return (
-      <div className={`group rounded-xl border-2 p-4 transition-all ${
+      <div
+        draggable={isAdmin}
+        onDragStart={() => {
+          const realId = isScheduleTask ? task.id : task.id;
+          setDragItem({ id: realId, kind: isScheduleTask ? "schedule" : "task" });
+        }}
+        className={`group rounded-xl border-2 p-4 transition-all ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} ${
         isScheduleTask
           ? 'border-[hsl(var(--gold))]/25 bg-[hsl(var(--gold))]/5'
           : isOverdue
