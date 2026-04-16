@@ -683,20 +683,22 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const displayReports = isExpanded ? performanceReports.slice(0, 20) : performanceReports.slice(0, 6);
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-form_chart">
               <SectionHeading title="Recent Form" />
               {performanceReports.length > 0 ? (
                 <>
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                     {displayReports.map((rpt: any) => {
-                      if (hiddenStats[`form_${rpt.id}`]) return null;
+                      const isHidden = hiddenStats[`form_${rpt.id}`];
+                      // In view mode skip hidden, in edit mode show greyed out
+                      if (isHidden && !isEditing) return null;
                       const r90Val = rpt.r90_score;
                       const r90Grade = r90Val != null ? getFormGrade('r90', r90Val) : null;
                       return (
-                        <div key={rpt.id} className="relative rounded-2xl p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                        <div key={rpt.id} className={`relative rounded-2xl p-3 flex items-center justify-between transition-opacity ${isHidden ? 'opacity-30' : ''}`} style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
                           {isEditing && (
                             <button onClick={() => toggleStatVisibility(`form_${rpt.id}`)} className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 text-white/30 hover:text-white/60">
-                              <Eye className="w-3 h-3" />
+                              {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                             </button>
                           )}
                           <div>
@@ -711,7 +713,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                               </div>
                             )}
                             {r90Val != null && (
-                              <div className={`w-10 h-10 rounded ${getR90Color(r90Val)} flex items-center justify-center`}>
+                              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: r90Val >= 0.08 ? '#22c55e' : r90Val >= 0.05 ? '#eab308' : r90Val >= 0.02 ? '#f97316' : '#ef4444' }}>
                                 <span className="text-[11px] font-bold text-white">{r90Val.toFixed(2)}</span>
                               </div>
                             )}
