@@ -145,7 +145,7 @@ const PerformanceReport = () => {
   const [showTimelapse, setShowTimelapse] = useState(false);
   const [rankedMode, setRankedMode] = useState<"chronological" | "ranked" | "noted">("chronological");
   const [showClippedActions, setShowClippedActions] = useState(false);
-  const [showShotMap, setShowShotMap] = useState(true);
+  const [showShotMap, setShowShotMap] = useState(false);
   const [showFilteredPlayer, setShowFilteredPlayer] = useState(false);
   const [showZonePlayer, setShowZonePlayer] = useState(false);
   const [zonePlayerTitle, setZonePlayerTitle] = useState("");
