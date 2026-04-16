@@ -166,7 +166,8 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const activeMember = staffMembers[activeStaffIndex];
+  const visibleStaff = staffMembers.filter(m => !hiddenStaff.includes(m.id));
+  const activeMember = visibleStaff[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
   const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
   const memberTaskFeed: TaskFeedItem[] = activeMember
