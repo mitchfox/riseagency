@@ -56,9 +56,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   // Loop cycle key — increments on every backward jump to force SVG remount
   // so all SVG <animate> elements restart cleanly each replay.
   const [loopCycleKey, setLoopCycleKey] = useState(0);
-  // IDs of annotations already revealed in the current loop cycle —
-  // used to skip the fade-in animation when playback resumes after a freeze.
-  const revealedIdsRef = useRef<Set<string>>(new Set());
+  // IDs of annotations already shown during a freeze in the current loop
+  // cycle. After the freeze fades out we MUST NOT show them again until
+  // the next loop — they are a freeze-frame asset only.
+  const consumedIdsRef = useRef<Set<string>>(new Set());
 
   // Use refs to avoid RAF dependency on state
   const freezeActiveRef = useRef(false);
@@ -121,7 +122,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Detect any backward jump (loop, seek, clip restart) and reset triggers
       if (!freezeActiveRef.current && prevTime > 0 && now < prevTime - 0.5) {
         triggeredTimesRef.current.clear();
-        revealedIdsRef.current.clear();
+        consumedIdsRef.current.clear();
         lastFreezeTriggerTimeRef.current = -1;
         // Force SVG remount so <animate> nodes restart cleanly on every replay
         setLoopCycleKey(k => k + 1);
@@ -170,7 +171,11 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
     freezeActiveRef.current = true;
     setFreezeActive(true);
     setFreezePhase('showing');
-    setVisibleEls(computed);
+    // During the freeze we want every triggered annotation visible at full
+    // opacity. We pass forceOpacity:1 here so the SVG ignores animateIn/Out
+    // entrance fades during the pause.
+    const frozen = computed.map(el => ({ ...el, computedOpacity: 1 }));
+    setVisibleEls(frozen);
 
     // Schedule resume
     if (freezeTimerRef.current) clearTimeout(freezeTimerRef.current);
@@ -178,14 +183,17 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
     freezeTimerRef.current = setTimeout(() => {
       setFreezePhase('fading');
-      // Mark these elements as already revealed for this loop cycle —
-      // when playback resumes, computeVisibleElements will skip animateIn.
-      computed.forEach(el => revealedIdsRef.current.add(el.id));
+      // Mark these elements as consumed for this loop — once playback
+      // resumes they MUST NOT render again until the next loop cycle.
+      computed.forEach(el => consumedIdsRef.current.add(el.id));
       fadeTimerRef.current = setTimeout(() => {
         setFreezeFrameUrl(null);
         freezeActiveRef.current = false;
         setFreezeActive(false);
         setFreezePhase('idle');
+        // Clear visibleEls so resumed playback starts blank — the main RAF
+        // loop will only repopulate with non-consumed annotations.
+        setVisibleEls([]);
         if (video.currentTime < (video.duration || 0)) {
           video.play().catch(() => {});
         }
@@ -212,10 +220,11 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       }
 
       const relTime = video.currentTime - clipStart;
-      const computed = computeVisibleElements(elements as AnnotationElement[], relTime, {
+      const computedRaw = computeVisibleElements(elements as AnnotationElement[], relTime, {
         forceOpacity: null,
-        skipAnimateInIds: revealedIdsRef.current,
       });
+      // Filter out anything already shown during a freeze in this loop cycle.
+      const computed = computedRaw.filter(el => !consumedIdsRef.current.has(el.id));
 
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
