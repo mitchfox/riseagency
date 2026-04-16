@@ -725,8 +725,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         className="w-full aspect-video"
         style={{ display: 'block', width: '100%', objectFit: 'fill' }}
       />
-      {hasAnnotations && renderedVisibleEls.length > 0 && (
+      {hasAnnotations && (
         <svg
+          key={loopCycleKey}
           className="absolute inset-0 w-full h-full pointer-events-none"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
