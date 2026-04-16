@@ -720,44 +720,140 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     );
   };
 
+  const DAYS_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
   const renderScheduleTab = () => (
-    <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        Full schedule board available in <button className="text-primary underline" onClick={() => navigate('/staff?section=marketingschedule')}>Marketing & Brand</button>
-      </p>
-      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
-        const dayItems = scheduleItems.filter(s => s.day_of_week.toLowerCase() === day);
-        if (dayItems.length === 0) return null;
-        return (
-          <div key={day}>
-            <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${day === todayDayName ? 'text-[hsl(var(--gold))]' : 'text-muted-foreground'}`}>
-              {day.charAt(0).toUpperCase() + day.slice(1)} {day === todayDayName && '(Today)'}
-            </p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-              {dayItems.map(item => (
-                <div key={item.id} className={`rounded-xl border p-3 ${item.status === 'posted' ? 'opacity-40' : ''}`}>
-                  <p className="text-xs font-semibold">{item.post_type}</p>
-                  {item.platform_format && <p className="text-[10px] text-muted-foreground">{item.platform_format}</p>}
-                  {item.scheduled_time && <p className="text-[10px] text-muted-foreground">{item.scheduled_time}</p>}
-                  {item.owner_id && (
-                    <div className="mt-1 flex items-center gap-1">
-                      <StaffAvatar staffId={item.owner_id} />
-                      <span className="text-[9px] text-muted-foreground">{getDisplayName(staffMembers.find(m => m.id === item.owner_id) || { id: '', email: '', full_name: '' })}</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Visual weekly board. Full management in <button className="text-primary underline" onClick={() => navigate('/staff?section=marketingschedule')}>Marketing & Brand</button>.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {DAYS_ORDER.map(day => {
+          const dayItems = scheduleItems.filter(s => s.day_of_week.toLowerCase() === day);
+          const isToday = day === todayDayName;
+          return (
+            <div key={day} className={`rounded-xl border ${isToday ? 'border-[hsl(var(--gold))] bg-[hsl(var(--gold))]/5' : 'border-border/40 bg-card/40'} p-2 min-h-[140px] flex flex-col`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-[hsl(var(--gold))]' : 'text-muted-foreground'}`}>
+                  {day.slice(0, 3)}{isToday && ' • Today'}
+                </p>
+                <span className="text-[10px] text-muted-foreground">{dayItems.length}</span>
+              </div>
+              <div className="space-y-1.5 flex-1">
+                {dayItems.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground/50 italic">Nothing scheduled</p>
+                )}
+                {dayItems.map(item => {
+                  const owner = staffMembers.find(m => m.id === item.owner_id);
+                  return (
+                    <div
+                      key={item.id}
+                      className={`rounded-lg border bg-background/60 p-1.5 group relative ${item.status === 'posted' ? 'opacity-40' : ''}`}
+                    >
+                      {item.image_url && (
+                        <div
+                          className="h-12 w-full rounded-md bg-cover bg-center mb-1.5 border border-border/40"
+                          style={{ backgroundImage: `url(${item.image_url})` }}
+                        />
+                      )}
+                      <p className="text-[11px] font-semibold leading-tight truncate">{item.post_type}</p>
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                        {item.platform_format && (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-muted/60 text-muted-foreground">{item.platform_format}</span>
+                        )}
+                        {item.scheduled_time && (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-muted/60 text-muted-foreground">{item.scheduled_time}</span>
+                        )}
+                        <span className={`text-[9px] px-1 py-0.5 rounded font-semibold ${
+                          item.status === 'posted' ? 'bg-green-500/20 text-green-400' :
+                          item.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-muted/60 text-muted-foreground'
+                        }`}>
+                          {item.status || 'planned'}
+                        </span>
+                      </div>
+                      {owner && (
+                        <div className="mt-1 flex items-center gap-1">
+                          <StaffAvatar staffId={owner.id} />
+                          <span className="text-[9px] text-muted-foreground truncate">{getDisplayName(owner)}</span>
+                        </div>
+                      )}
+                      {item.status !== 'posted' && (
+                        <Button size="sm" variant="outline" className="mt-1 h-5 w-full text-[9px] gap-1" onClick={() => handleMarkScheduleDone(`schedule-${item.id}`)}>
+                          <Check className="h-2.5 w-2.5" /> Done
+                        </Button>
+                      )}
                     </div>
-                  )}
-                  {item.status !== 'posted' && (
-                    <Button size="sm" variant="outline" className="mt-2 h-6 text-[10px] gap-1" onClick={() => handleMarkScheduleDone(`schedule-${item.id}`)}>
-                      <Check className="h-2.5 w-2.5" /> Done
-                    </Button>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
+
+  // Upcoming-week strip rendered above tabs — fixtures + tasks/schedule for active member
+  const renderUpcomingStrip = () => {
+    const now = Date.now();
+    const sevenDays = now + 7 * 86400000;
+    const memberId = activeMember?.id;
+    const upcomingTasks = (memberId ? tasks.filter(t => t.assigned_to?.includes(memberId) && !t.completed && t.due_date) : [])
+      .filter(t => {
+        const dt = new Date(t.due_date as any).getTime();
+        return dt >= now && dt <= sevenDays;
+      })
+      .sort((a, b) => new Date(a.due_date as any).getTime() - new Date(b.due_date as any).getTime());
+
+    const items = [
+      ...fixtures.map(f => ({
+        kind: 'fixture' as const,
+        key: `f-${f.id}`,
+        date: new Date(`${f.match_date}T${f.match_time || '12:00'}`),
+        title: `${f.home_team} vs ${f.away_team}`,
+        sub: f.competition || 'Fixture',
+      })),
+      ...upcomingTasks.map(t => ({
+        kind: 'task' as const,
+        key: `t-${t.id}`,
+        date: new Date(t.due_date as any),
+        title: t.title,
+        sub: t.category || 'Task',
+      })),
+    ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    if (items.length === 0) return null;
+
+    return (
+      <div className="rounded-xl border border-border/40 bg-card/30 p-2.5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">This Week</p>
+          <span className="text-[10px] text-muted-foreground">{items.length}</span>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+          {items.map(item => (
+            <div
+              key={item.key}
+              className={`shrink-0 w-44 rounded-lg border p-2 snap-start ${
+                item.kind === 'fixture'
+                  ? 'border-[hsl(var(--gold))]/40 bg-[hsl(var(--gold))]/5'
+                  : 'border-primary/30 bg-primary/5'
+              }`}
+            >
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                {item.kind === 'fixture' ? '⚽ Fixture' : '✓ Task'} · {item.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </p>
+              <p className="text-xs font-semibold mt-1 line-clamp-2">{item.title}</p>
+              <p className="text-[10px] text-muted-foreground truncate mt-0.5">{item.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderLeaderboardTab = () => (
     <div className="space-y-4">
