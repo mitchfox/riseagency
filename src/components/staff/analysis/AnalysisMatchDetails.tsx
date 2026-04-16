@@ -459,13 +459,16 @@ export const AnalysisMatchDetails = ({
               </div>
             </div>
 
-            {/* Match Image for pre-match */}
+            {/* Match Image for pre-match — widescreen hero crop with safe-area guides */}
             <div>
               <Label className="flex items-center gap-1">
                 Match Image
                 <Crop className="w-3 h-3" />
               </Label>
-              <p className="text-xs text-muted-foreground mb-1">Square format (1:1) - appears in match header</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                Widescreen hero (16:9). The dashed band shows the area still visible after the
+                top fade and bottom gold arch overlays — keep faces and key detail inside it.
+              </p>
               <Input
                 type="file"
                 accept="image/*"
@@ -474,7 +477,7 @@ export const AnalysisMatchDetails = ({
                 disabled={uploadingImage}
               />
               {formData.match_image_url && (
-                <img src={formData.match_image_url} alt="Match" className="mt-2 w-32 h-32 object-cover rounded" />
+                <img src={formData.match_image_url} alt="Match" className="mt-2 w-full max-w-md aspect-video object-cover rounded" />
               )}
             </div>
           </>
@@ -630,15 +633,16 @@ export const AnalysisMatchDetails = ({
       </CollapsibleContent>
     </Collapsible>
 
-    {/* Image Crop Dialog - flexible for logos, 16:9 for match images */}
+    {/* Image Crop Dialog — pre-match hero uses 16:9 with safe-area guides; post-match keeps 16:9 */}
     <ImageCropDialog
       open={cropDialogOpen}
       onOpenChange={setCropDialogOpen}
       imageSrc={cropImageSrc}
       onCropComplete={handleCropComplete}
-      aspectRatio={cropField === "match_image_url" ? (analysisType === "pre-match" ? 1 : 16/9) : undefined}
+      aspectRatio={cropField === "match_image_url" ? 16 / 9 : undefined}
       title={cropField === "match_image_url" ? "Crop Match Image" : "Crop Team Logo"}
       showBackgroundRemoval={cropField !== "match_image_url"}
+      showHeroSafeAreas={cropField === "match_image_url" && analysisType === "pre-match"}
       cropHeight={cropField === "match_image_url" && analysisType === "post-match" ? 250 : undefined}
     />
     </>
