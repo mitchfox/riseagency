@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake, ExternalLink, AlertOctagon, Activity, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, ChevronDown, ChevronRight, Users, FileText, Film, ListMusic, Calendar, CheckSquare, Target, LogIn, BarChart3, Search, Send, Building2, TrendingUp, PenLine, GitCompare, Cake, ExternalLink, AlertOctagon, Activity, MessageSquare, Pencil, UserPlus } from "lucide-react";
 import { ImprovementReportDialog } from "./ImprovementReportDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +64,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   staff_activity: { label: "Staff Activity", icon: Activity },
   message_sent: { label: "Messages Sent", icon: MessageSquare },
   player_updated: { label: "Player Updates", icon: Pencil },
-  player_created: { label: "New Players", icon: Plus_Icon_Placeholder_Placeholder },
+  player_created: { label: "New Players", icon: UserPlus },
 };
 
 // Friendly fallback label derivation when an event_type is not pre-registered
