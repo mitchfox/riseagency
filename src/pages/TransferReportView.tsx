@@ -414,7 +414,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'in_numbers':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-in_numbers">
               <SectionHeading title="In Numbers" />
               {player?.topStats && player.topStats.length > 0 ? (
                 <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
@@ -437,7 +437,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'highlights':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-highlights">
               <SectionHeading title="Match Highlights" />
               {highlights.length > 0 ? (
                 <div className="relative aspect-video rounded-2xl overflow-hidden bg-black" style={{ border: `4px solid ${RISE_GOLD}` }}>
@@ -507,7 +507,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const shortBio = bio.length > 300 ? bio.slice(0, 300) + '...' : bio;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-biography">
               <SectionHeading title="Biography & Profile" />
               {bio ? (
                 <div className="rounded-2xl p-5" style={{ background: 'rgba(20,20,20,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
@@ -531,7 +531,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'stats':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-stats">
               <SectionHeading title="Season Statistics" />
               {player?.seasonStats && player.seasonStats.length > 0 ? (
                 <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -835,7 +835,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const schemes = tacticalSchemes.length > 0 ? tacticalSchemes : (player?.tacticalFormations || []);
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-tactical">
               <SectionHeading title="Tactical History" />
               {schemes.length > 0 ? (
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -872,7 +872,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'strengths':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-strengths">
               <SectionHeading title="Strengths & Play Style" />
               {player?.strengthsAndPlayStyle ? (
                 <div className="rounded-2xl p-5" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
@@ -906,7 +906,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'clips':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-clips">
               <SectionHeading title="Wyscout Video Reports" />
               {videoReports.length > 0 ? (
                 <div className="space-y-3">
@@ -949,7 +949,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
       case 'graphics':
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-graphics">
               <SectionHeading title="Graphics & Images" />
               {galleryImages.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -972,7 +972,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const shortNotes = notes && notes.length > 300 ? notes.slice(0, 300) + '...' : notes;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-scouting_notes">
               <SectionHeading title="Scouting Notes" />
               {isEditing ? (
                 <Textarea
@@ -1005,7 +1005,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const hasData = contract?.current_club || contract?.contract_expiry || contract?.wage || contract?.market_value || contract?.agent;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-contract_info">
               <SectionHeading title="Contract Information" icon={<FileText className="h-5 w-5" />} />
               {isEditing ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -1056,7 +1056,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const hasData = physical?.height || physical?.weight || physical?.preferred_foot || physical?.fitness_level;
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-physical_profile">
               <SectionHeading title="Physical Profile" icon={<Dumbbell className="h-5 w-5" />} />
               {isEditing ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1104,7 +1104,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
         const notes = isEditing ? (editContentConfig.agent_notes || '') : (contentConfig?.agent_notes || '');
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
-            <section>
+            <section id="section-agent_notes">
               <SectionHeading title="Agent Notes" icon={<User className="h-5 w-5" />} />
               {isEditing ? (
                 <Textarea
