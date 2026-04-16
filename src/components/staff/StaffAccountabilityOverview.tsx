@@ -215,6 +215,32 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const monthCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, monthStart), 0);
   const yearCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, yearStart), 0);
 
+  const handleDropOnStaff = async (targetStaffId: string) => {
+    if (!dragItem || !isAdmin) return;
+    const { id, kind } = dragItem;
+    setDragItem(null);
+
+    if (kind === "task") {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      const newAssigned = [targetStaffId];
+      const { error } = await supabase.from('staff_tasks').update({ assigned_to: newAssigned }).eq('id', id);
+      if (error) toast.error("Failed to reassign");
+      else {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, assigned_to: newAssigned } : t));
+        toast.success("Task reassigned");
+      }
+    } else if (kind === "schedule") {
+      const realId = id.replace("schedule-", "");
+      const { error } = await supabase.from('marketing_schedule_items').update({ owner_id: targetStaffId }).eq('id', realId);
+      if (error) toast.error("Failed to reassign");
+      else {
+        setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, owner_id: targetStaffId } : s));
+        toast.success("Schedule item reassigned");
+      }
+    }
+  };
+
   const handleToggleComplete = async (id: string, completed: boolean) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
