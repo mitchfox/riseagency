@@ -34,7 +34,7 @@ import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEdito
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { supabase } from "@/integrations/supabase/client";
-import { ActionVideoPopup } from "@/components/ActionVideoPopup";
+
 import { toast } from "sonner";
 import {
   DndContext,
