@@ -2812,8 +2812,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors min-h-[140px]"
               >
-                <input ref={fileInputRef} type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
-                {uploadFile ? (
+                <input ref={fileInputRef} type="file" accept="video/*" multiple onChange={handleFileSelect} className="hidden" />
+                {uploadFiles.length > 1 ? (
+                  <div className="text-center space-y-1 p-4">
+                    <Film className="h-8 w-8 mx-auto text-primary" />
+                    <p className="font-medium text-sm">{uploadFiles.length} videos selected</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(uploadFiles.reduce((s, f) => s + f.size, 0) / (1024 * 1024)).toFixed(0)} MB total
+                    </p>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setUploadFile(null); setUploadFiles([]); }}>
+                      <X className="h-3 w-3 mr-1" /> Remove all
+                    </Button>
+                  </div>
+                ) : uploadFile ? (
                   <div className="text-center space-y-1 p-4">
                     <Film className="h-8 w-8 mx-auto text-primary" />
                     <p className="font-medium text-sm truncate max-w-[200px]">{uploadFile.name}</p>
