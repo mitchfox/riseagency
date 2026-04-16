@@ -15,6 +15,7 @@ import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { ScoreEditMode } from "./analysis/ScoreEditMode";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
+import { FFFPackageHeader } from "./FFFPackageHeader";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { toTitleCase } from "@/lib/titleCase";
@@ -194,6 +195,35 @@ const SortableStatItem = ({ id, children }: SortableStatItemProps) => {
       <div className="pl-7">
         {children}
       </div>
+    </div>
+  );
+};
+
+// Lightweight wrapper that resolves the player's representation_status before
+// rendering the FFF package tracker.
+const FFFPackageWrapper = ({ playerId, analysisId }: { playerId: string; analysisId?: string }) => {
+  const [status, setStatus] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!playerId) return;
+    supabase
+      .from("players")
+      .select("representation_status")
+      .eq("id", playerId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setStatus((data?.representation_status as string) || null);
+      });
+    return () => { cancelled = true; };
+  }, [playerId]);
+  if (status !== "fuel_for_football") return null;
+  return (
+    <div className="mb-4">
+      <FFFPackageHeader
+        playerId={playerId}
+        representationStatus={status}
+        currentPerformanceReportId={analysisId || null}
+      />
     </div>
   );
 };
@@ -3512,8 +3542,10 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          <h1 className="text-lg md:text-2xl font-bold mb-6 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
-          
+          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+
+          <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />
+
           {mainContent}
         </div>
         {additionalDialogs}

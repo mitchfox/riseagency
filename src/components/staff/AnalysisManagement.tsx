@@ -32,6 +32,7 @@ import { AnalysisSchemeSection } from "./analysis/AnalysisSchemeSection";
 import { AnalysisPointsSection } from "./analysis/AnalysisPointsSection";
 import { AnalysisOverviewSection } from "./analysis/AnalysisOverviewSection";
 import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
+import { FFFPackageHeader } from "./FFFPackageHeader";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
 
@@ -1590,6 +1591,20 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             onTranslated={handleAnalysisTranslated}
           />
         </div>
+
+        {/* Fuel For Football package tracker - only when player is on FFF */}
+        {(() => {
+          const linkedPlayer = players.find((p) => p.id === selectedPlayerId);
+          if (!linkedPlayer || linkedPlayer.representation_status !== "fuel_for_football") return null;
+          return (
+            <FFFPackageHeader
+              playerId={selectedPlayerId}
+              representationStatus={linkedPlayer.representation_status}
+              currentAnalysisId={editingAnalysis?.id || null}
+              currentFixtureId={formData.fixture_id || null}
+            />
+          );
+        })()}
 
         {/* Quick Link - only show when creating new analysis (not for concepts) - stays open */}
         {!editingAnalysis && !isConcept && (
