@@ -739,7 +739,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
 
       case 'comparison': {
         const categories = getMetricCategoriesForPosition(player?.position);
-        const [swappingSlot, setSwappingSlot] = useState<number | null>(null);
+        // swappingCompSlot state is lifted to component level
         return (
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
             <section id="section-comparison">
