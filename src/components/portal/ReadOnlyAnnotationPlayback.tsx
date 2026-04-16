@@ -178,6 +178,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
     freezeTimerRef.current = setTimeout(() => {
       setFreezePhase('fading');
+      // Mark these elements as already revealed for this loop cycle —
+      // when playback resumes, computeVisibleElements will skip animateIn.
+      computed.forEach(el => revealedIdsRef.current.add(el.id));
       fadeTimerRef.current = setTimeout(() => {
         setFreezeFrameUrl(null);
         freezeActiveRef.current = false;
@@ -209,7 +212,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       }
 
       const relTime = video.currentTime - clipStart;
-      const computed = computeVisibleElements(elements as AnnotationElement[], relTime, { forceOpacity: null });
+      const computed = computeVisibleElements(elements as AnnotationElement[], relTime, {
+        forceOpacity: null,
+        skipAnimateInIds: revealedIdsRef.current,
+      });
 
       // Check for new annotations that haven't triggered a freeze yet
       if (!video.paused && computed.length > 0) {
