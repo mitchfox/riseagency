@@ -151,14 +151,19 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     localStorage.setItem("staff_aliases", JSON.stringify(aliases));
   };
 
+  const [fixtures, setFixtures] = useState<Array<{ id: string; home_team: string; away_team: string; match_date: string; match_time: string | null; competition: string | null }>>([]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const yearStart2 = new Date(new Date().getFullYear(), 0, 1).toISOString();
-    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }] = await Promise.all([
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const inSevenDaysIso = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }, { data: fixturesData }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
       supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
+      supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
     ]);
 
     // Only admins on My Tasks
@@ -170,6 +175,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(adminProfiles);
     setActivityLog((activityData || []) as ActivityLogEntry[]);
+    setFixtures((fixturesData || []) as any);
 
     if (userId) {
       const idx = adminProfiles.findIndex(p => p.id === userId);
