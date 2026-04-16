@@ -822,6 +822,42 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Manage People Dialog */}
+      <Dialog open={managePeopleOpen} onOpenChange={setManagePeopleOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage People</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {staffMembers.map(m => {
+              const isHidden = hiddenStaff.includes(m.id);
+              const alias = staffAliases[m.id] || "";
+              return (
+                <div key={m.id} className={`flex items-center gap-3 rounded-lg border p-3 ${isHidden ? 'opacity-50' : ''}`}>
+                  <Checkbox
+                    checked={!isHidden}
+                    onCheckedChange={(checked) => {
+                      if (checked) saveHiddenStaff(hiddenStaff.filter(id => id !== m.id));
+                      else saveHiddenStaff([...hiddenStaff, m.id]);
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{m.full_name || m.email}</p>
+                    <Input
+                      value={alias}
+                      onChange={(e) => saveStaffAliases({ ...staffAliases, [m.id]: e.target.value })}
+                      placeholder="Display alias"
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  {isHidden && <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
