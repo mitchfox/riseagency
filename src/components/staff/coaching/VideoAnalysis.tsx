@@ -506,183 +506,193 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const handleCreate = async () => {
     if (!newTitle || !uploadFile) return;
 
-    if (uploadFile.size > MAX_VIDEO_UPLOAD_BYTES) {
-      toast.error("This file exceeds the 50GB upload limit");
-      return;
-    }
+    const filesToUpload = uploadFiles.length > 1 ? uploadFiles : [uploadFile];
+    const isMulti = filesToUpload.length > 1;
 
-    // Route large files through hybrid compress + split flow
-    if (needsHybridUpload(uploadFile)) {
-      setCreating(true);
-      setShowHybridModal(true);
-      const abortController = new AbortController();
-      hybridAbortRef.current = abortController;
-
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        const userId = session.session?.user?.id;
-
-
-        let firstInserted: VideoAnalysisEntry | null = null;
-
-        const result = await splitAndUpload(uploadFile, {
-          onProgress: setHybridProgress,
-          abortSignal: abortController.signal,
-          onPartUploaded: async (part, totalParts, groupId) => {
-            const row: any = {
-              title: newTitle,
-              video_url: part.publicUrl,
-              opponent: newOpponent || null,
-              match_date: newMatchDate || null,
-              created_by: userId || null,
-              annotations: [],
-              clips: [],
-              auto_delete_at: null,
-              match_minute_offset: 0,
-              group_id: totalParts > 1 ? groupId : null,
-              part_number: totalParts > 1 ? part.partNumber : null,
-              total_parts: totalParts > 1 ? totalParts : null,
-            };
-            if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
-
-            const { data: inserted, error: insertError } = await supabase
-              .from("video_analyses")
-              .insert(row)
-              .select()
-              .single();
-
-            if (insertError) throw insertError;
-
-            if (inserted) {
-              const entry: VideoAnalysisEntry = {
-                ...inserted,
-                annotations: [] as Annotation[],
-                clips: [] as Clip[],
-                match_minute_offset: 0,
-                second_half_offset: (inserted as any).second_half_offset ?? null,
-                second_half_video_time: (inserted as any).second_half_video_time ?? null,
-                part_number: (inserted as any).part_number ?? null,
-                group_id: (inserted as any).group_id ?? null,
-                total_parts: (inserted as any).total_parts ?? null,
-              };
-              setVideos(prev => [entry, ...prev]);
-              if (!firstInserted) {
-                firstInserted = entry;
-                setSelectedVideo(entry);
-              }
-            }
-          },
-        });
-
-        setShowUpload(false);
-        setNewTitle("");
-        setUploadFile(null);
-        setNewPlayerId(defaultPlayerId || "");
-        setNewOpponent("");
-        setNewMatchDate("");
-        toast.success(result.parts.length > 1 ? `Video uploaded as ${result.parts.length} parts` : "Video uploaded successfully");
-      } catch (err: any) {
-        if (err.message !== 'Cancelled') {
-          toast.error(err.message || "Failed to process large video");
-        }
+    // Validate all files
+    for (const f of filesToUpload) {
+      if (f.size > MAX_VIDEO_UPLOAD_BYTES) {
+        toast.error(`${f.name} exceeds the 50GB upload limit`);
+        return;
       }
-      setShowHybridModal(false);
-      setHybridProgress(null);
-      hybridAbortRef.current = null;
-      setCreating(false);
-      return;
     }
 
     setCreating(true);
     setUploadProgress(0);
     setUploadedBytes(0);
 
+    const toastId = isMulti ? toast.loading(`Uploading 0/${filesToUpload.length} videos...`) : undefined;
+
     try {
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user?.id;
-
-      const ext = uploadFile.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${ext}`;
-
-      // Use TUS resumable upload for large file support (up to 50GB)
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const token = session.session?.access_token;
+      if (!token) throw new Error("Please sign in again before uploading");
 
-      if (!token) {
-        throw new Error("Please sign in again before uploading");
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      let lastEntry: VideoAnalysisEntry | null = null;
+
+      for (let fi = 0; fi < filesToUpload.length; fi++) {
+        const currentFile = filesToUpload[fi];
+        const fileTitle = isMulti
+          ? currentFile.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ')
+          : newTitle;
+
+        if (toastId) {
+          toast.loading(`Uploading ${fi + 1}/${filesToUpload.length}: ${currentFile.name}`, { id: toastId });
+        }
+
+        // Route large files through hybrid flow
+        if (needsHybridUpload(currentFile)) {
+          setShowHybridModal(true);
+          const abortController = new AbortController();
+          hybridAbortRef.current = abortController;
+
+          let firstInserted: VideoAnalysisEntry | null = null;
+
+          const result = await splitAndUpload(currentFile, {
+            onProgress: setHybridProgress,
+            abortSignal: abortController.signal,
+            onPartUploaded: async (part, totalParts, groupId) => {
+              const row: any = {
+                title: fileTitle,
+                video_url: part.publicUrl,
+                opponent: newOpponent || null,
+                match_date: newMatchDate || null,
+                created_by: userId || null,
+                annotations: [],
+                clips: [],
+                auto_delete_at: null,
+                match_minute_offset: 0,
+                group_id: totalParts > 1 ? groupId : null,
+                part_number: totalParts > 1 ? part.partNumber : null,
+                total_parts: totalParts > 1 ? totalParts : null,
+              };
+              if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
+
+              const { data: inserted, error: insertError } = await supabase
+                .from("video_analyses")
+                .insert(row)
+                .select()
+                .single();
+
+              if (insertError) throw insertError;
+
+              if (inserted) {
+                const entry: VideoAnalysisEntry = {
+                  ...inserted,
+                  annotations: [] as Annotation[],
+                  clips: [] as Clip[],
+                  match_minute_offset: 0,
+                  second_half_offset: (inserted as any).second_half_offset ?? null,
+                  second_half_video_time: (inserted as any).second_half_video_time ?? null,
+                  part_number: (inserted as any).part_number ?? null,
+                  group_id: (inserted as any).group_id ?? null,
+                  total_parts: (inserted as any).total_parts ?? null,
+                };
+                setVideos(prev => [entry, ...prev]);
+                if (!firstInserted) {
+                  firstInserted = entry;
+                  lastEntry = entry;
+                }
+              }
+            },
+          });
+
+          setShowHybridModal(false);
+          setHybridProgress(null);
+          hybridAbortRef.current = null;
+          continue;
+        }
+
+        // Normal TUS upload
+        const ext = currentFile.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${ext}`;
+
+        const publicUrl = await new Promise<string>((resolve, reject) => {
+          const upload = new tus.Upload(currentFile, {
+            endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+            retryDelays: [0, 3000, 5000, 10000, 20000],
+            headers: {
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              authorization: `Bearer ${token}`,
+              'x-upsert': 'false',
+            },
+            uploadDataDuringCreation: false,
+            removeFingerprintOnSuccess: true,
+            metadata: {
+              bucketName: 'analysis-videos',
+              objectName: filePath,
+              contentType: currentFile.type || 'video/mp4',
+            },
+            chunkSize: 6 * 1024 * 1024,
+            onError: (error) => {
+              reject(new Error(`Upload failed: ${error.message || 'network error. Check your connection and try again.'}`));
+            },
+            onProgress: (bytesUploaded, bytesTotal) => {
+              setUploadedBytes(bytesUploaded);
+              setUploadProgress(Math.round((bytesUploaded / bytesTotal) * 100));
+            },
+            onSuccess: () => {
+              const { data: urlData } = supabase.storage
+                .from('analysis-videos')
+                .getPublicUrl(filePath);
+              resolve(urlData.publicUrl);
+            },
+          });
+          upload.start();
+        });
+
+        const insertData: any = {
+          title: fileTitle,
+          video_url: publicUrl,
+          opponent: newOpponent || null,
+          match_date: newMatchDate || null,
+          created_by: userId || null,
+          annotations: [],
+          clips: [],
+          auto_delete_at: null,
+          match_minute_offset: 0,
+        };
+        if (newPlayerId && newPlayerId !== "none") insertData.player_id = newPlayerId;
+
+        const { data, error } = await supabase
+          .from("video_analyses")
+          .insert(insertData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: (data as any).second_half_offset ?? null, second_half_video_time: (data as any).second_half_video_time ?? null, part_number: null, group_id: null, total_parts: null };
+          setVideos(prev => [entry, ...prev]);
+          lastEntry = entry;
+        }
       }
 
-      const publicUrl = await new Promise<string>((resolve, reject) => {
-        const upload = new tus.Upload(uploadFile, {
-          endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
-          retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            authorization: `Bearer ${token}`,
-            'x-upsert': 'false',
-          },
-          uploadDataDuringCreation: false,
-          removeFingerprintOnSuccess: true,
-          metadata: {
-            bucketName: 'analysis-videos',
-            objectName: filePath,
-            contentType: uploadFile.type || 'video/mp4',
-          },
-          chunkSize: 6 * 1024 * 1024, // 6MB chunks (Supabase recommended)
-          onError: (error) => {
-            reject(new Error(`Upload failed: ${error.message || 'network error. Check your connection and try again.'}`));
-          },
-          onProgress: (bytesUploaded, bytesTotal) => {
-            setUploadedBytes(bytesUploaded);
-            setUploadProgress(Math.round((bytesUploaded / bytesTotal) * 100));
-          },
-          onSuccess: () => {
-            const { data: urlData } = supabase.storage
-              .from('analysis-videos')
-              .getPublicUrl(filePath);
-            resolve(urlData.publicUrl);
-          },
-        });
-        upload.start();
-      });
+      // Done with all files
+      if (lastEntry) setSelectedVideo(lastEntry);
+      setShowUpload(false);
+      setNewTitle("");
+      setUploadFile(null);
+      setUploadFiles([]);
+      setNewPlayerId(defaultPlayerId || "");
+      setNewOpponent("");
+      setNewMatchDate("");
+      setUploadProgress(0);
+      setUploadedBytes(0);
 
-      const insertData: any = {
-        title: newTitle,
-        video_url: publicUrl,
-        opponent: newOpponent || null,
-        match_date: newMatchDate || null,
-        created_by: userId || null,
-        annotations: [],
-        clips: [],
-        auto_delete_at: null,
-        match_minute_offset: 0,
-      };
-      if (newPlayerId && newPlayerId !== "none") insertData.player_id = newPlayerId;
-
-      const { data, error } = await supabase
-        .from("video_analyses")
-        .insert(insertData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const entry: VideoAnalysisEntry = { ...data, annotations: [] as Annotation[], clips: [] as Clip[], match_minute_offset: 0, second_half_offset: (data as any).second_half_offset ?? null, second_half_video_time: (data as any).second_half_video_time ?? null, part_number: null, group_id: null, total_parts: null };
-        setVideos(prev => [entry, ...prev]);
-        setSelectedVideo(entry);
-        setShowUpload(false);
-        setNewTitle("");
-        setUploadFile(null);
-        setNewPlayerId(defaultPlayerId || "");
-        setNewOpponent("");
-        setNewMatchDate("");
-        setUploadProgress(0);
-        setUploadedBytes(0);
+      if (toastId) {
+        toast.success(`${filesToUpload.length} videos uploaded successfully`, { id: toastId });
+      } else {
         toast.success("Video uploaded successfully");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to upload video");
+      if (err.message !== 'Cancelled') {
+        toast.error(err.message || "Failed to upload video");
+        if (toastId) toast.dismiss(toastId);
+      }
     }
     setCreating(false);
   };
