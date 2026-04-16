@@ -1,63 +1,73 @@
 
-Audit findings:
-- Transfer report editing is only partially done. Some per-stat toggles exist, but not for all requested items. Comparison player selection exists only in the top settings panel, not as an easy inline picker. Section reordering is not implemented. Corner rounding is still inconsistent. Some gold styling is using invalid dynamic Tailwind strings, so it will not reliably render as Rise Gold.
-- Existing staff accounts still have no name edit UI. `StaffAccountManagement.tsx` only allows phone, role, reset password and delete.
-- Analysis editor preview mode is still not implemented. `AnnotationEditor.tsx` still loads as a live video player and toggles playback directly on the video.
-- The annotation drift is very likely timing-related, not size-related. Two concrete causes are visible in code:
-  1. `computeVisibleElements()` shows annotations up to 0.25s early, which is enough to make moving annotations look misplaced.
-  2. `ReadOnlyAnnotationOverlay.tsx` is using a broken `__clipStartTime` path that is never set, so clip-relative timing is not reliable.
-  3. `AnnotationEditor.tsx` captures `drawingTimestamp` from `video.currentTime` without waiting for the exact displayed frame after seek/pause, so the saved annotation time can be slightly off from the frame the user thinks they paused on.
 
-Implementation plan:
+## Plan: Annotation Fixes, Transfer Report Enhancements & Persistent Tool Settings
 
-1. Fix annotation timing at the source
-- In `src/lib/annotationRenderUtils.ts`, remove the built-in 0.25s early-visibility tolerance from normal rendering.
-- Split “exact visibility” from “group freeze/reveal” logic so playback uses exact `appearAt`, while freeze batching still works separately if needed.
-- Keep all viewers and export using the same exact timing path.
+### Issues Identified
 
-2. Lock annotation capture to the exact paused frame
-- In `src/components/staff/annotations/AnnotationEditor.tsx`, change seek/freeze flow so annotation mode only starts after the video has actually landed on the requested frame (`seeked` or `requestVideoFrameCallback`).
-- When opening from analysis editor with `initialSeekTime`, wait for the seek to settle before setting `drawingTimestamp`.
-- When entering drawing mode, capture the displayed frame first, then store that exact media time as the annotation timestamp.
-- This removes the “I paused here but the annotation saved slightly earlier/later” problem.
+**Annotations — 4 critical bugs:**
+1. **Fullscreen:** `AnalysisVideoReports.tsx` line 422 calls `requestFullscreen()` on `videoRef.current?.closest('.relative')` which finds the inner `<div className="relative max-h-full max-w-full">` — this div wraps the video but the `ReadOnlyAnnotationOverlay` is inside it, so it *should* work. However, the `ReadOnlyAnnotationOverlay` renders `null` when `visibleEls.length === 0` (line 63), and in fullscreen the video restarts from 0 — the `loopKey` reset detection may not fire properly because `prevTimeRef` was tracking the old time. The real issue: annotations only show once because SVG `<animate>` elements with `fill="freeze"` only run once and never reset.
+2. **Loop replay (all contexts):** SVG `<animate fill="freeze">` elements in `ReadOnlyAnnotationOverlay` run once and never replay. The `loopKey` state is incremented on loop detection but it's never used as a React `key` on the SVG or the elements, so React doesn't remount them.
+3. **Timing drift:** `drawingTimestamp` captures `video.currentTime` which is correct, but annotations store `appearAt` relative to the klip start. The `startDrawing` function (line 593) sets `drawingTimestamp = video.currentTime` (absolute), but `effectiveOffset` (line 105) is `drawingTimestamp - activeKlip.startTime`. When new elements are placed, `AnnotationCanvas` sets `appearAt = klipOffset` which is `currentTime - activeKlip.startTime`. This should be correct IF `currentTime` matches `drawingTimestamp`. The issue is that when the video loops and `currentTime` resets, `triggeredTimesRef` still contains old times — annotations won't re-trigger in the editor. Also the `effectiveOffset` calculation is fine but the playback freeze mechanism captures the wrong set of elements.
+4. **Editor loop:** The editor video has `loop` attribute but when it loops, `triggeredTimesRef` is never cleared, so annotations never re-trigger on subsequent loops.
 
-3. Fix read-only annotation playback alignment everywhere
-- In `src/components/portal/ReadOnlyAnnotationOverlay.tsx`, stop relying on `__clipStartTime`.
-- Pass real clip-relative timing in explicitly from the player, or parse the clip start consistently from the playback source.
-- Update `AnalysisVideoReports.tsx` and any annotation-enabled popup/player to provide the correct clip start context so saved annotation times line up with the actual clip frame.
-- Recheck fullscreen playback after this so the same timing/render path is used in normal and fullscreen states.
+**Transfer Report — 5 items:**
+1. Data graphics section only shows bar charts — needs varied visualisations
+2. Individual stat visibility toggles don't work correctly (wrong items hidden)
+3. Recent form colours not reflecting actual performance grade
+4. Comparison player names not clickable to swap
+5. No quick navigation menu after hero
 
-4. Add analysis editor preview mode
-- In `src/components/staff/annotations/AnnotationEditor.tsx`, switch the default experience to a poster/preview frame.
-- The clip should stay paused until clicked, then play on loop until clicked again.
-- Keep annotation tools and frame stepping intact once the user starts editing.
-- If needed, adjust the caller in `src/components/staff/analysis/AnalysisPointsSection.tsx` so it opens into this paused-preview state consistently.
+---
 
-5. Finish transfer report improvements
-- In `src/pages/TransferReportView.tsx`:
-  - increase corner rounding on highlights, biography, profile and similar content cards
-  - extend individual visibility toggles to the remaining requested items: specific recent-form matches, specific strengths/play-style items and any remaining stat rows
-  - move comparison-player changing into the comparison section itself so it is easy to swap players there while editing
-  - add up/down reorder buttons beside the section visibility controls in `SectionEditWrapper`
-  - replace invalid dynamic Tailwind gold classes with inline styles or valid class tokens so every gold accent uses exact Rise Gold `#C6A332`
+### Implementation
 
-6. Add existing staff account name editing
-- In `src/components/staff/StaffAccountManagement.tsx`, add inline editing for `profiles.full_name` on existing accounts, matching the current phone edit pattern.
-- Keep it admin-only and refresh the list after save.
-- This will give you a proper edit path on existing staff accounts rather than only during account creation.
+#### 1. Fix Annotation Loop Replay (all contexts)
+**`ReadOnlyAnnotationOverlay.tsx`:**
+- Use `loopKey` as the `key` on the root SVG element so React remounts all `<animate>` elements on loop
+- Remove `fill="freeze"` from draw-once animations (lines, arrows) and replace with `fill="freeze"` but ensure the SVG is keyed properly
+- The `key={loopKey}` on the SVG wrapper forces React to destroy and recreate all animate elements
 
-Files to update:
-- `src/lib/annotationRenderUtils.ts`
-- `src/components/staff/annotations/AnnotationEditor.tsx`
-- `src/components/portal/ReadOnlyAnnotationOverlay.tsx`
-- `src/components/portal/AnalysisVideoReports.tsx`
-- `src/components/staff/analysis/AnalysisPointsSection.tsx`
-- `src/pages/TransferReportView.tsx`
-- `src/components/staff/StaffAccountManagement.tsx`
+#### 2. Fix Annotation Fullscreen
+**`AnalysisVideoReports.tsx`:**
+- Add a `ref` to the `<div className="relative max-h-full max-w-full">` container (line 433)
+- Use that ref directly for `requestFullscreen()` instead of the fragile `.closest('.relative')` lookup
 
-Validation after implementation:
-- Compare the paused frame in the analysis editor against the saved annotation frame and verify there is no visible drift
-- Verify the same annotation sits in the same place in editor, normal playback and fullscreen playback
-- Check moving/keyframed annotations specifically, since they are most sensitive to timing errors
-- Test transfer report editing end to end: hide/show single stats, swap comparison players, reorder sections, confirm rounding and confirm all gold is exact Rise Gold
-- Test editing an existing staff account name and confirm the update persists on reload
+#### 3. Fix Annotation Loop in Editor
+**`AnnotationEditor.tsx`:**
+- On video `timeupdate` or the RAF loop, detect when `currentTime` resets (jumps backward significantly) and clear `triggeredTimesRef`
+- This ensures annotations re-trigger on every loop iteration
+
+#### 4. Fix Annotation Timing
+The timestamp capture looks correct after the previous fix. The remaining issue is that `effectiveOffset` during playback uses `klipOffset = currentTime - activeKlip.startTime`. If `activeKlip.startTime` is 0 (auto-created "Full Video" klip), then `klipOffset = currentTime` which is correct. Annotations with `appearAt` set during drawing should match. I'll add a guard to ensure the drawing timestamp is captured only after the seek has fully settled using `requestVideoFrameCallback` where supported.
+
+#### 5. Persist Last Colour & Stroke
+Already implemented (lines 49-65) — `localStorage` stores `annotation-last-colour` and `annotation-last-stroke`. This is working. No change needed.
+
+#### 6. Transfer Report — Data Graphics Visibility Toggles Fix
+The `toggleStatVisibility` function (line 306) works correctly — it toggles `hiddenStats[key]`. But the data_graphics section (line 561) checks `hiddenStats[data_${stat.key}]` only for filtering standoutStats *before* render — it doesn't filter. The hidden stats should filter out the stat AND still show it greyed out so it can be toggled back.
+
+**Fix:** In data_graphics section, render ALL stats but grey out hidden ones. Same for form, strengths, and comparison metrics.
+
+#### 7. Transfer Report — Form Colours
+Line 641-648: The form grade uses `getFormGrade('r90', r90Val)` which returns a grade object with `.color`. The R90 colour square uses `getR90Color()` which returns Tailwind classes. Check that `getFormGrade` returns accurate grades. The display looks correct in code — will verify the grade thresholds match expectations.
+
+#### 8. Transfer Report — Clickable Comparison Player Names
+In the comparison section (line 714-717), player names are shown as `<th>` headers. Make them clickable in both edit and view mode — clicking opens a dropdown of available comparison players to swap that slot.
+
+#### 9. Transfer Report — Quick Navigation Menu
+Add a sticky section just after the hero with anchor links to each visible section. Clicking scrolls smoothly to that section. Each section gets an `id` attribute.
+
+#### 10. Transfer Report — Richer Data Visualisations
+Replace the simple bar chart layout with a mix of:
+- **Radar/spider chart** for the top 6 standout metrics (SVG-based)
+- **Horizontal comparison bars** for remaining metrics (current style but improved)
+- Individual visibility toggles on each metric row
+
+---
+
+### Files to edit
+- `src/components/portal/ReadOnlyAnnotationOverlay.tsx` — key SVG on loopKey
+- `src/components/portal/AnalysisVideoReports.tsx` — fullscreen ref fix
+- `src/components/staff/annotations/AnnotationEditor.tsx` — clear triggeredTimes on loop, improve timestamp capture
+- `src/pages/TransferReportView.tsx` — quick nav, data graphics radar, visibility fix, clickable comparison names, form colour fix
+
