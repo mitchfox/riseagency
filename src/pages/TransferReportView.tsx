@@ -879,13 +879,14 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                   {Array.isArray(player.strengthsAndPlayStyle) ? (
                     <div className="flex flex-wrap gap-2">
                       {player.strengthsAndPlayStyle.map((s: string, i: number) => {
-                        if (hiddenStats[`strength_${i}`]) return null;
+                        const isHidden = hiddenStats[`strength_${i}`];
+                        if (isHidden && !isEditing) return null;
                         return (
-                          <span key={i} className="relative px-3 py-1.5 rounded-md text-sm text-white/70 font-medium" style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>
+                          <span key={i} className={`relative px-3 py-1.5 rounded-md text-sm text-white/70 font-medium transition-opacity ${isHidden ? 'opacity-30' : ''}`} style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>
                             {s}
                             {isEditing && (
                               <button onClick={() => toggleStatVisibility(`strength_${i}`)} className="ml-1.5 text-white/30 hover:text-white/60">
-                                <Eye className="w-2.5 h-2.5 inline" />
+                                {isHidden ? <EyeOff className="w-2.5 h-2.5 inline" /> : <Eye className="w-2.5 h-2.5 inline" />}
                               </button>
                             )}
                           </span>
