@@ -288,6 +288,10 @@ export const AnalysisOverviewSection = ({
                             value={matchup.notes || ""}
                             onChange={(e) => updateMatchup(index, "notes", e.target.value)}
                             rows={2}
+                            spellCheck
+                            autoCorrect="on"
+                            autoCapitalize="sentences"
+                            lang="en-GB"
                           />
                         </div>
                       </div>
@@ -341,6 +345,10 @@ export const AnalysisOverviewSection = ({
               <Textarea
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -405,6 +413,10 @@ export const AnalysisOverviewSection = ({
                 onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
                 placeholder="Detailed explanation of the concept..."
                 rows={4}
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
           </>
