@@ -443,7 +443,23 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         ...p,
         _id: p._id || crypto.randomUUID(),
       }));
-      setFormData({ ...analysis, points: pointsWithIds });
+
+      // Load match_time from linked fixture (kickoff time lives on fixtures table)
+      let fixtureMatchTime: string | null = null;
+      if ((analysis as any).fixture_id) {
+        try {
+          const { data: fx } = await supabase
+            .from("fixtures")
+            .select("match_time")
+            .eq("id", (analysis as any).fixture_id)
+            .maybeSingle();
+          fixtureMatchTime = (fx as any)?.match_time || null;
+        } catch (e) {
+          console.error("Failed to load fixture match_time", e);
+        }
+      }
+
+      setFormData({ ...analysis, points: pointsWithIds, match_time: fixtureMatchTime || "" });
 
       try {
         const { data } = await supabase
@@ -728,6 +744,20 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         if (error) throw error;
         analysisId = data.id;
         toast.success("Analysis created successfully");
+      }
+
+      // Persist kickoff time to the linked fixture (match_time is on fixtures, not analyses)
+      if (formData.match_time !== undefined && (dataToSave.fixture_id || (editingAnalysis as any)?.fixture_id)) {
+        const fixtureId = dataToSave.fixture_id || (editingAnalysis as any)?.fixture_id;
+        try {
+          const { error: fxErr } = await supabase
+            .from("fixtures")
+            .update({ match_time: formData.match_time || null })
+            .eq("id", fixtureId);
+          if (fxErr) console.error("Failed to update fixture match_time:", fxErr);
+        } catch (e) {
+          console.error("Failed to update fixture match_time:", e);
+        }
       }
 
       if (selectedPerformanceReportId && selectedPerformanceReportId !== "none" && analysisId) {
