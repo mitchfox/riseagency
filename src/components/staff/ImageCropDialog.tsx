@@ -16,6 +16,12 @@ interface ImageCropDialogProps {
   title?: string;
   showBackgroundRemoval?: boolean;
   cropHeight?: number;
+  /**
+   * When true, draws the same dark fade (top) and gold arch (bottom) overlays
+   * that appear on the live pre-match hero so staff can crop to what is
+   * actually visible after the overlays are applied.
+   */
+  showHeroSafeAreas?: boolean;
 }
 
 const removeBackground = (imageData: ImageData, threshold: number = 240): ImageData => {
@@ -91,7 +97,8 @@ export const ImageCropDialog = ({
   aspectRatio,
   title = "Crop Image",
   showBackgroundRemoval = false,
-  cropHeight
+  cropHeight,
+  showHeroSafeAreas = false,
 }: ImageCropDialogProps) => {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -194,6 +201,45 @@ export const ImageCropDialog = ({
             restrictPosition={false}
             minZoom={0.1}
           />
+          {showHeroSafeAreas && (
+            <div className="pointer-events-none absolute inset-0 z-10">
+              {/* Top dark fade — matches live hero overlay (~24% of 400px) */}
+              <div
+                className="absolute top-0 left-0 right-0"
+                style={{
+                  height: '24%',
+                  background:
+                    'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+                }}
+              />
+              {/* Bottom gold arch — matches live hero arch (~30% of 400px) */}
+              <svg
+                className="absolute bottom-0 left-0 right-0 w-full"
+                viewBox="0 0 400 120"
+                preserveAspectRatio="none"
+                style={{ height: '30%' }}
+              >
+                <defs>
+                  <linearGradient id="cropGoldFade" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                    <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,20 Q200,70 400,20 L400,120 L0,120 Z" fill="url(#cropGoldFade)" />
+                <path d="M0,50 Q200,90 400,50 L400,120 L0,120 Z" fill="hsl(var(--primary))" fillOpacity="0.9" />
+              </svg>
+              {/* Safe-area frame outlining the truly visible band */}
+              <div
+                className="absolute left-0 right-0 border-y-2 border-dashed border-white/70"
+                style={{ top: '24%', bottom: '30%' }}
+              >
+                <span className="absolute top-1 left-2 text-[10px] font-semibold uppercase tracking-wider text-white bg-black/60 px-1.5 py-0.5 rounded">
+                  Visible area
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">

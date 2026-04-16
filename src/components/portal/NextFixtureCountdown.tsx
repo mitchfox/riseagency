@@ -18,7 +18,8 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
 
   const getFixtureKickoff = (fixture: { match_date: string; match_time?: string | null }) => {
     const [year, month, day] = fixture.match_date.split("-").map(Number);
-    const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : "23:59";
+    const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : null;
+    if (!timeValue) return null;
     const [hours, mins] = timeValue.split(":").map(Number);
     return new Date(year, (month || 1) - 1, day || 1, hours || 0, mins || 0, 0, 0);
   };
@@ -36,7 +37,10 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
         .order("match_time", { ascending: true })
         .limit(30);
 
-      const upcomingFixture = (data || []).find((fixture) => getFixtureKickoff(fixture) > nowDate) || null;
+      const upcomingFixture = (data || []).find((fixture) => {
+        const kickoff = getFixtureKickoff(fixture);
+        return kickoff !== null && kickoff > nowDate;
+      }) || null;
 
       if (!upcomingFixture) {
         setNextFixture(null);
@@ -77,10 +81,8 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
 
   const countdown = useMemo(() => {
     if (!nextFixture) return null;
-    const [year, month, day] = nextFixture.match_date.split("-").map(Number);
-    const timeValue = nextFixture.match_time && nextFixture.match_time.trim() ? nextFixture.match_time : "23:59";
-    const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
-    const target = new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
+    const target = getFixtureKickoff(nextFixture);
+    if (!target) return null;
 
     const diff = target.getTime() - now.getTime();
     if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, passed: true };

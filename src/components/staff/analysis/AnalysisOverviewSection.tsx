@@ -208,6 +208,10 @@ export const AnalysisOverviewSection = ({
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
                 placeholder="Key tactical information about the match..."
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -219,6 +223,10 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Strong aerial presence
 • Fast counter attacks
 • Set piece threat"
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -230,6 +238,10 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Weak on the left flank
 • Slow to transition
 • Vulnerable to through balls"
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -276,6 +288,10 @@ export const AnalysisOverviewSection = ({
                             value={matchup.notes || ""}
                             onChange={(e) => updateMatchup(index, "notes", e.target.value)}
                             rows={2}
+                            spellCheck
+                            autoCorrect="on"
+                            autoCapitalize="sentences"
+                            lang="en-GB"
                           />
                         </div>
                       </div>
@@ -329,6 +345,10 @@ export const AnalysisOverviewSection = ({
               <Textarea
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
 
@@ -393,6 +413,10 @@ export const AnalysisOverviewSection = ({
                 onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
                 placeholder="Detailed explanation of the concept..."
                 rows={4}
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
+                lang="en-GB"
               />
             </div>
           </>
