@@ -3512,8 +3512,10 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          <h1 className="text-lg md:text-2xl font-bold mb-6 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
-          
+          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+
+          <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />
+
           {mainContent}
         </div>
         {additionalDialogs}
