@@ -1544,6 +1544,80 @@ export type Database = {
         }
         Relationships: []
       }
+      fff_package_completions: {
+        Row: {
+          analysis_id: string | null
+          completed_at: string
+          completed_by: string | null
+          created_at: string
+          fixture_id: string | null
+          id: string
+          notes: string | null
+          package_id: string
+          performance_report_id: string | null
+        }
+        Insert: {
+          analysis_id?: string | null
+          completed_at?: string
+          completed_by?: string | null
+          created_at?: string
+          fixture_id?: string | null
+          id?: string
+          notes?: string | null
+          package_id: string
+          performance_report_id?: string | null
+        }
+        Update: {
+          analysis_id?: string | null
+          completed_at?: string
+          completed_by?: string | null
+          created_at?: string
+          fixture_id?: string | null
+          id?: string
+          notes?: string | null
+          package_id?: string
+          performance_report_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fff_package_completions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "fff_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fff_packages: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          package_size: number
+          player_id: string
+          started_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          package_size?: number
+          player_id: string
+          started_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          package_size?: number
+          player_id?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fixtures: {
         Row: {
           away_score: number | null
