@@ -420,14 +420,23 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
         const sanitised = clip.title.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "Clip";
         setExportProgress(Math.round((i / accepted.length) * 80));
         try {
+          // Strip URL fragments (e.g. #t=) which break Supabase storage fetches
           const cleanUrl = clip.videoUrl.split("#")[0];
-          const response = await fetch(cleanUrl);
-          const blob = await response.blob();
-          const contentType = blob.type || response.headers.get("content-type") || "";
-          const ext = contentType.includes("webm") ? "webm" : "mp4";
-          const fileName = `${i + 1}. ${sanitised}.${ext}`;
+          // Force download mode on Supabase storage URLs to avoid CORS / inline-stream issues
+          const fetchUrl = cleanUrl.includes("supabase.co/storage")
+            ? (cleanUrl.includes("?") ? `${cleanUrl}&download=` : `${cleanUrl}?download=`)
+            : cleanUrl;
+          const response = await fetch(fetchUrl, { mode: "cors", cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const rawBlob = await response.blob();
+          // Always re-wrap as video/mp4 so the file extension and MIME type match
+          const blob = new Blob([rawBlob], { type: "video/mp4" });
+          const fileName = `${i + 1}. ${sanitised}.mp4`;
           folder.file(fileName, blob);
-        } catch { toast.error(`Could not download: ${clip.title}`); }
+        } catch (err) {
+          console.error(`Failed to download clip ${clip.title}:`, err);
+          toast.error(`Could not download: ${clip.title}`);
+        }
       }
       setExportProgress(90);
       const content = await zip.generateAsync({ type: "blob" }, (meta) => {
