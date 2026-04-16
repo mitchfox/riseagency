@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check, ExternalLink } from "lucide-react";
+import { Plus, Bell, Clock, CheckCircle2, AlertTriangle, Loader2, Calendar, Trash2, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2, Pencil, Image, X, Check, ExternalLink, Settings2, EyeOff } from "lucide-react";
 import { format, isPast, isToday, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { createPortal } from "react-dom";
 
@@ -121,6 +121,25 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const [newRecurrenceLabel, setNewRecurrenceLabel] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [managePeopleOpen, setManagePeopleOpen] = useState(false);
+  const [dragItem, setDragItem] = useState<{ id: string; kind: "task" | "schedule" } | null>(null);
+
+  // Manage people settings from localStorage
+  const [hiddenStaff, setHiddenStaff] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("staff_hidden_ids") || "[]"); } catch { return []; }
+  });
+  const [staffAliases, setStaffAliases] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("staff_aliases") || "{}"); } catch { return {}; }
+  });
+
+  const saveHiddenStaff = (ids: string[]) => {
+    setHiddenStaff(ids);
+    localStorage.setItem("staff_hidden_ids", JSON.stringify(ids));
+  };
+  const saveStaffAliases = (aliases: Record<string, string>) => {
+    setStaffAliases(aliases);
+    localStorage.setItem("staff_aliases", JSON.stringify(aliases));
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -137,9 +156,10 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(coreProfiles);
 
-    // Auto-select logged-in user
+    // Auto-select logged-in user (index within visible staff)
     if (userId) {
-      const idx = coreProfiles.findIndex(p => p.id === userId);
+      const visibleProfiles = coreProfiles.filter(p => !hiddenStaff.includes(p.id));
+      const idx = visibleProfiles.findIndex(p => p.id === userId);
       if (idx >= 0) setActiveStaffIndex(idx);
     }
     setLoading(false);
@@ -147,7 +167,8 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const activeMember = staffMembers[activeStaffIndex];
+  const visibleStaff = staffMembers.filter(m => !hiddenStaff.includes(m.id));
+  const activeMember = visibleStaff[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
   const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
   const memberTaskFeed: TaskFeedItem[] = activeMember
@@ -194,6 +215,32 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const weekCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
   const monthCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, monthStart), 0);
   const yearCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, yearStart), 0);
+
+  const handleDropOnStaff = async (targetStaffId: string) => {
+    if (!dragItem || !isAdmin) return;
+    const { id, kind } = dragItem;
+    setDragItem(null);
+
+    if (kind === "task") {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      const newAssigned = [targetStaffId];
+      const { error } = await supabase.from('staff_tasks').update({ assigned_to: newAssigned }).eq('id', id);
+      if (error) toast.error("Failed to reassign");
+      else {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, assigned_to: newAssigned } : t));
+        toast.success("Task reassigned");
+      }
+    } else if (kind === "schedule") {
+      const realId = id.replace("schedule-", "");
+      const { error } = await supabase.from('marketing_schedule_items').update({ owner_id: targetStaffId }).eq('id', realId);
+      if (error) toast.error("Failed to reassign");
+      else {
+        setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, owner_id: targetStaffId } : s));
+        toast.success("Schedule item reassigned");
+      }
+    }
+  };
 
   const handleToggleComplete = async (id: string, completed: boolean) => {
     const task = tasks.find(t => t.id === id);
@@ -330,7 +377,13 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const taskWeekCount = !isScheduleTask ? countCompletions(task.completion_log, weekStart) : 0;
 
     return (
-      <div className={`group rounded-xl border-2 p-4 transition-all ${
+      <div
+        draggable={isAdmin}
+        onDragStart={() => {
+          const realId = isScheduleTask ? task.id : task.id;
+          setDragItem({ id: realId, kind: isScheduleTask ? "schedule" : "task" });
+        }}
+        className={`group rounded-xl border-2 p-4 transition-all ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''} ${
         isScheduleTask
           ? 'border-[hsl(var(--gold))]/25 bg-[hsl(var(--gold))]/5'
           : isOverdue
@@ -456,9 +509,14 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1.5" /> Add Task
-            </Button>
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setManagePeopleOpen(true)}>
+                <Settings2 className="h-4 w-4" />
+              </Button>
+              <Button size="sm" onClick={() => { resetForm(); setAddOpen(true); }}>
+                <Plus className="h-4 w-4 mr-1.5" /> Add Task
+              </Button>
+            </>
           )}
           <Button size="sm" variant="ghost" onClick={() => setFullscreen(!fullscreen)}>
             {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -473,16 +531,19 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 flex gap-2 overflow-x-auto py-1 scrollbar-hide">
-          {staffMembers.map((m, i) => {
+          {visibleStaff.map((m, i) => {
             const isActive = i === activeStaffIndex;
             const isCurrent = m.id === userId;
             const memberTaskCount =
               tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
               scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
+            const displayName = staffAliases[m.id] || (m.full_name || m.email.split('@')[0]).split(' ')[0];
             return (
               <button
                 key={m.id}
                 onClick={() => setActiveStaffIndex(i)}
+                onDragOver={(e) => { if (dragItem && isAdmin) e.preventDefault(); }}
+                onDrop={() => handleDropOnStaff(m.id)}
                 className={`shrink-0 px-4 py-2 rounded-xl border-2 transition-all text-sm font-medium ${
                   isActive
                     ? isCurrent
@@ -491,7 +552,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                     : 'border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
-                {(m.full_name || m.email.split('@')[0]).split(' ')[0]}
+                {displayName}
                 {memberTaskCount > 0 && (
                   <span className="ml-1.5 text-[10px] opacity-70">{memberTaskCount}</span>
                 )}
@@ -499,8 +560,8 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             );
           })}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= staffMembers.length - 1}
-          onClick={() => setActiveStaffIndex(prev => Math.min(staffMembers.length - 1, prev + 1))}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= visibleStaff.length - 1}
+          onClick={() => setActiveStaffIndex(prev => Math.min(visibleStaff.length - 1, prev + 1))}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -759,6 +820,42 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                 </Button>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage People Dialog */}
+      <Dialog open={managePeopleOpen} onOpenChange={setManagePeopleOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage People</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {staffMembers.map(m => {
+              const isHidden = hiddenStaff.includes(m.id);
+              const alias = staffAliases[m.id] || "";
+              return (
+                <div key={m.id} className={`flex items-center gap-3 rounded-lg border p-3 ${isHidden ? 'opacity-50' : ''}`}>
+                  <Checkbox
+                    checked={!isHidden}
+                    onCheckedChange={(checked) => {
+                      if (checked) saveHiddenStaff(hiddenStaff.filter(id => id !== m.id));
+                      else saveHiddenStaff([...hiddenStaff, m.id]);
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{m.full_name || m.email}</p>
+                    <Input
+                      value={alias}
+                      onChange={(e) => saveStaffAliases({ ...staffAliases, [m.id]: e.target.value })}
+                      placeholder="Display alias"
+                      className="mt-1 h-7 text-xs"
+                    />
+                  </div>
+                  {isHidden && <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />}
+                </div>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>

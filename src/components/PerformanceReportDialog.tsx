@@ -117,7 +117,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const [filterHasNotes, setFilterHasNotes] = useState(false);
   const sharedClipPlayer = useSharedClipPlayer();
   const [showMatchStats, setShowMatchStats] = useState(false);
-  const [showShotMap, setShowShotMap] = useState(true);
+  const [showShotMap, setShowShotMap] = useState(false);
 
   const openClip = (action: PerformanceAction) => {
     if (!hasPlayableClip(action)) {

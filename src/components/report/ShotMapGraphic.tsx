@@ -4,29 +4,39 @@ import type { ShotMapData } from "@/components/report/ShotMapSelector";
 
 const SHOT_MAP_STAT_KEY = "__shot_map";
 
-const PARENT_GRID: Array<Array<number | null>> = [
-  [null, 16, 17, 18, 19, 20, null],
-  [21, 11, 12, 13, 14, 15, 22],
-  [23, 6, 7, 8, 9, 10, 24],
-  [25, 1, 2, 3, 4, 5, 26],
-  [null, 27, 28, 29, 30, 31, null],
-];
+// Goal zones: 3 rows x 5 cols (1-15), viewed from behind the goal
+const GOAL_ROWS = 3;
+const GOAL_COLS = 5;
 
-const GOAL_ZONES = new Set(Array.from({ length: 15 }, (_, index) => index + 1));
-
-const OUTCOME_STYLES: Record<string, string> = {
-  goal: "border-destructive bg-destructive",
-  saved: "border-primary bg-primary",
-  missed: "border-muted-foreground bg-muted-foreground",
-  blocked: "border-secondary bg-secondary",
-  default: "border-border bg-muted",
+// Off-target zones mapped to positions around the goal
+const OFF_TARGET_POSITIONS: Record<number, { x: number; y: number }> = {
+  // Top row (above crossbar)
+  16: { x: 0.15, y: 0.06 }, 17: { x: 0.32, y: 0.06 }, 18: { x: 0.5, y: 0.06 },
+  19: { x: 0.68, y: 0.06 }, 20: { x: 0.85, y: 0.06 },
+  // Left side
+  21: { x: 0.08, y: 0.3 }, 23: { x: 0.08, y: 0.5 }, 25: { x: 0.08, y: 0.7 },
+  // Right side
+  22: { x: 0.92, y: 0.3 }, 24: { x: 0.92, y: 0.5 }, 26: { x: 0.92, y: 0.7 },
+  // Bottom row (below goal line)
+  27: { x: 0.15, y: 0.94 }, 28: { x: 0.32, y: 0.94 }, 29: { x: 0.5, y: 0.94 },
+  30: { x: 0.68, y: 0.94 }, 31: { x: 0.85, y: 0.94 },
 };
 
-const OUTCOME_LABELS: Array<{ label: string; key: NonNullable<ShotMapData["outcome"]> | "default" }> = [
-  { label: "Goal", key: "goal" },
-  { label: "Saved", key: "saved" },
-  { label: "Missed", key: "missed" },
-  { label: "Blocked", key: "blocked" },
+const GOAL_ZONES = new Set(Array.from({ length: 15 }, (_, i) => i + 1));
+
+const OUTCOME_COLORS: Record<string, string> = {
+  goal: "#ef4444",       // Red
+  saved: "#C6A332",      // Rise Gold
+  missed: "#6b7280",     // Grey
+  blocked: "#3b82f6",    // Blue
+  default: "#9ca3af",
+};
+
+const OUTCOME_LABELS: Array<{ label: string; key: string; color: string }> = [
+  { label: "Goal", key: "goal", color: OUTCOME_COLORS.goal },
+  { label: "Saved", key: "saved", color: OUTCOME_COLORS.saved },
+  { label: "Missed", key: "missed", color: OUTCOME_COLORS.missed },
+  { label: "Blocked", key: "blocked", color: OUTCOME_COLORS.blocked },
 ];
 
 interface ShotMapCarrier {
@@ -46,8 +56,8 @@ interface ShotPoint {
   zone: number;
   detail: number;
   outcome: ShotMapData["outcome"];
-  left: number;
-  top: number;
+  x: number;
+  y: number;
   stackIndex: number;
   actionLabel: string;
   actionType: string;
@@ -71,35 +81,40 @@ export const hasShotMapData = (actions: ShotMapCarrier[]) => {
   return actions.some((action) => !!getShotMapFromAction(action)?.zone);
 };
 
-const findZoneCell = (zone: number) => {
-  for (let row = 0; row < PARENT_GRID.length; row += 1) {
-    const col = PARENT_GRID[row].indexOf(zone);
-    if (col >= 0) return { row, col };
+// Goal frame occupies the centre of the graphic
+const GOAL_LEFT = 0.18;
+const GOAL_RIGHT = 0.82;
+const GOAL_TOP = 0.18;
+const GOAL_BOTTOM = 0.82;
+
+const getPointPosition = (zone: number, detail?: number | null): { x: number; y: number } | null => {
+  if (GOAL_ZONES.has(zone)) {
+    // Zone 1-5 = bottom row, 6-10 = middle, 11-15 = top
+    const row = 2 - Math.floor((zone - 1) / 5); // 0=top, 1=mid, 2=bottom
+    const col = (zone - 1) % 5;
+
+    const cellW = (GOAL_RIGHT - GOAL_LEFT) / GOAL_COLS;
+    const cellH = (GOAL_BOTTOM - GOAL_TOP) / GOAL_ROWS;
+
+    // Sub-grid detail (1-9)
+    const safeDetail = detail && detail >= 1 && detail <= 9 ? detail : 5;
+    const dCol = (safeDetail - 1) % 3;
+    const dRow = 2 - Math.floor((safeDetail - 1) / 3);
+
+    return {
+      x: GOAL_LEFT + cellW * col + cellW * (dCol + 0.5) / 3,
+      y: GOAL_TOP + cellH * row + cellH * (dRow + 0.5) / 3,
+    };
   }
 
-  return null;
-};
-
-const getPointPosition = (zone: number, detail?: number | null) => {
-  const cell = findZoneCell(zone);
-  if (!cell) return null;
-
-  const safeDetail = detail && detail >= 1 && detail <= 9 ? detail : 5;
-  const detailIndex = safeDetail - 1;
-  const detailCol = detailIndex % 3;
-  const detailRowFromTop = 2 - Math.floor(detailIndex / 3);
-
-  return {
-    left: ((cell.col + (detailCol + 0.5) / 3) / 7) * 100,
-    top: ((cell.row + (detailRowFromTop + 0.5) / 3) / 5) * 100,
-  };
+  return OFF_TARGET_POSITIONS[zone] || null;
 };
 
 const formatActionLabel = (action: ShotMapCarrier, shotMap: ShotMapData) => {
   const numberPrefix = action.action_number ? `#${action.action_number}` : "Shot";
-  const minuteLabel = action.minute != null ? ` • ${action.minute}'` : "";
-  const outcomeLabel = shotMap.outcome ? ` • ${shotMap.outcome}` : "";
-  const scoreLabel = typeof action.action_score === "number" ? ` • ${action.action_score.toFixed(2)}` : "";
+  const minuteLabel = action.minute != null ? ` · ${action.minute}'` : "";
+  const outcomeLabel = shotMap.outcome ? ` · ${shotMap.outcome}` : "";
+  const scoreLabel = typeof action.action_score === "number" ? ` · ${action.action_score.toFixed(2)}` : "";
   return `${numberPrefix}${minuteLabel}${outcomeLabel}${scoreLabel}`;
 };
 
@@ -113,7 +128,7 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
       const shotMap = getShotMapFromAction(action);
       if (!shotMap?.zone) return [];
 
-      const position = getPointPosition(shotMap.zone, shotMap.detail) as { left: number; top: number } | null;
+      const position = getPointPosition(shotMap.zone, shotMap.detail);
       if (!position) return [];
 
       const stackKey = `${shotMap.zone}-${shotMap.detail ?? 5}`;
@@ -125,8 +140,8 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
         zone: shotMap.zone,
         detail: shotMap.detail ?? 5,
         outcome: shotMap.outcome ?? null,
-        left: position.left,
-        top: position.top,
+        x: position.x,
+        y: position.y,
         stackIndex,
         actionLabel: formatActionLabel(action, shotMap),
         actionType: action.action_type ?? "Shot",
@@ -150,45 +165,67 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
     );
   }
 
+  const goalL = GOAL_LEFT * 100;
+  const goalT = GOAL_TOP * 100;
+  const goalW = (GOAL_RIGHT - GOAL_LEFT) * 100;
+  const goalH = (GOAL_BOTTOM - GOAL_TOP) * 100;
+
   return (
     <div className="space-y-4">
       <div className="mx-auto flex max-w-[430px] flex-col gap-3">
-        <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--background)))] p-3 shadow-sm">
-          <div
-            className="pointer-events-none absolute rounded-[1rem] border-2 border-foreground"
-            style={{
-              left: "calc(14.2857% + 12px)",
-              top: "calc(20% + 12px)",
-              width: "calc(71.4285% - 24px)",
-              height: "calc(60% - 24px)",
-              backgroundImage: [
-                "repeating-linear-gradient(to right, transparent 0, transparent calc(20% - 1px), hsl(var(--foreground) / 0.15) calc(20% - 1px), hsl(var(--foreground) / 0.15) 20%)",
-                "repeating-linear-gradient(to bottom, transparent 0, transparent calc(33.333% - 1px), hsl(var(--foreground) / 0.15) calc(33.333% - 1px), hsl(var(--foreground) / 0.15) 33.333%)",
-              ].join(", "),
-            }}
-          />
-          <div className="absolute inset-3 grid grid-cols-7 grid-rows-5 gap-1">
-            {PARENT_GRID.flatMap((row, rowIndex) =>
-              row.map((zone, colIndex) => {
-                if (!zone) {
-                  return <div key={`empty-${rowIndex}-${colIndex}`} />;
-                }
+        {/* Goal frame SVG */}
+        <div className="relative aspect-[7/5] overflow-hidden rounded-[1.5rem] border border-border/70 bg-[hsl(var(--background))]">
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full"
+          >
+            {/* Grass / pitch background */}
+            <rect x="0" y="0" width="100" height="100" fill="hsl(142 40% 12%)" />
 
-                const isGoalZone = GOAL_ZONES.has(zone);
-                return (
-                  <div
-                    key={zone}
-                    className={`rounded-md border ${isGoalZone ? "border-foreground/10 bg-transparent" : "border-border/55 bg-muted/20"}`}
-                  />
-                );
-              }),
-            )}
-          </div>
+            {/* Net pattern inside goal */}
+            <defs>
+              <pattern id="net-pattern" x="0" y="0" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="3.2" y2="3.2" stroke="white" strokeWidth="0.15" strokeOpacity="0.18" />
+                <line x1="3.2" y1="0" x2="0" y2="3.2" stroke="white" strokeWidth="0.15" strokeOpacity="0.18" />
+              </pattern>
+            </defs>
+            <rect x={goalL} y={goalT} width={goalW} height={goalH} fill="url(#net-pattern)" />
+            <rect x={goalL} y={goalT} width={goalW} height={goalH} fill="hsl(0 0% 0% / 0.25)" />
 
-          <div className="absolute inset-3">
+            {/* Goal frame (white posts and crossbar) */}
+            {/* Crossbar */}
+            <rect x={goalL - 0.8} y={goalT - 1.6} width={goalW + 1.6} height={1.6} rx="0.8" fill="white" />
+            {/* Left post */}
+            <rect x={goalL - 1.2} y={goalT - 1.6} width={1.4} height={goalH + 2} rx="0.6" fill="white" />
+            {/* Right post */}
+            <rect x={goalL + goalW - 0.2} y={goalT - 1.6} width={1.4} height={goalH + 2} rx="0.6" fill="white" />
+
+            {/* Goal line */}
+            <line x1={goalL} y1={goalT + goalH + 0.4} x2={goalL + goalW} y2={goalT + goalH + 0.4}
+              stroke="white" strokeWidth="0.5" strokeOpacity="0.4" />
+
+            {/* Internal grid lines for zones */}
+            {[1, 2, 3, 4].map(i => (
+              <line key={`vcol-${i}`}
+                x1={goalL + (goalW / 5) * i} y1={goalT}
+                x2={goalL + (goalW / 5) * i} y2={goalT + goalH}
+                stroke="white" strokeWidth="0.2" strokeOpacity="0.12"
+              />
+            ))}
+            {[1, 2].map(i => (
+              <line key={`hrow-${i}`}
+                x1={goalL} y1={goalT + (goalH / 3) * i}
+                x2={goalL + goalW} y2={goalT + (goalH / 3) * i}
+                stroke="white" strokeWidth="0.2" strokeOpacity="0.12"
+              />
+            ))}
+          </svg>
+
+          {/* Shot markers */}
+          <div className="absolute inset-0">
             {shotPoints.map((shot) => {
-              const styleKey = shot.outcome || "default";
-              const styleClass = OUTCOME_STYLES[styleKey] || OUTCOME_STYLES.default;
+              const color = OUTCOME_COLORS[shot.outcome || "default"] || OUTCOME_COLORS.default;
               const angle = shot.stackIndex * 1.3;
               const radius = shot.stackIndex === 0 ? 0 : 6;
               const offsetX = Math.cos(angle) * radius;
@@ -200,12 +237,17 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
                   type="button"
                   key={shot.id}
                   title={shot.actionLabel}
-                  onClick={() => setSelectedShotId((current) => current === shot.id ? null : shot.id)}
-                  className={`absolute h-3.5 w-3.5 rounded-full border-2 shadow-[0_0_0_2px_hsl(var(--background))] ${styleClass} ${isSelected ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""}`}
+                  onClick={() => setSelectedShotId((c) => c === shot.id ? null : shot.id)}
+                  className="absolute h-3.5 w-3.5 rounded-full shadow-md transition-transform hover:scale-125"
                   style={{
-                    left: `${shot.left}%`,
-                    top: `${shot.top}%`,
+                    left: `${shot.x * 100}%`,
+                    top: `${shot.y * 100}%`,
                     transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+                    backgroundColor: color,
+                    border: isSelected ? "2px solid white" : "2px solid rgba(0,0,0,0.3)",
+                    boxShadow: isSelected
+                      ? `0 0 0 3px white, 0 0 8px ${color}`
+                      : `0 1px 3px rgba(0,0,0,0.4)`,
                   }}
                 />
               );
@@ -213,6 +255,7 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
           </div>
         </div>
 
+        {/* Selected shot detail card */}
         {selectedShot && (
           <div className="rounded-xl border border-border/60 bg-card/40 p-3">
             <div className="flex items-start justify-between gap-3">
@@ -231,10 +274,11 @@ export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
           </div>
         )}
 
+        {/* Legend */}
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-xl border border-border/60 bg-card/40 px-3 py-2">
           {OUTCOME_LABELS.map((item) => (
             <div key={item.key} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <span className={`h-3 w-3 rounded-full border ${OUTCOME_STYLES[item.key] || OUTCOME_STYLES.default}`} />
+              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
               <span>{item.label}</span>
             </div>
           ))}

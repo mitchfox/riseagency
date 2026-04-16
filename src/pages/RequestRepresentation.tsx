@@ -284,7 +284,7 @@ const RequestRepresentation = () => {
                 <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover" width={1400} height={900} />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.18),hsl(var(--background)/0.28),hsl(var(--background)/0.92))]" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-primary">Request Representation</p>
+                  
                   <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em]">RISE WITH US</h1>
                   <p className="mt-2 max-w-[32ch] text-xs leading-relaxed text-foreground/80">
                       Realise potential with our experienced intermediary &amp; English Premier League star performance team.
