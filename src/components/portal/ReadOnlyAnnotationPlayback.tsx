@@ -683,9 +683,8 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   };
 
   const hasAnnotations = elements.length > 0;
-  const renderedVisibleEls = freezeActive
-    ? visibleEls
-    : visibleEls.filter((el) => !triggeredTimesRef.current.has(el.id));
+  // Always render whatever computeVisibleElements says is visible right now
+  const renderedVisibleEls = visibleEls;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
