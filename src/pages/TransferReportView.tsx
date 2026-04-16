@@ -667,8 +667,31 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
           <SectionEditWrapper key={sectionId} sectionId={sectionId}>
             <section>
               <SectionHeading title="Player Comparisons" icon={<BarChart3 className="h-5 w-5" />} />
+              {isEditing && comparisonPlayers.length > 0 && (
+                <div className="mb-4">
+                  <label className="text-[11px] text-white/40 uppercase tracking-wider font-bebas mb-2 block">Select Comparison Players</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {comparisonPlayers.map(cp => {
+                      const selected = ((editContentConfig.comparison_player_ids || []) as string[]).includes(cp.id);
+                      return (
+                        <button
+                          key={cp.id}
+                          onClick={() => {
+                            const current = (editContentConfig.comparison_player_ids || []) as string[];
+                            const updated = selected ? current.filter((id: string) => id !== cp.id) : [...current, cp.id];
+                            updateEditConfig('comparison_player_ids', updated);
+                          }}
+                          className="px-2.5 py-1 rounded text-[11px] transition-colors"
+                          style={selected ? { background: `${RISE_GOLD}20`, border: `1px solid ${RISE_GOLD}60`, color: RISE_GOLD } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+                        >
+                          {cp.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {configuredCompPlayers.length > 0 && Object.keys(playerAverages).length > 0 ? (
-                <div className="space-y-4">
                   {categories.map(cat => {
                     const catMetrics = cat.metrics.filter(m => !hiddenStats[`comp_${m.key}`] && playerAverages[m.key] != null);
                     if (catMetrics.length === 0) return null;
