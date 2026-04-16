@@ -530,16 +530,19 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 flex gap-2 overflow-x-auto py-1 scrollbar-hide">
-          {staffMembers.map((m, i) => {
+          {visibleStaff.map((m, i) => {
             const isActive = i === activeStaffIndex;
             const isCurrent = m.id === userId;
             const memberTaskCount =
               tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
               scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
+            const displayName = staffAliases[m.id] || (m.full_name || m.email.split('@')[0]).split(' ')[0];
             return (
               <button
                 key={m.id}
                 onClick={() => setActiveStaffIndex(i)}
+                onDragOver={(e) => { if (dragItem && isAdmin) e.preventDefault(); }}
+                onDrop={() => handleDropOnStaff(m.id)}
                 className={`shrink-0 px-4 py-2 rounded-xl border-2 transition-all text-sm font-medium ${
                   isActive
                     ? isCurrent
@@ -548,7 +551,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                     : 'border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
-                {(m.full_name || m.email.split('@')[0]).split(' ')[0]}
+                {displayName}
                 {memberTaskCount > 0 && (
                   <span className="ml-1.5 text-[10px] opacity-70">{memberTaskCount}</span>
                 )}
@@ -556,8 +559,8 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             );
           })}
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= staffMembers.length - 1}
-          onClick={() => setActiveStaffIndex(prev => Math.min(staffMembers.length - 1, prev + 1))}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" disabled={activeStaffIndex >= visibleStaff.length - 1}
+          onClick={() => setActiveStaffIndex(prev => Math.min(visibleStaff.length - 1, prev + 1))}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
