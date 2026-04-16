@@ -621,11 +621,16 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                 <>
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                     {displayReports.map((rpt: any) => {
+                      if (hiddenStats[`form_${rpt.id}`]) return null;
                       const r90Val = rpt.r90_score;
-                      // Use 'r90' as the metric key — that's what's in form_grade_configs
                       const r90Grade = r90Val != null ? getFormGrade('r90', r90Val) : null;
                       return (
-                        <div key={rpt.id} className="rounded-lg p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                        <div key={rpt.id} className="relative rounded-2xl p-3 flex items-center justify-between" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                          {isEditing && (
+                            <button onClick={() => toggleStatVisibility(`form_${rpt.id}`)} className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 text-white/30 hover:text-white/60">
+                              <Eye className="w-3 h-3" />
+                            </button>
+                          )}
                           <div>
                             <p className="font-bebas uppercase text-sm md:text-base text-white tracking-wider">{rpt.opponent || 'Match'}</p>
                             <p className="text-[11px] text-white/40">{rpt.analysis_date ? new Date(rpt.analysis_date).toLocaleDateString('en-GB') : ''}</p>
@@ -798,12 +803,22 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
             <section>
               <SectionHeading title="Strengths & Play Style" />
               {player?.strengthsAndPlayStyle ? (
-                <div className="rounded-lg p-5" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
+                <div className="rounded-2xl p-5" style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
                   {Array.isArray(player.strengthsAndPlayStyle) ? (
                     <div className="flex flex-wrap gap-2">
-                      {player.strengthsAndPlayStyle.map((s: string, i: number) => (
-                        <span key={i} className="px-3 py-1.5 rounded-md text-sm text-white/70 font-medium" style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>{s}</span>
-                      ))}
+                      {player.strengthsAndPlayStyle.map((s: string, i: number) => {
+                        if (hiddenStats[`strength_${i}`]) return null;
+                        return (
+                          <span key={i} className="relative px-3 py-1.5 rounded-md text-sm text-white/70 font-medium" style={{ border: `1px solid ${RISE_GOLD}33`, background: `${RISE_GOLD}0d` }}>
+                            {s}
+                            {isEditing && (
+                              <button onClick={() => toggleStatVisibility(`strength_${i}`)} className="ml-1.5 text-white/30 hover:text-white/60">
+                                <Eye className="w-2.5 h-2.5 inline" />
+                              </button>
+                            )}
+                          </span>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-white/60 text-sm md:text-base">{player.strengthsAndPlayStyle}</p>
