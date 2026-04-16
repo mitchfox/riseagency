@@ -199,6 +199,35 @@ const SortableStatItem = ({ id, children }: SortableStatItemProps) => {
   );
 };
 
+// Lightweight wrapper that resolves the player's representation_status before
+// rendering the FFF package tracker.
+const FFFPackageWrapper = ({ playerId, analysisId }: { playerId: string; analysisId?: string }) => {
+  const [status, setStatus] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!playerId) return;
+    supabase
+      .from("players")
+      .select("representation_status")
+      .eq("id", playerId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setStatus((data?.representation_status as string) || null);
+      });
+    return () => { cancelled = true; };
+  }, [playerId]);
+  if (status !== "fuel_for_football") return null;
+  return (
+    <div className="mb-4">
+      <FFFPackageHeader
+        playerId={playerId}
+        representationStatus={status}
+        currentPerformanceReportId={analysisId || null}
+      />
+    </div>
+  );
+};
+
 export const CreatePerformanceReportDialog = ({
   open = true,
   onOpenChange,
