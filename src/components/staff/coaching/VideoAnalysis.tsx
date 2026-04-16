@@ -2810,6 +2810,34 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               </div>
               <div
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
+                  if (dropped.length === 0) {
+                    toast.error('Please drop video files only');
+                    return;
+                  }
+                  const fileArray = dropped.slice(0, 10);
+                  if (dropped.length > 10) {
+                    toast.warning(`Only the first 10 videos will be uploaded (${dropped.length} dropped)`);
+                  }
+                  if (fileArray.length === 1) {
+                    setUploadFile(fileArray[0]);
+                    setUploadFiles([]);
+                  } else {
+                    setUploadFile(fileArray[0]);
+                    setUploadFiles(fileArray);
+                  }
+                  // Auto-fill title if empty so the upload button enables for multi-drop
+                  if (!newTitle) {
+                    setNewTitle(fileArray.length > 1
+                      ? `Batch upload (${fileArray.length} videos)`
+                      : fileArray[0].name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '));
+                  }
+                }}
                 className="border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors min-h-[140px]"
               >
                 <input ref={fileInputRef} type="file" accept="video/*" multiple onChange={handleFileSelect} className="hidden" />
@@ -2842,18 +2870,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 )}
               </div>
             </div>
-            <Button onClick={handleCreate} disabled={!newTitle || !uploadFile || creating} className="w-full mt-4">
+            <Button onClick={handleCreate} disabled={!uploadFile || creating} className="w-full mt-4">
               {creating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading{uploadFiles.length > 1 ? ` ${uploadFiles.length} videos` : ''}...
-                  {uploadFile && (
+                  {uploadFile && uploadFiles.length <= 1 && (
                     <span className="ml-2 text-xs opacity-80">
                       {(uploadedBytes / (1024 * 1024)).toFixed(1)} / {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB
                     </span>
                   )}
                 </>
               ) : (
-                <><Upload className="h-4 w-4 mr-2" /> Upload Match Video{uploadFiles.length > 1 ? 's' : ''}</>
+                <><Upload className="h-4 w-4 mr-2" /> Upload Match Video{uploadFiles.length > 1 ? `s (${uploadFiles.length})` : ''}</>
               )}
             </Button>
             {creating && uploadProgress > 0 && (

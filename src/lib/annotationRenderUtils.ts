@@ -25,6 +25,8 @@ export interface ComputeConfig {
   includeHidden?: boolean;
   /** Override opacity for all elements (e.g. 1 during freeze/drawing) */
   forceOpacity?: number | null;
+  /** Element IDs that should skip the animateIn fade (already revealed earlier in this loop cycle) */
+  skipAnimateInIds?: Set<string>;
 }
 
 // ── Pure keyframe interpolation ──
@@ -106,8 +108,9 @@ export function computeVisibleElements(
         }
       }
 
-      // Apply animateIn
-      if (el.animateIn && el.animateIn > 0) {
+      // Apply animateIn (skipped if this element was already revealed earlier in this loop cycle)
+      const skipIn = config?.skipAnimateInIds?.has(el.id) === true;
+      if (!skipIn && el.animateIn && el.animateIn > 0) {
         const elapsed = time - el.appearAt;
         if (elapsed >= 0 && elapsed < el.animateIn) {
           const progress = Math.max(0, Math.min(1, elapsed / el.animateIn));
