@@ -68,7 +68,8 @@ export const ParallaxHero = ({ imageUrl, imageUrls, imageFocalPoints, playerName
     if (!nextFixture) return null;
 
     const [year, month, day] = nextFixture.match_date.split("-").map(Number);
-    const timeValue = nextFixture.match_time && nextFixture.match_time.trim() ? nextFixture.match_time : "23:59";
+    const timeValue = nextFixture.match_time && nextFixture.match_time.trim() ? nextFixture.match_time : null;
+    if (!timeValue) return null;
     const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
     const target = new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
 

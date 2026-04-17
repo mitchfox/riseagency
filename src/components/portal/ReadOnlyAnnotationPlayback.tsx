@@ -707,8 +707,9 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   };
 
   const hasAnnotations = elements.length > 0;
-  // Always render whatever computeVisibleElements says is visible right now
-  const renderedVisibleEls = visibleEls;
+  // Only render SVG layer during freeze, mirroring the editor's behaviour exactly:
+  // freeze-only annotations must vanish the moment playback resumes.
+  const renderedVisibleEls = freezeActive ? visibleEls : [];
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -734,7 +735,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         className="w-full aspect-video"
         style={{ display: 'block', width: '100%', objectFit: 'fill' }}
       />
-      {hasAnnotations && (
+      {hasAnnotations && freezeActive && renderedVisibleEls.length > 0 && (
         <svg
           key={loopCycleKey}
           className="absolute inset-0 w-full h-full pointer-events-none"

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, MessageCircle, ChevronLeft, ChevronRight, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ExternalLink } from "lucide-react";
+import { ArrowRight, MessageCircle, ChevronLeft, ChevronRight, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ExternalLink, HelpCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import requestRepresentationHero from "@/assets/request-representation-hero-uploaded.png";
 
 type AgeGroup = null | "under18" | "over18";
-type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting";
+type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting" | "faqs";
 
 const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 
@@ -20,6 +20,7 @@ const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Gauge; eyebro
   { key: "agreement", title: "Representation Agreement", icon: FileText, eyebrow: "What the relationship covers", subtitle: "Terms before anything begins" },
   { key: "expectations", title: "Expectations", icon: Target, eyebrow: "What we expect from you", subtitle: "Standards on and off the pitch" },
   { key: "scouting", title: "Scouting Process", icon: Search, eyebrow: "How we assess fit", subtitle: "From first contact to decision" },
+  { key: "faqs", title: "FAQs", icon: HelpCircle, eyebrow: "Common questions answered", subtitle: "Quick answers before you reach out" },
 ];
 
 const marbleStyle = {
@@ -282,23 +283,42 @@ const RequestRepresentation = () => {
 
               <div className="md:grid md:grid-cols-[1fr_1.4fr] md:gap-8">
                 <div>
-                  <MarbleIconPanel icon={CARD_META.find((card) => card.key === activeCard)!.icon} title={cardContent[activeCard].title} />
-                  <h2 className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.14em] md:text-5xl">{cardContent[activeCard].title}</h2>
-                  <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground md:text-sm">{cardContent[activeCard].eyebrow}</p>
+                  <MarbleIconPanel icon={CARD_META.find((card) => card.key === activeCard)!.icon} title={CARD_META.find((card) => card.key === activeCard)!.title} />
+                  <h2 className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.14em] md:text-5xl">{CARD_META.find((card) => card.key === activeCard)!.title}</h2>
+                  <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground md:text-sm">{CARD_META.find((card) => card.key === activeCard)!.eyebrow}</p>
                 </div>
 
                 <div className="mt-5 space-y-2.5 md:mt-0">
-                  {cardContent[activeCard].points.map((point, index) => (
-                    <motion.div
-                      key={point}
-                      initial={{ opacity: 0, y: 14 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.24 }}
-                      className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
-                    >
-                      {point}
-                    </motion.div>
-                  ))}
+                  {activeCard === "faqs" ? (
+                    <Accordion type="single" collapsible className="space-y-2.5">
+                      {FAQS_BY_AGE[ageGroup].map((faq, idx) => (
+                        <AccordionItem
+                          key={idx}
+                          value={`faq-${idx}`}
+                          className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
+                        >
+                          <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
+                            {faq.q}
+                          </AccordionTrigger>
+                          <AccordionContent className="text-sm leading-relaxed text-foreground/80 md:text-base">
+                            {faq.a}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  ) : (
+                    cardContent[activeCard as Exclude<CardKey, "faqs">].points.map((point, index) => (
+                      <motion.div
+                        key={point}
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.24 }}
+                        className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
+                      >
+                        {point}
+                      </motion.div>
+                    ))
+                  )}
 
                   {activeCard === "performance" && (
                     <a
@@ -317,21 +337,23 @@ const RequestRepresentation = () => {
                 </div>
               </div>
 
-              <div className="mt-auto grid gap-2.5 pb-2 pt-6 md:grid-cols-2 md:gap-4 md:pt-10">
+              <div className="mt-auto grid grid-cols-2 gap-2.5 pb-2 pt-6 md:max-w-md md:mx-auto md:gap-4 md:pt-10">
                 <Button
                   size="lg"
-                  className="h-13 rounded-2xl bg-primary font-bebas text-base uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-14"
+                  className="aspect-square h-auto rounded-2xl bg-primary font-bebas text-sm uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:text-base flex flex-col items-center justify-center gap-2"
                   onClick={() => setShowForm(true)}
                 >
-                  Start the Conversation <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="h-6 w-6" />
+                  Start the Conversation
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-13 rounded-2xl font-bebas text-base uppercase tracking-[0.14em] md:h-14"
+                  className="aspect-square h-auto rounded-2xl font-bebas text-sm uppercase tracking-[0.14em] md:text-base flex flex-col items-center justify-center gap-2"
                   onClick={openWhatsApp}
                 >
-                  <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp Us
+                  <MessageCircle className="h-6 w-6" />
+                  WhatsApp Us
                 </Button>
               </div>
             </div>

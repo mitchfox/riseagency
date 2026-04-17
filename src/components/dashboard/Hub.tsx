@@ -25,7 +25,8 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
   React.useEffect(() => {
     const getFixtureKickoff = (fixture: { match_date: string; match_time?: string | null }) => {
       const [year, month, day] = fixture.match_date.split("-").map(Number);
-      const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : "23:59";
+      const timeValue = fixture.match_time && fixture.match_time.trim() ? fixture.match_time : null;
+      if (!timeValue) return null;
       const [kickoffHours, kickoffMins] = timeValue.split(":").map(Number);
       return new Date(year, (month || 1) - 1, day || 1, kickoffHours || 0, kickoffMins || 0, 0, 0);
     };
@@ -806,6 +807,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           const { x, y, width, height, value, index } = props;
                           if (!x || !y || !width || !height || value === undefined) return null;
                           const delay = index * 0.25;
+                          const display = typeof value === "number" ? value.toFixed(2) : value;
                           return (
                             <text
                               x={x + width / 2}
@@ -820,7 +822,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                                 animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
-                              {value}
+                              {display}
                             </text>
                           );
                         }}
