@@ -807,6 +807,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           const { x, y, width, height, value, index } = props;
                           if (!x || !y || !width || !height || value === undefined) return null;
                           const delay = index * 0.25;
+                          const display = typeof value === "number" ? value.toFixed(2) : value;
                           return (
                             <text
                               x={x + width / 2}
@@ -821,7 +822,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                                 animation: !hasAnimated.current ? `labelFadeIn 0.6s ease-out ${delay + 0.8}s forwards` : 'none'
                               }}
                             >
-                              {value}
+                              {display}
                             </text>
                           );
                         }}
