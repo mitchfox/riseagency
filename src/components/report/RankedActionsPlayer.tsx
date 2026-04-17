@@ -183,34 +183,37 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
           opacity: swipeY > 0 ? Math.max(0.3, 1 - swipeY / 300) : 1,
           transition: swiping ? "none" : "transform 0.3s ease, opacity 0.3s ease",
         }}
-        className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-screen max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0 [&>button.absolute]:hidden"
+        className="fixed inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 w-screen h-[100dvh] max-w-none max-h-none p-0 bg-black border-0 rounded-none flex flex-col overflow-hidden z-[200] data-[state=open]:!animate-none data-[state=closed]:!animate-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0 [&>button.absolute]:hidden"
       >
         <DialogTitle className="sr-only">{getModeLabel()}</DialogTitle>
 
-        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="text-primary font-bold text-sm">{getModeLabel()}</span>
-            <span className="text-xs text-white/60">{currentIndex + 1} / {sortedClips.length}</span>
+        <div
+          className="flex items-center justify-between px-3 md:px-4 py-2 bg-black/80 border-b border-border/30 shrink-0"
+          style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
+        >
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <span className="text-primary font-bold text-xs md:text-sm truncate">{getModeLabel()}</span>
+            <span className="text-[10px] md:text-xs text-white/60 shrink-0">{currentIndex + 1} / {sortedClips.length}</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px]">
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-9 w-9 min-w-[36px] shrink-0">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Controls - above video */}
-        <div className="px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
+        <div className="px-3 md:px-4 py-2 bg-black/90 border-b border-border/30 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white text-sm font-semibold">#{current.action_number}</span>
-                <span className="text-white/70 text-xs">{formatMinute(current.minute)}'</span>
-                <span className={`text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
+              <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                <span className="text-white text-xs md:text-sm font-semibold">#{current.action_number}</span>
+                <span className="text-white/70 text-[10px] md:text-xs">{formatMinute(current.minute)}'</span>
+                <span className={`text-xs md:text-sm font-bold ${getScoreColor(current.action_score ?? 0)}`}>
                   {current.action_score != null ? `${current.action_score >= 0 ? "+" : ""}${current.action_score.toFixed(3)}` : "—"}
                 </span>
               </div>
-              <p className="text-white/60 text-xs mt-0.5 truncate">{toTitleCase(current.action_type)}: {current.action_description}</p>
+              <p className="text-white/60 text-[10px] md:text-xs mt-0.5 truncate">{toTitleCase(current.action_type)}: {current.action_description}</p>
             </div>
-            <div className="flex gap-1 flex-shrink-0 items-center">
+            <div className="flex gap-0.5 md:gap-1 flex-shrink-0 items-center">
               <Button variant="ghost" size="sm" onClick={handlePrev} disabled={currentIndex === 0} className="text-white/60 hover:text-white h-8 w-8 p-0">
                 <SkipBack className="h-4 w-4" />
               </Button>
@@ -223,7 +226,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1 ml-2"
+                className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1 ml-1 md:ml-2 h-8 w-8 p-0"
                 onClick={() => setShowClipList(!showClipList)}
               >
                 {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
@@ -231,7 +234,7 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
             </div>
           </div>
           {current.notes && (
-            <p className="text-risegold text-xs italic leading-relaxed mt-1">📝 {current.notes}</p>
+            <p className="text-risegold text-[10px] md:text-xs italic leading-relaxed mt-1">📝 {current.notes}</p>
           )}
         </div>
 
