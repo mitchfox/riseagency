@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, MessageCircle, ChevronLeft, ChevronRight, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ExternalLink } from "lucide-react";
+import { ArrowRight, MessageCircle, ChevronLeft, ChevronRight, Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search, ExternalLink, HelpCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import requestRepresentationHero from "@/assets/request-representation-hero-uploaded.png";
 
 type AgeGroup = null | "under18" | "over18";
-type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting";
+type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting" | "faqs";
 
 const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 
@@ -20,6 +20,7 @@ const CARD_META: Array<{ key: CardKey; title: string; icon: typeof Gauge; eyebro
   { key: "agreement", title: "Representation Agreement", icon: FileText, eyebrow: "What the relationship covers", subtitle: "Terms before anything begins" },
   { key: "expectations", title: "Expectations", icon: Target, eyebrow: "What we expect from you", subtitle: "Standards on and off the pitch" },
   { key: "scouting", title: "Scouting Process", icon: Search, eyebrow: "How we assess fit", subtitle: "From first contact to decision" },
+  { key: "faqs", title: "FAQs", icon: HelpCircle, eyebrow: "Common questions answered", subtitle: "Quick answers before you reach out" },
 ];
 
 const marbleStyle = {
