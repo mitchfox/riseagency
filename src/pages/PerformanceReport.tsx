@@ -659,25 +659,25 @@ const PerformanceReport = () => {
                   size="sm"
                   disabled={!hasNotedClips}
                   onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
-                  className="text-xs font-semibold w-full"
+                  className="text-[11px] md:text-xs font-semibold w-full px-1 md:px-3 truncate"
                 >
-                  <MessageSquareText className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "noted_actions")}
+                  <MessageSquareText className="hidden md:inline-block h-3.5 w-3.5 mr-1" />{t(reportLanguage, "noted_actions")}
                 </Button>
                 <Button
                   variant="default"
                   size="sm"
                   onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
-                  className="text-xs font-semibold w-full bg-risegold hover:bg-risegold/90 text-black"
+                  className="text-[11px] md:text-xs font-semibold w-full px-1 md:px-3 truncate bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))]/90 text-black"
                 >
-                  <Film className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "full_match_video")}
+                  <Film className="hidden md:inline-block h-3.5 w-3.5 mr-1" />{t(reportLanguage, "full_match_video")}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
-                  className="text-xs font-semibold w-full"
+                  className="text-[11px] md:text-xs font-semibold w-full px-1 md:px-3 truncate"
                 >
-                  <Award className="h-3.5 w-3.5 mr-1" />{t(reportLanguage, "ranked_actions")}
+                  <Award className="hidden md:inline-block h-3.5 w-3.5 mr-1" />{t(reportLanguage, "ranked_actions")}
                 </Button>
               </div>
             )}
@@ -1019,9 +1019,8 @@ const PerformanceReport = () => {
           {/* Back to Top Button */}
           <div className="flex justify-center pt-4 pb-2">
             <Button
-              variant="default"
               size="sm"
-              className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
+              className="bg-[hsl(var(--gold))] text-black font-semibold hover:bg-[hsl(var(--gold))]/90"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <ArrowUp className="h-4 w-4 mr-1.5" />
@@ -1135,9 +1134,8 @@ const PerformanceReport = () => {
       {/* Back to Top */}
       <div className="flex justify-center py-6">
         <Button
-          variant="default"
           size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+          className="bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 font-semibold"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <ArrowUp className="h-3.5 w-3.5 mr-1.5" /> Back to Top

@@ -776,34 +776,34 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 
                 {/* Video Options Row - directly below player info */}
                 {reportClips.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1 md:gap-2">
                     {reportClips.some(a => a.notes) && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 text-xs font-semibold"
+                        className="h-10 text-[11px] md:text-xs font-semibold px-1 md:px-3 truncate"
                         onClick={() => { setRankedMode("noted"); openClipCollection(setShowRankedPlayer); }}
                       >
-                        <MessageSquareText className="h-3.5 w-3.5 mr-1" />
+                        <MessageSquareText className="hidden md:inline-block h-3.5 w-3.5 mr-1" />
                         {t(reportLanguage, "noted_actions")}
                       </Button>
                     )}
                     <Button
                       variant="default"
                       size="sm"
-                      className="h-10 text-xs font-semibold bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))]/90 text-black"
+                      className="h-10 text-[11px] md:text-xs font-semibold px-1 md:px-3 truncate bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))]/90 text-black"
                       onClick={() => { setRankedMode("chronological"); openClipCollection(setShowRankedPlayer); }}
                     >
-                      <Film className="h-3.5 w-3.5 mr-1" />
+                      <Film className="hidden md:inline-block h-3.5 w-3.5 mr-1" />
                       {t(reportLanguage, "full_match_video")}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 text-xs font-semibold"
+                      className="h-10 text-[11px] md:text-xs font-semibold px-1 md:px-3 truncate"
                       onClick={() => { setRankedMode("ranked"); openClipCollection(setShowRankedPlayer); }}
                     >
-                      <Award className="h-3.5 w-3.5 mr-1" />
+                      <Award className="hidden md:inline-block h-3.5 w-3.5 mr-1" />
                       {t(reportLanguage, "ranked_actions")}
                     </Button>
                   </div>
