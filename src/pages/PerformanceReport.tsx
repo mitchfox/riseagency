@@ -40,8 +40,8 @@ const PerformanceReport = () => {
       }
 
       const { data, error } = await supabase
-        .from("performance_analyses")
-        .select("id, player_name, opponent")
+        .from("player_analysis")
+        .select("id, opponent, players!inner(name)")
         .eq("id", id)
         .maybeSingle();
 
@@ -50,8 +50,9 @@ const PerformanceReport = () => {
       if (error || !data) {
         setNotFound(true);
       } else {
+        const playerName = (data as any).players?.name || "Player";
         setAnalysisId(data.id);
-        setMeta({ player: data.player_name || "Player", opponent: data.opponent || "Match" });
+        setMeta({ player: playerName, opponent: (data as any).opponent || "Match" });
       }
       setResolving(false);
     };
