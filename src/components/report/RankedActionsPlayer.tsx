@@ -293,7 +293,11 @@ export const RankedActionsPlayer = ({ open, onOpenChange, clips, mode, language 
 
         {/* Clip list table categorised */}
         {showClipList && (
-          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
+          <div
+            ref={clipListRef}
+            className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[28vh] md:max-h-[35vh]"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
             {mode === "ranked" ? (
               /* Ranked mode: just show by score, no categories */
               sortedClips.map(clip => (
