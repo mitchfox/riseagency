@@ -13,9 +13,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface RepresentationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  ageGroup?: "under18" | "over18" | null;
 }
 
-const representationSchema = z.object({
+const baseSchema = {
   name: z.string().trim().min(1, "Name is required").max(100),
   phone: z.string().trim().min(1, "Phone number is required").max(50),
   email: z.string().trim().email("Invalid email address").max(255).optional().or(z.literal("")),
@@ -23,11 +24,23 @@ const representationSchema = z.object({
   dob: z.string().trim().min(1, "Date of birth is required"),
   position: z.string().trim().max(100).optional().or(z.literal("")),
   message: z.string().trim().max(1000),
-});
+};
 
-export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialogProps) => {
+const buildSchema = (isUnder18: boolean) =>
+  z.object({
+    ...baseSchema,
+    parentName: isUnder18
+      ? z.string().trim().min(1, "Parent or guardian name is required").max(100)
+      : z.string().trim().max(100).optional().or(z.literal("")),
+    parentPhone: isUnder18
+      ? z.string().trim().min(1, "Parent or guardian phone is required").max(50)
+      : z.string().trim().max(50).optional().or(z.literal("")),
+  });
+
+export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: RepresentationDialogProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const isUnder18 = ageGroup === "under18";
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -37,27 +50,40 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
     position: "",
     message: "",
     videoLinks: [""],
+    parentName: "",
+    parentPhone: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      representationSchema.parse(formData);
-      
+      buildSchema(isUnder18).parse(formData);
+
       const { error } = await supabase.functions.invoke("send-form-email", {
-        body: { formType: "representation", data: formData },
+        body: { formType: "representation", data: { ...formData, ageGroup: ageGroup ?? "unspecified" } },
       });
 
       if (error) throw error;
-      
+
       toast({
         title: t('representation.success_title', 'Request Submitted'),
         description: t('representation.success_desc', "We'll be in touch soon!"),
       });
-      
+
       onOpenChange(false);
-      setFormData({ name: "", phone: "", email: "", currentClub: "", dob: "", position: "", message: "", videoLinks: [""] });
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        currentClub: "",
+        dob: "",
+        position: "",
+        message: "",
+        videoLinks: [""],
+        parentName: "",
+        parentPhone: "",
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
@@ -85,13 +111,15 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[900px] z-[150]">
+      <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto z-[150]">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bebas uppercase tracking-wider">
             {t('representation.title', 'Request Representation')}
           </DialogTitle>
           <DialogDescription>
-            {t('representation.description', 'Fill out the form below or contact us directly on WhatsApp')}
+            {isUnder18
+              ? t('representation.description_u18', 'Under 18 — please complete the player and parent or guardian details')
+              : t('representation.description', 'Fill out the form below or contact us directly on WhatsApp')}
           </DialogDescription>
         </DialogHeader>
 
@@ -172,6 +200,39 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
             />
           </div>
 
+          {isUnder18 && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-primary font-medium">
+                {t('representation.parent_section', 'Parent or guardian details (required for under 18)')}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="parentName">{t('representation.parent_name', "Parent or Guardian Name")} *</Label>
+                  <Input
+                    id="parentName"
+                    value={formData.parentName}
+                    onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    placeholder="Jane Doe"
+                    required={isUnder18}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="parentPhone">{t('representation.parent_phone', "Parent or Guardian Phone")} *</Label>
+                  <Input
+                    id="parentPhone"
+                    type="tel"
+                    value={formData.parentPhone}
+                    onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    placeholder="+44 7340 184399"
+                    required={isUnder18}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>{t('representation.video_links', 'Match Video Links')} <span className="text-muted-foreground text-xs">({t('representation.video_links_hint', 'Full match videos preferred, highlights also accepted')})</span></Label>
             {formData.videoLinks.map((link, idx) => (
@@ -225,8 +286,8 @@ export const RepresentationDialog = ({ open, onOpenChange }: RepresentationDialo
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               hoverEffect
               className="flex-1 btn-shine font-bebas uppercase tracking-wider"
             >
