@@ -257,35 +257,56 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  // Aggressively buffer entire video by progressively seeking the lookahead element
+  // Sliding 5-minute preload — keep ~300s buffered ahead of the current playhead.
+  // Uses the buffered ranges of the lookahead element and seeks it forward in 30s steps
+  // until we've buffered at least currentTime + 300s. Polls every 200ms.
   const startFullPreload = useCallback(() => {
     const lookaheadVideo = lookaheadRef.current;
     const mainVideo = videoRef.current;
     if (!lookaheadVideo || !mainVideo) return;
-    const duration = mainVideo.duration;
-    if (!Number.isFinite(duration) || duration <= 0) return;
 
-    // Already running or done
     if (preloadIntervalRef.current) return;
 
-    // Seek the lookahead in 30-second jumps from start to end
-    preloadPhaseRef.current = 0;
-    const CHUNK = 30;
-    const totalSteps = Math.ceil(duration / CHUNK);
+    const LOOKAHEAD_SECONDS = 300; // 5 minutes
+    const STEP = 30; // jump the lookahead currentTime in 30s increments
 
     preloadIntervalRef.current = setInterval(() => {
-      if (preloadPhaseRef.current >= totalSteps) {
+      const main = videoRef.current;
+      const lookahead = lookaheadRef.current;
+      if (!main || !lookahead) return;
+
+      const duration = main.duration;
+      if (!Number.isFinite(duration) || duration <= 0) return;
+
+      const target = Math.min(duration - 0.5, main.currentTime + LOOKAHEAD_SECONDS);
+
+      // Find the buffered end that covers main.currentTime
+      let bufferedEnd = 0;
+      const buf = lookahead.buffered;
+      for (let i = 0; i < buf.length; i++) {
+        if (buf.start(i) <= main.currentTime + 0.5 && buf.end(i) > bufferedEnd) {
+          bufferedEnd = buf.end(i);
+        }
+        if (buf.end(i) > bufferedEnd) bufferedEnd = Math.max(bufferedEnd, buf.end(i));
+      }
+
+      // Whole video buffered — stop polling
+      if (bufferedEnd >= duration - 1) {
         if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
         preloadIntervalRef.current = null;
         return;
       }
 
-      const seekTo = Math.min(preloadPhaseRef.current * CHUNK, duration - 0.5);
-      try {
-        lookaheadVideo.currentTime = seekTo;
-      } catch {}
-      preloadPhaseRef.current++;
-    }, 600);
+      // Need to advance the seek pointer if we're behind target
+      if (bufferedEnd < target) {
+        const nextSeek = Math.min(target, bufferedEnd + STEP);
+        try {
+          if (Math.abs(lookahead.currentTime - nextSeek) > 1) {
+            lookahead.currentTime = nextSeek;
+          }
+        } catch {}
+      }
+    }, 200);
   }, []);
 
   const togglePlayerFullscreen = useCallback(async () => {
