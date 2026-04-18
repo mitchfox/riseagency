@@ -150,11 +150,13 @@ export const AnnotationCanvas = ({
     }
 
     if (activeTool === 'magnifier') {
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 0.8, radius: 3, opacity: 1,
-        zoomLevel: 1.5, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
+        id: newId, type: 'magnifier', x: pos.x, y: pos.y,
+        color: '#ffffff', strokeWidth: 0.8, radius: 7, opacity: 1,
+        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
