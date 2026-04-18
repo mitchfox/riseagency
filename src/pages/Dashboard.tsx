@@ -1103,7 +1103,8 @@ const Dashboard = () => {
             home_team,
             away_team,
             home_score,
-            away_score
+            away_score,
+            category
           )
         `)
         .eq("player_id", playerData.id)
