@@ -119,7 +119,7 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'player-marker', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: klipOffset, ...defaultTiming,
+        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       onToolUsed?.();
@@ -130,7 +130,7 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'point', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
+        color: activeColor, strokeWidth, radius: 1, appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       // Don't call onToolUsed — keep point tool active for rapid placement
@@ -150,7 +150,7 @@ export const AnnotationCanvas = ({
             setElements(prev => [...prev, {
               id: crypto.randomUUID(), type: 'linked-line',
               x: el1.x, y: el1.y, x2: el2.x, y2: el2.y,
-              color: activeColor, strokeWidth, linkedTo: id, appearAt: klipOffset, ...defaultTiming,
+              color: activeColor, strokeWidth, linkedTo: id, appearAt: appearAtNow, ...defaultTiming,
             }]);
           }
           setLinkSource(null);
@@ -164,9 +164,11 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 0.8, radius: 7, opacity: 1,
-        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
-      }]);
+        color: '#ffffff', strokeWidth: 0.8, radius: 13.5, opacity: 1,
+        zoomLevel: 2, fillOpacity: 0.9, appearAt: appearAtNow, ...defaultTiming,
+        // Pan offset (in % of source video) — wheel-scrolled to shift sampled region
+        panX: 0, panY: 0,
+      } as any]);
       setSelectedId(newId);
       onToolUsed?.();
       return;
@@ -181,7 +183,7 @@ export const AnnotationCanvas = ({
         width: 10, height: 10,
         color: '#ffffff', strokeWidth: 1, opacity: 1, fillOpacity: 1,
         layerZIndex: 100,
-        appearAt: klipOffset, ...defaultTiming,
+        appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       onToolUsed?.();
@@ -191,7 +193,7 @@ export const AnnotationCanvas = ({
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
-  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset]);
+  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset, appearAtNow]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
