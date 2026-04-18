@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { Button } from "@/components/ui/button";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
@@ -179,19 +180,14 @@ export const CoachingDataSection = () => {
         </TabsContent>
 
         <TabsContent value="matchdata" className="mt-0 space-y-4">
-          <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Select a player..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select a player...</SelectItem>
-              {sortPlayersByRepresentation(players).map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name} ({player.position})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PlayerCombobox
+            players={sortPlayersByRepresentation(players)}
+            value={selectedPlayer}
+            onChange={setSelectedPlayer}
+            allLabel="Select a player..."
+            allValue="all"
+            className="w-full sm:w-[300px]"
+          />
           {selectedPlayer !== "all" && currentPlayer ? (
             <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
           ) : (
@@ -203,19 +199,14 @@ export const CoachingDataSection = () => {
         </TabsContent>
 
         <TabsContent value="comparisons" className="mt-0 space-y-4">
-          <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Select a player..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select a player...</SelectItem>
-              {sortPlayersByRepresentation(players).map((player) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name} ({player.position})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PlayerCombobox
+            players={sortPlayersByRepresentation(players)}
+            value={selectedPlayer}
+            onChange={setSelectedPlayer}
+            allLabel="Select a player..."
+            allValue="all"
+            className="w-full sm:w-[300px]"
+          />
           {selectedPlayer !== "all" && currentPlayer ? (
             <AnalysisComparisons analyses={analyses} playerData={currentPlayer} embedded />
           ) : (
