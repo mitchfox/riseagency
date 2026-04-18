@@ -640,6 +640,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     const captureFrame = () => {
       const exactTime = video.currentTime;
       setDrawingTimestamp(exactTime);
+      // Clear selection so a freshly-drawn annotation is the only one in focus.
+      setSelectedId(null);
       try {
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;

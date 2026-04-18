@@ -867,17 +867,17 @@ export const AnnotationCanvas = ({
         const magCircPerim = 2 * Math.PI * r;
         const magDash = `${magCircPerim * 0.12} ${magCircPerim * 0.06}`;
 
+        // Pan offset in % of source video — wheel-scroll over magnifier shifts sample region
+        const panX = (el as any).panX || 0;
+        const panY = (el as any).panY || 0;
+
         let dataUrl = '';
         if (video && video.readyState >= 2) {
           try {
             const vw = video.videoWidth || 1;
             const vh = video.videoHeight || 1;
-            const centreVX = (el.x / 100) * vw;
-            const centreVY = (el.y / 100) * vh;
-            // Source region tied to the magnifier's physical radius (not full
-            // video). This makes the magnifier behave like a real loupe — it
-            // samples a slice the same on-screen size as the circle and then
-            // upscales it by the zoom level.
+            const centreVX = ((el.x + panX) / 100) * vw;
+            const centreVY = ((el.y + panY) / 100) * vh;
             const radiusPxW = (r / 100) * vw;
             const radiusPxH = (r / 100) * vh;
             const regionW = Math.max(8, (radiusPxW * 2) / zoom);
@@ -897,7 +897,18 @@ export const AnnotationCanvas = ({
         }
 
         return (
-          <g key={el.id} data-element-id={el.id} style={selStyle}>
+          <g key={el.id} data-element-id={el.id} style={selStyle}
+            onWheel={(e) => {
+              // Pan the sampled region — small step per scroll tick.
+              e.preventDefault();
+              const step = 0.5;
+              const dx = e.shiftKey ? Math.sign(e.deltaY) * step : 0;
+              const dy = e.shiftKey ? 0 : Math.sign(e.deltaY) * step;
+              setElements(prev => prev.map(it => it.id === el.id
+                ? ({ ...it, panX: ((it as any).panX || 0) + dx, panY: ((it as any).panY || 0) + dy } as any)
+                : it));
+            }}
+          >
             <defs>
               <clipPath id={clipId}>
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
@@ -921,8 +932,13 @@ export const AnnotationCanvas = ({
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="8s" repeatCount="indefinite" />}
             </circle>
-            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 0.8}%`}
-              fill="white" fontSize="1.2%" textAnchor="middle" opacity={0.6}>
+            {/* Dedicated drag handle above the lens — easier to grab than the lens itself */}
+            <circle cx={`${el.x}%`} cy={`${(el.y || 0) - r - 1.2}%`} r={1}
+              fill="white" stroke={el.color} strokeWidth={0.3}
+              style={{ cursor: 'move' }}
+            />
+            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 2.4}%`}
+              fill="white" fontSize="1.1%" textAnchor="middle" opacity={0.6}>
               🔍 {zoom}x
             </text>
           </g>
