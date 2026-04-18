@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlayerCombobox } from '@/components/staff/PlayerCombobox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -220,18 +221,13 @@ export const HighlightMaker = ({ isAdmin }: HighlightMakerProps) => {
           <div className="grid grid-cols-1 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-sm">Player</Label>
-              <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a player" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map(player => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PlayerCombobox
+                players={players as any}
+                value={selectedPlayerId || null}
+                onChange={setSelectedPlayerId}
+                placeholder="Select a player"
+                className="w-full"
+              />
             </div>
 
             <div className="space-y-2">

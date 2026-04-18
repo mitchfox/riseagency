@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Calendar as CalendarIcon, Image, Upload, Trash2, Play, List, Folder, ChevronDown, Plus, Users, Tag, Download, Pencil } from "lucide-react";
@@ -491,19 +492,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                         </Select>
                         
                         {categoryFilter === 'players' && (
-                          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                              <SelectValue placeholder="All Players" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Players</SelectItem>
-                              {players.map(player => (
-                                <SelectItem key={player.id} value={player.id}>
-                                  {player.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <PlayerCombobox
+                            players={players as any}
+                            value={selectedPlayerId}
+                            onChange={setSelectedPlayerId}
+                            allLabel="All Players"
+                            allValue="all"
+                            className="w-full sm:w-[200px]"
+                          />
                         )}
                         
                         {canManage && (
@@ -601,19 +597,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                   <TabsContent value="videos" className="space-y-4">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                       <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <Select value={videoPlayerFilter} onValueChange={setVideoPlayerFilter}>
-                          <SelectTrigger className="w-full sm:w-[200px]">
-                            <SelectValue placeholder="All Players" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="all">All Players</SelectItem>
-                            {players.map(player => (
-                              <SelectItem key={player.id} value={player.id}>
-                                {player.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <PlayerCombobox
+                          players={players as any}
+                          value={videoPlayerFilter}
+                          onChange={setVideoPlayerFilter}
+                          allLabel="All Players"
+                          allValue="all"
+                          className="w-full sm:w-[200px]"
+                        />
                         
                         {canManage && (
                           <>
@@ -780,22 +771,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             {uploadForm.category === 'players' && (
               <div>
                 <Label htmlFor="upload-player">Player (Optional)</Label>
-                <Select
+                <PlayerCombobox
+                  players={players as any}
                   value={uploadForm.player_id || 'none'}
-                  onValueChange={(v) => setUploadForm({ ...uploadForm, player_id: v === 'none' ? null : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a player" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No specific player</SelectItem>
-                    {players.map(player => (
-                      <SelectItem key={player.id} value={player.id}>
-                        {player.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => setUploadForm({ ...uploadForm, player_id: v === 'none' ? null : v })}
+                  allLabel="No specific player"
+                  allValue="none"
+                  placeholder="Select a player"
+                />
               </div>
             )}
 
@@ -1113,18 +1096,12 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           <div className="space-y-4">
             <div>
               <Label htmlFor="playlist-player">Player *</Label>
-              <Select value={newPlaylistPlayerId} onValueChange={setNewPlaylistPlayerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a player" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PlayerCombobox
+                players={players as any}
+                value={newPlaylistPlayerId || null}
+                onChange={setNewPlaylistPlayerId}
+                placeholder="Select a player"
+              />
             </div>
             <div>
               <Label htmlFor="playlist-name">Playlist Name *</Label>
@@ -1164,17 +1141,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
             </div>
             <div>
               <Label>Linked Player</Label>
-              <Select value={editPlayerId || 'none'} onValueChange={(v) => setEditPlayerId(v === 'none' ? null : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="No player linked" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No player linked</SelectItem>
-                  {players.map(player => (
-                    <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PlayerCombobox
+                players={players as any}
+                value={editPlayerId || 'none'}
+                onChange={(v) => setEditPlayerId(v === 'none' ? null : v)}
+                allLabel="No player linked"
+                allValue="none"
+                placeholder="No player linked"
+              />
             </div>
             <div>
               <Label>Focal Point (for portal slider)</Label>

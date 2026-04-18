@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -824,17 +825,15 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
                 <span className="font-medium">{players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
               </div>
             ) : (
-              <Select value={linkPlayerId} onValueChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}>
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder="All / Select player" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All players</SelectItem>
-                  {players.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PlayerCombobox
+                players={players as any}
+                value={linkPlayerId || null}
+                onChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}
+                allLabel="All players"
+                allValue="all"
+                placeholder="All / Select player"
+                className="w-56"
+              />
             )}
           </div>
 

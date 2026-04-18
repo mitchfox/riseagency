@@ -107,9 +107,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lookaheadRef = useRef<HTMLVideoElement>(null);
+  const previewRef = useRef<HTMLVideoElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const preloadPhaseRef = useRef<number>(0);
   const preloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [hoverPreview, setHoverPreview] = useState<{ x: number; time: number } | null>(null);
+  const hoverSeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -257,35 +261,56 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  // Aggressively buffer entire video by progressively seeking the lookahead element
+  // Sliding 5-minute preload — keep ~300s buffered ahead of the current playhead.
+  // Uses the buffered ranges of the lookahead element and seeks it forward in 30s steps
+  // until we've buffered at least currentTime + 300s. Polls every 200ms.
   const startFullPreload = useCallback(() => {
     const lookaheadVideo = lookaheadRef.current;
     const mainVideo = videoRef.current;
     if (!lookaheadVideo || !mainVideo) return;
-    const duration = mainVideo.duration;
-    if (!Number.isFinite(duration) || duration <= 0) return;
 
-    // Already running or done
     if (preloadIntervalRef.current) return;
 
-    // Seek the lookahead in 30-second jumps from start to end
-    preloadPhaseRef.current = 0;
-    const CHUNK = 30;
-    const totalSteps = Math.ceil(duration / CHUNK);
+    const LOOKAHEAD_SECONDS = 300; // 5 minutes
+    const STEP = 30; // jump the lookahead currentTime in 30s increments
 
     preloadIntervalRef.current = setInterval(() => {
-      if (preloadPhaseRef.current >= totalSteps) {
+      const main = videoRef.current;
+      const lookahead = lookaheadRef.current;
+      if (!main || !lookahead) return;
+
+      const duration = main.duration;
+      if (!Number.isFinite(duration) || duration <= 0) return;
+
+      const target = Math.min(duration - 0.5, main.currentTime + LOOKAHEAD_SECONDS);
+
+      // Find the buffered end that covers main.currentTime
+      let bufferedEnd = 0;
+      const buf = lookahead.buffered;
+      for (let i = 0; i < buf.length; i++) {
+        if (buf.start(i) <= main.currentTime + 0.5 && buf.end(i) > bufferedEnd) {
+          bufferedEnd = buf.end(i);
+        }
+        if (buf.end(i) > bufferedEnd) bufferedEnd = Math.max(bufferedEnd, buf.end(i));
+      }
+
+      // Whole video buffered — stop polling
+      if (bufferedEnd >= duration - 1) {
         if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
         preloadIntervalRef.current = null;
         return;
       }
 
-      const seekTo = Math.min(preloadPhaseRef.current * CHUNK, duration - 0.5);
-      try {
-        lookaheadVideo.currentTime = seekTo;
-      } catch {}
-      preloadPhaseRef.current++;
-    }, 600);
+      // Need to advance the seek pointer if we're behind target
+      if (bufferedEnd < target) {
+        const nextSeek = Math.min(target, bufferedEnd + STEP);
+        try {
+          if (Math.abs(lookahead.currentTime - nextSeek) > 1) {
+            lookahead.currentTime = nextSeek;
+          }
+        } catch {}
+      }
+    }, 200);
   }, []);
 
   const togglePlayerFullscreen = useCallback(async () => {
@@ -317,7 +342,31 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     lookaheadVideo.src = selectedVideo.video_url;
     lookaheadVideo.preload = "auto";
     lookaheadVideo.load();
+
+    // Hover preview source
+    const preview = previewRef.current;
+    if (preview) {
+      preview.src = selectedVideo.video_url;
+      preview.preload = "metadata";
+      preview.load();
+    }
   }, [selectedVideo?.id, selectedVideo?.video_url]);
+
+  // Draw the preview frame onto the canvas whenever the preview video seeks
+  useEffect(() => {
+    const preview = previewRef.current;
+    const canvas = previewCanvasRef.current;
+    if (!preview || !canvas) return;
+    const onSeeked = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      try {
+        ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+      } catch {}
+    };
+    preview.addEventListener("seeked", onSeeked);
+    return () => preview.removeEventListener("seeked", onSeeked);
+  }, [selectedVideo?.id]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -2036,6 +2085,69 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   setOverlayCurrentTime(videoRef.current?.currentTime ?? 0);
                 }
               }}
+            />
+            {/* Hover preview thumbnail strip — sits just above the native controls */}
+            <div
+              className="absolute left-0 right-0 z-30 cursor-pointer"
+              style={{ bottom: '36px', height: '14px' }}
+              onMouseMove={(e) => {
+                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const ratio = Math.max(0, Math.min(1, x / rect.width));
+                const duration = videoRef.current?.duration || 0;
+                if (!duration) return;
+                const time = ratio * duration;
+                setHoverPreview({ x, time });
+                if (hoverSeekTimerRef.current) clearTimeout(hoverSeekTimerRef.current);
+                hoverSeekTimerRef.current = setTimeout(() => {
+                  const preview = previewRef.current;
+                  if (preview && Math.abs(preview.currentTime - time) > 0.25) {
+                    try { preview.currentTime = time; } catch {}
+                  }
+                }, 30);
+              }}
+              onMouseLeave={() => setHoverPreview(null)}
+              onClick={(e) => {
+                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const v = videoRef.current;
+                if (v && v.duration) v.currentTime = ratio * v.duration;
+              }}
+            />
+            {hoverPreview && (
+              <div
+                className="absolute z-40 pointer-events-none rounded-md overflow-hidden border border-white/20 bg-black/80 shadow-lg"
+                style={{
+                  left: `${Math.max(8, Math.min(hoverPreview.x - 80, (videoRef.current?.parentElement?.clientWidth || 0) - 168))}px`,
+                  bottom: '60px',
+                  width: '160px',
+                }}
+              >
+                <canvas
+                  ref={previewCanvasRef}
+                  width={160}
+                  height={90}
+                  className="block w-[160px] h-[90px] bg-black"
+                />
+                <div className="text-[10px] text-white text-center py-0.5 font-mono">
+                  {(() => {
+                    const t = hoverPreview.time;
+                    const m = Math.floor(t / 60);
+                    const s = Math.floor(t % 60);
+                    return `${m}:${String(s).padStart(2, '0')}`;
+                  })()}
+                </div>
+              </div>
+            )}
+            {/* Hidden preview video used to render hover thumbnails */}
+            <video
+              ref={previewRef}
+              preload="metadata"
+              crossOrigin="anonymous"
+              muted
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
             />
             {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
             <video
