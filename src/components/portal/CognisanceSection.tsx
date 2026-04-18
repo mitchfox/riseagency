@@ -285,7 +285,8 @@ export function CognisanceSection({ playerId, playerPosition }: CognisanceSectio
       .from("analyses")
       .select("*")
       .in("id", allPreMatchIds)
-      .eq("analysis_type", "pre-match");
+      .eq("analysis_type", "pre-match")
+      .neq("category", "training");
     
     if (preMatchData) {
       setPreMatchAnalyses(preMatchData.map(p => ({

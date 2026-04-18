@@ -148,7 +148,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
 
         const { data: tags } = await supabase
           .from("analysis_player_tags")
-          .select("analysis_id, created_at, analyses(id, title, analysis_type, home_team, away_team)")
+          .select("analysis_id, created_at, analyses(id, title, analysis_type, home_team, away_team, category)")
           .eq("player_id", playerId)
           .order("created_at", { ascending: false })
           .limit(5);
@@ -156,6 +156,7 @@ export const NewsFeed = ({ playerId, playerName, portalLanguage, onNavigateToAna
         tags?.forEach(tag => {
           const a = (tag as any).analyses;
           if (!a) return;
+          if (a.category === "training") return;
           const typeLabel = a.analysis_type === "pre-match"
             ? t(portalLanguage, "pre_match")
             : a.analysis_type === "post-match"

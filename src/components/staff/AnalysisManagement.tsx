@@ -80,6 +80,7 @@ interface Analysis {
   estimated_ready_at?: string | null;
   created_at: string;
   player_name?: string | null;
+  category?: "match" | "training" | null;
 }
 
 interface Point {
@@ -493,6 +494,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         starting_xi: [],
         visibility_status: "live",
         estimated_ready_at: null,
+        category: "match",
       });
       // In Athlete Centre context, keep the currently selected player pre-linked
       setSelectedPlayerId(defaultPlayerId || "none");
@@ -707,7 +709,8 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'match_date', 'home_team_logo', 'away_team_logo', 'selected_scheme', 'starting_xi',
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
-        'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at'
+        'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at',
+        'category'
       ];
 
       const dataToSave: Record<string, any> = {
@@ -1727,7 +1730,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         {/* Visibility Status */}
         {!isConcept && (
           <div className="space-y-3 p-3 rounded-lg border bg-card">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Label className="text-sm font-medium whitespace-nowrap">Status</Label>
               <Select
                 value={formData.visibility_status || "live"}
@@ -1749,6 +1752,34 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                   <SelectItem value="hidden">Hidden</SelectItem>
                 </SelectContent>
               </Select>
+
+              <div className="flex items-center gap-2 ml-2">
+                <Label className="text-sm font-medium whitespace-nowrap">Type</Label>
+                <div className="inline-flex rounded-md border bg-muted/30 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, category: "match" })}
+                    className={`px-3 py-1 text-xs rounded-sm transition-colors ${
+                      (formData.category || "match") === "match"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Match
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, category: "training" })}
+                    className={`px-3 py-1 text-xs rounded-sm transition-colors ${
+                      formData.category === "training"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Training
+                  </button>
+                </div>
+              </div>
             </div>
 
             {(formData.visibility_status === "draft" || formData.visibility_status === "hidden" || formData.visibility_status === "clipped") && (
@@ -1810,6 +1841,11 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                 }`}>
                   {(analysis as any).visibility_status === "draft" ? <FileEdit className="w-2.5 h-2.5" /> : (analysis as any).visibility_status === "clipped" ? <FileEdit className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
                   {(analysis as any).visibility_status === "draft" ? "Draft" : (analysis as any).visibility_status === "clipped" ? "Clipped" : "Hidden"}
+                </span>
+              )}
+              {(analysis as any).category === "training" && (
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 bg-emerald-500/20 text-emerald-400">
+                  Training
                 </span>
               )}
             </div>

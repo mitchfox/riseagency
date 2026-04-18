@@ -54,6 +54,7 @@ export const NextFixtureCountdown = ({ playerName }: NextFixtureCountdownProps) 
         .from("analyses")
         .select("id, home_team, away_team")
         .eq("analysis_type", "pre-match")
+        .neq("category", "training")
         .eq("fixture_id", upcomingFixture.id)
         .limit(1);
 

@@ -1103,7 +1103,8 @@ const Dashboard = () => {
             home_team,
             away_team,
             home_score,
-            away_score
+            away_score,
+            category
           )
         `)
         .eq("player_id", playerData.id)
@@ -1120,6 +1121,7 @@ const Dashboard = () => {
         validTagged.forEach((tag: any) => {
           const taggedAnalysis = tag.analyses;
           if (!taggedAnalysis) return;
+          if (taggedAnalysis.category === "training") return;
 
           const matchDate = taggedAnalysis.match_date;
           const homeTeam = taggedAnalysis.home_team?.toLowerCase()?.trim();
@@ -3067,56 +3069,87 @@ const Dashboard = () => {
                         </CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent className="container mx-auto px-4 space-y-3 md:space-y-4">
-                      {otherAnalyses.length === 0 ? (
-                        <div className="py-8">
-                          <p className="text-center text-muted-foreground text-sm md:text-base">No other analysis available yet.</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {otherAnalyses.map((item: any) => {
-                            const analysis = item.analyses;
-                            if (!analysis) return null;
-                            return (
-                              <div 
-                                key={item.id} 
-                                className="border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card cursor-pointer"
-                                onClick={() => navigate(`/analysis/${analysis.id}`)}
-                              >
-                                <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
-                                  <div className="flex-1 w-full">
-                                    <h3 className="font-semibold text-base md:text-lg mb-1">
-                                      {analysis.title || `${analysis.home_team || ''} vs ${analysis.away_team || ''}`}
-                                    </h3>
-                                    <div className="flex items-center gap-2">
-                                      <span className={`inline-block px-2 py-0.5 text-xs rounded ${
-                                        analysis.analysis_type === "pre-match" 
-                                          ? "bg-slate-300 text-slate-900" 
+                    <CardContent className="container mx-auto px-4 space-y-6 md:space-y-8">
+                      {(() => {
+                        const matchItems = otherAnalyses.filter((it: any) => it.analyses && it.analyses.category !== "training");
+                        const trainingItems = otherAnalyses.filter((it: any) => it.analyses && it.analyses.category === "training");
+
+                        const renderItem = (item: any) => {
+                          const analysis = item.analyses;
+                          if (!analysis) return null;
+                          const isTraining = analysis.category === "training";
+                          return (
+                            <div
+                              key={item.id}
+                              className="border rounded-lg p-3 md:p-4 hover:border-primary transition-colors bg-card cursor-pointer"
+                              onClick={() => navigate(`/analysis/${analysis.id}`)}
+                            >
+                              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                                <div className="flex-1 w-full">
+                                  <h3 className="font-semibold text-base md:text-lg mb-1">
+                                    {analysis.title || `${analysis.home_team || ''} vs ${analysis.away_team || ''}`}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-block px-2 py-0.5 text-xs rounded ${
+                                      isTraining
+                                        ? "bg-emerald-500/20 text-emerald-300"
+                                        : analysis.analysis_type === "pre-match"
+                                          ? "bg-slate-300 text-slate-900"
                                           : "bg-[hsl(43,49%,61%)] text-black"
-                                      }`}>
-                                        {analysis.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"}
+                                    }`}>
+                                      {isTraining
+                                        ? "Training"
+                                        : analysis.analysis_type === "pre-match" ? "Pre-Match" : "Post-Match"}
+                                    </span>
+                                    {analysis.match_date && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(analysis.match_date).toLocaleDateString()}
                                       </span>
-                                      {analysis.match_date && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {new Date(analysis.match_date).toLocaleDateString()}
-                                        </span>
-                                      )}
-                                    </div>
+                                    )}
                                   </div>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="w-full sm:w-auto flex-shrink-0"
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    <span className="text-xs md:text-sm">View Analysis</span>
-                                  </Button>
                                 </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full sm:w-auto flex-shrink-0"
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  <span className="text-xs md:text-sm">View Analysis</span>
+                                </Button>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                            </div>
+                          );
+                        };
+
+                        if (otherAnalyses.length === 0) {
+                          return (
+                            <div className="py-8">
+                              <p className="text-center text-muted-foreground text-sm md:text-base">No other analysis available yet.</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Match Analysis</h4>
+                              {matchItems.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No match analysis available yet.</p>
+                              ) : (
+                                <div className="space-y-3">{matchItems.map(renderItem)}</div>
+                              )}
+                            </div>
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Training</h4>
+                              {trainingItems.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No training analysis available yet.</p>
+                              ) : (
+                                <div className="space-y-3">{trainingItems.map(renderItem)}</div>
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                   </TabsContent>
