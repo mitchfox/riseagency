@@ -342,7 +342,31 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     lookaheadVideo.src = selectedVideo.video_url;
     lookaheadVideo.preload = "auto";
     lookaheadVideo.load();
+
+    // Hover preview source
+    const preview = previewRef.current;
+    if (preview) {
+      preview.src = selectedVideo.video_url;
+      preview.preload = "metadata";
+      preview.load();
+    }
   }, [selectedVideo?.id, selectedVideo?.video_url]);
+
+  // Draw the preview frame onto the canvas whenever the preview video seeks
+  useEffect(() => {
+    const preview = previewRef.current;
+    const canvas = previewCanvasRef.current;
+    if (!preview || !canvas) return;
+    const onSeeked = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      try {
+        ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+      } catch {}
+    };
+    preview.addEventListener("seeked", onSeeked);
+    return () => preview.removeEventListener("seeked", onSeeked);
+  }, [selectedVideo?.id]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
