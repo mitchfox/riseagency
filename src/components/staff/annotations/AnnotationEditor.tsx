@@ -45,24 +45,50 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(true);
   const [activeTool, setActiveTool] = useState<AnnotationTool>('select');
-  // Persist last-used colour and stroke per tool type
+  // Persist last-used colour PER tool — so picking green for arrows doesn't
+  // change the colour used for lines, and switching tools restores each
+  // tool's last colour.
+  const colourMapRef = useRef<Record<string, string>>((() => {
+    try { return JSON.parse(localStorage.getItem('annotation-last-colour-by-tool') || '{}'); }
+    catch { return {}; }
+  })());
   const [activeColor, setActiveColor] = useState(() => {
-    try { return localStorage.getItem('annotation-last-colour') || '#C6A332'; } catch { return '#C6A332'; }
+    try {
+      return colourMapRef.current['select']
+        || colourMapRef.current['__last']
+        || localStorage.getItem('annotation-last-colour')
+        || '#C6A332';
+    } catch { return '#C6A332'; }
   });
   const [strokeWidth, setStrokeWidth] = useState(() => {
     try { return parseFloat(localStorage.getItem('annotation-last-stroke') || '0.2') || 0.2; } catch { return 0.2; }
   });
   const [fillOpacity, setFillOpacity] = useState(0.15);
 
-  // Persist colour and stroke changes
+  // Persist colour and stroke changes — store per-tool AND keep a global
+  // fallback so the most recent colour is also remembered.
   const handleSetActiveColor = useCallback((c: string) => {
     setActiveColor(c);
-    try { localStorage.setItem('annotation-last-colour', c); } catch {}
-  }, []);
+    try {
+      colourMapRef.current[activeTool] = c;
+      colourMapRef.current['__last'] = c;
+      localStorage.setItem('annotation-last-colour-by-tool', JSON.stringify(colourMapRef.current));
+      localStorage.setItem('annotation-last-colour', c);
+    } catch {}
+  }, [activeTool]);
   const handleSetStrokeWidth = useCallback((w: number) => {
     setStrokeWidth(w);
     try { localStorage.setItem('annotation-last-stroke', String(w)); } catch {}
   }, []);
+
+  // When the active tool changes, restore that tool's last colour
+  useEffect(() => {
+    const stored = colourMapRef.current[activeTool];
+    if (stored && stored !== activeColor) {
+      setActiveColor(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTool]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showPanel, setShowPanel] = useState(true);
@@ -376,6 +402,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     setPlaybackFreezeActive(false);
     setPlaybackFreezePhase('idle');
     triggeredTimesRef.current.clear();
+    freezeElementIdsRef.current.clear();
     video.currentTime = clampedTime;
     setCurrentTime(clampedTime);
   }, [clipConstraint]);
