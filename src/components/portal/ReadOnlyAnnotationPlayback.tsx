@@ -56,6 +56,11 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   // Loop cycle key — increments on every backward jump to force SVG remount
   // so all SVG <animate> elements restart cleanly each replay.
   const [loopCycleKey, setLoopCycleKey] = useState(0);
+  // Defer attaching the video source until the element scrolls near the
+  // viewport. This lets pages with many embedded clips (e.g. AnalysisViewer)
+  // render their full layout first without competing for bandwidth on every
+  // video at once.
+  const [shouldLoad, setShouldLoad] = useState(false);
   // IDs of annotations already shown during a freeze in the current loop
   // cycle. After the freeze fades out we MUST NOT show them again until
   // the next loop — they are a freeze-frame asset only.
@@ -73,6 +78,29 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const internalLoopRef = useRef(false);
 
   const { cleanUrl, clipStart, clipEnd } = useMemo(() => parseClipFragment(videoUrl), [videoUrl]);
+
+  // Lazy-load: only attach the video src once the container is within ~600px
+  // of the viewport. This keeps the page structure responsive while videos
+  // queue up in the background as the user scrolls.
+  useEffect(() => {
+    if (shouldLoad) return;
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(e => e.isIntersecting)) {
+          setShouldLoad(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' }
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [shouldLoad]);
 
   // Load annotation project
   useEffect(() => {
@@ -302,7 +330,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         const adx = (el.x2 ?? x) - x;
         const ady = (el.y2 ?? y) - y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        const trim = mw * 0.6;
+        const trim = mw;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = x + adx * trimRatio;
         const ty2 = y + ady * trimRatio;
@@ -742,14 +770,15 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       )}
       <video
         ref={videoRef}
-        src={cleanUrl}
+        {...(shouldLoad ? { src: cleanUrl } : {})}
         autoPlay
         loop
         muted
         playsInline
         crossOrigin="anonymous"
+        preload={shouldLoad ? "auto" : "none"}
         className="w-full aspect-video"
-        style={{ display: 'block', width: '100%', objectFit: 'fill' }}
+        style={{ display: 'block', width: '100%', objectFit: 'fill', backgroundColor: '#000' }}
       />
       {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg

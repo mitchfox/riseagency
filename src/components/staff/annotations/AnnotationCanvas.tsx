@@ -109,19 +109,23 @@ export const AnnotationCanvas = ({
     if (activeTool === 'player-marker') {
       const num = prompt('Player number:');
       if (!num) return;
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
+        id: newId, type: 'player-marker', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
 
     if (activeTool === 'point') {
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'point', x: pos.x, y: pos.y,
+        id: newId, type: 'point', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       // Don't call onToolUsed — keep point tool active for rapid placement
       return;
     }
@@ -150,25 +154,29 @@ export const AnnotationCanvas = ({
     }
 
     if (activeTool === 'magnifier') {
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 0.8, radius: 3, opacity: 1,
-        zoomLevel: 1.5, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
+        id: newId, type: 'magnifier', x: pos.x, y: pos.y,
+        color: '#ffffff', strokeWidth: 0.8, radius: 7, opacity: 1,
+        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
 
     if (activeTool === 'image-layer') {
+      const newId = crypto.randomUUID();
       // Image layer: create a rect-like clipping region the user will drag to shape
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'image-layer',
+        id: newId, type: 'image-layer',
         x: pos.x - 5, y: pos.y - 5,
         width: 10, height: 10,
         color: '#ffffff', strokeWidth: 1, opacity: 1, fillOpacity: 1,
         layerZIndex: 100,
         appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
@@ -207,12 +215,27 @@ export const AnnotationCanvas = ({
           return { ...el, width: newRx, height: newRy, radius: Math.max(newRx, newRy) };
         }
 
-        // Player-marker/semi-circle/magnifier: resize radius
-        if (el.radius !== undefined && (el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier')) {
+        // Player-marker/magnifier: resize via radius (always uniform)
+        if (el.radius !== undefined && (el.type === 'player-marker' || el.type === 'magnifier')) {
           const delta = h.includes('e') || h.includes('s') ? Math.max(dx, dy) : Math.min(dx, dy);
           const isCorner = h.length === 2;
           const scaleFactor = isCorner ? delta : (h === 'e' || h === 'w' ? dx : dy);
           return { ...el, radius: Math.max(0.5, (s.radius ?? 2) + scaleFactor * (h.includes('w') || h.includes('n') ? -1 : 1)) };
+        }
+
+        // Semi-circle (disc): width/height drive the rendered shape, so the
+        // handles must update those — resizing only `radius` made the on-canvas
+        // dots float free without changing the disc itself.
+        if (el.type === 'semi-circle') {
+          const sRx = s.width ?? s.radius ?? 2.5;
+          const sRy = s.height ?? (sRx * 0.35);
+          let newRx = sRx;
+          let newRy = sRy;
+          if (h.includes('e')) newRx = Math.max(0.5, sRx + dx);
+          if (h.includes('w')) newRx = Math.max(0.5, sRx - dx);
+          if (h.includes('s')) newRy = Math.max(0.3, sRy + dy);
+          if (h.includes('n')) newRy = Math.max(0.3, sRy - dy);
+          return { ...el, width: newRx, height: newRy, radius: newRx };
         }
 
         // Rect / space-oval / image-layer: resize width/height
@@ -382,7 +405,12 @@ export const AnnotationCanvas = ({
         onToolUsed?.();
         break;
     }
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset, onToolUsed]);
+    // Auto-select the freshly drawn element so toolbar/sidebar acts on it
+    // immediately. Without this, any previously selected annotation (e.g. one
+    // the user opened to edit) stays focused and gives the impression the new
+    // shape was added on top of the old one.
+    setSelectedId(id);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, klipOffset, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
@@ -440,9 +468,10 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        // Shorten the line so it ends where the arrowhead begins, ensuring
-        // the marker tip is the true visual end-point of the arrow.
-        const trim = mw * 0.6;
+        // Shorten the line by the FULL marker length so the marker tip lands
+        // exactly on the original endpoint — anything less and the line pokes
+        // out past the point of the arrow.
+        const trim = mw;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = el.x + adx * trimRatio;
         const ty2 = el.y + ady * trimRatio;

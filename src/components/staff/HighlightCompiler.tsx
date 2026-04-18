@@ -429,9 +429,26 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
           const response = await fetch(fetchUrl, { mode: "cors", cache: "no-store" });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const rawBlob = await response.blob();
-          // Always re-wrap as video/mp4 so the file extension and MIME type match
-          const blob = new Blob([rawBlob], { type: "video/mp4" });
-          const fileName = `${i + 1}. ${sanitised}.mp4`;
+          // Detect the real content type so the extension matches the bytes.
+          // Clips can be MP4 (from Performance Reports) or WebM (from Video
+          // Analysis recordings) — forcing every file to .mp4 produced files
+          // that wouldn't open. Read the response header first, fall back to
+          // sniffing the URL, then default to MP4.
+          const headerType = (response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+          const urlLower = cleanUrl.toLowerCase();
+          let mime = headerType;
+          if (!mime || mime === "application/octet-stream" || mime === "binary/octet-stream") {
+            if (urlLower.endsWith(".webm")) mime = "video/webm";
+            else if (urlLower.endsWith(".mov")) mime = "video/quicktime";
+            else if (urlLower.endsWith(".mpeg") || urlLower.endsWith(".mpg")) mime = "video/mpeg";
+            else mime = "video/mp4";
+          }
+          const ext = mime === "video/webm" ? "webm"
+            : mime === "video/quicktime" ? "mov"
+            : mime === "video/mpeg" ? "mpeg"
+            : "mp4";
+          const blob = new Blob([rawBlob], { type: mime });
+          const fileName = `${i + 1}. ${sanitised}.${ext}`;
           folder.file(fileName, blob);
         } catch (err) {
           console.error(`Failed to download clip ${clip.title}:`, err);
