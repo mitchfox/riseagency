@@ -78,6 +78,13 @@ export const AnnotationCanvas = ({
     };
   }, []);
 
+  // Quantise timestamps to the nearest frame (30fps) so the appearAt stored
+  // on draw matches the timestamp computed during playback EXACTLY — no
+  // sub-frame drift, no tolerance windows.
+  const FRAME = 1 / 30;
+  const quantise = (t: number) => Math.round(t / FRAME) * FRAME;
+  const appearAtNow = quantise(klipOffset);
+
   // Default animation: 0.4s fade in, 3s duration
   const defaultTiming = { animateIn: 0.4, duration: 3 };
 
@@ -112,7 +119,7 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'player-marker', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: klipOffset, ...defaultTiming,
+        color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       onToolUsed?.();
@@ -123,7 +130,7 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'point', x: pos.x, y: pos.y,
-        color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
+        color: activeColor, strokeWidth, radius: 1, appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       // Don't call onToolUsed — keep point tool active for rapid placement
@@ -143,7 +150,7 @@ export const AnnotationCanvas = ({
             setElements(prev => [...prev, {
               id: crypto.randomUUID(), type: 'linked-line',
               x: el1.x, y: el1.y, x2: el2.x, y2: el2.y,
-              color: activeColor, strokeWidth, linkedTo: id, appearAt: klipOffset, ...defaultTiming,
+              color: activeColor, strokeWidth, linkedTo: id, appearAt: appearAtNow, ...defaultTiming,
             }]);
           }
           setLinkSource(null);
@@ -157,9 +164,11 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'magnifier', x: pos.x, y: pos.y,
-        color: '#ffffff', strokeWidth: 0.8, radius: 7, opacity: 1,
-        zoomLevel: 2, fillOpacity: 0.9, appearAt: klipOffset, ...defaultTiming,
-      }]);
+        color: '#ffffff', strokeWidth: 0.8, radius: 13.5, opacity: 1,
+        zoomLevel: 2, fillOpacity: 0.9, appearAt: appearAtNow, ...defaultTiming,
+        // Pan offset (in % of source video) — wheel-scrolled to shift sampled region
+        panX: 0, panY: 0,
+      } as any]);
       setSelectedId(newId);
       onToolUsed?.();
       return;
@@ -174,7 +183,7 @@ export const AnnotationCanvas = ({
         width: 10, height: 10,
         color: '#ffffff', strokeWidth: 1, opacity: 1, fillOpacity: 1,
         layerZIndex: 100,
-        appearAt: klipOffset, ...defaultTiming,
+        appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
       onToolUsed?.();
@@ -184,7 +193,7 @@ export const AnnotationCanvas = ({
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
-  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset]);
+  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset, appearAtNow]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
@@ -307,7 +316,7 @@ export const AnnotationCanvas = ({
     const effectiveStroke = usingGlobalDefaultStroke && TOOL_DEFAULT_STROKE[activeTool]
       ? TOOL_DEFAULT_STROKE[activeTool]!
       : strokeWidth;
-    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: klipOffset, ...defaultTiming };
+    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: appearAtNow, ...defaultTiming };
 
     switch (activeTool) {
       case 'line':
@@ -410,7 +419,7 @@ export const AnnotationCanvas = ({
     // the user opened to edit) stays focused and gives the impression the new
     // shape was added on top of the old one.
     setSelectedId(id);
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, klipOffset, onToolUsed]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, appearAtNow, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
@@ -468,10 +477,11 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        // Shorten the line by the FULL marker length so the marker tip lands
-        // exactly on the original endpoint — anything less and the line pokes
-        // out past the point of the arrow.
-        const trim = mw;
+        // SVG markers default to markerUnits="strokeWidth", so the on-screen
+        // marker length is mw * strokeWidth in the same units as the line.
+        // Trim by the FULL marker length so the line ends exactly where the
+        // arrowhead tip starts — anything less leaves the line poking through.
+        const trim = mw * el.strokeWidth;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = el.x + adx * trimRatio;
         const ty2 = el.y + ady * trimRatio;
@@ -857,17 +867,17 @@ export const AnnotationCanvas = ({
         const magCircPerim = 2 * Math.PI * r;
         const magDash = `${magCircPerim * 0.12} ${magCircPerim * 0.06}`;
 
+        // Pan offset in % of source video — wheel-scroll over magnifier shifts sample region
+        const panX = (el as any).panX || 0;
+        const panY = (el as any).panY || 0;
+
         let dataUrl = '';
         if (video && video.readyState >= 2) {
           try {
             const vw = video.videoWidth || 1;
             const vh = video.videoHeight || 1;
-            const centreVX = (el.x / 100) * vw;
-            const centreVY = (el.y / 100) * vh;
-            // Source region tied to the magnifier's physical radius (not full
-            // video). This makes the magnifier behave like a real loupe — it
-            // samples a slice the same on-screen size as the circle and then
-            // upscales it by the zoom level.
+            const centreVX = ((el.x + panX) / 100) * vw;
+            const centreVY = ((el.y + panY) / 100) * vh;
             const radiusPxW = (r / 100) * vw;
             const radiusPxH = (r / 100) * vh;
             const regionW = Math.max(8, (radiusPxW * 2) / zoom);
@@ -887,7 +897,18 @@ export const AnnotationCanvas = ({
         }
 
         return (
-          <g key={el.id} data-element-id={el.id} style={selStyle}>
+          <g key={el.id} data-element-id={el.id} style={selStyle}
+            onWheel={(e) => {
+              // Pan the sampled region — small step per scroll tick.
+              e.preventDefault();
+              const step = 0.5;
+              const dx = e.shiftKey ? Math.sign(e.deltaY) * step : 0;
+              const dy = e.shiftKey ? 0 : Math.sign(e.deltaY) * step;
+              setElements(prev => prev.map(it => it.id === el.id
+                ? ({ ...it, panX: ((it as any).panX || 0) + dx, panY: ((it as any).panY || 0) + dy } as any)
+                : it));
+            }}
+          >
             <defs>
               <clipPath id={clipId}>
                 <circle cx={`${el.x}%`} cy={`${el.y}%`} r={`${r}%`} />
@@ -911,8 +932,13 @@ export const AnnotationCanvas = ({
               {anim && <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />}
               {anim && <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="8s" repeatCount="indefinite" />}
             </circle>
-            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 0.8}%`}
-              fill="white" fontSize="1.2%" textAnchor="middle" opacity={0.6}>
+            {/* Dedicated drag handle above the lens — easier to grab than the lens itself */}
+            <circle cx={`${el.x}%`} cy={`${(el.y || 0) - r - 1.2}%`} r={1}
+              fill="white" stroke={el.color} strokeWidth={0.3}
+              style={{ cursor: 'move' }}
+            />
+            <text x={`${el.x}%`} y={`${(el.y || 0) - r - 2.4}%`}
+              fill="white" fontSize="1.1%" textAnchor="middle" opacity={0.6}>
               🔍 {zoom}x
             </text>
           </g>
@@ -1148,7 +1174,23 @@ export const AnnotationCanvas = ({
         { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
         { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
       ];
-    } else if ((el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
+    } else if (el.type === 'semi-circle' && (el.width !== undefined || el.radius !== undefined)) {
+      // Disc: handles must follow width/height (not radius alone) so on-screen
+      // dragging visibly resizes the disc rather than just moving the dots.
+      const rx = el.width ?? el.radius ?? 2.5;
+      const ry = el.height ?? (rx * 0.35);
+      bbox = { x: el.x - rx, y: el.y - ry, w: rx * 2, h: ry * 2 };
+      handles = [
+        { handle: 'ne', x: el.x + rx, y: el.y - ry, cursor: 'nesw-resize' },
+        { handle: 'se', x: el.x + rx, y: el.y + ry, cursor: 'nwse-resize' },
+        { handle: 'sw', x: el.x - rx, y: el.y + ry, cursor: 'nesw-resize' },
+        { handle: 'nw', x: el.x - rx, y: el.y - ry, cursor: 'nwse-resize' },
+        { handle: 'e', x: el.x + rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'w', x: el.x - rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
+        { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
+      ];
+    } else if ((el.type === 'player-marker' || el.type === 'magnifier') && el.radius !== undefined) {
       const r = el.radius;
       bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [

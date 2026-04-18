@@ -44,8 +44,10 @@ const RISE_GOLD = '#C6A332';
 const brandColors = [
   { color: RISE_GOLD, label: 'Rise Gold' },
   { color: '#dc2626', label: 'Red' },
+  { color: '#f97316', label: 'Orange' },
   { color: '#facc15', label: 'Yellow' },
   { color: '#22c55e', label: 'Green' },
+  { color: '#14532d', label: 'Dark Green' },
   { color: '#ffffff', label: 'White' },
   { color: '#000000', label: 'Black' },
 ];
