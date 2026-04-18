@@ -405,7 +405,12 @@ export const AnnotationCanvas = ({
         onToolUsed?.();
         break;
     }
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset, onToolUsed]);
+    // Auto-select the freshly drawn element so toolbar/sidebar acts on it
+    // immediately. Without this, any previously selected annotation (e.g. one
+    // the user opened to edit) stays focused and gives the impression the new
+    // shape was added on top of the old one.
+    setSelectedId(id);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, klipOffset, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
