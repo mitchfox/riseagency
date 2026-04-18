@@ -43,10 +43,11 @@ const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string
 const RISE_GOLD = '#C6A332';
 const brandColors = [
   { color: RISE_GOLD, label: 'Rise Gold' },
+  { color: '#dc2626', label: 'Red' },
+  { color: '#facc15', label: 'Yellow' },
+  { color: '#22c55e', label: 'Green' },
   { color: '#ffffff', label: 'White' },
   { color: '#000000', label: 'Black' },
-  { color: '#1a5c2e', label: 'Dark Green' },
-  { color: '#dc2626', label: 'Red' },
 ];
 
 export const AnnotationToolbar = ({
@@ -143,12 +144,12 @@ export const AnnotationToolbar = ({
       <div className="flex flex-col items-center gap-1 px-1 w-full">
         <Label className="text-[8px] text-white/40 uppercase">Thickness</Label>
         <div className="flex items-center justify-center w-full px-0.5">
-          <span className="text-[9px] text-white/30 font-mono w-4 text-center">{strokeWidth.toFixed(1)}</span>
+          <span className="text-[9px] text-white/30 font-mono w-6 text-center">{strokeWidth.toFixed(2)}</span>
         </div>
         <div className="w-10 py-1">
           <Slider
             value={[strokeWidth]}
-            min={0.2} max={6} step={0.2}
+            min={0.05} max={6} step={0.05}
             onValueChange={([v]) => setStrokeWidth(v)}
             className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
           />

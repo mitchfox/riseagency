@@ -204,7 +204,7 @@ const RequestRepresentation = () => {
             <img
               src={requestRepresentationHero}
               alt="Player walking out towards the pitch"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-top"
               width={1400}
               height={900}
             />
@@ -369,7 +369,7 @@ const RequestRepresentation = () => {
           >
             <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-6xl">
               <div className="relative overflow-hidden rounded-[1.8rem] border border-border/60 md:rounded-[2.2rem]">
-                <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover md:h-72" width={1400} height={900} />
+                <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover object-top md:h-72" width={1400} height={900} />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.18),hsl(var(--background)/0.28),hsl(var(--background)/0.92))]" />
                 <div className="absolute inset-x-0 bottom-0 p-4 md:p-8">
                   <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em] md:text-6xl">RISE WITH US</h1>

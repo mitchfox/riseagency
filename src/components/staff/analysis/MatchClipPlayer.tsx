@@ -28,21 +28,24 @@ interface ClipAction {
   clip_end: number | null;
 }
 
-const getScoreColor = (score: string) => {
-  const n = parseFloat(score);
-  if (isNaN(n)) return "bg-muted";
-  if (n < 0) return "bg-[hsl(0,84%,30%)]";      // Dark Red (U)
-  if (n < 0.2) return "bg-[hsl(0,84%,45%)]";     // Red (D)
-  if (n < 0.4) return "bg-[hsl(0,84%,60%)]";     // Light Red (C-)
-  if (n < 0.6) return "bg-[hsl(25,75%,45%)]";    // Orange-Brown (C)
-  if (n < 0.8) return "bg-[hsl(40,85%,50%)]";    // Yellow-Orange (C+)
-  if (n < 1.0) return "bg-[hsl(60,70%,50%)]";    // Yellow-Green (B-)
-  if (n < 1.2) return "bg-[hsl(142,76%,36%)]";   // Green (B)
-  if (n < 1.4) return "bg-[hsl(142,70%,40%)]";   // Green (B+)
-  if (n < 1.6) return "bg-[hsl(142,65%,45%)]";   // Green (A-)
-  if (n < 1.8) return "bg-[hsl(142,70%,50%)]";   // Green (A)
-  if (n < 2.2) return "bg-[hsl(142,76%,55%)]";   // Green (A+)
-  return "bg-[hsl(43,96%,56%)]";                  // Rise Gold (A*)
+// Returns the inline background colour matching the coaching-DB R90 grade scale.
+// Using inline styles instead of dynamic Tailwind classes guarantees the exact
+// colour renders regardless of Tailwind's content scanner.
+const getScoreBgColor = (score: string | number | null | undefined): string => {
+  const n = typeof score === 'number' ? score : parseFloat(String(score ?? ''));
+  if (isNaN(n)) return 'hsl(var(--muted))';
+  if (n < 0) return 'hsl(0, 84%, 30%)';      // Dark Red (U)
+  if (n < 0.2) return 'hsl(0, 84%, 45%)';     // Red (D)
+  if (n < 0.4) return 'hsl(0, 84%, 60%)';     // Light Red (C-)
+  if (n < 0.6) return 'hsl(25, 75%, 45%)';    // Orange-Brown (C)
+  if (n < 0.8) return 'hsl(40, 85%, 50%)';    // Yellow-Orange (C+)
+  if (n < 1.0) return 'hsl(60, 70%, 50%)';    // Yellow-Green (B-)
+  if (n < 1.2) return 'hsl(142, 76%, 36%)';   // Green (B)
+  if (n < 1.4) return 'hsl(142, 70%, 40%)';   // Green (B+)
+  if (n < 1.6) return 'hsl(142, 65%, 45%)';   // Green (A-)
+  if (n < 1.8) return 'hsl(142, 70%, 50%)';   // Green (A)
+  if (n < 2.2) return 'hsl(142, 76%, 55%)';   // Green (A+)
+  return 'hsl(43, 96%, 56%)';                 // Rise Gold (A*)
 };
 
 const ACTION_CATEGORY_RULES: { group: string; patterns: string[] }[] = [
@@ -474,7 +477,10 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
               <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-1 z-20">
                 {currentClip.action_score != null && String(currentClip.action_score) !== "" ? (
                   <>
-                    <span className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-base md:text-lg font-bold text-white shadow-lg ${getScoreColor(String(currentClip.action_score))}`}>
+                    <span
+                      className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-base md:text-lg font-bold text-white shadow-lg"
+                      style={{ backgroundColor: getScoreBgColor(currentClip.action_score) }}
+                    >
                       {currentClip.action_score}
                     </span>
                     <span className="text-white/70 text-[9px] md:text-[10px] bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm font-medium">
@@ -509,7 +515,10 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         <div className="bg-[#12151c] border-t border-white/5 shrink-0">
           {/* Action info row */}
           <div className="px-3 md:px-4 py-2 flex items-center gap-2 md:gap-3">
-            <span className={`px-2 py-0.5 rounded text-xs font-bold text-white shrink-0 ${getScoreColor(String(currentClip.action_score))}`}>
+            <span
+              className="px-2 py-0.5 rounded text-xs font-bold text-white shrink-0"
+              style={{ backgroundColor: getScoreBgColor(currentClip.action_score) }}
+            >
               {currentClip.action_score != null && String(currentClip.action_score) !== "" ? currentClip.action_score : "—"}
             </span>
             <span className="text-white text-xs md:text-sm font-medium truncate">{currentClip.action_type}</span>
@@ -585,27 +594,29 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   );
 };
 
-const ClipListItem = ({ clip, index, isActive, onClick }: { clip: ClipAction; index: number; isActive: boolean; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`w-full text-left px-3 md:px-4 py-2 flex items-center gap-2 text-sm transition-colors border-b border-white/[0.03] ${
-      isActive
-        ? "bg-[#C6A332]/10 border-l-2 border-l-[#C6A332]"
-        : "text-white/50 hover:bg-white/[0.03] border-l-2 border-l-transparent"
-    }`}
-  >
-    <span className={`shrink-0 w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white ${
-      clip.action_score != null && String(clip.action_score) !== ""
-        ? getScoreColor(String(clip.action_score))
-        : 'bg-white/10'
-    }`}>
-      {clip.action_score != null && String(clip.action_score) !== "" ? clip.action_score : index + 1}
-    </span>
-    <span className={`text-xs truncate ${isActive ? 'text-white' : ''}`}>
-      {clip.action_type}
-    </span>
-    {clip.minute && (
-      <span className="text-[10px] text-white/30 ml-auto shrink-0">{clip.minute}'</span>
-    )}
-  </button>
-);
+const ClipListItem = ({ clip, index, isActive, onClick }: { clip: ClipAction; index: number; isActive: boolean; onClick: () => void }) => {
+  const hasScore = clip.action_score != null && String(clip.action_score) !== "";
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-3 md:px-4 py-2 flex items-center gap-2 text-sm transition-colors border-b border-white/[0.03] ${
+        isActive
+          ? "bg-[#C6A332]/10 border-l-2 border-l-[#C6A332]"
+          : "text-white/50 hover:bg-white/[0.03] border-l-2 border-l-transparent"
+      }`}
+    >
+      <span
+        className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white"
+        style={hasScore ? { backgroundColor: getScoreBgColor(clip.action_score) } : { backgroundColor: 'rgba(255,255,255,0.1)' }}
+      >
+        {hasScore ? clip.action_score : index + 1}
+      </span>
+      <span className={`text-xs truncate ${isActive ? 'text-white' : ''}`}>
+        {clip.action_type}
+      </span>
+      {clip.minute && (
+        <span className="text-[10px] text-white/30 ml-auto shrink-0">{clip.minute}'</span>
+      )}
+    </button>
+  );
+};

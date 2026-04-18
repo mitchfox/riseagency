@@ -30,6 +30,26 @@ const getDashArray = (pattern?: string, sw?: number): string | undefined => {
   }
 };
 
+/**
+ * Default stroke width per tool. Used when the user has not customised the
+ * stroke for that specific tool. Matches the design spec:
+ *  - line: 0.6, arrow / curved-arrow: 1.0, rect / circle: 0.4, semi-circle: thin
+ */
+const TOOL_DEFAULT_STROKE: Partial<Record<AnnotationTool, number>> = {
+  line: 0.6,
+  arrow: 1.0,
+  'curved-arrow': 1.0,
+  rect: 0.4,
+  circle: 0.4,
+  'semi-circle': 0.4,
+};
+
+/**
+ * Default semi-circle (disc) dimensions in % of the video.
+ */
+const SEMI_CIRCLE_DEFAULT_W = 2.5;
+const SEMI_CIRCLE_DEFAULT_H = 1.0;
+
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth, fillOpacity,
   selectedId, setSelectedId, videoRef, linkSource, setLinkSource, klipOffset = 0,
@@ -125,6 +145,7 @@ export const AnnotationCanvas = ({
           setLinkSource(null);
         }
       }
+      // Sticky tool — do not call onToolUsed so user can keep linking.
       return;
     }
 
@@ -257,7 +278,13 @@ export const AnnotationCanvas = ({
     setDrawing(false);
 
     const id = crypto.randomUUID();
-    const base = { id, color: activeColor, strokeWidth, opacity: 1, appearAt: klipOffset, ...defaultTiming };
+    // Apply per-tool default stroke when the slider hasn't been moved off the
+    // global default of 0.2.
+    const usingGlobalDefaultStroke = Math.abs(strokeWidth - 0.2) < 0.001;
+    const effectiveStroke = usingGlobalDefaultStroke && TOOL_DEFAULT_STROKE[activeTool]
+      ? TOOL_DEFAULT_STROKE[activeTool]!
+      : strokeWidth;
+    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: klipOffset, ...defaultTiming };
 
     switch (activeTool) {
       case 'line':
@@ -297,8 +324,11 @@ export const AnnotationCanvas = ({
       case 'semi-circle': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
-        const rx = Math.abs(currentPos.x - startPos.x) / 2 || 4;
-        const ry = Math.abs(currentPos.y - startPos.y) / 2 || 1.5;
+        const dragW = Math.abs(currentPos.x - startPos.x);
+        const dragH = Math.abs(currentPos.y - startPos.y);
+        // If user barely dragged, fall back to the standard disc dimensions
+        const rx = dragW > 0.5 ? dragW / 2 : SEMI_CIRCLE_DEFAULT_W;
+        const ry = dragH > 0.5 ? dragH / 2 : SEMI_CIRCLE_DEFAULT_H;
         setElements(prev => [...prev, {
           ...base, type: 'semi-circle' as const, x: cx, y: cy,
           width: rx, height: ry, radius: rx,
@@ -352,7 +382,7 @@ export const AnnotationCanvas = ({
         onToolUsed?.();
         break;
     }
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
@@ -410,6 +440,12 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
+        // Shorten the line so it ends where the arrowhead begins, ensuring
+        // the marker tip is the true visual end-point of the arrow.
+        const trim = mw * 0.6;
+        const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
+        const tx2 = el.x + adx * trimRatio;
+        const ty2 = el.y + ady * trimRatio;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -417,7 +453,7 @@ export const AnnotationCanvas = ({
                 <polygon points={`0 0, ${mw} ${mh / 2}, 0 ${mh}`} fill={el.color} />
               </marker>
             </defs>
-            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
+            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
               strokeDashoffset={anim ? undefined : 0}
@@ -799,8 +835,14 @@ export const AnnotationCanvas = ({
             const vh = video.videoHeight || 1;
             const centreVX = (el.x / 100) * vw;
             const centreVY = (el.y / 100) * vh;
-            const regionW = vw / zoom;
-            const regionH = vh / zoom;
+            // Source region tied to the magnifier's physical radius (not full
+            // video). This makes the magnifier behave like a real loupe — it
+            // samples a slice the same on-screen size as the circle and then
+            // upscales it by the zoom level.
+            const radiusPxW = (r / 100) * vw;
+            const radiusPxH = (r / 100) * vh;
+            const regionW = Math.max(8, (radiusPxW * 2) / zoom);
+            const regionH = Math.max(8, (radiusPxH * 2) / zoom);
             const sx = Math.max(0, Math.min(vw - regionW, centreVX - regionW / 2));
             const sy = Math.max(0, Math.min(vh - regionH, centreVY - regionH / 2));
             const canvas = document.createElement('canvas');
@@ -1195,6 +1237,14 @@ export const AnnotationCanvas = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        // Right-click cancels any active drawing tool and link source so the
+        // user can quickly stop using sticky tools (point / linked-line).
+        setLinkSource(null);
+        setDrawing(false);
+        onToolUsed?.();
+      }}
     >
       {sortedElements.map(renderElement)}
       {renderPreview()}

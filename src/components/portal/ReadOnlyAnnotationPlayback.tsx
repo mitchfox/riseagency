@@ -294,6 +294,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         const adx = (el.x2 ?? x) - x;
         const ady = (el.y2 ?? y) - y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
+        const trim = mw * 0.6;
+        const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
+        const tx2 = x + adx * trimRatio;
+        const ty2 = y + ady * trimRatio;
         return (
           <g key={el.id} opacity={opacity}>
             <defs>
@@ -301,7 +305,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
                 <polygon points={`0 0, ${mw} ${mh / 2}, 0 ${mh}`} fill={el.color} />
               </marker>
             </defs>
-            <line x1={`${x}%`} y1={`${y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
+            <line x1={`${x}%`} y1={`${y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
             >
@@ -707,9 +711,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   };
 
   const hasAnnotations = elements.length > 0;
-  // Only render SVG layer during freeze, mirroring the editor's behaviour exactly:
-  // freeze-only annotations must vanish the moment playback resumes.
-  const renderedVisibleEls = freezeActive ? visibleEls : [];
+  // Render the SVG overlay any time we have something to show — either during
+  // the freeze pause OR during normal playback when an annotation is currently
+  // within its appearAt..appearAt+duration window. Previously the overlay was
+  // gated to `freezeActive` only, which meant if the freeze never triggered
+  // (e.g. autoplay blocked, or a re-mount mid-loop) annotations never appeared
+  // at all on the analysis viewer.
+  const renderedVisibleEls = visibleEls;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -735,7 +743,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         className="w-full aspect-video"
         style={{ display: 'block', width: '100%', objectFit: 'fill' }}
       />
-      {hasAnnotations && freezeActive && renderedVisibleEls.length > 0 && (
+      {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg
           key={loopCycleKey}
           className="absolute inset-0 w-full h-full pointer-events-none"
