@@ -107,9 +107,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lookaheadRef = useRef<HTMLVideoElement>(null);
+  const previewRef = useRef<HTMLVideoElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const preloadPhaseRef = useRef<number>(0);
   const preloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [hoverPreview, setHoverPreview] = useState<{ x: number; time: number } | null>(null);
+  const hoverSeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
