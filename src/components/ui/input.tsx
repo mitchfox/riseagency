@@ -12,6 +12,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className,
         )}
         spellCheck
+        lang="en-GB"
         ref={ref}
         {...props}
       />

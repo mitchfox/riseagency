@@ -12,6 +12,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
         className,
       )}
       spellCheck
+      lang="en-GB"
       ref={ref}
       {...props}
     />
