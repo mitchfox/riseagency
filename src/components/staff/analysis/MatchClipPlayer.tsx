@@ -477,7 +477,10 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
               <div className="absolute top-3 right-3 md:top-4 md:right-4 flex flex-col items-end gap-1 z-20">
                 {currentClip.action_score != null && String(currentClip.action_score) !== "" ? (
                   <>
-                    <span className={`px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-base md:text-lg font-bold text-white shadow-lg ${getScoreColor(String(currentClip.action_score))}`}>
+                    <span
+                      className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-base md:text-lg font-bold text-white shadow-lg"
+                      style={{ backgroundColor: getScoreBgColor(currentClip.action_score) }}
+                    >
                       {currentClip.action_score}
                     </span>
                     <span className="text-white/70 text-[9px] md:text-[10px] bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm font-medium">
@@ -512,7 +515,10 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
         <div className="bg-[#12151c] border-t border-white/5 shrink-0">
           {/* Action info row */}
           <div className="px-3 md:px-4 py-2 flex items-center gap-2 md:gap-3">
-            <span className={`px-2 py-0.5 rounded text-xs font-bold text-white shrink-0 ${getScoreColor(String(currentClip.action_score))}`}>
+            <span
+              className="px-2 py-0.5 rounded text-xs font-bold text-white shrink-0"
+              style={{ backgroundColor: getScoreBgColor(currentClip.action_score) }}
+            >
               {currentClip.action_score != null && String(currentClip.action_score) !== "" ? currentClip.action_score : "—"}
             </span>
             <span className="text-white text-xs md:text-sm font-medium truncate">{currentClip.action_type}</span>
@@ -588,27 +594,29 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   );
 };
 
-const ClipListItem = ({ clip, index, isActive, onClick }: { clip: ClipAction; index: number; isActive: boolean; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`w-full text-left px-3 md:px-4 py-2 flex items-center gap-2 text-sm transition-colors border-b border-white/[0.03] ${
-      isActive
-        ? "bg-[#C6A332]/10 border-l-2 border-l-[#C6A332]"
-        : "text-white/50 hover:bg-white/[0.03] border-l-2 border-l-transparent"
-    }`}
-  >
-    <span className={`shrink-0 w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white ${
-      clip.action_score != null && String(clip.action_score) !== ""
-        ? getScoreColor(String(clip.action_score))
-        : 'bg-white/10'
-    }`}>
-      {clip.action_score != null && String(clip.action_score) !== "" ? clip.action_score : index + 1}
-    </span>
-    <span className={`text-xs truncate ${isActive ? 'text-white' : ''}`}>
-      {clip.action_type}
-    </span>
-    {clip.minute && (
-      <span className="text-[10px] text-white/30 ml-auto shrink-0">{clip.minute}'</span>
-    )}
-  </button>
-);
+const ClipListItem = ({ clip, index, isActive, onClick }: { clip: ClipAction; index: number; isActive: boolean; onClick: () => void }) => {
+  const hasScore = clip.action_score != null && String(clip.action_score) !== "";
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-3 md:px-4 py-2 flex items-center gap-2 text-sm transition-colors border-b border-white/[0.03] ${
+        isActive
+          ? "bg-[#C6A332]/10 border-l-2 border-l-[#C6A332]"
+          : "text-white/50 hover:bg-white/[0.03] border-l-2 border-l-transparent"
+      }`}
+    >
+      <span
+        className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white"
+        style={hasScore ? { backgroundColor: getScoreBgColor(clip.action_score) } : { backgroundColor: 'rgba(255,255,255,0.1)' }}
+      >
+        {hasScore ? clip.action_score : index + 1}
+      </span>
+      <span className={`text-xs truncate ${isActive ? 'text-white' : ''}`}>
+        {clip.action_type}
+      </span>
+      {clip.minute && (
+        <span className="text-[10px] text-white/30 ml-auto shrink-0">{clip.minute}'</span>
+      )}
+    </button>
+  );
+};
