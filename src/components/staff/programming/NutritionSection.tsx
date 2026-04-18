@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { UtensilsCrossed, BookOpen } from "lucide-react";
@@ -58,24 +59,14 @@ export const NutritionSection = () => {
         </TabsList>
 
         <TabsContent value="programming" className="space-y-4">
-          <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Select a player..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select a player...</SelectItem>
-              {groupedPlayers.map((group) => (
-                <SelectGroup key={group.status}>
-                  <SelectLabel>{group.label}</SelectLabel>
-                  {group.players.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name} ({player.position})
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+          <PlayerCombobox
+            players={players}
+            value={selectedPlayer}
+            onChange={setSelectedPlayer}
+            allLabel="Select a player..."
+            allValue="all"
+            className="w-full sm:w-[300px]"
+          />
 
           {selectedPlayer === "all" && (
             <div className="text-center py-12 text-muted-foreground">
@@ -94,24 +85,15 @@ export const NutritionSection = () => {
         </TabsContent>
 
         <TabsContent value="recipes" className="space-y-4">
-          <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-            <SelectTrigger className="w-full sm:w-[300px]">
-              <SelectValue placeholder="Select a player (optional)..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Recipes (no player)</SelectItem>
-              {groupedPlayers.map((group) => (
-                <SelectGroup key={group.status}>
-                  <SelectLabel>{group.label}</SelectLabel>
-                  {group.players.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.name} ({player.position})
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+          <PlayerCombobox
+            players={players}
+            value={selectedPlayer}
+            onChange={setSelectedPlayer}
+            allLabel="All Recipes (no player)"
+            allValue="all"
+            placeholder="Select a player (optional)..."
+            className="w-full sm:w-[300px]"
+          />
 
           <NutritionRecipes
             playerId={selectedPlayer !== "all" ? selectedPlayer : undefined}

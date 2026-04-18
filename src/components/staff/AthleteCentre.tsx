@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   User, Dumbbell, LineChart, Target, Calendar,
@@ -373,35 +374,13 @@ export const AthleteCentre = () => {
       {/* Player Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
-          <Select value={selectedPlayer || ""} onValueChange={handleSelectPlayer}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a player..." />
-            </SelectTrigger>
-            <SelectContent>
-              {groupedPlayers.map((group) => (
-                <div key={group.status}>
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                    {group.label}
-                  </div>
-                  {group.players.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-muted overflow-hidden flex items-center justify-center">
-                          {player.image_url ? (
-                            <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </div>
-                        <span>{player.name}</span>
-                        <span className="text-muted-foreground text-xs">({player.position})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </div>
-              ))}
-            </SelectContent>
-          </Select>
+          <PlayerCombobox
+            players={groupedPlayers.flatMap(g => g.players)}
+            value={selectedPlayer}
+            onChange={handleSelectPlayer}
+            placeholder="Select a player..."
+            className="w-full"
+          />
         </div>
         <p className="text-sm text-muted-foreground">
           {players.length} players in database

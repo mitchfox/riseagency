@@ -428,29 +428,6 @@ const RequestRepresentation = () => {
                 })}
               </div>
 
-              <div className="mt-8 md:mt-12">
-                <h2 className="font-bebas text-2xl uppercase tracking-[0.16em] md:text-4xl">
-                  {ageGroup === "under18" ? "Under 18 FAQs" : "Over 18 FAQs"}
-                </h2>
-                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground md:text-sm">Common questions before you reach out</p>
-                <Accordion type="single" collapsible className="mt-4 space-y-2.5">
-                  {FAQS_BY_AGE[ageGroup].map((faq, idx) => (
-                    <AccordionItem
-                      key={idx}
-                      value={`faq-${idx}`}
-                      className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
-                    >
-                      <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
-                        {faq.q}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-sm leading-relaxed text-foreground/80 md:text-base">
-                        {faq.a}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
-
               <div className="mt-auto pb-2 pt-8 md:pt-12">
                 <Button
                   size="lg"

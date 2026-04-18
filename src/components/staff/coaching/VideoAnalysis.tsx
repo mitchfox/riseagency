@@ -1759,7 +1759,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         .insert(insertData);
 
       if (error) throw error;
-      toast.success("New action created with clip attached", { id: toastId });
+      toast.success("New action created with clip attached", { id: toastId, duration: 15000 });
     } catch (err: any) {
       toast.error(err.message || "Failed to create action", { id: toastId });
     }
