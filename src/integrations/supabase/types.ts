@@ -184,6 +184,7 @@ export type Database = {
           away_team: string | null
           away_team_bg_color: string | null
           away_team_logo: string | null
+          category: string
           concept: string | null
           created_at: string
           estimated_ready_at: string | null
@@ -227,6 +228,7 @@ export type Database = {
           away_team?: string | null
           away_team_bg_color?: string | null
           away_team_logo?: string | null
+          category?: string
           concept?: string | null
           created_at?: string
           estimated_ready_at?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           away_team?: string | null
           away_team_bg_color?: string | null
           away_team_logo?: string | null
+          category?: string
           concept?: string | null
           created_at?: string
           estimated_ready_at?: string | null
