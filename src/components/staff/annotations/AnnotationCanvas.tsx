@@ -440,6 +440,12 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
+        // Shorten the line so it ends where the arrowhead begins, ensuring
+        // the marker tip is the true visual end-point of the arrow.
+        const trim = mw * 0.6;
+        const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
+        const tx2 = el.x + adx * trimRatio;
+        const ty2 = el.y + ady * trimRatio;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -447,7 +453,7 @@ export const AnnotationCanvas = ({
                 <polygon points={`0 0, ${mw} ${mh / 2}, 0 ${mh}`} fill={el.color} />
               </marker>
             </defs>
-            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
+            <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
               strokeDashoffset={anim ? undefined : 0}
@@ -829,8 +835,14 @@ export const AnnotationCanvas = ({
             const vh = video.videoHeight || 1;
             const centreVX = (el.x / 100) * vw;
             const centreVY = (el.y / 100) * vh;
-            const regionW = vw / zoom;
-            const regionH = vh / zoom;
+            // Source region tied to the magnifier's physical radius (not full
+            // video). This makes the magnifier behave like a real loupe — it
+            // samples a slice the same on-screen size as the circle and then
+            // upscales it by the zoom level.
+            const radiusPxW = (r / 100) * vw;
+            const radiusPxH = (r / 100) * vh;
+            const regionW = Math.max(8, (radiusPxW * 2) / zoom);
+            const regionH = Math.max(8, (radiusPxH * 2) / zoom);
             const sx = Math.max(0, Math.min(vw - regionW, centreVX - regionW / 2));
             const sy = Math.max(0, Math.min(vh - regionH, centreVY - regionH / 2));
             const canvas = document.createElement('canvas');
@@ -1225,6 +1237,14 @@ export const AnnotationCanvas = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        // Right-click cancels any active drawing tool and link source so the
+        // user can quickly stop using sticky tools (point / linked-line).
+        setLinkSource(null);
+        setDrawing(false);
+        onToolUsed?.();
+      }}
     >
       {sortedElements.map(renderElement)}
       {renderPreview()}

@@ -294,6 +294,10 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         const adx = (el.x2 ?? x) - x;
         const ady = (el.y2 ?? y) - y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
+        const trim = mw * 0.6;
+        const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
+        const tx2 = x + adx * trimRatio;
+        const ty2 = y + ady * trimRatio;
         return (
           <g key={el.id} opacity={opacity}>
             <defs>
@@ -301,7 +305,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
                 <polygon points={`0 0, ${mw} ${mh / 2}, 0 ${mh}`} fill={el.color} />
               </marker>
             </defs>
-            <line x1={`${x}%`} y1={`${y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
+            <line x1={`${x}%`} y1={`${y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
               strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
             >
