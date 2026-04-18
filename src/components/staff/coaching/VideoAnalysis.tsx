@@ -261,57 +261,92 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  // Sliding 5-minute preload — keep ~300s buffered ahead of the current playhead.
-  // Uses the buffered ranges of the lookahead element and seeks it forward in 30s steps
-  // until we've buffered at least currentTime + 300s. Polls every 200ms.
-  const startFullPreload = useCallback(() => {
-    const lookaheadVideo = lookaheadRef.current;
-    const mainVideo = videoRef.current;
-    if (!lookaheadVideo || !mainVideo) return;
+  // Range-based pre-warmer — pulls the next ~5 minutes of bytes into the
+  // browser HTTP cache so the main video gets cache hits when it actually
+  // needs them. Far more reliable than a hidden video element which the
+  // browser will throttle/garbage-collect.
+  const preloadFileSizeRef = useRef<number | null>(null);
+  const preloadInFlightRef = useRef<boolean>(false);
+  const preloadCompletedToRef = useRef<number>(0); // bytes already fetched from start
 
+  const startFullPreload = useCallback(() => {
+    const mainVideo = videoRef.current;
+    if (!mainVideo || !selectedVideo?.video_url) return;
     if (preloadIntervalRef.current) return;
 
+    const url = selectedVideo.video_url;
     const LOOKAHEAD_SECONDS = 300; // 5 minutes
-    const STEP = 30; // jump the lookahead currentTime in 30s increments
+    const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunks
 
-    preloadIntervalRef.current = setInterval(() => {
+    // Discover total bytes once
+    const ensureSize = async () => {
+      if (preloadFileSizeRef.current != null) return preloadFileSizeRef.current;
+      try {
+        const head = await fetch(url, { method: 'HEAD' });
+        const len = parseInt(head.headers.get('content-length') || '0', 10);
+        if (Number.isFinite(len) && len > 0) {
+          preloadFileSizeRef.current = len;
+          return len;
+        }
+      } catch {}
+      return null;
+    };
+
+    preloadIntervalRef.current = setInterval(async () => {
       const main = videoRef.current;
-      const lookahead = lookaheadRef.current;
-      if (!main || !lookahead) return;
-
+      if (!main) return;
       const duration = main.duration;
       if (!Number.isFinite(duration) || duration <= 0) return;
 
-      const target = Math.min(duration - 0.5, main.currentTime + LOOKAHEAD_SECONDS);
+      const fileSize = await ensureSize();
+      if (!fileSize) return;
 
-      // Find the buffered end that covers main.currentTime
-      let bufferedEnd = 0;
-      const buf = lookahead.buffered;
-      for (let i = 0; i < buf.length; i++) {
-        if (buf.start(i) <= main.currentTime + 0.5 && buf.end(i) > bufferedEnd) {
-          bufferedEnd = buf.end(i);
-        }
-        if (buf.end(i) > bufferedEnd) bufferedEnd = Math.max(bufferedEnd, buf.end(i));
+      // bytes-per-second approximation
+      const bps = fileSize / duration;
+      const playheadByte = Math.floor(main.currentTime * bps);
+      const targetByte = Math.min(
+        fileSize - 1,
+        Math.floor((main.currentTime + LOOKAHEAD_SECONDS) * bps),
+      );
+
+      // If user seeked backwards, reset the watermark to playhead
+      if (preloadCompletedToRef.current < playheadByte) {
+        preloadCompletedToRef.current = playheadByte;
       }
 
-      // Whole video buffered — stop polling
-      if (bufferedEnd >= duration - 1) {
+      // Whole file warmed
+      if (preloadCompletedToRef.current >= fileSize - 1) {
         if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
         preloadIntervalRef.current = null;
         return;
       }
 
-      // Need to advance the seek pointer if we're behind target
-      if (bufferedEnd < target) {
-        const nextSeek = Math.min(target, bufferedEnd + STEP);
-        try {
-          if (Math.abs(lookahead.currentTime - nextSeek) > 1) {
-            lookahead.currentTime = nextSeek;
+      if (preloadInFlightRef.current) return;
+      if (preloadCompletedToRef.current >= targetByte) return;
+
+      const start = preloadCompletedToRef.current;
+      const end = Math.min(targetByte, start + CHUNK_SIZE - 1);
+      preloadInFlightRef.current = true;
+      try {
+        const res = await fetch(url, { headers: { Range: `bytes=${start}-${end}` } });
+        // Drain the body to ensure it actually lands in cache
+        if (res.body) {
+          const reader = res.body.getReader();
+          while (true) {
+            const { done } = await reader.read();
+            if (done) break;
           }
-        } catch {}
+        } else {
+          await res.arrayBuffer();
+        }
+        preloadCompletedToRef.current = end + 1;
+      } catch {
+        // network hiccup — retry on next tick
+      } finally {
+        preloadInFlightRef.current = false;
       }
-    }, 200);
-  }, []);
+    }, 250);
+  }, [selectedVideo?.video_url]);
 
   const togglePlayerFullscreen = useCallback(async () => {
     const shell = playerShellRef.current;
@@ -343,29 +378,50 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     lookaheadVideo.preload = "auto";
     lookaheadVideo.load();
 
-    // Hover preview source
+    // Reset Range pre-warmer state for the new video
+    preloadFileSizeRef.current = null;
+    preloadCompletedToRef.current = 0;
+    preloadInFlightRef.current = false;
+
+    // Hover preview source — needs auto preload so frame data is decodable
     const preview = previewRef.current;
     if (preview) {
       preview.src = selectedVideo.video_url;
-      preview.preload = "metadata";
+      preview.preload = "auto";
       preview.load();
     }
   }, [selectedVideo?.id, selectedVideo?.video_url]);
 
-  // Draw the preview frame onto the canvas whenever the preview video seeks
+  // Draw the preview frame onto the canvas whenever the preview video seeks.
+  // Wait for readyState >= HAVE_CURRENT_DATA (2) before drawing to avoid
+  // capturing a black frame before the decoder has data for that timestamp.
   useEffect(() => {
     const preview = previewRef.current;
     const canvas = previewCanvasRef.current;
     if (!preview || !canvas) return;
-    const onSeeked = () => {
+
+    const draw = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       try {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
       } catch {}
     };
+
+    const onSeeked = () => {
+      if (preview.readyState >= 2) {
+        draw();
+      } else {
+        preview.addEventListener("loadeddata", draw, { once: true });
+      }
+    };
+
     preview.addEventListener("seeked", onSeeked);
-    return () => preview.removeEventListener("seeked", onSeeked);
+    return () => {
+      preview.removeEventListener("seeked", onSeeked);
+      preview.removeEventListener("loadeddata", draw);
+    };
   }, [selectedVideo?.id]);
 
   useEffect(() => {
@@ -2142,7 +2198,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             {/* Hidden preview video used to render hover thumbnails */}
             <video
               ref={previewRef}
-              preload="metadata"
+              preload="auto"
               crossOrigin="anonymous"
               muted
               playsInline
