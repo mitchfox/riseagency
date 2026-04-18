@@ -30,6 +30,26 @@ const getDashArray = (pattern?: string, sw?: number): string | undefined => {
   }
 };
 
+/**
+ * Default stroke width per tool. Used when the user has not customised the
+ * stroke for that specific tool. Matches the design spec:
+ *  - line: 0.6, arrow / curved-arrow: 1.0, rect / circle: 0.4, semi-circle: thin
+ */
+const TOOL_DEFAULT_STROKE: Partial<Record<AnnotationTool, number>> = {
+  line: 0.6,
+  arrow: 1.0,
+  'curved-arrow': 1.0,
+  rect: 0.4,
+  circle: 0.4,
+  'semi-circle': 0.4,
+};
+
+/**
+ * Default semi-circle (disc) dimensions in % of the video.
+ */
+const SEMI_CIRCLE_DEFAULT_W = 2.5;
+const SEMI_CIRCLE_DEFAULT_H = 1.0;
+
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth, fillOpacity,
   selectedId, setSelectedId, videoRef, linkSource, setLinkSource, klipOffset = 0,
@@ -125,6 +145,7 @@ export const AnnotationCanvas = ({
           setLinkSource(null);
         }
       }
+      // Sticky tool — do not call onToolUsed so user can keep linking.
       return;
     }
 
@@ -257,7 +278,13 @@ export const AnnotationCanvas = ({
     setDrawing(false);
 
     const id = crypto.randomUUID();
-    const base = { id, color: activeColor, strokeWidth, opacity: 1, appearAt: klipOffset, ...defaultTiming };
+    // Apply per-tool default stroke when the slider hasn't been moved off the
+    // global default of 0.2.
+    const usingGlobalDefaultStroke = Math.abs(strokeWidth - 0.2) < 0.001;
+    const effectiveStroke = usingGlobalDefaultStroke && TOOL_DEFAULT_STROKE[activeTool]
+      ? TOOL_DEFAULT_STROKE[activeTool]!
+      : strokeWidth;
+    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: klipOffset, ...defaultTiming };
 
     switch (activeTool) {
       case 'line':
@@ -297,8 +324,11 @@ export const AnnotationCanvas = ({
       case 'semi-circle': {
         const cx = (startPos.x + currentPos.x) / 2;
         const cy = (startPos.y + currentPos.y) / 2;
-        const rx = Math.abs(currentPos.x - startPos.x) / 2 || 4;
-        const ry = Math.abs(currentPos.y - startPos.y) / 2 || 1.5;
+        const dragW = Math.abs(currentPos.x - startPos.x);
+        const dragH = Math.abs(currentPos.y - startPos.y);
+        // If user barely dragged, fall back to the standard disc dimensions
+        const rx = dragW > 0.5 ? dragW / 2 : SEMI_CIRCLE_DEFAULT_W;
+        const ry = dragH > 0.5 ? dragH / 2 : SEMI_CIRCLE_DEFAULT_H;
         setElements(prev => [...prev, {
           ...base, type: 'semi-circle' as const, x: cx, y: cy,
           width: rx, height: ry, radius: rx,
@@ -352,7 +382,7 @@ export const AnnotationCanvas = ({
         onToolUsed?.();
         break;
     }
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, klipOffset, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
