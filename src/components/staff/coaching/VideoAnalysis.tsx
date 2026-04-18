@@ -2086,6 +2086,69 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 }
               }}
             />
+            {/* Hover preview thumbnail strip — sits just above the native controls */}
+            <div
+              className="absolute left-0 right-0 z-30 cursor-pointer"
+              style={{ bottom: '36px', height: '14px' }}
+              onMouseMove={(e) => {
+                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const ratio = Math.max(0, Math.min(1, x / rect.width));
+                const duration = videoRef.current?.duration || 0;
+                if (!duration) return;
+                const time = ratio * duration;
+                setHoverPreview({ x, time });
+                if (hoverSeekTimerRef.current) clearTimeout(hoverSeekTimerRef.current);
+                hoverSeekTimerRef.current = setTimeout(() => {
+                  const preview = previewRef.current;
+                  if (preview && Math.abs(preview.currentTime - time) > 0.25) {
+                    try { preview.currentTime = time; } catch {}
+                  }
+                }, 30);
+              }}
+              onMouseLeave={() => setHoverPreview(null)}
+              onClick={(e) => {
+                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const v = videoRef.current;
+                if (v && v.duration) v.currentTime = ratio * v.duration;
+              }}
+            />
+            {hoverPreview && (
+              <div
+                className="absolute z-40 pointer-events-none rounded-md overflow-hidden border border-white/20 bg-black/80 shadow-lg"
+                style={{
+                  left: `${Math.max(8, Math.min(hoverPreview.x - 80, (videoRef.current?.parentElement?.clientWidth || 0) - 168))}px`,
+                  bottom: '60px',
+                  width: '160px',
+                }}
+              >
+                <canvas
+                  ref={previewCanvasRef}
+                  width={160}
+                  height={90}
+                  className="block w-[160px] h-[90px] bg-black"
+                />
+                <div className="text-[10px] text-white text-center py-0.5 font-mono">
+                  {(() => {
+                    const t = hoverPreview.time;
+                    const m = Math.floor(t / 60);
+                    const s = Math.floor(t % 60);
+                    return `${m}:${String(s).padStart(2, '0')}`;
+                  })()}
+                </div>
+              </div>
+            )}
+            {/* Hidden preview video used to render hover thumbnails */}
+            <video
+              ref={previewRef}
+              preload="metadata"
+              crossOrigin="anonymous"
+              muted
+              playsInline
+              aria-hidden="true"
+              className="absolute h-px w-px opacity-0 pointer-events-none"
+            />
             {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
             <video
               ref={lookaheadRef}
