@@ -419,7 +419,7 @@ export const AnnotationCanvas = ({
     // the user opened to edit) stays focused and gives the impression the new
     // shape was added on top of the old one.
     setSelectedId(id);
-  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, klipOffset, onToolUsed]);
+  }, [drawing, dragging, draggingEndpoint, resizing, activeTool, startPos, currentPos, activeColor, strokeWidth, fillOpacity, setElements, setSelectedId, appearAtNow, onToolUsed]);
 
   // Compute animation CSS for elements
   const getAnimStyle = (el: AnnotationElement): React.CSSProperties => {
