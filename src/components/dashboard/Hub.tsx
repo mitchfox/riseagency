@@ -86,6 +86,7 @@ const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints
         .from("analyses")
         .select("id, home_team, away_team")
         .eq("analysis_type", "pre-match")
+        .neq("category", "training")
         .eq("fixture_id", fixtureData.id)
         .limit(1);
 
@@ -243,6 +244,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
         .from('analyses')
         .select('id, fixture_id, home_team, away_team')
         .eq('analysis_type', 'post-match')
+        .neq('category', 'training')
         .not('fixture_id', 'is', null);
       
       if (data) {
