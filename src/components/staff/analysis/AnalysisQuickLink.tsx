@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { toast } from "sonner";
 
@@ -326,34 +327,18 @@ export const AnalysisQuickLink = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs">Player</Label>
-          <Input
-            placeholder="Search player..."
-            value={playerSearch}
-            onChange={(e) => setPlayerSearch(e.target.value)}
-            className="h-8 text-xs mb-1"
+          <PlayerCombobox
+            players={players as any}
+            value={selectedPlayerId === "none" ? null : selectedPlayerId}
+            onChange={(val) => {
+              setSelectedPlayerId(val);
+              setPlayerSearch("");
+            }}
+            placeholder="Select a player"
+            disabled={loadingPlayers}
+            showClub
+            className="h-9"
           />
-          <Select value={selectedPlayerId} onValueChange={(val) => {
-            setSelectedPlayerId(val);
-            setPlayerSearch("");
-          }} disabled={loadingPlayers}>
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder="Select a player" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Select a player</SelectItem>
-              {filteredPlayers.map((player: any, idx: number) => (
-                <SelectItem key={player.id} value={player.id}>
-                  {player.name}
-                  {player.club && (
-                    <span className="text-xs text-muted-foreground ml-1">({player.club})</span>
-                  )}
-                  {idx < recentPlayerIds.indexOf(player.id) + 1 && recentPlayerIds.indexOf(player.id) < 5 && (
-                    <span className="text-[10px] text-primary ml-1">●</span>
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div>
