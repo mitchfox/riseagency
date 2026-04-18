@@ -316,7 +316,7 @@ export const AnnotationCanvas = ({
     const effectiveStroke = usingGlobalDefaultStroke && TOOL_DEFAULT_STROKE[activeTool]
       ? TOOL_DEFAULT_STROKE[activeTool]!
       : strokeWidth;
-    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: klipOffset, ...defaultTiming };
+    const base = { id, color: activeColor, strokeWidth: effectiveStroke, opacity: 1, appearAt: appearAtNow, ...defaultTiming };
 
     switch (activeTool) {
       case 'line':
