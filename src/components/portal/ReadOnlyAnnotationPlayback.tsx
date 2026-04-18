@@ -226,25 +226,33 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       // Filter out anything already shown during a freeze in this loop cycle.
       const computed = computedRaw.filter(el => !consumedIdsRef.current.has(el.id));
 
-      // Check for new annotations that haven't triggered a freeze yet
+      // Check for any annotation whose appearAt has been reached but has not
+      // yet triggered its own freeze. Each annotation triggers its OWN freeze
+      // on its OWN timestamp — we no longer use a "last trigger time" gate
+      // because that caused later annotations on the same clip to be swallowed.
       if (!video.paused && computed.length > 0) {
-        const newElements = computed.filter(el => {
-          return !triggeredTimesRef.current.has(el.id) &&
-                 el.appearAt > lastFreezeTriggerTimeRef.current;
-        });
+        const dueNow = computed.filter(el =>
+          relTime >= el.appearAt &&
+          !triggeredTimesRef.current.has(el.id) &&
+          !consumedIdsRef.current.has(el.id)
+        );
 
-        if (newElements.length > 0) {
-          // Gate by the latest logical trigger point in the current visible batch,
-          // not just the paused playhead time.
-          lastFreezeTriggerTimeRef.current = Math.max(relTime, ...computed.map(el => el.appearAt));
-          newElements.forEach(el => triggeredTimesRef.current.add(el.id));
-          startFreezeRef.current(computed, video);
+        if (dueNow.length > 0) {
+          // Group annotations whose appearAt is within ~0.2s of the earliest
+          // due one so genuinely simultaneous markers freeze together, but
+          // separated ones each get their own freeze cycle.
+          const earliest = Math.min(...dueNow.map(el => el.appearAt));
+          const grouped = dueNow.filter(el => Math.abs(el.appearAt - earliest) < 0.2);
+          grouped.forEach(el => triggeredTimesRef.current.add(el.id));
+          startFreezeRef.current(grouped, video);
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
       }
 
-      setVisibleEls(computed);
+      // Freeze-only contract: outside a freeze, never render annotation SVG.
+      // We still keep visibleEls in state for the freeze handler to consume.
+      setVisibleEls([]);
       rafRef.current = requestAnimationFrame(tick);
     };
 
