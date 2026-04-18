@@ -56,6 +56,11 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   // Loop cycle key — increments on every backward jump to force SVG remount
   // so all SVG <animate> elements restart cleanly each replay.
   const [loopCycleKey, setLoopCycleKey] = useState(0);
+  // Defer attaching the video source until the element scrolls near the
+  // viewport. This lets pages with many embedded clips (e.g. AnalysisViewer)
+  // render their full layout first without competing for bandwidth on every
+  // video at once.
+  const [shouldLoad, setShouldLoad] = useState(false);
   // IDs of annotations already shown during a freeze in the current loop
   // cycle. After the freeze fades out we MUST NOT show them again until
   // the next loop — they are a freeze-frame asset only.
@@ -73,6 +78,29 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   const internalLoopRef = useRef(false);
 
   const { cleanUrl, clipStart, clipEnd } = useMemo(() => parseClipFragment(videoUrl), [videoUrl]);
+
+  // Lazy-load: only attach the video src once the container is within ~600px
+  // of the viewport. This keeps the page structure responsive while videos
+  // queue up in the background as the user scrolls.
+  useEffect(() => {
+    if (shouldLoad) return;
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setShouldLoad(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(e => e.isIntersecting)) {
+          setShouldLoad(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' }
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [shouldLoad]);
 
   // Load annotation project
   useEffect(() => {
