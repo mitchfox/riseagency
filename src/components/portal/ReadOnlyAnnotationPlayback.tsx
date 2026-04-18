@@ -770,14 +770,15 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       )}
       <video
         ref={videoRef}
-        src={cleanUrl}
+        {...(shouldLoad ? { src: cleanUrl } : {})}
         autoPlay
         loop
         muted
         playsInline
         crossOrigin="anonymous"
+        preload={shouldLoad ? "auto" : "none"}
         className="w-full aspect-video"
-        style={{ display: 'block', width: '100%', objectFit: 'fill' }}
+        style={{ display: 'block', width: '100%', objectFit: 'fill', backgroundColor: '#000' }}
       />
       {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg
