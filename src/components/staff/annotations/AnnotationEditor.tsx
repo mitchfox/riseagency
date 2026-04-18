@@ -642,6 +642,15 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // Save current elements so we can revert on cancel
     setDrawingStartElements(activeKlip?.elements || []);
 
+    // Clear any leftover freeze/triggered state so the previous annotation
+    // doesn't bleed into the new draw timestamp.
+    if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+    setPlaybackFreezeUrl(null);
+    setPlaybackFreezeActive(false);
+    setPlaybackFreezePhase('idle');
+    triggeredTimesRef.current.clear();
+    freezeElementIdsRef.current.clear();
+
     // Capture the exact frame currently displayed — use requestVideoFrameCallback if available
     const captureFrame = () => {
       const exactTime = video.currentTime;
