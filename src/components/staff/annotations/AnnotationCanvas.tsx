@@ -109,19 +109,23 @@ export const AnnotationCanvas = ({
     if (activeTool === 'player-marker') {
       const num = prompt('Player number:');
       if (!num) return;
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'player-marker', x: pos.x, y: pos.y,
+        id: newId, type: 'player-marker', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, number: parseInt(num) || 0, radius: 1.8, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
 
     if (activeTool === 'point') {
+      const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'point', x: pos.x, y: pos.y,
+        id: newId, type: 'point', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth, radius: 1, appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       // Don't call onToolUsed — keep point tool active for rapid placement
       return;
     }
@@ -162,15 +166,17 @@ export const AnnotationCanvas = ({
     }
 
     if (activeTool === 'image-layer') {
+      const newId = crypto.randomUUID();
       // Image layer: create a rect-like clipping region the user will drag to shape
       setElements(prev => [...prev, {
-        id: crypto.randomUUID(), type: 'image-layer',
+        id: newId, type: 'image-layer',
         x: pos.x - 5, y: pos.y - 5,
         width: 10, height: 10,
         color: '#ffffff', strokeWidth: 1, opacity: 1, fillOpacity: 1,
         layerZIndex: 100,
         appearAt: klipOffset, ...defaultTiming,
       }]);
+      setSelectedId(newId);
       onToolUsed?.();
       return;
     }
