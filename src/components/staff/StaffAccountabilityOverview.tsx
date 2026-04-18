@@ -882,6 +882,9 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const mainContent = (
     <div className={`space-y-4 ${fullscreen ? 'p-6' : ''}`}>
+      {/* Weekly hub — fixtures + selected staff member's tasks for the next 7 days */}
+      {renderUpcomingStrip()}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
