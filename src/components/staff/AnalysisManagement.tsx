@@ -1843,6 +1843,11 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                   {(analysis as any).visibility_status === "draft" ? "Draft" : (analysis as any).visibility_status === "clipped" ? "Clipped" : "Hidden"}
                 </span>
               )}
+              {(analysis as any).category === "training" && (
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 bg-emerald-500/20 text-emerald-400">
+                  Training
+                </span>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {new Date(analysis.created_at).toLocaleDateString()}
