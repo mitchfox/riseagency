@@ -492,19 +492,14 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
                         </Select>
                         
                         {categoryFilter === 'players' && (
-                          <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                            <SelectTrigger className="w-full sm:w-[200px]">
-                              <SelectValue placeholder="All Players" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Players</SelectItem>
-                              {players.map(player => (
-                                <SelectItem key={player.id} value={player.id}>
-                                  {player.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <PlayerCombobox
+                            players={players as any}
+                            value={selectedPlayerId}
+                            onChange={setSelectedPlayerId}
+                            allLabel="All Players"
+                            allValue="all"
+                            className="w-full sm:w-[200px]"
+                          />
                         )}
                         
                         {canManage && (
