@@ -477,10 +477,11 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        // Shorten the line by the FULL marker length so the marker tip lands
-        // exactly on the original endpoint — anything less and the line pokes
-        // out past the point of the arrow.
-        const trim = mw;
+        // SVG markers default to markerUnits="strokeWidth", so the on-screen
+        // marker length is mw * strokeWidth in the same units as the line.
+        // Trim by the FULL marker length so the line ends exactly where the
+        // arrowhead tip starts — anything less leaves the line poking through.
+        const trim = mw * el.strokeWidth;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = el.x + adx * trimRatio;
         const ty2 = el.y + ady * trimRatio;
