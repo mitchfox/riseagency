@@ -78,6 +78,13 @@ export const AnnotationCanvas = ({
     };
   }, []);
 
+  // Quantise timestamps to the nearest frame (30fps) so the appearAt stored
+  // on draw matches the timestamp computed during playback EXACTLY — no
+  // sub-frame drift, no tolerance windows.
+  const FRAME = 1 / 30;
+  const quantise = (t: number) => Math.round(t / FRAME) * FRAME;
+  const appearAtNow = quantise(klipOffset);
+
   // Default animation: 0.4s fade in, 3s duration
   const defaultTiming = { animateIn: 0.4, duration: 3 };
 
