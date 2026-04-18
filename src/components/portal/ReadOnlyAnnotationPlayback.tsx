@@ -707,9 +707,13 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
   };
 
   const hasAnnotations = elements.length > 0;
-  // Only render SVG layer during freeze, mirroring the editor's behaviour exactly:
-  // freeze-only annotations must vanish the moment playback resumes.
-  const renderedVisibleEls = freezeActive ? visibleEls : [];
+  // Render the SVG overlay any time we have something to show — either during
+  // the freeze pause OR during normal playback when an annotation is currently
+  // within its appearAt..appearAt+duration window. Previously the overlay was
+  // gated to `freezeActive` only, which meant if the freeze never triggered
+  // (e.g. autoplay blocked, or a re-mount mid-loop) annotations never appeared
+  // at all on the analysis viewer.
+  const renderedVisibleEls = visibleEls;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -735,7 +739,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         className="w-full aspect-video"
         style={{ display: 'block', width: '100%', objectFit: 'fill' }}
       />
-      {hasAnnotations && freezeActive && renderedVisibleEls.length > 0 && (
+      {hasAnnotations && renderedVisibleEls.length > 0 && (
         <svg
           key={loopCycleKey}
           className="absolute inset-0 w-full h-full pointer-events-none"
