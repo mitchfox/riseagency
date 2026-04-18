@@ -142,33 +142,18 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       computed = computed.filter(el => freezeElementIdsRef.current.has(el.id));
     }
 
-    // In drawing mode, ONLY show elements whose appearAt matches the drawing timestamp
-    // This prevents previous annotations at different times from bleeding through
+    // In drawing mode, ONLY show elements whose appearAt matches the drawing
+    // timestamp — both quantised to the same frame so there's no drift.
     if (drawingMode) {
+      const FRAME = 1 / 30;
       const drawOffset = drawingTimestamp - (activeKlip?.startTime ?? 0);
+      const drawFrame = Math.round(drawOffset / FRAME);
       computed = computed.filter(el => {
         // Always show image layers — they must mask annotations at all times
         if (el.type === 'image-layer') return true;
-        // Show elements that start at this exact drawing time (within 0.15s tolerance)
-        if (Math.abs(el.appearAt - drawOffset) < 0.15) return true;
-        // Also show the currently selected element regardless
-        if (el.id === selectedId) return true;
-        return false;
+        // Show only elements that share the SAME frame as the draw timestamp
+        return Math.round(el.appearAt / FRAME) === drawFrame;
       });
-
-      // Include selected element even if not computed
-      if (selectedId && !computed.some(el => el.id === selectedId)) {
-        const selectedEl = allElements.find(el => el.id === selectedId);
-        if (selectedEl) {
-          computed.push({
-            ...selectedEl,
-            computedOpacity: selectedEl.opacity ?? 1,
-            computedX: selectedEl.x,
-            computedY: selectedEl.y,
-            computedScale: 1,
-          });
-        }
-      }
     }
 
     // Map computed elements back to the shape AnnotationCanvas expects

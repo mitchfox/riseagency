@@ -1158,7 +1158,23 @@ export const AnnotationCanvas = ({
         { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
         { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
       ];
-    } else if ((el.type === 'player-marker' || el.type === 'semi-circle' || el.type === 'magnifier') && el.radius !== undefined) {
+    } else if (el.type === 'semi-circle' && (el.width !== undefined || el.radius !== undefined)) {
+      // Disc: handles must follow width/height (not radius alone) so on-screen
+      // dragging visibly resizes the disc rather than just moving the dots.
+      const rx = el.width ?? el.radius ?? 2.5;
+      const ry = el.height ?? (rx * 0.35);
+      bbox = { x: el.x - rx, y: el.y - ry, w: rx * 2, h: ry * 2 };
+      handles = [
+        { handle: 'ne', x: el.x + rx, y: el.y - ry, cursor: 'nesw-resize' },
+        { handle: 'se', x: el.x + rx, y: el.y + ry, cursor: 'nwse-resize' },
+        { handle: 'sw', x: el.x - rx, y: el.y + ry, cursor: 'nesw-resize' },
+        { handle: 'nw', x: el.x - rx, y: el.y - ry, cursor: 'nwse-resize' },
+        { handle: 'e', x: el.x + rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'w', x: el.x - rx, y: el.y, cursor: 'ew-resize' },
+        { handle: 'n', x: el.x, y: el.y - ry, cursor: 'ns-resize' },
+        { handle: 's', x: el.x, y: el.y + ry, cursor: 'ns-resize' },
+      ];
+    } else if ((el.type === 'player-marker' || el.type === 'magnifier') && el.radius !== undefined) {
       const r = el.radius;
       bbox = { x: el.x - r, y: el.y - r, w: r * 2, h: r * 2 };
       handles = [
