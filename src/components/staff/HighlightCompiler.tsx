@@ -821,24 +821,65 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
             <DialogDescription>Link a performance report or video analysis. All clips will appear as pending for review.</DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-center gap-3 pb-2">
-            <Label className="text-sm whitespace-nowrap">Player:</Label>
-            {defaultPlayerId ? (
+          {defaultPlayerId ? (
+            <div className="flex items-center gap-3 pb-2">
+              <Label className="text-sm whitespace-nowrap">Player:</Label>
               <div className="rounded-md border px-3 py-2 text-sm min-w-[220px]">
                 <span className="font-medium">{players.find(p => p.id === defaultPlayerId)?.name || "Selected player"}</span>
               </div>
-            ) : (
-              <PlayerCombobox
-                players={players as any}
-                value={linkPlayerId || null}
-                onChange={(v) => { setLinkPlayerId(v); setLinkReports([]); setLinkAnalyses([]); }}
-                allLabel="All players"
-                allValue="all"
-                placeholder="All / Select player"
-                className="w-56"
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-2 pb-2">
+              <Label className="text-sm">Player</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search players by name..."
+                  value={playerSearch}
+                  onChange={e => setPlayerSearch(e.target.value)}
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+              {linkPlayerId && linkPlayerId !== "all" && (
+                <div className="flex items-center justify-between rounded-md border bg-accent/30 px-3 py-1.5">
+                  <span className="text-sm font-medium">{players.find(p => p.id === linkPlayerId)?.name}</span>
+                  <Button
+                    variant="ghost" size="sm" className="h-6 text-xs"
+                    onClick={() => { setLinkPlayerId(""); setLinkReports([]); setLinkAnalyses([]); setPlayerSearch(""); }}
+                  >Change</Button>
+                </div>
+              )}
+              {playerSearch && !linkPlayerId && (
+                <ScrollArea className="max-h-[180px] rounded-md border">
+                  <div className="p-1">
+                    {players
+                      .filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase()))
+                      .slice(0, 50)
+                      .map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => { setLinkPlayerId(p.id); setLinkReports([]); setLinkAnalyses([]); setPlayerSearch(""); }}
+                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                        >
+                          {p.image_url ? (
+                            <img src={p.image_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-6 w-6 rounded-full bg-muted" />
+                          )}
+                          <span className="flex-1 truncate">{p.name}</span>
+                          {p.position && <span className="text-xs text-muted-foreground">{p.position}</span>}
+                        </button>
+                      ))}
+                    {players.filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase())).length === 0 && (
+                      <p className="px-2 py-3 text-center text-xs text-muted-foreground">No players match "{playerSearch}"</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          )}
 
           <Tabs value={linkTab} onValueChange={v => setLinkTab(v as any)} className="flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-2">
