@@ -1382,24 +1382,35 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                       />
                       <span className="text-[9px] text-white/30 font-mono">{selectedElement.color}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {[{ color: '#C6A332', label: 'Rise Gold' }, { color: '#ffffff', label: 'White' }, { color: '#000000', label: 'Black' }].map(({ color }) => (
+                    <div className="grid grid-cols-9 gap-1">
+                      {[
+                        { color: '#C6A332', label: 'Rise Gold' },
+                        { color: '#dc2626', label: 'Red' },
+                        { color: '#f97316', label: 'Orange' },
+                        { color: '#facc15', label: 'Yellow' },
+                        { color: '#22c55e', label: 'Green' },
+                        { color: '#14532d', label: 'Dark Green' },
+                        { color: '#ffffff', label: 'White' },
+                        { color: '#000000', label: 'Black' },
+                      ].map(({ color, label }) => (
                         <button
                           key={color}
-                          className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                            selectedElement.color === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                          title={label}
+                          className={`aspect-square rounded-full border-2 transition-transform ${
+                            selectedElement.color === color ? 'border-white scale-110' : 'border-white/10 hover:scale-105'
                           }`}
                           style={{ backgroundColor: color }}
                           onClick={() => updateElement(selectedElement.id, { color })}
                         />
                       ))}
-                      <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
-                        !['#C6A332', '#ffffff', '#000000'].includes(selectedElement.color) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+                      <label className={`aspect-square rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                        !['#C6A332', '#dc2626', '#f97316', '#facc15', '#22c55e', '#14532d', '#ffffff', '#000000'].includes(selectedElement.color)
+                          ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
                       }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
                         <input type="color" value={selectedElement.color} onChange={e => {
                           updateElement(selectedElement.id, { color: e.target.value });
                           setRecentColours(prev => {
-                            const updated = [e.target.value, ...prev.filter(x => x !== e.target.value)].slice(0, 8);
+                            const updated = Array.from(new Set([e.target.value, ...prev])).slice(0, 8);
                             localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
                             return updated;
                           });
