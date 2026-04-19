@@ -97,7 +97,7 @@ export const AnnotationToolbar = ({
   ];
 
   return (
-    <div className="p-5 flex items-stretch gap-6 h-full">
+    <div className="p-4 flex items-stretch gap-6">
       {/* Tool grid — large, roomy, fills the panel */}
       <div className="flex-1 min-w-0 flex flex-col">
         <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Tools (most used first)</p>
