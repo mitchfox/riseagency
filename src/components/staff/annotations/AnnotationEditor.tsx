@@ -892,15 +892,16 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0">
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas — sizes to fit, leaving room below for toolbar to fill */}
-          <div ref={videoContainerRef} className={`relative bg-[#12151e] flex items-center justify-center overflow-hidden min-h-0 ${drawingMode ? 'shrink-0 p-2' : 'flex-1'}`}>
+          <div ref={videoContainerRef} className="relative bg-[#12151e] flex items-center justify-center overflow-hidden min-h-0 flex-1">
             <div className="relative max-w-full max-h-full" style={{
               aspectRatio: '16 / 9',
-              width: drawingMode ? 'auto' : '100%',
-              height: drawingMode ? 'min(50vh, 100%)' : 'auto',
+              width: '100%',
+              height: 'auto',
               maxWidth: '100%',
               transform: `scale(${zoomLevel})`,
               transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
@@ -1169,21 +1170,6 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
             </div>
           </div>
 
-          {/* Tools panel — fills the empty space below the video */}
-          {drawingMode && (
-            <div className="bg-[#12151e] border-t border-white/10 flex-1 min-h-0 overflow-y-auto">
-              <AnnotationToolbar
-                activeTool={activeTool}
-                setActiveTool={setActiveTool}
-                activeColor={activeColor}
-                setActiveColor={handleSetActiveColor}
-                strokeWidth={strokeWidth}
-                setStrokeWidth={handleSetStrokeWidth}
-                fillOpacity={fillOpacity}
-                setFillOpacity={setFillOpacity}
-              />
-            </div>
-          )}
         </div>
 
         {/* Right sidebar */}
@@ -1785,6 +1771,23 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
 
           </div>
         )}
+        </div>
+
+        {/* Bottom toolbar row — tools under video, colour+sliders under sidebar */}
+        <div className="bg-[#12151e] border-t border-white/10 shrink-0 flex" style={{ height: '220px' }}>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <AnnotationToolbar
+              activeTool={activeTool}
+              setActiveTool={setActiveTool}
+              activeColor={activeColor}
+              setActiveColor={handleSetActiveColor}
+              strokeWidth={strokeWidth}
+              setStrokeWidth={handleSetStrokeWidth}
+              fillOpacity={fillOpacity}
+              setFillOpacity={setFillOpacity}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
