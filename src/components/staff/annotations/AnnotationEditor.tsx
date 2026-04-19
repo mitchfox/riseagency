@@ -897,19 +897,6 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas */}
           <div ref={videoContainerRef} className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
-            {/* Floating tools panel - bottom-right corner of video */}
-            {drawingMode && (
-              <AnnotationToolbar
-                activeTool={activeTool}
-                setActiveTool={setActiveTool}
-                activeColor={activeColor}
-                setActiveColor={handleSetActiveColor}
-                strokeWidth={strokeWidth}
-                setStrokeWidth={handleSetStrokeWidth}
-                fillOpacity={fillOpacity}
-                setFillOpacity={setFillOpacity}
-              />
-            )}
             <div className="relative" style={{
               display: 'inline-block',
               transform: `scale(${zoomLevel})`,
