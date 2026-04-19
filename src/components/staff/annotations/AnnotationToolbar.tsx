@@ -192,23 +192,27 @@ export const AnnotationToolbar = ({
               </Tooltip>
             </TooltipProvider>
           </div>
-          {recentColors.filter(c => !brandColors.some(b => b.color === c)).length > 0 && (
-            <div className="mt-1.5">
-              <p className="text-[9px] text-white/30 mb-1">Recent</p>
-              <div className="grid grid-cols-9 gap-1">
-                {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 9).map(c => (
-                  <button
-                    key={c}
-                    className={`aspect-square rounded-full border transition-transform ${
-                      activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: c }}
-                    onClick={() => setActiveColor(c)}
-                  />
-                ))}
+          {(() => {
+            const uniqueRecents = Array.from(new Set(recentColors)).filter(c => !brandColors.some(b => b.color === c));
+            if (uniqueRecents.length === 0) return null;
+            return (
+              <div className="mt-1.5">
+                <p className="text-[9px] text-white/30 mb-1">Recent</p>
+                <div className="grid grid-cols-9 gap-1">
+                  {uniqueRecents.slice(0, 9).map(c => (
+                    <button
+                      key={c}
+                      className={`aspect-square rounded-full border transition-transform ${
+                        activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c }}
+                      onClick={() => setActiveColor(c)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Sliders */}
