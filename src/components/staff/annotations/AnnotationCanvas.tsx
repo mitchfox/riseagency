@@ -1112,36 +1112,54 @@ export const AnnotationCanvas = ({
         );
       }
       case 'cylinder-spotlight': {
-        const baseR = el.radius ?? 2.5;
+        // `width` overrides radius for the cone base footprint
+        const baseR = (el.width ?? el.radius) ?? 2.5;
         const colH = el.height ?? 12;
         const colour = el.color || '#ffff66';
         const fadeId = `cyl-fade-${el.id}`;
         const ringId = `cyl-ring-${el.id}`;
+        const shineId = `cyl-shine-${el.id}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
               <linearGradient id={fadeId} x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor={colour} stopOpacity={el.fillOpacity ?? 0.45} />
+                <stop offset="0%" stopColor={colour} stopOpacity={el.fillOpacity ?? 0.45}>
+                  {anim && <animate attributeName="stop-opacity" values={`${el.fillOpacity ?? 0.45};${(el.fillOpacity ?? 0.45) * 1.4};${el.fillOpacity ?? 0.45}`} dur="2.4s" repeatCount="indefinite" />}
+                </stop>
                 <stop offset="100%" stopColor={colour} stopOpacity={0} />
               </linearGradient>
               <radialGradient id={ringId} cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor={colour} stopOpacity={0.85} />
                 <stop offset="100%" stopColor={colour} stopOpacity={0.2} />
               </radialGradient>
+              <linearGradient id={shineId} gradientUnits="userSpaceOnUse"
+                x1={`${el.x - baseR}`} y1="0" x2={`${el.x + baseR}`} y2="0">
+                <stop offset="0%" stopColor="white" stopOpacity={0} />
+                <stop offset="50%" stopColor="white" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="white" stopOpacity={0} />
+                {anim && <animateTransform attributeName="gradientTransform" type="translate" from={`${-baseR * 2} 0`} to={`${baseR * 2} 0`} dur="2.6s" repeatCount="indefinite" />}
+              </linearGradient>
             </defs>
-            {/* Vertical cylinder rising from base */}
-            <ellipse cx={`${el.x}%`} cy={`${el.y - colH}%`} rx={`${baseR * 0.85}%`} ry={`${baseR * 0.3}%`}
-              fill={colour} fillOpacity={0} />
+            {/* Cylinder body */}
             <path
               d={`M ${el.x - baseR} ${el.y} A ${baseR} ${baseR * 0.35} 0 0 0 ${el.x + baseR} ${el.y}
                   L ${el.x + baseR * 0.85} ${el.y - colH}
                   A ${baseR * 0.85} ${baseR * 0.3} 0 0 1 ${el.x - baseR * 0.85} ${el.y - colH} Z`}
               fill={`url(#${fadeId})`} stroke="none"
             />
+            {/* Travelling shine band over cylinder */}
+            <path
+              d={`M ${el.x - baseR} ${el.y} A ${baseR} ${baseR * 0.35} 0 0 0 ${el.x + baseR} ${el.y}
+                  L ${el.x + baseR * 0.85} ${el.y - colH}
+                  A ${baseR * 0.85} ${baseR * 0.3} 0 0 1 ${el.x - baseR * 0.85} ${el.y - colH} Z`}
+              fill={`url(#${shineId})`} stroke="none" opacity={0.4}
+            />
             {/* Base ring (cone marker) */}
             <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR}%`} ry={`${baseR * 0.35}%`}
               fill={`url(#${ringId})`} stroke={colour} strokeWidth={el.strokeWidth || 0.4} strokeOpacity={0.9}
-            />
+            >
+              {anim && <animate attributeName="stroke-opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite" />}
+            </ellipse>
             <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR * 0.6}%`} ry={`${baseR * 0.2}%`}
               fill="white" fillOpacity={0.5}
             />
@@ -1151,29 +1169,76 @@ export const AnnotationCanvas = ({
       case 'text-banner': {
         const anchor = el.anchor || 'bottom';
         const yPos = anchor === 'top' ? 6 : 94;
-        const fontSize = el.fontSize ?? 3.5;
-        const padX = 2.5;
-        const padY = 1.2;
+        const fontSize = el.fontSize ?? 1.6; // % of video height
         const txt = el.text || '';
-        const approxW = Math.max(20, Math.min(96, txt.length * fontSize * 0.55 + padX * 2));
+        const borderColour = (el as any).borderColor || '#C6A332';
+        const textColour = el.color || '#ffffff';
+        const bgFill = (el as any).bgColor || 'black';
+
+        // Smart wrapping: side margin = 4% on each edge → max width = 92%
+        // Approx character width ratio (in % units) per font-size unit
+        const maxBannerW = 92;
+        const sideMargin = 4;
+        const padX = 1.5;
+        const padY = 0.6;
+        const charW = fontSize * 0.55; // empirical width per character in % units
+        const maxCharsPerLine = Math.max(8, Math.floor((maxBannerW - padX * 2) / charW));
+
+        // Greedy word-wrap
+        const words = txt.split(/\s+/);
+        const lines: string[] = [];
+        let cur = '';
+        for (const w of words) {
+          const tentative = cur ? `${cur} ${w}` : w;
+          if (tentative.length <= maxCharsPerLine) {
+            cur = tentative;
+          } else {
+            if (cur) lines.push(cur);
+            // If the single word still exceeds, hard-break it
+            if (w.length > maxCharsPerLine) {
+              for (let i = 0; i < w.length; i += maxCharsPerLine) {
+                lines.push(w.slice(i, i + maxCharsPerLine));
+              }
+              cur = '';
+            } else {
+              cur = w;
+            }
+          }
+        }
+        if (cur) lines.push(cur);
+        if (lines.length === 0) lines.push('');
+
+        // Width = widest line × charW + padding, clamped to max
+        const longestLen = Math.max(...lines.map(l => l.length));
+        const bannerW = Math.min(maxBannerW, Math.max(12, longestLen * charW + padX * 2));
+        const lineH = fontSize * 1.25;
+        const totalH = lines.length * lineH + padY * 2;
+
+        // Compute Y so that the block is anchored to top/bottom with consistent margin
+        const blockTop = anchor === 'top' ? sideMargin : (100 - sideMargin - totalH);
+
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <rect
-              x={`${50 - approxW / 2}%`} y={`${yPos - fontSize / 2 - padY}%`}
-              width={`${approxW}%`} height={`${fontSize + padY * 2}%`}
-              rx={1} ry={1}
-              fill="black" fillOpacity={el.fillOpacity ?? 0.7}
-              stroke={el.color} strokeWidth={0.2}
+              x={`${50 - bannerW / 2}%`} y={`${blockTop}%`}
+              width={`${bannerW}%`} height={`${totalH}%`}
+              rx={0.6} ry={0.6}
+              fill={bgFill} fillOpacity={el.fillOpacity ?? 0.85}
+              stroke={borderColour} strokeWidth={0.25}
             />
-            <text
-              x="50%" y={`${yPos}%`}
-              fill={el.color || '#ffffff'} fontSize={`${fontSize}%`}
-              textAnchor="middle" dominantBaseline="central"
-              fontWeight="600"
-              style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.6)', strokeWidth: 0.4 }}
-            >
-              {txt}
-            </text>
+            {lines.map((ln, i) => (
+              <text
+                key={i}
+                x="50%"
+                y={`${blockTop + padY + lineH * (i + 0.5)}%`}
+                fill={textColour} fontSize={`${fontSize}%`}
+                textAnchor="middle" dominantBaseline="central"
+                fontWeight="600"
+                style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.7)', strokeWidth: 0.3 }}
+              >
+                {ln}
+              </text>
+            ))}
           </g>
         );
       }
