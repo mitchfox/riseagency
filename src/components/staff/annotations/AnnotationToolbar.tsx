@@ -88,7 +88,6 @@ export const AnnotationToolbar = ({
     });
   };
 
-  // Sort: Select pinned first, then by usage descending. All tools shown.
   const sortedTools: ToolDef[] = [
     tools.find(t => t.id === 'select')!,
     ...[...tools]
@@ -97,11 +96,14 @@ export const AnnotationToolbar = ({
   ];
 
   return (
-    <div className="p-4 flex items-stretch gap-6 h-full min-h-0">
-      {/* Tool grid — large, roomy, fills the panel */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-0">
-        <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2 shrink-0">Tools (most used first)</p>
-        <div className="grid gap-2 content-start overflow-y-auto" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))' }}>
+    <div className="flex h-full min-h-0">
+      {/* Tool grid — fills the area under the video */}
+      <div className="flex-1 min-w-0 flex flex-col p-3">
+        <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2 shrink-0">Tools</p>
+        <div
+          className="grid gap-1.5 content-start overflow-y-auto pr-1"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))' }}
+        >
           <TooltipProvider delayDuration={200}>
             {sortedTools.map(tool => {
               const isActive = activeTool === tool.id;
@@ -109,22 +111,21 @@ export const AnnotationToolbar = ({
                 <Tooltip key={tool.id}>
                   <TooltipTrigger asChild>
                     <button
-                      className={`relative aspect-square flex flex-col items-center justify-center rounded-lg transition-all ${
+                      className={`relative aspect-square flex items-center justify-center rounded-md transition-all ${
                         isActive
-                          ? 'bg-primary text-primary-foreground ring-2 ring-primary/60 shadow-lg shadow-primary/20'
+                          ? 'bg-primary text-primary-foreground ring-1 ring-primary/60'
                           : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/10'
                       }`}
                       onClick={() => handleSelectTool(tool.id)}
                     >
                       {tool.hotkey && (
-                        <span className={`absolute top-1 right-1 text-[9px] font-mono leading-none px-1 py-0.5 rounded ${
+                        <span className={`absolute top-0.5 right-0.5 text-[8px] font-mono leading-none px-0.5 rounded ${
                           isActive ? 'bg-black/30 text-white' : 'bg-black/40 text-white/60'
                         }`}>
                           {tool.hotkey}
                         </span>
                       )}
-                      <tool.icon className="w-5 h-5" />
-                      <span className="text-[10px] leading-tight mt-1.5 opacity-80">{tool.shortLabel}</span>
+                      <tool.icon className="w-4 h-4" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs space-y-0.5">
@@ -138,18 +139,18 @@ export const AnnotationToolbar = ({
         </div>
       </div>
 
-      {/* Right side: colours + sliders */}
-      <div className="flex items-start gap-4 border-l border-white/10 pl-4 shrink-0">
-        {/* Colour palette — single column 8 swatches tall, compact */}
-        <div className="flex flex-col">
+      {/* Right column — width matches the right sidebar (w-60 = 240px) */}
+      <div className="w-60 shrink-0 border-l border-white/10 bg-[#161a24] p-3 flex flex-col gap-3 overflow-y-auto">
+        {/* Colour palette — fills the 240px column width */}
+        <div>
           <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Colour</p>
-          <div className="grid grid-cols-9 gap-1.5 max-w-[230px]">
+          <div className="grid grid-cols-9 gap-1">
             <TooltipProvider delayDuration={200}>
               {brandColors.map(({ color, label }) => (
                 <Tooltip key={color}>
                   <TooltipTrigger asChild>
                     <button
-                      className={`w-6 h-6 rounded-full border-2 transition-transform ${
+                      className={`aspect-square rounded-full border-2 transition-transform ${
                         activeColor === color ? 'border-white scale-110' : 'border-white/10 hover:scale-105'
                       }`}
                       style={{ backgroundColor: color }}
@@ -161,39 +162,56 @@ export const AnnotationToolbar = ({
               ))}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <label className={`w-6 h-6 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
-                    !brandColors.some(b => b.color === activeColor) && !recentColors.includes(activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
-                  }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
-                    <input type="color" value={activeColor} onChange={e => {
-                      setActiveColor(e.target.value);
-                      setRecentColors(prev => {
-                        const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 4);
-                        try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
-                        return next;
-                      });
-                    }} className="sr-only" />
+                  <label
+                    className={`aspect-square rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                      !brandColors.some(b => b.color === activeColor) && !recentColors.includes(activeColor)
+                        ? 'border-white scale-110'
+                        : 'border-white/30 hover:scale-105'
+                    }`}
+                    style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}
+                  >
+                    <input
+                      type="color"
+                      value={activeColor}
+                      onChange={e => {
+                        setActiveColor(e.target.value);
+                        setRecentColors(prev => {
+                          const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 8);
+                          try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
+                          return next;
+                        });
+                      }}
+                      className="sr-only"
+                    />
                   </label>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-[10px]">Custom colour</TooltipContent>
               </Tooltip>
-              {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 4).map(c => (
-                <button
-                  key={c}
-                  className={`w-6 h-6 rounded-full border transition-transform ${
-                    activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setActiveColor(c)}
-                />
-              ))}
             </TooltipProvider>
           </div>
+          {recentColors.filter(c => !brandColors.some(b => b.color === c)).length > 0 && (
+            <div className="mt-1.5">
+              <p className="text-[9px] text-white/30 mb-1">Recent</p>
+              <div className="grid grid-cols-9 gap-1">
+                {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 9).map(c => (
+                  <button
+                    key={c}
+                    className={`aspect-square rounded-full border transition-transform ${
+                      activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setActiveColor(c)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Thickness slider */}
-        <div className="flex flex-col w-24">
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-[10px] text-white/40 uppercase">Thick</Label>
+        {/* Sliders */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <Label className="text-[10px] text-white/40 uppercase">Thickness</Label>
             <span className="text-[10px] text-white/30 font-mono">{strokeWidth.toFixed(2)}</span>
           </div>
           <Slider
@@ -205,8 +223,8 @@ export const AnnotationToolbar = ({
         </div>
 
         {showFillOpacity && (
-          <div className="flex flex-col w-20">
-            <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="flex items-center justify-between mb-1">
               <Label className="text-[10px] text-white/40 uppercase">Fill</Label>
               <span className="text-[10px] text-white/30">{Math.round(fillOpacity * 100)}%</span>
             </div>
