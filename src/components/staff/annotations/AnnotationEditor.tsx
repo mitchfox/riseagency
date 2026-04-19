@@ -893,24 +893,23 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Left tools - only visible in drawing mode */}
-        {drawingMode && (
-          <AnnotationToolbar
-            activeTool={activeTool}
-            setActiveTool={setActiveTool}
-            activeColor={activeColor}
-            setActiveColor={handleSetActiveColor}
-            strokeWidth={strokeWidth}
-            setStrokeWidth={handleSetStrokeWidth}
-            fillOpacity={fillOpacity}
-            setFillOpacity={setFillOpacity}
-          />
-        )}
-
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas */}
           <div ref={videoContainerRef} className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
+            {/* Floating tools panel - bottom-right corner of video */}
+            {drawingMode && (
+              <AnnotationToolbar
+                activeTool={activeTool}
+                setActiveTool={setActiveTool}
+                activeColor={activeColor}
+                setActiveColor={handleSetActiveColor}
+                strokeWidth={strokeWidth}
+                setStrokeWidth={handleSetStrokeWidth}
+                fillOpacity={fillOpacity}
+                setFillOpacity={setFillOpacity}
+              />
+            )}
             <div className="relative" style={{
               display: 'inline-block',
               transform: `scale(${zoomLevel})`,
@@ -1522,6 +1521,98 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                           className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                         />
                       </div>
+                    )}
+                    {selectedElement.type === 'cylinder-spotlight' && (
+                      <>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Beam Width</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.width ?? selectedElement.radius ?? 2.5).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.width ?? selectedElement.radius ?? 2.5]}
+                            min={0.5} max={20} step={0.25}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { width: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Beam Height</Label>
+                            <span className="text-[9px] text-white/30">{(selectedElement.height ?? 12).toFixed(1)}</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.height ?? 12]}
+                            min={2} max={60} step={1}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { height: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                          />
+                        </div>
+                      </>
+                    )}
+                    {selectedElement.type === 'text-banner' && (
+                      <>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-[9px] text-white/40">Font Size (px ~)</Label>
+                            <span className="text-[9px] text-white/30">{Math.round((selectedElement.fontSize ?? 1.6) * 7.5)}px</span>
+                          </div>
+                          <Slider
+                            value={[selectedElement.fontSize ?? 1.6]}
+                            min={0.8} max={6} step={0.1}
+                            onValueChange={([v]) => updateElement(selectedElement.id, { fontSize: v })}
+                            className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Anchor</Label>
+                          <div className="flex gap-1 flex-1">
+                            {(['top', 'bottom'] as const).map(a => (
+                              <button
+                                key={a}
+                                className={`flex-1 text-[9px] py-1 rounded border ${
+                                  (selectedElement.anchor || 'bottom') === a
+                                    ? 'bg-white/15 border-white/30 text-white'
+                                    : 'border-white/10 text-white/40 hover:bg-white/5'
+                                }`}
+                                onClick={() => updateElement(selectedElement.id, { anchor: a, y: a === 'top' ? 6 : 94 })}
+                              >
+                                {a}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Text</Label>
+                          <input
+                            type="color"
+                            value={selectedElement.color || '#ffffff'}
+                            onChange={e => updateElement(selectedElement.id, { color: e.target.value })}
+                            className="w-7 h-7 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                            title="Text colour"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Border</Label>
+                          <input
+                            type="color"
+                            value={(selectedElement as any).borderColor || '#C6A332'}
+                            onChange={e => updateElement(selectedElement.id, { borderColor: e.target.value } as any)}
+                            className="w-7 h-7 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                            title="Border colour"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Background</Label>
+                          <input
+                            type="color"
+                            value={(selectedElement as any).bgColor || '#000000'}
+                            onChange={e => updateElement(selectedElement.id, { bgColor: e.target.value } as any)}
+                            className="w-7 h-7 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                            title="Background colour"
+                          />
+                        </div>
+                      </>
                     )}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">

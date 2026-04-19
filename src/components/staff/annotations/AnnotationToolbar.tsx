@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   MousePointer2, Minus, MoveRight, Square, Circle,
   Sun, Pencil, UserCircle, Eraser, Eye, Ruler, Search, Link2, MapPin, CircleDot,
-  Redo2, Eclipse, ImagePlus, Type, Lightbulb,
+  Redo2, Eclipse, ImagePlus, Type, Lightbulb, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,16 @@ interface AnnotationToolbarProps {
   setFillOpacity: (o: number) => void;
 }
 
-const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string; shortLabel: string; hotkey: string; group: string }[] = [
+interface ToolDef {
+  id: AnnotationTool;
+  icon: React.ComponentType<any>;
+  label: string;
+  shortLabel: string;
+  hotkey: string;
+  group: string;
+}
+
+const tools: ToolDef[] = [
   { id: 'select', icon: MousePointer2, label: 'Select & move elements', shortLabel: 'Select', hotkey: 'Ctrl', group: 'core' },
   { id: 'line', icon: Minus, label: 'Straight line', shortLabel: 'Line', hotkey: '1', group: 'draw' },
   { id: 'arrow', icon: MoveRight, label: 'Directional arrow', shortLabel: 'Arrow', hotkey: '2', group: 'draw' },
@@ -54,6 +63,13 @@ const brandColors = [
   { color: '#000000', label: 'Black' },
 ];
 
+const USAGE_KEY = 'annotation-tool-usage';
+const TOP_COUNT = 6;
+
+const loadUsage = (): Record<string, number> => {
+  try { return JSON.parse(localStorage.getItem(USAGE_KEY) || '{}'); } catch { return {}; }
+};
+
 export const AnnotationToolbar = ({
   activeTool, setActiveTool, activeColor, setActiveColor, strokeWidth, setStrokeWidth,
   fillOpacity, setFillOpacity,
@@ -62,92 +78,151 @@ export const AnnotationToolbar = ({
   const [recentColors, setRecentColors] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]'); } catch { return []; }
   });
+  const [usage, setUsage] = useState<Record<string, number>>(loadUsage);
+  const [expanded, setExpanded] = useState(false);
+
+  // Track tool selection — bump usage for the chosen tool
+  const handleSelectTool = (id: AnnotationTool) => {
+    setActiveTool(id);
+    if (id === 'select' || id === 'eraser') return; // ignore utility selections
+    setUsage(prev => {
+      const next = { ...prev, [id]: (prev[id] || 0) + 1 };
+      try { localStorage.setItem(USAGE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  // Always keep Select pinned at the top of the most-used row
+  const sortedByUsage = [...tools]
+    .filter(t => t.id !== 'select')
+    .sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+  const topTools: ToolDef[] = [tools.find(t => t.id === 'select')!, ...sortedByUsage.slice(0, TOP_COUNT - 1)];
+  const remainingTools = sortedByUsage.slice(TOP_COUNT - 1);
 
   return (
-    <div className="w-14 bg-[#161a24] border-r border-white/10 flex flex-col shrink-0 h-full">
-      {/* Tools — scrollable when overflowing */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center py-2 gap-0.5">
-        <TooltipProvider delayDuration={200}>
-          {tools.map((tool, i) => {
-            const showDivider = i > 0 && tool.group !== tools[i - 1].group;
-            return (
-              <div key={tool.id} className="flex flex-col items-center">
-                {showDivider && <div className="my-1 w-8 border-t border-white/10" />}
-                <Tooltip>
+    <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 pointer-events-auto">
+      {/* Expanded tool grid (View more) */}
+      {expanded && (
+        <div className="bg-[#161a24]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl p-2 animate-fade-in">
+          <p className="text-[9px] uppercase tracking-wider text-white/40 px-1 pb-1.5">All tools</p>
+          <div className="grid grid-cols-6 gap-1 max-w-[280px]">
+            <TooltipProvider delayDuration={200}>
+              {remainingTools.map(tool => (
+                <Tooltip key={tool.id}>
                   <TooltipTrigger asChild>
                     <button
-                      className={`w-10 h-10 flex flex-col items-center justify-center rounded-md transition-colors gap-0 ${
+                      className={`w-10 h-10 flex flex-col items-center justify-center rounded-md transition-colors ${
                         activeTool === tool.id
                           ? 'bg-primary text-primary-foreground'
-                          : 'text-white/50 hover:text-white hover:bg-white/10'
+                          : 'text-white/60 hover:text-white hover:bg-white/10'
                       }`}
-                      onClick={() => setActiveTool(tool.id)}
+                      onClick={() => { handleSelectTool(tool.id); setExpanded(false); }}
                     >
                       <tool.icon className="w-3.5 h-3.5" />
-                      <span className="text-[7px] leading-tight mt-0.5 opacity-60">{tool.shortLabel}</span>
+                      <span className="text-[7px] leading-tight mt-0.5 opacity-70">{tool.shortLabel}</span>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs space-y-0.5">
+                  <TooltipContent side="left" className="text-xs space-y-0.5">
                     <p className="font-medium">{tool.shortLabel}{tool.hotkey ? ` (${tool.hotkey})` : ''}</p>
                     <p className="text-muted-foreground text-[10px]">{tool.label}</p>
                   </TooltipContent>
                 </Tooltip>
-              </div>
-            );
-          })}
-        </TooltipProvider>
-      </div>
+              ))}
+            </TooltipProvider>
+          </div>
+        </div>
+      )}
 
-      {/* Colour palette — ALWAYS visible, never scrolls off screen */}
-      <div className="shrink-0 border-t border-white/10 bg-[#161a24] flex flex-col items-center py-2 gap-1 px-1">
-        <TooltipProvider delayDuration={200}>
-          {brandColors.map(({ color, label }) => (
-            <Tooltip key={color}>
+      {/* Main panel: most-used tools + colours + sliders */}
+      <div className="bg-[#161a24]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl p-2 flex flex-col gap-2 max-h-[70vh] overflow-y-auto">
+        {/* Top row: most-used tools + view-more toggle */}
+        <div className="flex flex-col gap-1">
+          <p className="text-[9px] uppercase tracking-wider text-white/40 px-1">Tools</p>
+          <div className="flex flex-col gap-0.5">
+            <TooltipProvider delayDuration={200}>
+              {topTools.map(tool => (
+                <Tooltip key={tool.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={`w-10 h-10 flex flex-col items-center justify-center rounded-md transition-colors ${
+                        activeTool === tool.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-white/60 hover:text-white hover:bg-white/10'
+                      }`}
+                      onClick={() => handleSelectTool(tool.id)}
+                    >
+                      <tool.icon className="w-3.5 h-3.5" />
+                      <span className="text-[7px] leading-tight mt-0.5 opacity-70">{tool.shortLabel}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs space-y-0.5">
+                    <p className="font-medium">{tool.shortLabel}{tool.hotkey ? ` (${tool.hotkey})` : ''}</p>
+                    <p className="text-muted-foreground text-[10px]">{tool.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+            {remainingTools.length > 0 && (
+              <button
+                className="w-10 h-7 flex items-center justify-center rounded-md text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                onClick={() => setExpanded(e => !e)}
+                title={expanded ? 'Hide more tools' : 'View more tools'}
+              >
+                {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Colour palette — always visible */}
+        <div className="border-t border-white/10 pt-2 flex flex-col items-center gap-1">
+          <TooltipProvider delayDuration={200}>
+            {brandColors.map(({ color, label }) => (
+              <Tooltip key={color}>
+                <TooltipTrigger asChild>
+                  <button
+                    className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                      activeColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setActiveColor(color)}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-[10px]">{label}</TooltipContent>
+              </Tooltip>
+            ))}
+            <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                    activeColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color }}
-                  onClick={() => setActiveColor(color)}
-                />
+                <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                  !brandColors.some(b => b.color === activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+                }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
+                  <input type="color" value={activeColor} onChange={e => {
+                    setActiveColor(e.target.value);
+                    setRecentColors(prev => {
+                      const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 4);
+                      try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
+                      return next;
+                    });
+                  }} className="sr-only" />
+                </label>
               </TooltipTrigger>
-              <TooltipContent side="right" className="text-[10px]">{label}</TooltipContent>
+              <TooltipContent side="left" className="text-[10px]">Custom colour</TooltipContent>
             </Tooltip>
-          ))}
-          {/* Colour picker */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
-                !brandColors.some(b => b.color === activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
-              }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
-                <input type="color" value={activeColor} onChange={e => {
-                  setActiveColor(e.target.value);
-                  setRecentColors(prev => {
-                    const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 4);
-                    try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
-                    return next;
-                  });
-                }} className="sr-only" />
-              </label>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-[10px]">Custom colour</TooltipContent>
-          </Tooltip>
-          {/* Recent custom colours */}
-          {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 3).map(c => (
-            <button
-              key={c}
-              className={`w-4 h-4 rounded-full border transition-transform ${
-                activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-              }`}
-              style={{ backgroundColor: c }}
-              onClick={() => setActiveColor(c)}
-            />
-          ))}
-        </TooltipProvider>
+            {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 3).map(c => (
+              <button
+                key={c}
+                className={`w-4 h-4 rounded-full border transition-transform ${
+                  activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                }`}
+                style={{ backgroundColor: c }}
+                onClick={() => setActiveColor(c)}
+              />
+            ))}
+          </TooltipProvider>
+        </div>
 
         {/* Thickness */}
-        <div className="flex flex-col items-center gap-1 w-full mt-1 pt-2 border-t border-white/10">
+        <div className="border-t border-white/10 pt-2 flex flex-col items-center gap-1 w-full">
           <Label className="text-[8px] text-white/40 uppercase">Thick</Label>
           <span className="text-[9px] text-white/30 font-mono">{strokeWidth.toFixed(2)}</span>
           <div className="w-10 py-1">
@@ -161,7 +236,7 @@ export const AnnotationToolbar = ({
         </div>
 
         {showFillOpacity && (
-          <div className="flex flex-col items-center gap-1 w-full mt-1 pt-2 border-t border-white/10">
+          <div className="border-t border-white/10 pt-2 flex flex-col items-center gap-1 w-full">
             <Label className="text-[8px] text-white/40 uppercase">Fill</Label>
             <span className="text-[8px] text-white/30">{Math.round(fillOpacity * 100)}%</span>
             <div className="w-10 py-1">
