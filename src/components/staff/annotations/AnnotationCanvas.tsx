@@ -190,6 +190,37 @@ export const AnnotationCanvas = ({
       return;
     }
 
+    if (activeTool === 'text-banner') {
+      const txt = prompt('Banner text:');
+      if (!txt) return;
+      // Anchor to bottom by default if click is in lower half, else top
+      const anchor: 'top' | 'bottom' = pos.y > 50 ? 'bottom' : 'top';
+      const newId = crypto.randomUUID();
+      setElements(prev => [...prev, {
+        id: newId, type: 'text-banner', x: 50, y: anchor === 'top' ? 6 : 94,
+        text: txt, anchor, fontSize: 3.5,
+        color: activeColor, strokeWidth: 0, fillOpacity: 0.7,
+        appearAt: appearAtNow, ...defaultTiming,
+      }]);
+      setSelectedId(newId);
+      onToolUsed?.();
+      return;
+    }
+
+    if (activeTool === 'cylinder-spotlight') {
+      // Single-click placement: cone marker with a fading vertical cylinder rising from it
+      const newId = crypto.randomUUID();
+      setElements(prev => [...prev, {
+        id: newId, type: 'cylinder-spotlight', x: pos.x, y: pos.y,
+        color: activeColor, strokeWidth: strokeWidth || 0.4,
+        radius: 2.5, height: 12, fillOpacity: 0.45,
+        appearAt: appearAtNow, ...defaultTiming,
+      }]);
+      setSelectedId(newId);
+      onToolUsed?.();
+      return;
+    }
+
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
