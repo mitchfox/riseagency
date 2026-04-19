@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   MousePointer2, Minus, MoveRight, Square, Circle,
   Sun, UserCircle, Eraser, Eye, Ruler, Search, Link2, MapPin, CircleDot,
-  Redo2, Eclipse, ImagePlus, Type, Lightbulb,
+  Redo2, Eclipse, ImagePlus, Type, Lightbulb, Crosshair,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ const tools: ToolDef[] = [
   { id: 'distance', icon: Ruler, label: 'Measure distance', shortLabel: 'Dist', hotkey: 'R' },
   { id: 'linked-line', icon: Link2, label: 'Connect elements', shortLabel: 'Link', hotkey: 'L' },
   { id: 'image-layer', icon: ImagePlus, label: 'Keep image in front', shortLabel: 'Layer', hotkey: 'B' },
+  { id: 'ai-track', icon: Crosshair, label: 'AI auto-track a player across the clip', shortLabel: 'Track', hotkey: 'A' },
   { id: 'eraser', icon: Eraser, label: 'Remove element', shortLabel: 'Erase', hotkey: 'E' },
 ];
 
