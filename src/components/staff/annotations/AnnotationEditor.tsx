@@ -112,7 +112,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
   const [isRenaming, setIsRenaming] = useState(false);
   const [recentColours, setRecentColours] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      const raw = JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      return Array.from(new Set(Array.isArray(raw) ? raw : [])).slice(0, 8) as string[];
     } catch { return []; }
   });
   // Playback freeze state (separate from drawing mode freeze)
