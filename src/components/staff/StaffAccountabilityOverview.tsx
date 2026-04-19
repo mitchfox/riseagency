@@ -203,7 +203,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(adminProfiles);
     setActivityLog((activityData || []) as ActivityLogEntry[]);
-    setFixtures((fixturesData || []) as any);
+    setFixtures(filteredFixtures as any);
 
     if (userId) {
       const idx = adminProfiles.findIndex(p => p.id === userId);
