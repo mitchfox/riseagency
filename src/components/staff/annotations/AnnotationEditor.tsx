@@ -892,7 +892,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0">
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas — sizes to fit, leaving room below for toolbar to fill */}
