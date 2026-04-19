@@ -1546,15 +1546,34 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                       <>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <Label className="text-[9px] text-white/40">Font Size (px ~)</Label>
-                            <span className="text-[9px] text-white/30">{Math.round((selectedElement.fontSize ?? 1.6) * 7.5)}px</span>
+                            <Label className="text-[9px] text-white/40">Font Size</Label>
+                            <span className="text-[9px] text-white/30">{Math.round((selectedElement.fontSize ?? 4.5) * 10.8)}px</span>
                           </div>
                           <Slider
-                            value={[selectedElement.fontSize ?? 1.6]}
-                            min={0.8} max={48} step={0.2}
+                            value={[selectedElement.fontSize ?? 4.5]}
+                            min={1} max={20} step={0.1}
                             onValueChange={([v]) => updateElement(selectedElement.id, { fontSize: v })}
                             className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                           />
+                          <p className="text-[8px] text-white/25">Container stays the same size — only text scales.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Font</Label>
+                          <div className="flex gap-1 flex-1">
+                            {(['tight', 'normal'] as const).map(f => (
+                              <button
+                                key={f}
+                                className={`flex-1 text-[9px] py-1 rounded border ${
+                                  ((selectedElement as any).fontStyle || 'tight') === f
+                                    ? 'bg-white/15 border-white/30 text-white'
+                                    : 'border-white/10 text-white/40 hover:bg-white/5'
+                                }`}
+                                onClick={() => updateElement(selectedElement.id, { fontStyle: f } as any)}
+                              >
+                                {f === 'tight' ? 'Agrandir Tight' : 'Normal'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Label className="text-[9px] text-white/40 w-14">Anchor</Label>
