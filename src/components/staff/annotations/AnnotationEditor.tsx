@@ -896,9 +896,12 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas — sizes to fit, leaving room below for toolbar to fill */}
-          <div ref={videoContainerRef} className="relative bg-[#12151e] flex items-center justify-center overflow-hidden flex-1 min-h-0">
-            <div className="relative" style={{
-              display: 'inline-block',
+          <div ref={videoContainerRef} className={`relative bg-[#12151e] flex items-center justify-center overflow-hidden min-h-0 ${drawingMode ? 'shrink-0 p-2' : 'flex-1'}`}>
+            <div className="relative max-w-full max-h-full" style={{
+              aspectRatio: '16 / 9',
+              width: drawingMode ? 'auto' : '100%',
+              height: drawingMode ? 'min(50vh, 100%)' : 'auto',
+              maxWidth: '100%',
               transform: `scale(${zoomLevel})`,
               transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
               transition: 'transform 0.1s ease-out',
@@ -907,7 +910,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                 ref={videoRef}
                 src={clipConstraint ? `${project.videoUrl}#t=${clipConstraint.start},${clipConstraint.end}` : project.videoUrl}
                 crossOrigin="anonymous"
-                className={`w-full aspect-video object-fill block ${drawingMode ? 'invisible' : ''}`}
+                className={`w-full h-full object-fill block ${drawingMode ? 'invisible' : ''}`}
                 muted={muted}
                 playsInline
                 preload="auto"
@@ -1168,7 +1171,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
 
           {/* Tools panel — fills the empty space below the video */}
           {drawingMode && (
-            <div className="bg-[#12151e] border-t border-white/10 shrink-0 max-h-[45vh] overflow-y-auto">
+            <div className="bg-[#12151e] border-t border-white/10 flex-1 min-h-0 overflow-y-auto">
               <AnnotationToolbar
                 activeTool={activeTool}
                 setActiveTool={setActiveTool}

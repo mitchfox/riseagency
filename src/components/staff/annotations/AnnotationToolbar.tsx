@@ -97,11 +97,11 @@ export const AnnotationToolbar = ({
   ];
 
   return (
-    <div className="p-4 flex items-stretch gap-6">
+    <div className="p-4 flex items-stretch gap-6 h-full min-h-0">
       {/* Tool grid — large, roomy, fills the panel */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Tools (most used first)</p>
-        <div className="grid gap-2 content-start" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))' }}>
+      <div className="flex-1 min-w-0 flex flex-col min-h-0">
+        <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2 shrink-0">Tools (most used first)</p>
+        <div className="grid gap-2 content-start overflow-y-auto" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))' }}>
           <TooltipProvider delayDuration={200}>
             {sortedTools.map(tool => {
               const isActive = activeTool === tool.id;
@@ -139,17 +139,17 @@ export const AnnotationToolbar = ({
       </div>
 
       {/* Right side: colours + sliders */}
-      <div className="flex items-start gap-5 border-l border-white/10 pl-5 shrink-0">
-        {/* Colour palette */}
+      <div className="flex items-start gap-4 border-l border-white/10 pl-4 shrink-0">
+        {/* Colour palette — single column 8 swatches tall, compact */}
         <div className="flex flex-col">
           <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Colour</p>
-          <div className="grid grid-cols-4 gap-1.5 max-w-[140px]">
+          <div className="grid grid-cols-9 gap-1.5 max-w-[230px]">
             <TooltipProvider delayDuration={200}>
               {brandColors.map(({ color, label }) => (
                 <Tooltip key={color}>
                   <TooltipTrigger asChild>
                     <button
-                      className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                      className={`w-6 h-6 rounded-full border-2 transition-transform ${
                         activeColor === color ? 'border-white scale-110' : 'border-white/10 hover:scale-105'
                       }`}
                       style={{ backgroundColor: color }}
@@ -161,8 +161,8 @@ export const AnnotationToolbar = ({
               ))}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <label className={`w-7 h-7 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
-                    !brandColors.some(b => b.color === activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+                  <label className={`w-6 h-6 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                    !brandColors.some(b => b.color === activeColor) && !recentColors.includes(activeColor) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
                   }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
                     <input type="color" value={activeColor} onChange={e => {
                       setActiveColor(e.target.value);
@@ -176,7 +176,7 @@ export const AnnotationToolbar = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-[10px]">Custom colour</TooltipContent>
               </Tooltip>
-              {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 3).map(c => (
+              {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 4).map(c => (
                 <button
                   key={c}
                   className={`w-6 h-6 rounded-full border transition-transform ${
@@ -191,7 +191,7 @@ export const AnnotationToolbar = ({
         </div>
 
         {/* Thickness slider */}
-        <div className="flex flex-col w-32">
+        <div className="flex flex-col w-24">
           <div className="flex items-center justify-between mb-2">
             <Label className="text-[10px] text-white/40 uppercase">Thick</Label>
             <span className="text-[10px] text-white/30 font-mono">{strokeWidth.toFixed(2)}</span>
@@ -205,7 +205,7 @@ export const AnnotationToolbar = ({
         </div>
 
         {showFillOpacity && (
-          <div className="flex flex-col w-28">
+          <div className="flex flex-col w-20">
             <div className="flex items-center justify-between mb-2">
               <Label className="text-[10px] text-white/40 uppercase">Fill</Label>
               <span className="text-[10px] text-white/30">{Math.round(fillOpacity * 100)}%</span>
