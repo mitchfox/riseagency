@@ -1417,23 +1417,28 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                         }} className="sr-only" />
                       </label>
                     </div>
-                    {recentColours.length > 0 && (
-                      <div>
-                        <span className="text-[9px] text-white/25">Recent</span>
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                          {recentColours.map(c => (
-                            <button
-                              key={c}
-                              className={`w-4 h-4 rounded-full border transition-transform ${
-                                selectedElement.color === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-                              }`}
-                              style={{ backgroundColor: c }}
-                              onClick={() => updateElement(selectedElement.id, { color: c })}
-                            />
-                          ))}
+                    {(() => {
+                      const brand = ['#C6A332', '#dc2626', '#f97316', '#facc15', '#22c55e', '#14532d', '#ffffff', '#000000'];
+                      const uniqueRecents = Array.from(new Set(recentColours)).filter(c => !brand.includes(c));
+                      if (uniqueRecents.length === 0) return null;
+                      return (
+                        <div>
+                          <span className="text-[9px] text-white/25">Recent</span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {uniqueRecents.slice(0, 8).map(c => (
+                              <button
+                                key={c}
+                                className={`w-4 h-4 rounded-full border transition-transform ${
+                                  selectedElement.color === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                                }`}
+                                style={{ backgroundColor: c }}
+                                onClick={() => updateElement(selectedElement.id, { color: c })}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
 
                   {/* Size */}
