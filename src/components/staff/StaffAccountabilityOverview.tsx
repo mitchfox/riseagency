@@ -842,7 +842,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         key: `f-${f.id}`,
         date: new Date(`${f.match_date}T${f.match_time || '12:00'}`),
         title: `${f.home_team} vs ${f.away_team}`,
-        sub: f.competition || 'Fixture',
+        sub: f.player_name ? `${f.player_name} · ${f.competition || 'Match'}` : (f.competition || 'Fixture'),
       })),
       ...upcomingTasks.map(t => ({
         kind: 'task' as const,
