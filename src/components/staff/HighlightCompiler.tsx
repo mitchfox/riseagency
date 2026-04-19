@@ -109,7 +109,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkTab, setLinkTab] = useState<"reports" | "analyses">("reports");
   const [linkPlayerId, setLinkPlayerId] = useState<string>(defaultPlayerId || "");
-  const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
+  const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; club?: string | null; image_url?: string | null; representation_status?: string | null }[]>([]);
   const [linkReports, setLinkReports] = useState<any[]>([]);
   const [linkAnalyses, setLinkAnalyses] = useState<any[]>([]);
   const [linkSearch, setLinkSearch] = useState("");
@@ -160,7 +160,10 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
   };
 
   const fetchPlayers = async () => {
-    const { data } = await supabase.from("players").select("id, name").order("name");
+    const { data } = await supabase
+      .from("players")
+      .select("id, name, position, club, image_url, representation_status")
+      .order("name");
     setPlayers(data || []);
   };
 

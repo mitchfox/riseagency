@@ -763,7 +763,104 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     toast.success(`Keyframe added at ${klipOffset.toFixed(1)}s`);
   }, [selectedId, allElements, klipOffset, updateElement]);
 
-  // (Tracker functionality removed)
+  // ── AI player tracker ────────────────────────────────────────────────────
+  // When the user picks the 'ai-track' tool and clicks on a player in the
+  // current frame, we capture frames across the active klip, send them to
+  // the ai-track-player edge function, and apply the returned positions as
+  // keyframes on a newly-created player marker.
+  const [aiTracking, setAiTracking] = useState(false);
+  const handleAiTrack = useCallback(async (xPct: number, yPct: number) => {
+    const video = videoRef.current;
+    if (!video || !activeKlip) {
+      toast.error('No active clip to track within');
+      return;
+    }
+    if (aiTracking) return;
+    setAiTracking(true);
+    const wasPaused = video.paused;
+    video.pause();
+    const originalTime = video.currentTime;
+
+    try {
+      // Sample one frame every 0.5s across the active klip — keep it light to
+      // stay within model context limits.
+      const sampleInterval = 0.5;
+      const startT = activeKlip.startTime;
+      const endT = activeKlip.endTime;
+      const times: number[] = [];
+      for (let t = startT; t <= endT + 0.001; t += sampleInterval) {
+        times.push(Math.min(t, endT));
+      }
+      if (times.length > 30) {
+        // Cap at 30 frames to keep request size manageable
+        const stride = times.length / 30;
+        const trimmed: number[] = [];
+        for (let i = 0; i < 30; i++) trimmed.push(times[Math.floor(i * stride)]);
+        times.length = 0;
+        times.push(...trimmed);
+      }
+
+      // Render each frame to a 480-wide JPEG data URL
+      const canvas = document.createElement('canvas');
+      const targetW = 480;
+      const aspect = (video.videoHeight || 9) / (video.videoWidth || 16);
+      canvas.width = targetW;
+      canvas.height = Math.round(targetW * aspect);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context unavailable');
+
+      const frames: { time: number; dataUrl: string }[] = [];
+      toast.loading(`Capturing ${times.length} frames…`, { id: 'ai-track' });
+      for (const t of times) {
+        await new Promise<void>((resolve) => {
+          const onSeeked = () => { video.removeEventListener('seeked', onSeeked); resolve(); };
+          video.addEventListener('seeked', onSeeked, { once: true });
+          video.currentTime = t;
+        });
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frames.push({ time: t - startT, dataUrl: canvas.toDataURL('image/jpeg', 0.7) });
+      }
+
+      toast.loading('Tracking player…', { id: 'ai-track' });
+      const { data, error } = await supabase.functions.invoke('ai-track-player', {
+        body: { frames, initialClick: { x: xPct, y: yPct } },
+      });
+      if (error) throw error;
+      if (!data?.positions?.length) throw new Error('No positions returned');
+
+      // Build a player-marker with keyframes (time = seconds into the klip)
+      const positions = data.positions as { time: number; x: number; y: number; confidence: number }[];
+      const newId = crypto.randomUUID();
+      const first = positions[0];
+      const newMarker: AnnotationElement = {
+        id: newId,
+        type: 'player-marker',
+        x: first.x,
+        y: first.y,
+        color: activeColor,
+        strokeWidth,
+        radius: 1.8,
+        number: 0,
+        appearAt: 0,
+        animateIn: 0.2,
+        duration: activeKlip.endTime - activeKlip.startTime,
+        keyframes: positions.map(p => ({ time: p.time, x: p.x, y: p.y })),
+        isTrackingEvent: true,
+      };
+      setElements(prev => [...prev, newMarker]);
+      setSelectedId(newId);
+      setActiveTool('select');
+      toast.success(`Tracked across ${positions.length} frames`, { id: 'ai-track' });
+    } catch (err: any) {
+      console.error('AI track failed:', err);
+      toast.error(err?.message || 'AI tracker failed', { id: 'ai-track' });
+    } finally {
+      video.currentTime = originalTime;
+      if (!wasPaused) video.play().catch(() => {});
+      setAiTracking(false);
+    }
+  }, [activeKlip, aiTracking, activeColor, strokeWidth, setElements]);
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -793,6 +890,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         if (e.key === 'v') setActiveTool('vision-cone');
         if (e.key === 'b') setActiveTool('image-layer');
         if (e.key === 'e') setActiveTool('eraser');
+        if (e.key === 'a') setActiveTool('ai-track');
       }
       // Stop propagation to prevent staff hotkeys from firing
       e.stopPropagation();
@@ -1019,6 +1117,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                     klipOffset={klipOffset}
                     onToolUsed={handleToolUsed}
                     isDrawingMode={drawingMode}
+                    onAiTrack={handleAiTrack}
                   />
                 </div>
               )}
@@ -1036,6 +1135,19 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
             {hasVisibleAnnotations && !drawingMode && (
               <div className="absolute top-2 right-2 bg-amber-500/80 text-white text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
                 <Lock className="w-3 h-3" /> Annotation visible
+              </div>
+            )}
+            {activeTool === 'ai-track' && !aiTracking && drawingMode && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1 rounded-full">
+                Click the player to AI-track them across the clip
+              </div>
+            )}
+            {aiTracking && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-40">
+                <div className="bg-[#1a1f2e] border border-white/10 rounded-lg px-5 py-4 flex items-center gap-3">
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-white/90">Tracking player with AI…</span>
+                </div>
               </div>
             )}
           </div>
