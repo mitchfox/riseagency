@@ -198,9 +198,10 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'text-banner', x: 50, y: anchor === 'top' ? 6 : 94,
-        text: txt, anchor, fontSize: 1.6, // ≈ 12px on 720p
+        text: txt, anchor, fontSize: 4.5, // ≈ 49px on 1080p — readable default
         color: '#ffffff', strokeWidth: 0, fillOpacity: 0.85,
         borderColor: '#C6A332',
+        fontStyle: 'tight',
         appearAt: appearAtNow, ...defaultTiming,
       } as any]);
       setSelectedId(newId);
