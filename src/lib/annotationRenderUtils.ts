@@ -371,7 +371,7 @@ export function renderElementsToSVGString(
         break;
 
       case 'cylinder-spotlight': {
-        const baseR = el.radius ?? 2.5;
+        const baseR = (el.width ?? el.radius) ?? 2.5;
         const colH = el.height ?? 12;
         const colour = el.color || '#ffff66';
         const fadeId = `cyl-fade-${el.id}`;
@@ -398,16 +398,43 @@ export function renderElementsToSVGString(
 
       case 'text-banner': {
         const anchor = el.anchor || 'bottom';
-        const yPos = anchor === 'top' ? 6 : 94;
-        const fontSize = el.fontSize ?? 3.5;
-        const padY = 1.2;
-        const padX = 2.5;
-        const txt = escapeXml(el.text || '');
-        const approxW = Math.max(20, Math.min(96, (el.text || '').length * fontSize * 0.55 + padX * 2));
+        const fontSize = el.fontSize ?? 1.6;
+        const txt = el.text || '';
+        const borderColour = (el as any).borderColor || '#C6A332';
+        const textColour = el.color || '#ffffff';
+        const bgFill = (el as any).bgColor || 'black';
+        const sideMargin = 4, padX = 1.5, padY = 0.6;
+        const charW = fontSize * 0.55;
+        const maxBannerW = 92;
+        const maxCharsPerLine = Math.max(8, Math.floor((maxBannerW - padX * 2) / charW));
+        const words = txt.split(/\s+/);
+        const lines: string[] = [];
+        let cur = '';
+        for (const w of words) {
+          const tentative = cur ? `${cur} ${w}` : w;
+          if (tentative.length <= maxCharsPerLine) cur = tentative;
+          else {
+            if (cur) lines.push(cur);
+            if (w.length > maxCharsPerLine) {
+              for (let i = 0; i < w.length; i += maxCharsPerLine) lines.push(w.slice(i, i + maxCharsPerLine));
+              cur = '';
+            } else cur = w;
+          }
+        }
+        if (cur) lines.push(cur);
+        if (lines.length === 0) lines.push('');
+        const longestLen = Math.max(...lines.map(l => l.length));
+        const bannerW = Math.min(maxBannerW, Math.max(12, longestLen * charW + padX * 2));
+        const lineH = fontSize * 1.25;
+        const totalH = lines.length * lineH + padY * 2;
+        const blockTop = anchor === 'top' ? sideMargin : (100 - sideMargin - totalH);
+        const lineSvgs = lines.map((ln, i) =>
+          `<text x="50%" y="${blockTop + padY + lineH * (i + 0.5)}%" fill="${textColour}" font-size="${fontSize}%" text-anchor="middle" dominant-baseline="central" font-weight="600" style="paint-order: stroke; stroke: rgba(0,0,0,0.7); stroke-width: 0.3">${escapeXml(ln)}</text>`
+        ).join('');
         parts.push(
           groupOpen,
-          `<rect x="${50 - approxW / 2}%" y="${yPos - fontSize / 2 - padY}%" width="${approxW}%" height="${fontSize + padY * 2}%" rx="1" ry="1" fill="black" fill-opacity="${el.fillOpacity ?? 0.7}" stroke="${el.color}" stroke-width="0.2"/>`,
-          `<text x="50%" y="${yPos}%" fill="${el.color || '#ffffff'}" font-size="${fontSize}%" text-anchor="middle" dominant-baseline="central" font-weight="600" style="paint-order: stroke; stroke: rgba(0,0,0,0.6); stroke-width: 0.4">${txt}</text>`,
+          `<rect x="${50 - bannerW / 2}%" y="${blockTop}%" width="${bannerW}%" height="${totalH}%" rx="0.6" ry="0.6" fill="${bgFill}" fill-opacity="${el.fillOpacity ?? 0.85}" stroke="${borderColour}" stroke-width="0.25"/>`,
+          lineSvgs,
           groupClose
         );
         break;
