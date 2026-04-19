@@ -1137,6 +1137,19 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                 <Lock className="w-3 h-3" /> Annotation visible
               </div>
             )}
+            {activeTool === 'ai-track' && !aiTracking && drawingMode && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1 rounded-full">
+                Click the player to AI-track them across the clip
+              </div>
+            )}
+            {aiTracking && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-40">
+                <div className="bg-[#1a1f2e] border border-white/10 rounded-lg px-5 py-4 flex items-center gap-3">
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-white/90">Tracking player with AI…</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Transport controls */}
