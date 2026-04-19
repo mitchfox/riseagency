@@ -31,7 +31,8 @@ export type AnnotationTool =
   | 'select' | 'line' | 'arrow' | 'curved-arrow' | 'rect' | 'circle'
   | 'spotlight' | 'player-marker' | 'eraser'
   | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
-  | 'semi-circle' | 'point' | 'space-oval' | 'image-layer';
+  | 'semi-circle' | 'point' | 'space-oval' | 'image-layer'
+  | 'cylinder-spotlight' | 'text-banner';
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
