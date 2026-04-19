@@ -198,10 +198,11 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'text-banner', x: 50, y: anchor === 'top' ? 6 : 94,
-        text: txt, anchor, fontSize: 3.5,
-        color: activeColor, strokeWidth: 0, fillOpacity: 0.7,
+        text: txt, anchor, fontSize: 1.6, // ≈ 12px on 720p
+        color: '#ffffff', strokeWidth: 0, fillOpacity: 0.85,
+        borderColor: '#C6A332',
         appearAt: appearAtNow, ...defaultTiming,
-      }]);
+      } as any]);
       setSelectedId(newId);
       onToolUsed?.();
       return;
@@ -213,7 +214,7 @@ export const AnnotationCanvas = ({
       setElements(prev => [...prev, {
         id: newId, type: 'cylinder-spotlight', x: pos.x, y: pos.y,
         color: activeColor, strokeWidth: strokeWidth || 0.4,
-        radius: 2.5, height: 12, fillOpacity: 0.45,
+        radius: 2.5, width: 2.5, height: 12, fillOpacity: 0.45,
         appearAt: appearAtNow, ...defaultTiming,
       }]);
       setSelectedId(newId);
