@@ -74,7 +74,10 @@ export const AnnotationToolbar = ({
 }: AnnotationToolbarProps) => {
   const showFillOpacity = ['rect', 'circle', 'spotlight', 'magnifier', 'semi-circle', 'vision-cone', 'space-oval'].includes(activeTool);
   const [recentColors, setRecentColors] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]'); } catch { return []; }
+    try {
+      const raw = JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      return Array.from(new Set(Array.isArray(raw) ? raw : [])).slice(0, 8) as string[];
+    } catch { return []; }
   });
   const [usage, setUsage] = useState<Record<string, number>>(loadUsage);
 
@@ -176,7 +179,7 @@ export const AnnotationToolbar = ({
                       onChange={e => {
                         setActiveColor(e.target.value);
                         setRecentColors(prev => {
-                          const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 8);
+                          const next = Array.from(new Set([e.target.value, ...prev])).slice(0, 8);
                           try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
                           return next;
                         });
