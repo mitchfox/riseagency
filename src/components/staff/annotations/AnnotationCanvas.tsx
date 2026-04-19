@@ -17,6 +17,7 @@ interface AnnotationCanvasProps {
   klipOffset?: number;
   onToolUsed?: () => void;
   isDrawingMode?: boolean;
+  onAiTrack?: (xPct: number, yPct: number) => void;
 }
 
 /** Convert dashPattern to SVG strokeDasharray */
@@ -53,7 +54,7 @@ const SEMI_CIRCLE_DEFAULT_H = 1.0;
 export const AnnotationCanvas = ({
   elements, setElements, activeTool, activeColor, strokeWidth, fillOpacity,
   selectedId, setSelectedId, videoRef, linkSource, setLinkSource, klipOffset = 0,
-  onToolUsed, isDrawingMode = false,
+  onToolUsed, isDrawingMode = false, onAiTrack,
 }: AnnotationCanvasProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -110,6 +111,11 @@ export const AnnotationCanvas = ({
         const id = target.getAttribute('data-element-id')!;
         setElements(prev => prev.filter(el => el.id !== id));
       }
+      return;
+    }
+
+    if (activeTool === 'ai-track') {
+      onAiTrack?.(pos.x, pos.y);
       return;
     }
 
