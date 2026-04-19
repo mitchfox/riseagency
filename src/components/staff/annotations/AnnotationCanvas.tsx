@@ -488,15 +488,16 @@ export const AnnotationCanvas = ({
         const ldx = (el.x2 ?? el.x) - el.x;
         const ldy = (el.y2 ?? el.y) - el.y;
         const lineLen = Math.sqrt(ldx * ldx + ldy * ldy) || 1;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <line
               x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round"
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${lineLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${lineLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -508,14 +509,11 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        // SVG markers default to markerUnits="strokeWidth", so the on-screen
-        // marker length is mw * strokeWidth in the same units as the line.
-        // Trim by the FULL marker length so the line ends exactly where the
-        // arrowhead tip starts — anything less leaves the line poking through.
         const trim = mw * el.strokeWidth;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = el.x + adx * trimRatio;
         const ty2 = el.y + ady * trimRatio;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -525,10 +523,10 @@ export const AnnotationCanvas = ({
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${arrowLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -547,8 +545,8 @@ export const AnnotationCanvas = ({
         const ny = dx / len;
         const cx = mx + nx * offset;
         const cy = my + ny * offset;
-        // Approximate curve length for draw-on
         const curveLen = len * 1.3;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -560,10 +558,10 @@ export const AnnotationCanvas = ({
               d={`M ${el.x} ${el.y} Q ${cx} ${cy} ${el.x2 ?? el.x} ${el.y2 ?? el.y}`}
               stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
               markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${curveLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${curveLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="3s" fill="freeze" />}
             </path>
           </g>
         );
