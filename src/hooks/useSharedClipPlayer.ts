@@ -208,9 +208,14 @@ export const useSharedClipPlayer = (): SharedClipPlayerState => {
       return;
     }
 
-    // Different source — load it once
+    // Different source — load it once. Use a media-fragment URL so the
+    // browser only fetches the byte range we need. Without this, full-match
+    // videos (>1GB) try to download the whole file before the first byte plays
+    // which causes very long buffering on reports clipped from the old
+    // video-analysis pipeline.
     loadedSourceRef.current = clip.videoUrl;
-    vid.src = clip.videoUrl;
+    const fragmentUrl = `${clip.videoUrl}#t=${clip.clipStart.toFixed(3)},${clip.clipEnd.toFixed(3)}`;
+    vid.src = fragmentUrl;
 
     vid.addEventListener('loadedmetadata', () => {
       seekAndPlay();
