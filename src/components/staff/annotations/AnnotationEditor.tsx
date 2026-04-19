@@ -897,11 +897,11 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas — sizes to fit, leaving room below for toolbar to fill */}
-          <div ref={videoContainerRef} className={`relative bg-[#12151e] flex items-center justify-center overflow-hidden min-h-0 ${drawingMode ? 'shrink-0 p-2' : 'flex-1'}`}>
+          <div ref={videoContainerRef} className="relative bg-[#12151e] flex items-center justify-center overflow-hidden min-h-0 flex-1">
             <div className="relative max-w-full max-h-full" style={{
               aspectRatio: '16 / 9',
-              width: drawingMode ? 'auto' : '100%',
-              height: drawingMode ? 'min(50vh, 100%)' : 'auto',
+              width: '100%',
+              height: 'auto',
               maxWidth: '100%',
               transform: `scale(${zoomLevel})`,
               transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
