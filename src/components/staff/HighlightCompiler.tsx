@@ -160,7 +160,10 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
   };
 
   const fetchPlayers = async () => {
-    const { data } = await supabase.from("players").select("id, name").order("name");
+    const { data } = await supabase
+      .from("players")
+      .select("id, name, position, club, image_url, representation_status")
+      .order("name");
     setPlayers(data || []);
   };
 
