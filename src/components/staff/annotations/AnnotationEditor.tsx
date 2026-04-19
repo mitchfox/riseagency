@@ -890,6 +890,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         if (e.key === 'v') setActiveTool('vision-cone');
         if (e.key === 'b') setActiveTool('image-layer');
         if (e.key === 'e') setActiveTool('eraser');
+        if (e.key === 'a') setActiveTool('ai-track');
       }
       // Stop propagation to prevent staff hotkeys from firing
       e.stopPropagation();
