@@ -151,20 +151,48 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     localStorage.setItem("staff_aliases", JSON.stringify(aliases));
   };
 
-  const [fixtures, setFixtures] = useState<Array<{ id: string; home_team: string; away_team: string; match_date: string; match_time: string | null; competition: string | null }>>([]);
+  const [fixtures, setFixtures] = useState<Array<{ id: string; home_team: string; away_team: string; match_date: string; match_time: string | null; competition: string | null; player_name?: string | null; player_club?: string | null }>>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const yearStart2 = new Date(new Date().getFullYear(), 0, 1).toISOString();
     const todayIso = new Date().toISOString().slice(0, 10);
     const inSevenDaysIso = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }, { data: fixturesData }] = await Promise.all([
+    const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }, { data: fixturesData }, { data: representedPlayers }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
       supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
       supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
+      supabase.from('players').select('name, club').in('representation_status', ['represented', 'mandated']),
     ]);
+
+    // Filter fixtures to only those involving a represented player's club
+    // and tag them with player_name for display.
+    const playersByClub = new Map<string, { name: string; club: string }>();
+    (representedPlayers || []).forEach((p: any) => {
+      if (p.club) {
+        const k = p.club.toLowerCase().trim();
+        if (!playersByClub.has(k)) playersByClub.set(k, { name: p.name, club: p.club });
+      }
+    });
+    const matchClub = (team: string) => {
+      const k = (team || '').toLowerCase().trim();
+      // Direct match first; fall back to substring match either direction.
+      if (playersByClub.has(k)) return playersByClub.get(k);
+      for (const [club, info] of playersByClub.entries()) {
+        if (k.includes(club) || club.includes(k)) return info;
+      }
+      return null;
+    };
+    const filteredFixtures = (fixturesData || [])
+      .map((f: any) => {
+        const home = matchClub(f.home_team);
+        const away = matchClub(f.away_team);
+        const player = home || away;
+        return player ? { ...f, player_name: player.name, player_club: player.club } : null;
+      })
+      .filter(Boolean);
 
     // Only admins on My Tasks
     const adminIds = new Set(CORE_STAFF_IDS);
@@ -175,7 +203,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     setScheduleItems((scheduleData || []) as ScheduleTaskItem[]);
     setStaffMembers(adminProfiles);
     setActivityLog((activityData || []) as ActivityLogEntry[]);
-    setFixtures((fixturesData || []) as any);
+    setFixtures(filteredFixtures as any);
 
     if (userId) {
       const idx = adminProfiles.findIndex(p => p.id === userId);
@@ -814,7 +842,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         key: `f-${f.id}`,
         date: new Date(`${f.match_date}T${f.match_time || '12:00'}`),
         title: `${f.home_team} vs ${f.away_team}`,
-        sub: f.competition || 'Fixture',
+        sub: f.player_name ? `${f.player_name} · ${f.competition || 'Match'}` : (f.competition || 'Fixture'),
       })),
       ...upcomingTasks.map(t => ({
         kind: 'task' as const,

@@ -190,6 +190,37 @@ export const AnnotationCanvas = ({
       return;
     }
 
+    if (activeTool === 'text-banner') {
+      const txt = prompt('Banner text:');
+      if (!txt) return;
+      // Anchor to bottom by default if click is in lower half, else top
+      const anchor: 'top' | 'bottom' = pos.y > 50 ? 'bottom' : 'top';
+      const newId = crypto.randomUUID();
+      setElements(prev => [...prev, {
+        id: newId, type: 'text-banner', x: 50, y: anchor === 'top' ? 6 : 94,
+        text: txt, anchor, fontSize: 3.5,
+        color: activeColor, strokeWidth: 0, fillOpacity: 0.7,
+        appearAt: appearAtNow, ...defaultTiming,
+      }]);
+      setSelectedId(newId);
+      onToolUsed?.();
+      return;
+    }
+
+    if (activeTool === 'cylinder-spotlight') {
+      // Single-click placement: cone marker with a fading vertical cylinder rising from it
+      const newId = crypto.randomUUID();
+      setElements(prev => [...prev, {
+        id: newId, type: 'cylinder-spotlight', x: pos.x, y: pos.y,
+        color: activeColor, strokeWidth: strokeWidth || 0.4,
+        radius: 2.5, height: 12, fillOpacity: 0.45,
+        appearAt: appearAtNow, ...defaultTiming,
+      }]);
+      setSelectedId(newId);
+      onToolUsed?.();
+      return;
+    }
+
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
@@ -457,15 +488,16 @@ export const AnnotationCanvas = ({
         const ldx = (el.x2 ?? el.x) - el.x;
         const ldy = (el.y2 ?? el.y) - el.y;
         const lineLen = Math.sqrt(ldx * ldx + ldy * ldy) || 1;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <line
               x1={`${el.x}%`} y1={`${el.y}%`} x2={`${el.x2}%`} y2={`${el.y2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round"
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${lineLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${lineLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${lineLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -477,14 +509,11 @@ export const AnnotationCanvas = ({
         const adx = (el.x2 ?? el.x) - el.x;
         const ady = (el.y2 ?? el.y) - el.y;
         const arrowLen = Math.sqrt(adx * adx + ady * ady) || 1;
-        // SVG markers default to markerUnits="strokeWidth", so the on-screen
-        // marker length is mw * strokeWidth in the same units as the line.
-        // Trim by the FULL marker length so the line ends exactly where the
-        // arrowhead tip starts — anything less leaves the line poking through.
         const trim = mw * el.strokeWidth;
         const trimRatio = Math.max(0, (arrowLen - trim) / arrowLen);
         const tx2 = el.x + adx * trimRatio;
         const ty2 = el.y + ady * trimRatio;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -494,10 +523,10 @@ export const AnnotationCanvas = ({
             </defs>
             <line x1={`${el.x}%`} y1={`${el.y}%`} x2={`${tx2}%`} y2={`${ty2}%`}
               stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${arrowLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${arrowLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${arrowLen}`} to="0" dur="3s" fill="freeze" />}
             </line>
           </g>
         );
@@ -516,8 +545,8 @@ export const AnnotationCanvas = ({
         const ny = dx / len;
         const cx = mx + nx * offset;
         const cy = my + ny * offset;
-        // Approximate curve length for draw-on
         const curveLen = len * 1.3;
+        const isDashed = el.dashPattern && el.dashPattern !== 'solid';
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <defs>
@@ -529,10 +558,10 @@ export const AnnotationCanvas = ({
               d={`M ${el.x} ${el.y} Q ${cx} ${cy} ${el.x2 ?? el.x} ${el.y2 ?? el.y}`}
               stroke={el.color} strokeWidth={el.strokeWidth} fill="none" strokeLinecap="round"
               markerEnd={`url(#${mid})`}
-              strokeDasharray={getDashArray(el.dashPattern, el.strokeWidth) || `${curveLen}`}
-              strokeDashoffset={anim ? undefined : 0}
+              strokeDasharray={isDashed ? getDashArray(el.dashPattern, el.strokeWidth) : `${curveLen}`}
+              strokeDashoffset={anim && !isDashed ? undefined : 0}
             >
-              {anim && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="3s" fill="freeze" />}
+              {anim && !isDashed && <animate attributeName="stroke-dashoffset" from={`${curveLen}`} to="0" dur="3s" fill="freeze" />}
             </path>
           </g>
         );
@@ -1056,6 +1085,72 @@ export const AnnotationCanvas = ({
                 pointerEvents="none"
               />
             )}
+          </g>
+        );
+      }
+      case 'cylinder-spotlight': {
+        const baseR = el.radius ?? 2.5;
+        const colH = el.height ?? 12;
+        const colour = el.color || '#ffff66';
+        const fadeId = `cyl-fade-${el.id}`;
+        const ringId = `cyl-ring-${el.id}`;
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <linearGradient id={fadeId} x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor={colour} stopOpacity={el.fillOpacity ?? 0.45} />
+                <stop offset="100%" stopColor={colour} stopOpacity={0} />
+              </linearGradient>
+              <radialGradient id={ringId} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={colour} stopOpacity={0.85} />
+                <stop offset="100%" stopColor={colour} stopOpacity={0.2} />
+              </radialGradient>
+            </defs>
+            {/* Vertical cylinder rising from base */}
+            <ellipse cx={`${el.x}%`} cy={`${el.y - colH}%`} rx={`${baseR * 0.85}%`} ry={`${baseR * 0.3}%`}
+              fill={colour} fillOpacity={0} />
+            <path
+              d={`M ${el.x - baseR} ${el.y} A ${baseR} ${baseR * 0.35} 0 0 0 ${el.x + baseR} ${el.y}
+                  L ${el.x + baseR * 0.85} ${el.y - colH}
+                  A ${baseR * 0.85} ${baseR * 0.3} 0 0 1 ${el.x - baseR * 0.85} ${el.y - colH} Z`}
+              fill={`url(#${fadeId})`} stroke="none"
+            />
+            {/* Base ring (cone marker) */}
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR}%`} ry={`${baseR * 0.35}%`}
+              fill={`url(#${ringId})`} stroke={colour} strokeWidth={el.strokeWidth || 0.4} strokeOpacity={0.9}
+            />
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR * 0.6}%`} ry={`${baseR * 0.2}%`}
+              fill="white" fillOpacity={0.5}
+            />
+          </g>
+        );
+      }
+      case 'text-banner': {
+        const anchor = el.anchor || 'bottom';
+        const yPos = anchor === 'top' ? 6 : 94;
+        const fontSize = el.fontSize ?? 3.5;
+        const padX = 2.5;
+        const padY = 1.2;
+        const txt = el.text || '';
+        const approxW = Math.max(20, Math.min(96, txt.length * fontSize * 0.55 + padX * 2));
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <rect
+              x={`${50 - approxW / 2}%`} y={`${yPos - fontSize / 2 - padY}%`}
+              width={`${approxW}%`} height={`${fontSize + padY * 2}%`}
+              rx={1} ry={1}
+              fill="black" fillOpacity={el.fillOpacity ?? 0.7}
+              stroke={el.color} strokeWidth={0.2}
+            />
+            <text
+              x="50%" y={`${yPos}%`}
+              fill={el.color || '#ffffff'} fontSize={`${fontSize}%`}
+              textAnchor="middle" dominantBaseline="central"
+              fontWeight="600"
+              style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.6)', strokeWidth: 0.4 }}
+            >
+              {txt}
+            </text>
           </g>
         );
       }

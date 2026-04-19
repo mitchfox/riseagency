@@ -22,7 +22,10 @@ export interface AnnotationElement {
   id: string;
   type: 'line' | 'arrow' | 'curved-arrow' | 'curve' | 'rect' | 'circle' | 'spotlight' | 'text' | 'freehand'
     | 'player-marker' | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
-    | 'semi-circle' | 'point' | 'space-oval' | 'image-layer';
+    | 'semi-circle' | 'point' | 'space-oval' | 'image-layer'
+    | 'cylinder-spotlight' | 'text-banner';
+  /** For text-banner: 'top' or 'bottom' anchoring with margins */
+  anchor?: 'top' | 'bottom';
   x: number;
   y: number;
   x2?: number;
