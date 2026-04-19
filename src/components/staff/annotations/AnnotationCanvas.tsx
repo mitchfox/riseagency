@@ -1088,6 +1088,72 @@ export const AnnotationCanvas = ({
           </g>
         );
       }
+      case 'cylinder-spotlight': {
+        const baseR = el.radius ?? 2.5;
+        const colH = el.height ?? 12;
+        const colour = el.color || '#ffff66';
+        const fadeId = `cyl-fade-${el.id}`;
+        const ringId = `cyl-ring-${el.id}`;
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <defs>
+              <linearGradient id={fadeId} x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor={colour} stopOpacity={el.fillOpacity ?? 0.45} />
+                <stop offset="100%" stopColor={colour} stopOpacity={0} />
+              </linearGradient>
+              <radialGradient id={ringId} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={colour} stopOpacity={0.85} />
+                <stop offset="100%" stopColor={colour} stopOpacity={0.2} />
+              </radialGradient>
+            </defs>
+            {/* Vertical cylinder rising from base */}
+            <ellipse cx={`${el.x}%`} cy={`${el.y - colH}%`} rx={`${baseR * 0.85}%`} ry={`${baseR * 0.3}%`}
+              fill={colour} fillOpacity={0} />
+            <path
+              d={`M ${el.x - baseR} ${el.y} A ${baseR} ${baseR * 0.35} 0 0 0 ${el.x + baseR} ${el.y}
+                  L ${el.x + baseR * 0.85} ${el.y - colH}
+                  A ${baseR * 0.85} ${baseR * 0.3} 0 0 1 ${el.x - baseR * 0.85} ${el.y - colH} Z`}
+              fill={`url(#${fadeId})`} stroke="none"
+            />
+            {/* Base ring (cone marker) */}
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR}%`} ry={`${baseR * 0.35}%`}
+              fill={`url(#${ringId})`} stroke={colour} strokeWidth={el.strokeWidth || 0.4} strokeOpacity={0.9}
+            />
+            <ellipse cx={`${el.x}%`} cy={`${el.y}%`} rx={`${baseR * 0.6}%`} ry={`${baseR * 0.2}%`}
+              fill="white" fillOpacity={0.5}
+            />
+          </g>
+        );
+      }
+      case 'text-banner': {
+        const anchor = el.anchor || 'bottom';
+        const yPos = anchor === 'top' ? 6 : 94;
+        const fontSize = el.fontSize ?? 3.5;
+        const padX = 2.5;
+        const padY = 1.2;
+        const txt = el.text || '';
+        const approxW = Math.max(20, Math.min(96, txt.length * fontSize * 0.55 + padX * 2));
+        return (
+          <g key={el.id} data-element-id={el.id} style={selStyle}>
+            <rect
+              x={`${50 - approxW / 2}%`} y={`${yPos - fontSize / 2 - padY}%`}
+              width={`${approxW}%`} height={`${fontSize + padY * 2}%`}
+              rx={1} ry={1}
+              fill="black" fillOpacity={el.fillOpacity ?? 0.7}
+              stroke={el.color} strokeWidth={0.2}
+            />
+            <text
+              x="50%" y={`${yPos}%`}
+              fill={el.color || '#ffffff'} fontSize={`${fontSize}%`}
+              textAnchor="middle" dominantBaseline="central"
+              fontWeight="600"
+              style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.6)', strokeWidth: 0.4 }}
+            >
+              {txt}
+            </text>
+          </g>
+        );
+      }
       default:
         return null;
     }
