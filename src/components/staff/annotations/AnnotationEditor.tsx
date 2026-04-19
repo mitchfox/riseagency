@@ -32,7 +32,7 @@ export type AnnotationTool =
   | 'spotlight' | 'player-marker' | 'eraser'
   | 'vision-cone' | 'distance' | 'magnifier' | 'linked-line'
   | 'semi-circle' | 'point' | 'space-oval' | 'image-layer'
-  | 'cylinder-spotlight' | 'text-banner';
+  | 'cylinder-spotlight' | 'text-banner' | 'ai-track';
 
 // interpolateKeyframes moved to annotationRenderUtils.ts
 
