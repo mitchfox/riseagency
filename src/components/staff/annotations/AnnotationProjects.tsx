@@ -26,6 +26,10 @@ export interface AnnotationElement {
     | 'cylinder-spotlight' | 'text-banner';
   /** For text-banner: 'top' or 'bottom' anchoring with margins */
   anchor?: 'top' | 'bottom';
+  /** For text-banner: border colour (default Rise Gold) */
+  borderColor?: string;
+  /** For text-banner: background fill colour (default black) */
+  bgColor?: string;
   x: number;
   y: number;
   x2?: number;
