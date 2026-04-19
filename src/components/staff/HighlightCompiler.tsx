@@ -113,6 +113,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
   const [linkReports, setLinkReports] = useState<any[]>([]);
   const [linkAnalyses, setLinkAnalyses] = useState<any[]>([]);
   const [linkSearch, setLinkSearch] = useState("");
+  const [playerSearch, setPlayerSearch] = useState("");
 
   // ── New project dialog ──
   const [newProjectOpen, setNewProjectOpen] = useState(false);
