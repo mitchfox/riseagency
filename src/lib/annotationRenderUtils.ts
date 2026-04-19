@@ -369,6 +369,49 @@ export function renderElementsToSVGString(
           groupClose
         );
         break;
+
+      case 'cylinder-spotlight': {
+        const baseR = el.radius ?? 2.5;
+        const colH = el.height ?? 12;
+        const colour = el.color || '#ffff66';
+        const fadeId = `cyl-fade-${el.id}`;
+        const ringId = `cyl-ring-${el.id}`;
+        parts.push(
+          groupOpen,
+          `<defs>`,
+          `<linearGradient id="${fadeId}" x1="0%" y1="100%" x2="0%" y2="0%">`,
+          `<stop offset="0%" stop-color="${colour}" stop-opacity="${el.fillOpacity ?? 0.45}"/>`,
+          `<stop offset="100%" stop-color="${colour}" stop-opacity="0"/>`,
+          `</linearGradient>`,
+          `<radialGradient id="${ringId}" cx="50%" cy="50%" r="50%">`,
+          `<stop offset="0%" stop-color="${colour}" stop-opacity="0.85"/>`,
+          `<stop offset="100%" stop-color="${colour}" stop-opacity="0.2"/>`,
+          `</radialGradient>`,
+          `</defs>`,
+          `<path d="M ${x - baseR} ${y} A ${baseR} ${baseR * 0.35} 0 0 0 ${x + baseR} ${y} L ${x + baseR * 0.85} ${y - colH} A ${baseR * 0.85} ${baseR * 0.3} 0 0 1 ${x - baseR * 0.85} ${y - colH} Z" fill="url(#${fadeId})" stroke="none"/>`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${baseR}%" ry="${baseR * 0.35}%" fill="url(#${ringId})" stroke="${colour}" stroke-width="${el.strokeWidth || 0.4}" stroke-opacity="0.9"/>`,
+          `<ellipse cx="${x}%" cy="${y}%" rx="${baseR * 0.6}%" ry="${baseR * 0.2}%" fill="white" fill-opacity="0.5"/>`,
+          groupClose
+        );
+        break;
+      }
+
+      case 'text-banner': {
+        const anchor = el.anchor || 'bottom';
+        const yPos = anchor === 'top' ? 6 : 94;
+        const fontSize = el.fontSize ?? 3.5;
+        const padY = 1.2;
+        const padX = 2.5;
+        const txt = escapeXml(el.text || '');
+        const approxW = Math.max(20, Math.min(96, (el.text || '').length * fontSize * 0.55 + padX * 2));
+        parts.push(
+          groupOpen,
+          `<rect x="${50 - approxW / 2}%" y="${yPos - fontSize / 2 - padY}%" width="${approxW}%" height="${fontSize + padY * 2}%" rx="1" ry="1" fill="black" fill-opacity="${el.fillOpacity ?? 0.7}" stroke="${el.color}" stroke-width="0.2"/>`,
+          `<text x="50%" y="${yPos}%" fill="${el.color || '#ffffff'}" font-size="${fontSize}%" text-anchor="middle" dominant-baseline="central" font-weight="600" style="paint-order: stroke; stroke: rgba(0,0,0,0.6); stroke-width: 0.4">${txt}</text>`,
+          groupClose
+        );
+        break;
+      }
     }
   }
 
