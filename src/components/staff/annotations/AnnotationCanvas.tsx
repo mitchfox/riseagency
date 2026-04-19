@@ -1013,15 +1013,37 @@ export const AnnotationCanvas = ({
           </g>
         );
       }
-      case 'point':
+      case 'point': {
+        const pr = el.radius || 1;
+        const pulseId = `pt-pulse-${el.id}`;
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
-            <circle cx={el.x} cy={el.y} r={el.radius || 1} fill={el.color} fillOpacity={0.9}
+            <defs>
+              <radialGradient id={pulseId} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={el.color} stopOpacity={0.6} />
+                <stop offset="100%" stopColor={el.color} stopOpacity={0} />
+              </radialGradient>
+            </defs>
+            {/* Outward pulse ring */}
+            <circle cx={el.x} cy={el.y} r={pr * 2.5} fill={`url(#${pulseId})`} stroke="none">
+              {anim && <animate attributeName="r" values={`${pr};${pr * 3.2};${pr}`} dur="2.4s" repeatCount="indefinite" />}
+              {anim && <animate attributeName="opacity" values="0.9;0;0.9" dur="2.4s" repeatCount="indefinite" />}
+            </circle>
+            {/* Spinning dashed orbit ring */}
+            <circle cx={el.x} cy={el.y} r={pr * 1.6}
+              fill="none" stroke={el.color} strokeWidth={Math.max(pr * 0.18, 0.2)}
+              strokeOpacity={0.55}
+              strokeDasharray={`${pr * 0.6} ${pr * 0.5}`}
+            >
+              {anim && <animate attributeName="stroke-dashoffset" from={`${pr * 4}`} to="0" dur="3s" repeatCount="indefinite" />}
+            </circle>
+            <circle cx={el.x} cy={el.y} r={pr} fill={el.color} fillOpacity={0.95}
               stroke="white" strokeWidth={0.3}>
-              {anim && <animate attributeName="r" from="0" to={String(el.radius || 1)} dur="1s" fill="freeze" />}
+              {anim && <animate attributeName="r" from="0" to={String(pr)} dur="0.4s" fill="freeze" />}
             </circle>
           </g>
         );
+      }
       case 'image-layer': {
         // Image layer: captures video frame via canvas and renders on top
         const video = videoRef.current;
