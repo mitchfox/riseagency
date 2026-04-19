@@ -897,19 +897,6 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
         <div className="flex-1 flex flex-col min-w-0">
           {/* Canvas */}
           <div ref={videoContainerRef} className="flex-1 relative bg-[#12151e] flex items-center justify-center overflow-hidden">
-            {/* Floating tools panel - bottom-right corner of video */}
-            {drawingMode && (
-              <AnnotationToolbar
-                activeTool={activeTool}
-                setActiveTool={setActiveTool}
-                activeColor={activeColor}
-                setActiveColor={handleSetActiveColor}
-                strokeWidth={strokeWidth}
-                setStrokeWidth={handleSetStrokeWidth}
-                fillOpacity={fillOpacity}
-                setFillOpacity={setFillOpacity}
-              />
-            )}
             <div className="relative" style={{
               display: 'inline-block',
               transform: `scale(${zoomLevel})`,
@@ -1178,6 +1165,22 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               )}
             </div>
           </div>
+
+          {/* Tools panel — fills the empty space below the video */}
+          {drawingMode && (
+            <div className="bg-[#12151e] border-t border-white/10 shrink-0">
+              <AnnotationToolbar
+                activeTool={activeTool}
+                setActiveTool={setActiveTool}
+                activeColor={activeColor}
+                setActiveColor={handleSetActiveColor}
+                strokeWidth={strokeWidth}
+                setStrokeWidth={handleSetStrokeWidth}
+                fillOpacity={fillOpacity}
+                setFillOpacity={setFillOpacity}
+              />
+            </div>
+          )}
         </div>
 
         {/* Right sidebar */}
@@ -1559,7 +1562,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                           </div>
                           <Slider
                             value={[selectedElement.fontSize ?? 1.6]}
-                            min={0.8} max={6} step={0.1}
+                            min={0.8} max={48} step={0.2}
                             onValueChange={([v]) => updateElement(selectedElement.id, { fontSize: v })}
                             className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                           />

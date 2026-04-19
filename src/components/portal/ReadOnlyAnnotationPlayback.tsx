@@ -816,8 +816,8 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
         }
         if (cur) lines.push(cur);
         if (lines.length === 0) lines.push('');
-        const longestLen = Math.max(...lines.map(l => l.length));
-        const bannerW = Math.min(maxBannerW, Math.max(12, longestLen * charW + padX * 2));
+        // Banner width fixed at maxBannerW so font-size only affects text + wrapping.
+        const bannerW = maxBannerW;
         const lineH = fontSize * 1.25;
         const totalH = lines.length * lineH + padY * 2;
         const blockTop = anchor === 'top' ? sideMargin : (100 - sideMargin - totalH);

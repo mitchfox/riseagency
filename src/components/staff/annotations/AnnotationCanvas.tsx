@@ -1208,9 +1208,9 @@ export const AnnotationCanvas = ({
         if (cur) lines.push(cur);
         if (lines.length === 0) lines.push('');
 
-        // Width = widest line × charW + padding, clamped to max
-        const longestLen = Math.max(...lines.map(l => l.length));
-        const bannerW = Math.min(maxBannerW, Math.max(12, longestLen * charW + padX * 2));
+        // Banner width is FIXED at maxBannerW so font-size changes only
+        // affect text size + line wrapping, not the box width itself.
+        const bannerW = maxBannerW;
         const lineH = fontSize * 1.25;
         const totalH = lines.length * lineH + padY * 2;
 
