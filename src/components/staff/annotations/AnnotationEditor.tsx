@@ -688,16 +688,33 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     setFreezeFrameUrl(null);
     setActiveTool('select');
     setSelectedId(null);
+    // Clear all freeze/trigger state so newly drawn annotations are evaluated
+    // against the resumed timeline as if from scratch — without this, the
+    // previous annotation's freeze IDs bleed onto the next playback frame and
+    // either prevent the new one from showing or show stale ones at the wrong
+    // timestamp.
+    if (playbackFreezeTimerRef.current) clearTimeout(playbackFreezeTimerRef.current);
+    setPlaybackFreezeUrl(null);
+    setPlaybackFreezeActive(false);
+    setPlaybackFreezePhase('idle');
+    triggeredTimesRef.current.clear();
+    freezeElementIdsRef.current.clear();
     // Elements are already in the klip — just close drawing mode
     handleSave();
     toast.success("Annotation saved");
-    // Resume video playback
+    // Rewind 1.5 seconds before the just-drawn annotation timestamp so the
+    // user sees it appear naturally on resume rather than immediately after
+    // the freeze frame closes.
     const video = videoRef.current;
-    if (video && video.currentTime < (video.duration || 0)) {
-      video.play();
-      setIsPlaying(true);
+    if (video) {
+      const target = Math.max(activeKlip?.startTime ?? 0, drawingTimestamp - 1.5);
+      video.currentTime = target;
+      if (video.currentTime < (video.duration || 0)) {
+        video.play().catch(() => {});
+        setIsPlaying(true);
+      }
     }
-  }, [handleSave]);
+  }, [handleSave, activeKlip, drawingTimestamp]);
 
   const cancelDrawing = useCallback(() => {
     // Revert elements to what they were before drawing started
