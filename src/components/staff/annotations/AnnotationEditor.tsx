@@ -1116,6 +1116,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                     klipOffset={klipOffset}
                     onToolUsed={handleToolUsed}
                     isDrawingMode={drawingMode}
+                    onAiTrack={handleAiTrack}
                   />
                 </div>
               )}
