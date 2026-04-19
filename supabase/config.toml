@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.parse-stats-url]
 verify_jwt = false
+
+[functions.ai-track-player]
+verify_jwt = false
