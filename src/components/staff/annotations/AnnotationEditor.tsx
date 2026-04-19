@@ -112,7 +112,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
   const [isRenaming, setIsRenaming] = useState(false);
   const [recentColours, setRecentColours] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      const raw = JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      return Array.from(new Set(Array.isArray(raw) ? raw : [])).slice(0, 8) as string[];
     } catch { return []; }
   });
   // Playback freeze state (separate from drawing mode freeze)
@@ -1382,47 +1383,63 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                       />
                       <span className="text-[9px] text-white/30 font-mono">{selectedElement.color}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {[{ color: '#C6A332', label: 'Rise Gold' }, { color: '#ffffff', label: 'White' }, { color: '#000000', label: 'Black' }].map(({ color }) => (
+                    <div className="grid grid-cols-9 gap-1">
+                      {[
+                        { color: '#C6A332', label: 'Rise Gold' },
+                        { color: '#dc2626', label: 'Red' },
+                        { color: '#f97316', label: 'Orange' },
+                        { color: '#facc15', label: 'Yellow' },
+                        { color: '#22c55e', label: 'Green' },
+                        { color: '#14532d', label: 'Dark Green' },
+                        { color: '#ffffff', label: 'White' },
+                        { color: '#000000', label: 'Black' },
+                      ].map(({ color, label }) => (
                         <button
                           key={color}
-                          className={`w-5 h-5 rounded-full border-2 transition-transform ${
-                            selectedElement.color === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                          title={label}
+                          className={`aspect-square rounded-full border-2 transition-transform ${
+                            selectedElement.color === color ? 'border-white scale-110' : 'border-white/10 hover:scale-105'
                           }`}
                           style={{ backgroundColor: color }}
                           onClick={() => updateElement(selectedElement.id, { color })}
                         />
                       ))}
-                      <label className={`w-5 h-5 rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
-                        !['#C6A332', '#ffffff', '#000000'].includes(selectedElement.color) ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
+                      <label className={`aspect-square rounded-full cursor-pointer border-2 transition-transform overflow-hidden ${
+                        !['#C6A332', '#dc2626', '#f97316', '#facc15', '#22c55e', '#14532d', '#ffffff', '#000000'].includes(selectedElement.color)
+                          ? 'border-white scale-110' : 'border-white/30 hover:scale-105'
                       }`} style={{ background: 'conic-gradient(red,yellow,lime,aqua,blue,magenta,red)' }}>
                         <input type="color" value={selectedElement.color} onChange={e => {
                           updateElement(selectedElement.id, { color: e.target.value });
                           setRecentColours(prev => {
-                            const updated = [e.target.value, ...prev.filter(x => x !== e.target.value)].slice(0, 8);
+                            const updated = Array.from(new Set([e.target.value, ...prev])).slice(0, 8);
                             localStorage.setItem('annotation-recent-colours', JSON.stringify(updated));
                             return updated;
                           });
                         }} className="sr-only" />
                       </label>
                     </div>
-                    {recentColours.length > 0 && (
-                      <div>
-                        <span className="text-[9px] text-white/25">Recent</span>
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                          {recentColours.map(c => (
-                            <button
-                              key={c}
-                              className={`w-4 h-4 rounded-full border transition-transform ${
-                                selectedElement.color === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-                              }`}
-                              style={{ backgroundColor: c }}
-                              onClick={() => updateElement(selectedElement.id, { color: c })}
-                            />
-                          ))}
+                    {(() => {
+                      const brand = ['#C6A332', '#dc2626', '#f97316', '#facc15', '#22c55e', '#14532d', '#ffffff', '#000000'];
+                      const uniqueRecents = Array.from(new Set(recentColours)).filter(c => !brand.includes(c));
+                      if (uniqueRecents.length === 0) return null;
+                      return (
+                        <div>
+                          <span className="text-[9px] text-white/25">Recent</span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {uniqueRecents.slice(0, 8).map(c => (
+                              <button
+                                key={c}
+                                className={`w-4 h-4 rounded-full border transition-transform ${
+                                  selectedElement.color === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                                }`}
+                                style={{ backgroundColor: c }}
+                                onClick={() => updateElement(selectedElement.id, { color: c })}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
 
                   {/* Size */}
@@ -1546,15 +1563,34 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                       <>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <Label className="text-[9px] text-white/40">Font Size (px ~)</Label>
-                            <span className="text-[9px] text-white/30">{Math.round((selectedElement.fontSize ?? 1.6) * 7.5)}px</span>
+                            <Label className="text-[9px] text-white/40">Font Size</Label>
+                            <span className="text-[9px] text-white/30">{Math.round((selectedElement.fontSize ?? 4.5) * 10.8)}px</span>
                           </div>
                           <Slider
-                            value={[selectedElement.fontSize ?? 1.6]}
-                            min={0.8} max={48} step={0.2}
+                            value={[selectedElement.fontSize ?? 4.5]}
+                            min={1} max={20} step={0.1}
                             onValueChange={([v]) => updateElement(selectedElement.id, { fontSize: v })}
                             className="[&_[role=slider]]:bg-white [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5"
                           />
+                          <p className="text-[8px] text-white/25">Container stays the same size — only text scales.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-[9px] text-white/40 w-14">Font</Label>
+                          <div className="flex gap-1 flex-1">
+                            {(['tight', 'normal'] as const).map(f => (
+                              <button
+                                key={f}
+                                className={`flex-1 text-[9px] py-1 rounded border ${
+                                  ((selectedElement as any).fontStyle || 'tight') === f
+                                    ? 'bg-white/15 border-white/30 text-white'
+                                    : 'border-white/10 text-white/40 hover:bg-white/5'
+                                }`}
+                                onClick={() => updateElement(selectedElement.id, { fontStyle: f } as any)}
+                              >
+                                {f === 'tight' ? 'Agrandir Tight' : 'Normal'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Label className="text-[9px] text-white/40 w-14">Anchor</Label>

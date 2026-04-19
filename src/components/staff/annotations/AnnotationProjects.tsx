@@ -30,6 +30,8 @@ export interface AnnotationElement {
   borderColor?: string;
   /** For text-banner: background fill colour (default black) */
   bgColor?: string;
+  /** For text-banner: typography style (default 'tight' = Agrandir Tight) */
+  fontStyle?: 'tight' | 'normal';
   x: number;
   y: number;
   x2?: number;

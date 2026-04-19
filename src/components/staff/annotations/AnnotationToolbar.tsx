@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   MousePointer2, Minus, MoveRight, Square, Circle,
   Sun, UserCircle, Eraser, Eye, Ruler, Search, Link2, MapPin, CircleDot,
-  Redo2, Eclipse, ImagePlus, Type, Lightbulb,
+  Redo2, Eclipse, ImagePlus, Type, Lightbulb, Crosshair,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ const tools: ToolDef[] = [
   { id: 'distance', icon: Ruler, label: 'Measure distance', shortLabel: 'Dist', hotkey: 'R' },
   { id: 'linked-line', icon: Link2, label: 'Connect elements', shortLabel: 'Link', hotkey: 'L' },
   { id: 'image-layer', icon: ImagePlus, label: 'Keep image in front', shortLabel: 'Layer', hotkey: 'B' },
+  { id: 'ai-track', icon: Crosshair, label: 'AI auto-track a player across the clip', shortLabel: 'Track', hotkey: 'A' },
   { id: 'eraser', icon: Eraser, label: 'Remove element', shortLabel: 'Erase', hotkey: 'E' },
 ];
 
@@ -74,7 +75,10 @@ export const AnnotationToolbar = ({
 }: AnnotationToolbarProps) => {
   const showFillOpacity = ['rect', 'circle', 'spotlight', 'magnifier', 'semi-circle', 'vision-cone', 'space-oval'].includes(activeTool);
   const [recentColors, setRecentColors] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]'); } catch { return []; }
+    try {
+      const raw = JSON.parse(localStorage.getItem('annotation-recent-colours') || '[]');
+      return Array.from(new Set(Array.isArray(raw) ? raw : [])).slice(0, 8) as string[];
+    } catch { return []; }
   });
   const [usage, setUsage] = useState<Record<string, number>>(loadUsage);
 
@@ -176,7 +180,7 @@ export const AnnotationToolbar = ({
                       onChange={e => {
                         setActiveColor(e.target.value);
                         setRecentColors(prev => {
-                          const next = [e.target.value, ...prev.filter(c => c !== e.target.value)].slice(0, 8);
+                          const next = Array.from(new Set([e.target.value, ...prev])).slice(0, 8);
                           try { localStorage.setItem('annotation-recent-colours', JSON.stringify(next)); } catch {}
                           return next;
                         });
@@ -189,23 +193,27 @@ export const AnnotationToolbar = ({
               </Tooltip>
             </TooltipProvider>
           </div>
-          {recentColors.filter(c => !brandColors.some(b => b.color === c)).length > 0 && (
-            <div className="mt-1.5">
-              <p className="text-[9px] text-white/30 mb-1">Recent</p>
-              <div className="grid grid-cols-9 gap-1">
-                {recentColors.filter(c => !brandColors.some(b => b.color === c)).slice(0, 9).map(c => (
-                  <button
-                    key={c}
-                    className={`aspect-square rounded-full border transition-transform ${
-                      activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: c }}
-                    onClick={() => setActiveColor(c)}
-                  />
-                ))}
+          {(() => {
+            const uniqueRecents = Array.from(new Set(recentColors)).filter(c => !brandColors.some(b => b.color === c));
+            if (uniqueRecents.length === 0) return null;
+            return (
+              <div className="mt-1.5">
+                <p className="text-[9px] text-white/30 mb-1">Recent</p>
+                <div className="grid grid-cols-9 gap-1">
+                  {uniqueRecents.slice(0, 9).map(c => (
+                    <button
+                      key={c}
+                      className={`aspect-square rounded-full border transition-transform ${
+                        activeColor === c ? 'border-white scale-110' : 'border-white/20 hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c }}
+                      onClick={() => setActiveColor(c)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Sliders */}

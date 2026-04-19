@@ -198,9 +198,10 @@ export const AnnotationCanvas = ({
       const newId = crypto.randomUUID();
       setElements(prev => [...prev, {
         id: newId, type: 'text-banner', x: 50, y: anchor === 'top' ? 6 : 94,
-        text: txt, anchor, fontSize: 1.6, // ≈ 12px on 720p
+        text: txt, anchor, fontSize: 4.5, // ≈ 49px on 1080p — readable default
         color: '#ffffff', strokeWidth: 0, fillOpacity: 0.85,
         borderColor: '#C6A332',
+        fontStyle: 'tight',
         appearAt: appearAtNow, ...defaultTiming,
       } as any]);
       setSelectedId(newId);
@@ -1168,23 +1169,25 @@ export const AnnotationCanvas = ({
       }
       case 'text-banner': {
         const anchor = el.anchor || 'bottom';
-        const yPos = anchor === 'top' ? 6 : 94;
         const fontSize = el.fontSize ?? 1.6; // % of video height
         const txt = el.text || '';
         const borderColour = (el as any).borderColor || '#C6A332';
         const textColour = el.color || '#ffffff';
         const bgFill = (el as any).bgColor || 'black';
+        const fontFamily = (el as any).fontStyle === 'normal'
+          ? 'Inter, system-ui, sans-serif'
+          : "'Agrandir Tight', Inter, system-ui, sans-serif";
 
-        // Smart wrapping: side margin = 4% on each edge → max width = 92%
-        // Approx character width ratio (in % units) per font-size unit
+        // ── Container size is FIXED so font slider only changes text size ──
         const maxBannerW = 92;
         const sideMargin = 4;
         const padX = 1.5;
-        const padY = 0.6;
-        const charW = fontSize * 0.55; // empirical width per character in % units
-        const maxCharsPerLine = Math.max(8, Math.floor((maxBannerW - padX * 2) / charW));
+        const padY = 1.2;
+        const FIXED_BANNER_H = 8; // % of video height — independent of fontSize
 
-        // Greedy word-wrap
+        // Wrap by chars per line based on current fontSize so text fills the box
+        const charW = fontSize * 0.5;
+        const maxCharsPerLine = Math.max(8, Math.floor((maxBannerW - padX * 2) / charW));
         const words = txt.split(/\s+/);
         const lines: string[] = [];
         let cur = '';
@@ -1194,7 +1197,6 @@ export const AnnotationCanvas = ({
             cur = tentative;
           } else {
             if (cur) lines.push(cur);
-            // If the single word still exceeds, hard-break it
             if (w.length > maxCharsPerLine) {
               for (let i = 0; i < w.length; i += maxCharsPerLine) {
                 lines.push(w.slice(i, i + maxCharsPerLine));
@@ -1208,20 +1210,18 @@ export const AnnotationCanvas = ({
         if (cur) lines.push(cur);
         if (lines.length === 0) lines.push('');
 
-        // Banner width is FIXED at maxBannerW so font-size changes only
-        // affect text size + line wrapping, not the box width itself.
         const bannerW = maxBannerW;
-        const lineH = fontSize * 1.25;
-        const totalH = lines.length * lineH + padY * 2;
-
-        // Compute Y so that the block is anchored to top/bottom with consistent margin
-        const blockTop = anchor === 'top' ? sideMargin : (100 - sideMargin - totalH);
+        const bannerH = FIXED_BANNER_H;
+        const blockTop = anchor === 'top' ? sideMargin : (100 - sideMargin - bannerH);
+        const lineH = fontSize * 1.15;
+        const totalTextH = lines.length * lineH;
+        const textStartY = blockTop + (bannerH - totalTextH) / 2 + lineH / 2;
 
         return (
           <g key={el.id} data-element-id={el.id} style={selStyle}>
             <rect
               x={`${50 - bannerW / 2}%`} y={`${blockTop}%`}
-              width={`${bannerW}%`} height={`${totalH}%`}
+              width={`${bannerW}%`} height={`${bannerH}%`}
               rx={0.6} ry={0.6}
               fill={bgFill} fillOpacity={el.fillOpacity ?? 0.85}
               stroke={borderColour} strokeWidth={0.25}
@@ -1230,8 +1230,9 @@ export const AnnotationCanvas = ({
               <text
                 key={i}
                 x="50%"
-                y={`${blockTop + padY + lineH * (i + 0.5)}%`}
+                y={`${textStartY + lineH * i}%`}
                 fill={textColour} fontSize={`${fontSize}%`}
+                fontFamily={fontFamily}
                 textAnchor="middle" dominantBaseline="central"
                 fontWeight="600"
                 style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.7)', strokeWidth: 0.3 }}
