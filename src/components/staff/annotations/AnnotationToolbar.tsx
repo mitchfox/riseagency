@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   MousePointer2, Minus, MoveRight, Square, Circle,
   Sun, Pencil, UserCircle, Eraser, Eye, Ruler, Search, Link2, MapPin, CircleDot,
-  Redo2, Eclipse, ImagePlus
+  Redo2, Eclipse, ImagePlus, Type, Lightbulb,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -31,7 +31,9 @@ const tools: { id: AnnotationTool; icon: React.ComponentType<any>; label: string
   { id: 'space-oval', icon: Eclipse, label: 'Hatched space oval', shortLabel: 'Space', hotkey: 'S', group: 'shape' },
   { id: 'player-marker', icon: UserCircle, label: 'Numbered player', shortLabel: 'Player', hotkey: '', group: 'label' },
   { id: 'point', icon: MapPin, label: 'Anchor point', shortLabel: 'Point', hotkey: 'P', group: 'label' },
-  { id: 'spotlight', icon: Sun, label: 'Focus highlight', shortLabel: 'Spot', hotkey: 'H', group: 'effect' },
+  { id: 'text-banner', icon: Type, label: 'Text fixed top or bottom', shortLabel: 'Text', hotkey: 'T', group: 'label' },
+  { id: 'spotlight', icon: Sun, label: 'Focus highlight (dimmed background)', shortLabel: 'Highlight', hotkey: 'H', group: 'effect' },
+  { id: 'cylinder-spotlight', icon: Lightbulb, label: 'Spotlight beam under player', shortLabel: 'Spot', hotkey: 'G', group: 'effect' },
   { id: 'vision-cone', icon: Eye, label: 'Field of view', shortLabel: 'Vision', hotkey: 'V', group: 'effect' },
   { id: 'magnifier', icon: Search, label: 'Zoom into area', shortLabel: 'Mag', hotkey: 'M', group: 'effect' },
   { id: 'distance', icon: Ruler, label: 'Measure distance', shortLabel: 'Dist', hotkey: 'R', group: 'effect' },
