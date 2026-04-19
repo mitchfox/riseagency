@@ -232,7 +232,7 @@ export const AnnotationCanvas = ({
     setDrawing(true);
     setStartPos(pos);
     setCurrentPos(pos);
-  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset, appearAtNow]);
+  }, [activeTool, activeColor, strokeWidth, fillOpacity, elements, getPos, setElements, setSelectedId, linkSource, setLinkSource, videoRef, klipOffset, appearAtNow, onAiTrack]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const pos = getPos(e);
