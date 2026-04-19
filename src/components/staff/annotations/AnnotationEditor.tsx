@@ -848,7 +848,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
   const selectedElement = allElements.find(el => el.id === selectedId);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] bg-[#1e2330] rounded-lg overflow-hidden text-white">
+    <div className="flex flex-col h-full min-h-[600px] bg-[#1e2330] rounded-lg overflow-hidden text-white">
       {/* Top bar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-[#161a24] border-b border-white/10 shrink-0">
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70 hover:text-white" onClick={onBack}>
