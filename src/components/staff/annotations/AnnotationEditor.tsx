@@ -1165,6 +1165,22 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               )}
             </div>
           </div>
+
+          {/* Tools panel — fills the empty space below the video */}
+          {drawingMode && (
+            <div className="bg-[#12151e] border-t border-white/10 shrink-0">
+              <AnnotationToolbar
+                activeTool={activeTool}
+                setActiveTool={setActiveTool}
+                activeColor={activeColor}
+                setActiveColor={handleSetActiveColor}
+                strokeWidth={strokeWidth}
+                setStrokeWidth={handleSetStrokeWidth}
+                fillOpacity={fillOpacity}
+                setFillOpacity={setFillOpacity}
+              />
+            </div>
+          )}
         </div>
 
         {/* Right sidebar */}
