@@ -333,23 +333,50 @@ export const ClippedActionsPlayer = ({
                   {cat} ({categorisedClips[cat].length})
                 </div>
                 {categorisedClips[cat].map(clip => (
-                  <button
+                  <div
                     key={clip.id}
                     data-active={clip.id === currentClip.id}
-                    onClick={() => jumpToClip(clip.id)}
-                    className={`w-full text-left px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
+                    className={`w-full px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
                       clip.id === currentClip.id
                         ? 'bg-primary/20 text-white'
                         : 'text-white/70 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
-                    <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
-                    <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
-                    {clip.id === currentClip.id && (
-                      <span className="text-primary text-[10px] font-bold">▶</span>
+                    <button
+                      onClick={() => jumpToClip(clip.id)}
+                      className="flex-1 flex items-center gap-3 text-left"
+                    >
+                      <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
+                      <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
+                      <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
+                      {clip.id === currentClip.id && (
+                        <span className="text-primary text-[10px] font-bold">▶</span>
+                      )}
+                    </button>
+                    {onSaveToBest && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-white/50 hover:text-yellow-400 shrink-0"
+                        title="Save to Best Clips"
+                        disabled={savingClipId === clip.id}
+                        onClick={(e) => { e.stopPropagation(); onSaveToBest(clip as any); }}
+                      >
+                        {savingClipId === clip.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className="h-3 w-3" />}
+                      </Button>
                     )}
-                  </button>
+                    {showDownloads && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-white/50 hover:text-white shrink-0"
+                        title="Download clip"
+                        onClick={(e) => { e.stopPropagation(); onDownloadCurrent?.(clip as any); }}
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
             ))}
