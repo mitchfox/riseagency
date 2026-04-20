@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, Star } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, DownloadCloud, Star } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
