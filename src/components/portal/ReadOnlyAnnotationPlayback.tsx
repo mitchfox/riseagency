@@ -79,6 +79,19 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
 
   const { cleanUrl, clipStart, clipEnd } = useMemo(() => parseClipFragment(videoUrl), [videoUrl]);
 
+  // Re-apply the media fragment to the actual <video> source so the browser
+  // only fetches the needed byte range. Stripping #t= caused the player to
+  // download entire 2hr+ match files just to play a 10s clipped window.
+  const fragmentSrc = useMemo(() => {
+    if (clipEnd != null && clipEnd > clipStart) {
+      return `${cleanUrl}#t=${clipStart.toFixed(3)},${clipEnd.toFixed(3)}`;
+    }
+    if (clipStart > 0) {
+      return `${cleanUrl}#t=${clipStart.toFixed(3)}`;
+    }
+    return cleanUrl;
+  }, [cleanUrl, clipStart, clipEnd]);
+
   // Lazy-load: only attach the video src once the container is within ~600px
   // of the viewport. This keeps the page structure responsive while videos
   // queue up in the background as the user scrolls.
@@ -876,7 +889,7 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       )}
       <video
         ref={videoRef}
-        {...(shouldLoad ? { src: cleanUrl } : {})}
+        {...(shouldLoad ? { src: fragmentSrc } : {})}
         autoPlay
         loop
         muted
