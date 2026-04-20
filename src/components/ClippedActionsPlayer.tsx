@@ -243,16 +243,16 @@ export const ClippedActionsPlayer = ({
                   title="Download this clip"
                 >
                   <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Clip</span>
+                  <span className="hidden sm:inline">This clip</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
                   onClick={() => onDownloadAll?.(sortedClips as any)}
-                  title="Download all clips"
+                  title={`Download all ${sortedClips.length} clips`}
                 >
-                  <Download className="h-4 w-4" />
+                  <DownloadCloud className="h-4 w-4" />
                   <span className="hidden sm:inline">All ({sortedClips.length})</span>
                 </Button>
               </>
