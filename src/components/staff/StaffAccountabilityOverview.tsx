@@ -666,6 +666,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   }).sort((a, b) => b.lastWeek - a.lastWeek || b.fourWeeks - a.fourWeeks || b.allTime - a.allTime);
 
   // historyEntries computed above (must be before any early return)
+  const historyStaff = visibleStaff.find(s => s.id === historyStaffId) || null;
 
   // ── Day-grouped active tasks ──
   const activeFeed = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
