@@ -644,7 +644,6 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   }).sort((a, b) => b.lastWeek - a.lastWeek || b.fourWeeks - a.fourWeeks || b.allTime - a.allTime);
 
   // Leaderboard click → show member's recent activity
-  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
   const historyStaff = visibleStaff.find(s => s.id === historyStaffId) || null;
 
   const historyEntries = useMemo(() => {
