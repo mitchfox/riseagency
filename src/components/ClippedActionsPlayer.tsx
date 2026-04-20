@@ -197,16 +197,24 @@ export const ClippedActionsPlayer = ({
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
               <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
+              {(currentClip.action_description || currentClip.notes) && (
+                <div className="mt-1 text-white/85 text-xs leading-snug">
+                  {currentClip.action_description && <p className="line-clamp-2">{currentClip.action_description}</p>}
+                  {currentClip.notes && (
+                    <p className="text-[10px] text-risegold italic mt-0.5 line-clamp-2">📝 {currentClip.notes}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px]">
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:text-white hover:bg-white/20 h-10 w-10 min-w-[40px] shrink-0">
             <X className="h-5 w-5" />
           </Button>
         </div>
