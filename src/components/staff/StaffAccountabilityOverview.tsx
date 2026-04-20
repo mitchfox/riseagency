@@ -141,6 +141,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
+  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
 
   const saveStaffAvatars = (avatars: Record<string, string>) => {
     setStaffAvatars(avatars);
