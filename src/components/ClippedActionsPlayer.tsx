@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, Star } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
@@ -28,6 +28,11 @@ interface ClippedActionsPlayerProps {
   language?: string;
   title?: string;
   player?: SharedClipPlayerState;
+  showDownloads?: boolean;
+  onDownloadCurrent?: (clip: ClipAction) => void;
+  onDownloadAll?: (clips: ClipAction[]) => void;
+  onSaveToBest?: (clip: ClipAction) => void;
+  savingClipId?: string | null;
 }
 
 const normaliseType = (t: string) => (t || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -52,6 +57,11 @@ export const ClippedActionsPlayer = ({
   language = "en",
   title,
   player: providedPlayer,
+  showDownloads,
+  onDownloadCurrent,
+  onDownloadAll,
+  onSaveToBest,
+  savingClipId,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
