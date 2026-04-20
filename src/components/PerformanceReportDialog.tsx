@@ -1007,7 +1007,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
               {/* Shot Map */}
               {showShotMap && (
-                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} /></CardContent></Card>
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} isGoalkeeper={/gk|goalkeeper|keeper|portiere|portero|gardien|tor(?:wart|hüter)?/i.test(analysis?.player_position || "")} /></CardContent></Card>
               )}
 
               {/* Pitch Heatmap */}
