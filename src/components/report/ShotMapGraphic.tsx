@@ -24,20 +24,25 @@ const OFF_TARGET_POSITIONS: Record<number, { x: number; y: number }> = {
 
 const GOAL_ZONES = new Set(Array.from({ length: 15 }, (_, i) => i + 1));
 
-const OUTCOME_COLORS: Record<string, string> = {
-  goal: "#ef4444",       // Red
-  saved: "#C6A332",      // Rise Gold
+// GK view: from the goalkeeper's perspective — a goal conceded is bad (red),
+// a save is positive (rise gold), missed/blocked are neutral wins.
+const GK_OUTCOME_COLORS: Record<string, string> = {
+  goal: "#ef4444",       // Red — conceded
+  saved: "#C6A332",      // Rise Gold — saved
   missed: "#6b7280",     // Grey
   blocked: "#3b82f6",    // Blue
   default: "#9ca3af",
 };
 
-const OUTCOME_LABELS: Array<{ label: string; key: string; color: string }> = [
-  { label: "Goal", key: "goal", color: OUTCOME_COLORS.goal },
-  { label: "Saved", key: "saved", color: OUTCOME_COLORS.saved },
-  { label: "Missed", key: "missed", color: OUTCOME_COLORS.missed },
-  { label: "Blocked", key: "blocked", color: OUTCOME_COLORS.blocked },
-];
+// Outfield view: from the attacker's perspective — a goal is the desired
+// outcome (rise gold), a miss/save/block are progressively worse.
+const OUTFIELD_OUTCOME_COLORS: Record<string, string> = {
+  goal: "#C6A332",       // Rise Gold — goal scored
+  missed: "#ef4444",     // Red — missed the target
+  saved: "#f97316",      // Orange — saved by keeper
+  blocked: "#eab308",    // Yellow — blocked
+  default: "#9ca3af",
+};
 
 interface ShotMapCarrier {
   id: string;
