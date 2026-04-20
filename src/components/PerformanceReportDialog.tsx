@@ -63,6 +63,7 @@ interface AnalysisDetails {
   r90_score: number | null;
   minutes_played: number | null;
   player_name: string;
+  player_position?: string | null;
   striker_stats?: StrikerStats | null;
   performance_overview?: string | null;
   visibility_status?: string;
