@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -640,7 +640,36 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       fourWeeks: taskFour + scheduleFour + activityFour,
       lastWeek: taskWeek + scheduleWeek + activityWeek,
     };
-  }).sort((a, b) => b.allTime - a.allTime);
+  }).sort((a, b) => b.lastWeek - a.lastWeek || b.fourWeeks - a.fourWeeks || b.allTime - a.allTime);
+
+  // Leaderboard click → show member's recent activity
+  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
+  const historyStaff = visibleStaff.find(s => s.id === historyStaffId) || null;
+
+  const historyEntries = useMemo(() => {
+    if (!historyStaffId) return [] as Array<{ when: Date; type: string; label: string }>;
+    const entries: Array<{ when: Date; type: string; label: string }> = [];
+
+    // Task completions
+    tasks.filter(t => t.assigned_to?.includes(historyStaffId)).forEach(t => {
+      (t.completion_log || []).forEach(ts => {
+        entries.push({ when: new Date(ts), type: 'Task', label: t.title });
+      });
+    });
+
+    // Posted schedule items
+    scheduleItems.filter(s => s.owner_id === historyStaffId && (s.status || '').toLowerCase() === 'posted').forEach(s => {
+      const ts = (s as any).updated_at;
+      if (ts) entries.push({ when: new Date(ts), type: 'Schedule', label: s.post_type || 'Scheduled post' });
+    });
+
+    // Activity log entries
+    activityLog.filter(a => a.user_id === historyStaffId).forEach(a => {
+      entries.push({ when: new Date(a.created_at), type: 'Activity', label: a.action || 'Action' });
+    });
+
+    return entries.sort((a, b) => b.when.getTime() - a.when.getTime()).slice(0, 100);
+  }, [historyStaffId, tasks, scheduleItems, activityLog]);
 
   // ── Day-grouped active tasks ──
   const activeFeed = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
@@ -888,23 +917,28 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       <div className="rounded-xl border bg-card/50 overflow-hidden">
         <div className="grid grid-cols-5 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-bold border-b border-border/50">
           <span className="col-span-2">Staff</span>
-          <span className="text-center">All Time</span>
-          <span className="text-center">4 Weeks</span>
           <span className="text-center">This Week</span>
+          <span className="text-center">4 Weeks</span>
+          <span className="text-center">All Time</span>
         </div>
         {leaderboardData.map((entry, idx) => (
-          <div key={entry.id} className={`grid grid-cols-5 gap-2 px-4 py-3 items-center ${idx === 0 ? 'bg-[hsl(var(--gold))]/5' : ''} ${idx < leaderboardData.length - 1 ? 'border-b border-border/30' : ''}`}>
+          <button
+            key={entry.id}
+            onClick={() => setHistoryStaffId(entry.id)}
+            className={`w-full grid grid-cols-5 gap-2 px-4 py-3 items-center text-left transition-colors hover:bg-muted/40 ${idx === 0 ? 'bg-[hsl(var(--gold))]/5' : ''} ${idx < leaderboardData.length - 1 ? 'border-b border-border/30' : ''}`}
+          >
             <div className="col-span-2 flex items-center gap-2">
               {idx === 0 && <Trophy className="h-3.5 w-3.5 text-[hsl(var(--gold))]" />}
               <StaffAvatar staffId={entry.id} />
               <span className="text-sm font-medium truncate">{entry.name}</span>
             </div>
-            <p className="text-center text-sm font-bold">{entry.allTime}</p>
-            <p className="text-center text-sm font-bold text-primary">{entry.fourWeeks}</p>
             <p className="text-center text-sm font-bold text-[hsl(var(--gold))]">{entry.lastWeek}</p>
-          </div>
+            <p className="text-center text-sm font-bold text-primary">{entry.fourWeeks}</p>
+            <p className="text-center text-sm font-bold">{entry.allTime}</p>
+          </button>
         ))}
       </div>
+      <p className="text-[10px] text-muted-foreground text-center">Tap a row to see what they've done</p>
     </div>
   );
 
@@ -1159,6 +1193,35 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
               )}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Leaderboard history dialog */}
+      <Dialog open={!!historyStaffId} onOpenChange={(o) => !o && setHistoryStaffId(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {historyStaff && <StaffAvatar staffId={historyStaff.id} />}
+              {historyStaff ? getDisplayName(historyStaff) : ''} — Recent activity
+            </DialogTitle>
+          </DialogHeader>
+          {historyEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No activity recorded yet.</p>
+          ) : (
+            <div className="space-y-1 mt-2">
+              {historyEntries.map((entry, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2 rounded-lg border border-border/40 bg-card/40 text-sm">
+                  <Badge variant="outline" className={`text-[10px] shrink-0 ${
+                    entry.type === 'Task' ? 'border-emerald-500/40 text-emerald-400' :
+                    entry.type === 'Schedule' ? 'border-blue-500/40 text-blue-400' :
+                    'border-[hsl(var(--gold))]/40 text-[hsl(var(--gold))]'
+                  }`}>{entry.type}</Badge>
+                  <span className="flex-1 truncate">{entry.label}</span>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">{format(entry.when, 'dd MMM HH:mm')}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

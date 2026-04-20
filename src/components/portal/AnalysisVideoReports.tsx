@@ -1,16 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Play, Pause, SkipBack, SkipForward, X, Maximize, Trash2, Download, CheckSquare, Film, ListVideo, Star, Loader2 } from "lucide-react";
+import { Film, ListVideo } from "lucide-react";
 import { downloadVideo } from "@/lib/videoDownload";
-import { computeVisibleElements } from "@/lib/annotationRenderUtils";
-import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
 import { toTitleCase } from "@/lib/titleCase";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 
 interface Analysis {
   id: string;
@@ -30,7 +26,9 @@ interface ActionClip {
   minute: number | null;
   video_url: string | null;
   is_successful: boolean | null;
-  clip_annotations: any[] | null;
+  clip_start: number | null;
+  clip_end: number | null;
+  notes: string | null;
   // Joined
   opponent?: string;
   match_date?: string;
@@ -42,13 +40,6 @@ interface Props {
   embedded?: boolean;
 }
 
-/** Parse #t=start,end fragment from a video URL for legacy boundary enforcement */
-const parseTimeFragment = (url: string | null | undefined) => {
-  if (!url) return null;
-  const match = url.match(/#t=([\d.]+),([\d.]+)/);
-  return match ? { start: parseFloat(match[1]), end: parseFloat(match[2]) } : null;
-};
-
 export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) => {
   const [allActions, setAllActions] = useState<ActionClip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +47,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   const [selectedActionTypes, setSelectedActionTypes] = useState<string[]>([]);
   const [compilationClips, setCompilationClips] = useState<ActionClip[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [currentClipIndex, setCurrentClipIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [selectedClipIds, setSelectedClipIds] = useState<Set<string>>(new Set());
   const [savingToBestClips, setSavingToBestClips] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const fetchActions = async () => {
@@ -73,17 +60,16 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
         .not('video_url', 'is', null)
         .order('action_number');
       if (error) { console.error(error); setLoading(false); return; }
-      
+
       const enriched = (data || []).map(a => {
         const match = analyses.find(an => an.id === a.analysis_id);
         return {
           ...a,
-          clip_annotations: Array.isArray(a.clip_annotations) ? a.clip_annotations : null,
           opponent: match?.opponent || 'Unknown',
           match_date: match?.analysis_date,
         };
       });
-      setAllActions(enriched);
+      setAllActions(enriched as ActionClip[]);
       setLoading(false);
     };
     fetchActions();
@@ -105,7 +91,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     });
   }, [allActions]);
 
-  // Categorise types
   const categoriseType = (type: string): string => {
     const t = type.toLowerCase();
     if (['goal', 'assist', 'key pass', 'chance created', 'shot on target'].some(k => t.includes(k))) return 'Key Actions';
@@ -114,7 +99,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     return 'Other';
   };
 
-  // Best actions: score >= 0.05
   const bestActions = useMemo(() => {
     return allActions.filter(a => a.action_score != null && a.action_score >= 0.05);
   }, [allActions]);
@@ -137,11 +121,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     setSelectedMatches(analyses.map(a => a.id));
   };
 
-  const toggleActionType = (type: string) => {
-    setSelectedActionTypes(prev => prev.includes(type) ? prev.filter(x => x !== type) : [...prev, type]);
-  };
-
-  // Check if an action matches selected types (handles comma-separated)
   const actionMatchesTypes = (action: ActionClip, types: string[]) => {
     if (types.length === 0) return true;
     const actionTypes = action.action_type.includes(',')
@@ -168,9 +147,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
       return;
     }
     setCompilationClips(clips);
-    setSelectedClipIds(new Set(clips.map(c => c.id)));
-    setCurrentClipIndex(0);
-    setIsPlaying(true);
     setModalOpen(true);
   };
 
@@ -187,62 +163,30 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     });
     if (clips.length === 0) { toast.error('No clips available'); return; }
     setCompilationClips(clips);
-    setSelectedClipIds(new Set(clips.map(c => c.id)));
-    setCurrentClipIndex(0);
-    setIsPlaying(true);
     setModalOpen(true);
   };
 
-  const currentClip = compilationClips[currentClipIndex];
-
-  const handleVideoEnded = () => {
-    if (currentClipIndex < compilationClips.length - 1) {
-      setCurrentClipIndex(prev => prev + 1);
-    } else {
-      setIsPlaying(false);
-    }
+  const handleDownloadCurrent = (clip: any) => {
+    const found = compilationClips.find(c => c.id === clip.id);
+    if (!found?.video_url) return;
+    downloadVideo(found.video_url, `clip-${found.action_number}-${found.action_type}`);
+    toast.success('Download started');
   };
 
-  useEffect(() => {
-    if (videoRef.current && isPlaying && modalOpen) {
-      videoRef.current.play().catch(() => setIsPlaying(false));
-    }
-  }, [currentClipIndex, modalOpen]);
-
-  const toggleClipSelection = (id: string) => {
-    setSelectedClipIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
+  const handleDownloadAll = (clips: any[]) => {
+    const valid = clips.filter(c => c.video_url);
+    if (valid.length === 0) { toast.error('No downloadable clips'); return; }
+    valid.forEach((c, i) => {
+      setTimeout(() => downloadVideo(c.video_url, `clip-${i + 1}-${c.action_type}`), i * 500);
     });
+    toast.success(`Downloading ${valid.length} clips…`);
   };
 
-  const removeClip = (index: number) => {
-    const clip = compilationClips[index];
-    setCompilationClips(prev => prev.filter((_, i) => i !== index));
-    setSelectedClipIds(prev => { const n = new Set(prev); n.delete(clip.id); return n; });
-    if (currentClipIndex >= compilationClips.length - 1) setCurrentClipIndex(Math.max(0, compilationClips.length - 2));
-  };
-
-  const handleExport = (mode: 'all' | 'selected' | 'single') => {
-    if (mode === 'single' && currentClip?.video_url) {
-      downloadVideo(currentClip.video_url, `clip-${currentClip.action_number}`);
-    } else if (mode === 'selected') {
-      compilationClips.filter(c => selectedClipIds.has(c.id) && c.video_url).forEach((c, i) => {
-        setTimeout(() => downloadVideo(c.video_url!, `clip-${i + 1}-${c.action_type}`), i * 500);
-      });
-    } else {
-      compilationClips.filter(c => c.video_url).forEach((c, i) => {
-        setTimeout(() => downloadVideo(c.video_url!, `clip-${i + 1}-${c.action_type}`), i * 500);
-      });
-    }
-  };
-
-  const handleSaveToBestClips = async (clip: ActionClip) => {
-    if (!clip.video_url) return;
+  const handleSaveToBestClips = async (clip: any) => {
+    const full = compilationClips.find(c => c.id === clip.id);
+    if (!full?.video_url) return;
     setSavingToBestClips(clip.id);
     try {
-      // Fetch current player highlights
       const { data: playerData, error: fetchErr } = await supabase
         .from('players')
         .select('highlights')
@@ -256,16 +200,15 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
 
       const bestClips = Array.isArray(highlights.bestClips) ? highlights.bestClips : [];
 
-      // Check if already saved
-      if (bestClips.some((c: any) => c.videoUrl === clip.video_url)) {
+      if (bestClips.some((c: any) => c.videoUrl === full.video_url)) {
         toast.info('This clip is already in Best Clips');
         setSavingToBestClips(null);
         return;
       }
 
       bestClips.push({
-        name: `${toTitleCase(clip.action_type)} vs ${clip.opponent}${clip.minute != null ? ` (${clip.minute}')` : ''}`,
-        videoUrl: clip.video_url,
+        name: `${toTitleCase(full.action_type)} vs ${full.opponent}${full.minute != null ? ` (${full.minute}')` : ''}`,
+        videoUrl: full.video_url,
         addedAt: new Date().toISOString(),
       });
 
@@ -281,6 +224,19 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     }
     setSavingToBestClips(null);
   };
+
+  // Map clips to the shape ClippedActionsPlayer expects
+  const playerClips = useMemo(() => compilationClips.map(c => ({
+    id: c.id,
+    action_number: c.action_number,
+    action_type: c.action_type,
+    action_description: c.action_description || '',
+    video_url: c.video_url || '',
+    minute: c.minute ?? 0,
+    notes: c.notes,
+    clip_start: c.clip_start,
+    clip_end: c.clip_end,
+  })), [compilationClips]);
 
   return (
     <Card className={embedded ? "rounded-none border-0 shadow-none" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
@@ -302,7 +258,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Step 1: Select Action Types</h3>
               <div className="space-y-2">
-                {/* Best Actions button - always first */}
                 {bestActions.length > 0 && (
                   <>
                     <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mt-2 mb-1">Best Actions</span>
@@ -335,7 +290,6 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
                         )}
                         <button
                           onClick={() => {
-                            // Clear best actions filter when selecting specific types
                             setSelectedActionTypes(prev => {
                               const withoutBest = prev.filter(x => x !== '__best__');
                               return withoutBest.includes(type) ? withoutBest.filter(x => x !== type) : [...withoutBest, type];
@@ -394,151 +348,18 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
           </>
         )}
 
-        {/* Widescreen compilation modal */}
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-[95vw] w-full p-0 overflow-hidden bg-black border-none">
-            {currentClip && (
-              <div className="flex flex-col h-[90vh]">
-                {/* Video area */}
-                <div className="relative flex-1 min-h-0 bg-black flex items-center justify-center">
-                  {/* Info overlay */}
-                  <div className="absolute top-3 left-3 z-10 bg-black/70 text-white text-sm px-3 py-2 rounded">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge className="bg-primary text-primary-foreground text-xs">{currentClipIndex + 1}/{compilationClips.length}</Badge>
-                      <span className="font-semibold">{toTitleCase(currentClip.action_type)}</span>
-                    </div>
-                    <p className="text-xs text-white/70">
-                      vs {currentClip.opponent} {currentClip.minute != null && `· ${currentClip.minute}'`}
-                    </p>
-                    {currentClip.action_description && (
-                      <p className="text-xs text-white/60 mt-0.5">{currentClip.action_description}</p>
-                    )}
-                  </div>
-
-                  {/* Close + fullscreen */}
-                  <div className="absolute top-3 right-3 z-10 flex gap-2">
-                    <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
-                      onClick={() => {
-                        // Use the inner container ref that wraps both video + annotation overlay
-                        const container = document.getElementById('analysis-video-fullscreen-container');
-                        (container || videoRef.current)?.requestFullscreen?.();
-                      }}>
-                      <Maximize className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="bg-black/50 hover:bg-black/70 text-white"
-                      onClick={() => setModalOpen(false)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div id="analysis-video-fullscreen-container" className="relative max-h-full max-w-full">
-                    <video
-                      ref={videoRef}
-                      src={currentClip.video_url || ''}
-                      className="max-h-full max-w-full aspect-video object-fill"
-                      autoPlay muted playsInline loop
-                      onEnded={handleVideoEnded}
-                      onPlay={() => setIsPlaying(true)}
-                      onPause={() => setIsPlaying(false)}
-                      onLoadedMetadata={() => {
-                        const boundaries = parseTimeFragment(currentClip.video_url);
-                        if (boundaries && videoRef.current) {
-                          videoRef.current.currentTime = boundaries.start;
-                        }
-                      }}
-                      onTimeUpdate={() => {
-                        const boundaries = parseTimeFragment(currentClip.video_url);
-                        if (boundaries && videoRef.current && videoRef.current.currentTime >= boundaries.end) {
-                          videoRef.current.currentTime = boundaries.start;
-                        }
-                      }}
-                    />
-                    {currentClip.clip_annotations && currentClip.clip_annotations.length > 0 && (
-                      <ReadOnlyAnnotationOverlay
-                        elements={currentClip.clip_annotations}
-                        videoRef={videoRef}
-                        clipStart={(() => {
-                          const boundaries = parseTimeFragment(currentClip.video_url);
-                          return boundaries?.start || 0;
-                        })()}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div className="bg-black/95 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20"
-                      disabled={currentClipIndex === 0}
-                      onClick={() => setCurrentClipIndex(i => i - 1)}>
-                      <SkipBack className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10"
-                      onClick={() => {
-                        if (videoRef.current) { isPlaying ? videoRef.current.pause() : videoRef.current.play(); }
-                      }}>
-                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20"
-                      disabled={currentClipIndex >= compilationClips.length - 1}
-                      onClick={() => setCurrentClipIndex(i => i + 1)}>
-                      <SkipForward className="h-5 w-5" />
-                    </Button>
-                  </div>
-
-                  {/* Export dropdown */}
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('single')}>
-                      <Download className="h-4 w-4 mr-1" /> Clip
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('selected')}>
-                      <CheckSquare className="h-4 w-4 mr-1" /> Selected ({selectedClipIds.size})
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={() => handleExport('all')}>
-                      <Download className="h-4 w-4 mr-1" /> All
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Clip list */}
-                <div className="bg-black/95 px-4 pb-3 max-h-[150px] overflow-y-auto">
-                  <div className="space-y-1">
-                    {compilationClips.map((clip, index) => (
-                      <div
-                        key={clip.id}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-colors ${
-                          index === currentClipIndex ? 'bg-primary text-primary-foreground' : 'text-white/80 hover:bg-white/10'
-                        }`}
-                      >
-                        <Checkbox
-                          checked={selectedClipIds.has(clip.id)}
-                          onCheckedChange={() => toggleClipSelection(clip.id)}
-                          className="border-white/50"
-                        />
-                        <button className="flex-1 text-left" onClick={() => setCurrentClipIndex(index)}>
-                          <span className="font-mono text-xs opacity-60">#{clip.action_number}</span>{' '}
-                          {toTitleCase(clip.action_type)} · vs {clip.opponent}
-                          {clip.minute != null && <span className="opacity-60"> · {clip.minute}'</span>}
-                        </button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-yellow-400"
-                          title="Save to Best Clips"
-                          disabled={savingToBestClips === clip.id}
-                          onClick={(e) => { e.stopPropagation(); handleSaveToBestClips(clip); }}>
-                          {savingToBestClips === clip.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className="h-3 w-3" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-white/50 hover:text-destructive"
-                          onClick={(e) => { e.stopPropagation(); removeClip(index); }}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {/* Shared player — match-report parity */}
+        <ClippedActionsPlayer
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          clips={playerClips}
+          title="Video Report"
+          showDownloads
+          onDownloadCurrent={handleDownloadCurrent}
+          onDownloadAll={handleDownloadAll}
+          onSaveToBest={handleSaveToBestClips}
+          savingClipId={savingToBestClips}
+        />
       </CardContent>
     </Card>
   );
