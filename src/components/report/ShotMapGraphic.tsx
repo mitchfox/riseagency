@@ -123,8 +123,15 @@ const formatActionLabel = (action: ShotMapCarrier, shotMap: ShotMapData) => {
   return `${numberPrefix}${minuteLabel}${outcomeLabel}${scoreLabel}`;
 };
 
-export const ShotMapGraphic = ({ actions }: { actions: ShotMapCarrier[] }) => {
+export const ShotMapGraphic = ({ actions, isGoalkeeper = false }: { actions: ShotMapCarrier[]; isGoalkeeper?: boolean }) => {
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
+  const OUTCOME_COLORS = isGoalkeeper ? GK_OUTCOME_COLORS : OUTFIELD_OUTCOME_COLORS;
+  const OUTCOME_LABELS: Array<{ label: string; key: string; color: string }> = [
+    { label: "Goal", key: "goal", color: OUTCOME_COLORS.goal },
+    { label: "Saved", key: "saved", color: OUTCOME_COLORS.saved },
+    { label: "Missed", key: "missed", color: OUTCOME_COLORS.missed },
+    { label: "Blocked", key: "blocked", color: OUTCOME_COLORS.blocked },
+  ];
 
   const shotPoints = useMemo<ShotPoint[]>(() => {
     const stackMap = new Map<string, number>();
