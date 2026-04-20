@@ -917,23 +917,28 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       <div className="rounded-xl border bg-card/50 overflow-hidden">
         <div className="grid grid-cols-5 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-bold border-b border-border/50">
           <span className="col-span-2">Staff</span>
-          <span className="text-center">All Time</span>
-          <span className="text-center">4 Weeks</span>
           <span className="text-center">This Week</span>
+          <span className="text-center">4 Weeks</span>
+          <span className="text-center">All Time</span>
         </div>
         {leaderboardData.map((entry, idx) => (
-          <div key={entry.id} className={`grid grid-cols-5 gap-2 px-4 py-3 items-center ${idx === 0 ? 'bg-[hsl(var(--gold))]/5' : ''} ${idx < leaderboardData.length - 1 ? 'border-b border-border/30' : ''}`}>
+          <button
+            key={entry.id}
+            onClick={() => setHistoryStaffId(entry.id)}
+            className={`w-full grid grid-cols-5 gap-2 px-4 py-3 items-center text-left transition-colors hover:bg-muted/40 ${idx === 0 ? 'bg-[hsl(var(--gold))]/5' : ''} ${idx < leaderboardData.length - 1 ? 'border-b border-border/30' : ''}`}
+          >
             <div className="col-span-2 flex items-center gap-2">
               {idx === 0 && <Trophy className="h-3.5 w-3.5 text-[hsl(var(--gold))]" />}
               <StaffAvatar staffId={entry.id} />
               <span className="text-sm font-medium truncate">{entry.name}</span>
             </div>
-            <p className="text-center text-sm font-bold">{entry.allTime}</p>
-            <p className="text-center text-sm font-bold text-primary">{entry.fourWeeks}</p>
             <p className="text-center text-sm font-bold text-[hsl(var(--gold))]">{entry.lastWeek}</p>
-          </div>
+            <p className="text-center text-sm font-bold text-primary">{entry.fourWeeks}</p>
+            <p className="text-center text-sm font-bold">{entry.allTime}</p>
+          </button>
         ))}
       </div>
+      <p className="text-[10px] text-muted-foreground text-center">Tap a row to see what they've done</p>
     </div>
   );
 
