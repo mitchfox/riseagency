@@ -22,7 +22,12 @@ export const R90FlowChart = ({ actions, minutesPlayed, language = "en" }: R90Flo
 
     const sorted = sortReportActionsChronologically(actions);
     const lastActionMinute = Math.max(...sorted.map(a => Math.floor(a.minute)));
-    const startMinute = Math.max(0, lastActionMinute - minutesPlayed);
+    const firstActionMinute = Math.min(...sorted.map(a => Math.floor(a.minute)));
+    // Anchor start to the match start so cumulative minutes are correct,
+    // but only begin plotting from 5 minutes after the first action to avoid
+    // wild early R90 swings on tiny sample sizes.
+    const matchStartMinute = Math.max(0, lastActionMinute - minutesPlayed);
+    const plotStartMinute = firstActionMinute + 5;
 
     const actionPoints: { minute: number; score: number; label: string }[] = [];
     let cumulativeScore = 0;
@@ -45,11 +50,13 @@ export const R90FlowChart = ({ actions, minutesPlayed, language = "en" }: R90Flo
     });
 
     let runningScore = 0;
-    for (let m = startMinute; m <= endMinute; m++) {
+    for (let m = matchStartMinute; m <= endMinute; m++) {
       const entry = scoreAtMinute.get(m);
       if (entry) runningScore = entry.score;
 
-      const elapsed = m - startMinute;
+      if (m < plotStartMinute) continue;
+
+      const elapsed = m - matchStartMinute;
       const r90 = elapsed > 0 ? (runningScore / elapsed) * 90 : 0;
 
       points.push({

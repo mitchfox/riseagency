@@ -63,6 +63,7 @@ interface AnalysisDetails {
   r90_score: number | null;
   minutes_played: number | null;
   player_name: string;
+  player_position?: string | null;
   striker_stats?: StrikerStats | null;
   performance_overview?: string | null;
   visibility_status?: string;
@@ -185,7 +186,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -205,6 +206,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         r90_score: analysisResult.data.r90_score,
         minutes_played: analysisResult.data.minutes_played,
         player_name: analysisResult.data.players?.name || "Unknown Player",
+        player_position: (analysisResult.data.players as any)?.position || null,
         striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
         performance_overview: analysisResult.data.performance_overview,
         visibility_status: (analysisResult.data as any).visibility_status || "live",
@@ -1005,7 +1007,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
               {/* Shot Map */}
               {showShotMap && (
-                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} /></CardContent></Card>
+                <Card className="overflow-hidden"><CardContent className="p-3 md:p-6"><ShotMapGraphic actions={actions} isGoalkeeper={/gk|goalkeeper|keeper|portiere|portero|gardien|tor(?:wart|hüter)?/i.test(analysis?.player_position || "")} /></CardContent></Card>
               )}
 
               {/* Pitch Heatmap */}
