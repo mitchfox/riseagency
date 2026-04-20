@@ -224,15 +224,41 @@ export const ClippedActionsPlayer = ({
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
-            onClick={() => setShowClipList(!showClipList)}
-          >
-            {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            Clips
-          </Button>
+          <div className="flex items-center gap-1">
+            {showDownloads && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
+                  onClick={() => onDownloadCurrent?.(currentClip as any)}
+                  title="Download this clip"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Clip</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
+                  onClick={() => onDownloadAll?.(sortedClips as any)}
+                  title="Download all clips"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">All ({sortedClips.length})</span>
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/70 hover:text-white hover:bg-white/20 text-xs gap-1"
+              onClick={() => setShowClipList(!showClipList)}
+            >
+              {showClipList ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              Clips
+            </Button>
+          </div>
         </div>
 
         {/* Video */}
