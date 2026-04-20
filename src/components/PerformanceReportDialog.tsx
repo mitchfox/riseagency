@@ -186,7 +186,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -206,6 +206,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         r90_score: analysisResult.data.r90_score,
         minutes_played: analysisResult.data.minutes_played,
         player_name: analysisResult.data.players?.name || "Unknown Player",
+        player_position: (analysisResult.data.players as any)?.position || null,
         striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
         performance_overview: analysisResult.data.performance_overview,
         visibility_status: (analysisResult.data as any).visibility_status || "live",
