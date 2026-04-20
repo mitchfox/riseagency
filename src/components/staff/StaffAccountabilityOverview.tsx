@@ -141,6 +141,29 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [collapsedDays, setCollapsedDays] = useState<Set<string>>(new Set());
+  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
+
+  const historyEntries = useMemo(() => {
+    if (!historyStaffId) return [] as Array<{ when: Date; type: string; label: string }>;
+    const entries: Array<{ when: Date; type: string; label: string }> = [];
+
+    tasks.filter(t => t.assigned_to?.includes(historyStaffId)).forEach(t => {
+      (t.completion_log || []).forEach(ts => {
+        entries.push({ when: new Date(ts), type: 'Task', label: t.title });
+      });
+    });
+
+    scheduleItems.filter(s => s.owner_id === historyStaffId && (s.status || '').toLowerCase() === 'posted').forEach(s => {
+      const ts = (s as any).updated_at;
+      if (ts) entries.push({ when: new Date(ts), type: 'Schedule', label: s.post_type || 'Scheduled post' });
+    });
+
+    activityLog.filter(a => a.user_id === historyStaffId).forEach(a => {
+      entries.push({ when: new Date(a.created_at), type: 'Activity', label: a.action || 'Action' });
+    });
+
+    return entries.sort((a, b) => b.when.getTime() - a.when.getTime()).slice(0, 100);
+  }, [historyStaffId, tasks, scheduleItems, activityLog]);
 
   const saveStaffAvatars = (avatars: Record<string, string>) => {
     setStaffAvatars(avatars);
@@ -642,34 +665,8 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     };
   }).sort((a, b) => b.lastWeek - a.lastWeek || b.fourWeeks - a.fourWeeks || b.allTime - a.allTime);
 
-  // Leaderboard click → show member's recent activity
-  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
+  // historyEntries computed above (must be before any early return)
   const historyStaff = visibleStaff.find(s => s.id === historyStaffId) || null;
-
-  const historyEntries = useMemo(() => {
-    if (!historyStaffId) return [] as Array<{ when: Date; type: string; label: string }>;
-    const entries: Array<{ when: Date; type: string; label: string }> = [];
-
-    // Task completions
-    tasks.filter(t => t.assigned_to?.includes(historyStaffId)).forEach(t => {
-      (t.completion_log || []).forEach(ts => {
-        entries.push({ when: new Date(ts), type: 'Task', label: t.title });
-      });
-    });
-
-    // Posted schedule items
-    scheduleItems.filter(s => s.owner_id === historyStaffId && (s.status || '').toLowerCase() === 'posted').forEach(s => {
-      const ts = (s as any).updated_at;
-      if (ts) entries.push({ when: new Date(ts), type: 'Schedule', label: s.post_type || 'Scheduled post' });
-    });
-
-    // Activity log entries
-    activityLog.filter(a => a.user_id === historyStaffId).forEach(a => {
-      entries.push({ when: new Date(a.created_at), type: 'Activity', label: a.action || 'Action' });
-    });
-
-    return entries.sort((a, b) => b.when.getTime() - a.when.getTime()).slice(0, 100);
-  }, [historyStaffId, tasks, scheduleItems, activityLog]);
 
   // ── Day-grouped active tasks ──
   const activeFeed = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
