@@ -640,7 +640,36 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       fourWeeks: taskFour + scheduleFour + activityFour,
       lastWeek: taskWeek + scheduleWeek + activityWeek,
     };
-  }).sort((a, b) => b.allTime - a.allTime);
+  }).sort((a, b) => b.lastWeek - a.lastWeek || b.fourWeeks - a.fourWeeks || b.allTime - a.allTime);
+
+  // Leaderboard click → show member's recent activity
+  const [historyStaffId, setHistoryStaffId] = useState<string | null>(null);
+  const historyStaff = visibleStaff.find(s => s.id === historyStaffId) || null;
+
+  const historyEntries = useMemo(() => {
+    if (!historyStaffId) return [] as Array<{ when: Date; type: string; label: string }>;
+    const entries: Array<{ when: Date; type: string; label: string }> = [];
+
+    // Task completions
+    tasks.filter(t => t.assigned_to?.includes(historyStaffId)).forEach(t => {
+      (t.completion_log || []).forEach(ts => {
+        entries.push({ when: new Date(ts), type: 'Task', label: t.title });
+      });
+    });
+
+    // Posted schedule items
+    scheduleItems.filter(s => s.owner_id === historyStaffId && (s.status || '').toLowerCase() === 'posted').forEach(s => {
+      const ts = (s as any).updated_at;
+      if (ts) entries.push({ when: new Date(ts), type: 'Schedule', label: s.post_type || 'Scheduled post' });
+    });
+
+    // Activity log entries
+    activityLog.filter(a => a.user_id === historyStaffId).forEach(a => {
+      entries.push({ when: new Date(a.created_at), type: 'Activity', label: a.action || 'Action' });
+    });
+
+    return entries.sort((a, b) => b.when.getTime() - a.when.getTime()).slice(0, 100);
+  }, [historyStaffId, tasks, scheduleItems, activityLog]);
 
   // ── Day-grouped active tasks ──
   const activeFeed = memberTaskFeed.filter(t => !t.completed || t.is_recurring);
