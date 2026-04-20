@@ -1195,6 +1195,35 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Leaderboard history dialog */}
+      <Dialog open={!!historyStaffId} onOpenChange={(o) => !o && setHistoryStaffId(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {historyStaff && <StaffAvatar staffId={historyStaff.id} />}
+              {historyStaff ? getDisplayName(historyStaff) : ''} — Recent activity
+            </DialogTitle>
+          </DialogHeader>
+          {historyEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No activity recorded yet.</p>
+          ) : (
+            <div className="space-y-1 mt-2">
+              {historyEntries.map((entry, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2 rounded-lg border border-border/40 bg-card/40 text-sm">
+                  <Badge variant="outline" className={`text-[10px] shrink-0 ${
+                    entry.type === 'Task' ? 'border-emerald-500/40 text-emerald-400' :
+                    entry.type === 'Schedule' ? 'border-blue-500/40 text-blue-400' :
+                    'border-[hsl(var(--gold))]/40 text-[hsl(var(--gold))]'
+                  }`}>{entry.type}</Badge>
+                  <span className="flex-1 truncate">{entry.label}</span>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">{format(entry.when, 'dd MMM HH:mm')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
