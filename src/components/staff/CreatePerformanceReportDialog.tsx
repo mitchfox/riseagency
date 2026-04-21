@@ -2236,8 +2236,10 @@ export const CreatePerformanceReportDialog = ({
               />
             </CollapsibleContent>
           </Collapsible>
+          )}
 
-          {/* Per-90 Fixture Stats (synced to Player Data) */}
+          {/* Per-90 Fixture Stats (synced to Player Data) — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
@@ -2294,6 +2296,7 @@ export const CreatePerformanceReportDialog = ({
               />
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           <div>
             <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
