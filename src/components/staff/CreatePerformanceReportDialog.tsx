@@ -3527,6 +3527,7 @@ export const CreatePerformanceReportDialog = ({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+              <CategoryToggle value={reportCategory} onChange={setReportCategory} />
               <VisibilityStatusButton
                 value={visibilityStatus}
                 onChange={setVisibilityStatus}
