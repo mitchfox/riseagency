@@ -1524,8 +1524,9 @@ export const CreatePerformanceReportDialog = ({
   // Bulk AI score filling function removed - users should use R90 Ratings Viewer for manual lookup
 
   const handleSave = async () => {
-    // Validation - only fixture is required, everything else is optional
-    if (!selectedFixtureId) {
+    const isHighlightsReport = reportCategory === "highlights";
+    // Validation - fixture only required for non-highlights reports
+    if (!isHighlightsReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
       return;
     }
