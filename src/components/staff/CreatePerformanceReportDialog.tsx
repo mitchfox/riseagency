@@ -2165,8 +2165,10 @@ export const CreatePerformanceReportDialog = ({
               </div>
             </div>
           </div>
+          )}
 
-          {/* Optional Striker Stats */}
+          {/* Optional Striker Stats — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <Collapsible open={showStrikerStats} onOpenChange={setShowStrikerStats}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
