@@ -1961,7 +1961,30 @@ export const CreatePerformanceReportDialog = ({
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6 pb-20">
-          {/* Fixture Selection */}
+          {/* Type toggle — always visible at top so staff can switch into Highlights mode */}
+          <div className="flex justify-end">
+            <CategoryToggle value={reportCategory} onChange={setReportCategory} />
+          </div>
+
+          {/* Highlights title (Highlights mode only) — stored in player_analysis.notes */}
+          {reportCategory === "highlights" && (
+            <div>
+              <Label htmlFor="highlights-title">Highlights Title *</Label>
+              <Input
+                id="highlights-title"
+                value={highlightsTitle}
+                onChange={(e) => setHighlightsTitle(e.target.value)}
+                placeholder="e.g., Best Goals — October 2025"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Highlights reports do not need a fixture, opponent or R90 score. Add clips below in the order you want them to play.
+              </p>
+            </div>
+          )}
+
+          {/* Fixture Selection — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
             <Select value={selectedFixtureId} onValueChange={handleFixtureChange}>
@@ -2012,8 +2035,10 @@ export const CreatePerformanceReportDialog = ({
               </div>
             )}
           </div>
+          )}
 
-          {/* Key Stats */}
+          {/* Key Stats — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="r90">R90 Score (Auto-calculated)</Label>
