@@ -15,6 +15,7 @@ import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { ScoreEditMode } from "./analysis/ScoreEditMode";
 import { VisibilityStatusButton, VisibilityStatus } from "./VisibilityStatusButton";
+import { CategoryToggle, ReportCategory } from "./CategoryToggle";
 import { FFFPackageHeader } from "./FFFPackageHeader";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -277,6 +278,7 @@ export const CreatePerformanceReportDialog = ({
   const [reportLanguage, setReportLanguage] = useState("en");
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [showDescriptions, setShowDescriptions] = useState(true);
+  const [reportCategory, setReportCategory] = useState<ReportCategory>("match");
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
@@ -1005,7 +1007,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category")
         .eq("id", analysisId)
         .single();
 
@@ -1018,6 +1020,7 @@ export const CreatePerformanceReportDialog = ({
       setPerformanceOverview(analysisData.performance_overview || "");
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
       setShowDescriptions((analysisData as any).show_descriptions !== false);
+      setReportCategory(((analysisData as any).category as ReportCategory) || "match");
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
@@ -1604,6 +1607,7 @@ export const CreatePerformanceReportDialog = ({
             show_descriptions: showDescriptions,
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
+            category: reportCategory,
           } as any)
           .eq("id", analysisId);
 
@@ -1679,6 +1683,7 @@ export const CreatePerformanceReportDialog = ({
             show_descriptions: showDescriptions,
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
+            category: reportCategory,
           } as any)
           .select()
           .single();
@@ -3007,6 +3012,7 @@ export const CreatePerformanceReportDialog = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Action
               </Button>
+              <CategoryToggle value={reportCategory} onChange={setReportCategory} />
               <VisibilityStatusButton
                 value={visibilityStatus}
                 onChange={setVisibilityStatus}
@@ -3521,6 +3527,7 @@ export const CreatePerformanceReportDialog = ({
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+              <CategoryToggle value={reportCategory} onChange={setReportCategory} />
               <VisibilityStatusButton
                 value={visibilityStatus}
                 onChange={setVisibilityStatus}

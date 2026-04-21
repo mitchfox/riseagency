@@ -1,0 +1,1 @@
+ALTER TABLE public.player_analysis ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'match';

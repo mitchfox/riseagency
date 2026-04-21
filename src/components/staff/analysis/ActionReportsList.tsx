@@ -28,6 +28,7 @@ interface ActionReport {
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
+  category?: string | null;
 }
 
 interface ActionReportsListProps {
@@ -93,6 +94,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           visibility_status,
           placeholder_raw_score,
           placeholder_minutes,
+          category,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -115,6 +117,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         visibility_status: report.visibility_status || "draft",
         placeholder_raw_score: report.placeholder_raw_score,
         placeholder_minutes: report.placeholder_minutes,
+        category: report.category || "match",
       }));
 
       setReports(formattedReports);
@@ -310,6 +313,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                           {report.visibility_status === "draft" ? "Draft" : report.visibility_status === "clipped" ? "Clipped" : "Hidden"}
                         </span>
                       )}
+                  {report.category === "training" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-emerald-500/20 text-emerald-400">
+                      Training
+                    </span>
+                  )}
                     </div>
                     <h4 className="text-base md:text-lg font-semibold truncate">vs {report.opponent || "Unknown"}</h4>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm opacity-90 mt-1">
