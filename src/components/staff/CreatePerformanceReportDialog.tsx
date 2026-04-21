@@ -285,6 +285,11 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderSr, setPlaceholderSr] = useState("");
   // Highlights-mode title — stored in player_analysis.notes column
   const [highlightsTitle, setHighlightsTitle] = useState<string>("");
+  // Highlights-mode "Add from Existing Report" picker
+  const [showAddFromExisting, setShowAddFromExisting] = useState(false);
+  const [existingReports, setExistingReports] = useState<Array<{ id: string; analysis_date: string; opponent: string | null; category: string | null }>>([]);
+  const [selectedExistingReportId, setSelectedExistingReportId] = useState<string | null>(null);
+  const [existingReportActions, setExistingReportActions] = useState<Array<any>>([]);
   const [estimatedReadyAt, setEstimatedReadyAt] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<TranslatedContent | null>(null);
   const [activeTranslationTab, setActiveTranslationTab] = useState("en");
