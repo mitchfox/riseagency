@@ -2361,7 +2361,20 @@ export const CreatePerformanceReportDialog = ({
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
-              <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
+              <Label className="text-base sm:text-lg font-semibold">
+                {reportCategory === "highlights" ? "Highlight Clips *" : "Performance Actions *"}
+              </Label>
+              {reportCategory === "highlights" && (
+                <Button
+                  onClick={() => setShowAddFromExisting(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add from Existing Report
+                </Button>
+              )}
               {actions.some(a => a.video_url) && (
                 <Button
                   onClick={() => setVideoEditorOpen(true)}
