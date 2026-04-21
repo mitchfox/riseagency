@@ -1009,7 +1009,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes")
         .eq("id", analysisId)
         .single();
 
@@ -1023,6 +1023,8 @@ export const CreatePerformanceReportDialog = ({
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
       setShowDescriptions((analysisData as any).show_descriptions !== false);
       setReportCategory(((analysisData as any).category as ReportCategory) || "match");
+      // Highlights title is stored in player_analysis.notes
+      setHighlightsTitle((analysisData as any).notes || "");
       initialVisibilityRef.current = (analysisData as any).visibility_status || "draft";
       setPlaceholderRawScore((analysisData as any).placeholder_raw_score?.toString() || "");
       setPlaceholderMinutes((analysisData as any).placeholder_minutes?.toString() || "");
@@ -1473,8 +1475,10 @@ export const CreatePerformanceReportDialog = ({
 
   // Sort actions on minute blur instead of every keystroke
   const handleMinuteBlur = useCallback(() => {
+    // In Highlights mode, ordering is manual via up/down arrows — never auto-sort.
+    if (reportCategory === "highlights") return;
     setActions((prev) => sortActionsChronologically(prev));
-  }, []);
+  }, [reportCategory]);
 
   // Extract keywords from description for better matching
   const getKeywords = (text: string) => {
@@ -1524,8 +1528,9 @@ export const CreatePerformanceReportDialog = ({
   // Bulk AI score filling function removed - users should use R90 Ratings Viewer for manual lookup
 
   const handleSave = async () => {
-    // Validation - only fixture is required, everything else is optional
-    if (!selectedFixtureId) {
+    const isHighlightsReport = reportCategory === "highlights";
+    // Validation - fixture only required for non-highlights reports
+    if (!isHighlightsReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
       return;
     }

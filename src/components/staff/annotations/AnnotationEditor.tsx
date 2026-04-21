@@ -380,7 +380,21 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       setPlaybackFreezeUrl(null);
       setPlaybackFreezeActive(false);
       setPlaybackFreezePhase('idle');
-      video.play();
+      // Resume from current position. Never silently restart from 0 — only
+      // the SkipBack control should rewind. If the video is already at the
+      // very end, nudge it back a hair so play() doesn't auto-rewind.
+      const dur = video.duration || 0;
+      if (dur > 0 && video.currentTime >= dur - 0.05) {
+        video.currentTime = Math.max(0, dur - 0.05);
+      }
+      const resumeAt = video.currentTime;
+      video.play().then(() => {
+        // Some browsers reset currentTime when starting playback on a
+        // looped/ended clip. Force it back if that happens.
+        if (Math.abs(video.currentTime - resumeAt) > 0.25) {
+          video.currentTime = resumeAt;
+        }
+      }).catch(() => {});
       setIsPlaying(true);
     } else {
       video.pause();
@@ -1037,14 +1051,16 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               />
               {/* Play/pause overlay — shows when paused and not in drawing mode */}
               {!isPlaying && !drawingMode && !videoError && !playbackFreezeActive && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center z-15 cursor-pointer bg-black/20"
-                  onClick={togglePlay}
+                <button
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center z-30 cursor-pointer bg-black/20 hover:bg-black/30 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                  aria-label="Play"
                 >
-                  <div className="w-16 h-16 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm border border-white/20">
-                    <Play className="w-8 h-8 text-white ml-1" />
+                  <div className="w-20 h-20 rounded-full bg-black/70 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
+                    <Play className="w-10 h-10 text-white ml-1" />
                   </div>
-                </div>
+                </button>
               )}
               {/* Re-upload overlay when video expired */}
               {videoError && (
@@ -1267,8 +1283,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(-1)} disabled={drawingMode}>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white" onClick={togglePlay} disabled={drawingMode}>
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-white hover:bg-white/10" onClick={togglePlay} disabled={drawingMode}>
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(1)} disabled={drawingMode}>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -1440,48 +1456,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               {/* Element scripting controls */}
               {selectedElement && (
                 <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
-                  <div className="flex items-center gap-1 text-[10px] text-white/40">
-                    <Clock className="w-3 h-3" />
-                    <span>Timing</span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[9px] text-white/40 w-14">Appear</Label>
-                      <Input
-                        type="number" step="0.1" min="0"
-                        value={selectedElement.appearAt.toFixed(1)}
-                        onChange={e => updateElement(selectedElement.id, { appearAt: parseFloat(e.target.value) || 0 })}
-                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
-                      />
-                      <span className="text-[9px] text-white/30">s</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[9px] text-white/40 w-14">Duration</Label>
-                      <Input
-                        type="number" step="0.5" min="0.5"
-                        value={selectedElement.duration ?? ''}
-                        placeholder="∞"
-                        onChange={e => {
-                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                          updateElement(selectedElement.id, { duration: v });
-                        }}
-                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
-                      />
-                      <span className="text-[9px] text-white/30">s</span>
-                    </div>
-                    <Button
-
-                      variant="ghost"
-                      size="sm"
-                      className="w-full h-6 text-[10px] text-white/40"
-                      onClick={() => updateElement(selectedElement.id, { appearAt: klipOffset })}
-                    >
-                      Set appear to now ({klipOffset.toFixed(1)}s)
-                    </Button>
-                  </div>
-
-                  {/* Colour */}
-                  <div className="space-y-1.5 pt-2 border-t border-white/10">
+                  {/* Colour — moved above Timing for faster access */}
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
                       <span>Colour</span>
                     </div>
@@ -1564,6 +1540,46 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                         </div>
                       );
                     })()}
+                  </div>
+
+                  {/* Timing — moved below Colour */}
+                  <div className="space-y-1 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1 text-[10px] text-white/40">
+                      <Clock className="w-3 h-3" />
+                      <span>Timing</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-14">Appear</Label>
+                      <Input
+                        type="number" step="0.1" min="0"
+                        value={selectedElement.appearAt.toFixed(1)}
+                        onChange={e => updateElement(selectedElement.id, { appearAt: parseFloat(e.target.value) || 0 })}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-14">Duration</Label>
+                      <Input
+                        type="number" step="0.5" min="0.5"
+                        value={selectedElement.duration ?? ''}
+                        placeholder="∞"
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                          updateElement(selectedElement.id, { duration: v });
+                        }}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-6 text-[10px] text-white/40"
+                      onClick={() => updateElement(selectedElement.id, { appearAt: klipOffset })}
+                    >
+                      Set appear to now ({klipOffset.toFixed(1)}s)
+                    </Button>
                   </div>
 
                   {/* Size */}
