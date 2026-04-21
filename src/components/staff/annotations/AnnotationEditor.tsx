@@ -1281,8 +1281,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
               <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(-1)} disabled={drawingMode}>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white" onClick={togglePlay} disabled={drawingMode}>
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-white hover:bg-white/10" onClick={togglePlay} disabled={drawingMode}>
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-white/70" onClick={() => stepFrame(1)} disabled={drawingMode}>
                 <ChevronRight className="w-3.5 h-3.5" />
