@@ -282,19 +282,31 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
 
     if (newVisible.length === 0) return;
 
-    // Mark these as triggered and track ALL visible element IDs (not just new ones)
-    // so annotations within 0.2s of each other all display simultaneously
+    // Each distinct timestamp (>= 0.1s apart) gets its OWN freeze frame.
+    // Group only elements drawn at effectively the same moment (<0.1s apart)
+    // with the just-triggered annotation, so a 0.5s gap correctly produces
+    // two separate freezes instead of merging onto the second timestamp.
+    const TIMESTAMP_GROUP_TOLERANCE = 0.1;
+    const earliestNewAppearAt = Math.min(...newVisible.map(el => el.appearAt));
+
+    // Mark only the newly triggered timestamps as fired so future ones still
+    // get their own freeze when they arrive.
     newVisible.forEach(el => {
       const roundedTime = Math.round(el.appearAt * 100) / 100;
       triggeredTimesRef.current.add(roundedTime);
     });
-    // Show ALL currently visible elements, not just the newly triggered ones
-    const freezeIds = new Set<string>(visibleElements.map(el => el.id));
+
+    // Freeze only the elements that share this trigger moment — not earlier
+    // elements whose 3s duration window happens to still overlap.
+    const groupElements = visibleElements.filter(el =>
+      Math.abs(el.appearAt - earliestNewAppearAt) < TIMESTAMP_GROUP_TOLERANCE
+    );
+    const freezeIds = new Set<string>(groupElements.map(el => el.id));
     freezeElementIdsRef.current = freezeIds;
 
-    // Calculate the longest remaining duration among visible annotations
+    // Calculate the longest remaining duration among the grouped annotations
     const maxDuration = Math.max(
-      ...visibleElements.map(el => {
+      ...groupElements.map(el => {
         const elDuration = el.duration ?? 3;
         const elapsed = effectiveOffset - el.appearAt;
         return Math.max(elDuration - elapsed, 0.5);
