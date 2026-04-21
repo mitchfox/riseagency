@@ -2536,6 +2536,7 @@ export const CreatePerformanceReportDialog = ({
                       />
                     </div>
                   </div>
+                  )}
                   
                   <div>
                     <Label className="text-xs">Action Type *</Label>
