@@ -3012,6 +3012,7 @@ export const CreatePerformanceReportDialog = ({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Action
               </Button>
+              <CategoryToggle value={reportCategory} onChange={setReportCategory} />
               <VisibilityStatusButton
                 value={visibilityStatus}
                 onChange={setVisibilityStatus}
