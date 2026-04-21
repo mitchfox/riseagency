@@ -2905,6 +2905,7 @@ export type Database = {
         Row: {
           analysis_date: string
           analysis_writer_id: string | null
+          category: string
           club_logo_url: string | null
           created_at: string
           estimated_ready_at: string | null
@@ -2935,6 +2936,7 @@ export type Database = {
         Insert: {
           analysis_date: string
           analysis_writer_id?: string | null
+          category?: string
           club_logo_url?: string | null
           created_at?: string
           estimated_ready_at?: string | null
@@ -2965,6 +2967,7 @@ export type Database = {
         Update: {
           analysis_date?: string
           analysis_writer_id?: string | null
+          category?: string
           club_logo_url?: string | null
           created_at?: string
           estimated_ready_at?: string | null
