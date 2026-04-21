@@ -283,24 +283,26 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     if (newVisible.length === 0) return;
 
     // Each distinct timestamp (>= 0.1s apart) gets its OWN freeze frame.
-    // Group only elements drawn at effectively the same moment (<0.1s apart)
-    // with the just-triggered annotation, so a 0.5s gap correctly produces
-    // two separate freezes instead of merging onto the second timestamp.
-    const TIMESTAMP_GROUP_TOLERANCE = 0.1;
+    // Use a sub-0.1s tolerance so even a 0.1s gap produces separate freezes,
+    // while annotations created at the same instant still group together.
+    const TIMESTAMP_GROUP_TOLERANCE = 0.05;
     const earliestNewAppearAt = Math.min(...newVisible.map(el => el.appearAt));
 
-    // Mark only the newly triggered timestamps as fired so future ones still
-    // get their own freeze when they arrive.
-    newVisible.forEach(el => {
-      const roundedTime = Math.round(el.appearAt * 100) / 100;
-      triggeredTimesRef.current.add(roundedTime);
-    });
-
-    // Freeze only the elements that share this trigger moment — not earlier
-    // elements whose 3s duration window happens to still overlap.
-    const groupElements = visibleElements.filter(el =>
+    // Group ONLY the newly-triggered annotations that share this trigger moment.
+    // Earlier annotations whose duration window still overlaps must NOT bleed in,
+    // and later annotations must NOT be silently consumed (which previously caused
+    // a 0.5s-apart pair to render together on the second timestamp).
+    const groupElements = newVisible.filter(el =>
       Math.abs(el.appearAt - earliestNewAppearAt) < TIMESTAMP_GROUP_TOLERANCE
     );
+
+    // Mark ONLY the elements actually being shown in this freeze as triggered.
+    // Anything outside the tolerance window stays untriggered so it gets its own
+    // freeze frame when the playhead reaches it.
+    groupElements.forEach(el => {
+      const roundedTime = Math.round(el.appearAt * 1000) / 1000;
+      triggeredTimesRef.current.add(roundedTime);
+    });
     const freezeIds = new Set<string>(groupElements.map(el => el.id));
     freezeElementIdsRef.current = freezeIds;
 
