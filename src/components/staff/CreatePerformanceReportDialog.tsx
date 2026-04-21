@@ -285,6 +285,11 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderSr, setPlaceholderSr] = useState("");
   // Highlights-mode title — stored in player_analysis.notes column
   const [highlightsTitle, setHighlightsTitle] = useState<string>("");
+  // Highlights-mode "Add from Existing Report" picker
+  const [showAddFromExisting, setShowAddFromExisting] = useState(false);
+  const [existingReports, setExistingReports] = useState<Array<{ id: string; analysis_date: string; opponent: string | null; category: string | null }>>([]);
+  const [selectedExistingReportId, setSelectedExistingReportId] = useState<string | null>(null);
+  const [existingReportActions, setExistingReportActions] = useState<Array<any>>([]);
   const [estimatedReadyAt, setEstimatedReadyAt] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<TranslatedContent | null>(null);
   const [activeTranslationTab, setActiveTranslationTab] = useState("en");
@@ -1595,14 +1600,15 @@ export const CreatePerformanceReportDialog = ({
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
-            fixture_id: selectedFixtureId,
-            analysis_date: fixture?.match_date,
-            r90_score: calculatedR90,
-            minutes_played: !isNaN(parsedMinutes) ? parsedMinutes : null,
-            opponent: opponent,
-            result: result || null,
-            striker_stats: strikerStatsJson,
-            fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
+            fixture_id: isHighlightsReport ? null : selectedFixtureId,
+            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: isHighlightsReport ? null : calculatedR90,
+            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
+            opponent: isHighlightsReport ? null : opponent,
+            result: isHighlightsReport ? null : (result || null),
+            striker_stats: isHighlightsReport ? null : strikerStatsJson,
+            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
@@ -1671,14 +1677,15 @@ export const CreatePerformanceReportDialog = ({
           .from("player_analysis")
           .insert({
             player_id: playerId,
-            fixture_id: selectedFixtureId,
-            analysis_date: fixture?.match_date,
-            r90_score: calculatedR90,
-            minutes_played: !isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null,
-            opponent: opponent,
-            result: result || null,
-            striker_stats: strikerStatsJson,
-            fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
+            fixture_id: isHighlightsReport ? null : selectedFixtureId,
+            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: isHighlightsReport ? null : calculatedR90,
+            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null),
+            opponent: isHighlightsReport ? null : opponent,
+            result: isHighlightsReport ? null : (result || null),
+            striker_stats: isHighlightsReport ? null : strikerStatsJson,
+            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
@@ -1961,7 +1968,30 @@ export const CreatePerformanceReportDialog = ({
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6 pb-20">
-          {/* Fixture Selection */}
+          {/* Type toggle — always visible at top so staff can switch into Highlights mode */}
+          <div className="flex justify-end">
+            <CategoryToggle value={reportCategory} onChange={setReportCategory} />
+          </div>
+
+          {/* Highlights title (Highlights mode only) — stored in player_analysis.notes */}
+          {reportCategory === "highlights" && (
+            <div>
+              <Label htmlFor="highlights-title">Highlights Title *</Label>
+              <Input
+                id="highlights-title"
+                value={highlightsTitle}
+                onChange={(e) => setHighlightsTitle(e.target.value)}
+                placeholder="e.g., Best Goals — October 2025"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Highlights reports do not need a fixture, opponent or R90 score. Add clips below in the order you want them to play.
+              </p>
+            </div>
+          )}
+
+          {/* Fixture Selection — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
             <Select value={selectedFixtureId} onValueChange={handleFixtureChange}>
@@ -2012,8 +2042,10 @@ export const CreatePerformanceReportDialog = ({
               </div>
             )}
           </div>
+          )}
 
-          {/* Key Stats */}
+          {/* Key Stats — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="r90">R90 Score (Auto-calculated)</Label>
@@ -2140,8 +2172,10 @@ export const CreatePerformanceReportDialog = ({
               </div>
             </div>
           </div>
+          )}
 
-          {/* Optional Striker Stats */}
+          {/* Optional Striker Stats — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <Collapsible open={showStrikerStats} onOpenChange={setShowStrikerStats}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
@@ -2209,8 +2243,10 @@ export const CreatePerformanceReportDialog = ({
               />
             </CollapsibleContent>
           </Collapsible>
+          )}
 
-          {/* Per-90 Fixture Stats (synced to Player Data) */}
+          {/* Per-90 Fixture Stats (synced to Player Data) — hidden in Highlights mode */}
+          {reportCategory !== "highlights" && (
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
@@ -2267,6 +2303,7 @@ export const CreatePerformanceReportDialog = ({
               />
             </CollapsibleContent>
           </Collapsible>
+          )}
 
           <div>
             <Label htmlFor="performance-overview">Performance Overview (Optional)</Label>
@@ -2331,7 +2368,20 @@ export const CreatePerformanceReportDialog = ({
           {/* Performance Actions */}
           <div>
             <div className="mb-4 flex items-center gap-3">
-              <Label className="text-base sm:text-lg font-semibold">Performance Actions *</Label>
+              <Label className="text-base sm:text-lg font-semibold">
+                {reportCategory === "highlights" ? "Highlight Clips *" : "Performance Actions *"}
+              </Label>
+              {reportCategory === "highlights" && (
+                <Button
+                  onClick={() => setShowAddFromExisting(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add from Existing Report
+                </Button>
+              )}
               {actions.some(a => a.video_url) && (
                 <Button
                   onClick={() => setVideoEditorOpen(true)}
@@ -2463,6 +2513,7 @@ export const CreatePerformanceReportDialog = ({
                     </div>
                   </div>
                   
+                   {reportCategory !== "highlights" && (
                    <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Minute *</Label>
@@ -2487,6 +2538,7 @@ export const CreatePerformanceReportDialog = ({
                       />
                     </div>
                   </div>
+                  )}
                   
                   <div>
                     <Label className="text-xs">Action Type *</Label>
