@@ -1600,14 +1600,15 @@ export const CreatePerformanceReportDialog = ({
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
-            fixture_id: selectedFixtureId,
-            analysis_date: fixture?.match_date,
-            r90_score: calculatedR90,
-            minutes_played: !isNaN(parsedMinutes) ? parsedMinutes : null,
-            opponent: opponent,
-            result: result || null,
-            striker_stats: strikerStatsJson,
-            fixture_stats: Object.keys(fixtureStats).length > 0 ? fixtureStats : null,
+            fixture_id: isHighlightsReport ? null : selectedFixtureId,
+            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: isHighlightsReport ? null : calculatedR90,
+            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
+            opponent: isHighlightsReport ? null : opponent,
+            result: isHighlightsReport ? null : (result || null),
+            striker_stats: isHighlightsReport ? null : strikerStatsJson,
+            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
             placeholder_raw_score: visibilityStatus === "hidden" && placeholderRawScore ? parseFloat(placeholderRawScore) : null,
