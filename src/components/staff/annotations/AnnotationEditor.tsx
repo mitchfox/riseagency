@@ -380,7 +380,21 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
       setPlaybackFreezeUrl(null);
       setPlaybackFreezeActive(false);
       setPlaybackFreezePhase('idle');
-      video.play();
+      // Resume from current position. Never silently restart from 0 — only
+      // the SkipBack control should rewind. If the video is already at the
+      // very end, nudge it back a hair so play() doesn't auto-rewind.
+      const dur = video.duration || 0;
+      if (dur > 0 && video.currentTime >= dur - 0.05) {
+        video.currentTime = Math.max(0, dur - 0.05);
+      }
+      const resumeAt = video.currentTime;
+      video.play().then(() => {
+        // Some browsers reset currentTime when starting playback on a
+        // looped/ended clip. Force it back if that happens.
+        if (Math.abs(video.currentTime - resumeAt) > 0.25) {
+          video.currentTime = resumeAt;
+        }
+      }).catch(() => {});
       setIsPlaying(true);
     } else {
       video.pause();
