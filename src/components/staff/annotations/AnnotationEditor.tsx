@@ -1542,6 +1542,46 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                     })()}
                   </div>
 
+                  {/* Timing — moved below Colour */}
+                  <div className="space-y-1 pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1 text-[10px] text-white/40">
+                      <Clock className="w-3 h-3" />
+                      <span>Timing</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-14">Appear</Label>
+                      <Input
+                        type="number" step="0.1" min="0"
+                        value={selectedElement.appearAt.toFixed(1)}
+                        onChange={e => updateElement(selectedElement.id, { appearAt: parseFloat(e.target.value) || 0 })}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[9px] text-white/40 w-14">Duration</Label>
+                      <Input
+                        type="number" step="0.5" min="0.5"
+                        value={selectedElement.duration ?? ''}
+                        placeholder="∞"
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                          updateElement(selectedElement.id, { duration: v });
+                        }}
+                        className="h-6 text-[10px] bg-white/5 border-white/10 text-white flex-1"
+                      />
+                      <span className="text-[9px] text-white/30">s</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-6 text-[10px] text-white/40"
+                      onClick={() => updateElement(selectedElement.id, { appearAt: klipOffset })}
+                    >
+                      Set appear to now ({klipOffset.toFixed(1)}s)
+                    </Button>
+                  </div>
+
                   {/* Size */}
                   <div className="space-y-1 pt-2 border-t border-white/10">
                     <div className="flex items-center gap-1 text-[10px] text-white/40">
