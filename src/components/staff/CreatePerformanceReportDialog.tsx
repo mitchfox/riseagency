@@ -283,6 +283,8 @@ export const CreatePerformanceReportDialog = ({
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
   const [placeholderSr, setPlaceholderSr] = useState("");
+  // Highlights-mode title — stored in player_analysis.notes column
+  const [highlightsTitle, setHighlightsTitle] = useState<string>("");
   const [estimatedReadyAt, setEstimatedReadyAt] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<TranslatedContent | null>(null);
   const [activeTranslationTab, setActiveTranslationTab] = useState("en");
