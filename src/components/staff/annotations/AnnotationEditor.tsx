@@ -276,7 +276,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
 
     // Check if any annotations just became visible that we haven't triggered yet
     const newVisible = visibleElements.filter(el => {
-      const roundedTime = Math.round(el.appearAt * 100) / 100;
+      const roundedTime = Math.round(el.appearAt * 1000) / 1000;
       return !triggeredTimesRef.current.has(roundedTime);
     });
 
