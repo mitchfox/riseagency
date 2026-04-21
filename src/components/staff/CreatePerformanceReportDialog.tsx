@@ -2511,6 +2511,7 @@ export const CreatePerformanceReportDialog = ({
                     </div>
                   </div>
                   
+                   {reportCategory !== "highlights" && (
                    <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Minute *</Label>
