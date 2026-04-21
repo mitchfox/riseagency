@@ -1473,8 +1473,10 @@ export const CreatePerformanceReportDialog = ({
 
   // Sort actions on minute blur instead of every keystroke
   const handleMinuteBlur = useCallback(() => {
+    // In Highlights mode, ordering is manual via up/down arrows — never auto-sort.
+    if (reportCategory === "highlights") return;
     setActions((prev) => sortActionsChronologically(prev));
-  }, []);
+  }, [reportCategory]);
 
   // Extract keywords from description for better matching
   const getKeywords = (text: string) => {
