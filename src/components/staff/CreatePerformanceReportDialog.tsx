@@ -1607,6 +1607,7 @@ export const CreatePerformanceReportDialog = ({
             show_descriptions: showDescriptions,
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
+            category: reportCategory,
           } as any)
           .eq("id", analysisId);
 
@@ -1682,6 +1683,7 @@ export const CreatePerformanceReportDialog = ({
             show_descriptions: showDescriptions,
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
+            category: reportCategory,
           } as any)
           .select()
           .single();
