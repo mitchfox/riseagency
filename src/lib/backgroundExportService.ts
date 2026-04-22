@@ -11,6 +11,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
+import { trimAndUploadClip } from "@/lib/clientClipExtractor";
 
 export interface ExportJob {
   id: string;
@@ -148,27 +149,28 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       try {
         const annotations = job.getClipAnnotations?.(clip.id);
 
-        // Attempt to trim the clip into a standalone file via edge function
+        // Always produce a standalone trimmed clip. trimAndUploadClip tries the
+        // edge function first, then falls back to client-side capture so that
+        // bulk exports never store the full match URL.
         let clipVideoUrl = sourceVideoUrl;
         let clipStart: number | null = clip.start;
         let clipEnd: number | null = clip.end;
 
         try {
-          const { data: trimData, error: trimError } = await invokeEdgeFunction<{ url: string }>(
-            "trim-video-clip",
-            { body: { sourceUrl: sourceVideoUrl, start: clip.start, end: clip.end, clipId: clip.id } }
+          const trimmedUrl = await trimAndUploadClip(
+            sourceVideoUrl,
+            clip.id,
+            clip.start,
+            clip.end
           );
-
-          if (!trimError && trimData?.url) {
-            // Successfully trimmed — use standalone clip URL, no boundaries needed
-            clipVideoUrl = trimData.url;
+          if (trimmedUrl) {
+            clipVideoUrl = trimmedUrl;
             clipStart = null;
             clipEnd = null;
-          } else {
-            console.warn(`Trim failed for clip ${clip.id}, storing with boundaries:`, trimError?.message);
           }
         } catch (trimErr) {
-          console.warn(`Trim call failed for clip ${clip.id}, storing with boundaries:`, trimErr);
+          console.warn(`Trim failed for clip ${clip.id}, falling back to bounded full match URL:`, trimErr);
+          // Keep boundaries so the report player still windows the clip.
         }
 
         const insertRow: any = {
