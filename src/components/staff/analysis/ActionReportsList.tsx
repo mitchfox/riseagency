@@ -95,6 +95,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           placeholder_raw_score,
           placeholder_minutes,
           category,
+          notes,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -118,6 +119,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         placeholder_raw_score: report.placeholder_raw_score,
         placeholder_minutes: report.placeholder_minutes,
         category: report.category || "match",
+        notes: report.notes || null,
       }));
 
       setReports(formattedReports);
