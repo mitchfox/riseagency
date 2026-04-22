@@ -821,6 +821,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               </div>
 
               {/* Key Stats */}
+              {analysis.category !== "highlights" && (
               <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
                   <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
@@ -853,9 +854,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
                 </div>
               </div>
+              )}
 
               {/* Advanced Stats (Match Statistics) - Collapsible */}
-              {advancedStats.length > 0 && (
+              {analysis.category !== "highlights" && advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2 cursor-pointer" onClick={() => setShowMatchStats(!showMatchStats)}>
                     <div className="flex items-center justify-between">
