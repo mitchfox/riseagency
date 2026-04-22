@@ -761,7 +761,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               )}
               {/* Player Info with Clipped Actions Button */}
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+                <div className={`grid gap-2 md:gap-4 ${analysis.category === "highlights" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
                   <div>
                     <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
@@ -770,14 +770,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
-                  <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
-                    <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
-                    <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
-                  </div>
+                  {analysis.category !== "highlights" && (
+                    <>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
+                        <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
+                        <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
                 
                 {/* Video Options Row - directly below player info */}
