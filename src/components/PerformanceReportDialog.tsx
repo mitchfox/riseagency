@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { downloadVideo } from "@/lib/videoDownload";
 import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
 import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
@@ -64,6 +65,8 @@ interface AnalysisDetails {
   minutes_played: number | null;
   player_name: string;
   player_position?: string | null;
+  category?: string | null;
+  notes?: string | null;
   striker_stats?: StrikerStats | null;
   performance_overview?: string | null;
   visibility_status?: string;
@@ -186,7 +189,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name, position)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -218,6 +221,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         show_descriptions: (analysisResult.data as any).show_descriptions !== false,
         club_logo_url: (analysisResult.data as any).club_logo_url || null,
         opposition_color: (analysisResult.data as any).opposition_color || null,
+        category: (analysisResult.data as any).category || "match",
+        notes: (analysisResult.data as any).notes || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -757,7 +762,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               )}
               {/* Player Info with Clipped Actions Button */}
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+                <div className={`grid gap-2 md:gap-4 ${analysis.category === "highlights" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
                   <div>
                     <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "player_label")}</p>
                     <p className="font-bold text-sm md:text-base truncate">{analysis.player_name}</p>
@@ -766,14 +771,18 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "date")}</p>
                     <p className="font-bold text-sm md:text-base">{new Date(analysis.analysis_date).toLocaleDateString(portalLocale)}</p>
                   </div>
-                  <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
-                    <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
-                    <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
-                  </div>
+                  {analysis.category !== "highlights" && (
+                    <>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "opponent")}</p>
+                        <p className="font-bold text-sm md:text-base truncate">{tf("opponent", analysis.opponent) || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs md:text-sm text-muted-foreground">{t(reportLanguage, "result")}</p>
+                        <p className="font-bold text-sm md:text-base">{analysis.result || "N/A"}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
                 
                 {/* Video Options Row - directly below player info */}
@@ -813,6 +822,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               </div>
 
               {/* Key Stats */}
+              {analysis.category !== "highlights" && (
               <div className="grid grid-cols-3 gap-2 md:gap-4 p-2 md:p-4 bg-accent/20 rounded-lg">
                 <div className="text-center p-2">
                   <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
@@ -845,9 +855,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                   <p className="text-base md:text-2xl font-bold">{analysis.minutes_played ?? "N/A"}</p>
                 </div>
               </div>
+              )}
 
               {/* Advanced Stats (Match Statistics) - Collapsible */}
-              {advancedStats.length > 0 && (
+              {analysis.category !== "highlights" && advancedStats.length > 0 && (
                 <Card className="overflow-hidden">
                   <CardHeader className="py-1.5 md:py-2 cursor-pointer" onClick={() => setShowMatchStats(!showMatchStats)}>
                     <div className="flex items-center justify-between">
@@ -1279,6 +1290,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             };
           })}
         player={sharedClipPlayer}
+        showDownloads={analysis?.category === "highlights"}
+        onDownloadCurrent={(clip: any) => {
+          if (!clip?.video_url) return;
+          downloadVideo(clip.video_url, `clip-${clip.action_number}-${clip.action_type || "highlight"}`);
+        }}
+        onDownloadAll={(clips: any[]) => {
+          const valid = clips.filter((c) => c.video_url);
+          if (valid.length === 0) { toast.error("No downloadable clips"); return; }
+          valid.forEach((c, i) => {
+            setTimeout(() => downloadVideo(c.video_url, `clip-${i + 1}-${c.action_type || "highlight"}`), i * 500);
+          });
+          toast.success(`Downloading ${valid.length} clips…`);
+        }}
       />
 
       {/* Ranked/Full Match Video Player */}

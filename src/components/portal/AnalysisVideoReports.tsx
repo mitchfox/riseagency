@@ -169,17 +169,22 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   const handleDownloadCurrent = (clip: any) => {
     const found = compilationClips.find(c => c.id === clip.id);
     if (!found?.video_url) return;
+    if (found.clip_start != null && found.clip_end != null) {
+      toast.error("This clip is part of a full match file and can't be downloaded directly. Re-export the report to generate standalone clips.");
+      return;
+    }
     downloadVideo(found.video_url, `clip-${found.action_number}-${found.action_type}`);
     toast.success('Download started');
   };
 
   const handleDownloadAll = (clips: any[]) => {
-    const valid = clips.filter(c => c.video_url);
-    if (valid.length === 0) { toast.error('No downloadable clips'); return; }
+    const valid = clips.filter(c => c.video_url && (c.clip_start == null || c.clip_end == null));
+    const skipped = clips.length - valid.length;
+    if (valid.length === 0) { toast.error('No standalone clips available to download'); return; }
     valid.forEach((c, i) => {
       setTimeout(() => downloadVideo(c.video_url, `clip-${i + 1}-${c.action_type}`), i * 500);
     });
-    toast.success(`Downloading ${valid.length} clips…`);
+    toast.success(skipped > 0 ? `Downloading ${valid.length} clips (${skipped} skipped — full match)` : `Downloading ${valid.length} clips…`);
   };
 
   const handleSaveToBestClips = async (clip: any) => {
