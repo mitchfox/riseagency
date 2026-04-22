@@ -1290,6 +1290,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
             };
           })}
         player={sharedClipPlayer}
+        showDownloads={analysis?.category === "highlights"}
+        onDownloadCurrent={(clip: any) => {
+          if (!clip?.video_url) return;
+          downloadVideo(clip.video_url, `clip-${clip.action_number}-${clip.action_type || "highlight"}`);
+        }}
+        onDownloadAll={(clips: any[]) => {
+          const valid = clips.filter((c) => c.video_url);
+          if (valid.length === 0) { toast.error("No downloadable clips"); return; }
+          valid.forEach((c, i) => {
+            setTimeout(() => downloadVideo(c.video_url, `clip-${i + 1}-${c.action_type || "highlight"}`), i * 500);
+          });
+          toast.success(`Downloading ${valid.length} clips…`);
+        }}
       />
 
       {/* Ranked/Full Match Video Player */}
