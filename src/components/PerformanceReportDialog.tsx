@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ActionVideoPopup } from "@/components/ActionVideoPopup";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { downloadVideo } from "@/lib/videoDownload";
 import { STAT_TYPE_CONFIGS, StatTypeConfig } from "@/components/staff/ActionStatRecorder";
 import { R90FlowChart } from "@/components/report/R90FlowChart";
 import { ActionHeatmap } from "@/components/report/ActionHeatmap";
