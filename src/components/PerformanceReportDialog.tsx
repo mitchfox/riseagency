@@ -64,6 +64,8 @@ interface AnalysisDetails {
   minutes_played: number | null;
   player_name: string;
   player_position?: string | null;
+  category?: string | null;
+  notes?: string | null;
   striker_stats?: StrikerStats | null;
   performance_overview?: string | null;
   visibility_status?: string;
@@ -186,7 +188,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, players!inner (name, position)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -218,6 +220,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         show_descriptions: (analysisResult.data as any).show_descriptions !== false,
         club_logo_url: (analysisResult.data as any).club_logo_url || null,
         opposition_color: (analysisResult.data as any).opposition_color || null,
+        category: (analysisResult.data as any).category || "match",
+        notes: (analysisResult.data as any).notes || null,
       });
 
       if (actionsResult.error) throw actionsResult.error;
