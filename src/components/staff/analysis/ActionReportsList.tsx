@@ -29,6 +29,7 @@ interface ActionReport {
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
   category?: string | null;
+  notes?: string | null;
 }
 
 interface ActionReportsListProps {
@@ -320,17 +321,26 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                       Training
                     </span>
                   )}
+                  {report.category === "highlights" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-primary/20 text-primary">
+                      Highlights
+                    </span>
+                  )}
                     </div>
-                    <h4 className="text-base md:text-lg font-semibold truncate">vs {report.opponent || "Unknown"}</h4>
+                    <h4 className="text-base md:text-lg font-semibold truncate">
+                      {report.category === "highlights"
+                        ? (report.notes || "Highlights")
+                        : `vs ${report.opponent || "Unknown"}`}
+                    </h4>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm opacity-90 mt-1">
                       <span>{format(new Date(report.analysis_date), "dd MMM yyyy")}</span>
-                      {report.result && (
+                      {report.category !== "highlights" && report.result && (
                         <>
                           <span>•</span>
                           <span>{report.result}</span>
                         </>
                       )}
-                      {report.minutes_played && (
+                      {report.category !== "highlights" && report.minutes_played && (
                         <>
                           <span>•</span>
                           <span>{report.minutes_played} min</span>
