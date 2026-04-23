@@ -192,19 +192,54 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
     // Filter fixtures to only those involving a represented player's club
     // and tag them with player_name for display.
-    const playersByClub = new Map<string, { name: string; club: string }>();
+    // Strict normalisation: lowercase, strip punctuation, strip common club
+    // suffixes/affixes, then compare token sets to avoid spurious substring
+    // matches (e.g. an unrepresented player's club like "FC Mettler" should
+    // not match a represented club just because of an overlapping token).
+    const STOP_TOKENS = new Set([
+      'fc', 'cf', 'afc', 'sc', 'sk', 'bsc', 'sv', 'fk', 'ac', 'as', 'cd',
+      'cs', 'rfc', 'ud', 'club', 'football', 'futbol', 'futebol', 'calcio',
+      'sport', 'sports', 'sporting', 'real', 'de', 'la', 'el', 'le', 'les',
+      'u23', 'u21', 'u19', 'u18', 'ii', 'b', 'reserves',
+    ]);
+    const tokenise = (raw: string): string[] => {
+      const cleaned = (raw || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[.,'’"`()/\\-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!cleaned) return [];
+      return cleaned.split(' ').filter(t => t.length > 1 && !STOP_TOKENS.has(t));
+    };
+    const playersByKey = new Map<string, { name: string; club: string; tokens: Set<string> }>();
     (representedPlayers || []).forEach((p: any) => {
-      if (p.club) {
-        const k = p.club.toLowerCase().trim();
-        if (!playersByClub.has(k)) playersByClub.set(k, { name: p.name, club: p.club });
+      if (!p.club) return;
+      const tokens = new Set(tokenise(p.club));
+      if (tokens.size === 0) return;
+      const key = [...tokens].sort().join(' ');
+      if (!playersByKey.has(key)) {
+        playersByKey.set(key, { name: p.name, club: p.club, tokens });
       }
     });
     const matchClub = (team: string) => {
-      const k = (team || '').toLowerCase().trim();
-      // Direct match first; fall back to substring match either direction.
-      if (playersByClub.has(k)) return playersByClub.get(k);
-      for (const [club, info] of playersByClub.entries()) {
-        if (k.includes(club) || club.includes(k)) return info;
+      const teamTokens = new Set(tokenise(team));
+      if (teamTokens.size === 0) return null;
+      const teamKey = [...teamTokens].sort().join(' ');
+      // Exact normalised match
+      const exact = playersByKey.get(teamKey);
+      if (exact) return exact;
+      // Subset match: every meaningful token of the smaller side appears in
+      // the other. Requires at least 2 shared tokens to avoid single-word
+      // collisions on common words.
+      for (const info of playersByKey.values()) {
+        const shared = [...teamTokens].filter(t => info.tokens.has(t));
+        const minSize = Math.min(teamTokens.size, info.tokens.size);
+        if (shared.length >= 2 && shared.length === minSize) return info;
+        if (shared.length === 1 && minSize === 1 && teamTokens.size === info.tokens.size) {
+          return info;
+        }
       }
       return null;
     };
