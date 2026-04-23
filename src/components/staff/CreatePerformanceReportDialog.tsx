@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -2315,6 +2315,10 @@ export const CreatePerformanceReportDialog = ({
               rows={4}
               className={`mt-2 ${isTranslatedView ? "bg-muted/50" : ""}`}
               readOnly={isTranslatedView}
+              spellCheck
+              lang="en-GB"
+              autoCorrect="on"
+              autoCapitalize="sentences"
             />
           </div>
 
@@ -3265,6 +3269,124 @@ export const CreatePerformanceReportDialog = ({
   // Additional dialogs that need to be rendered regardless of mode
   const additionalDialogs = (
     <>
+      {/* Highlights: Add from Existing Report picker */}
+      <Dialog open={showAddFromExisting} onOpenChange={(o) => {
+        setShowAddFromExisting(o);
+        if (o) {
+          // Lazy-load the player's other reports
+          (async () => {
+            const { data } = await supabase
+              .from('player_analysis')
+              .select('id, analysis_date, opponent, category')
+              .eq('player_id', playerId)
+              .neq('id', analysisId || '00000000-0000-0000-0000-000000000000')
+              .order('analysis_date', { ascending: false })
+              .limit(50);
+            setExistingReports((data || []) as any);
+            setSelectedExistingReportId(null);
+            setExistingReportActions([]);
+          })();
+        }
+      }}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-4xl lg:max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Add Clips from Existing Report</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 flex-1 overflow-hidden">
+            <div className="border rounded-md overflow-y-auto max-h-[60vh]">
+              {existingReports.length === 0 ? (
+                <p className="p-3 text-xs text-muted-foreground">No other reports found for this player.</p>
+              ) : (
+                existingReports.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={async () => {
+                      setSelectedExistingReportId(r.id);
+                      const { data } = await (supabase as any)
+                        .from('performance_actions')
+                        .select('action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details')
+                        .eq('analysis_id', r.id)
+                        .order('action_number', { ascending: true });
+                      setExistingReportActions(((data || []) as any[]).filter((a: any) => a.video_url));
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs border-b hover:bg-muted/50 ${selectedExistingReportId === r.id ? 'bg-primary/10' : ''}`}
+                  >
+                    <div className="font-medium truncate">
+                      {r.category === 'highlights' ? '★ ' : ''}
+                      {r.opponent || (r.category === 'highlights' ? 'Highlights' : 'Match')}
+                    </div>
+                    <div className="text-muted-foreground text-[10px]">{new Date(r.analysis_date).toLocaleDateString('en-GB')}</div>
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] border rounded-md p-2 space-y-1">
+              {!selectedExistingReportId ? (
+                <p className="p-3 text-xs text-muted-foreground">Select a report on the left to choose clips.</p>
+              ) : existingReportActions.length === 0 ? (
+                <p className="p-3 text-xs text-muted-foreground">This report has no clips with video.</p>
+              ) : (
+                existingReportActions.map((a, i) => (
+                  <label key={i} className="flex items-start gap-2 p-2 rounded border hover:bg-muted/30 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      data-action-idx={i}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{a.action_type || `Action #${a.action_number}`}</div>
+                      <div className="text-muted-foreground text-[10px]">
+                        min {a.minute ?? '?'} · score {a.action_score ?? 'N/A'}
+                      </div>
+                      {a.action_description && <div className="text-[10px] mt-0.5 line-clamp-2">{a.action_description}</div>}
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+          <DialogFooter className="mt-3">
+            <Button variant="outline" onClick={() => setShowAddFromExisting(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const checked = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"][data-action-idx]'))
+                  .filter(c => c.checked)
+                  .map(c => parseInt(c.dataset.actionIdx || '-1', 10))
+                  .filter(i => i >= 0);
+                if (checked.length === 0) {
+                  toast.error('Select at least one clip');
+                  return;
+                }
+                const startNum = actions.length > 0 ? Math.max(...actions.map(a => a.action_number)) : 0;
+                const imported: PerformanceAction[] = checked.map((idx, k) => {
+                  const src = existingReportActions[idx];
+                  return {
+                    action_number: startNum + k + 1,
+                    minute: src.minute != null ? String(src.minute) : '',
+                    action_score: src.action_score != null ? String(src.action_score) : '',
+                    action_type: src.action_type || '',
+                    action_description: src.action_description || '',
+                    notes: src.notes || '',
+                    video_url: src.video_url || null,
+                    clip_start: src.clip_start ?? null,
+                    clip_end: src.clip_end ?? null,
+                    recorded_stat: src.recorded_stat ?? null,
+                    zone: src.zone ?? null,
+                    zone_details: src.zone_details ?? null,
+                    shot_map: null,
+                  };
+                });
+                setActions(prev => [...prev, ...imported]);
+                setShowAddFromExisting(false);
+                toast.success(`Imported ${imported.length} clip${imported.length === 1 ? '' : 's'}`);
+              }}
+            >
+              Add Selected
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* R90 Ratings Viewer */}
       <R90RatingsViewer
         open={isR90ViewerOpen}

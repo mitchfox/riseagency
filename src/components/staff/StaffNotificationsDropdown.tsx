@@ -60,6 +60,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   comparison_request: { label: "Comparison Requests", icon: GitCompare },
   player_birthday: { label: "Player Birthdays", icon: Cake },
   player_turning_18: { label: "Player Birthdays", icon: Cake },
+  fixture_countdown: { label: "Upcoming Fixtures", icon: Calendar },
   error_report: { label: "Error Reports", icon: AlertOctagon },
   staff_activity: { label: "Staff Activity", icon: Activity },
   message_sent: { label: "Messages Sent", icon: MessageSquare },
@@ -82,6 +83,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const [open, setOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [improvementReport, setImprovementReport] = useState<any>(null);
+  // Tick used to recompute live "in X hours" labels for fixture_countdown notifications
+  // while the dropdown is open.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setInterval(() => setNowTick(t => t + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   const fetchNotifications = async () => {
     try {
@@ -341,6 +350,38 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
           : "Player birthday today";
       case "player_turning_18":
         return data?.player_name ? `${data.player_name} turns 18 today` : "Player turning 18 today";
+      case "fixture_countdown": {
+        const matchDate = data?.match_date as string | undefined;
+        const matchTime = (data?.match_time as string | undefined) || "15:00";
+        const home = data?.home_team || "Home";
+        const away = data?.away_team || "Away";
+        if (!matchDate) return notification.body || `${home} vs ${away}`;
+        const kickoff = new Date(`${matchDate}T${matchTime}:00`).getTime();
+        const diffMs = kickoff - Date.now();
+        let when: string;
+        if (diffMs <= -90 * 60_000) {
+          when = "kicked off earlier";
+        } else if (diffMs <= 0) {
+          when = "kicking off now";
+        } else {
+          const totalMins = Math.round(diffMs / 60_000);
+          if (totalMins < 60) {
+            when = `in ${totalMins} minute${totalMins === 1 ? "" : "s"}`;
+          } else {
+            const totalHours = Math.round(diffMs / 3_600_000);
+            if (totalHours < 24) {
+              when = `in ${totalHours} hour${totalHours === 1 ? "" : "s"}`;
+            } else {
+              const days = Math.floor(totalHours / 24);
+              const hours = totalHours % 24;
+              when = hours > 0
+                ? `in ${days} day${days === 1 ? "" : "s"}, ${hours} hour${hours === 1 ? "" : "s"}`
+                : `in ${days} day${days === 1 ? "" : "s"}`;
+            }
+          }
+        }
+        return `${home} vs ${away} ${when}`;
+      }
       default:
         return notification.body || "";
     }

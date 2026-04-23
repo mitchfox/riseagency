@@ -435,13 +435,59 @@ export const ReadOnlyAnnotationOverlay = ({ elements, videoRef, clipStart = 0 }:
       }
 
       case 'magnifier': {
+        const zoom = el.zoomLevel || 1.5;
         const r = el.radius || 3;
+        const clipId = `ro-overlay-mag-clip-${el.id}`;
         const magCircPerim = 2 * Math.PI * r;
         const magDash = `${magCircPerim * 0.12} ${magCircPerim * 0.06}`;
+        const video = videoRef.current;
+        const panX = (el as any).panX || 0;
+        const panY = (el as any).panY || 0;
+
+        let dataUrl = '';
+        if (video && video.readyState >= 2) {
+          try {
+            const vw = video.videoWidth || 1;
+            const vh = video.videoHeight || 1;
+            const centreVX = ((x + panX) / 100) * vw;
+            const centreVY = ((y + panY) / 100) * vh;
+            const radiusPxW = (r / 100) * vw;
+            const radiusPxH = (r / 100) * vh;
+            const regionW = Math.max(8, (radiusPxW * 2) / zoom);
+            const regionH = Math.max(8, (radiusPxH * 2) / zoom);
+            const sx = Math.max(0, Math.min(vw - regionW, centreVX - regionW / 2));
+            const sy = Math.max(0, Math.min(vh - regionH, centreVY - regionH / 2));
+            const canvas = document.createElement('canvas');
+            const outSize = 256;
+            canvas.width = outSize;
+            canvas.height = outSize;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, sx, sy, regionW, regionH, 0, 0, outSize, outSize);
+              dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            }
+          } catch { /* cross-origin */ }
+        }
+
         return (
           <g key={el.id} opacity={opacity}>
+            <defs>
+              <clipPath id={clipId}>
+                <circle cx={`${x}%`} cy={`${y}%`} r={`${r}%`} />
+              </clipPath>
+            </defs>
+            {dataUrl && (
+              <image
+                href={dataUrl}
+                x={`${x - r}%`} y={`${y - r}%`}
+                width={`${r * 2}%`} height={`${r * 2}%`}
+                clipPath={`url(#${clipId})`}
+                preserveAspectRatio="xMidYMid slice"
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
             <circle cx={`${x}%`} cy={`${y}%`} r={`${r}%`}
-              fill="rgba(0,0,0,0.3)" stroke="white" strokeWidth={0.8} strokeOpacity={0.9}
+              fill={dataUrl ? 'none' : 'rgba(0,0,0,0.3)'} stroke="white" strokeWidth={0.8} strokeOpacity={0.9}
               strokeDasharray={magDash}>
               <animate attributeName="r" from="0" to={`${r}%`} dur="0.3s" fill="freeze" />
               <animate attributeName="stroke-dashoffset" from={`${magCircPerim}`} to="0" dur="8s" repeatCount="indefinite" />
