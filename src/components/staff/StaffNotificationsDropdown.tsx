@@ -60,6 +60,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType }
   comparison_request: { label: "Comparison Requests", icon: GitCompare },
   player_birthday: { label: "Player Birthdays", icon: Cake },
   player_turning_18: { label: "Player Birthdays", icon: Cake },
+  fixture_countdown: { label: "Upcoming Fixtures", icon: Calendar },
   error_report: { label: "Error Reports", icon: AlertOctagon },
   staff_activity: { label: "Staff Activity", icon: Activity },
   message_sent: { label: "Messages Sent", icon: MessageSquare },
@@ -82,6 +83,14 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
   const [open, setOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [improvementReport, setImprovementReport] = useState<any>(null);
+  // Tick used to recompute live "in X hours" labels for fixture_countdown notifications
+  // while the dropdown is open.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setInterval(() => setNowTick(t => t + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [open]);
 
   const fetchNotifications = async () => {
     try {
