@@ -3302,12 +3302,12 @@ export const CreatePerformanceReportDialog = ({
                     key={r.id}
                     onClick={async () => {
                       setSelectedExistingReportId(r.id);
-                      const { data } = await supabase
+                      const { data } = await (supabase as any)
                         .from('performance_actions')
                         .select('action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details')
                         .eq('analysis_id', r.id)
                         .order('action_number', { ascending: true });
-                      setExistingReportActions((data || []).filter((a: any) => a.video_url));
+                      setExistingReportActions(((data || []) as any[]).filter((a: any) => a.video_url));
                     }}
                     className={`w-full text-left px-3 py-2 text-xs border-b hover:bg-muted/50 ${selectedExistingReportId === r.id ? 'bg-primary/10' : ''}`}
                   >
