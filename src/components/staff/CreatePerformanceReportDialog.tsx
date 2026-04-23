@@ -2315,6 +2315,10 @@ export const CreatePerformanceReportDialog = ({
               rows={4}
               className={`mt-2 ${isTranslatedView ? "bg-muted/50" : ""}`}
               readOnly={isTranslatedView}
+              spellCheck
+              lang="en-GB"
+              autoCorrect="on"
+              autoCapitalize="sentences"
             />
           </div>
 
