@@ -314,7 +314,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const yearStart = startOfYear(now);
-  const fourWeeksAgo = addDays(now, -28);
+  // Rolling one-month window: e.g. on 23 April this covers everything since 23 March.
+  const rollingMonthAgo = (() => {
+    const d = new Date(now);
+    d.setMonth(d.getMonth() - 1);
+    return d;
+  })();
 
   const weekCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
   const monthCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, monthStart), 0);
@@ -686,17 +691,17 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const leaderboardData = visibleStaff.map(m => {
     const mTasks = tasks.filter(t => t.assigned_to?.includes(m.id));
     const taskAll = mTasks.reduce((sum, t) => sum + (t.completion_log?.length || 0), 0);
-    const taskFour = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, fourWeeksAgo), 0);
+    const taskFour = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, rollingMonthAgo), 0);
     const taskWeek = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
 
     const mSchedule = scheduleItems.filter(s => s.owner_id === m.id && (s.status || '').toLowerCase() === 'posted');
     const scheduleAll = mSchedule.length;
-    const scheduleFour = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= fourWeeksAgo).length;
+    const scheduleFour = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= rollingMonthAgo).length;
     const scheduleWeek = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= weekStart).length;
 
     const mActivity = activityLog.filter(a => a.user_id === m.id);
     const activityAll = mActivity.length;
-    const activityFour = mActivity.filter(a => new Date(a.created_at) >= fourWeeksAgo).length;
+    const activityFour = mActivity.filter(a => new Date(a.created_at) >= rollingMonthAgo).length;
     const activityWeek = mActivity.filter(a => new Date(a.created_at) >= weekStart).length;
 
     return {
@@ -958,7 +963,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         <div className="grid grid-cols-5 gap-2 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-bold border-b border-border/50">
           <span className="col-span-2">Staff</span>
           <span className="text-center">This Week</span>
-          <span className="text-center">4 Weeks</span>
+          <span className="text-center">Month</span>
           <span className="text-center">All Time</span>
         </div>
         {leaderboardData.map((entry, idx) => (
