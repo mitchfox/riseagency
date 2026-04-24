@@ -2121,6 +2121,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             </Button>
             <video
               ref={videoRef}
+              key={selectedVideo.id}
               src={selectedVideo.video_url}
               crossOrigin="anonymous"
               controls

@@ -172,7 +172,7 @@ const RequestRepresentation = () => {
   const cardContent = useMemo(() => (ageGroup ? getCardContent(ageGroup) : null), [ageGroup]);
 
   const openWhatsApp = () => {
-    window.open("https://wa.me/447340184399?text=Hi%2C%20I%27d%20like%20to%20request%20representation.", "_blank");
+    window.open("https://wa.me/447508342901", "_blank");
   };
 
   const goToAdjacentCard = (direction: "prev" | "next") => {
