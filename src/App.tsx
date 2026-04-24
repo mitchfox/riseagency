@@ -149,6 +149,7 @@ const App = () => {
                       {createLocalizedRoutes('/between-the-lines', <BetweenTheLines />)}
                       {createLocalizedDynamicRoutes('/between-the-lines/:articleId', <News />)}
                       {createLocalizedRoutes('/press-releases', <PressReleases />)}
+                      {createLocalizedDynamicRoutes('/press-releases/:releaseId', <PressReleases />)}
                       {createLocalizedRoutes('/open-access', <OpenAccess />)}
                       {createLocalizedRoutes('/contact', <Contact />)}
                       {createLocalizedRoutes('/about', <About />)}

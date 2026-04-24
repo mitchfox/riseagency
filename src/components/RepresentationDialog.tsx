@@ -40,7 +40,6 @@ const buildSchema = (isUnder18: boolean) =>
 export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: RepresentationDialogProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const isUnder18 = ageGroup === "under18";
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -53,6 +52,19 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
     parentName: "",
     parentPhone: "",
   });
+
+  // Derive under-18 status either from the upfront age choice OR the entered DOB.
+  const isUnder18FromDob = (() => {
+    if (!formData.dob) return false;
+    const dob = new Date(formData.dob);
+    if (isNaN(dob.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age < 18;
+  })();
+  const isUnder18 = ageGroup === "under18" || isUnder18FromDob;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,10 +115,7 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
   };
 
   const handleWhatsApp = () => {
-    const message = encodeURIComponent(
-      `Hi, I'm ${formData.name || "[Your Name]"} and I'd like to request representation. Current Club: ${formData.currentClub || "[Your Club]"}, Position: ${formData.position || "[Your Position]"}. ${formData.message || ""}`
-    );
-    window.open(`https://wa.me/447340184399?text=${message}`, "_blank");
+    window.open("https://wa.me/447508342901", "_blank");
   };
 
   return (

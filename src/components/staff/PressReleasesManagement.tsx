@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -16,6 +16,7 @@ interface PressRelease {
   title: string;
   content: string;
   excerpt: string | null;
+  image_url: string | null;
   published_at: string;
   is_published: boolean;
   created_at: string;
@@ -30,8 +31,10 @@ const PressReleasesManagement = () => {
     title: "",
     content: "",
     excerpt: "",
+    image_url: "",
     is_published: true,
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchReleases();
@@ -68,6 +71,7 @@ const PressReleasesManagement = () => {
             title: formData.title,
             content: formData.content,
             excerpt: formData.excerpt || null,
+            image_url: formData.image_url || null,
             is_published: formData.is_published,
           })
           .eq("id", editingRelease.id);
@@ -79,6 +83,7 @@ const PressReleasesManagement = () => {
           title: formData.title,
           content: formData.content,
           excerpt: formData.excerpt || null,
+          image_url: formData.image_url || null,
           is_published: formData.is_published,
         });
 
@@ -88,7 +93,7 @@ const PressReleasesManagement = () => {
 
       setDialogOpen(false);
       setEditingRelease(null);
-      setFormData({ title: "", content: "", excerpt: "", is_published: true });
+      setFormData({ title: "", content: "", excerpt: "", image_url: "", is_published: true });
       fetchReleases();
     } catch (error) {
       console.error("Error saving press release:", error);
@@ -102,6 +107,7 @@ const PressReleasesManagement = () => {
       title: release.title,
       content: release.content,
       excerpt: release.excerpt || "",
+      image_url: release.image_url || "",
       is_published: release.is_published,
     });
     setDialogOpen(true);
@@ -123,8 +129,27 @@ const PressReleasesManagement = () => {
 
   const openNewDialog = () => {
     setEditingRelease(null);
-    setFormData({ title: "", content: "", excerpt: "", is_published: true });
+    setFormData({ title: "", content: "", excerpt: "", image_url: "", is_published: true });
     setDialogOpen(true);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `press-releases/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('blog-images').upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('blog-images').getPublicUrl(path);
+      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      toast.success('Image uploaded');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
   };
 
   if (loading) {
@@ -174,6 +199,37 @@ const PressReleasesManagement = () => {
                   placeholder="Full press release content..."
                   rows={10}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Header image (optional — defaults to RISE white logo)</Label>
+                {formData.image_url ? (
+                  <div className="relative inline-block">
+                    <img src={formData.image_url} alt="Header" className="h-32 rounded border border-border" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1 h-6 w-6"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed border-border px-4 py-3 hover:bg-muted/40 w-fit">
+                    <Upload className="h-4 w-4" />
+                    <span className="text-sm">{uploading ? 'Uploading…' : 'Upload image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleImageUpload(f);
+                      }}
+                    />
+                  </label>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Switch
