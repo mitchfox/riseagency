@@ -66,7 +66,15 @@ const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frid
 
 function countCompletions(log: string[] | null, since: Date): number {
   if (!log || log.length === 0) return 0;
-  return log.filter(ts => new Date(ts) >= since).length;
+  const sinceMs = since.getTime();
+  return log.filter(ts => {
+    if (!ts) return false;
+    // Normalise both ISO ("2026-04-23T21:31:34.822Z") and Postgres
+    // ("2026-04-23 21:31:34.822+00") shapes so Safari parses reliably.
+    const normalised = typeof ts === 'string' ? ts.replace(' ', 'T') : ts;
+    const t = new Date(normalised).getTime();
+    return Number.isFinite(t) && t >= sinceMs;
+  }).length;
 }
 
 interface ScheduleTaskItem {
