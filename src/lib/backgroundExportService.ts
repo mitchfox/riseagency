@@ -48,6 +48,7 @@ type ProgressListener = (progress: ExportProgress) => void;
 const listeners = new Set<ProgressListener>();
 let activeJob: ExportProgress | null = null;
 let running = false;
+let lastJob: ExportJob | null = null;
 
 export function subscribeToExportProgress(fn: ProgressListener): () => void {
   listeners.add(fn);
@@ -66,6 +67,36 @@ export function getActiveExport(): ExportProgress | null {
 
 export function isExportRunning(): boolean {
   return running;
+}
+
+/**
+ * Restart the most recent export, retrying only clips that did not finish
+ * successfully (i.e. statuses that are not "done" or "skipped"). Used by the
+ * floating progress widget when an export appears stalled, so the user does
+ * not have to reload the page and lose state.
+ */
+export async function restartCurrentExport(): Promise<void> {
+  if (!lastJob) {
+    toast.error("No export to restart");
+    return;
+  }
+  // Force-clear the in-flight guard in case the previous job is wedged.
+  running = false;
+
+  const finishedIds = new Set(
+    Object.entries(activeJob?.statuses || {})
+      .filter(([, status]) => status === "done" || status === "skipped")
+      .map(([id]) => id)
+  );
+
+  const remaining = lastJob.clips.filter((c) => !finishedIds.has(c.id));
+  if (remaining.length === 0) {
+    toast.success("All clips already exported");
+    return;
+  }
+
+  toast.message("Restarting failed clips…");
+  await startExportJob({ ...lastJob, clips: remaining });
 }
 
 function getEffectiveOffset(
@@ -102,6 +133,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
   }
 
   running = true;
+  lastJob = job;
   const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
   job.clips.forEach((c) => {
     statuses[c.id] = "pending";

@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { subscribeToExportProgress, isExportRunning, type ExportProgress } from "@/lib/backgroundExportService";
+import {
+  subscribeToExportProgress,
+  isExportRunning,
+  restartCurrentExport,
+  type ExportProgress,
+} from "@/lib/backgroundExportService";
 import { Check, X, Loader2, Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +13,7 @@ export const ExportProgressFloat = () => {
   const [dismissed, setDismissed] = useState(false);
   const [stalled, setStalled] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const lastProgressRef = useRef<number>(0);
   const stallTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -72,16 +78,24 @@ export const ExportProgressFloat = () => {
               size="icon"
               className="h-6 w-6"
               title={stalled ? "Restart export" : paused ? "Resume" : "Pause"}
-              onClick={() => {
+              disabled={restarting}
+              onClick={async () => {
                 if (stalled) {
-                  // Force reload page to restart
-                  window.location.reload();
+                  setRestarting(true);
+                  setStalled(false);
+                  try {
+                    await restartCurrentExport();
+                  } finally {
+                    setRestarting(false);
+                  }
                 } else {
                   setPaused(!paused);
                 }
               }}
             >
-              {stalled ? (
+              {restarting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-yellow-600" />
+              ) : stalled ? (
                 <RotateCcw className="h-3.5 w-3.5 text-yellow-600" />
               ) : paused ? (
                 <Play className="h-3.5 w-3.5 text-green-600" />
