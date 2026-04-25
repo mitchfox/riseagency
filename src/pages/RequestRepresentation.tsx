@@ -302,7 +302,7 @@ const RequestRepresentation = () => {
             className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-10"
           >
             <div className="pointer-events-none absolute inset-0 hidden md:block" style={blackMarbleBgStyle} />
-            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl">
+            <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl">
               <div className="mb-4 flex items-center justify-between gap-2 md:mb-6">
                 <button
                   onClick={() => setActiveCard(null)}
