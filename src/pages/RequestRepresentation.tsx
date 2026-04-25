@@ -465,17 +465,17 @@ const RequestRepresentation = () => {
                       whileTap={{ scale: 0.97, rotateX: 3, rotateY: index % 2 === 0 ? -3 : 3 }}
                       transition={{ delay: index * 0.04, duration: 0.42 }}
                       onClick={() => setActiveCard(card.key)}
-                      className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-left md:p-4"
+                      className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-4"
                       style={{ ...marbleStyle, transformStyle: "preserve-3d" }}
                     >
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06),hsl(var(--background)/0.74))]" />
-                      <div className="relative flex min-h-[132px] flex-col justify-between md:min-h-[170px]">
+                      <div className="relative flex min-h-[132px] flex-col items-center justify-center gap-3 md:min-h-[170px] md:gap-4">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-12 md:w-12">
                           <Icon className="h-4.5 w-4.5 text-primary md:h-5 md:w-5" />
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
-                          <p className="mt-1 font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl">{card.title}</p>
+                          <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl">{card.title}</p>
+                          <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
                         </div>
                       </div>
                     </motion.button>
@@ -487,10 +487,10 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 w-full rounded-xl font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:max-w-md md:mx-auto md:flex md:text-base"
+                  className="h-12 w-full rounded-xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:max-w-md md:mx-auto md:flex md:text-base"
                   onClick={() => setShowForm(true)}
                 >
-                  Open the Form <ArrowRight className="ml-2 h-4 w-4" />
+                  <HoverText text="Open the Form" /> <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
