@@ -388,16 +388,16 @@ const RequestRepresentation = () => {
                   onClick={() => setShowForm(true)}
                 >
                   <ArrowRight className="h-6 w-6" />
-                  Start the Conversation
+                  <HoverText text="Start the Conversation" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="aspect-square h-auto rounded-2xl font-bebas text-sm uppercase tracking-[0.14em] md:text-base flex flex-col items-center justify-center gap-2"
+                  className="aspect-square h-auto rounded-2xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:text-base flex flex-col items-center justify-center gap-2"
                   onClick={openWhatsApp}
                 >
                   <MessageCircle className="h-6 w-6" />
-                  WhatsApp Us
+                  <HoverText text="WhatsApp Us" />
                 </Button>
               </div>
             </div>
