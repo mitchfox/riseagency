@@ -410,16 +410,25 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -36 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-12"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-12"
           >
-            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-6xl">
-              <div className="relative overflow-hidden rounded-[1.8rem] border border-border/60 md:rounded-[2.2rem]">
-                <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover object-top md:h-72" width={1400} height={900} />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.18),hsl(var(--background)/0.28),hsl(var(--background)/0.92))]" />
-                <div className="absolute inset-x-0 bottom-0 p-4 md:p-8">
-                  <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em] md:text-6xl">RISE WITH US</h1>
+            <div className="pointer-events-none absolute inset-0 hidden md:block" style={blackMarbleBgStyle} />
+            <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+              {/* Smudged black marble header — no stretched photo */}
+              <div
+                className="relative overflow-hidden rounded-[1.8rem] border border-border/60 md:rounded-[2.2rem]"
+                style={{
+                  backgroundImage: `url(${blackMarbleSmudged})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.35),hsl(var(--background)/0.55),hsl(var(--background)/0.85))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,hsl(var(--gold)/0.18),transparent_45%)]" />
+                <div className="relative p-5 md:p-10 min-h-[180px] md:min-h-[260px] flex flex-col justify-end">
+                  <h1 className="font-bebas text-3xl uppercase leading-none tracking-[0.16em] md:text-6xl">RISE WITH US</h1>
                   <p className="mt-2 max-w-[32ch] text-xs leading-relaxed text-foreground/80 md:max-w-xl md:text-base">
-                      Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                    Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                   </p>
                 </div>
               </div>
