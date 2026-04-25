@@ -1106,12 +1106,12 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
       {/* Add / Edit Task Dialog */}
       <Dialog open={addOpen || !!editingTask} onOpenChange={(open) => { if (!open) { setAddOpen(false); setEditingTask(null); resetForm(); } }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[92dvh] p-0 flex flex-col gap-0">
+          <DialogHeader className="px-5 pt-5 pb-2 shrink-0">
             <DialogTitle>{editingTask ? 'Edit Task' : 'Add Task'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="col-span-2">
                 <Label>Title *</Label>
                 <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="What needs to be done?" />
@@ -1149,7 +1149,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
               <div>
                 <Label>Image</Label>
                 {newImageUrl ? (
-                  <div className="relative w-full h-28 rounded-lg overflow-hidden border border-border">
+                  <div className="relative w-full h-24 sm:h-28 rounded-lg overflow-hidden border border-border">
                     <img src={newImageUrl} alt="" className="w-full h-full object-cover" />
                     <Button type="button" size="sm" variant="destructive" className="absolute top-1 right-1 h-6 text-[10px]" onClick={() => setNewImageUrl('')}>Remove</Button>
                   </div>
@@ -1200,7 +1200,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                     <button
                       key={m.id}
                       onClick={() => toggleAssignee(m.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-medium border transition-colors ${
                         newAssignees.includes(m.id)
                           ? 'bg-[hsl(var(--gold))]/20 border-[hsl(var(--gold))]/40 text-[hsl(var(--gold))]'
                           : 'bg-card border-border/50 text-muted-foreground hover:text-foreground'
@@ -1215,28 +1215,28 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
                       if (newAssignees.length === staffMembers.length) setNewAssignees([]);
                       else setNewAssignees(staffMembers.map(m => m.id));
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-border/50 text-muted-foreground hover:text-foreground"
+                    className="px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-medium border border-dashed border-border/50 text-muted-foreground hover:text-foreground"
                   >
                     {newAssignees.length === staffMembers.length ? 'Deselect All' : 'Select All'}
                   </button>
                 </div>
               </div>
             )}
+          </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => { setAddOpen(false); setEditingTask(null); resetForm(); }}>Cancel</Button>
-              {editingTask ? (
-                <Button onClick={handleSaveEdit} disabled={saving || !newTitle.trim()}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-                  Save Changes
-                </Button>
-              ) : (
-                <Button onClick={handleAdd} disabled={saving || !newTitle.trim() || newAssignees.length === 0}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-                  Add Task{newAssignees.length > 1 ? ` (${newAssignees.length} people)` : ''}
-                </Button>
-              )}
-            </div>
+          <div className="border-t bg-background px-5 py-3 flex justify-end gap-2 shrink-0">
+            <Button variant="outline" onClick={() => { setAddOpen(false); setEditingTask(null); resetForm(); }}>Cancel</Button>
+            {editingTask ? (
+              <Button onClick={handleSaveEdit} disabled={saving || !newTitle.trim()}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+                Save Changes
+              </Button>
+            ) : (
+              <Button onClick={handleAdd} disabled={saving || !newTitle.trim() || newAssignees.length === 0}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+                Add Task{newAssignees.length > 1 ? ` (${newAssignees.length} people)` : ''}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

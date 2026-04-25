@@ -1,164 +1,63 @@
+Three focused fixes.
 
-Fix the incomplete Highlights implementation and annotation editor issues properly.
+### 1. Request Representation — proper tablet & desktop layout
 
-### 1. Make “Highlights” a real data report mode
+The page (`src/pages/RequestRepresentation.tsx`) is essentially mobile-only: the hero stretches an image full-bleed, the hub uses a thin `max-w-md` column, and the choice/CTA buttons are not wrapped with the site's hover reveal effect.
 
-**In `CreatePerformanceReportDialog.tsx`:**
+Changes:
 
-- Add a clear `isHighlightsReport = reportCategory === "highlights"` branch.
-- When Highlights is selected:
-  - Hide fixture selection entirely.
-  - Hide opponent, result, club logo and opposition colour.
-  - Hide R90 score, minutes played and additional statistics.
-  - Hide match graphics/stat tooling that only makes sense for match reports.
-  - Add a required-looking but flexible **Highlights Title** field near the top.
-  - Store that title in the existing `player_analysis.notes` field to avoid needing a schema change.
-  - Use today’s date for `analysis_date` when there is no fixture.
-  - Save `fixture_id: null`, `opponent: null`, `result: null`, `r90_score: null`, `minutes_played: null`, `striker_stats: null`, `fixture_stats: null`.
-  - Do not block saving because no fixture is selected.
+- **Tablet/desktop redesign with black marble**
+  - Replace the stretched hero image background with a proper layered backdrop using `src/assets/black-marble-smudged.png` (cover, with a soft radial gold glow + dark vignette overlay) on `md+` breakpoints. Keep the existing photo as a contained right-hand visual on desktop only (e.g. `lg:grid-cols-[1fr_1fr]`), not as a stretched background.
+  - Hub view (`request-hub`): widen the container to `lg:max-w-6xl` on desktop. Replace the cropped header image strip with a marble-backed header card that includes the `RISEWhite` logo + RISE WITH US headline + intro line on the left and a contained, properly aspected image on the right (desktop only). On tablet, the marble header sits full width with no stretched photo behind it.
+  - Detail card view: use the same marble backdrop on `md+` and keep the existing two-column content grid.
+- **Centralise option cards (Performance, Club Network, Brand, etc.)**
+  - In the `CARD_META.map(...)` grid, change the inner flex from left-aligned (`flex-col justify-between`) to centred (`items-center justify-center text-center`). Move the icon circle to the top centre and place subtitle + title centred underneath. Apply at all breakpoints so cards look consistent.
+- **Hover text-reveal on buttons**
+  - All page buttons (Under 18, Over 18, Start Here, WhatsApp, Open the Form, Start the Conversation, WhatsApp Us) get `hoverEffect` applied. The shared `Button` wraps string children with `<HoverText>` automatically when `hoverEffect` is set, so we just add the prop. For buttons that contain icons + text (e.g. Open the Form with `ArrowRight`), wrap the label string explicitly in `<HoverText text="..." />` so the reveal effect runs on the text only.
+- **Over 18 button hover colour**
+  - The current Over 18 button uses inline `marbleStyle` and a plain text colour, so on hover the foreground "disappears". Switch it to use the standard outline pattern (`border-primary/50 text-primary hover:text-primary` with `hover:bg-primary/10` and remove the marble inline style). On hover the text remains visible and turns Rise Gold via `text-primary` (HoverText reveal animates a gold sheen over it).
+- **After clicking Under 18 / Over 18, header behind RISE WITH US uses smudged black marble**
+  - In the hub view header card, replace `<img src={requestRepresentationHero} ... />` background with a `<div>` styled with `background-image: url(black-marble-smudged.png)` on mobile, and on desktop reuse the same marble plus a contained, side-aligned photo (so it's no longer a stretched cover image). The dark linear-gradient overlay stays.
 
-### 2. Manual action ordering for Highlights
+### 2. Video analysis — Restart export button no longer reloads the page
 
-**In `CreatePerformanceReportDialog.tsx`:**
+In `src/components/staff/ExportProgressFloat.tsx`, the stalled-state click handler currently calls `window.location.reload()`, which destroys all state.
 
-- Stop auto-sorting Highlights actions by minute.
-- Make `handleMinuteBlur` do nothing when the report is Highlights.
-- Keep the existing up/down arrows visible and make them the primary ordering method.
-- Hide the minute field in Highlights mode.
-- Hide score entry and R90 score helpers in Highlights mode, while still allowing imported action scores to exist internally for staff reference and colour coding.
-- Rename the actions section to **Highlight Clips** when in Highlights mode.
-- Use `action_number` as the manual reel order.
+Changes:
 
-### 3. Add clips from existing reports
+- Track the current `ExportJob` in `backgroundExportService.ts`:
+  - Store the latest job passed to `startExportJob` in a module-level `lastJob` ref.
+  - Export a new `restartCurrentExport()` helper. It first sets `running = false` to clear the in-flight guard, then re-invokes `startExportJob(lastJob)` with only the still-pending or errored clips (those whose status is not `done` or `skipped` in `activeJob`).
+- Update `ExportProgressFloat.tsx` so the stalled-state restart button calls `restartCurrentExport()` instead of `window.location.reload()`. While restarting, show a brief spinner state (re-use the existing `Loader2`).
+- Toast: replace the silent reload with `toast.message("Restarting failed clips…")` so the user gets feedback.
 
-**In `CreatePerformanceReportDialog.tsx`:**
+This means the user stays on the page, the export retries the blocked clip, and successful clips are not re-processed.
 
-- Add an **Add from Existing Report** button for Highlights mode.
-- Open a wide dialog, not a narrow popup.
-- First select one of the same player’s existing non-highlight data reports.
-- Then show that report’s actions with:
-  - action number
-  - opponent/date
-  - action type
-  - description
-  - action score with the existing score colour logic
-  - clip availability indicator
-- Clicking an action imports it into the Highlights report:
-  - Copies `action_type`
-  - Copies `action_description`
-  - Copies `notes`
-  - Copies `video_url`
-  - Copies `clip_start`
-  - Copies `clip_end`
-  - Copies `action_score` for staff reference
-  - Leaves `minute` blank
-  - Gives it the next manual `action_number`
-- Add duplicate prevention so the same source clip is not accidentally added twice.
+### 3. My Tasks — mobile optimise the Add Task dialog
 
-### 4. Staff report list display
+The dialog in `StaffAccountabilityOverview.tsx` (lines 1108–1242) uses `max-w-2xl` with no height/scroll handling, so on mobile the content overflows the viewport and cannot be scrolled.
 
-**In `ActionReportsList.tsx`:**
+Changes to the `<DialogContent>` and inner layout:
 
-- Show Highlights reports with a distinct **Highlights** badge.
-- For Highlights reports:
-  - Display the saved title instead of `vs opponent`.
-  - Hide the R90 panel if no R90 exists.
-  - Hide minutes/result rows when empty.
-  - Keep Edit/View/Play/Score buttons working where applicable.
+- `DialogContent` className: `max-w-2xl w-[95vw] max-h-[92dvh] p-0 flex flex-col` so the dialog respects the viewport height.
+- Wrap the form body in a scrollable region: `<div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">…</div>`.
+- Make the action footer sticky inside the dialog: `<div className="border-t bg-background px-5 py-3 flex justify-end gap-2 shrink-0">…</div>`. Buttons stay visible while the form scrolls.
+- Responsive form grid: change `grid grid-cols-2 gap-4` to `grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4` so Priority/Category/Deadline/Image/Recurring stack on mobile instead of squeezing.
+- Assignees block: keep `flex-wrap` but ensure each chip has `text-xs` and `min-h-[32px]` so they remain tappable. No layout overflow on small screens.
+- Image preview height: drop from `h-28` to `h-24 sm:h-28` so it doesn't dominate small screens.
+- DialogHeader: keep title visible at top with `px-5 pt-5 pb-2 shrink-0`.
 
-### 5. Live report view support for Highlights
-
-**In `PerformanceReportDialog.tsx`:**
-
-- Fetch `category` and `notes` from `player_analysis`.
-- Detect `isHighlightsReport`.
-- If Highlights:
-  - Title the dialog as a Highlights report.
-  - Show the Highlights title from `notes`.
-  - Hide opponent/result/R90/minutes/raw score sections.
-  - Hide match-only visualisation buttons such as R90 Flow, heatmaps, match timelapse, chance creation, zone performance and shot map unless still relevant later.
-  - Show clips in manual `action_number` order.
-  - In the action list, hide minute and score columns for Highlights.
-  - Keep the full-screen clip player working from the same existing player components.
-
-### 6. Put Highlights reports on the portal Highlights tab only
-
-**In `Dashboard.tsx`:**
-
-- Split player analyses into:
-  - regular performance reports: `category !== "highlights"`
-  - highlights reports: `category === "highlights"`
-- Exclude Highlights reports from:
-  - Performance reports tab
-  - Data tab
-  - Comparisons
-  - Video reports
-- Add Highlights reports to the portal **Highlights** section, likely under a new sub-tab or section labelled **RISE Highlights**.
-- Each Highlights report card will show:
-  - title
-  - date
-  - number of clips if available
-  - Watch button
-  - Download all clips button
-- Opening a Highlights report uses the same `PerformanceReportDialog`, but in Highlights mode.
-
-### 7. Download this clip and all clips from live report view
-
-**In `PerformanceReportDialog.tsx` and the shared video player components:**
-
-- Add `showDownloads`, `onDownloadCurrent` and `onDownloadAll` support to the live report player path, not just portal video reports.
-- Use clearer buttons:
-  - **Download current clip** with `Download`
-  - **Download all clips (.zip)** with `DownloadCloud`
-- Add a reusable ZIP download helper using `JSZip`, following the existing Highlight Compiler export pattern.
-- For all clips:
-  - Fetch each clip URL
-  - Strip `#t=` fragments before fetching
-  - Use real file extension from content type where possible
-  - Save as a ZIP named after the report or Highlights title
-- For current clip:
-  - Use direct download where the clip is already a standalone extracted file.
-  - If only a media-fragment range exists on a full match URL, clearly download the source clip URL route available rather than pretending the browser can download only the fragment as a file. If needed, use the existing trimming function in a follow-up to produce physical clips.
-
-### 8. Annotation editor play button and layout fixes
-
-**In `AnnotationEditor.tsx`:**
-
-- Fix the play button so it resumes from the current `video.currentTime`.
-- Do not seek to 0 or restart unless the user presses the skip-to-start button.
-- Increase the central overlay play button hit area and z-index so it is always easy to click.
-- Increase the bottom transport play button size from the tiny 8x8 icon button to a larger 10x10 or equivalent control.
-- Ensure the click target is not blocked by timeline markers or overlays.
-- Increase the video area height without changing the video width:
-  - Keep the 16:9 video ratio.
-  - Give the video/canvas region more vertical space.
-  - Reduce the height/padding of the lower toolbar/control area to compensate.
-- Keep the existing width and overall editor structure intact.
-
-### 9. Move selected annotation colour controls higher
-
-**In `AnnotationEditor.tsx`:**
-
-- When an annotation is selected, move the Colour controls above Timing.
-- Keep Delete/Duplicate immediately accessible.
-- Then show Colour.
-- Then show Timing.
-- Then show Size/shape-specific controls.
-- This makes colour changes reachable without scrolling down the side panel.
-
-### 10. Annotation timestamp precision protection
-
-**In `AnnotationEditor.tsx`:**
-
-- Tighten the existing freeze-frame grouping so separate annotations are only grouped when they are effectively the exact same timestamp.
-- Use a tolerance below 0.1s, so even a 0.1s difference creates a separate freeze frame.
-- Update trigger tracking to avoid rounding collisions that merge annotations close together.
-- Preserve the behaviour where annotations created at the same instant can still appear together.
+This makes the dialog fully scrollable on mobile, keeps the action buttons reachable, and gives a comfortable single-column layout under `sm`.
 
 ### Technical notes
 
-- No new database schema is required for the Highlights title because `player_analysis.notes` already exists.
-- The existing `category` field will be used with values: `match`, `training`, `highlights`.
-- Existing RLS/auth rules remain unchanged.
-- The implementation will avoid editing generated backend client/type files directly.
-- All UI copy will use UK English and the existing dark Rise Gold styling.
+- No DB or schema changes.
+- No new dependencies; reuses the existing `HoverText` component, `black-marble-smudged.png` asset, and the shared `Button` `hoverEffect` prop.
+- `restartCurrentExport` is additive — existing callers of `startExportJob` are unaffected.
+
+### Files touched
+
+- `src/pages/RequestRepresentation.tsx`
+- `src/components/staff/ExportProgressFloat.tsx`
+- `src/lib/backgroundExportService.ts`
+- `src/components/staff/StaffAccountabilityOverview.tsx`

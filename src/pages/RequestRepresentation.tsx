@@ -5,7 +5,10 @@ import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { HoverText } from "@/components/HoverText";
 import requestRepresentationHero from "@/assets/request-representation-hero-uploaded.png";
+import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 
 type AgeGroup = null | "under18" | "over18";
 type CardKey = "performance" | "network" | "brand" | "fees" | "agreement" | "expectations" | "scouting" | "faqs";
@@ -30,6 +33,17 @@ const marbleStyle = {
     "radial-gradient(circle at 68% 78%, hsl(var(--gold) / 0.12), transparent 22%)",
     "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--card)) 48%, hsl(var(--background)) 100%)",
   ].join(", "),
+};
+
+const blackMarbleBgStyle = {
+  backgroundImage: [
+    "radial-gradient(ellipse at 22% 18%, hsl(var(--gold) / 0.16), transparent 38%)",
+    "radial-gradient(ellipse at 80% 78%, hsl(var(--gold) / 0.10), transparent 42%)",
+    "linear-gradient(180deg, hsl(var(--background) / 0.55), hsl(var(--background) / 0.78))",
+    `url(${blackMarbleSmudged})`,
+  ].join(", "),
+  backgroundSize: "auto, auto, auto, cover",
+  backgroundPosition: "center",
 };
 
 const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
@@ -201,51 +215,81 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
           >
+            {/* Mobile: photo background. Tablet/desktop: black marble backdrop with contained photo on lg+. */}
             <img
               src={requestRepresentationHero}
               alt="Player walking out towards the pitch"
-              className="absolute inset-0 h-full w-full object-cover object-top"
+              className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
               width={1400}
               height={900}
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.16),hsl(var(--background)/0.68)_52%,hsl(var(--background))_100%)]" />
+            <div
+              className="absolute inset-0 hidden md:block"
+              style={blackMarbleBgStyle}
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.16),hsl(var(--background)/0.68)_52%,hsl(var(--background))_100%)] md:hidden" />
 
-            <div className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] md:items-center md:justify-center">
-              <motion.div
-                initial={{ opacity: 0, y: 28 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.42 }}
-                className="mx-auto w-full max-w-sm md:max-w-2xl md:text-center"
-              >
-                <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl md:text-8xl">RISE WITH US</h1>
-                <p className="mt-4 text-sm leading-relaxed text-foreground/84 md:mx-auto md:mt-6 md:max-w-xl md:text-lg">
-                  Realise potential with our experienced intermediary &amp; English Premier League star performance team.
-                </p>
-              </motion.div>
+            <div className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] md:justify-center">
+              <div className="mx-auto w-full max-w-sm md:max-w-5xl lg:max-w-6xl">
+                <div className="md:grid md:grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12">
+                  <div className="md:text-center lg:text-left">
+                    <motion.div
+                      initial={{ opacity: 0, y: 28 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.08, duration: 0.42 }}
+                    >
+                      <img
+                        src={riseLogoWhite}
+                        alt="RISE Football Agency"
+                        className="hidden md:block md:mx-auto lg:mx-0 mb-6 h-12 w-auto"
+                      />
+                      <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl md:text-8xl">RISE WITH US</h1>
+                      <p className="mt-4 text-sm leading-relaxed text-foreground/84 md:mt-6 md:max-w-xl md:mx-auto lg:mx-0 md:text-lg">
+                        Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                      </p>
+                    </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 28 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.16, duration: 0.42 }}
-                className="mx-auto mt-8 grid w-full max-w-sm gap-3 md:max-w-xl md:grid-cols-2 md:gap-4"
-              >
-                <Button
-                  size="lg"
-                  className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-16 md:text-xl"
-                  onClick={() => setAgeGroup("under18")}
-                >
-                  Under 18
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 rounded-2xl border-border font-bebas text-lg uppercase tracking-[0.14em] text-foreground backdrop-blur-md md:h-16 md:text-xl"
-                  style={marbleStyle}
-                  onClick={() => setAgeGroup("over18")}
-                >
-                  Over 18
-                </Button>
-              </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 28 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.16, duration: 0.42 }}
+                      className="mt-8 grid w-full gap-3 max-w-sm md:max-w-xl md:mx-auto lg:mx-0 md:grid-cols-2 md:gap-4"
+                    >
+                      <Button
+                        size="lg"
+                        hoverEffect
+                        className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-16 md:text-xl"
+                        onClick={() => setAgeGroup("under18")}
+                      >
+                        Under 18
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        hoverEffect
+                        className="h-14 rounded-2xl border-primary/50 bg-background/40 font-bebas text-lg uppercase tracking-[0.14em] text-primary hover:bg-primary/10 hover:text-primary backdrop-blur-md md:h-16 md:text-xl"
+                        onClick={() => setAgeGroup("over18")}
+                      >
+                        Over 18
+                      </Button>
+                    </motion.div>
+                  </div>
+
+                  {/* Contained photo on desktop only */}
+                  <div className="hidden lg:block">
+                    <div className="relative overflow-hidden rounded-[2rem] border border-border/60 shadow-[0_30px_80px_-30px_hsl(var(--gold)/0.4)]">
+                      <img
+                        src={requestRepresentationHero}
+                        alt="Player walking out towards the pitch"
+                        className="h-[520px] w-full object-cover object-top"
+                        width={900}
+                        height={1100}
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_60%,hsl(var(--background)/0.35))]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.section>
         ) : activeCard && cardContent ? (
@@ -255,9 +299,10 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -42 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-10"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-10"
           >
-            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl">
+            <div className="pointer-events-none absolute inset-0 hidden md:block" style={blackMarbleBgStyle} />
+            <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl">
               <div className="mb-4 flex items-center justify-between gap-2 md:mb-6">
                 <button
                   onClick={() => setActiveCard(null)}
@@ -344,16 +389,16 @@ const RequestRepresentation = () => {
                   onClick={() => setShowForm(true)}
                 >
                   <ArrowRight className="h-6 w-6" />
-                  Start the Conversation
+                  <HoverText text="Start the Conversation" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="aspect-square h-auto rounded-2xl font-bebas text-sm uppercase tracking-[0.14em] md:text-base flex flex-col items-center justify-center gap-2"
+                  className="aspect-square h-auto rounded-2xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:text-base flex flex-col items-center justify-center gap-2"
                   onClick={openWhatsApp}
                 >
                   <MessageCircle className="h-6 w-6" />
-                  WhatsApp Us
+                  <HoverText text="WhatsApp Us" />
                 </Button>
               </div>
             </div>
@@ -365,16 +410,25 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -36 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-12"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pt-10 md:pb-12"
           >
-            <div className="mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-6xl">
-              <div className="relative overflow-hidden rounded-[1.8rem] border border-border/60 md:rounded-[2.2rem]">
-                <img src={requestRepresentationHero} alt="RISE representation" className="h-44 w-full object-cover object-top md:h-72" width={1400} height={900} />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.18),hsl(var(--background)/0.28),hsl(var(--background)/0.92))]" />
-                <div className="absolute inset-x-0 bottom-0 p-4 md:p-8">
-                  <h1 className="mt-1 font-bebas text-3xl uppercase leading-none tracking-[0.16em] md:text-6xl">RISE WITH US</h1>
+            <div className="pointer-events-none absolute inset-0 hidden md:block" style={blackMarbleBgStyle} />
+            <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+              {/* Smudged black marble header — no stretched photo */}
+              <div
+                className="relative overflow-hidden rounded-[1.8rem] border border-border/60 md:rounded-[2.2rem]"
+                style={{
+                  backgroundImage: `url(${blackMarbleSmudged})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.35),hsl(var(--background)/0.55),hsl(var(--background)/0.85))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,hsl(var(--gold)/0.18),transparent_45%)]" />
+                <div className="relative p-5 md:p-10 min-h-[180px] md:min-h-[260px] flex flex-col justify-end">
+                  <h1 className="font-bebas text-3xl uppercase leading-none tracking-[0.16em] md:text-6xl">RISE WITH US</h1>
                   <p className="mt-2 max-w-[32ch] text-xs leading-relaxed text-foreground/80 md:max-w-xl md:text-base">
-                      Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                    Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                   </p>
                 </div>
               </div>
@@ -382,6 +436,7 @@ const RequestRepresentation = () => {
               <div className="mb-4 mt-4 grid grid-cols-2 gap-2.5 md:mb-6 md:mt-6 md:max-w-xl md:gap-4">
                 <Button
                   size="lg"
+                  hoverEffect
                   className="h-12 rounded-xl bg-primary font-bebas text-sm uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-14 md:text-base"
                   onClick={() => setShowForm(true)}
                 >
@@ -390,10 +445,10 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-xl font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:text-base"
+                  className="h-12 rounded-xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:text-base"
                   onClick={openWhatsApp}
                 >
-                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> WhatsApp
+                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> <HoverText text="WhatsApp" />
                 </Button>
               </div>
 
@@ -410,17 +465,17 @@ const RequestRepresentation = () => {
                       whileTap={{ scale: 0.97, rotateX: 3, rotateY: index % 2 === 0 ? -3 : 3 }}
                       transition={{ delay: index * 0.04, duration: 0.42 }}
                       onClick={() => setActiveCard(card.key)}
-                      className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-left md:p-4"
+                      className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-4"
                       style={{ ...marbleStyle, transformStyle: "preserve-3d" }}
                     >
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06),hsl(var(--background)/0.74))]" />
-                      <div className="relative flex min-h-[132px] flex-col justify-between md:min-h-[170px]">
+                      <div className="relative flex min-h-[132px] flex-col items-center justify-center gap-3 md:min-h-[170px] md:gap-4">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-12 md:w-12">
                           <Icon className="h-4.5 w-4.5 text-primary md:h-5 md:w-5" />
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
-                          <p className="mt-1 font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl">{card.title}</p>
+                          <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl">{card.title}</p>
+                          <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
                         </div>
                       </div>
                     </motion.button>
@@ -432,10 +487,10 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 w-full rounded-xl font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:max-w-md md:mx-auto md:flex md:text-base"
+                  className="h-12 w-full rounded-xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:max-w-md md:mx-auto md:flex md:text-base"
                   onClick={() => setShowForm(true)}
                 >
-                  Open the Form <ArrowRight className="ml-2 h-4 w-4" />
+                  <HoverText text="Open the Form" /> <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
