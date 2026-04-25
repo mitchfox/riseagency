@@ -436,6 +436,7 @@ const RequestRepresentation = () => {
               <div className="mb-4 mt-4 grid grid-cols-2 gap-2.5 md:mb-6 md:mt-6 md:max-w-xl md:gap-4">
                 <Button
                   size="lg"
+                  hoverEffect
                   className="h-12 rounded-xl bg-primary font-bebas text-sm uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-14 md:text-base"
                   onClick={() => setShowForm(true)}
                 >
@@ -444,10 +445,10 @@ const RequestRepresentation = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="h-12 rounded-xl font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:text-base"
+                  className="h-12 rounded-xl border-primary/50 text-primary hover:bg-primary/10 hover:text-primary font-bebas text-sm uppercase tracking-[0.14em] md:h-14 md:text-base"
                   onClick={openWhatsApp}
                 >
-                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> WhatsApp
+                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> <HoverText text="WhatsApp" />
                 </Button>
               </div>
 
