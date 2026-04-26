@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -28,16 +29,19 @@ interface PageLoadingProps {
   text?: string;
 }
 
-export const PageLoading = ({ text = "Loading..." }: PageLoadingProps) => {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="h-12 w-12 rounded-full border-4 border-muted animate-pulse" />
-          <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        </div>
-        <p className="text-muted-foreground text-sm">{text}</p>
-      </div>
-    </div>
-  );
+/**
+ * Site-wide full-page loader. Always uses the branded RISE loader
+ * (black marble, pulsing logo, gold accent line, dot pulse). The
+ * `text` prop is preserved for backwards compatibility but mapped to
+ * the branded loader's own `label` so we never expose generic
+ * "Loading..." copy.
+ */
+export const PageLoading = ({ text }: PageLoadingProps) => {
+  // Treat the legacy default "Loading..." as no label, so we get the
+ // branded "Loading" wordmark instead.
+  const label =
+    !text || text.trim().toLowerCase().replace(/\.+$/, "") === "loading"
+      ? undefined
+      : text;
+  return <RiseBrandedLoader label={label} />;
 };
