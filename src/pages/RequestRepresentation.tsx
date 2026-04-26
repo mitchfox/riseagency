@@ -329,12 +329,17 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Map-based language switcher — hidden once the player has chosen
-          an age bracket (they no longer need to switch language while
-          deep inside their breakdown). */}
-      {!ageGroup && (
-        <div className="fixed top-3 right-3 z-50">
-          <LanguageMapSelector />
+      {/* Map-based language switcher — pinned at the very bottom on the
+          age screen so it never competes with the headline branding.
+          Hidden once the player has chosen an age bracket. */}
+      {!ageGroup && introDone && (
+        <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md">
+            <LanguageMapSelector />
+            <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+              {LANG_ABBR[language] ?? "ENG"}
+            </span>
+          </div>
         </div>
       )}
 
@@ -373,7 +378,7 @@ const RequestRepresentation = () => {
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
               initial={{ x: "-58%", opacity: 0 }}
               animate={{ x: "-50%", opacity: 1 }}
-              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             />
             {/* Front smoke (between player and text) */}
             <SmokeOverlay layer="front" />
