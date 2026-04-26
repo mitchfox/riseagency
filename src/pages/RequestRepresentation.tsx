@@ -754,7 +754,13 @@ const RequestRepresentation = () => {
         </div>
       )}
 
-      <RepresentationDialog open={showForm} onOpenChange={setShowForm} ageGroup={ageGroup} />
+      <RepresentationDialog
+        open={showForm}
+        onOpenChange={setShowForm}
+        ageGroup={ageGroup}
+        initialPosition={chosenPosition ?? ""}
+        initialDob={chosenDob ?? ""}
+      />
     </div>
   );
 };
