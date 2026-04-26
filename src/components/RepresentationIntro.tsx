@@ -14,13 +14,13 @@ import logoWhite from "@/assets/RISEWhite.png";
  * deep black with low-key motion texture (a slow gold radial wash).
  */
 
-// 5x slower than the previous timing — gives the intro real weight.
+// Slower than a normal page transition, but tightened so each line lands cleanly.
 const LINES: { text: string; hold: number }[] = [
-  { text: "Realise your potential.",            hold: 8500 },
-  { text: "See where you are going.",           hold: 8500 },
-  { text: "Realise your potential.",            hold: 8500 },
-  { text: "Work with us to make it a reality.", hold: 9500 },
-  { text: "Then…",                              hold: 7500 },
+  { text: "Realise your potential.",            hold: 4250 },
+  { text: "See where you are going.",           hold: 4250 },
+  { text: "Realise your potential.",            hold: 4250 },
+  { text: "Work with us to make it a reality.", hold: 4750 },
+  { text: "Then…",                              hold: 3750 },
 ];
 
 interface Props { onComplete: () => void; }
@@ -109,24 +109,28 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       )}
 
       {/* Lines */}
-      <AnimatePresence mode="wait">
-        {phase === "lines" && lineIndex < LINES.length && (
-          <motion.p
-            key={`line-${lineIndex}`}
-            initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
-            animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative px-6 text-center font-bebas uppercase text-foreground ${
-              lineIndex === LINES.length - 1
-                ? "text-3xl tracking-[0.42em] text-primary md:text-5xl"
-                : "text-xl md:text-3xl lg:text-4xl"
-            }`}
-          >
-            {LINES[lineIndex].text}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <AnimatePresence mode="wait">
+          {phase === "lines" && lineIndex < LINES.length && (
+            <motion.p
+              key={`line-${lineIndex}`}
+              initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
+              animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+              className={`relative px-6 text-center font-bebas uppercase ${
+                lineIndex === LINES.length - 1
+                  ? "text-3xl tracking-[0.42em] text-primary md:text-5xl"
+                  : LINES[lineIndex].text === "Realise your potential."
+                    ? "text-xl text-primary md:text-3xl lg:text-4xl"
+                    : "text-xl text-foreground md:text-3xl lg:text-4xl"
+              }`}
+            >
+              {LINES[lineIndex].text}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/*
         Logo phase: pulse twice, then travel UP to the position the
@@ -151,11 +155,10 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   }
                 : {
                     opacity: 1,
-                    // h-20 (80px) → h-8 (32px) ≈ 0.4 scale
-                    scale: 0.4,
-                    // Travel up to top of screen, leaving safe-area padding.
-                    // 50dvh (centre) − ~3rem from top = approx -47dvh.
-                    y: "-47dvh",
+                    // h-20 (80px) → h-12 (48px), matching the page logo.
+                    scale: 0.6,
+                    // Exact handoff: page logo centre sits 56px mobile, 64px from md up.
+                    y: "calc(-50dvh + clamp(56px, 8.333vw, 64px))",
                   }
             }
             transition={
@@ -163,7 +166,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                 ? { duration: 8, times: [0, 0.18, 0.42, 0.62, 0.82, 1], ease: "easeInOut" }
                 : { duration: 4, ease: [0.22, 1, 0.36, 1] }
             }
-            className="pointer-events-none relative z-10 h-20 w-auto md:h-28"
+            className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
           />
         )}
       </AnimatePresence>

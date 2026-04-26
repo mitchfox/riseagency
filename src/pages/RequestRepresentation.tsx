@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import {
-  ArrowRight, MessageCircle, ChevronLeft, ChevronRight,
+  ArrowRight, ChevronLeft, ChevronRight,
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
@@ -18,9 +18,7 @@ import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
-import representationBgRise from "@/assets/representation-bg-rise.png";
 import representationTy from "@/assets/representation-ty.png";
-import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 
 type AgeGroup = null | "under18" | "over18";
@@ -71,18 +69,6 @@ const GROUPS: GroupKey[] = ["who", "how", "terms"];
 const LANG_ABBR: Record<string, string> = {
   en: "ENG", es: "ESP", pt: "POR", fr: "FRA", de: "GER", it: "ITA",
   pl: "POL", cs: "CZE", ru: "RUS", tr: "TUR", hr: "CRO", no: "NOR",
-};
-
-const marbleStyle = {
-  backgroundImage: [
-    "radial-gradient(circle at 18% 18%, hsl(var(--gold) / 0.18), transparent 28%)",
-    "radial-gradient(circle at 80% 22%, hsl(var(--foreground) / 0.12), transparent 24%)",
-    "radial-gradient(circle at 68% 78%, hsl(var(--gold) / 0.12), transparent 22%)",
-    `url(${blackMarbleSmudged})`,
-    "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--card)) 48%, hsl(var(--background)) 100%)",
-  ].join(", "),
-  backgroundSize: "auto, auto, auto, cover, auto",
-  backgroundPosition: "center",
 };
 
 /** Solid-black plate (with a faint gold edge wash) used for hub/detail
@@ -290,6 +276,12 @@ const RiseLogoShine = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
+const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
+  <svg viewBox="0 0 32 32" aria-hidden="true" className={className} fill="currentColor">
+    <path d="M16.02 3.2A12.7 12.7 0 0 0 5.2 22.55L3.6 28.8l6.38-1.5A12.68 12.68 0 1 0 16.02 3.2Zm0 2.42a10.26 10.26 0 0 1 8.72 15.67 10.24 10.24 0 0 1-13.94 3.64l-.46-.27-3.1.73.78-3.03-.3-.49A10.25 10.25 0 0 1 16.02 5.62Zm-4.08 4.58c-.25 0-.64.1-.98.47-.34.37-1.28 1.25-1.28 3.04s1.31 3.53 1.49 3.77c.18.25 2.53 4.05 6.25 5.52 3.09 1.22 3.72.98 4.39.92.67-.06 2.16-.88 2.46-1.74.3-.86.3-1.6.21-1.75-.09-.15-.34-.25-.71-.43-.37-.18-2.16-1.07-2.5-1.19-.34-.12-.58-.18-.83.18-.24.37-.95 1.19-1.17 1.43-.21.25-.43.28-.8.1-.37-.19-1.56-.58-2.97-1.84a11.15 11.15 0 0 1-2.05-2.55c-.21-.37-.02-.57.16-.75.17-.17.37-.43.55-.64.18-.21.24-.37.37-.61.12-.25.06-.46-.03-.64-.09-.18-.83-2.01-1.13-2.75-.3-.72-.6-.62-.83-.63h-.61Z" />
+  </svg>
+);
+
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language } = useLanguage();
@@ -342,12 +334,14 @@ const RequestRepresentation = () => {
           Hidden once the player has chosen an age bracket. */}
       {!ageGroup && introDone && (
         <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md">
-            <LanguageMapSelector />
-            <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
-              {LANG_ABBR[language] ?? "ENG"}
-            </span>
-          </div>
+          <LanguageMapSelector
+            className="rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md"
+            triggerContent={(
+              <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+                {LANG_ABBR[language] ?? "ENG"}
+              </span>
+            )}
+          />
         </div>
       )}
 
@@ -356,9 +350,6 @@ const RequestRepresentation = () => {
       <AnimatePresence>
         {!introDone && <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />}
       </AnimatePresence>
-
-      {/* Background smoke (BEHIND the player overlay image) */}
-      <SmokeOverlay layer="back" />
 
       <AnimatePresence mode="wait">
         {introDone && !ageGroup ? (
@@ -371,22 +362,26 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
           >
-            {/* Background image (RISE black plate) */}
-            <img
-              src={representationBgRise}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover object-center"
-            />
+            <div className="absolute inset-0 bg-black" />
+            {/* Background smoke (BEHIND the player overlay image) */}
+            <SmokeOverlay layer="back" />
             {/* Player overlay - sits between the back smoke (z-0) and the
                 front smoke (z-20). Centred on every breakpoint. */}
             <motion.img
               src={representationTy}
               alt="Tyrese Omotoye celebrating"
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
-              initial={{ x: "-58%", opacity: 0 }}
+              initial={{ x: "-72%", opacity: 1 }}
               animate={{ x: "-50%", opacity: 1 }}
               transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            />
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-[8] h-[120vmax] w-[120vmax] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/35"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.15], opacity: [0, 0.5, 0] }}
+              transition={{ duration: 2.8, delay: 14.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ boxShadow: "0 0 60px hsl(var(--gold) / 0.35), inset 0 0 80px hsl(var(--gold) / 0.16)" }}
             />
             {/* Front smoke (between player and text) */}
             <SmokeOverlay layer="front" />
@@ -398,13 +393,12 @@ const RequestRepresentation = () => {
             <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] text-center md:px-10">
               {/* TOP: RISE white logo + REPRESENTATION wordmark */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.5 }}
                 className="flex w-full flex-col items-center"
               >
-                <RiseLogoShine className="h-8 sm:h-10 md:h-14" />
-                <h1 className="mt-2 font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
+                <RiseLogoShine className="h-12 md:h-16" />
+                <h1 className="mt-2 font-bebas text-3xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
                   REPRESENTATION
                 </h1>
               </motion.div>
@@ -425,7 +419,8 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                <div className="relative rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-8 left-0 right-0 h-10 rounded-b-3xl border-x border-b border-primary/30" />
                   <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
@@ -483,20 +478,38 @@ const RequestRepresentation = () => {
             className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-12 md:pb-44 lg:px-16"
           >
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-              {/* Cleaner centred header — no oversized image */}
-              <div className="text-center">
-                <div className="mx-auto mb-3 flex justify-center md:mb-4">
-                  <RiseLogoShine className="h-9 md:h-12" />
+              <motion.header
+                animate={scrolled ? "compact" : "open"}
+                variants={{ open: { paddingTop: 0, paddingBottom: 28 }, compact: { paddingTop: 0, paddingBottom: 10 } }}
+                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                className="sticky top-0 z-30 -mx-4 bg-black/88 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] text-center backdrop-blur-md md:-mx-8 md:px-8 lg:-mx-16 lg:px-16"
+              >
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
+                <div className="mx-auto flex max-w-4xl flex-col items-center">
+                  <RiseLogoShine className={scrolled ? "h-9 md:h-10" : "h-12 md:h-16"} />
+                  <AnimatePresence initial={false}>
+                    {!scrolled && (
+                      <motion.div
+                        key="rep-feature-title"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.22 }}
+                        className="flex flex-col items-center"
+                      >
+                        <div className="mt-3 flex w-full items-center gap-3">
+                          <span className="h-px flex-1 bg-primary/45" />
+                          <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.28em] text-foreground md:text-8xl">REPRESENTATION</h1>
+                          <span className="h-px flex-1 bg-primary/45" />
+                        </div>
+                        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/82 md:mt-5 md:max-w-3xl md:text-base">
+                          {MISSION_BIO}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <h1 className="font-bebas text-4xl uppercase leading-none tracking-[0.32em] md:text-7xl">REPRESENTATION</h1>
-                <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/80 md:mt-6 md:max-w-3xl md:text-base">
-                  {MISSION_BIO}
-                </p>
-                <div className="mx-auto mt-5 h-[1px] w-20 bg-primary/70" />
-                <p className="mt-3 text-[10px] uppercase tracking-[0.32em] text-primary/80 md:text-xs">
-                  Scroll for more
-                </p>
-              </div>
+              </motion.header>
 
               {/* Grouped tile sections */}
               {GROUPS.map((g) => {
@@ -547,15 +560,15 @@ const RequestRepresentation = () => {
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-md md:max-w-2xl">
             {showSlider && groupSiblings.length > 0 && (
-              <div className="mb-1.5 flex items-center justify-between gap-2 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
+              <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => { setActiveCard(null); setScoutingPosition(null); setPerformanceSub(null); }}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
+                  className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
                 >
                   <ChevronLeft className="h-3 w-3" /> Back to all
                 </button>
-                <div className="flex-1">
+                <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
@@ -568,16 +581,16 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center gap-3 rounded-xl bg-primary px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full items-center justify-center rounded-xl bg-primary px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }} className="px-1">Request Representation</motion.span>
                 ) : (
-                  <div className="flex items-center gap-3 leading-[1]">
-                    <ArrowRight className="h-5 w-5 md:h-6 md:w-6" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-[14px] md:text-base">Request</span>
-                      <span className="text-[14px] md:text-base">Representation</span>
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                    <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-[17px] md:text-xl">Request</span>
+                      <span className="text-[17px] md:text-xl">Representation</span>
                     </div>
                   </div>
                 )}
@@ -585,16 +598,16 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center gap-3 rounded-xl border border-primary/50 bg-background/80 px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }} className="px-1">Contact Us</motion.span>
                 ) : (
-                  <div className="flex items-center gap-3 leading-[1]">
-                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-[14px] md:text-base">Contact</span>
-                      <span className="text-[14px] md:text-base">Us</span>
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                    <WhatsAppIcon className="h-4 w-4 md:h-5 md:w-5" />
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-[17px] md:text-xl">Contact</span>
+                      <span className="text-[17px] md:text-xl">Us</span>
                     </div>
                   </div>
                 )}
