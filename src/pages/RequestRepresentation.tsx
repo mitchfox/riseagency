@@ -295,8 +295,8 @@ const RequestRepresentation = () => {
 
   // Sticky footer shrink-on-scroll
   const { scrollY } = useScroll();
-  const footerHeight = useTransform(scrollY, [0, 120], [76, 44]);
-  const footerFontSize = useTransform(scrollY, [0, 120], [13, 11]);
+  const footerHeight = useTransform(scrollY, [0, 120], [96, 52]);
+  const footerFontSize = useTransform(scrollY, [0, 120], [16, 12]);
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 100));
 
