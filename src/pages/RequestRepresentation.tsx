@@ -642,7 +642,7 @@ const RequestRepresentation = () => {
                   </div>
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
-                    <p className="text-balance text-[13px] leading-relaxed text-foreground/82 md:text-base">
+                    <p className="text-justify text-[13px] leading-relaxed text-foreground/85 md:text-base [text-justify:inter-word]" style={{ hyphens: "auto" }}>
                       {MISSION_BIO}
                     </p>
                   </div>
