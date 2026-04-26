@@ -671,7 +671,7 @@ const RequestRepresentation = () => {
               )}
             </AnimatePresence>
 
-            <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+            <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
               {/* Static feature header — sized to fit mobile cleanly.
                   No sticky positioning, no animated heights; the
                   collapsed state is a separate fixed mini bar above. */}
