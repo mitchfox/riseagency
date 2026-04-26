@@ -870,7 +870,7 @@ const DetailView = ({
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={`Back to Scouting`} />
           <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
@@ -916,7 +916,7 @@ const DetailView = ({
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label="Back to Performance" />
           <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
@@ -955,7 +955,7 @@ const DetailView = ({
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-6 md:pb-44 lg:px-16"
     >
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
         <TitlePlate icon={Icon} title={meta.title} eyebrow={content?.eyebrow ?? meta.subtitle} />
 
         <div className="mt-5 space-y-3 md:mt-7">
