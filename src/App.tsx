@@ -24,6 +24,7 @@ import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import RequestRepresentation from "./pages/RequestRepresentation";
 
 // Lazy-loaded pages for better initial load performance
 const Landing = lazy(() => import("./pages/Landing"));
@@ -68,7 +69,6 @@ const Jobs = lazy(() => import("./pages/Jobs"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
-const RequestRepresentation = lazy(() => import("./pages/RequestRepresentation"));
 const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const SharedContact = lazy(() => import("./pages/SharedContact"));
 const TransferReportView = lazy(() => import("./pages/TransferReportView"));

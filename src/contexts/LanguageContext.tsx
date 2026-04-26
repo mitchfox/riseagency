@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { supabase } from '@/integrations/supabase/client';
 import { getEnglishPath, getLocalizedPath } from '@/lib/localizedRoutes';
 import { getSubdomainInfo, getLanguageFromSubdomain, isPreviewOrLocalEnvironment, ROLE_SUBDOMAINS } from '@/lib/subdomainUtils';
+import { PageLoading } from '@/components/LoadingSpinner';
 
 type LanguageCode = 'en' | 'es' | 'pt' | 'fr' | 'de' | 'it' | 'pl' | 'cs' | 'ru' | 'tr' | 'hr' | 'no';
 
@@ -345,13 +346,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     window.location.href = newUrl;
   }, []);
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isRepresentationRoute = pathname === '/representation' || pathname === '/request-representation';
+
+  if (isRepresentationRoute) {
+    return (
+      <LanguageContext.Provider value={{ language, translations, t, isLoading, switchLanguage }}>
+        {children}
+      </LanguageContext.Provider>
+    );
+  }
+
   // Don't render children until language is initialized AND translations are loaded
   if (!isInitialized || !translationsLoaded) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (
