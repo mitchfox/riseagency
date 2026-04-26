@@ -393,9 +393,8 @@ const RequestRepresentation = () => {
             <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] text-center md:px-10">
               {/* TOP: RISE white logo + REPRESENTATION wordmark */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.5 }}
                 className="flex w-full flex-col items-center"
               >
                 <RiseLogoShine className="h-12 md:h-16" />
