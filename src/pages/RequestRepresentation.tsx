@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
@@ -65,6 +66,12 @@ const GROUP_LABELS: Record<GroupKey, string> = {
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
+
+/** Three-letter language label shown next to the map selector flag. */
+const LANG_ABBR: Record<string, string> = {
+  en: "ENG", es: "ESP", pt: "POR", fr: "FRA", de: "GER", it: "ITA",
+  pl: "POL", cs: "CZE", ru: "RUS", tr: "TUR", hr: "CRO", no: "NOR",
+};
 
 const marbleStyle = {
   backgroundImage: [
@@ -285,6 +292,7 @@ const RiseLogoShine = ({ className = "" }: { className?: string }) => (
 
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
+  const { language } = useLanguage();
   const [introDone, setIntroDone] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
