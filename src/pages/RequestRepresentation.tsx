@@ -750,15 +750,6 @@ const RequestRepresentation = () => {
           <div className="mx-auto max-w-md md:max-w-2xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
-                <div className="mb-1 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => { setActiveCard(null); setScoutingPosition(null); setPerformanceSub(null); }}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
-                  >
-                    <ChevronLeft className="h-3 w-3" /> Back to all
-                  </button>
-                </div>
                 <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
