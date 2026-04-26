@@ -339,6 +339,17 @@ const RequestRepresentation = () => {
     if (introDone) sessionStorage.setItem(INTRO_SEEN_KEY, "1");
   }, [introDone]);
 
+  // While the hub is the active screen, enable proximity scroll-snap on
+  // the document so each category title parks just below the mini header.
+  useEffect(() => {
+    const onHub = introDone && !!ageGroup && activeCard === null;
+    if (!onHub) return;
+    const html = document.documentElement;
+    const previous = html.style.scrollSnapType;
+    html.style.scrollSnapType = "y proximity";
+    return () => { html.style.scrollSnapType = previous; };
+  }, [introDone, ageGroup, activeCard]);
+
   // Scroll-anchoring on the hub: each category title parks just under the
   // mini header. Refs are keyed by GroupKey.
   const groupRefs = useRef<Partial<Record<GroupKey, HTMLDivElement | null>>>({});
@@ -704,6 +715,7 @@ const RequestRepresentation = () => {
                     key={g}
                     ref={(el) => { groupRefs.current[g] = el; }}
                     className="scroll-mt-[88px] md:scroll-mt-[96px]"
+                    style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
                   >
                     <SectionDivider label={GROUP_LABELS[g]} />
                     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:gap-5">
