@@ -185,6 +185,8 @@ const App = () => {
                       <Route path="/sign/:token" element={<SignContract />} />
                       <Route path="/risewithus" element={<RiseWithUs />} />
                       <Route path="/risewithus/:slug" element={<RiseWithUs />} />
+                      <Route path="/representation" element={<RequestRepresentation />} />
+                      {/* Legacy alias - keeps old links working */}
                       <Route path="/request-representation" element={<RequestRepresentation />} />
                       <Route path="/contact/:contactId" element={<SharedContact />} />
                       <Route path="/diagnostics" element={<Diagnostics />} />

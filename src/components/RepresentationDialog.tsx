@@ -126,9 +126,7 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
             {t('representation.title', 'Request Representation')}
           </DialogTitle>
           <DialogDescription>
-            {isUnder18
-              ? t('representation.description_u18', 'Under 18 — please complete the player and parent or guardian details')
-              : t('representation.description', 'Fill out the form below or contact us directly on WhatsApp')}
+            {t('representation.description', 'Fill out the form below or contact us directly on WhatsApp')}
           </DialogDescription>
         </DialogHeader>
 
@@ -211,12 +209,9 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
 
           {isUnder18 && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-primary font-medium">
-                {t('representation.parent_section', 'Parent or guardian details (required for under 18)')}
-              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="parentName">{t('representation.parent_name', "Parent or Guardian Name")} *</Label>
+                  <Label htmlFor="parentName">{t('representation.parent_name', "Parent or Guardian Name")}</Label>
                   <Input
                     id="parentName"
                     value={formData.parentName}
@@ -227,7 +222,7 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="parentPhone">{t('representation.parent_phone', "Parent or Guardian Phone")} *</Label>
+                  <Label htmlFor="parentPhone">{t('representation.parent_phone', "Parent or Guardian Phone")}</Label>
                   <Input
                     id="parentPhone"
                     type="tel"

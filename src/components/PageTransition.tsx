@@ -36,8 +36,10 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
     };
   }, [location, displayLocation, setGlobalTransitioning]);
 
+  const isRepresentationPath = (p: string) =>
+    p.startsWith("/representation") || p.startsWith("/request-representation");
   const useRiseSliderTransition =
-    location.pathname.startsWith("/request-representation") || displayLocation.pathname.startsWith("/request-representation");
+    isRepresentationPath(location.pathname) || isRepresentationPath(displayLocation.pathname);
 
   return (
     <>
