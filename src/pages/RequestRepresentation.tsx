@@ -383,13 +383,12 @@ const RequestRepresentation = () => {
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
 
-  // When the user lands on the Scouting section without having drilled in
-  // yet, auto-open their pre-chosen position (or the matching grouping).
-  useEffect(() => {
-    if (activeCard === "scouting" && scoutingPosition === null && chosenPosition) {
-      setScoutingPosition(POSITION_TO_SCOUTING[chosenPosition]);
-    }
-  }, [activeCard, chosenPosition, scoutingPosition]);
+  // Recommended scouting position (derived from the position chosen on the
+  // home rectangle). NOTE: we no longer auto-open it — Scouting must lead
+  // with the network intro + map, then the position breakdown.
+  const recommendedScoutingPosition: ScoutingPosition | null = chosenPosition
+    ? POSITION_TO_SCOUTING[chosenPosition]
+    : null;
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-black text-foreground">
@@ -418,9 +417,9 @@ const RequestRepresentation = () => {
           /* ============ AGE GROUP SCREEN ============ */
           <motion.section
             key="age"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -36 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
             onClick={(e) => {
@@ -533,10 +532,10 @@ const RequestRepresentation = () => {
                         className="flex flex-col items-center gap-3 text-center"
                       >
                         <motion.h1
-                          initial={{ opacity: 0, scale: 0.92 }}
-                          animate={{ opacity: 1, scale: 1, letterSpacing: "0.32em" }}
-                          transition={{ duration: 1.0, delay: 0.15 }}
-                          className="font-bebas text-2xl uppercase leading-none text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.8, delay: 0.15 }}
+                          className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
                           style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                         >
                           Representation
@@ -560,9 +559,9 @@ const RequestRepresentation = () => {
                     {introStep === "position" && (
                       <motion.div
                         key="position-picker"
-                        initial={{ opacity: 0, x: 24 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
@@ -582,9 +581,9 @@ const RequestRepresentation = () => {
                     {introStep === "dob" && (
                       <motion.div
                         key="dob-picker"
-                        initial={{ opacity: 0, x: 24 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
@@ -638,6 +637,7 @@ const RequestRepresentation = () => {
             setScoutingPosition={setScoutingPosition}
             performanceSub={performanceSub}
             setPerformanceSub={setPerformanceSub}
+            recommendedScoutingPosition={recommendedScoutingPosition}
             onBack={() => {
               if (performanceSub) { setPerformanceSub(null); return; }
               if (scoutingPosition) { setScoutingPosition(null); return; }
@@ -648,9 +648,9 @@ const RequestRepresentation = () => {
           /* ============ HUB SCREEN ============ */
           <motion.section
             key="hub"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -36 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-8 md:pb-44 lg:px-16"
           >
@@ -762,21 +762,21 @@ const RequestRepresentation = () => {
           <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
-                {/* "Back to all" pill — returns the user to the hub
-                    (exits the active section). Sits ABOVE the slider
-                    where it lived previously. */}
+                {/* "Back to all" pill — centred above the slider. */}
                 {activeCard && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveCard(null);
-                      setScoutingPosition(null);
-                      setPerformanceSub(null);
-                    }}
-                    className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
-                  >
-                    <ChevronLeft className="h-3 w-3" /> Back to all
-                  </button>
+                  <div className="mb-2 flex w-full justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveCard(null);
+                        setScoutingPosition(null);
+                        setPerformanceSub(null);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
+                    >
+                      <ChevronLeft className="h-3 w-3" /> Back to all
+                    </button>
+                  </div>
                 )}
                 <div>
                   <SectionSliderWheel
@@ -846,6 +846,7 @@ interface DetailViewProps {
   setScoutingPosition: (p: ScoutingPosition | null) => void;
   performanceSub: PerformanceSub | null;
   setPerformanceSub: (p: PerformanceSub | null) => void;
+  recommendedScoutingPosition: ScoutingPosition | null;
   onBack: () => void;
 }
 
@@ -853,6 +854,7 @@ const DetailView = ({
   activeCard, cardContent, ageGroup,
   scoutingPosition, setScoutingPosition,
   performanceSub, setPerformanceSub,
+  recommendedScoutingPosition,
   onBack,
 }: DetailViewProps) => {
   const meta = CARD_META.find((c) => c.key === activeCard)!;
@@ -864,11 +866,11 @@ const DetailView = ({
     return (
       <motion.section
         key={`scout-${scoutingPosition}`}
-        initial={{ opacity: 0, x: 42 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -42 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-        className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
+        className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={`Back to Scouting`} />
@@ -910,11 +912,11 @@ const DetailView = ({
     return (
       <motion.section
         key={`perf-${performanceSub}`}
-        initial={{ opacity: 0, x: 42 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -42 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-        className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
+        className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label="Back to Performance" />
@@ -949,11 +951,11 @@ const DetailView = ({
   return (
     <motion.section
       key={`detail-${activeCard}`}
-      initial={{ opacity: 0, x: 42 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -42 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-6 md:pb-44 lg:px-16"
+      className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-6 md:pb-60 lg:px-16"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
         <TitlePlate icon={Icon} title={meta.title} eyebrow={content?.eyebrow ?? meta.subtitle} />
@@ -979,37 +981,52 @@ const DetailView = ({
             </Accordion>
           )}
 
-          {/* Scouting top level */}
+          {/* Scouting top level — ALWAYS leads with the network intro and
+              the same map used on the Players page, then explanation
+              cards, then the position breakdown. */}
           {activeCard === "scouting" && (
-            <div className="space-y-4">
-              {/* 1. Lead with the scouting network — what it is, where
-                  it reaches and why it matters. Mirrors the Players
-                  page so anyone arriving here sees the same context. */}
-              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-primary/30 px-3 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
-                    Eyes Across All Of Europe
-                  </span>
-                </div>
-                <p className="font-bebas text-2xl uppercase leading-none tracking-[0.12em] md:text-4xl">
+            <div className="space-y-4 md:space-y-6">
+              {/* 1. Network intro — mirrors Players page wording. */}
+              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
+                <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
+                  Eyes Across All Of Europe
+                </span>
+                <p className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.12em] md:text-5xl">
                   Scouting <span className="text-primary">Network</span>
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/80 md:text-base">
-                  If you're a professional or academy player in Europe, chances are we already know about you. We have built an extensive scouting network across Europe — and into Africa — with eyes at every level of the professional game. Our coverage is novel and future-focused: we look for qualities that scale through a career, not just what works today.
+                <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
+                  If you're a professional or academy player in Europe, chances are we already know about you.
                 </p>
               </div>
 
-              {/* The interactive map — same component, hidden stats /
-                  grid toggle so the embed stays focused. */}
+              {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-                <div className="h-[420px] md:h-[600px]">
-                  <ScoutingNetworkMap hideStats hideGridToggle />
+                <div className="h-[420px] md:h-[560px] lg:h-[640px]">
+                  <ScoutingNetworkMap hideGridToggle />
                 </div>
+              </div>
+
+              {/* 3. The same three explanation cards from the Players page. */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+                {[
+                  { n: "01", title: "Deep European Network", desc: "We have built an extensive scouting network across Europe, with eyes at every level of the professional game." },
+                  { n: "02", title: "Future-Focused Scouting", desc: "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career." },
+                  { n: "03", title: "Complete Player Knowledge", desc: "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up." },
+                ].map((p) => (
+                  <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
+                    <div className="flex items-start gap-4">
+                      <span className="font-bebas text-3xl text-primary/30 md:text-4xl">{p.n}</span>
+                      <div>
+                        <p className="font-bebas text-lg uppercase tracking-[0.12em] md:text-xl">{p.title}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-foreground/80 md:text-base">{p.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <SectionDivider label="What we look for" />
 
-              {/* 2. Then the qualitative bullets and position breakdown. */}
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
@@ -1018,23 +1035,41 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider />
+              <SectionDivider label="Position breakdown" />
 
-              <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Position breakdown</p>
-                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it. Each opens on its own screen — use the back arrow to return here.</p>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
-                  {SCOUTING_POSITIONS.map((pos) => (
+              {recommendedScoutingPosition && (
+                <button
+                  type="button"
+                  onClick={() => setScoutingPosition(recommendedScoutingPosition)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
+                >
+                  <div>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">Recommended for your position</p>
+                    <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary" />
+                </button>
+              )}
+
+              <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+                {SCOUTING_POSITIONS.map((pos) => {
+                  const isRec = pos === recommendedScoutingPosition;
+                  return (
                     <button
                       key={pos}
                       type="button"
                       onClick={() => setScoutingPosition(pos)}
-                      className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 hover:border-primary/60 hover:bg-card/70 transition-colors"
+                      className={`rounded-xl border px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] transition-colors md:text-base ${
+                        isRec
+                          ? "border-primary/70 bg-primary/15 text-primary"
+                          : "border-border/60 bg-card/40 text-foreground/80 hover:border-primary/60 hover:bg-card/70"
+                      }`}
                     >
                       {pos}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
           )}
