@@ -73,7 +73,7 @@ const fragmentShader = `
     // Sample depth (RGB or grayscale) and derive a 0..1 mask.
     float depth = dot(texture2D(uDepth, vUv).rgb, vec3(0.299, 0.587, 0.114));
     // Subtle parallax: stronger on near features, weaker on far ones.
-    float parallaxStrength = mix(0.012, 0.026, depth);
+    float parallaxStrength = mix(0.028, 0.065, depth);
     vec2 offset = (uTarget - vec2(0.5)) * parallaxStrength;
     vec2 sampleUV = vUv - offset;
 
@@ -131,8 +131,8 @@ const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
     // Lissajous-style virtual cursor — keeps the parallax target
     // gliding through a small region around the centre so the
     // figure appears to bend / breathe.
-    const cx = 0.5 + Math.sin(t * 0.45) * 0.18 + Math.sin(t * 0.21) * 0.05;
-    const cy = 0.5 + Math.cos(t * 0.37) * 0.14 + Math.cos(t * 0.18) * 0.04;
+    const cx = 0.5 + Math.sin(t * 0.55) * 0.42 + Math.sin(t * 0.23) * 0.12;
+    const cy = 0.5 + Math.cos(t * 0.43) * 0.34 + Math.cos(t * 0.19) * 0.10;
     matRef.current.uniforms.uTarget.value.set(cx, cy);
     matRef.current.uniforms.uTime.value = t;
   });
