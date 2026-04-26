@@ -349,15 +349,35 @@ const RequestRepresentation = () => {
             <div className="absolute inset-0 bg-black" />
             {/* Background smoke (BEHIND the player overlay image) */}
             <SmokeOverlay layer="back" />
-            {/* Player overlay - sits between the back smoke (z-0) and the
-                front smoke (z-20). Centred on every breakpoint. */}
+            {/* Player overlay — drifts in from the RIGHT to centre.
+                Sits between the back smoke (z-0) and the front smoke (z-20). */}
             <motion.img
               src={representationTy}
               alt="Tyrese Omotoye celebrating"
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
-              initial={{ x: "-72%", opacity: 1 }}
+              initial={{ x: "-28%", opacity: 1 }}
               animate={{ x: "-50%", opacity: 1 }}
               transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            />
+            {/* Single long smoke streak running right -> left across the
+                full width of the screen, sitting behind the player so it
+                feels atmospheric without obscuring him. */}
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 right-0 top-[42%] z-[5] h-[140px] md:h-[200px]"
+              style={{
+                backgroundImage:
+                  "radial-gradient(ellipse at 22% 50%, hsl(var(--gold) / 0.55) 0%, hsl(var(--gold) / 0.25) 12%, transparent 30%), radial-gradient(ellipse at 58% 50%, hsl(var(--foreground) / 0.42) 0%, hsl(var(--foreground) / 0.18) 14%, transparent 32%), radial-gradient(ellipse at 84% 50%, hsl(var(--gold) / 0.4) 0%, hsl(var(--gold) / 0.18) 12%, transparent 30%), linear-gradient(90deg, transparent 0%, hsl(var(--foreground) / 0.18) 22%, hsl(var(--gold) / 0.32) 50%, hsl(var(--foreground) / 0.18) 78%, transparent 100%)",
+                filter: "blur(8px)",
+                mixBlendMode: "screen",
+                WebkitMaskImage:
+                  "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+                maskImage:
+                  "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+              }}
+              initial={{ x: "30%", opacity: 0.5 }}
+              animate={{ x: ["30%", "-30%"], opacity: [0.5, 0.85, 0.55] }}
+              transition={{ duration: 28, repeat: Infinity, repeatType: "mirror", ease: "linear" }}
             />
             <motion.div
               aria-hidden="true"
@@ -374,7 +394,7 @@ const RequestRepresentation = () => {
 
             {/* Foreground content – fully centred. z-30 keeps it above all
                 smoke + overlay layers. */}
-            <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] text-center md:px-10">
+            <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] text-center md:px-10 md:pt-[max(1rem,env(safe-area-inset-top))]">
               {/* TOP: RISE white logo + REPRESENTATION wordmark */}
               <motion.div
                 initial={{ opacity: 1, y: 0 }}
@@ -394,9 +414,11 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.18, duration: 0.5 }}
                 className="flex w-full max-w-md flex-col items-center md:max-w-2xl lg:max-w-3xl"
               >
-                <p className="text-balance text-sm leading-snug text-foreground/85 md:text-base lg:text-lg">
-                  Realise potential with our experienced intermediary &amp; English Premier League star performance team.
-                </p>
+                <div className="rounded-2xl border border-primary/25 bg-black/65 px-4 py-3 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:px-5 md:py-4">
+                  <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
+                    Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                  </p>
+                </div>
 
                 {/* Group divider belongs ABOVE the age section so the
                     relationship between the heading and the buttons is
