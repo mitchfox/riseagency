@@ -1108,13 +1108,14 @@ export default RequestRepresentation;
 
 /* =================================================================
  * FormationPositionPicker
- * 4-3-3 visual layout:
- *   GK
- *   LB  LCB  RCB  RB
- *   CDM
- *   CM
- *   CAM
+ * 4-3-3 visual layout (attacking line on top, GK at the bottom —
+ * the way an attacking side reads it):
  *   LW   CF   RW
+ *   CAM
+ *   CM
+ *   CDM
+ *   LB  LCB  RCB  RB
+ *   GK
  * Each tile shows the localized abbreviation.
  * ================================================================= */
 
@@ -1139,16 +1140,16 @@ const FormationPositionPicker = ({
   );
   return (
     <div className="mt-1 flex w-full flex-col items-center gap-1.5 md:gap-2">
-      <Row><Tile p="GK" /></Row>
-      <Row>
-        <Tile p="LB" /><Tile p="LCB" /><Tile p="RCB" /><Tile p="RB" />
-      </Row>
-      <Row><Tile p="CDM" /></Row>
-      <Row><Tile p="CM" /></Row>
-      <Row><Tile p="CAM" /></Row>
       <Row>
         <Tile p="LW" /><Tile p="CF" /><Tile p="RW" />
       </Row>
+      <Row><Tile p="CAM" /></Row>
+      <Row><Tile p="CM" /></Row>
+      <Row><Tile p="CDM" /></Row>
+      <Row>
+        <Tile p="LB" /><Tile p="LCB" /><Tile p="RCB" /><Tile p="RB" />
+      </Row>
+      <Row><Tile p="GK" /></Row>
     </div>
   );
 };
