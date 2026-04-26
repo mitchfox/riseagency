@@ -241,26 +241,26 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         </div>
       )}
 
-      {/* Logo phase: appears only after the line sequence finishes. */}
+      {/* Logo phase: appears only after the line sequence finishes.
+          The intro logo stays centred and simply fades out at the
+          end so there is no jump to a position that does not match
+          the actual page layout. The Representation page renders
+          its own logo in its real header position. */}
       {inLogo && (
         <motion.img
           key="rep-intro-logo"
           src={logoWhite}
           alt="RISE"
-          initial={{ opacity: 0, scale: 0.9, y: 0 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={
             phase === "logo"
-              ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1], y: 0 }
-              : {
-                  opacity: 1,
-                  scale: 0.6,
-                  y: "calc(-50dvh + clamp(56px, 8.333vw, 64px))",
-                }
+              ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1] }
+              : { opacity: 0, scale: 1 }
           }
           transition={
             phase === "logo"
               ? { duration: 3.6, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
-              : { duration: 2.2, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 1.6, ease: [0.22, 1, 0.36, 1] }
           }
           className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
         />
