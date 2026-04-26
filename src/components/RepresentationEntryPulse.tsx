@@ -14,7 +14,7 @@ export const RepresentationEntryPulse = ({ onComplete }: RepresentationEntryPuls
 
   return (
     <motion.div
-      className="fixed inset-0 z-[130] flex items-center justify-center overflow-hidden bg-background"
+      className="fixed inset-0 z-[110] flex items-center justify-center overflow-hidden bg-background"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35 }}
