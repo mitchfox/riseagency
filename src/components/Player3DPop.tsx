@@ -36,9 +36,9 @@ const getSetUrls = (variant: Player3DVariant) => {
     : [set.player, set.depth, set.rough];
 };
 
-Object.keys(SETS).forEach((variant) => {
-  useLoader.preload(TextureLoader, getSetUrls(variant as Player3DVariant));
-});
+export const preloadPlayer3DVariant = (variant: Player3DVariant) => {
+  useLoader.preload(TextureLoader, getSetUrls(variant));
+};
 
 const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
   const urls = getSetUrls(variant);
