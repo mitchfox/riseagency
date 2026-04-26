@@ -1,18 +1,28 @@
 import { motion } from "framer-motion";
 import riseLogo from "@/assets/logo.png";
 import blackMarble from "@/assets/black-marble.png";
+import { cn } from "@/lib/utils";
 
 interface RiseBrandedLoaderProps {
   label?: string;
+  className?: string;
+  compact?: boolean;
+  logoSize?: "sm" | "md" | "lg";
 }
 
-export const RiseBrandedLoader = ({ label }: RiseBrandedLoaderProps) => {
+const logoSizes = {
+  sm: "w-10 h-10",
+  md: "w-12 h-12",
+  lg: "w-16 h-16",
+};
+
+export const RiseBrandedLoader = ({ label, className, compact = false, logoSize = "lg" }: RiseBrandedLoaderProps) => {
   return (
-    <div className="min-h-[100dvh] bg-black flex items-center justify-center relative overflow-hidden">
-      <div className="absolute inset-0">
+    <div className={cn(compact ? "min-h-0" : "min-h-[100dvh]", "bg-black flex items-center justify-center relative overflow-hidden", className)}>
+      {!compact && <div className="absolute inset-0">
         <img src={blackMarble} alt="" className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-      </div>
+      </div>}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -22,7 +32,7 @@ export const RiseBrandedLoader = ({ label }: RiseBrandedLoaderProps) => {
         <motion.img
           src={riseLogo}
           alt="RISE Football Agency"
-          className="w-20 h-20 md:w-28 md:h-28 object-contain drop-shadow-2xl"
+          className={cn(compact ? logoSizes[logoSize] : "w-20 h-20 md:w-28 md:h-28", "object-contain drop-shadow-2xl")}
           animate={{ scale: [1, 1.06, 1], opacity: [0.9, 1, 0.9] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
         />
