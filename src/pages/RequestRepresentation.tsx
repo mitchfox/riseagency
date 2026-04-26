@@ -425,14 +425,14 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="rounded-3xl border border-primary/30 bg-black/55 px-5 py-5 backdrop-blur-md md:px-8 md:py-7 lg:px-10 lg:py-8">
-                  <p className="font-bebas text-xs uppercase tracking-[0.32em] text-primary md:text-sm">
+                <div className="rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                  <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
-                  <p className="mx-auto mt-2 max-w-xs text-xs leading-snug text-foreground/75 md:max-w-md md:text-sm">
+                  <p className="mx-auto mt-1.5 max-w-xs text-sm leading-snug text-foreground/85 md:max-w-md md:text-base">
                     For a more personalised breakdown of what representation will look like for you.
                   </p>
-                  <div className="mt-4 grid w-full grid-cols-2 gap-3 md:gap-4">
+                  <div className="mt-3 grid w-full grid-cols-2 gap-3 md:gap-4">
                     <Button
                       size="lg"
                       hoverEffect
