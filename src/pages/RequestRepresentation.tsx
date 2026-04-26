@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
+import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
@@ -75,6 +76,13 @@ const marbleStyle = {
   ].join(", "),
   backgroundSize: "auto, auto, auto, cover, auto",
   backgroundPosition: "center",
+};
+
+/** Solid-black plate (with a faint gold edge wash) used for hub/detail
+ *  sections. Marble texture is reserved for the title plate only so the
+ *  rest of the page reads as a clean dark surface. */
+const solidBlackSectionStyle: React.CSSProperties = {
+  backgroundColor: "hsl(0 0% 4%)",
 };
 
 const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
@@ -277,6 +285,7 @@ const RiseLogoShine = ({ className = "" }: { className?: string }) => (
 
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
+  const [introDone, setIntroDone] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
@@ -320,15 +329,26 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Persistent map-based language switcher top-right */}
-      <div className="fixed top-3 right-3 z-50">
-        <LanguageMapSelector />
-      </div>
+      {/* Map-based language switcher — hidden once the player has chosen
+          an age bracket (they no longer need to switch language while
+          deep inside their breakdown). */}
+      {!ageGroup && (
+        <div className="fixed top-3 right-3 z-50">
+          <LanguageMapSelector />
+        </div>
+      )}
 
-      <SmokeOverlay />
+      {/* Cinematic intro: shown once on first load, then the age screen
+          becomes available. */}
+      <AnimatePresence>
+        {!introDone && <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />}
+      </AnimatePresence>
+
+      {/* Background smoke (BEHIND the player overlay image) */}
+      <SmokeOverlay layer="back" />
 
       <AnimatePresence mode="wait">
-        {!ageGroup ? (
+        {introDone && !ageGroup ? (
           /* ============ AGE GROUP SCREEN ============ */
           <motion.section
             key="age"
@@ -338,100 +358,88 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
           >
-            {/* Mobile: RISE black background + Ty overlay sliding in. */}
+            {/* Background image (RISE black plate) */}
             <img
               src={representationBgRise}
-              alt="RISE - Realise Potential"
-              className="absolute inset-0 h-full w-full object-cover object-top md:hidden"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover object-center"
             />
+            {/* Player overlay - sits between the back smoke (z-0) and the
+                front smoke (z-20). Centred on every breakpoint. */}
             <motion.img
               src={representationTy}
               alt="Tyrese Omotoye celebrating"
-              className="pointer-events-none absolute inset-y-0 right-0 h-full w-auto object-contain object-bottom md:hidden"
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
+              initial={{ x: "-58%", opacity: 0 }}
+              animate={{ x: "-50%", opacity: 1 }}
               transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.16),hsl(var(--background)/0.55)_55%,hsl(var(--background))_100%)] md:hidden" />
+            {/* Front smoke (between player and text) */}
+            <SmokeOverlay layer="front" />
+            {/* Soft vignette so text reads cleanly on top */}
+            <div className="absolute inset-0 z-[25] bg-[linear-gradient(180deg,hsl(0_0%_0%/0.55)_0%,transparent_28%,transparent_55%,hsl(0_0%_0%/0.85)_100%)]" />
 
-            {/* Desktop hero: 2 column with image left, copy right */}
-            <div className="absolute inset-0 hidden md:block">
-              <div className="absolute inset-0 bg-black" />
-              <div className="absolute inset-0 opacity-60" style={{ backgroundImage: `url(${blackMarbleSmudged})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_50%,hsl(var(--gold)/0.15),transparent_45%)]" />
-            </div>
+            {/* Foreground content – fully centred. z-30 keeps it above all
+                smoke + overlay layers. */}
+            <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] text-center md:px-10">
+              {/* TOP: RISE white logo + REPRESENTATION wordmark */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08, duration: 0.5 }}
+                className="flex w-full flex-col items-center"
+              >
+                <RiseLogoShine className="h-8 sm:h-10 md:h-14" />
+                <h1 className="mt-2 font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
+                  REPRESENTATION
+                </h1>
+              </motion.div>
 
-            <div className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] md:justify-center md:px-12 lg:px-20">
-              <div className="mx-auto w-full max-w-sm md:max-w-6xl">
-                <div className="md:grid md:grid-cols-[1fr_1fr] md:items-center md:gap-16">
-                  {/* Image / RISE wordmark on desktop */}
-                  <div className="relative hidden md:block">
-                    <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-[2rem] border border-primary/30">
-                      <img src={representationBgRise} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                      <motion.img
-                        src={representationTy}
-                        alt="Tyrese Omotoye"
-                        className="absolute inset-0 h-full w-full object-contain object-bottom"
-                        initial={{ x: -80, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-                      />
-                    </div>
-                  </div>
+              {/* BOTTOM: tagline + age bracket cluster, all centred. */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.18, duration: 0.5 }}
+                className="flex w-full max-w-md flex-col items-center md:max-w-2xl lg:max-w-3xl"
+              >
+                <p className="text-balance text-sm leading-snug text-foreground/85 md:text-base lg:text-lg">
+                  Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                </p>
 
-                  <div className="md:text-left">
-                    <motion.div
-                      initial={{ opacity: 0, y: 28 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.08, duration: 0.42 }}
+                {/* Group divider belongs ABOVE the age section so the
+                    relationship between the heading and the buttons is
+                    obvious. */}
+                <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
+
+                <div className="rounded-3xl border border-primary/30 bg-black/55 px-5 py-5 backdrop-blur-md md:px-8 md:py-7 lg:px-10 lg:py-8">
+                  <p className="font-bebas text-xs uppercase tracking-[0.32em] text-primary md:text-sm">
+                    Choose your age bracket
+                  </p>
+                  <p className="mx-auto mt-2 max-w-xs text-xs leading-snug text-foreground/75 md:max-w-md md:text-sm">
+                    For a more personalised breakdown of what representation will look like for you.
+                  </p>
+                  <div className="mt-4 grid w-full grid-cols-2 gap-3 md:gap-4">
+                    <Button
+                      size="lg"
+                      hoverEffect
+                      className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-16 md:text-xl lg:text-2xl"
+                      onClick={() => setAgeGroup("under18")}
                     >
-                      <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.12em] sm:text-6xl md:text-7xl lg:text-8xl">
-                        REPRESENTATION
-                      </h1>
-                      <p className="mt-4 text-sm leading-relaxed text-foreground/84 md:mt-6 md:max-w-xl md:text-lg">
-                        Realise potential with our experienced intermediary &amp; English Premier League star performance team.
-                      </p>
-                    </motion.div>
-
-                    <div className="mt-7 md:mt-9">
-                      <p className="max-w-md text-sm leading-relaxed text-foreground/85 md:max-w-xl md:text-base">
-                        Choose your age bracket for a more personalised breakdown of what representation will look like for you.
-                      </p>
-                      <div className="mt-2 h-[1px] w-16 bg-primary/70" />
-                    </div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 28 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.16, duration: 0.42 }}
-                      className="mt-5 grid w-full gap-3 max-w-sm md:max-w-xl md:grid-cols-2 md:gap-4"
+                      <HoverText text="Under 18" />
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      hoverEffect
+                      className="h-14 rounded-2xl border-primary/50 bg-background/40 font-bebas text-lg uppercase tracking-[0.14em] text-primary backdrop-blur-md hover:border-primary hover:bg-primary/10 hover:text-primary md:h-16 md:text-xl lg:text-2xl"
+                      onClick={() => setAgeGroup("over18")}
                     >
-                      <Button
-                        size="lg"
-                        hoverEffect
-                        className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-16 md:text-xl"
-                        onClick={() => setAgeGroup("under18")}
-                      >
-                        <HoverText text="Under 18" />
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        hoverEffect
-                        className="h-14 rounded-2xl border-primary/50 bg-background/40 font-bebas text-lg uppercase tracking-[0.14em] text-primary hover:border-primary hover:bg-primary/10 hover:text-primary backdrop-blur-md md:h-16 md:text-xl"
-                        onClick={() => setAgeGroup("over18")}
-                      >
-                        <HoverText text="Over 18" />
-                      </Button>
-                    </motion.div>
-
-                    {/* Bottom-centre RISE white logo with shine */}
-                    <div className="mt-10 flex justify-center md:mt-12">
-                      <RiseLogoShine className="h-9 md:h-12" />
-                    </div>
+                      <HoverText text="Over 18" />
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </motion.section>
         ) : activeCard && cardContent ? (
