@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ interface RepresentationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ageGroup?: "under18" | "over18" | null;
+  /** Optional pre-fill values gathered before the form opens. */
+  initialPosition?: string;
+  initialDob?: string;
 }
 
 const baseSchema = {
@@ -37,7 +40,10 @@ const buildSchema = (isUnder18: boolean) =>
       : z.string().trim().max(50).optional().or(z.literal("")),
   });
 
-export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: RepresentationDialogProps) => {
+export const RepresentationDialog = ({
+  open, onOpenChange, ageGroup,
+  initialPosition = "", initialDob = "",
+}: RepresentationDialogProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -45,13 +51,25 @@ export const RepresentationDialog = ({ open, onOpenChange, ageGroup }: Represent
     phone: "",
     email: "",
     currentClub: "",
-    dob: "",
-    position: "",
+    dob: initialDob,
+    position: initialPosition,
     message: "",
     videoLinks: [""],
     parentName: "",
     parentPhone: "",
   });
+
+  // Refresh the prefill whenever the dialog re-opens so the fields
+  // reflect the most recent position / DOB the user chose on the
+  // home rectangle. The user can still edit either field freely.
+  useEffect(() => {
+    if (!open) return;
+    setFormData((prev) => ({
+      ...prev,
+      dob: initialDob || prev.dob,
+      position: initialPosition || prev.position,
+    }));
+  }, [open, initialDob, initialPosition]);
 
   // Derive under-18 status either from the upfront age choice OR the entered DOB.
   const isUnder18FromDob = (() => {
