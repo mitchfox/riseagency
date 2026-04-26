@@ -177,7 +177,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       {/* Lines stack: 2 fixed slots so the second line can appear
           *underneath* the first without pushing it. */}
       {!inLogo && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center md:gap-6">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-[28vh] text-center md:gap-6 md:pb-[22vh]">
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
             <AnimatePresence>
