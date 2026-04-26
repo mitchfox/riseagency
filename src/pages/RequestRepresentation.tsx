@@ -472,7 +472,10 @@ const RequestRepresentation = () => {
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
               {/* Cleaner centred header — no oversized image */}
               <div className="text-center">
-                <h1 className="font-bebas text-4xl uppercase leading-none tracking-[0.16em] md:text-7xl">REPRESENTATION</h1>
+                <div className="mx-auto mb-3 flex justify-center md:mb-4">
+                  <RiseLogoShine className="h-9 md:h-12" />
+                </div>
+                <h1 className="font-bebas text-4xl uppercase leading-none tracking-[0.32em] md:text-7xl">REPRESENTATION</h1>
                 <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/80 md:mt-6 md:max-w-3xl md:text-base">
                   {MISSION_BIO}
                 </p>
@@ -502,9 +505,9 @@ const RequestRepresentation = () => {
                             transition={{ delay: index * 0.04, duration: 0.42 }}
                             onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                             className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
-                            style={marbleStyle}
+                            style={solidBlackSectionStyle}
                           >
-                            <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.06),hsl(var(--background)/0.74))]" />
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.08),transparent_60%)]" />
                             <div className="relative flex min-h-[140px] flex-col items-center justify-center gap-3 md:min-h-[200px] md:gap-4 lg:min-h-[220px]">
                               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-14 md:w-14">
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
