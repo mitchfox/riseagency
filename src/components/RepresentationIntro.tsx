@@ -95,7 +95,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const showFourth    = phase === "p2-both";
   const showFifth     = phase === "p3-line5";
   const inLogo        = phase === "logo" || phase === "descend";
+  const inPair1       = ["p1-line1", "p1-both", "p1-fade"].includes(phase);
   const inPair2       = ["p2-line3", "p2-both", "p2-fade"].includes(phase);
+  // 3D layer fades down in the final phase of each pair.
+  const pair1Fading   = phase === "p1-fade";
+  const pair2Fading   = phase === "p2-fade";
 
   return (
     <motion.div
@@ -119,18 +123,35 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* 3D player pop — only behind lines 3 + 4. Subtle, low-opacity. */}
+      {/* 3D player pop — Pair 1 (lines 1+2). Fades out in final second. */}
+      <AnimatePresence>
+        {inPair1 && (
+          <motion.div
+            key="pair1-3d"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: pair1Fading ? 0 : 0.55 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: pair1Fading ? 0.9 : 0.9, ease: "easeInOut" }}
+            className="pointer-events-none absolute inset-0"
+          >
+            <Player3DPop variant="two" className="absolute inset-0 h-full w-full" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 3D player pop — Pair 2 (lines 3 + 4). Fades out in final second. */}
       <AnimatePresence>
         {inPair2 && (
           <motion.div
             key="pair2-3d"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.55 }}
+            animate={{ opacity: pair2Fading ? 0 : 0.55 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.9, ease: "easeInOut" }}
             className="pointer-events-none absolute inset-0"
           >
-            <Player3DPop className="absolute inset-0 h-full w-full" />
+            <Player3DPop variant="one" className="absolute inset-0 h-full w-full" />
             {/* Soft black vignette so the text reads cleanly on top. */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
           </motion.div>
