@@ -479,20 +479,38 @@ const RequestRepresentation = () => {
             className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-12 md:pb-44 lg:px-16"
           >
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-              {/* Cleaner centred header — no oversized image */}
-              <div className="text-center">
-                <div className="mx-auto mb-3 flex justify-center md:mb-4">
-                  <RiseLogoShine className="h-9 md:h-12" />
+              <motion.header
+                animate={scrolled ? "compact" : "open"}
+                variants={{ open: { paddingTop: 0, paddingBottom: 28 }, compact: { paddingTop: 0, paddingBottom: 10 } }}
+                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                className="sticky top-0 z-30 -mx-4 bg-black/88 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] text-center backdrop-blur-md md:-mx-8 md:px-8 lg:-mx-16 lg:px-16"
+              >
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
+                <div className="mx-auto flex max-w-4xl flex-col items-center">
+                  <RiseLogoShine className={scrolled ? "h-9 md:h-10" : "h-12 md:h-16"} />
+                  <AnimatePresence initial={false}>
+                    {!scrolled && (
+                      <motion.div
+                        key="rep-feature-title"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.22 }}
+                        className="flex flex-col items-center"
+                      >
+                        <div className="mt-3 flex w-full items-center gap-3">
+                          <span className="h-px flex-1 bg-primary/45" />
+                          <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.28em] text-foreground md:text-8xl">REPRESENTATION</h1>
+                          <span className="h-px flex-1 bg-primary/45" />
+                        </div>
+                        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/82 md:mt-5 md:max-w-3xl md:text-base">
+                          {MISSION_BIO}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <h1 className="font-bebas text-4xl uppercase leading-none tracking-[0.32em] md:text-7xl">REPRESENTATION</h1>
-                <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/80 md:mt-6 md:max-w-3xl md:text-base">
-                  {MISSION_BIO}
-                </p>
-                <div className="mx-auto mt-5 h-[1px] w-20 bg-primary/70" />
-                <p className="mt-3 text-[10px] uppercase tracking-[0.32em] text-primary/80 md:text-xs">
-                  Scroll for more
-                </p>
-              </div>
+              </motion.header>
 
               {/* Grouped tile sections */}
               {GROUPS.map((g) => {
