@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 
 interface LoadingSpinnerProps {
@@ -6,12 +5,6 @@ interface LoadingSpinnerProps {
   className?: string;
   text?: string;
 }
-
-const sizeClasses = {
-  sm: "h-8 w-8",
-  md: "h-10 w-10",
-  lg: "h-12 w-12",
-};
 
 export const LoadingSpinner = ({ size = "md", className, text }: LoadingSpinnerProps) => {
   return <RiseBrandedLoader className={className} compact label={text} logoSize={size} />;
