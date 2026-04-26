@@ -315,11 +315,11 @@ const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language, t } = useLanguage();
   const isMobile = useIsMobile();
-  const skipIntro = typeof window !== "undefined" && sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
   // Representation always starts with the central pulse and wave before
-  // the cinematic text sequence is allowed to mount.
-  const [pulseDone, setPulseDone] = useState(skipIntro);
-  const [introDone, setIntroDone] = useState(skipIntro);
+  // the cinematic text sequence is allowed to mount. Intro plays on
+  // every fresh page mount so it's never silently skipped.
+  const [pulseDone, setPulseDone] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
   const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
@@ -333,11 +333,8 @@ const RequestRepresentation = () => {
 
   const cardContent = useMemo(() => (ageGroup ? getCardContent(ageGroup) : null), [ageGroup]);
 
-  // Once the intro finishes, persist for the session so language reloads
-  // jump straight into the experience instead of replaying the cinematic.
-  useEffect(() => {
-    if (introDone) sessionStorage.setItem(INTRO_SEEN_KEY, "1");
-  }, [introDone]);
+  // Intro is intentionally not persisted — it should play whenever the
+  // page mounts so users always see the cinematic.
 
   // While the hub is the active screen, enable proximity scroll-snap on
   // the document so each category title parks just below the mini header.
@@ -760,7 +757,7 @@ const RequestRepresentation = () => {
       {ageGroup && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
-            {showSlider && groupSiblings.length > 0 && (
+                {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
                 {/* "Back to all" pill — centred above the slider. */}
                 {activeCard && (
@@ -768,13 +765,21 @@ const RequestRepresentation = () => {
                     <button
                       type="button"
                       onClick={() => {
+                        // Inside a Performance sub-screen, "Back to all"
+                        // returns to the Performance hub first, not the
+                        // top-level group hub.
+                        if (performanceSub) { setPerformanceSub(null); return; }
+                        if (scoutingPosition) { setScoutingPosition(null); return; }
                         setActiveCard(null);
-                        setScoutingPosition(null);
-                        setPerformanceSub(null);
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
                     >
-                      <ChevronLeft className="h-3 w-3" /> Back to all
+                      <ChevronLeft className="h-3 w-3" />
+                      {performanceSub
+                        ? "Back to Performance"
+                        : scoutingPosition
+                          ? "Back to Scouting"
+                          : "Back to all"}
                     </button>
                   </div>
                 )}
