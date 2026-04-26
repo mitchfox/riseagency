@@ -478,41 +478,51 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -36 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-12 md:pb-44 lg:px-16"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-8 md:pb-44 lg:px-16"
           >
+            {/* Compact fixed mini header — only visible after scroll.
+                Doesn't reflow page so scrolling stays smooth. */}
+            <AnimatePresence>
+              {scrolled && (
+                <motion.div
+                  key="mini-header"
+                  initial={{ y: -50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -50, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="fixed inset-x-0 top-0 z-40 flex items-center justify-center border-b border-primary/25 bg-black/85 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md"
+                >
+                  <RiseLogoShine className="h-7 md:h-9" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-              <motion.header
-                animate={scrolled ? "compact" : "open"}
-                variants={{ open: { paddingTop: 0, paddingBottom: 28 }, compact: { paddingTop: 0, paddingBottom: 10 } }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="sticky top-0 z-30 -mx-4 bg-black/88 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] text-center backdrop-blur-md md:-mx-8 md:px-8 lg:-mx-16 lg:px-16"
-              >
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
-                <div className="mx-auto flex max-w-4xl flex-col items-center">
-                  <RiseLogoShine className={scrolled ? "h-9 md:h-10" : "h-12 md:h-16"} />
-                  <AnimatePresence initial={false}>
-                    {!scrolled && (
-                      <motion.div
-                        key="rep-feature-title"
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.22 }}
-                        className="flex flex-col items-center"
-                      >
-                        <div className="mt-3 flex w-full items-center gap-3">
-                          <span className="h-px flex-1 bg-primary/45" />
-                          <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.28em] text-foreground md:text-8xl">REPRESENTATION</h1>
-                          <span className="h-px flex-1 bg-primary/45" />
-                        </div>
-                        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/82 md:mt-5 md:max-w-3xl md:text-base">
-                          {MISSION_BIO}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              {/* Static feature header — sized to fit mobile cleanly.
+                  No sticky positioning, no animated heights; the
+                  collapsed state is a separate fixed mini bar above. */}
+              <header className="relative pb-6 text-center md:pb-10">
+                <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
+                  {/* Logo as the centrepiece */}
+                  <RiseLogoShine className="h-14 md:h-20" />
+                  {/* Title with framing rules. Tracking + responsive
+                      sizing keep it inside a 360px viewport. */}
+                  <div className="relative flex w-full items-center gap-2 md:gap-4">
+                    <span className="h-px flex-1 bg-primary/45" />
+                    <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.18em] text-foreground sm:text-3xl md:text-6xl md:tracking-[0.24em] lg:text-7xl">
+                      Representation
+                    </h1>
+                    <span className="h-px flex-1 bg-primary/45" />
+                  </div>
+                  {/* Mission, in a contained glass plate */}
+                  <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                    <p className="text-balance text-[13px] leading-relaxed text-foreground/82 md:text-base">
+                      {MISSION_BIO}
+                    </p>
+                  </div>
                 </div>
-              </motion.header>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
+              </header>
 
               {/* Grouped tile sections */}
               {GROUPS.map((g) => {
