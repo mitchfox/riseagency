@@ -14,12 +14,13 @@ import logoWhite from "@/assets/RISEWhite.png";
  * deep black with low-key motion texture (a slow gold radial wash).
  */
 
+// 5x slower than the previous timing — gives the intro real weight.
 const LINES: { text: string; hold: number }[] = [
-  { text: "Realise your potential.",            hold: 1700 },
-  { text: "See where you are going.",           hold: 1700 },
-  { text: "Realise your potential.",            hold: 1700 },
-  { text: "Work with us to make it a reality.", hold: 1900 },
-  { text: "Then…",                              hold: 1500 },
+  { text: "Realise your potential.",            hold: 8500 },
+  { text: "See where you are going.",           hold: 8500 },
+  { text: "Realise your potential.",            hold: 8500 },
+  { text: "Work with us to make it a reality.", hold: 9500 },
+  { text: "Then…",                              hold: 7500 },
 ];
 
 interface Props { onComplete: () => void; }
@@ -48,12 +49,12 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
 
   useEffect(() => {
     if (phase === "logo") {
-      // pulse pulse, then descend
-      const t = setTimeout(() => setPhase("descend"), 1700);
+      // pulse pulse, then descend (5x slower)
+      const t = setTimeout(() => setPhase("descend"), 8500);
       return () => clearTimeout(t);
     }
     if (phase === "descend") {
-      const t = setTimeout(() => { setPhase("done"); onComplete(); }, 950);
+      const t = setTimeout(() => { setPhase("done"); onComplete(); }, 4500);
       return () => clearTimeout(t);
     }
   }, [phase, onComplete]);
@@ -115,7 +116,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
             initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
             animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
             className={`relative px-6 text-center font-bebas uppercase text-foreground ${
               lineIndex === LINES.length - 1
                 ? "text-3xl tracking-[0.42em] text-primary md:text-5xl"
@@ -127,7 +128,13 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         )}
       </AnimatePresence>
 
-      {/* Logo phase: pulse twice, then descend & shrink */}
+      {/*
+        Logo phase: pulse twice, then travel UP to the position the
+        age-screen logo will occupy so the transition is seamless.
+        Age-screen logo sits top-centre at h-8 (sm:h-10, md:h-14) with
+        ~max(2rem, safe-area-inset-top) of top padding. We start the
+        intro logo at h-20 (md:h-28) and shrink + lift to match.
+      */}
       <AnimatePresence>
         {(phase === "logo" || phase === "descend") && (
           <motion.img
@@ -139,19 +146,22 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               phase === "logo"
                 ? {
                     opacity: 1,
-                    // pulse: 1 → 1.08 → 1 → 1.04 → 1
+                    // pulse: slower & more drawn out
                     scale: [0.9, 1, 1.08, 1, 1.04, 1],
                   }
                 : {
                     opacity: 1,
-                    scale: 0.45,
-                    y: "42dvh",
+                    // h-20 (80px) → h-8 (32px) ≈ 0.4 scale
+                    scale: 0.4,
+                    // Travel up to top of screen, leaving safe-area padding.
+                    // 50dvh (centre) − ~3rem from top = approx -47dvh.
+                    y: "-47dvh",
                   }
             }
             transition={
               phase === "logo"
-                ? { duration: 1.6, times: [0, 0.18, 0.42, 0.62, 0.82, 1], ease: "easeInOut" }
-                : { duration: 0.9, ease: [0.22, 1, 0.36, 1] }
+                ? { duration: 8, times: [0, 0.18, 0.42, 0.62, 0.82, 1], ease: "easeInOut" }
+                : { duration: 4, ease: [0.22, 1, 0.36, 1] }
             }
             className="pointer-events-none relative z-10 h-20 w-auto md:h-28"
           />

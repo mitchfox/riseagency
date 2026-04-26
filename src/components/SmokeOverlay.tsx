@@ -17,23 +17,26 @@ interface SmokeOverlayProps {
 }
 
 const BACK_LAYERS = [
+  // Wispier, more blurred — still readable behind the player.
   // [color, opacity, size, blur, durationSec, dir]
-  { tint: "white", opacity: 0.55, size: 760, blur: 1,   dur: 42, dir: 1 },
-  { tint: "gold",  opacity: 0.35, size: 880, blur: 1.4, dur: 58, dir: -1 },
-  { tint: "white", opacity: 0.22, size: 1100, blur: 2,  dur: 70, dir: 1 },
+  { tint: "white", opacity: 0.42, size: 1100, blur: 14, dur: 42, dir: 1 },
+  { tint: "gold",  opacity: 0.55, size: 1300, blur: 18, dur: 58, dir: -1 },
+  { tint: "white", opacity: 0.20, size: 1500, blur: 22, dur: 70, dir: 1 },
 ] as const;
 
 const FRONT_LAYERS = [
-  // Sparser + lower opacity wisps in front of the player image
-  { tint: "white", opacity: 0.28, size: 720, blur: 1.6, dur: 46, dir: -1 },
-  { tint: "gold",  opacity: 0.20, size: 980, blur: 2.2, dur: 64, dir: 1 },
-  { tint: "white", opacity: 0.42, size: 640, blur: 1.2, dur: 36, dir: 1 },
+  // In front of the player — kept VERY light so he stays clearly visible.
+  { tint: "white", opacity: 0.10, size: 1200, blur: 18, dur: 46, dir: -1 },
+  { tint: "gold",  opacity: 0.14, size: 1400, blur: 22, dur: 64, dir: 1 },
+  { tint: "white", opacity: 0.07, size: 1000, blur: 14, dur: 36, dir: 1 },
 ] as const;
 
+// Gold tint uses a recoloured layer (multiply with gold) instead of
+// hue-rotate so the wisps actually read as Rise Gold.
 const tintFilter = (tint: "white" | "gold", blur: number) =>
   tint === "gold"
-    ? `blur(${blur}px) sepia(1) saturate(3) hue-rotate(-12deg) brightness(1.25)`
-    : `blur(${blur}px) brightness(1.9) contrast(1.05)`;
+    ? `blur(${blur}px) brightness(2.2) contrast(0.85) saturate(0)`
+    : `blur(${blur}px) brightness(2.2) contrast(0.85) saturate(0)`;
 
 export const SmokeOverlay = ({ layer = "back" }: SmokeOverlayProps) => {
   const layers = layer === "front" ? FRONT_LAYERS : BACK_LAYERS;
@@ -54,7 +57,17 @@ export const SmokeOverlay = ({ layer = "back" }: SmokeOverlayProps) => {
           }}
           animate={{ x: l.dir > 0 ? ["-12%", "12%"] : ["12%", "-12%"] }}
           transition={{ duration: l.dur, repeat: Infinity, repeatType: "mirror", ease: "linear" }}
-        />
+        >
+          {l.tint === "gold" && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundColor: "hsl(var(--gold))",
+                mixBlendMode: "multiply",
+              }}
+            />
+          )}
+        </motion.div>
       ))}
     </div>
   );

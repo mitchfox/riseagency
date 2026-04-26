@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
@@ -65,6 +66,12 @@ const GROUP_LABELS: Record<GroupKey, string> = {
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
+
+/** Three-letter language label shown next to the map selector flag. */
+const LANG_ABBR: Record<string, string> = {
+  en: "ENG", es: "ESP", pt: "POR", fr: "FRA", de: "GER", it: "ITA",
+  pl: "POL", cs: "CZE", ru: "RUS", tr: "TUR", hr: "CRO", no: "NOR",
+};
 
 const marbleStyle = {
   backgroundImage: [
@@ -285,6 +292,7 @@ const RiseLogoShine = ({ className = "" }: { className?: string }) => (
 
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
+  const { language } = useLanguage();
   const [introDone, setIntroDone] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
@@ -295,7 +303,7 @@ const RequestRepresentation = () => {
 
   // Sticky footer shrink-on-scroll
   const { scrollY } = useScroll();
-  const footerHeight = useTransform(scrollY, [0, 120], [96, 52]);
+  const footerHeight = useTransform(scrollY, [0, 120], [72, 48]);
   const footerFontSize = useTransform(scrollY, [0, 120], [16, 12]);
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 100));
@@ -329,12 +337,17 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Map-based language switcher — hidden once the player has chosen
-          an age bracket (they no longer need to switch language while
-          deep inside their breakdown). */}
-      {!ageGroup && (
-        <div className="fixed top-3 right-3 z-50">
-          <LanguageMapSelector />
+      {/* Map-based language switcher — pinned at the very bottom on the
+          age screen so it never competes with the headline branding.
+          Hidden once the player has chosen an age bracket. */}
+      {!ageGroup && introDone && (
+        <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md">
+            <LanguageMapSelector />
+            <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+              {LANG_ABBR[language] ?? "ENG"}
+            </span>
+          </div>
         </div>
       )}
 
@@ -373,7 +386,7 @@ const RequestRepresentation = () => {
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
               initial={{ x: "-58%", opacity: 0 }}
               animate={{ x: "-50%", opacity: 1 }}
-              transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             />
             {/* Front smoke (between player and text) */}
             <SmokeOverlay layer="front" />
@@ -412,14 +425,14 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="rounded-3xl border border-primary/30 bg-black/55 px-5 py-5 backdrop-blur-md md:px-8 md:py-7 lg:px-10 lg:py-8">
-                  <p className="font-bebas text-xs uppercase tracking-[0.32em] text-primary md:text-sm">
+                <div className="rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                  <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
-                  <p className="mx-auto mt-2 max-w-xs text-xs leading-snug text-foreground/75 md:max-w-md md:text-sm">
+                  <p className="mx-auto mt-1.5 max-w-xs text-sm leading-snug text-foreground/85 md:max-w-md md:text-base">
                     For a more personalised breakdown of what representation will look like for you.
                   </p>
-                  <div className="mt-4 grid w-full grid-cols-2 gap-3 md:gap-4">
+                  <div className="mt-3 grid w-full grid-cols-2 gap-3 md:gap-4">
                     <Button
                       size="lg"
                       hoverEffect
@@ -555,30 +568,34 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center gap-2 rounded-xl bg-primary font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full items-center justify-center gap-3 rounded-xl bg-primary px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
                 {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }}>Request Representation</motion.span>
+                  <motion.span style={{ fontSize: footerFontSize }} className="px-1">Request Representation</motion.span>
                 ) : (
-                  <div className="flex flex-col items-center leading-[1]">
-                    <ArrowRight className="mb-1 h-5 w-5 md:h-6 md:w-6" />
-                    <span className="text-[15px] md:text-base">Request</span>
-                    <span className="text-[15px] md:text-base">Representation</span>
+                  <div className="flex items-center gap-3 leading-[1]">
+                    <ArrowRight className="h-5 w-5 md:h-6 md:w-6" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-[14px] md:text-base">Request</span>
+                      <span className="text-[14px] md:text-base">Representation</span>
+                    </div>
                   </div>
                 )}
               </motion.button>
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center gap-2 rounded-xl border border-primary/50 bg-background/80 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full items-center justify-center gap-3 rounded-xl border border-primary/50 bg-background/80 px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
                 {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }}>Contact Us</motion.span>
+                  <motion.span style={{ fontSize: footerFontSize }} className="px-1">Contact Us</motion.span>
                 ) : (
-                  <div className="flex flex-col items-center leading-[1]">
-                    <MessageCircle className="mb-1 h-5 w-5 md:h-6 md:w-6" />
-                    <span className="text-[15px] md:text-base">Contact</span>
-                    <span className="text-[15px] md:text-base">Us</span>
+                  <div className="flex items-center gap-3 leading-[1]">
+                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-[14px] md:text-base">Contact</span>
+                      <span className="text-[14px] md:text-base">Us</span>
+                    </div>
                   </div>
                 )}
               </motion.button>
@@ -867,8 +884,8 @@ const BackPill = ({ onClick, label }: { onClick: () => void; label: string }) =>
 const TitlePlate = ({
   icon: Icon, title, eyebrow,
 }: { icon: typeof Gauge; title: string; eyebrow?: string }) => (
-  <div className="relative overflow-hidden rounded-[1.6rem] border border-border/60 p-6 md:p-8" style={marbleStyle}>
-    <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.1),hsl(var(--background)/0.72))]" />
+  <div className="relative overflow-hidden rounded-[1.6rem] border border-border/60 p-6 md:p-8" style={solidBlackSectionStyle}>
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.08),transparent_60%)]" />
     <div className="relative flex flex-col items-center gap-4 text-center md:gap-5">
       <div className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_30px_hsl(var(--gold)/0.12)] md:h-20 md:w-20">
         <Icon className="h-7 w-7 text-primary md:h-9 md:w-9" />
