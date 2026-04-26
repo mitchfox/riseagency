@@ -866,9 +866,9 @@ const DetailView = ({
     return (
       <motion.section
         key={`scout-${scoutingPosition}`}
-        initial={{ opacity: 0, x: 42 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -42 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
@@ -912,9 +912,9 @@ const DetailView = ({
     return (
       <motion.section
         key={`perf-${performanceSub}`}
-        initial={{ opacity: 0, x: 42 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -42 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
@@ -951,9 +951,9 @@ const DetailView = ({
   return (
     <motion.section
       key={`detail-${activeCard}`}
-      initial={{ opacity: 0, x: 42 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -42 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-6 md:pb-44 lg:px-16"
     >
