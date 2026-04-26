@@ -761,21 +761,21 @@ const RequestRepresentation = () => {
           <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
-                {/* "Back to all" pill — returns the user to the hub
-                    (exits the active section). Sits ABOVE the slider
-                    where it lived previously. */}
+                {/* "Back to all" pill — centred above the slider. */}
                 {activeCard && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveCard(null);
-                      setScoutingPosition(null);
-                      setPerformanceSub(null);
-                    }}
-                    className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
-                  >
-                    <ChevronLeft className="h-3 w-3" /> Back to all
-                  </button>
+                  <div className="mb-2 flex w-full justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveCard(null);
+                        setScoutingPosition(null);
+                        setPerformanceSub(null);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
+                    >
+                      <ChevronLeft className="h-3 w-3" /> Back to all
+                    </button>
+                  </div>
                 )}
                 <div>
                   <SectionSliderWheel
