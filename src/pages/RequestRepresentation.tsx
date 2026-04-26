@@ -334,12 +334,14 @@ const RequestRepresentation = () => {
           Hidden once the player has chosen an age bracket. */}
       {!ageGroup && introDone && (
         <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md">
-            <LanguageMapSelector />
-            <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
-              {LANG_ABBR[language] ?? "ENG"}
-            </span>
-          </div>
+          <LanguageMapSelector
+            className="rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md"
+            triggerContent={(
+              <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+                {LANG_ABBR[language] ?? "ENG"}
+              </span>
+            )}
+          />
         </div>
       )}
 
@@ -348,9 +350,6 @@ const RequestRepresentation = () => {
       <AnimatePresence>
         {!introDone && <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />}
       </AnimatePresence>
-
-      {/* Background smoke (BEHIND the player overlay image) */}
-      <SmokeOverlay layer="back" />
 
       <AnimatePresence mode="wait">
         {introDone && !ageGroup ? (
@@ -363,22 +362,26 @@ const RequestRepresentation = () => {
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
           >
-            {/* Background image (RISE black plate) */}
-            <img
-              src={representationBgRise}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover object-center"
-            />
+            <div className="absolute inset-0 bg-black" />
+            {/* Background smoke (BEHIND the player overlay image) */}
+            <SmokeOverlay layer="back" />
             {/* Player overlay - sits between the back smoke (z-0) and the
                 front smoke (z-20). Centred on every breakpoint. */}
             <motion.img
               src={representationTy}
               alt="Tyrese Omotoye celebrating"
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
-              initial={{ x: "-58%", opacity: 0 }}
+              initial={{ x: "-72%", opacity: 1 }}
               animate={{ x: "-50%", opacity: 1 }}
               transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            />
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-[8] h-[120vmax] w-[120vmax] -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/35"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.15], opacity: [0, 0.5, 0] }}
+              transition={{ duration: 2.8, delay: 14.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ boxShadow: "0 0 60px hsl(var(--gold) / 0.35), inset 0 0 80px hsl(var(--gold) / 0.16)" }}
             />
             {/* Front smoke (between player and text) */}
             <SmokeOverlay layer="front" />
@@ -395,8 +398,8 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.08, duration: 0.5 }}
                 className="flex w-full flex-col items-center"
               >
-                <RiseLogoShine className="h-8 sm:h-10 md:h-14" />
-                <h1 className="mt-2 font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
+                <RiseLogoShine className="h-12 md:h-16" />
+                <h1 className="mt-2 font-bebas text-3xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
                   REPRESENTATION
                 </h1>
               </motion.div>
@@ -417,7 +420,8 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                <div className="relative rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
+                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-8 left-0 right-0 h-10 rounded-b-3xl border-x border-b border-primary/30" />
                   <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
