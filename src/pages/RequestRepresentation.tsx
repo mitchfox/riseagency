@@ -383,13 +383,12 @@ const RequestRepresentation = () => {
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
 
-  // When the user lands on the Scouting section without having drilled in
-  // yet, auto-open their pre-chosen position (or the matching grouping).
-  useEffect(() => {
-    if (activeCard === "scouting" && scoutingPosition === null && chosenPosition) {
-      setScoutingPosition(POSITION_TO_SCOUTING[chosenPosition]);
-    }
-  }, [activeCard, chosenPosition, scoutingPosition]);
+  // Recommended scouting position (derived from the position chosen on the
+  // home rectangle). NOTE: we no longer auto-open it — Scouting must lead
+  // with the network intro + map, then the position breakdown.
+  const recommendedScoutingPosition: ScoutingPosition | null = chosenPosition
+    ? POSITION_TO_SCOUTING[chosenPosition]
+    : null;
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-black text-foreground">
@@ -533,10 +532,10 @@ const RequestRepresentation = () => {
                         className="flex flex-col items-center gap-3 text-center"
                       >
                         <motion.h1
-                          initial={{ opacity: 0, scale: 0.92 }}
-                          animate={{ opacity: 1, scale: 1, letterSpacing: "0.32em" }}
-                          transition={{ duration: 1.0, delay: 0.15 }}
-                          className="font-bebas text-2xl uppercase leading-none text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.8, delay: 0.15 }}
+                          className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
                           style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                         >
                           Representation
@@ -560,9 +559,9 @@ const RequestRepresentation = () => {
                     {introStep === "position" && (
                       <motion.div
                         key="position-picker"
-                        initial={{ opacity: 0, x: 24 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
@@ -582,9 +581,9 @@ const RequestRepresentation = () => {
                     {introStep === "dob" && (
                       <motion.div
                         key="dob-picker"
-                        initial={{ opacity: 0, x: 24 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 }}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
