@@ -552,31 +552,30 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center gap-1 rounded-xl bg-primary font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full items-center justify-center gap-2 rounded-xl bg-primary font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
-                {!scrolled && <ArrowRight className="h-3 w-3 mb-0.5" />}
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }}>Request Representation</motion.span>
                 ) : (
-                  <div className="flex flex-col items-center leading-[0.95]">
-                    <ArrowRight className="h-3 w-3 mb-1" />
-                    <span className="text-[11px] md:text-xs">Request</span>
-                    <span className="text-[11px] md:text-xs">Representation</span>
+                  <div className="flex flex-col items-center leading-[1]">
+                    <ArrowRight className="mb-1 h-5 w-5 md:h-6 md:w-6" />
+                    <span className="text-[15px] md:text-base">Request</span>
+                    <span className="text-[15px] md:text-base">Representation</span>
                   </div>
                 )}
               </motion.button>
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center gap-1 rounded-xl border border-primary/50 bg-background/80 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full items-center justify-center gap-2 rounded-xl border border-primary/50 bg-background/80 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }}>Contact Us</motion.span>
                 ) : (
-                  <div className="flex flex-col items-center leading-[0.95]">
-                    <MessageCircle className="h-3 w-3 mb-1" />
-                    <span className="text-[11px] md:text-xs">Contact</span>
-                    <span className="text-[11px] md:text-xs">Us</span>
+                  <div className="flex flex-col items-center leading-[1]">
+                    <MessageCircle className="mb-1 h-5 w-5 md:h-6 md:w-6" />
+                    <span className="text-[15px] md:text-base">Contact</span>
+                    <span className="text-[15px] md:text-base">Us</span>
                   </div>
                 )}
               </motion.button>
