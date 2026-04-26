@@ -155,10 +155,10 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   }
                 : {
                     opacity: 1,
-                    // h-20 (80px) → h-8 (32px) ≈ 0.4 scale
-                    scale: 0.4,
-                    // Exact mobile handoff: page logo centre sits 48px from top.
-                    y: "calc(-50dvh + 48px)",
+                    // h-20 (80px) → h-12 (48px), matching the page logo.
+                    scale: 0.6,
+                    // Exact mobile handoff: page logo centre sits 56px from top.
+                    y: "calc(-50dvh + 56px)",
                   }
             }
             transition={
