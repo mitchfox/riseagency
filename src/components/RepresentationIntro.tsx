@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -80,26 +80,26 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
 
-  const finishIntro = () => {
+  const finishIntro = useCallback(() => {
     if (completed) return;
     setCompleted(true);
     setPhase("done");
     onComplete();
-  };
+  }, [completed, onComplete]);
 
   // Skip on key press.
   useEffect(() => {
     const skip = () => finishIntro();
     window.addEventListener("keydown", skip, { once: true });
     return () => window.removeEventListener("keydown", skip);
-  }, [completed, onComplete]);
+  }, [finishIntro]);
 
   // Drive phase transitions.
   useEffect(() => {
     if (phase === "done") { finishIntro(); return; }
     const t = setTimeout(() => setPhase(NEXT[phase]), PHASE_DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase, completed, onComplete]);
+  }, [phase, finishIntro]);
 
   if (phase === "done") return null;
 
@@ -123,7 +123,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      onClick={() => { setPhase("done"); onComplete(); }}
+      onClick={finishIntro}
       role="presentation"
     >
       {/* Low-motion gold ambience — barely there. */}
