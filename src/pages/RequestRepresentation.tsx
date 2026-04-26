@@ -278,7 +278,7 @@ const SectionDivider = ({ label }: { label?: string }) => (
   <div className="my-6 flex items-center gap-3 md:my-8">
     <div className="h-[1px] flex-1 bg-primary/40" />
     {label ? (
-      <span className="font-bebas text-xs uppercase tracking-[0.32em] text-primary md:text-sm">{label}</span>
+      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">{label}</span>
     ) : (
       <div className="h-1 w-1 rounded-full bg-primary/70" />
     )}
@@ -315,11 +315,11 @@ const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language, t } = useLanguage();
   const isMobile = useIsMobile();
-  const skipIntro = typeof window !== "undefined" && sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
   // Representation always starts with the central pulse and wave before
-  // the cinematic text sequence is allowed to mount.
-  const [pulseDone, setPulseDone] = useState(skipIntro);
-  const [introDone, setIntroDone] = useState(skipIntro);
+  // the cinematic text sequence is allowed to mount. Intro plays on
+  // every fresh page mount so it's never silently skipped.
+  const [pulseDone, setPulseDone] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
   const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
@@ -333,11 +333,8 @@ const RequestRepresentation = () => {
 
   const cardContent = useMemo(() => (ageGroup ? getCardContent(ageGroup) : null), [ageGroup]);
 
-  // Once the intro finishes, persist for the session so language reloads
-  // jump straight into the experience instead of replaying the cinematic.
-  useEffect(() => {
-    if (introDone) sessionStorage.setItem(INTRO_SEEN_KEY, "1");
-  }, [introDone]);
+  // Intro is intentionally not persisted — it should play whenever the
+  // page mounts so users always see the cinematic.
 
   // While the hub is the active screen, enable proximity scroll-snap on
   // the document so each category title parks just below the mini header.
@@ -691,7 +688,7 @@ const RequestRepresentation = () => {
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
-                      className="text-justify text-[13px] leading-relaxed text-foreground/85 md:text-base [text-justify:inter-word]"
+                      className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
                       style={{
                         hyphens: "none",
                         WebkitHyphens: "none",
@@ -760,7 +757,7 @@ const RequestRepresentation = () => {
       {ageGroup && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
-            {showSlider && groupSiblings.length > 0 && (
+                {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
                 {/* "Back to all" pill — centred above the slider. */}
                 {activeCard && (
@@ -768,13 +765,21 @@ const RequestRepresentation = () => {
                     <button
                       type="button"
                       onClick={() => {
+                        // Inside a Performance sub-screen, "Back to all"
+                        // returns to the Performance hub first, not the
+                        // top-level group hub.
+                        if (performanceSub) { setPerformanceSub(null); return; }
+                        if (scoutingPosition) { setScoutingPosition(null); return; }
                         setActiveCard(null);
-                        setScoutingPosition(null);
-                        setPerformanceSub(null);
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
                     >
-                      <ChevronLeft className="h-3 w-3" /> Back to all
+                      <ChevronLeft className="h-3 w-3" />
+                      {performanceSub
+                        ? "Back to Performance"
+                        : scoutingPosition
+                          ? "Back to Scouting"
+                          : "Back to all"}
                     </button>
                   </div>
                 )}
@@ -928,6 +933,22 @@ const DetailView = ({
               </div>
             ))}
           </div>
+          {performanceSub === "analysis" && (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 md:mt-6">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
+                  title="RISE Football Analysis"
+                  frameBorder={0}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 h-full w-full"
+                />
+              </div>
+            </div>
+          )}
           {performanceSub === "actions" && (
             <a
               href={RONALDO_REPORT_URL}
@@ -1037,40 +1058,35 @@ const DetailView = ({
 
               <SectionDivider label="Position breakdown" />
 
-              {recommendedScoutingPosition && (
+              {recommendedScoutingPosition ? (
                 <button
                   type="button"
                   onClick={() => setScoutingPosition(recommendedScoutingPosition)}
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
-                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">Recommended for your position</p>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">What we look for in your position</p>
                     <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-primary" />
                 </button>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+                    {SCOUTING_POSITIONS.map((pos) => (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => setScoutingPosition(pos)}
+                        className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 transition-colors hover:border-primary/60 hover:bg-card/70 md:text-base"
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
-
-              <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
-                {SCOUTING_POSITIONS.map((pos) => {
-                  const isRec = pos === recommendedScoutingPosition;
-                  return (
-                    <button
-                      key={pos}
-                      type="button"
-                      onClick={() => setScoutingPosition(pos)}
-                      className={`rounded-xl border px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] transition-colors md:text-base ${
-                        isRec
-                          ? "border-primary/70 bg-primary/15 text-primary"
-                          : "border-border/60 bg-card/40 text-foreground/80 hover:border-primary/60 hover:bg-card/70"
-                      }`}
-                    >
-                      {pos}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           )}
 
