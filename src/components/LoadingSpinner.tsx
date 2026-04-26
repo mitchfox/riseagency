@@ -14,15 +14,7 @@ const sizeClasses = {
 };
 
 export const LoadingSpinner = ({ size = "md", className, text }: LoadingSpinnerProps) => {
-  return (
-    <div className={cn("flex flex-col items-center justify-center gap-3", className)}>
-      <div className="relative">
-        <div className={cn("rounded-full border-4 border-muted animate-pulse", sizeClasses[size])} />
-        <div className={cn("absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin", sizeClasses[size])} />
-      </div>
-      {text && <span className="text-muted-foreground text-sm">{text}</span>}
-    </div>
-  );
+  return <RiseBrandedLoader className={className} compact label={text} logoSize={size} />;
 };
 
 interface PageLoadingProps {
