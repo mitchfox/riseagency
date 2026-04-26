@@ -2,10 +2,13 @@ import { useMemo, useRef } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { TextureLoader } from "three";
-import playerImg from "@/assets/intro3d/player.png";
-import depthImg from "@/assets/intro3d/depth.png";
-import roughnessImg from "@/assets/intro3d/roughness.png";
-import alphaImg from "@/assets/intro3d/alpha.png";
+import playerImg1 from "@/assets/intro3d/player.png";
+import depthImg1 from "@/assets/intro3d/depth.png";
+import roughnessImg1 from "@/assets/intro3d/roughness.png";
+import alphaImg1 from "@/assets/intro3d/alpha.png";
+import playerImg2 from "@/assets/intro3d/player2.png";
+import depthImg2 from "@/assets/intro3d/depth2.png";
+import roughnessImg2 from "@/assets/intro3d/roughness2.png";
 
 /**
  * Subtle 3D pop of the player image. Plane is displaced by the depth
@@ -15,10 +18,18 @@ import alphaImg from "@/assets/intro3d/alpha.png";
  *
  * Auto-drifts up and to the right while on screen.
  */
-const PlayerMesh = () => {
-  const [colorMap, depthMap, roughMap, alphaMap] = useLoader(TextureLoader, [
-    playerImg, depthImg, roughnessImg, alphaImg,
-  ]);
+const SETS = {
+  one: { player: playerImg1, depth: depthImg1, rough: roughnessImg1, alpha: alphaImg1 as string | null },
+  two: { player: playerImg2, depth: depthImg2, rough: roughnessImg2, alpha: null as string | null },
+} as const;
+
+const PlayerMesh = ({ variant }: { variant: "one" | "two" }) => {
+  const set = SETS[variant];
+  const urls = set.alpha
+    ? [set.player, set.depth, set.rough, set.alpha]
+    : [set.player, set.depth, set.rough];
+  const maps = useLoader(TextureLoader, urls);
+  const [colorMap, depthMap, roughMap, alphaMap] = [maps[0], maps[1], maps[2], maps[3]];
   // Keep maps colour-correct on lit material.
   colorMap.colorSpace = THREE.SRGBColorSpace;
 
@@ -49,7 +60,7 @@ const PlayerMesh = () => {
         displacementBias={-0.05}
         roughnessMap={roughMap}
         roughness={0.85}
-        alphaMap={alphaMap}
+        {...(alphaMap ? { alphaMap } : {})}
         transparent
         alphaTest={0.05}
         metalness={0.05}
@@ -58,7 +69,13 @@ const PlayerMesh = () => {
   );
 };
 
-export const Player3DPop = ({ className = "" }: { className?: string }) => (
+export const Player3DPop = ({
+  className = "",
+  variant = "one",
+}: {
+  className?: string;
+  variant?: "one" | "two";
+}) => (
   <div className={`pointer-events-none ${className}`}>
     <Canvas
       camera={{ position: [0, 0, 4.2], fov: 38 }}
@@ -68,7 +85,7 @@ export const Player3DPop = ({ className = "" }: { className?: string }) => (
       <ambientLight intensity={0.55} />
       <directionalLight position={[2, 3, 4]} intensity={1.2} color={"#fff5d4"} />
       <directionalLight position={[-3, -1, 2]} intensity={0.4} color={"#c6a332"} />
-      <PlayerMesh />
+      <PlayerMesh variant={variant} />
     </Canvas>
   </div>
 );
