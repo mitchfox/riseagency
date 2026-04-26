@@ -329,22 +329,6 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Map-based language switcher — pinned at the very bottom on the
-          age screen so it never competes with the headline branding.
-          Hidden once the player has chosen an age bracket. */}
-      {!ageGroup && introDone && (
-        <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-          <LanguageMapSelector
-            className="rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md"
-            triggerContent={(
-              <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
-                {LANG_ABBR[language] ?? "ENG"}
-              </span>
-            )}
-          />
-        </div>
-      )}
-
       {/* Cinematic intro: shown once on first load, then the age screen
           becomes available. */}
       <AnimatePresence>
