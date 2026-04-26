@@ -417,9 +417,9 @@ const RequestRepresentation = () => {
           /* ============ AGE GROUP SCREEN ============ */
           <motion.section
             key="age"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -36 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
             onClick={(e) => {
@@ -647,9 +647,9 @@ const RequestRepresentation = () => {
           /* ============ HUB SCREEN ============ */
           <motion.section
             key="hub"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -36 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-8 md:pb-44 lg:px-16"
           >
