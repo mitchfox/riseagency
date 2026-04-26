@@ -57,7 +57,7 @@ const defaultSubHeader: SubHeaderConfig = {
     { type: 'button', action: 'declareInterest', labelKey: 'header.declare_interest', fallback: 'Declare Interest In A Star', mobileFallback: 'Interest', icon: Users },
   ],
   right: [
-    { type: 'button', action: 'representation', labelKey: 'header.request_representation', fallback: 'Request Representation', mobileFallback: 'Represent', icon: Handshake },
+    { type: 'button', action: 'representation', labelKey: 'header.request_representation', fallback: 'Representation', mobileFallback: 'Represent', icon: Handshake },
     { type: 'link', to: '/login', labelKey: 'header.portal', fallback: 'Portal', mobileFallback: 'Portal', icon: LogIn },
   ],
 };
