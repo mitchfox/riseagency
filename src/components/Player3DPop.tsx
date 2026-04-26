@@ -9,21 +9,21 @@ import alphaImg1 from "@/assets/intro3d/alpha.png";
 import playerImg2 from "@/assets/intro3d/player2.png";
 import depthImg2 from "@/assets/intro3d/depth2.png";
 import roughnessImg2 from "@/assets/intro3d/roughness2.png";
-import homePlayerImg from "@/assets/intro3d/home-player.png";
+import homePlayerImg from "@/assets/intro3d/home-base.png";
 import homeRoughnessImg from "@/assets/intro3d/home-roughness.png";
 import homeAlphaImg from "@/assets/intro3d/home-alpha.png";
 
 /**
- * Subtle 3D pop of the player image. Plane is displaced by the depth
- * map so the figure feels embossed; the image acts as the colour map,
- * the roughness map drives lighting micro-detail and the alpha map
- * cuts the silhouette so the background black shows through.
- *
- * Auto-drifts up and to the right while on screen.
+ * Stationary 3D "pop" of a player image. Modeled after the landing
+ * page Player3DEffect: the plane stays locked to the centre of its
+ * container and only the shader does the work — depth-driven
+ * parallax samples the colour map at an offset that drifts gently
+ * over time, so the figure appears to bend / breathe / catch light
+ * on the spot rather than physically travelling across the screen.
  */
 const SETS = {
-  one: { player: playerImg1, depth: depthImg1, rough: roughnessImg1, alpha: alphaImg1 as string | null },
-  two: { player: playerImg2, depth: depthImg2, rough: roughnessImg2, alpha: null as string | null },
+  one:  { player: playerImg1,  depth: depthImg1,  rough: roughnessImg1,  alpha: alphaImg1     as string | null },
+  two:  { player: playerImg2,  depth: depthImg2,  rough: roughnessImg2,  alpha: null          as string | null },
   home: { player: homePlayerImg, depth: homeRoughnessImg, rough: homeRoughnessImg, alpha: homeAlphaImg as string | null },
 } as const;
 
@@ -40,44 +40,112 @@ export const preloadPlayer3DVariant = (variant: Player3DVariant) => {
   useLoader.preload(TextureLoader, getSetUrls(variant));
 };
 
+/* ============================================================
+ * Shader: depth-driven parallax with subtle rim light.
+ * - Plane never moves; only the UV sample point inside the shader
+ *   shifts based on a slow oscillating "virtual cursor".
+ * - Depth map drives per-pixel parallax strength so foreground
+ *   features shift slightly more than background ones, creating the
+ *   "bend on the spot" 3D feel.
+ * - Optional alpha map cuts the silhouette out of the plane so the
+ *   page background shows through.
+ * ============================================================ */
+const vertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const fragmentShader = `
+  uniform sampler2D uColor;
+  uniform sampler2D uDepth;
+  uniform sampler2D uRough;
+  uniform sampler2D uAlpha;
+  uniform float uHasAlpha;
+  uniform vec2  uTarget;       // virtual cursor in 0..1
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec2 vUv;
+
+  void main() {
+    // Sample depth (RGB or grayscale) and derive a 0..1 mask.
+    float depth = dot(texture2D(uDepth, vUv).rgb, vec3(0.299, 0.587, 0.114));
+    // Subtle parallax: stronger on near features, weaker on far ones.
+    float parallaxStrength = mix(0.012, 0.026, depth);
+    vec2 offset = (uTarget - vec2(0.5)) * parallaxStrength;
+    vec2 sampleUV = vUv - offset;
+
+    vec4 color = texture2D(uColor, sampleUV);
+    float alpha = color.a;
+    if (uHasAlpha > 0.5) {
+      alpha *= texture2D(uAlpha, sampleUV).a;
+    }
+    if (alpha < 0.01) discard;
+
+    // Roughness map adds soft micro-shading.
+    float rough = dot(texture2D(uRough, sampleUV).rgb, vec3(0.299, 0.587, 0.114));
+    float shade = mix(0.92, 1.06, rough);
+    vec3 rgb = color.rgb * shade;
+
+    // Gentle rim light driven by the virtual cursor — adds the
+    // "catch-the-light" feel without moving the player.
+    float rim = smoothstep(0.85, 1.0, max(vUv.x, 1.0 - vUv.x))
+              * (0.18 + 0.12 * sin(uTime * 0.8));
+    rgb += vec3(0.78, 0.66, 0.32) * rim * 0.25;
+
+    gl_FragColor = vec4(rgb, alpha * uOpacity);
+  }
+`;
+
 const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
+  const set = SETS[variant];
   const urls = getSetUrls(variant);
   const maps = useLoader(TextureLoader, urls);
   const [colorMap, depthMap, roughMap, alphaMap] = [maps[0], maps[1], maps[2], maps[3]];
-  // Keep maps colour-correct on lit material.
   colorMap.colorSpace = THREE.SRGBColorSpace;
+  if (alphaMap) alphaMap.colorSpace = THREE.NoColorSpace;
 
-  const ref = useRef<THREE.Mesh>(null);
-  const start = useRef<number | null>(null);
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+
+  const uniforms = useMemo(() => ({
+    uColor:    { value: colorMap },
+    uDepth:    { value: depthMap },
+    uRough:    { value: roughMap },
+    uAlpha:    { value: alphaMap ?? colorMap },
+    uHasAlpha: { value: set.alpha ? 1.0 : 0.0 },
+    uTarget:   { value: new THREE.Vector2(0.5, 0.5) },
+    uTime:     { value: 0 },
+    uOpacity:  { value: 1 },
+  }), [colorMap, depthMap, roughMap, alphaMap, set.alpha]);
+
+  // Plane is sized to the 9:16 source ratio (1080x1920). Position is
+  // FIXED at the origin — no translation, ever. Rotation is also
+  // locked. All apparent motion comes from the shader's UV sampling.
+  const geometry = useMemo(() => new THREE.PlaneGeometry(1.8, 3.2, 1, 1), []);
 
   useFrame((state) => {
-    if (!ref.current) return;
+    if (!matRef.current) return;
     const t = state.clock.getElapsedTime();
-    if (start.current === null) start.current = t;
-    const e = t - start.current;
-    // Slow drift up + right plus the tiniest yaw breath.
-    ref.current.position.x = -0.4 + e * 0.06;
-    ref.current.position.y = -0.2 + e * 0.05;
-    ref.current.rotation.y = Math.sin(e * 0.4) * 0.06;
-    ref.current.rotation.x = Math.sin(e * 0.3) * 0.03;
+    // Lissajous-style virtual cursor — keeps the parallax target
+    // gliding through a small region around the centre so the
+    // figure appears to bend / breathe.
+    const cx = 0.5 + Math.sin(t * 0.45) * 0.18 + Math.sin(t * 0.21) * 0.05;
+    const cy = 0.5 + Math.cos(t * 0.37) * 0.14 + Math.cos(t * 0.18) * 0.04;
+    matRef.current.uniforms.uTarget.value.set(cx, cy);
+    matRef.current.uniforms.uTime.value = t;
   });
 
-  // Plane sized to the 1080x1920 source ratio (9:16).
-  const geometry = useMemo(() => new THREE.PlaneGeometry(2.25, 4, 200, 360), []);
-
   return (
-    <mesh ref={ref} geometry={geometry}>
-      <meshStandardMaterial
-        map={colorMap}
-        displacementMap={depthMap}
-        displacementScale={0.45}
-        displacementBias={-0.05}
-        roughnessMap={roughMap}
-        roughness={0.85}
-        {...(alphaMap ? { alphaMap } : {})}
+    <mesh geometry={geometry} position={[0, 0, 0]}>
+      <shaderMaterial
+        ref={matRef}
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
         transparent
-        alphaTest={0.05}
-        metalness={0.05}
+        depthWrite={false}
       />
     </mesh>
   );
@@ -92,13 +160,11 @@ export const Player3DPop = ({
 }) => (
   <div className={`pointer-events-none ${className}`}>
     <Canvas
-      camera={{ position: [0, 0, 4.2], fov: 38 }}
-      dpr={[1, 1.25]}
-      gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
+      orthographic
+      camera={{ position: [0, 0, 5], zoom: 220, near: 0.1, far: 100 }}
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, alpha: true, premultipliedAlpha: false, powerPreference: "high-performance" }}
     >
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[2, 3, 4]} intensity={1.2} color={"#fff5d4"} />
-      <directionalLight position={[-3, -1, 2]} intensity={0.4} color={"#c6a332"} />
       <Suspense fallback={null}>
         <PlayerMesh variant={variant} />
       </Suspense>

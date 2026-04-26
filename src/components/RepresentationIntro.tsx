@@ -21,6 +21,11 @@ import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 
 interface Props { onComplete: () => void; }
 
+/**
+ * Both 3D player layers stay mounted for the full intro so the
+ * Three.js context never tears down between text changes (which
+ * was triggering the loading screen flash). Only opacity changes.
+ */
 const IntroPlayerLayer = memo(({ variant }: { variant: "one" | "two" }) => (
   <>
     <Player3DPop variant={variant} className="absolute inset-0 h-full w-full" />
@@ -117,9 +122,14 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const inLogo        = phase === "logo" || phase === "descend";
   const inPair1       = ["p1-line1", "p1-both", "p1-fade"].includes(phase);
   const inPair2       = ["p2-line3", "p2-both", "p2-fade"].includes(phase);
-  // 3D layer fades down in the final phase of each pair.
-  const pair1Fading   = phase === "p1-fade";
-  const pair2Fading   = phase === "p2-fade";
+  // Per-pair 3D layer opacity. Always mounted; opacity decides
+  // visibility so we never retrigger the texture load.
+  const pair1Opacity =
+    phase === "p1-line1" || phase === "p1-both" ? 0.55 :
+    phase === "p1-fade" ? 0 : 0;
+  const pair2Opacity =
+    phase === "p2-line3" || phase === "p2-both" ? 0.55 :
+    phase === "p2-fade" ? 0 : 0;
 
   return (
     <motion.div
@@ -143,37 +153,26 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* 3D player pop — Pair 1 (lines 1+2). Fades out in final second. */}
-      <AnimatePresence>
-        {inPair1 && (
-          <motion.div
-            key="pair1-3d"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: pair1Fading ? 0 : 0.55 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: pair1Fading ? 0.9 : 0.9, ease: "easeInOut" }}
-            className="pointer-events-none absolute inset-0"
-          >
-            <IntroPlayerLayer variant="two" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 3D player pop — Pair 2 (lines 3 + 4). Fades out in final second. */}
-      <AnimatePresence>
-        {inPair2 && (
-          <motion.div
-            key="pair2-3d"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: pair2Fading ? 0 : 0.55 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.9, ease: "easeInOut" }}
-            className="pointer-events-none absolute inset-0"
-          >
-            <IntroPlayerLayer variant="one" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* 3D player layers — both stay mounted so Three.js does not
+          tear down between phases. Opacity does the work. */}
+      <motion.div
+        key="pair1-3d"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: pair1Opacity }}
+        transition={{ duration: 0.9, ease: "easeInOut" }}
+        className="pointer-events-none absolute inset-0"
+      >
+        <IntroPlayerLayer variant="two" />
+      </motion.div>
+      <motion.div
+        key="pair2-3d"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: pair2Opacity }}
+        transition={{ duration: 0.9, ease: "easeInOut" }}
+        className="pointer-events-none absolute inset-0"
+      >
+        <IntroPlayerLayer variant="one" />
+      </motion.div>
 
       {/* Lines stack: 2 fixed slots so the second line can appear
           *underneath* the first without pushing it. */}
@@ -242,26 +241,26 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         </div>
       )}
 
-      {/* Logo phase: appears only after the line sequence finishes. */}
+      {/* Logo phase: appears only after the line sequence finishes.
+          The intro logo stays centred and simply fades out at the
+          end so there is no jump to a position that does not match
+          the actual page layout. The Representation page renders
+          its own logo in its real header position. */}
       {inLogo && (
         <motion.img
           key="rep-intro-logo"
           src={logoWhite}
           alt="RISE"
-          initial={{ opacity: 0, scale: 0.9, y: 0 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={
             phase === "logo"
-              ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1], y: 0 }
-              : {
-                  opacity: 1,
-                  scale: 0.6,
-                  y: "calc(-50dvh + clamp(56px, 8.333vw, 64px))",
-                }
+              ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1] }
+              : { opacity: 0, scale: 1 }
           }
           transition={
             phase === "logo"
               ? { duration: 3.6, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
-              : { duration: 2.2, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 1.6, ease: [0.22, 1, 0.36, 1] }
           }
           className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
         />
