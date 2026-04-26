@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import {
-  ArrowRight, MessageCircle, ChevronLeft, ChevronRight,
+  ArrowRight, ChevronLeft, ChevronRight,
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
@@ -18,9 +18,7 @@ import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
-import representationBgRise from "@/assets/representation-bg-rise.png";
 import representationTy from "@/assets/representation-ty.png";
-import blackMarbleSmudged from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 
 type AgeGroup = null | "under18" | "over18";
@@ -71,18 +69,6 @@ const GROUPS: GroupKey[] = ["who", "how", "terms"];
 const LANG_ABBR: Record<string, string> = {
   en: "ENG", es: "ESP", pt: "POR", fr: "FRA", de: "GER", it: "ITA",
   pl: "POL", cs: "CZE", ru: "RUS", tr: "TUR", hr: "CRO", no: "NOR",
-};
-
-const marbleStyle = {
-  backgroundImage: [
-    "radial-gradient(circle at 18% 18%, hsl(var(--gold) / 0.18), transparent 28%)",
-    "radial-gradient(circle at 80% 22%, hsl(var(--foreground) / 0.12), transparent 24%)",
-    "radial-gradient(circle at 68% 78%, hsl(var(--gold) / 0.12), transparent 22%)",
-    `url(${blackMarbleSmudged})`,
-    "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--card)) 48%, hsl(var(--background)) 100%)",
-  ].join(", "),
-  backgroundSize: "auto, auto, auto, cover, auto",
-  backgroundPosition: "center",
 };
 
 /** Solid-black plate (with a faint gold edge wash) used for hub/detail
@@ -288,6 +274,12 @@ const RiseLogoShine = ({ className = "" }: { className?: string }) => (
       }
     `}</style>
   </div>
+);
+
+const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
+  <svg viewBox="0 0 32 32" aria-hidden="true" className={className} fill="currentColor">
+    <path d="M16.02 3.2A12.7 12.7 0 0 0 5.2 22.55L3.6 28.8l6.38-1.5A12.68 12.68 0 1 0 16.02 3.2Zm0 2.42a10.26 10.26 0 0 1 8.72 15.67 10.24 10.24 0 0 1-13.94 3.64l-.46-.27-3.1.73.78-3.03-.3-.49A10.25 10.25 0 0 1 16.02 5.62Zm-4.08 4.58c-.25 0-.64.1-.98.47-.34.37-1.28 1.25-1.28 3.04s1.31 3.53 1.49 3.77c.18.25 2.53 4.05 6.25 5.52 3.09 1.22 3.72.98 4.39.92.67-.06 2.16-.88 2.46-1.74.3-.86.3-1.6.21-1.75-.09-.15-.34-.25-.71-.43-.37-.18-2.16-1.07-2.5-1.19-.34-.12-.58-.18-.83.18-.24.37-.95 1.19-1.17 1.43-.21.25-.43.28-.8.1-.37-.19-1.56-.58-2.97-1.84a11.15 11.15 0 0 1-2.05-2.55c-.21-.37-.02-.57.16-.75.17-.17.37-.43.55-.64.18-.21.24-.37.37-.61.12-.25.06-.46-.03-.64-.09-.18-.83-2.01-1.13-2.75-.3-.72-.6-.62-.83-.63h-.61Z" />
+  </svg>
 );
 
 const RequestRepresentation = () => {
