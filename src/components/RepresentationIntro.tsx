@@ -157,8 +157,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                     opacity: 1,
                     // h-20 (80px) → h-12 (48px), matching the page logo.
                     scale: 0.6,
-                    // Exact mobile handoff: page logo centre sits 56px from top.
-                    y: "calc(-50dvh + 56px)",
+                    // Exact handoff: page logo centre sits 56px mobile, 64px from md up.
+                    y: "calc(-50dvh + clamp(56px, 8.333vw, 64px))",
                   }
             }
             transition={
@@ -166,7 +166,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                 ? { duration: 8, times: [0, 0.18, 0.42, 0.62, 0.82, 1], ease: "easeInOut" }
                 : { duration: 4, ease: [0.22, 1, 0.36, 1] }
             }
-            className="pointer-events-none relative z-10 h-20 w-auto md:h-28"
+            className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
           />
         )}
       </AnimatePresence>
