@@ -543,15 +543,15 @@ const RequestRepresentation = () => {
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-md md:max-w-2xl">
             {showSlider && groupSiblings.length > 0 && (
-              <div className="mb-1.5 flex items-center justify-between gap-2 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
+              <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => { setActiveCard(null); setScoutingPosition(null); setPerformanceSub(null); }}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
+                  className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
                 >
                   <ChevronLeft className="h-3 w-3" /> Back to all
                 </button>
-                <div className="flex-1">
+                <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
@@ -564,16 +564,16 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center gap-3 rounded-xl bg-primary px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full items-center justify-center rounded-xl bg-primary px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }} className="px-1">Request Representation</motion.span>
                 ) : (
-                  <div className="flex items-center gap-3 leading-[1]">
-                    <ArrowRight className="h-5 w-5 md:h-6 md:w-6" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-[14px] md:text-base">Request</span>
-                      <span className="text-[14px] md:text-base">Representation</span>
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                    <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-[17px] md:text-xl">Request</span>
+                      <span className="text-[17px] md:text-xl">Representation</span>
                     </div>
                   </div>
                 )}
@@ -581,16 +581,16 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center gap-3 rounded-xl border border-primary/50 bg-background/80 px-3 py-1.5 font-bebas uppercase tracking-[0.14em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
                 {scrolled ? (
                   <motion.span style={{ fontSize: footerFontSize }} className="px-1">Contact Us</motion.span>
                 ) : (
-                  <div className="flex items-center gap-3 leading-[1]">
-                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-[14px] md:text-base">Contact</span>
-                      <span className="text-[14px] md:text-base">Us</span>
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                    <WhatsAppIcon className="h-4 w-4 md:h-5 md:w-5" />
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-[17px] md:text-xl">Contact</span>
+                      <span className="text-[17px] md:text-xl">Us</span>
                     </div>
                   </div>
                 )}
