@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -34,6 +34,14 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Live drag state — updates as the user drags so the wheel visibly
+  // moves under the finger / cursor instead of waiting for release.
+  const [drag, setDrag] = useState(0);
+  const dragRef = useRef<{ start: number; pointerId: number | null }>({ start: 0, pointerId: null });
+  // One full slot is ~118px wide; threshold to commit a step.
+  const SLOT = 118;
+  const STEP_THRESHOLD = 60;
+
   const wrap = (i: number) => (i + total) % total;
   const move = (delta: number) => onChange(sections[wrap(idx + delta)].key);
   const shortestOffset = (target: number) => {
@@ -61,34 +69,47 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
         </button>
 
         <div
-          className="relative flex h-14 flex-1 touch-pan-y items-center justify-center overflow-hidden [perspective:520px]"
-          onTouchStart={(e) => {
-            (e.currentTarget as any)._sx = e.touches[0].clientX;
-          }}
-          onTouchEnd={(e) => {
-            const sx = (e.currentTarget as any)._sx;
-            if (sx == null) return;
-            const dx = e.changedTouches[0].clientX - sx;
-            if (Math.abs(dx) > 30) move(dx < 0 ? 1 : -1);
-          }}
+          className="relative flex h-14 flex-1 touch-pan-y items-center justify-center overflow-hidden [perspective:520px] cursor-grab active:cursor-grabbing"
           onPointerDown={(e) => {
-            (e.currentTarget as any)._px = e.clientX;
             (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            dragRef.current = { start: e.clientX, pointerId: e.pointerId };
+            setDrag(0);
+          }}
+          onPointerMove={(e) => {
+            if (dragRef.current.pointerId !== e.pointerId) return;
+            const dx = e.clientX - dragRef.current.start;
+            // Limit live drag travel to ~1.5 slots so it stays readable.
+            const clamped = Math.max(-SLOT * 1.5, Math.min(SLOT * 1.5, dx));
+            setDrag(clamped);
+            // Commit a step crossing without releasing.
+            if (clamped >= STEP_THRESHOLD) {
+              dragRef.current.start = e.clientX;
+              setDrag(0);
+              move(-1);
+            } else if (clamped <= -STEP_THRESHOLD) {
+              dragRef.current.start = e.clientX;
+              setDrag(0);
+              move(1);
+            }
           }}
           onPointerUp={(e) => {
-            const px = (e.currentTarget as any)._px;
-            if (px == null) return;
-            const dx = e.clientX - px;
-            if (Math.abs(dx) > 24) move(dx < 0 ? 1 : -1);
-            (e.currentTarget as any)._px = null;
+            dragRef.current.pointerId = null;
+            setDrag(0);
+          }}
+          onPointerCancel={() => {
+            dragRef.current.pointerId = null;
+            setDrag(0);
           }}
         >
           <AnimatePresence initial={false} mode="popLayout">
             {visible.map(({ offset, section }) => {
               const isCenter = offset === 0;
               const opacity = isCenter ? 1 : Math.abs(offset) === 1 ? 0.62 : 0.26;
-              const translateX = offset * 118;
-              const rotateY = offset * -42 + scrollSpin;
+              const translateX = offset * SLOT + drag;
+              // Drag rotates the wheel by up to ~30° each side as the
+              // user pulls; snaps back when released or after commit.
+              const dragRotate = (drag / SLOT) * 30;
+              const rotateY = offset * -42 + scrollSpin + dragRotate;
               const scale = isCenter ? 1 : Math.abs(offset) === 1 ? 0.82 : 0.66;
               return (
                 <motion.button
@@ -97,7 +118,11 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
                   initial={{ opacity: 0, scale: 0.72 }}
                   animate={{ opacity, x: translateX, rotateY, scale, z: isCenter ? 42 : -50 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  transition={
+                    dragRef.current.pointerId !== null
+                      ? { duration: 0, ease: "linear" }
+                      : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
+                  }
                   onClick={() => onChange(section.key)}
                   className="absolute inline-flex min-w-[150px] items-center justify-center gap-2 whitespace-nowrap px-3 text-center font-bebas text-xs uppercase tracking-[0.18em] text-primary sm:min-w-[190px] sm:text-sm"
                   style={{ transformStyle: "preserve-3d" }}
