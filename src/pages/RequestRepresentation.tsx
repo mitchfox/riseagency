@@ -329,22 +329,6 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Map-based language switcher — pinned at the very bottom on the
-          age screen so it never competes with the headline branding.
-          Hidden once the player has chosen an age bracket. */}
-      {!ageGroup && introDone && (
-        <div className="pointer-events-auto fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-          <LanguageMapSelector
-            className="rounded-full border border-border/50 bg-black/55 px-3 py-1.5 backdrop-blur-md"
-            triggerContent={(
-              <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
-                {LANG_ABBR[language] ?? "ENG"}
-              </span>
-            )}
-          />
-        </div>
-      )}
-
       {/* Cinematic intro: shown once on first load, then the age screen
           becomes available. */}
       <AnimatePresence>
@@ -419,8 +403,14 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="relative rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
-                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-8 left-0 right-0 h-10 rounded-b-3xl border-x border-b border-primary/30" />
+                {/*
+                  Age panel: a single rounded rectangle whose padding
+                  extends down so the language selector below sits
+                  visually inside the bottom edge of the rectangle.
+                  The selector is rendered inside the panel as the
+                  final element so the border genuinely encloses it.
+                */}
+                <div className="relative w-full max-w-md rounded-3xl border border-primary/30 bg-black/55 px-3 pt-4 pb-5 backdrop-blur-md md:px-5 md:pt-5 md:pb-6 lg:px-6">
                   <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
@@ -446,6 +436,19 @@ const RequestRepresentation = () => {
                       <HoverText text="Over 18" />
                     </Button>
                   </div>
+                </div>
+                {/* Language selector overlapping the bottom edge of the
+                    age panel so the border visually passes behind its
+                    centre. */}
+                <div className="-mt-4 md:-mt-5">
+                  <LanguageMapSelector
+                    className="rounded-full border border-primary/30 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-[0_4px_18px_hsl(var(--gold)/0.15)]"
+                    triggerContent={(
+                      <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+                        {LANG_ABBR[language] ?? "ENG"}
+                      </span>
+                    )}
+                  />
                 </div>
               </motion.div>
             </div>
@@ -475,41 +478,51 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -36 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-12 md:pb-44 lg:px-16"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-8 md:pb-44 lg:px-16"
           >
+            {/* Compact fixed mini header — only visible after scroll.
+                Doesn't reflow page so scrolling stays smooth. */}
+            <AnimatePresence>
+              {scrolled && (
+                <motion.div
+                  key="mini-header"
+                  initial={{ y: -50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -50, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="fixed inset-x-0 top-0 z-40 flex items-center justify-center border-b border-primary/25 bg-black/85 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md"
+                >
+                  <RiseLogoShine className="h-7 md:h-9" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-              <motion.header
-                animate={scrolled ? "compact" : "open"}
-                variants={{ open: { paddingTop: 0, paddingBottom: 28 }, compact: { paddingTop: 0, paddingBottom: 10 } }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="sticky top-0 z-30 -mx-4 bg-black/88 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] text-center backdrop-blur-md md:-mx-8 md:px-8 lg:-mx-16 lg:px-16"
-              >
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
-                <div className="mx-auto flex max-w-4xl flex-col items-center">
-                  <RiseLogoShine className={scrolled ? "h-9 md:h-10" : "h-12 md:h-16"} />
-                  <AnimatePresence initial={false}>
-                    {!scrolled && (
-                      <motion.div
-                        key="rep-feature-title"
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.22 }}
-                        className="flex flex-col items-center"
-                      >
-                        <div className="mt-3 flex w-full items-center gap-3">
-                          <span className="h-px flex-1 bg-primary/45" />
-                          <h1 className="font-bebas text-5xl uppercase leading-none tracking-[0.28em] text-foreground md:text-8xl">REPRESENTATION</h1>
-                          <span className="h-px flex-1 bg-primary/45" />
-                        </div>
-                        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-foreground/82 md:mt-5 md:max-w-3xl md:text-base">
-                          {MISSION_BIO}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              {/* Static feature header — sized to fit mobile cleanly.
+                  No sticky positioning, no animated heights; the
+                  collapsed state is a separate fixed mini bar above. */}
+              <header className="relative pb-6 text-center md:pb-10">
+                <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
+                  {/* Logo as the centrepiece */}
+                  <RiseLogoShine className="h-14 md:h-20" />
+                  {/* Title with framing rules. Tracking + responsive
+                      sizing keep it inside a 360px viewport. */}
+                  <div className="relative flex w-full items-center gap-2 md:gap-4">
+                    <span className="h-px flex-1 bg-primary/45" />
+                    <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.18em] text-foreground sm:text-3xl md:text-6xl md:tracking-[0.24em] lg:text-7xl">
+                      Representation
+                    </h1>
+                    <span className="h-px flex-1 bg-primary/45" />
+                  </div>
+                  {/* Mission, in a contained glass plate */}
+                  <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                    <p className="text-balance text-[13px] leading-relaxed text-foreground/82 md:text-base">
+                      {MISSION_BIO}
+                    </p>
+                  </div>
                 </div>
-              </motion.header>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
+              </header>
 
               {/* Grouped tile sections */}
               {GROUPS.map((g) => {
@@ -529,7 +542,7 @@ const RequestRepresentation = () => {
                             whileHover={{ scale: 1.03, y: -3 }}
                             whileTap={{ scale: 0.97 }}
                             transition={{ delay: index * 0.04, duration: 0.42 }}
-                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); }}
                             className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
                             style={solidBlackSectionStyle}
                           >
@@ -561,13 +574,15 @@ const RequestRepresentation = () => {
           <div className="mx-auto max-w-md md:max-w-2xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
-                <button
-                  type="button"
-                  onClick={() => { setActiveCard(null); setScoutingPosition(null); setPerformanceSub(null); }}
-                  className="mb-1 inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
-                >
-                  <ChevronLeft className="h-3 w-3" /> Back to all
-                </button>
+                <div className="mb-1 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => { setActiveCard(null); setScoutingPosition(null); setPerformanceSub(null); }}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.16em] text-primary hover:bg-primary/10"
+                  >
+                    <ChevronLeft className="h-3 w-3" /> Back to all
+                  </button>
+                </div>
                 <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}

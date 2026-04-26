@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,6 +17,22 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
   const idx = Math.max(0, sections.findIndex((s) => s.key === activeKey));
   const total = sections.length;
   if (total === 0) return null;
+
+  // Scroll-driven wheel rotation: as the user scrolls down the page,
+  // every section label rotates a touch around the cylinder so it
+  // physically reads as a wheel turning, even without a swipe.
+  const [scrollSpin, setScrollSpin] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      // Map scrollY 0 → 1500 to a -22° → +22° wheel offset, looping.
+      const y = window.scrollY;
+      const spin = ((y % 600) / 600) * 44 - 22;
+      setScrollSpin(spin);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const wrap = (i: number) => (i + total) % total;
   const move = (delta: number) => onChange(sections[wrap(idx + delta)].key);
@@ -71,7 +88,7 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
               const isCenter = offset === 0;
               const opacity = isCenter ? 1 : Math.abs(offset) === 1 ? 0.62 : 0.26;
               const translateX = offset * 118;
-              const rotateY = offset * -42;
+              const rotateY = offset * -42 + scrollSpin;
               const scale = isCenter ? 1 : Math.abs(offset) === 1 ? 0.82 : 0.66;
               return (
                 <motion.button

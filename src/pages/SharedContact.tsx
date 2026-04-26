@@ -6,6 +6,7 @@ import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Mail, Building2, MapPin, User, Download } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { RiseBrandedLoader } from '@/components/RiseBrandedLoader';
 
 const SharedContact = () => {
   const { contactId } = useParams<{ contactId: string }>();
@@ -50,11 +51,7 @@ const SharedContact = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading contact...</div>
-      </div>
-    );
+    return <RiseBrandedLoader />;
   }
 
   if (!contact) {

@@ -82,32 +82,6 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         animate={{ opacity: [0.5, 0.9, 0.55] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Faint moving horizon line that intensifies after line 2 */}
-      {phase === "lines" && lineIndex >= 1 && (
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-primary/30"
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 0.6 }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-        />
-      )}
-      {/* Subtle grid system overlay, fades in around line 4 */}
-      {phase === "lines" && lineIndex >= 3 && (
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.18 }}
-          transition={{ duration: 0.9 }}
-          style={{
-            backgroundImage:
-              "linear-gradient(hsl(var(--gold) / 0.18) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold) / 0.18) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
-          }}
-        />
-      )}
-
       {/* Lines */}
       <div className="absolute inset-0 flex items-center justify-center">
         <AnimatePresence mode="wait">

@@ -7,6 +7,7 @@ import { Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import NotFound from "./NotFound";
+import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 
 interface ProspectPlayer {
   id: string;
@@ -62,11 +63,7 @@ const RiseWithUs = () => {
   }, [slug, isPickerMode]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <RiseBrandedLoader />;
   }
 
   // Picker mode: list all prospects
