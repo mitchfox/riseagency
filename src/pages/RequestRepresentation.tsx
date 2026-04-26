@@ -637,6 +637,7 @@ const RequestRepresentation = () => {
             setScoutingPosition={setScoutingPosition}
             performanceSub={performanceSub}
             setPerformanceSub={setPerformanceSub}
+            recommendedScoutingPosition={recommendedScoutingPosition}
             onBack={() => {
               if (performanceSub) { setPerformanceSub(null); return; }
               if (scoutingPosition) { setScoutingPosition(null); return; }
@@ -845,6 +846,7 @@ interface DetailViewProps {
   setScoutingPosition: (p: ScoutingPosition | null) => void;
   performanceSub: PerformanceSub | null;
   setPerformanceSub: (p: PerformanceSub | null) => void;
+  recommendedScoutingPosition: ScoutingPosition | null;
   onBack: () => void;
 }
 
@@ -852,6 +854,7 @@ const DetailView = ({
   activeCard, cardContent, ageGroup,
   scoutingPosition, setScoutingPosition,
   performanceSub, setPerformanceSub,
+  recommendedScoutingPosition,
   onBack,
 }: DetailViewProps) => {
   const meta = CARD_META.find((c) => c.key === activeCard)!;
