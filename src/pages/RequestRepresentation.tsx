@@ -1042,40 +1042,35 @@ const DetailView = ({
 
               <SectionDivider label="Position breakdown" />
 
-              {recommendedScoutingPosition && (
+              {recommendedScoutingPosition ? (
                 <button
                   type="button"
                   onClick={() => setScoutingPosition(recommendedScoutingPosition)}
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
-                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">Recommended for your position</p>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">What we look for in your position</p>
                     <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-primary" />
                 </button>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+                    {SCOUTING_POSITIONS.map((pos) => (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => setScoutingPosition(pos)}
+                        className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 transition-colors hover:border-primary/60 hover:bg-card/70 md:text-base"
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
-
-              <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
-                {SCOUTING_POSITIONS.map((pos) => {
-                  const isRec = pos === recommendedScoutingPosition;
-                  return (
-                    <button
-                      key={pos}
-                      type="button"
-                      onClick={() => setScoutingPosition(pos)}
-                      className={`rounded-xl border px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] transition-colors md:text-base ${
-                        isRec
-                          ? "border-primary/70 bg-primary/15 text-primary"
-                          : "border-border/60 bg-card/40 text-foreground/80 hover:border-primary/60 hover:bg-card/70"
-                      }`}
-                    >
-                      {pos}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           )}
 
