@@ -6,7 +6,7 @@ interface RiseBrandedLoaderProps {
   label?: string;
 }
 
-export const RiseBrandedLoader = ({ label = "Loading" }: RiseBrandedLoaderProps) => {
+export const RiseBrandedLoader = ({ label }: RiseBrandedLoaderProps) => {
   return (
     <div className="min-h-[100dvh] bg-black flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0">
@@ -33,14 +33,16 @@ export const RiseBrandedLoader = ({ label = "Loading" }: RiseBrandedLoaderProps)
           animate={{ width: 140, opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
         />
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="font-bebas tracking-[0.4em] uppercase text-base md:text-lg text-primary drop-shadow-lg"
-        >
-          {label}
-        </motion.p>
+        {label && (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="font-bebas tracking-[0.4em] uppercase text-base md:text-lg text-primary drop-shadow-lg"
+          >
+            {label}
+          </motion.p>
+        )}
         <div className="flex gap-2.5">
           {[0, 1, 2].map(i => (
             <motion.div
