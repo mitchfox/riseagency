@@ -679,7 +679,16 @@ const RequestRepresentation = () => {
                   </div>
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
-                    <p className="text-justify text-[13px] leading-relaxed text-foreground/85 md:text-base [text-justify:inter-word]" style={{ hyphens: "auto" }}>
+                    <p
+                      className="text-justify text-[13px] leading-relaxed text-foreground/85 md:text-base [text-justify:inter-word]"
+                      style={{
+                        hyphens: "none",
+                        WebkitHyphens: "none",
+                        msHyphens: "none",
+                        wordBreak: "normal",
+                        overflowWrap: "normal",
+                      }}
+                    >
                       {MISSION_BIO}
                     </p>
                   </div>
@@ -691,7 +700,11 @@ const RequestRepresentation = () => {
               {GROUPS.map((g) => {
                 const cards = CARD_META.filter((c) => c.group === g);
                 return (
-                  <div key={g}>
+                  <div
+                    key={g}
+                    ref={(el) => { groupRefs.current[g] = el; }}
+                    className="scroll-mt-[88px] md:scroll-mt-[96px]"
+                  >
                     <SectionDivider label={GROUP_LABELS[g]} />
                     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:gap-5">
                       {cards.map((card, index) => {
