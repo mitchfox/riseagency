@@ -15,6 +15,7 @@ import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
+import { RepresentationEntryPulse } from "@/components/RepresentationEntryPulse";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { RepDobPicker } from "@/components/RepDobPicker";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
@@ -292,9 +293,9 @@ const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language } = useLanguage();
-  // The global PageTransition already plays the central RISE pulse on
-  // route entry, so we don't need a second entry overlay here. The
-  // cinematic intro mounts as soon as the page does.
+  // Representation always starts with the central pulse and wave before
+  // the cinematic text sequence is allowed to mount.
+  const [pulseDone, setPulseDone] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
@@ -350,9 +351,12 @@ const RequestRepresentation = () => {
           rolls into the Omotoye loop. */}
       <RepresentationAudio />
 
-      {/* Cinematic intro — plays once on first visit. */}
+      {/* Route entry pulse, then cinematic intro. */}
       <AnimatePresence>
-        {!introDone && (
+        {!pulseDone && (
+          <RepresentationEntryPulse key="entry-pulse" onComplete={() => setPulseDone(true)} />
+        )}
+        {pulseDone && !introDone && (
           <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
         )}
       </AnimatePresence>
