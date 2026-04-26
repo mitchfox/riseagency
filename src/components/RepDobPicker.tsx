@@ -138,9 +138,9 @@ export const RepDobPicker = ({ onConfirm }: Props) => {
   return (
     <div className="flex w-full items-center gap-3">
       <div className="grid flex-1 grid-cols-3 gap-2">
-        <Dial<number>  ariaLabel="Day"   values={DAYS}   index={day}   onChange={setDay} />
-        <Dial<string>  ariaLabel="Month" values={MONTHS} index={month} onChange={setMonth} />
-        <Dial<number>  ariaLabel="Year"  values={YEARS}  index={year}  onChange={setYear} />
+        <Dial ariaLabel="Day" values={DAYS} index={day} onChange={setDay} />
+        <Dial ariaLabel="Month" values={MONTHS} index={month} onChange={setMonth} />
+        <Dial ariaLabel="Year" values={YEARS} index={year} onChange={setYear} />
       </div>
       <button
         type="button"
