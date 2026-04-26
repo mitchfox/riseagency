@@ -978,37 +978,52 @@ const DetailView = ({
             </Accordion>
           )}
 
-          {/* Scouting top level */}
+          {/* Scouting top level — ALWAYS leads with the network intro and
+              the same map used on the Players page, then explanation
+              cards, then the position breakdown. */}
           {activeCard === "scouting" && (
-            <div className="space-y-4">
-              {/* 1. Lead with the scouting network — what it is, where
-                  it reaches and why it matters. Mirrors the Players
-                  page so anyone arriving here sees the same context. */}
-              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-primary/30 px-3 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
-                    Eyes Across All Of Europe
-                  </span>
-                </div>
-                <p className="font-bebas text-2xl uppercase leading-none tracking-[0.12em] md:text-4xl">
+            <div className="space-y-4 md:space-y-6">
+              {/* 1. Network intro — mirrors Players page wording. */}
+              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
+                <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
+                  Eyes Across All Of Europe
+                </span>
+                <p className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.12em] md:text-5xl">
                   Scouting <span className="text-primary">Network</span>
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/80 md:text-base">
-                  If you're a professional or academy player in Europe, chances are we already know about you. We have built an extensive scouting network across Europe — and into Africa — with eyes at every level of the professional game. Our coverage is novel and future-focused: we look for qualities that scale through a career, not just what works today.
+                <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
+                  If you're a professional or academy player in Europe, chances are we already know about you.
                 </p>
               </div>
 
-              {/* The interactive map — same component, hidden stats /
-                  grid toggle so the embed stays focused. */}
+              {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-                <div className="h-[420px] md:h-[600px]">
-                  <ScoutingNetworkMap hideStats hideGridToggle />
+                <div className="h-[420px] md:h-[560px] lg:h-[640px]">
+                  <ScoutingNetworkMap hideGridToggle />
                 </div>
+              </div>
+
+              {/* 3. The same three explanation cards from the Players page. */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+                {[
+                  { n: "01", title: "Deep European Network", desc: "We have built an extensive scouting network across Europe, with eyes at every level of the professional game." },
+                  { n: "02", title: "Future-Focused Scouting", desc: "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career." },
+                  { n: "03", title: "Complete Player Knowledge", desc: "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up." },
+                ].map((p) => (
+                  <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
+                    <div className="flex items-start gap-4">
+                      <span className="font-bebas text-3xl text-primary/30 md:text-4xl">{p.n}</span>
+                      <div>
+                        <p className="font-bebas text-lg uppercase tracking-[0.12em] md:text-xl">{p.title}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-foreground/80 md:text-base">{p.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <SectionDivider label="What we look for" />
 
-              {/* 2. Then the qualitative bullets and position breakdown. */}
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
@@ -1017,23 +1032,41 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider />
+              <SectionDivider label="Position breakdown" />
 
-              <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Position breakdown</p>
-                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it. Each opens on its own screen — use the back arrow to return here.</p>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
-                  {SCOUTING_POSITIONS.map((pos) => (
+              {recommendedScoutingPosition && (
+                <button
+                  type="button"
+                  onClick={() => setScoutingPosition(recommendedScoutingPosition)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
+                >
+                  <div>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">Recommended for your position</p>
+                    <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary" />
+                </button>
+              )}
+
+              <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+                {SCOUTING_POSITIONS.map((pos) => {
+                  const isRec = pos === recommendedScoutingPosition;
+                  return (
                     <button
                       key={pos}
                       type="button"
                       onClick={() => setScoutingPosition(pos)}
-                      className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 hover:border-primary/60 hover:bg-card/70 transition-colors"
+                      className={`rounded-xl border px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] transition-colors md:text-base ${
+                        isRec
+                          ? "border-primary/70 bg-primary/15 text-primary"
+                          : "border-border/60 bg-card/40 text-foreground/80 hover:border-primary/60 hover:bg-card/70"
+                      }`}
                     >
                       {pos}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
           )}
