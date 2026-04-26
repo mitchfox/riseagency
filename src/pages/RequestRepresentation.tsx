@@ -412,6 +412,15 @@ const RequestRepresentation = () => {
             exit={{ opacity: 0, x: -36 }}
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="relative min-h-[100dvh]"
+            onClick={(e) => {
+              if (introStep !== "intro") return;
+              const target = e.target as HTMLElement;
+              // The language selector keeps its own behaviour (opens map).
+              if (target.closest("[data-no-tap]")) return;
+              setIntroStep("position");
+            }}
+            role={introStep === "intro" ? "button" : undefined}
+            tabIndex={introStep === "intro" ? 0 : undefined}
           >
             <div className="absolute inset-0 bg-black" />
             {/* Background smoke (BEHIND the player overlay image) */}
