@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Player3DPop } from "@/components/Player3DPop";
+import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -79,6 +79,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    preloadPlayer3DVariant("two");
+    preloadPlayer3DVariant("one");
+  }, []);
 
   const finishIntro = useCallback(() => {
     if (completed) return;
