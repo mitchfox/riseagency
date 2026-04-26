@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import {
   ArrowRight, ChevronLeft, ChevronRight,
@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
 import { RepresentationEntryPulse } from "@/components/RepresentationEntryPulse";
@@ -30,6 +31,26 @@ type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" 
 const POSITION_OPTIONS: PlayerPosition[] = [
   "GK", "LB", "LCB", "RCB", "RB", "CDM", "CM", "CAM", "LW", "RW", "CF",
 ];
+
+/** Maps the home-screen 11-position picker to the broader scouting
+ *  groupings used in the Scouting section. */
+const POSITION_TO_SCOUTING: Record<PlayerPosition, ScoutingPosition> = {
+  GK:  "Goalkeeper",
+  LB:  "Full-Back",
+  RB:  "Full-Back",
+  LCB: "Centre-Back",
+  RCB: "Centre-Back",
+  CDM: "Central Defensive Midfielder",
+  CM:  "Central Midfielder",
+  CAM: "Central Attacking Midfielder",
+  LW:  "Winger / Wide Forward",
+  RW:  "Winger / Wide Forward",
+  CF:  "Centre Forward / Striker",
+};
+
+/** sessionStorage flag — when present, the cinematic pulse + intro are
+ *  skipped so a language reload drops you straight into the page. */
+const INTRO_SEEN_KEY = "rep_intro_seen_v1";
 type GroupKey = "who" | "how" | "terms";
 type CardKey =
   | "scouting" | "expectations"
@@ -292,11 +313,13 @@ const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
 
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  const isMobile = useIsMobile();
+  const skipIntro = typeof window !== "undefined" && sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
   // Representation always starts with the central pulse and wave before
   // the cinematic text sequence is allowed to mount.
-  const [pulseDone, setPulseDone] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
+  const [pulseDone, setPulseDone] = useState(skipIntro);
+  const [introDone, setIntroDone] = useState(skipIntro);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
   const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
@@ -309,6 +332,16 @@ const RequestRepresentation = () => {
   const [showForm, setShowForm] = useState(false);
 
   const cardContent = useMemo(() => (ageGroup ? getCardContent(ageGroup) : null), [ageGroup]);
+
+  // Once the intro finishes, persist for the session so language reloads
+  // jump straight into the experience instead of replaying the cinematic.
+  useEffect(() => {
+    if (introDone) sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+  }, [introDone]);
+
+  // Scroll-anchoring on the hub: each category title parks just under the
+  // mini header. Refs are keyed by GroupKey.
+  const groupRefs = useRef<Partial<Record<GroupKey, HTMLDivElement | null>>>({});
 
   // Sticky footer shrink-on-scroll
   const { scrollY } = useScroll();
@@ -338,6 +371,14 @@ const RequestRepresentation = () => {
   const inScoutingTop = activeCard === "scouting" && scoutingPosition === null;
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
+
+  // When the user lands on the Scouting section without having drilled in
+  // yet, auto-open their pre-chosen position (or the matching grouping).
+  useEffect(() => {
+    if (activeCard === "scouting" && scoutingPosition === null && chosenPosition) {
+      setScoutingPosition(POSITION_TO_SCOUTING[chosenPosition]);
+    }
+  }, [activeCard, chosenPosition, scoutingPosition]);
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-black text-foreground">
@@ -460,17 +501,6 @@ const RequestRepresentation = () => {
                     the rectangle in every step. */}
                 <div
                   className="relative w-full max-w-md rounded-3xl border border-primary/30 bg-black/65 px-4 pt-5 pb-6 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:px-6 md:pt-6 md:pb-7 lg:px-7"
-                  onClick={(e) => {
-                    if (introStep !== "intro") return;
-                    // Anywhere inside the rectangle (except the
-                    // language selector itself) advances to position
-                    // selection.
-                    const target = e.target as HTMLElement;
-                    if (target.closest("[data-no-tap]")) return;
-                    setIntroStep("position");
-                  }}
-                  role={introStep === "intro" ? "button" : undefined}
-                  tabIndex={introStep === "intro" ? 0 : undefined}
                 >
                   <AnimatePresence mode="wait">
                     {introStep === "intro" && (
@@ -500,7 +530,9 @@ const RequestRepresentation = () => {
                           transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                           className="mt-2 font-bebas text-[11px] uppercase tracking-[0.32em] text-primary/80 md:text-xs"
                         >
-                          Tap anywhere to start
+                          {isMobile
+                            ? t("representation.tap_to_start", "Tap anywhere to start")
+                            : t("representation.click_to_start", "Click anywhere to start")}
                         </motion.p>
                       </motion.div>
                     )}
@@ -520,18 +552,10 @@ const RequestRepresentation = () => {
                         <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
                           For a more personalised breakdown of what representation will look like for you.
                         </p>
-                        <div className="mt-1 grid w-full grid-cols-4 gap-1.5 md:grid-cols-6 md:gap-2">
-                          {POSITION_OPTIONS.map((p) => (
-                            <button
-                              key={p}
-                              type="button"
-                              onClick={() => { setChosenPosition(p); setIntroStep("dob"); }}
-                              className="rounded-lg border border-primary/35 bg-background/40 px-2 py-2 font-bebas text-sm uppercase tracking-[0.12em] text-primary transition-colors hover:border-primary hover:bg-primary/15"
-                            >
-                              {p}
-                            </button>
-                          ))}
-                        </div>
+                        <FormationPositionPicker
+                          onPick={(p) => { setChosenPosition(p); setIntroStep("dob"); }}
+                          translate={(abbr) => t(`positions.${abbr}`, abbr)}
+                        />
                       </motion.div>
                     )}
 
