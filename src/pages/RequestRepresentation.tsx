@@ -982,6 +982,34 @@ const DetailView = ({
           {/* Scouting top level */}
           {activeCard === "scouting" && (
             <div className="space-y-4">
+              {/* 1. Lead with the scouting network — what it is, where
+                  it reaches and why it matters. Mirrors the Players
+                  page so anyone arriving here sees the same context. */}
+              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/30 px-3 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
+                    Eyes Across All Of Europe
+                  </span>
+                </div>
+                <p className="font-bebas text-2xl uppercase leading-none tracking-[0.12em] md:text-4xl">
+                  Scouting <span className="text-primary">Network</span>
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-foreground/80 md:text-base">
+                  If you're a professional or academy player in Europe, chances are we already know about you. We have built an extensive scouting network across Europe — and into Africa — with eyes at every level of the professional game. Our coverage is novel and future-focused: we look for qualities that scale through a career, not just what works today.
+                </p>
+              </div>
+
+              {/* The interactive map — same component, hidden stats /
+                  grid toggle so the embed stays focused. */}
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+                <div className="h-[420px] md:h-[600px]">
+                  <ScoutingNetworkMap hideStats hideGridToggle />
+                </div>
+              </div>
+
+              <SectionDivider label="What we look for" />
+
+              {/* 2. Then the qualitative bullets and position breakdown. */}
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
@@ -993,8 +1021,8 @@ const DetailView = ({
               <SectionDivider />
 
               <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Pick a position</p>
-                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Choose your position to see exactly what we look for. The breakdown opens on its own screen — use the back arrow to return here.</p>
+                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Position breakdown</p>
+                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it. Each opens on its own screen — use the back arrow to return here.</p>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
                   {SCOUTING_POSITIONS.map((pos) => (
                     <button
