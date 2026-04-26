@@ -1093,3 +1093,50 @@ const TitlePlate = ({
 );
 
 export default RequestRepresentation;
+
+/* =================================================================
+ * FormationPositionPicker
+ * 4-3-3 visual layout:
+ *   GK
+ *   LB  LCB  RCB  RB
+ *   CDM
+ *   CM
+ *   CAM
+ *   LW   CF   RW
+ * Each tile shows the localized abbreviation.
+ * ================================================================= */
+
+const FormationPositionPicker = ({
+  onPick,
+  translate,
+}: {
+  onPick: (p: PlayerPosition) => void;
+  translate: (abbr: PlayerPosition) => string;
+}) => {
+  const Tile = ({ p }: { p: PlayerPosition }) => (
+    <button
+      type="button"
+      onClick={() => onPick(p)}
+      className="flex h-9 min-w-[2.75rem] items-center justify-center rounded-md border border-primary/35 bg-background/40 px-2 font-bebas text-[12px] uppercase tracking-[0.1em] text-primary transition-colors hover:border-primary hover:bg-primary/15 md:h-10 md:min-w-[3.25rem] md:text-sm"
+    >
+      {translate(p)}
+    </button>
+  );
+  const Row = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex w-full justify-center gap-1.5 md:gap-2">{children}</div>
+  );
+  return (
+    <div className="mt-1 flex w-full flex-col items-center gap-1.5 md:gap-2">
+      <Row><Tile p="GK" /></Row>
+      <Row>
+        <Tile p="LB" /><Tile p="LCB" /><Tile p="RCB" /><Tile p="RB" />
+      </Row>
+      <Row><Tile p="CDM" /></Row>
+      <Row><Tile p="CM" /></Row>
+      <Row><Tile p="CAM" /></Row>
+      <Row>
+        <Tile p="LW" /><Tile p="CF" /><Tile p="RW" />
+      </Row>
+    </div>
+  );
+};
