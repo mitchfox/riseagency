@@ -419,8 +419,14 @@ const RequestRepresentation = () => {
                     obvious. */}
                 <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
 
-                <div className="relative rounded-3xl border border-primary/30 bg-black/55 px-3 py-3 backdrop-blur-md md:px-5 md:py-4 lg:px-6 lg:py-5">
-                  <span aria-hidden="true" className="pointer-events-none absolute -bottom-8 left-0 right-0 h-10 rounded-b-3xl border-x border-b border-primary/30" />
+                {/*
+                  Age panel: a single rounded rectangle whose padding
+                  extends down so the language selector below sits
+                  visually inside the bottom edge of the rectangle.
+                  The selector is rendered inside the panel as the
+                  final element so the border genuinely encloses it.
+                */}
+                <div className="relative w-full max-w-md rounded-3xl border border-primary/30 bg-black/55 px-3 pt-4 pb-5 backdrop-blur-md md:px-5 md:pt-5 md:pb-6 lg:px-6">
                   <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
                     Choose your age bracket
                   </p>
