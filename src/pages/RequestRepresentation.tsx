@@ -21,7 +21,7 @@ import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { RepDobPicker } from "@/components/RepDobPicker";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
-import { Player3DPop } from "@/components/Player3DPop";
+import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 
@@ -335,6 +335,9 @@ const RequestRepresentation = () => {
 
   // Intro is intentionally not persisted — it should play whenever the
   // page mounts so users always see the cinematic.
+  useEffect(() => {
+    preloadPlayer3DVariant("home");
+  }, []);
 
   // While the hub is the active screen, enable proximity scroll-snap on
   // the document so each category title parks just below the mini header.
