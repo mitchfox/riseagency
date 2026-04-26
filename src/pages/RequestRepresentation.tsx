@@ -542,7 +542,7 @@ const RequestRepresentation = () => {
                             whileHover={{ scale: 1.03, y: -3 }}
                             whileTap={{ scale: 0.97 }}
                             transition={{ delay: index * 0.04, duration: 0.42 }}
-                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); }}
                             className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
                             style={solidBlackSectionStyle}
                           >
