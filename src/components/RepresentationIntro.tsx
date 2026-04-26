@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Player3DPop } from "@/components/Player3DPop";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -94,6 +95,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const showFourth    = phase === "p2-both";
   const showFifth     = phase === "p3-line5";
   const inLogo        = phase === "logo" || phase === "descend";
+  const inPair2       = ["p2-line3", "p2-both", "p2-fade"].includes(phase);
 
   return (
     <motion.div
@@ -116,6 +118,24 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         animate={{ opacity: [0.5, 0.9, 0.55] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      {/* 3D player pop — only behind lines 3 + 4. Subtle, low-opacity. */}
+      <AnimatePresence>
+        {inPair2 && (
+          <motion.div
+            key="pair2-3d"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.55 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.9, ease: "easeInOut" }}
+            className="pointer-events-none absolute inset-0"
+          >
+            <Player3DPop className="absolute inset-0 h-full w-full" />
+            {/* Soft black vignette so the text reads cleanly on top. */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Lines stack: 2 fixed slots so the second line can appear
           *underneath* the first without pushing it. */}
