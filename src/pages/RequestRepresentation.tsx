@@ -759,9 +759,25 @@ const RequestRepresentation = () => {
       {/* Sticky CTA buttons + scoped slider — only when inside a section */}
       {ageGroup && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto max-w-md md:max-w-2xl">
+          <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
+                {/* "Back to all" pill — returns the user to the hub
+                    (exits the active section). Sits ABOVE the slider
+                    where it lived previously. */}
+                {activeCard && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveCard(null);
+                      setScoutingPosition(null);
+                      setPerformanceSub(null);
+                    }}
+                    className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <ChevronLeft className="h-3 w-3" /> Back to all
+                  </button>
+                )}
                 <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
