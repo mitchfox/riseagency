@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Player3DPop } from "@/components/Player3DPop";
+import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -20,6 +20,13 @@ import { Player3DPop } from "@/components/Player3DPop";
  */
 
 interface Props { onComplete: () => void; }
+
+const IntroPlayerLayer = memo(({ variant }: { variant: "one" | "two" }) => (
+  <>
+    <Player3DPop variant={variant} className="absolute inset-0 h-full w-full" />
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
+  </>
+));
 
 type Phase =
   | "p1-line1"   // Line 1 alone
@@ -71,20 +78,33 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const LINE4 = t("representation.intro_line4", "Work with us to make it a reality.");
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    preloadPlayer3DVariant("two");
+    preloadPlayer3DVariant("one");
+  }, []);
+
+  const finishIntro = useCallback(() => {
+    if (completed) return;
+    setCompleted(true);
+    setPhase("done");
+    onComplete();
+  }, [completed, onComplete]);
 
   // Skip on key press.
   useEffect(() => {
-    const skip = () => { setPhase("done"); onComplete(); };
+    const skip = () => finishIntro();
     window.addEventListener("keydown", skip, { once: true });
     return () => window.removeEventListener("keydown", skip);
-  }, [onComplete]);
+  }, [finishIntro]);
 
   // Drive phase transitions.
   useEffect(() => {
-    if (phase === "done") { onComplete(); return; }
+    if (phase === "done") { finishIntro(); return; }
     const t = setTimeout(() => setPhase(NEXT[phase]), PHASE_DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase, onComplete]);
+  }, [phase, finishIntro]);
 
   if (phase === "done") return null;
 
@@ -108,7 +128,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
-      onClick={() => { setPhase("done"); onComplete(); }}
+      onClick={finishIntro}
       role="presentation"
     >
       {/* Low-motion gold ambience — barely there. */}
@@ -134,8 +154,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
             transition={{ duration: pair1Fading ? 0.9 : 0.9, ease: "easeInOut" }}
             className="pointer-events-none absolute inset-0"
           >
-            <Player3DPop variant="two" className="absolute inset-0 h-full w-full" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
+            <IntroPlayerLayer variant="two" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -151,9 +170,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
             transition={{ duration: 0.9, ease: "easeInOut" }}
             className="pointer-events-none absolute inset-0"
           >
-            <Player3DPop variant="one" className="absolute inset-0 h-full w-full" />
-            {/* Soft black vignette so the text reads cleanly on top. */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.65)_75%,rgba(0,0,0,0.92)_100%)]" />
+            <IntroPlayerLayer variant="one" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -253,7 +270,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       {/* Skip */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); setPhase("done"); onComplete(); }}
+        onClick={(e) => { e.stopPropagation(); finishIntro(); }}
         className="absolute bottom-4 right-4 z-20 rounded-full border border-border/50 px-3 py-1 text-[10px] font-bebas uppercase tracking-[0.24em] text-muted-foreground hover:bg-muted/40 hover:text-foreground"
       >
         Skip

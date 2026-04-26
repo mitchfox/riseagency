@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { TextureLoader } from "three";
@@ -9,6 +9,9 @@ import alphaImg1 from "@/assets/intro3d/alpha.png";
 import playerImg2 from "@/assets/intro3d/player2.png";
 import depthImg2 from "@/assets/intro3d/depth2.png";
 import roughnessImg2 from "@/assets/intro3d/roughness2.png";
+import homePlayerImg from "@/assets/intro3d/home-player.png";
+import homeRoughnessImg from "@/assets/intro3d/home-roughness.png";
+import homeAlphaImg from "@/assets/intro3d/home-alpha.png";
 
 /**
  * Subtle 3D pop of the player image. Plane is displaced by the depth
@@ -21,13 +24,24 @@ import roughnessImg2 from "@/assets/intro3d/roughness2.png";
 const SETS = {
   one: { player: playerImg1, depth: depthImg1, rough: roughnessImg1, alpha: alphaImg1 as string | null },
   two: { player: playerImg2, depth: depthImg2, rough: roughnessImg2, alpha: null as string | null },
+  home: { player: homePlayerImg, depth: homeRoughnessImg, rough: homeRoughnessImg, alpha: homeAlphaImg as string | null },
 } as const;
 
-const PlayerMesh = ({ variant }: { variant: "one" | "two" }) => {
+type Player3DVariant = keyof typeof SETS;
+
+const getSetUrls = (variant: Player3DVariant) => {
   const set = SETS[variant];
-  const urls = set.alpha
+  return set.alpha
     ? [set.player, set.depth, set.rough, set.alpha]
     : [set.player, set.depth, set.rough];
+};
+
+export const preloadPlayer3DVariant = (variant: Player3DVariant) => {
+  useLoader.preload(TextureLoader, getSetUrls(variant));
+};
+
+const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
+  const urls = getSetUrls(variant);
   const maps = useLoader(TextureLoader, urls);
   const [colorMap, depthMap, roughMap, alphaMap] = [maps[0], maps[1], maps[2], maps[3]];
   // Keep maps colour-correct on lit material.
@@ -74,18 +88,20 @@ export const Player3DPop = ({
   variant = "one",
 }: {
   className?: string;
-  variant?: "one" | "two";
+  variant?: Player3DVariant;
 }) => (
   <div className={`pointer-events-none ${className}`}>
     <Canvas
       camera={{ position: [0, 0, 4.2], fov: 38 }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true }}
+      dpr={[1, 1.25]}
+      gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
     >
       <ambientLight intensity={0.55} />
       <directionalLight position={[2, 3, 4]} intensity={1.2} color={"#fff5d4"} />
       <directionalLight position={[-3, -1, 2]} intensity={0.4} color={"#c6a332"} />
-      <PlayerMesh variant={variant} />
+      <Suspense fallback={null}>
+        <PlayerMesh variant={variant} />
+      </Suspense>
     </Canvas>
   </div>
 );

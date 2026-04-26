@@ -21,8 +21,8 @@ import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { RepDobPicker } from "@/components/RepDobPicker";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
+import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
-import representationTy from "@/assets/representation-ty.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 
 type AgeGroup = null | "under18" | "over18";
@@ -335,6 +335,9 @@ const RequestRepresentation = () => {
 
   // Intro is intentionally not persisted — it should play whenever the
   // page mounts so users always see the cinematic.
+  useEffect(() => {
+    preloadPlayer3DVariant("home");
+  }, []);
 
   // While the hub is the active screen, enable proximity scroll-snap on
   // the document so each category title parks just below the mini header.
@@ -448,16 +451,17 @@ const RequestRepresentation = () => {
               animate={{ opacity: 1, x: "0%" }}
               transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
             />
-            {/* Player overlay — drifts in from the RIGHT to centre.
+            {/* Player overlay — 3D pop layer using the final home-screen image maps.
                 Sits between the back smoke (z-0) and the front smoke (z-20). */}
-            <motion.img
-              src={representationTy}
-              alt="Tyrese Omotoye celebrating"
-              className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
-              initial={{ x: "20%", opacity: 1 }}
-              animate={{ x: "-50%", opacity: 1 }}
-              transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-            />
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-10"
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 0.92, scale: 1 }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            >
+              <Player3DPop variant="home" className="absolute inset-0 h-full w-full" />
+            </motion.div>
             {/* Single long smoke streak running right -> left across the
                 full width of the screen, sitting behind the player so it
                 feels atmospheric without obscuring him. */}
