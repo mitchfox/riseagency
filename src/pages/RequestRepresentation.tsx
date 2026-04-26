@@ -303,7 +303,7 @@ const RequestRepresentation = () => {
 
   // Sticky footer shrink-on-scroll
   const { scrollY } = useScroll();
-  const footerHeight = useTransform(scrollY, [0, 120], [96, 52]);
+  const footerHeight = useTransform(scrollY, [0, 120], [72, 48]);
   const footerFontSize = useTransform(scrollY, [0, 120], [16, 12]);
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 100));
@@ -884,8 +884,8 @@ const BackPill = ({ onClick, label }: { onClick: () => void; label: string }) =>
 const TitlePlate = ({
   icon: Icon, title, eyebrow,
 }: { icon: typeof Gauge; title: string; eyebrow?: string }) => (
-  <div className="relative overflow-hidden rounded-[1.6rem] border border-border/60 p-6 md:p-8" style={marbleStyle}>
-    <div className="absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background)/0.1),hsl(var(--background)/0.72))]" />
+  <div className="relative overflow-hidden rounded-[1.6rem] border border-border/60 p-6 md:p-8" style={solidBlackSectionStyle}>
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.08),transparent_60%)]" />
     <div className="relative flex flex-col items-center gap-4 text-center md:gap-5">
       <div className="flex h-16 w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_30px_hsl(var(--gold)/0.12)] md:h-20 md:w-20">
         <Icon className="h-7 w-7 text-primary md:h-9 md:w-9" />
