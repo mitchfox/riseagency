@@ -62,11 +62,8 @@ const RiseWithUs = () => {
   }, [slug, isPickerMode]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    const { RiseBrandedLoader } = require("@/components/RiseBrandedLoader");
+    return <RiseBrandedLoader />;
   }
 
   // Picker mode: list all prospects
