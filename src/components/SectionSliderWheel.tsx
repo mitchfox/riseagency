@@ -19,14 +19,16 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
 
   const wrap = (i: number) => (i + total) % total;
   const move = (delta: number) => onChange(sections[wrap(idx + delta)].key);
+  const shortestOffset = (target: number) => {
+    let offset = target - idx;
+    if (offset > total / 2) offset -= total;
+    if (offset < -total / 2) offset += total;
+    return offset;
+  };
 
-  // Show prev, current, next only — neighbours sit partially off-screen
-  // with proper spacing so labels never overlap.
-  const visibleOffsets = total === 1 ? [0] : total === 2 ? [-1, 0] : [-1, 0, 1];
-  const visible = visibleOffsets.map((offset) => ({
-    offset,
-    section: sections[wrap(idx + offset)],
-  }));
+  const visible = sections
+    .map((section, index) => ({ section, offset: shortestOffset(index) }))
+    .filter(({ offset }) => Math.abs(offset) <= 2);
 
   return (
     <div className="relative w-full select-none">
@@ -42,7 +44,7 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
         </button>
 
         <div
-          className="relative flex h-10 flex-1 items-center justify-center overflow-hidden"
+          className="relative flex h-14 flex-1 touch-pan-y items-center justify-center overflow-hidden [perspective:520px]"
           onTouchStart={(e) => {
             (e.currentTarget as any)._sx = e.touches[0].clientX;
           }}
@@ -52,29 +54,40 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
             const dx = e.changedTouches[0].clientX - sx;
             if (Math.abs(dx) > 30) move(dx < 0 ? 1 : -1);
           }}
+          onPointerDown={(e) => {
+            (e.currentTarget as any)._px = e.clientX;
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+          }}
+          onPointerUp={(e) => {
+            const px = (e.currentTarget as any)._px;
+            if (px == null) return;
+            const dx = e.clientX - px;
+            if (Math.abs(dx) > 24) move(dx < 0 ? 1 : -1);
+            (e.currentTarget as any)._px = null;
+          }}
         >
           <AnimatePresence initial={false} mode="popLayout">
             {visible.map(({ offset, section }) => {
               const isCenter = offset === 0;
-              const opacity = isCenter ? 1 : 0.5;
-              // Neighbours sit at ~70% of container width away from centre
-              // so labels never collide. They're allowed to clip off the
-              // overflow-hidden rail.
-              const translateX = offset * 180;
+              const opacity = isCenter ? 1 : Math.abs(offset) === 1 ? 0.62 : 0.26;
+              const translateX = offset * 118;
+              const rotateY = offset * -42;
+              const scale = isCenter ? 1 : Math.abs(offset) === 1 ? 0.82 : 0.66;
               return (
                 <motion.button
                   type="button"
-                  key={`${section.key}-${offset}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity, x: translateX }}
+                  key={section.key}
+                  initial={{ opacity: 0, scale: 0.72 }}
+                  animate={{ opacity, x: translateX, rotateY, scale, z: isCenter ? 42 : -50 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   onClick={() => onChange(section.key)}
-                  className="absolute inline-flex items-center gap-2 whitespace-nowrap font-bebas uppercase tracking-[0.18em] text-primary text-xs sm:text-sm px-3"
+                  className="absolute inline-flex min-w-[150px] items-center justify-center gap-2 whitespace-nowrap px-3 text-center font-bebas text-xs uppercase tracking-[0.18em] text-primary sm:min-w-[190px] sm:text-sm"
+                  style={{ transformStyle: "preserve-3d" }}
                 >
-                  {!isCenter && offset === -1 && <span className="text-primary/70">•</span>}
+                  {!isCenter && offset < 0 && <span className="text-primary/70">•</span>}
                   <span>{section.label}</span>
-                  {!isCenter && offset === 1 && <span className="text-primary/70">•</span>}
+                  {!isCenter && offset > 0 && <span className="text-primary/70">•</span>}
                 </motion.button>
               );
             })}
