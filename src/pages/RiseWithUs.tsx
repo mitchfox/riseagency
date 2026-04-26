@@ -7,6 +7,7 @@ import { Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import NotFound from "./NotFound";
+import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 
 interface ProspectPlayer {
   id: string;
@@ -62,7 +63,6 @@ const RiseWithUs = () => {
   }, [slug, isPickerMode]);
 
   if (loading) {
-    const { RiseBrandedLoader } = require("@/components/RiseBrandedLoader");
     return <RiseBrandedLoader />;
   }
 
