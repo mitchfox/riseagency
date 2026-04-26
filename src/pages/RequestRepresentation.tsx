@@ -437,6 +437,19 @@ const RequestRepresentation = () => {
                     </Button>
                   </div>
                 </div>
+                {/* Language selector overlapping the bottom edge of the
+                    age panel so the border visually passes behind its
+                    centre. */}
+                <div className="-mt-4 md:-mt-5">
+                  <LanguageMapSelector
+                    className="rounded-full border border-primary/30 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-[0_4px_18px_hsl(var(--gold)/0.15)]"
+                    triggerContent={(
+                      <span className="font-bebas text-[11px] uppercase tracking-[0.24em] text-foreground/80">
+                        {LANG_ABBR[language] ?? "ENG"}
+                      </span>
+                    )}
+                  />
+                </div>
               </motion.div>
             </div>
           </motion.section>
