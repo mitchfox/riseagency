@@ -730,7 +730,7 @@ const RequestRepresentation = () => {
                     style={scrolled ? { fontSize: footerFontSize } : undefined}
                     className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
                   >
-                    Request Representation
+                    <HoverText text="Request Representation" />
                   </motion.span>
                 </div>
               </motion.button>
@@ -745,7 +745,7 @@ const RequestRepresentation = () => {
                     style={scrolled ? { fontSize: footerFontSize } : undefined}
                     className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
                   >
-                    Contact Us
+                    <HoverText text="Contact Us" />
                   </motion.span>
                 </div>
               </motion.button>
