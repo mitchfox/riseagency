@@ -933,6 +933,22 @@ const DetailView = ({
               </div>
             ))}
           </div>
+          {performanceSub === "analysis" && (
+            <div className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 md:mt-6">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
+                  title="RISE Football Analysis"
+                  frameBorder={0}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 h-full w-full"
+                />
+              </div>
+            </div>
+          )}
           {performanceSub === "actions" && (
             <a
               href={RONALDO_REPORT_URL}
