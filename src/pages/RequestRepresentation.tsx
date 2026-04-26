@@ -450,69 +450,123 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.18, duration: 0.5 }}
                 className="flex w-full max-w-md flex-col items-center md:max-w-2xl lg:max-w-3xl"
               >
-                <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-primary/25 bg-black/65 px-4 py-4 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:gap-3 md:px-6 md:py-5">
-                  <motion.h1
-                    initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.18em" }}
-                    animate={{
-                      opacity: 1,
-                      scale: [0.9, 1.06, 1],
-                      letterSpacing: ["0.18em", "0.34em", "0.32em"],
-                    }}
-                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-                    className="font-bebas text-2xl uppercase leading-none text-primary drop-shadow-[0_0_22px_hsl(var(--gold)/0.45)] sm:text-3xl md:text-4xl lg:text-5xl"
-                    style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
-                  >
-                    Representation
-                  </motion.h1>
-                  <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
-                  <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
-                    Realise potential with our experienced intermediary &amp; English Premier League star performance team.
-                  </p>
+                {/* Single rounded rectangle. Its content swaps between
+                    intro copy → position picker → DOB picker. The
+                    language selector sits inside the bottom edge of
+                    the rectangle in every step. */}
+                <div
+                  className="relative w-full max-w-md rounded-3xl border border-primary/30 bg-black/65 px-4 pt-5 pb-6 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:px-6 md:pt-6 md:pb-7 lg:px-7"
+                  onClick={(e) => {
+                    if (introStep !== "intro") return;
+                    // Anywhere inside the rectangle (except the
+                    // language selector itself) advances to position
+                    // selection.
+                    const target = e.target as HTMLElement;
+                    if (target.closest("[data-no-tap]")) return;
+                    setIntroStep("position");
+                  }}
+                  role={introStep === "intro" ? "button" : undefined}
+                  tabIndex={introStep === "intro" ? 0 : undefined}
+                >
+                  <AnimatePresence mode="wait">
+                    {introStep === "intro" && (
+                      <motion.div
+                        key="intro-copy"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.32 }}
+                        className="flex flex-col items-center gap-3 text-center"
+                      >
+                        <motion.h1
+                          initial={{ opacity: 0, scale: 0.92 }}
+                          animate={{ opacity: 1, scale: 1, letterSpacing: "0.32em" }}
+                          transition={{ duration: 1.0, delay: 0.15 }}
+                          className="font-bebas text-2xl uppercase leading-none text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                          style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
+                        >
+                          Representation
+                        </motion.h1>
+                        <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
+                        <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
+                          Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                        </p>
+                        <motion.p
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                          className="mt-2 font-bebas text-[11px] uppercase tracking-[0.32em] text-primary/80 md:text-xs"
+                        >
+                          Tap anywhere to start
+                        </motion.p>
+                      </motion.div>
+                    )}
+
+                    {introStep === "position" && (
+                      <motion.div
+                        key="position-picker"
+                        initial={{ opacity: 0, x: 24 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -24 }}
+                        transition={{ duration: 0.32 }}
+                        className="flex flex-col items-center gap-3 text-center"
+                      >
+                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                          Choose your position
+                        </p>
+                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                          For a more personalised breakdown of what representation will look like for you.
+                        </p>
+                        <div className="mt-1 grid w-full grid-cols-4 gap-1.5 md:grid-cols-6 md:gap-2">
+                          {POSITION_OPTIONS.map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => { setChosenPosition(p); setIntroStep("dob"); }}
+                              className="rounded-lg border border-primary/35 bg-background/40 px-2 py-2 font-bebas text-sm uppercase tracking-[0.12em] text-primary transition-colors hover:border-primary hover:bg-primary/15"
+                            >
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {introStep === "dob" && (
+                      <motion.div
+                        key="dob-picker"
+                        initial={{ opacity: 0, x: 24 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -24 }}
+                        transition={{ duration: 0.32 }}
+                        className="flex flex-col items-center gap-3 text-center"
+                      >
+                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                          Date of birth
+                        </p>
+                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                          For a more personalised breakdown of what representation will look like for you.
+                        </p>
+                        <div className="mt-1 w-full">
+                          <RepDobPicker
+                            onConfirm={(iso) => {
+                              setChosenDob(iso);
+                              const dob = new Date(iso);
+                              const today = new Date();
+                              let age = today.getFullYear() - dob.getFullYear();
+                              const m = today.getMonth() - dob.getMonth();
+                              if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                              setAgeGroup(age < 18 ? "under18" : "over18");
+                            }}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                {/* Group divider belongs ABOVE the age section so the
-                    relationship between the heading and the buttons is
-                    obvious. */}
-                <div className="my-5 h-[1px] w-24 bg-primary/70 md:my-7 md:w-32" />
-
-                {/*
-                  Age panel: a single rounded rectangle whose padding
-                  extends down so the language selector below sits
-                  visually inside the bottom edge of the rectangle.
-                  The selector is rendered inside the panel as the
-                  final element so the border genuinely encloses it.
-                */}
-                <div className="relative w-full max-w-md rounded-3xl border border-primary/30 bg-black/55 px-3 pt-4 pb-5 backdrop-blur-md md:px-5 md:pt-5 md:pb-6 lg:px-6">
-                  <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
-                    Choose your age bracket
-                  </p>
-                  <p className="mx-auto mt-1.5 max-w-xs text-sm leading-snug text-foreground/85 md:max-w-md md:text-base">
-                    For a more personalised breakdown of what representation will look like for you.
-                  </p>
-                  <div className="mt-3 grid w-full grid-cols-2 gap-3 md:gap-4">
-                    <Button
-                      size="lg"
-                      hoverEffect
-                      className="h-14 rounded-2xl bg-primary font-bebas text-lg uppercase tracking-[0.14em] text-primary-foreground hover:bg-primary/90 md:h-16 md:text-xl lg:text-2xl"
-                      onClick={() => setAgeGroup("under18")}
-                    >
-                      <HoverText text="Under 18" />
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      hoverEffect
-                      className="h-14 rounded-2xl border-primary/50 bg-background/40 font-bebas text-lg uppercase tracking-[0.14em] text-primary backdrop-blur-md hover:border-primary hover:bg-primary/10 hover:text-primary md:h-16 md:text-xl lg:text-2xl"
-                      onClick={() => setAgeGroup("over18")}
-                    >
-                      <HoverText text="Over 18" />
-                    </Button>
-                  </div>
-                </div>
-                {/* Language selector overlapping the bottom edge of the
-                    age panel so the border visually passes behind its
-                    centre. */}
-                <div className="-mt-4 md:-mt-5">
+                {/* Language selector overlapping the bottom edge so the
+                    rectangle border passes behind its centre. */}
+                <div className="-mt-4 md:-mt-5" data-no-tap>
                   <LanguageMapSelector
                     className="rounded-full border border-primary/30 bg-black/85 px-3 py-1.5 backdrop-blur-md shadow-[0_4px_18px_hsl(var(--gold)/0.15)]"
                     triggerContent={(
