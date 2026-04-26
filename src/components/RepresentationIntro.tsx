@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -61,13 +62,13 @@ const NEXT: Record<Phase, Phase> = {
   "done":     "done",
 };
 
-const LINE1 = "Realise your potential.";
-const LINE2 = "See where you are going.";
-const LINE3 = "Realise your potential.";
-const LINE4 = "Work with us to make it a reality.";
-const LINE5 = "Then…";
-
 export const RepresentationIntro = ({ onComplete }: Props) => {
+  const { t } = useLanguage();
+  const LINE1 = t("representation.intro_line1", "Realise your potential.");
+  const LINE2 = t("representation.intro_line2", "See where you are going.");
+  const LINE3 = t("representation.intro_line3", "Realise your potential.");
+  const LINE4 = t("representation.intro_line4", "Work with us to make it a reality.");
+  const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
 
   // Skip on key press.
@@ -126,11 +127,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               {(showTopGold || showTopGold2) && (
                 <motion.p
                   key={showTopGold ? "top-1" : "top-3"}
-                  initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
-                  animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase text-xl text-primary md:text-3xl lg:text-4xl"
+                  className="font-bebas uppercase tracking-[0.22em] text-xl text-primary md:text-3xl lg:text-4xl"
                   style={{ color: "hsl(var(--gold))" }}
                 >
                   {showTopGold ? LINE1 : LINE3}
@@ -139,8 +140,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               {showFifth && (
                 <motion.p
                   key="line5"
-                  initial={{ opacity: 0, y: 14, letterSpacing: "0.32em" }}
-                  animate={{ opacity: 1, y: 0, letterSpacing: "0.42em" }}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                   className="font-bebas uppercase text-3xl tracking-[0.42em] md:text-5xl"
@@ -157,11 +158,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               {showSecond && (
                 <motion.p
                   key="line2"
-                  initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
-                  animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase text-xl text-foreground md:text-3xl lg:text-4xl"
+                  className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
                 >
                   {LINE2}
                 </motion.p>
@@ -169,11 +170,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               {showFourth && (
                 <motion.p
                   key="line4"
-                  initial={{ opacity: 0, y: 14, letterSpacing: "0.18em" }}
-                  animate={{ opacity: 1, y: 0, letterSpacing: "0.22em" }}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase text-xl text-foreground md:text-3xl lg:text-4xl"
+                  className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
                 >
                   {LINE4}
                 </motion.p>
