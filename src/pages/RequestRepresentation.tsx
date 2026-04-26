@@ -618,34 +618,36 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center rounded-xl bg-primary px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full items-center justify-center rounded-xl bg-primary px-2 py-1.5 text-center font-bebas uppercase tracking-[0.1em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
                 {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }} className="px-1">Request Representation</motion.span>
+                  <motion.span style={{ fontSize: footerFontSize }} className="px-1 leading-tight whitespace-normal break-words">
+                    Request Representation
+                  </motion.span>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[1] w-full">
                     <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-[17px] md:text-xl">Request</span>
-                      <span className="text-[17px] md:text-xl">Representation</span>
-                    </div>
+                    <span className="block w-full whitespace-normal break-words text-[15px] leading-tight md:text-lg">
+                      Request Representation
+                    </span>
                   </div>
                 )}
               </motion.button>
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-1.5 py-1.5 text-center font-bebas uppercase tracking-[0.12em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-2 py-1.5 text-center font-bebas uppercase tracking-[0.1em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
                 {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }} className="px-1">Contact Us</motion.span>
+                  <motion.span style={{ fontSize: footerFontSize }} className="px-1 leading-tight whitespace-normal break-words">
+                    Contact Us
+                  </motion.span>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-1 leading-[0.95]">
+                  <div className="flex flex-col items-center justify-center gap-1 leading-[1] w-full">
                     <WhatsAppIcon className="h-4 w-4 md:h-5 md:w-5" />
-                    <div className="flex flex-col items-center text-center">
-                      <span className="text-[17px] md:text-xl">Contact</span>
-                      <span className="text-[17px] md:text-xl">Us</span>
-                    </div>
+                    <span className="block w-full whitespace-normal break-words text-[15px] leading-tight md:text-lg">
+                      Contact Us
+                    </span>
                   </div>
                 )}
               </motion.button>
