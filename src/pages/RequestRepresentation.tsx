@@ -15,14 +15,20 @@ import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
-import { RepresentationEntryOverlay } from "@/components/RepresentationEntryOverlay";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
+import { RepDobPicker } from "@/components/RepDobPicker";
+import { RepresentationAudio } from "@/components/RepresentationAudio";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
 import representationTy from "@/assets/representation-ty.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 
 type AgeGroup = null | "under18" | "over18";
+type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
+
+const POSITION_OPTIONS: PlayerPosition[] = [
+  "GK", "LB", "LCB", "RCB", "RB", "CDM", "CM", "CAM", "LW", "RW", "CF",
+];
 type GroupKey = "who" | "how" | "terms";
 type CardKey =
   | "scouting" | "expectations"
@@ -286,11 +292,16 @@ const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language } = useLanguage();
-  // Entry sequence: full RISE pulse + shader wave plays in its
-  // entirety BEFORE anything else mounts so the user never sees
-  // overlapping loaders for a fraction of a second.
-  const [entryDone, setEntryDone] = useState(false);
+  // The global PageTransition already plays the central RISE pulse on
+  // route entry, so we don't need a second entry overlay here. The
+  // cinematic intro mounts as soon as the page does.
   const [introDone, setIntroDone] = useState(false);
+  // Pre-form state collected on the home rectangle. Both feed into
+  // the form prefill *and* derive the age group automatically.
+  const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
+  const [chosenDob, setChosenDob] = useState<string | null>(null);
+  // Steps inside the home rectangle: intro copy → position → dob.
+  const [introStep, setIntroStep] = useState<"intro" | "position" | "dob">("intro");
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
@@ -334,18 +345,14 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Stage 1: central RISE pulse + shader wave. Plays in full
-          before anything underneath mounts. */}
-      <AnimatePresence>
-        {!entryDone && (
-          <RepresentationEntryOverlay key="entry" onComplete={() => setEntryDone(true)} />
-        )}
-      </AnimatePresence>
+      {/* Page music. Starts the moment the page mounts so the RISE
+          intro track plays during the cinematic intro and seamlessly
+          rolls into the Omotoye loop. */}
+      <RepresentationAudio />
 
-      {/* Stage 2: cinematic intro. Only mounts after the entry
-          transition has fully finished. */}
+      {/* Cinematic intro — plays once on first visit. */}
       <AnimatePresence>
-        {entryDone && !introDone && (
+        {!introDone && (
           <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
         )}
       </AnimatePresence>
