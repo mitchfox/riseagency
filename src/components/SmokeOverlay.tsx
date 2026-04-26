@@ -2,9 +2,10 @@ import { motion } from "framer-motion";
 import smokeTexture from "@/assets/smudged-marble-overlay.png";
 
 /**
- * Two slow-moving smoke layers (white + Rise Gold) that drift left↔right
- * forever using mirrored repeats so the motion never stops or jumps.
- * pointer-events-none so it never blocks UI.
+ * Two large slow-moving smoke layers (white + Rise Gold) that drift
+ * left↔right forever using mirrored repeats so the motion never stops
+ * or jumps. Full-bleed and clearly visible. pointer-events-none so it
+ * never blocks UI.
  */
 export const SmokeOverlay = () => {
   return (
@@ -15,10 +16,10 @@ export const SmokeOverlay = () => {
         style={{
           backgroundImage: `url(${smokeTexture})`,
           backgroundRepeat: "repeat",
-          backgroundSize: "1400px auto",
-          opacity: 0.2,
+          backgroundSize: "780px auto",
+          opacity: 0.85,
           mixBlendMode: "screen",
-          filter: "blur(2px) brightness(1.6)",
+          filter: "blur(1px) brightness(1.9) contrast(1.05)",
         }}
         animate={{ x: ["-12%", "12%"] }}
         transition={{ duration: 38, repeat: Infinity, repeatType: "mirror", ease: "linear" }}
@@ -29,10 +30,10 @@ export const SmokeOverlay = () => {
         style={{
           backgroundImage: `url(${smokeTexture})`,
           backgroundRepeat: "repeat",
-          backgroundSize: "1700px auto",
-          opacity: 0.2,
-          mixBlendMode: "overlay",
-          filter: "blur(3px) sepia(1) saturate(2.4) hue-rotate(-12deg)",
+          backgroundSize: "920px auto",
+          opacity: 0.7,
+          mixBlendMode: "screen",
+          filter: "blur(1.5px) sepia(1) saturate(3) hue-rotate(-12deg) brightness(1.3)",
         }}
         animate={{ x: ["10%", "-10%"] }}
         transition={{ duration: 52, repeat: Infinity, repeatType: "mirror", ease: "linear" }}

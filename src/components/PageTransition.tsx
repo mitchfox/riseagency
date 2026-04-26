@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, type Location } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import logoWhite from "@/assets/RISEWhite.png";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { useTransition } from "@/contexts/TransitionContext";
 
@@ -51,18 +52,27 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           }}
         >
           {useRiseSliderTransition ? (
-            <div className="absolute inset-0 overflow-hidden bg-background">
+            // Centre-out gold reveal with the white RISE logo on top —
+            // gold band grows from screen centre out to both edges, then
+            // a black band wipes back over to reveal the new page.
+            <div className="absolute inset-0 overflow-hidden bg-black">
               <div
-                className="absolute inset-y-0 left-0 w-full bg-primary"
-                style={{ animation: "riseSliderCover 0.72s cubic-bezier(0.77, 0, 0.175, 1) forwards" }}
+                className="absolute inset-y-0 left-1/2 -translate-x-1/2 bg-primary"
+                style={{
+                  width: "0%",
+                  animation: "riseCentreCover 0.72s cubic-bezier(0.77, 0, 0.175, 1) forwards",
+                }}
               />
               <div
-                className="absolute inset-y-0 left-0 w-full bg-background"
-                style={{ animation: "riseSliderReveal 0.86s cubic-bezier(0.77, 0, 0.175, 1) 0.45s forwards" }}
+                className="absolute inset-y-0 left-1/2 -translate-x-1/2 bg-black"
+                style={{
+                  width: "0%",
+                  animation: "riseCentreReveal 0.86s cubic-bezier(0.77, 0, 0.175, 1) 0.45s forwards",
+                }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src={logo}
+                  src={logoWhite}
                   alt="RISE"
                   className="h-16 md:h-20"
                   style={{
@@ -114,6 +124,16 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
         @keyframes riseSliderReveal {
           from { transform: translateX(0%); }
           to { transform: translateX(100%); }
+        }
+
+        @keyframes riseCentreCover {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+
+        @keyframes riseCentreReveal {
+          from { width: 0%; }
+          to { width: 100%; }
         }
 
         @keyframes logoFadeIn {
