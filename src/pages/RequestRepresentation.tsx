@@ -671,7 +671,7 @@ const RequestRepresentation = () => {
               )}
             </AnimatePresence>
 
-            <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+            <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
               {/* Static feature header — sized to fit mobile cleanly.
                   No sticky positioning, no animated heights; the
                   collapsed state is a separate fixed mini bar above. */}
@@ -759,9 +759,25 @@ const RequestRepresentation = () => {
       {/* Sticky CTA buttons + scoped slider — only when inside a section */}
       {ageGroup && (
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto max-w-md md:max-w-2xl">
+          <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
             {showSlider && groupSiblings.length > 0 && (
               <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
+                {/* "Back to all" pill — returns the user to the hub
+                    (exits the active section). Sits ABOVE the slider
+                    where it lived previously. */}
+                {activeCard && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveCard(null);
+                      setScoutingPosition(null);
+                      setPerformanceSub(null);
+                    }}
+                    className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
+                  >
+                    <ChevronLeft className="h-3 w-3" /> Back to all
+                  </button>
+                )}
                 <div>
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
@@ -854,7 +870,7 @@ const DetailView = ({
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={`Back to Scouting`} />
           <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
@@ -900,7 +916,7 @@ const DetailView = ({
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-10 md:pb-44 lg:px-16"
       >
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label="Back to Performance" />
           <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
@@ -939,7 +955,7 @@ const DetailView = ({
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-6 md:pb-44 lg:px-16"
     >
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
         <TitlePlate icon={Icon} title={meta.title} eyebrow={content?.eyebrow ?? meta.subtitle} />
 
         <div className="mt-5 space-y-3 md:mt-7">
@@ -966,6 +982,34 @@ const DetailView = ({
           {/* Scouting top level */}
           {activeCard === "scouting" && (
             <div className="space-y-4">
+              {/* 1. Lead with the scouting network — what it is, where
+                  it reaches and why it matters. Mirrors the Players
+                  page so anyone arriving here sees the same context. */}
+              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/30 px-3 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
+                    Eyes Across All Of Europe
+                  </span>
+                </div>
+                <p className="font-bebas text-2xl uppercase leading-none tracking-[0.12em] md:text-4xl">
+                  Scouting <span className="text-primary">Network</span>
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-foreground/80 md:text-base">
+                  If you're a professional or academy player in Europe, chances are we already know about you. We have built an extensive scouting network across Europe — and into Africa — with eyes at every level of the professional game. Our coverage is novel and future-focused: we look for qualities that scale through a career, not just what works today.
+                </p>
+              </div>
+
+              {/* The interactive map — same component, hidden stats /
+                  grid toggle so the embed stays focused. */}
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+                <div className="h-[420px] md:h-[600px]">
+                  <ScoutingNetworkMap hideStats hideGridToggle />
+                </div>
+              </div>
+
+              <SectionDivider label="What we look for" />
+
+              {/* 2. Then the qualitative bullets and position breakdown. */}
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
@@ -977,8 +1021,8 @@ const DetailView = ({
               <SectionDivider />
 
               <div>
-                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Pick a position</p>
-                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Choose your position to see exactly what we look for. The breakdown opens on its own screen — use the back arrow to return here.</p>
+                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary/85">Position breakdown</p>
+                <p className="mb-3 text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it. Each opens on its own screen — use the back arrow to return here.</p>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
                   {SCOUTING_POSITIONS.map((pos) => (
                     <button
@@ -1108,13 +1152,14 @@ export default RequestRepresentation;
 
 /* =================================================================
  * FormationPositionPicker
- * 4-3-3 visual layout:
- *   GK
- *   LB  LCB  RCB  RB
- *   CDM
- *   CM
- *   CAM
+ * 4-3-3 visual layout (attacking line on top, GK at the bottom —
+ * the way an attacking side reads it):
  *   LW   CF   RW
+ *   CAM
+ *   CM
+ *   CDM
+ *   LB  LCB  RCB  RB
+ *   GK
  * Each tile shows the localized abbreviation.
  * ================================================================= */
 
@@ -1139,16 +1184,16 @@ const FormationPositionPicker = ({
   );
   return (
     <div className="mt-1 flex w-full flex-col items-center gap-1.5 md:gap-2">
-      <Row><Tile p="GK" /></Row>
-      <Row>
-        <Tile p="LB" /><Tile p="LCB" /><Tile p="RCB" /><Tile p="RB" />
-      </Row>
-      <Row><Tile p="CDM" /></Row>
-      <Row><Tile p="CM" /></Row>
-      <Row><Tile p="CAM" /></Row>
       <Row>
         <Tile p="LW" /><Tile p="CF" /><Tile p="RW" />
       </Row>
+      <Row><Tile p="CAM" /></Row>
+      <Row><Tile p="CM" /></Row>
+      <Row><Tile p="CDM" /></Row>
+      <Row>
+        <Tile p="LB" /><Tile p="LCB" /><Tile p="RCB" /><Tile p="RB" />
+      </Row>
+      <Row><Tile p="GK" /></Row>
     </div>
   );
 };

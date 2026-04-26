@@ -24,13 +24,22 @@ export const RepresentationAudio = () => {
     const a = new Audio();
     a.volume = 0.32;
     a.preload = "auto";
+    // Many mobile browsers (notably iOS Safari) refuse to start
+    // playback unless the <audio> element is created and called
+    // synchronously inside a user gesture handler. We therefore
+    // attempt an instant play, and ALSO arm a one-shot global
+    // listener that resumes playback on the very first tap / click /
+    // key press anywhere on the page. The listener self-removes once
+    // audio is confirmed playing.
+    a.setAttribute("playsinline", "true");
+    (a as any).playsInline = true;
     audioRef.current = a;
 
     const playCurrent = () => {
       a.src = PLAYLIST[idx.current];
-      // Best-effort autoplay; navigation is a user gesture so most
-      // browsers will allow it. If it fails we still cycle silently.
-      a.play().catch(() => {});
+      a.play().catch(() => {
+        // Autoplay blocked — wait for the next user gesture.
+      });
     };
 
     const onEnded = () => {
@@ -41,11 +50,31 @@ export const RepresentationAudio = () => {
       playCurrent();
     };
 
+    const tryUnlock = () => {
+      if (!a.paused) return;
+      a.play()
+        .then(() => {
+          window.removeEventListener("pointerdown", tryUnlock, true);
+          window.removeEventListener("touchstart", tryUnlock, true);
+          window.removeEventListener("click", tryUnlock, true);
+          window.removeEventListener("keydown", tryUnlock, true);
+        })
+        .catch(() => {});
+    };
+    window.addEventListener("pointerdown", tryUnlock, true);
+    window.addEventListener("touchstart", tryUnlock, true);
+    window.addEventListener("click", tryUnlock, true);
+    window.addEventListener("keydown", tryUnlock, true);
+
     a.addEventListener("ended", onEnded);
     playCurrent();
 
     return () => {
       a.removeEventListener("ended", onEnded);
+      window.removeEventListener("pointerdown", tryUnlock, true);
+      window.removeEventListener("touchstart", tryUnlock, true);
+      window.removeEventListener("click", tryUnlock, true);
+      window.removeEventListener("keydown", tryUnlock, true);
       a.pause();
       a.src = "";
       audioRef.current = null;
