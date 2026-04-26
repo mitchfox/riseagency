@@ -143,26 +143,19 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       )}
 
       {/*
-        Logo phase: pulse twice, then travel UP to the position the
-        age-screen logo will occupy so the transition is seamless.
-        Age-screen logo sits top-centre at h-8 (sm:h-10, md:h-14) with
-        ~max(2rem, safe-area-inset-top) of top padding. We start the
-        intro logo at h-20 (md:h-28) and shrink + lift to match.
+        Logo phase only: appears AFTER the line sequence finishes,
+        pulses twice, then travels UP to the position the age-screen
+        logo will occupy so the transition is seamless. Not present
+        during the line phase so it never sits behind the text.
       */}
-      {/*
-        Logo: always present, never fades. Sits behind the lines at low
-        opacity so it's a constant presence; pulses & travels up at the
-        end to seamlessly match the header logo on the age screen.
-      */}
-      <motion.img
-        key="rep-intro-logo"
-        src={logoWhite}
-        alt="RISE"
-        initial={{ opacity: 0.18, scale: 0.95, y: 0 }}
-        animate={
-          phase === "lines"
-            ? { opacity: 0.18, scale: 0.95, y: 0 }
-            : phase === "logo"
+      {(phase === "logo" || phase === "descend") && (
+        <motion.img
+          key="rep-intro-logo"
+          src={logoWhite}
+          alt="RISE"
+          initial={{ opacity: 0, scale: 0.9, y: 0 }}
+          animate={
+            phase === "logo"
               ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1], y: 0 }
               : {
                   opacity: 1,
@@ -170,16 +163,15 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   scale: 0.6,
                   y: "calc(-50dvh + clamp(56px, 8.333vw, 64px))",
                 }
-        }
-        transition={
-          phase === "logo"
-            ? { duration: 4, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
-            : phase === "descend"
-              ? { duration: 2.6, ease: [0.22, 1, 0.36, 1] }
-              : { duration: 0.8, ease: "easeOut" }
-        }
-        className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
-      />
+          }
+          transition={
+            phase === "logo"
+              ? { duration: 4, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
+              : { duration: 2.6, ease: [0.22, 1, 0.36, 1] }
+          }
+          className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
+        />
+      )}
 
       {/* Skip hint */}
       <button

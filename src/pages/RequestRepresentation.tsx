@@ -15,6 +15,7 @@ import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
+import { RepresentationEntryOverlay } from "@/components/RepresentationEntryOverlay";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
@@ -285,6 +286,10 @@ const WhatsAppIcon = ({ className = "" }: { className?: string }) => (
 const RequestRepresentation = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>(null);
   const { language } = useLanguage();
+  // Entry sequence: full RISE pulse + shader wave plays in its
+  // entirety BEFORE anything else mounts so the user never sees
+  // overlapping loaders for a fraction of a second.
+  const [entryDone, setEntryDone] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKey | null>(null);
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
@@ -329,10 +334,20 @@ const RequestRepresentation = () => {
         description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
       />
 
-      {/* Cinematic intro: shown once on first load, then the age screen
-          becomes available. */}
+      {/* Stage 1: central RISE pulse + shader wave. Plays in full
+          before anything underneath mounts. */}
       <AnimatePresence>
-        {!introDone && <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />}
+        {!entryDone && (
+          <RepresentationEntryOverlay key="entry" onComplete={() => setEntryDone(true)} />
+        )}
+      </AnimatePresence>
+
+      {/* Stage 2: cinematic intro. Only mounts after the entry
+          transition has fully finished. */}
+      <AnimatePresence>
+        {entryDone && !introDone && (
+          <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
@@ -349,13 +364,29 @@ const RequestRepresentation = () => {
             <div className="absolute inset-0 bg-black" />
             {/* Background smoke (BEHIND the player overlay image) */}
             <SmokeOverlay layer="back" />
+            {/* Stationary background blur glow, anchored to the LEFT
+                side of the screen. Provides the "cool background blur"
+                without travelling — sits behind everything else. */}
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[70vw] md:w-[55vw]"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 0% 50%, hsl(var(--gold) / 0.32) 0%, hsl(var(--gold) / 0.14) 22%, hsl(var(--foreground) / 0.08) 42%, transparent 70%)",
+                filter: "blur(40px)",
+                mixBlendMode: "screen",
+              }}
+              initial={{ opacity: 0, x: "-30%" }}
+              animate={{ opacity: 1, x: "0%" }}
+              transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+            />
             {/* Player overlay — drifts in from the RIGHT to centre.
                 Sits between the back smoke (z-0) and the front smoke (z-20). */}
             <motion.img
               src={representationTy}
               alt="Tyrese Omotoye celebrating"
               className="pointer-events-none absolute inset-y-0 left-1/2 z-10 h-full w-auto -translate-x-1/2 object-contain object-bottom"
-              initial={{ x: "-28%", opacity: 1 }}
+              initial={{ x: "20%", opacity: 1 }}
               animate={{ x: "-50%", opacity: 1 }}
               transition={{ duration: 14, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             />
@@ -395,16 +426,14 @@ const RequestRepresentation = () => {
             {/* Foreground content – fully centred. z-30 keeps it above all
                 smoke + overlay layers. */}
             <div className="relative z-30 flex min-h-[100dvh] flex-col items-center justify-between px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] text-center md:px-10 md:pt-[max(1rem,env(safe-area-inset-top))]">
-              {/* TOP: RISE white logo + REPRESENTATION wordmark */}
+              {/* TOP: RISE white logo only. The "Representation" wordmark
+                  has been moved into the tagline rectangle below. */}
               <motion.div
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex w-full flex-col items-center"
               >
                 <RiseLogoShine className="h-12 md:h-16" />
-                <h1 className="mt-2 font-bebas text-3xl uppercase leading-none tracking-[0.32em] text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
-                  REPRESENTATION
-                </h1>
               </motion.div>
 
               {/* BOTTOM: tagline + age bracket cluster, all centred. */}
@@ -414,7 +443,21 @@ const RequestRepresentation = () => {
                 transition={{ delay: 0.18, duration: 0.5 }}
                 className="flex w-full max-w-md flex-col items-center md:max-w-2xl lg:max-w-3xl"
               >
-                <div className="rounded-2xl border border-primary/25 bg-black/65 px-4 py-3 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:px-5 md:py-4">
+                <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-primary/25 bg-black/65 px-4 py-4 backdrop-blur-md shadow-[0_6px_24px_hsl(0_0%_0%/0.45)] md:gap-3 md:px-6 md:py-5">
+                  <motion.h1
+                    initial={{ opacity: 0, scale: 0.9, letterSpacing: "0.18em" }}
+                    animate={{
+                      opacity: 1,
+                      scale: [0.9, 1.06, 1],
+                      letterSpacing: ["0.18em", "0.34em", "0.32em"],
+                    }}
+                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+                    className="font-bebas text-2xl uppercase leading-none text-primary drop-shadow-[0_0_22px_hsl(var(--gold)/0.45)] sm:text-3xl md:text-4xl lg:text-5xl"
+                    style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
+                  >
+                    Representation
+                  </motion.h1>
+                  <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                   <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                     Realise potential with our experienced intermediary &amp; English Premier League star performance team.
                   </p>
@@ -618,38 +661,32 @@ const RequestRepresentation = () => {
               <motion.button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex h-full items-center justify-center rounded-xl bg-primary px-2 py-1.5 text-center font-bebas uppercase tracking-[0.1em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                className="flex h-full min-w-0 items-center justify-center rounded-xl bg-primary px-2 py-1.5 text-center font-bebas uppercase tracking-[0.06em] text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
               >
-                {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }} className="px-1 leading-tight whitespace-normal break-words">
+                <div className="flex w-full min-w-0 flex-col items-center justify-center gap-0.5 leading-[1.05]">
+                  {!scrolled && <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />}
+                  <motion.span
+                    style={scrolled ? { fontSize: footerFontSize } : undefined}
+                    className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
+                  >
                     Request Representation
                   </motion.span>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-1 leading-[1] w-full">
-                    <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-                    <span className="block w-full whitespace-normal break-words text-[15px] leading-tight md:text-lg">
-                      Request Representation
-                    </span>
-                  </div>
-                )}
+                </div>
               </motion.button>
               <motion.button
                 type="button"
                 onClick={openWhatsApp}
-                className="flex h-full items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-2 py-1.5 text-center font-bebas uppercase tracking-[0.1em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
+                className="flex h-full min-w-0 items-center justify-center rounded-xl border border-primary/50 bg-background/80 px-2 py-1.5 text-center font-bebas uppercase tracking-[0.06em] text-primary shadow-lg transition-colors hover:border-primary hover:bg-primary/10"
               >
-                {scrolled ? (
-                  <motion.span style={{ fontSize: footerFontSize }} className="px-1 leading-tight whitespace-normal break-words">
+                <div className="flex w-full min-w-0 flex-col items-center justify-center gap-0.5 leading-[1.05]">
+                  {!scrolled && <WhatsAppIcon className="h-4 w-4 md:h-5 md:w-5" />}
+                  <motion.span
+                    style={scrolled ? { fontSize: footerFontSize } : undefined}
+                    className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
+                  >
                     Contact Us
                   </motion.span>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-1 leading-[1] w-full">
-                    <WhatsAppIcon className="h-4 w-4 md:h-5 md:w-5" />
-                    <span className="block w-full whitespace-normal break-words text-[15px] leading-tight md:text-lg">
-                      Contact Us
-                    </span>
-                  </div>
-                )}
+                </div>
               </motion.button>
             </motion.div>
           </div>
