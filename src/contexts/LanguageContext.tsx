@@ -346,6 +346,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     window.location.href = newUrl;
   }, []);
 
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isRepresentationRoute = pathname === '/representation' || pathname === '/request-representation';
+
+  if (isRepresentationRoute) {
+    return (
+      <LanguageContext.Provider value={{ language, translations, t, isLoading, switchLanguage }}>
+        {children}
+      </LanguageContext.Provider>
+    );
+  }
+
   // Don't render children until language is initialized AND translations are loaded
   if (!isInitialized || !translationsLoaded) {
     return <PageLoading />;
