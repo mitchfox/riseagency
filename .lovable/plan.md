@@ -1,63 +1,110 @@
-Three focused fixes.
+# Representation Page — Full Redesign Plan
 
-### 1. Request Representation — proper tablet & desktop layout
+A large rebuild of `src/pages/RequestRepresentation.tsx` plus a couple of small new components. Everything below is mobile-first then refined for tablet/desktop.
 
-The page (`src/pages/RequestRepresentation.tsx`) is essentially mobile-only: the hero stretches an image full-bleed, the hub uses a thin `max-w-md` column, and the choice/CTA buttons are not wrapped with the site's hover reveal effect.
+---
 
-Changes:
+## 1. Naming, framing, and copy
 
-- **Tablet/desktop redesign with black marble**
-  - Replace the stretched hero image background with a proper layered backdrop using `src/assets/black-marble-smudged.png` (cover, with a soft radial gold glow + dark vignette overlay) on `md+` breakpoints. Keep the existing photo as a contained right-hand visual on desktop only (e.g. `lg:grid-cols-[1fr_1fr]`), not as a stretched background.
-  - Hub view (`request-hub`): widen the container to `lg:max-w-6xl` on desktop. Replace the cropped header image strip with a marble-backed header card that includes the `RISEWhite` logo + RISE WITH US headline + intro line on the left and a contained, properly aspected image on the right (desktop only). On tablet, the marble header sits full width with no stretched photo behind it.
-  - Detail card view: use the same marble backdrop on `md+` and keep the existing two-column content grid.
-- **Centralise option cards (Performance, Club Network, Brand, etc.)**
-  - In the `CARD_META.map(...)` grid, change the inner flex from left-aligned (`flex-col justify-between`) to centred (`items-center justify-center text-center`). Move the icon circle to the top centre and place subtitle + title centred underneath. Apply at all breakpoints so cards look consistent.
-- **Hover text-reveal on buttons**
-  - All page buttons (Under 18, Over 18, Start Here, WhatsApp, Open the Form, Start the Conversation, WhatsApp Us) get `hoverEffect` applied. The shared `Button` wraps string children with `<HoverText>` automatically when `hoverEffect` is set, so we just add the prop. For buttons that contain icons + text (e.g. Open the Form with `ArrowRight`), wrap the label string explicitly in `<HoverText text="..." />` so the reveal effect runs on the text only.
-- **Over 18 button hover colour**
-  - The current Over 18 button uses inline `marbleStyle` and a plain text colour, so on hover the foreground "disappears". Switch it to use the standard outline pattern (`border-primary/50 text-primary hover:text-primary` with `hover:bg-primary/10` and remove the marble inline style). On hover the text remains visible and turns Rise Gold via `text-primary` (HoverText reveal animates a gold sheen over it).
-- **After clicking Under 18 / Over 18, header behind RISE WITH US uses smudged black marble**
-  - In the hub view header card, replace `<img src={requestRepresentationHero} ... />` background with a `<div>` styled with `background-image: url(black-marble-smudged.png)` on mobile, and on desktop reuse the same marble plus a contained, side-aligned photo (so it's no longer a stretched cover image). The dark linear-gradient overlay stays.
+- Rename route label and headings from "Request Representation" → **"Representation"** (page title, header copy, nav links pointing here, SEO title).
+- Re-frame copy so it reads from the player's POV. Two clear angles surfaced as primary entry buttons on the hub:
+  - **"I want to be signed — what do you need from me?"**
+  - **"What do I get from RISE?"**
+- Insert a Rise Gold horizontal divider (1px, `bg-primary/40`) between every section group on the hub: Intro · Sign-with-us · What-you-get · Scouting · Performance · Network · Brand · Fees/Agreement/FAQs.
 
-### 2. Video analysis — Restart export button no longer reloads the page
+## 2. Age-bracket screen
 
-In `src/components/staff/ExportProgressFloat.tsx`, the stalled-state click handler currently calls `window.location.reload()`, which destroys all state.
+- Above the Under 18 / Over 18 buttons add a short line: *"Choose your age bracket so we can show you a personalised breakdown of what representation looks like for you."*
+- Fix Over-18 hover: text already turns Rise Gold, but the contrast issue is the disappearing border — confirm `hover:bg-primary/10 hover:text-primary` keeps text readable. Re-check with the gold class and add `hover:border-primary`.
+- Add the existing `LanguageSelector` (and optional `LanguageMapSelector` button) pinned **top-right** of this screen (and persisted on every state of the page). IP-based auto-detection already runs from `LanguageContext` so no new geo work is needed.
 
-Changes:
+## 3. Mobile hero — Ty image overlay animation
 
-- Track the current `ExportJob` in `backgroundExportService.ts`:
-  - Store the latest job passed to `startExportJob` in a module-level `lastJob` ref.
-  - Export a new `restartCurrentExport()` helper. It first sets `running = false` to clear the in-flight guard, then re-invokes `startExportJob(lastJob)` with only the still-pending or errored clips (those whose status is not `done` or `skipped` in `activeJob`).
-- Update `ExportProgressFloat.tsx` so the stalled-state restart button calls `restartCurrentExport()` instead of `window.location.reload()`. While restarting, show a brief spinner state (re-use the existing `Loader2`).
-- Toast: replace the silent reload with `toast.message("Restarting failed clips…")` so the user gets feedback.
+- Background: replace the current hero with `user-uploads://off_Ty_page.png` copied to `src/assets/representation-bg-rise.png` (the RISE / Realise Potential black backdrop).
+- Overlay: `user-uploads://on_Ty_page.png` copied to `src/assets/representation-ty.png` (cut-out player).
+- Animation (mobile only, `md:hidden`): Ty starts at `translateX(-100px)` then framer-motion animates to `translateX(0)` over ~1.4s ease-out and locks in place so he aligns into the same composition as the original combined photo. No looping.
+- Tablet/desktop keeps the contained marble layout already in place.
 
-This means the user stays on the page, the export retries the blocked clip, and successful clips are not re-processed.
+## 4. Smoke effects (all hub/detail screens)
 
-### 3. My Tasks — mobile optimise the Add Task dialog
+- New file `src/components/SmokeOverlay.tsx`: two stacked SVG/PNG smoke layers (white at 20%, Rise Gold at 20%) animated horizontally left → right via framer-motion `animate={{ x: ['-30%', '30%'] }}` with `repeat: Infinity, repeatType: 'mirror'` and `ease: 'linear'`, durations 38s and 52s so they never visibly stop. `pointer-events-none`, `mix-blend-screen` for the white, `mix-blend-overlay` for the gold.
+- Mounted once at the page root, behind content (`z-0`) and above background (`z-1` for content wrapper).
 
-The dialog in `StaffAccountabilityOverview.tsx` (lines 1108–1242) uses `max-w-2xl` with no height/scroll handling, so on mobile the content overflows the viewport and cannot be scrolled.
+## 5. RISE branded loader
 
-Changes to the `<DialogContent>` and inner layout:
+- Extract the existing `AnalysisViewer` loader (logo pulse + gold gradient line + dot bounce) into `src/components/RiseBrandedLoader.tsx`.
+- Show it on first mount of `/request-representation` for ~700ms (fast — user requested as fast as possible) before the age-bracket screen fades in. `AnimatePresence` handles the swap.
 
-- `DialogContent` className: `max-w-2xl w-[95vw] max-h-[92dvh] p-0 flex flex-col` so the dialog respects the viewport height.
-- Wrap the form body in a scrollable region: `<div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">…</div>`.
-- Make the action footer sticky inside the dialog: `<div className="border-t bg-background px-5 py-3 flex justify-end gap-2 shrink-0">…</div>`. Buttons stay visible while the form scrolls.
-- Responsive form grid: change `grid grid-cols-2 gap-4` to `grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4` so Priority/Category/Deadline/Image/Recurring stack on mobile instead of squeezing.
-- Assignees block: keep `flex-wrap` but ensure each chip has `text-xs` and `min-h-[32px]` so they remain tappable. No layout overflow on small screens.
-- Image preview height: drop from `h-28` to `h-24 sm:h-28` so it doesn't dominate small screens.
-- DialogHeader: keep title visible at top with `px-5 pt-5 pb-2 shrink-0`.
+## 6. Hub layout (after age selected)
 
-This makes the dialog fully scrollable on mobile, keeps the action buttons reachable, and gives a comfortable single-column layout under `sm`.
+Vertical order with Rise-Gold dividers between groups:
 
-### Technical notes
+1. **Header strip** — keeps the marble panel; title becomes "RISE WITH US".
+2. **Two intent buttons** (full-width primary cards):
+   - "How do I get signed by RISE?" → opens form with prefilled context.
+   - "What do I get from RISE?" → scrolls to the value sections.
+3. **Scouting** card promoted to **first** value tile.
+4. Value tiles in this new order: Scouting · Performance · Club Network · Brand · Fees · Agreement · Expectations · FAQs.
 
-- No DB or schema changes.
-- No new dependencies; reuses the existing `HoverText` component, `black-marble-smudged.png` asset, and the shared `Button` `hoverEffect` prop.
-- `restartCurrentExport` is additive — existing callers of `startExportJob` are unaffected.
+## 7. Scouting deep-dive (per-position)
 
-### Files touched
+When the Scouting tile is opened:
 
-- `src/pages/RequestRepresentation.tsx`
-- `src/components/staff/ExportProgressFloat.tsx`
-- `src/lib/backgroundExportService.ts`
-- `src/components/staff/StaffAccountabilityOverview.tsx`
+- Show a position picker grid using `SCOUTING_POSITIONS` from `src/data/scoutingSkills.ts` (already defines GK, CB, FB, DM, CM, AM, W, ST etc.).
+- After picking a position, render the 16 attributes from `POSITION_SKILLS[position]` grouped by domain (Physical / Mental / Technical / Tactical) using the icon + colour map already used on `Scouts.tsx`.
+- Each attribute card includes its short description so it doubles as a "what we look for from an analysis and player insight POV" explainer.
+- Reuse the `domainConfig` styling for visual parity with the existing scouting page.
+
+## 8. Performance deep-dive (sub-sections)
+
+Performance card opens a sub-grid with six tiles (each with its own short description + image):
+
+- Analysis
+- Action Reports (use a small preview image of an existing report instead of a generic icon — replace the current `MarbleIconPanel` placeholder with `<img src={performanceReportPreview} />`)
+- Strength, Power & Speed
+- Nutrition
+- Technique
+- Psychology
+
+Pull copy snippets from `RealisePotential.tsx` translation keys (`realise.step1_*`…`realise.step5_*`) and from existing performance/analysis blurbs to populate each tile.
+
+## 9. Club Network deep-dive
+
+- Embed the existing `ScoutingNetworkMap` component inside the Club Network detail view (shrunk to fit, with `pointer-events: auto` so users can interact). Add a one-line caption above it.
+
+## 10. Sticky footer CTAs (shrink on scroll)
+
+- New sticky bottom bar (only on hub + detail screens, not on age-bracket screen):
+  - Left button: **"Request Representation"** (opens form).
+  - Right button: **"Contact Us For Representation"** (opens WhatsApp `+447508342901`).
+  - Both use `HoverText` reveal effect.
+- Use `useScroll` + `useTransform` from framer-motion (or a small `useEffect` listener) to shrink height (`h-16` → `h-9`) and font size (`text-base` → `text-xs`) by ~50% once `scrollY > 80`.
+
+## 11. Section slider wheel (above sticky footer)
+
+- New component `src/components/SectionSliderWheel.tsx`:
+  - Horizontal wheel showing current section name centred in **Rise Gold** at 100% opacity, previous and next labels at 60% opacity, separated by Rise Gold bullet `•`.
+  - 3D cylinder feel via `perspective: 800px` on the container and `rotateY` on each item: centre at 0deg, neighbours at ±35deg, fade past that. Items beyond ±2 are hidden, giving the impression they continue off-screen.
+  - Left and right chevron taps move by 1 and instantly switch `activeCard`. Touch swipe also wired up.
+  - Sits directly above the sticky footer CTAs.
+
+## 12. Form changes (already aligned with under-18 rules)
+
+- `RepresentationDialog` already conditionally shows parent-name and parent-phone when DOB makes the user under 18 — confirm both the button text on the hub and the dialog header read "Request Representation".
+
+## 13. Files
+
+- **Edit:** `src/pages/RequestRepresentation.tsx` (large), `src/App.tsx` (route label only if needed), any nav link components pointing to "Request Representation" → "Representation".
+- **New:** `src/components/SmokeOverlay.tsx`, `src/components/RiseBrandedLoader.tsx`, `src/components/SectionSliderWheel.tsx`.
+- **New assets:** `src/assets/representation-bg-rise.png` (from `off_Ty_page.png`), `src/assets/representation-ty.png` (from `on_Ty_page.png`), `src/assets/performance-report-preview.png` (a screenshot already in the repo or reuse an existing example image).
+- **Reuse:** `SCOUTING_POSITIONS`, `POSITION_SKILLS`, `ScoutingNetworkMap`, `LanguageSelector`, `HoverText`, framer-motion patterns from `AnalysisViewer`.
+
+## 14. Out of scope (so the PR stays focused)
+
+- No backend or database changes.
+- No edits to global Header/Footer (the page is intentionally standalone, per memory `mem://features/public/request-representation-page`).
+- No new translations beyond simple English copy now; i18n keys can be added later if you want the page fully localised.
+
+---
+
+Approve and I will implement everything above in one pass.
