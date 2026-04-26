@@ -278,7 +278,7 @@ const SectionDivider = ({ label }: { label?: string }) => (
   <div className="my-6 flex items-center gap-3 md:my-8">
     <div className="h-[1px] flex-1 bg-primary/40" />
     {label ? (
-      <span className="font-bebas text-xs uppercase tracking-[0.32em] text-primary md:text-sm">{label}</span>
+      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">{label}</span>
     ) : (
       <div className="h-1 w-1 rounded-full bg-primary/70" />
     )}
