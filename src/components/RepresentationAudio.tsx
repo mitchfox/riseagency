@@ -65,6 +65,12 @@ export const RepresentationAudio = () => {
     window.addEventListener("touchstart", tryUnlock, true);
     window.addEventListener("click", tryUnlock, true);
     window.addEventListener("keydown", tryUnlock, true);
+    // Some flows (like the cinematic intro overlay) call
+    // stopPropagation in their handlers. Listen for a synthetic
+    // event the intro dispatches the moment it begins so we can
+    // arm playback at the very start of the cinematic.
+    const onIntroStart = () => tryUnlock();
+    window.addEventListener("rep-intro-start", onIntroStart);
 
     a.addEventListener("ended", onEnded);
     playCurrent();
@@ -75,6 +81,7 @@ export const RepresentationAudio = () => {
       window.removeEventListener("touchstart", tryUnlock, true);
       window.removeEventListener("click", tryUnlock, true);
       window.removeEventListener("keydown", tryUnlock, true);
+      window.removeEventListener("rep-intro-start", onIntroStart);
       a.pause();
       a.src = "";
       audioRef.current = null;

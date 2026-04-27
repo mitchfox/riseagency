@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,16 @@ export const RepresentationDialog = ({
 }: RepresentationDialogProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  // Refs for the input fields so Enter can advance to the next one.
+  // Date of Birth and Position are skipped intentionally (they're
+  // pre-filled from the home rectangle and require manual interaction).
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const clubRef = useRef<HTMLInputElement>(null);
+  const parentNameRef = useRef<HTMLInputElement>(null);
+  const parentPhoneRef = useRef<HTMLInputElement>(null);
+  const firstVideoRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -70,6 +80,14 @@ export const RepresentationDialog = ({
       position: initialPosition || prev.position,
     }));
   }, [open, initialDob, initialPosition]);
+
+  /** Enter on a field advances focus to the next ref in the chain. */
+  const advance = (next: React.RefObject<HTMLInputElement>) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      next.current?.focus();
+    };
 
   // Derive under-18 status either from the upfront age choice OR the entered DOB.
   const isUnder18FromDob = (() => {
@@ -133,7 +151,33 @@ export const RepresentationDialog = ({
   };
 
   const handleWhatsApp = () => {
-    window.open("https://wa.me/447508342901", "_blank");
+    // Build a WhatsApp message that includes whatever the user has
+    // already typed so the conversation starts with full context.
+    const lines: string[] = [
+      t("representation.whatsapp_intro", "Hi RISE — I'd like to enquire about representation."),
+      "",
+    ];
+    if (formData.name) lines.push(`Name: ${formData.name}`);
+    if (formData.phone) lines.push(`Phone: ${formData.phone}`);
+    if (formData.email) lines.push(`Email: ${formData.email}`);
+    if (formData.currentClub) lines.push(`Current club: ${formData.currentClub}`);
+    if (formData.dob) lines.push(`Date of birth: ${formData.dob}`);
+    if (formData.position) lines.push(`Position: ${formData.position}`);
+    if (isUnder18) {
+      if (formData.parentName) lines.push(`Parent/guardian: ${formData.parentName}`);
+      if (formData.parentPhone) lines.push(`Parent/guardian phone: ${formData.parentPhone}`);
+    }
+    const videos = formData.videoLinks.filter((v) => v.trim());
+    if (videos.length) {
+      lines.push("Match videos:");
+      videos.forEach((v) => lines.push(`- ${v}`));
+    }
+    if (formData.message) {
+      lines.push("");
+      lines.push(`Notes: ${formData.message}`);
+    }
+    const text = encodeURIComponent(lines.join("\n"));
+    window.open(`https://wa.me/447508342901?text=${text}`, "_blank");
   };
 
   return (
@@ -153,9 +197,10 @@ export const RepresentationDialog = ({
             <Label htmlFor="name">{t('representation.full_name', 'Full Name')} *</Label>
             <Input
               id="name"
+              ref={nameRef}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+              onKeyDown={advance(phoneRef)}
               placeholder="John Doe"
               required
             />
@@ -166,10 +211,11 @@ export const RepresentationDialog = ({
               <Label htmlFor="phone">{t('representation.phone', 'Phone Number')} *</Label>
               <Input
                 id="phone"
+                ref={phoneRef}
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(emailRef)}
                 placeholder="+44 7340 184399"
                 required
               />
@@ -179,10 +225,11 @@ export const RepresentationDialog = ({
               <Label htmlFor="email">{t('representation.email', 'Email')}</Label>
               <Input
                 id="email"
+                ref={emailRef}
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(clubRef)}
                 placeholder="john@example.com"
               />
             </div>
@@ -193,9 +240,10 @@ export const RepresentationDialog = ({
               <Label htmlFor="currentClub">{t('representation.current_club', 'Current Club')} *</Label>
               <Input
                 id="currentClub"
+                ref={clubRef}
                 value={formData.currentClub}
                 onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(isUnder18 ? parentNameRef : firstVideoRef)}
                 placeholder="e.g., Manchester United U21"
                 required
               />
@@ -232,9 +280,10 @@ export const RepresentationDialog = ({
                   <Label htmlFor="parentName">{t('representation.parent_name', "Parent or Guardian Name")}</Label>
                   <Input
                     id="parentName"
+                    ref={parentNameRef}
                     value={formData.parentName}
                     onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    onKeyDown={advance(parentPhoneRef)}
                     placeholder="Jane Doe"
                     required={isUnder18}
                   />
@@ -243,10 +292,11 @@ export const RepresentationDialog = ({
                   <Label htmlFor="parentPhone">{t('representation.parent_phone', "Parent or Guardian Phone")}</Label>
                   <Input
                     id="parentPhone"
+                    ref={parentPhoneRef}
                     type="tel"
                     value={formData.parentPhone}
                     onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    onKeyDown={advance(firstVideoRef)}
                     placeholder="+44 7340 184399"
                     required={isUnder18}
                   />
@@ -256,10 +306,16 @@ export const RepresentationDialog = ({
           )}
 
           <div className="space-y-2">
-            <Label>{t('representation.video_links', 'Match Video Links')} <span className="text-muted-foreground text-xs">({t('representation.video_links_hint', 'Full match videos preferred, highlights also accepted')})</span></Label>
+            <Label className="block">
+              {t('representation.video_links', 'Match Video Links')}
+              <span className="block text-muted-foreground text-xs mt-0.5">
+                ({t('representation.video_links_hint', 'Full Match Videos Preferred, Highlights Also Accepted')})
+              </span>
+            </Label>
             {formData.videoLinks.map((link, idx) => (
               <div key={idx} className="flex gap-2">
                 <Input
+                  ref={idx === 0 ? firstVideoRef : undefined}
                   value={link}
                   onChange={(e) => {
                     const updated = [...formData.videoLinks];

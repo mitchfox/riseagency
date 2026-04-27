@@ -517,6 +517,7 @@ const RequestRepresentation = () => {
             <motion.div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-10"
+              style={{ transform: "translateY(4px)" }}
               initial={{ opacity: 0, scale: 1.03 }}
               animate={{ opacity: 0.92, scale: 1 }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
@@ -606,8 +607,8 @@ const RequestRepresentation = () => {
                         <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
-                            "representation.hero_subtitle",
-                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team."
+                            "representation.hero_subtitle_v2",
+                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team"
                           )}
                         </p>
                         <motion.p
@@ -631,10 +632,10 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                        <p className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
                           {t("representation.choose_position", "Choose your position")}
                         </p>
-                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                        <p className="italic text-sm leading-snug text-foreground/85 md:text-base">
                           {t(
                             "representation.personalised_breakdown",
                             "For a more personalised breakdown of what representation will look like for you."
@@ -656,10 +657,10 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                        <p className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
                           {t("representation.dob_heading", "Date of birth")}
                         </p>
-                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                        <p className="italic text-sm leading-snug text-foreground/85 md:text-base">
                           {t(
                             "representation.personalised_breakdown",
                             "For a more personalised breakdown of what representation will look like for you."
@@ -813,7 +814,7 @@ const RequestRepresentation = () => {
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
                               </div>
                               <div>
-                                <p className="break-words hyphens-auto font-bebas text-[clamp(0.85rem,3.6vw,1.125rem)] uppercase leading-[1.05] tracking-[0.08em] md:text-[clamp(1rem,2.4vw,1.5rem)] md:tracking-[0.1em] lg:text-[clamp(1.1rem,2vw,1.875rem)]">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
+                                <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
                                   <p className="mx-auto mt-1.5 max-w-[9.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">{formatCardSubtitle(card.key, t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback))}</p>
                               </div>
                             </div>
@@ -1088,19 +1089,19 @@ const DetailView = ({
               {/* 1. Network intro — mirrors Players page wording. */}
               <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
                 <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
-                  Eyes Across All Of Europe
+                  {t("scouting_network.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
                 <p className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.12em] md:text-5xl">
-                  Scouting <span className="text-primary">Network</span>
+                  {t("scouting_network.scouting", "Scouting")} <span className="text-primary">{t("scouting_network.network", "Network")}</span>
                 </p>
                 <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
-                  If you're a professional or academy player in Europe, chances are we already know about you.
+                  {t("scouting_network.intro_blurb", "If you're a professional or academy player in Europe, chances are we already know about you.")}
                 </p>
               </div>
 
               {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-                <div className="h-[420px] md:h-[560px] lg:h-[640px]">
+                <div className="h-[640px] md:h-[760px] lg:h-[860px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
               </div>
@@ -1108,9 +1109,9 @@ const DetailView = ({
               {/* 3. The same three explanation cards from the Players page. */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
                 {[
-                  { n: "01", title: "Deep European Network", desc: "We have built an extensive scouting network across Europe, with eyes at every level of the professional game." },
-                  { n: "02", title: "Future-Focused Scouting", desc: "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career." },
-                  { n: "03", title: "Complete Player Knowledge", desc: "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up." },
+                  { n: "01", title: t("scouting_network.card1_title", "Deep European Network"), desc: t("scouting_network.card1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.") },
+                  { n: "02", title: t("scouting_network.card2_title", "Future-Focused Scouting"), desc: t("scouting_network.card2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
+                  { n: "03", title: t("scouting_network.card3_title", "Complete Player Knowledge"), desc: t("scouting_network.card3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
                 ].map((p) => (
                   <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
                     <div className="flex items-start gap-4">
@@ -1124,7 +1125,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label="What we look for" />
+              <SectionDivider label={t("scouting_network.what_we_look_for", "What we look for")} />
 
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
@@ -1134,7 +1135,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label="Position breakdown" />
+              <SectionDivider label={t("scouting_network.position_breakdown", "Position breakdown")} />
 
               {recommendedScoutingPosition ? (
                 <button
@@ -1143,14 +1144,14 @@ const DetailView = ({
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
-                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">What we look for in your position</p>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">{t("scouting_network.what_we_look_for_position", "What we look for in your position")}</p>
                     <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-primary" />
                 </button>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+                  <p className="text-xs text-muted-foreground md:text-sm">{t("scouting_network.open_position_hint", "Open any position to see exactly what we look for in it.")}</p>
                   <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
                     {SCOUTING_POSITIONS.map((pos) => (
                       <button
