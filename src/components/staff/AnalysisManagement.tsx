@@ -833,6 +833,50 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     }
   };
 
+  /**
+   * Duplicate an analysis (or concept) row, copying every field including
+   * JSONB content (points, matchups, scheme data, video URLs, images, kit
+   * colours, linked videos, etc.). Stripped: id, created_at, updated_at.
+   * The title gets " (Copy)" appended so the duplicate is easy to spot.
+   */
+  const handleDuplicate = async (id: string) => {
+    try {
+      const { data: row, error: fetchErr } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!row) throw new Error("Analysis not found");
+
+      const clone: any = JSON.parse(JSON.stringify(row));
+      delete clone.id;
+      delete clone.created_at;
+      delete clone.updated_at;
+      if (clone.title) clone.title = `${clone.title} (Copy)`;
+      else if (clone.concept) clone.concept = `${clone.concept} (Copy)`;
+      else if (clone.home_team || clone.away_team) {
+        clone.home_team = clone.home_team
+          ? `${clone.home_team} (Copy)`
+          : clone.home_team;
+      }
+
+      const { data: inserted, error: insertErr } = await supabase
+        .from("analyses")
+        .insert(clone)
+        .select()
+        .single();
+      if (insertErr) throw insertErr;
+
+      toast.success("Analysis duplicated");
+      logActivity({ action: 'created', entityType: 'analysis', entityId: inserted?.id, details: { duplicated_from: id } });
+      fetchAnalyses();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to duplicate analysis");
+      console.error(error);
+    }
+  };
+
   const addPoint = (insertAfterIndex?: number) => {
     const newPoint = { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] };
     const currentPoints = formData.points || [];
@@ -1876,6 +1920,9 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(type, analysis)}>
               <Pencil className="w-4 h-4" />
             </Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Duplicate" onClick={() => handleDuplicate(analysis.id)}>
+              <Copy className="w-4 h-4" />
+            </Button>
             {isAdmin && (
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(analysis.id)}>
                 <Trash2 className="w-4 h-4" />
@@ -1910,6 +1957,9 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate(`/staff/coaching?tab=analysis&edit=${concept.id}`)}>
               <Pencil className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" title="Duplicate" onClick={() => handleDuplicate(concept.id)}>
+              <Copy className="w-4 h-4" />
             </Button>
             {isAdmin && (
               <Button variant="ghost" size="sm" onClick={() => handleDeleteConcept(concept.id)}>

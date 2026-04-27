@@ -70,10 +70,12 @@
     <link rel="preload" href="/assets/player-xray.png" as="image" />
     <link rel="preload" href="/assets/player-depth-map.png" as="image" />
     
-    <!-- Google Fonts with display swap for performance -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" as="style" />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"></noscript>
+    <!-- Bebas Neue: load synchronously with display=block so headings never reflow
+         from a fallback font (which caused the representation intro lines to
+         appear shifted to the right and then snap into place). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block" rel="stylesheet" />
     
     <!-- Favicon and Icons -->
     <link rel="icon" type="image/png" href="https://storage.googleapis.com/gpt-engineer-file-uploads/blxFQX1QtlSc3qNcPxWdCZ730Tf1/uploads/1767271070152-favicon (3).png">

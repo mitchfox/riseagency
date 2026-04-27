@@ -163,6 +163,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
 
     let success = 0;
     let skipped = 0;
+    let failed = 0;
 
     // Clean source URL (strip any existing #t= fragments)
     const sourceVideoUrl = job.videoUrl.split("#")[0];
@@ -181,29 +182,22 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       try {
         const annotations = job.getClipAnnotations?.(clip.id);
 
-        // Always produce a standalone trimmed clip. trimAndUploadClip tries the
-        // edge function first, then falls back to client-side capture so that
-        // bulk exports never store the full match URL.
-        let clipVideoUrl = sourceVideoUrl;
-        let clipStart: number | null = clip.start;
-        let clipEnd: number | null = clip.end;
-
-        try {
-          const trimmedUrl = await trimAndUploadClip(
-            sourceVideoUrl,
-            clip.id,
-            clip.start,
-            clip.end
-          );
-          if (trimmedUrl) {
-            clipVideoUrl = trimmedUrl;
-            clipStart = null;
-            clipEnd = null;
-          }
-        } catch (trimErr) {
-          console.warn(`Trim failed for clip ${clip.id}, falling back to bounded full match URL:`, trimErr);
-          // Keep boundaries so the report player still windows the clip.
-        }
+        // Always produce a standalone trimmed clip. If trimming fails (server
+        // and client-side both unavailable), we deliberately DO NOT fall back
+        // to inserting the full match URL — that produced reports where the
+        // entire video analysis source played in place of a single clip.
+        // Instead we mark the clip as failed and skip it so the user can
+        // retry from the export progress widget.
+        const trimmedUrl = await trimAndUploadClip(
+          sourceVideoUrl,
+          clip.id,
+          clip.start,
+          clip.end
+        );
+        if (!trimmedUrl) throw new Error("Clip trim returned no URL");
+        const clipVideoUrl = trimmedUrl;
+        const clipStart: number | null = null;
+        const clipEnd: number | null = null;
 
         const insertRow: any = {
           analysis_id: job.reportId,
@@ -235,6 +229,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       } catch (err) {
         console.error(`Failed to export clip ${clip.id}:`, err);
         statuses[clip.id] = "error";
+        failed++;
       }
 
       notify({ ...progress, statuses: { ...statuses } });
@@ -242,7 +237,12 @@ export async function startExportJob(job: ExportJob): Promise<void> {
 
     const parts = [`${success} exported`];
     if (skipped > 0) parts.push(`${skipped} already existed`);
-    toast.success(parts.join(", "));
+    if (failed > 0) parts.push(`${failed} failed — retry from export widget`);
+    if (failed > 0 && success === 0) {
+      toast.error(parts.join(", "));
+    } else {
+      toast.success(parts.join(", "));
+    }
   } catch (err: any) {
     toast.error(err.message || "Export failed");
   } finally {
