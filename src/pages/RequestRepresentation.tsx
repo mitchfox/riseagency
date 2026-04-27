@@ -810,7 +810,7 @@ const RequestRepresentation = () => {
                 )}
                 <div>
                   <SectionSliderWheel
-                    sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
+                    sections={groupSiblings.map((c) => ({ key: c.key, label: t(CARD_TITLE_KEYS[c.key].key, CARD_TITLE_KEYS[c.key].fallback) }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
                     onChange={(k) => { setActiveCard(k as CardKey); setScoutingPosition(null); setPerformanceSub(null); }}
                   />
