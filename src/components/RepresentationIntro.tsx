@@ -220,7 +220,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                   className="font-bebas uppercase tracking-[0.22em] text-xl text-primary md:text-3xl lg:text-4xl"
-                  style={{ color: "hsl(var(--gold))" }}
+                  style={{ color: "hsl(var(--gold))", marginRight: "-0.22em" }}
                 >
                   {showTopGold ? LINE1 : LINE3}
                 </motion.p>
@@ -233,7 +233,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                   className="font-bebas uppercase text-3xl tracking-[0.42em] md:text-5xl"
-                  style={{ color: "hsl(var(--gold))" }}
+                  style={{ color: "hsl(var(--gold))", marginRight: "-0.42em" }}
                 >
                   {LINE5}
                 </motion.p>
@@ -251,6 +251,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                   className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
+                  style={{ marginRight: "-0.22em" }}
                 >
                   {LINE2}
                 </motion.p>
@@ -263,6 +264,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                   className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
+                  style={{ marginRight: "-0.22em" }}
                 >
                   {LINE4}
                 </motion.p>

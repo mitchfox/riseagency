@@ -72,8 +72,11 @@ const fragmentShader = `
   void main() {
     // Sample depth (RGB or grayscale) and derive a 0..1 mask.
     float depth = dot(texture2D(uDepth, vUv).rgb, vec3(0.299, 0.587, 0.114));
-    // Subtle parallax: stronger on near features, weaker on far ones.
-    float parallaxStrength = mix(0.028, 0.065, depth);
+    // Subtle parallax — keep this small so the figure only LEANS on
+    // the spot rather than smearing across the canvas. Larger values
+    // sample colour from far outside the silhouette and cause heavy
+    // visual blur / shirt expansion.
+    float parallaxStrength = mix(0.006, 0.014, depth);
     vec2 offset = (uTarget - vec2(0.5)) * parallaxStrength;
     vec2 sampleUV = vUv - offset;
 
@@ -106,6 +109,14 @@ const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
   const [colorMap, depthMap, roughMap, alphaMap] = [maps[0], maps[1], maps[2], maps[3]];
   colorMap.colorSpace = THREE.SRGBColorSpace;
   if (alphaMap) alphaMap.colorSpace = THREE.NoColorSpace;
+  // Linear filtering keeps the parallax sample smooth without the
+  // hard pixel snap that read as "blur" at higher offsets.
+  [colorMap, depthMap, roughMap, alphaMap].forEach((m) => {
+    if (!m) return;
+    m.minFilter = THREE.LinearFilter;
+    m.magFilter = THREE.LinearFilter;
+    m.generateMipmaps = false;
+  });
 
   const matRef = useRef<THREE.ShaderMaterial>(null);
 
@@ -128,11 +139,12 @@ const PlayerMesh = ({ variant }: { variant: Player3DVariant }) => {
   useFrame((state) => {
     if (!matRef.current) return;
     const t = state.clock.getElapsedTime();
-    // Lissajous-style virtual cursor — keeps the parallax target
-    // gliding through a small region around the centre so the
-    // figure appears to bend / breathe.
-    const cx = 0.5 + Math.sin(t * 0.55) * 0.42 + Math.sin(t * 0.23) * 0.12;
-    const cy = 0.5 + Math.cos(t * 0.43) * 0.34 + Math.cos(t * 0.19) * 0.10;
+    // Virtual cursor stays inside [0,1] and only drifts a tiny amount
+    // around the centre. Result: the player appears to lean very
+    // slightly forward / back on the spot — no smearing, no shirt
+    // expansion, no jitter.
+    const cx = 0.5 + Math.sin(t * 0.45) * 0.18 + Math.sin(t * 0.21) * 0.05;
+    const cy = 0.5 + Math.cos(t * 0.37) * 0.14 + Math.cos(t * 0.17) * 0.04;
     matRef.current.uniforms.uTarget.value.set(cx, cy);
     matRef.current.uniforms.uTime.value = t;
   });
