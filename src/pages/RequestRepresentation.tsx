@@ -814,7 +814,7 @@ const RequestRepresentation = () => {
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
                               </div>
                               <div>
-                                <p className="break-words hyphens-auto font-bebas text-[clamp(0.85rem,3.6vw,1.125rem)] uppercase leading-[1.05] tracking-[0.08em] md:text-[clamp(1rem,2.4vw,1.5rem)] md:tracking-[0.1em] lg:text-[clamp(1.1rem,2vw,1.875rem)]">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
+                                <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
                                   <p className="mx-auto mt-1.5 max-w-[9.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">{formatCardSubtitle(card.key, t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback))}</p>
                               </div>
                             </div>
