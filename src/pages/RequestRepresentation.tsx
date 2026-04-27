@@ -86,10 +86,21 @@ const CARD_META: CardMeta[] = [
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
 ];
 
-const GROUP_LABELS: Record<GroupKey, string> = {
-  who: "Who We Select",
-  how: "How We Work",
-  terms: "What Are The Terms",
+const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
+  who:   { key: "representation.who_we_select",      fallback: "Who We Select" },
+  how:   { key: "representation.how_we_work",        fallback: "How We Work" },
+  terms: { key: "representation.what_are_the_terms", fallback: "What Are The Terms" },
+};
+
+const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+  scouting:     { key: "representation.scouting",     fallback: "Scouting" },
+  expectations: { key: "representation.expectations", fallback: "Expectations" },
+  performance:  { key: "representation.performance",  fallback: "Performance" },
+  network:      { key: "representation.club_network", fallback: "Club Network" },
+  brand:        { key: "representation.brand",        fallback: "Brand" },
+  fees:         { key: "representation.fees",         fallback: "Fees" },
+  agreement:    { key: "representation.agreement",    fallback: "Agreement" },
+  faqs:         { key: "representation.faqs",         fallback: "FAQs" },
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
@@ -533,15 +544,15 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <motion.h1
-                          initial={{ opacity: 0, scale: 0.96 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.8, delay: 0.15 }}
-                          className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
-                          style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
-                        >
-                          Representation
-                        </motion.h1>
+                         <motion.h1
+                           initial={{ opacity: 0, scale: 0.96 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           transition={{ duration: 0.8, delay: 0.15 }}
+                           className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                           style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
+                         >
+                           {t("representation.representation", "Representation")}
+                         </motion.h1>
                         <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
@@ -692,13 +703,13 @@ const RequestRepresentation = () => {
                   <RiseLogoShine className="h-14 md:h-20" />
                   {/* Title with framing rules. Tracking + responsive
                       sizing keep it inside a 360px viewport. */}
-                  <div className="relative flex w-full items-center gap-2 md:gap-4">
-                    <span className="h-px flex-1 bg-primary/45" />
-                    <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.18em] text-foreground sm:text-3xl md:text-6xl md:tracking-[0.24em] lg:text-7xl">
-                      Representation
-                    </h1>
-                    <span className="h-px flex-1 bg-primary/45" />
-                  </div>
+                   <div className="relative flex w-full items-center gap-2 md:gap-4">
+                     <span className="h-px flex-1 bg-primary/45" />
+                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-foreground sm:text-3xl md:text-5xl md:tracking-[0.16em] lg:text-6xl lg:tracking-[0.18em]">
+                       {t("representation.representation", "Representation")}
+                     </h1>
+                     <span className="h-px flex-1 bg-primary/45" />
+                   </div>
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
@@ -728,7 +739,7 @@ const RequestRepresentation = () => {
                     className="scroll-mt-[88px] md:scroll-mt-[96px]"
                     style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
                   >
-                    <SectionDivider label={GROUP_LABELS[g]} />
+                    <SectionDivider label={t(GROUP_LABELS[g].key, GROUP_LABELS[g].fallback)} />
                     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:gap-5">
                       {cards.map((card, index) => {
                         const Icon = card.icon;
@@ -751,7 +762,7 @@ const RequestRepresentation = () => {
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
                               </div>
                               <div>
-                                <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{card.title}</p>
+                                <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
                               </div>
                             </div>
@@ -799,7 +810,7 @@ const RequestRepresentation = () => {
                 )}
                 <div>
                   <SectionSliderWheel
-                    sections={groupSiblings.map((c) => ({ key: c.key, label: c.title }))}
+                    sections={groupSiblings.map((c) => ({ key: c.key, label: t(CARD_TITLE_KEYS[c.key].key, CARD_TITLE_KEYS[c.key].fallback) }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
                     onChange={(k) => { setActiveCard(k as CardKey); setScoutingPosition(null); setPerformanceSub(null); }}
                   />

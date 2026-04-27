@@ -84,10 +84,13 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
-  // Use the body font (Inter / system) for the intro lines so there is
-  // never a font-swap reflow. Bebas Neue's tracked, centred lines were
-  // visibly snapping in from the right when the web font finished
-  // loading — using a font that is always available avoids that.
+  // Use a pure system-ui font stack for the intro lines so there is
+  // absolutely never a font-swap reflow. Even Inter (the body font)
+  // arrived after first paint and shifted the centred, letter-spaced
+  // lines visibly from the side. system-ui is always immediately
+  // available so the text is stable from frame zero.
+  const SYSTEM_FONT_STACK =
+    'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
   useEffect(() => {
     preloadPlayer3DVariant("two");
@@ -195,8 +198,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-primary md:text-2xl lg:text-3xl"
-                  style={{ color: "hsl(var(--gold))" }}
+                  className="font-semibold uppercase tracking-[0.18em] text-lg text-primary md:text-2xl lg:text-3xl"
+                  style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
                 >
                   {showTopGold ? LINE1 : LINE3}
                 </motion.p>
@@ -208,8 +211,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-sans font-semibold uppercase tracking-[0.32em] text-2xl md:text-4xl"
-                  style={{ color: "hsl(var(--gold))" }}
+                  className="font-semibold uppercase tracking-[0.32em] text-2xl md:text-4xl"
+                  style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
                 >
                   {LINE5}
                 </motion.p>
@@ -226,7 +229,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
+                  className="font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
+                  style={{ fontFamily: SYSTEM_FONT_STACK }}
                 >
                   {LINE2}
                 </motion.p>
@@ -238,7 +242,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
+                  className="font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
+                  style={{ fontFamily: SYSTEM_FONT_STACK }}
                 >
                   {LINE4}
                 </motion.p>
