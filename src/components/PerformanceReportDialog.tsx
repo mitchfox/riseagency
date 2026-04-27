@@ -27,6 +27,7 @@ import { getReportLanguage, getReportLocale, getTranslatedActionField, getTransl
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 import { hasPlayableClip } from "@/lib/clipVideoUtils";
 import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinute = (minute: number | null | undefined): string => {
@@ -689,24 +690,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
         <div className="p-3 md:p-6 overflow-x-hidden">
           {loading ? (
-            <div className="space-y-6 animate-pulse">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i}>
-                    <div className="h-4 w-16 bg-muted rounded mb-2"></div>
-                    <div className="h-6 w-24 bg-muted rounded"></div>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-accent/20 rounded-lg">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="text-center">
-                    <div className="h-4 w-16 bg-muted rounded mx-auto mb-2"></div>
-                    <div className="h-8 w-20 bg-muted rounded mx-auto"></div>
-                  </div>
-                ))}
-              </div>
-              <div className="h-40 bg-muted rounded"></div>
+            <div className="relative min-h-[68vh] overflow-hidden rounded-lg bg-background">
+              <ShaderAnimation />
             </div>
           ) : !analysis ? (
             <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
