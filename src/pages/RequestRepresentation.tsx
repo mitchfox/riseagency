@@ -504,6 +504,7 @@ const RequestRepresentation = () => {
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex w-full flex-col items-center"
+                style={{ paddingLeft: "10px" }}
               >
                 <RiseLogoShine className="h-12 md:h-16" />
               </motion.div>
