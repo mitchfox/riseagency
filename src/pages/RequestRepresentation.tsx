@@ -86,10 +86,21 @@ const CARD_META: CardMeta[] = [
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
 ];
 
-const GROUP_LABELS: Record<GroupKey, string> = {
-  who: "Who We Select",
-  how: "How We Work",
-  terms: "What Are The Terms",
+const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
+  who:   { key: "representation.who_we_select",      fallback: "Who We Select" },
+  how:   { key: "representation.how_we_work",        fallback: "How We Work" },
+  terms: { key: "representation.what_are_the_terms", fallback: "What Are The Terms" },
+};
+
+const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+  scouting:     { key: "representation.scouting",     fallback: "Scouting" },
+  expectations: { key: "representation.expectations", fallback: "Expectations" },
+  performance:  { key: "representation.performance",  fallback: "Performance" },
+  network:      { key: "representation.club_network", fallback: "Club Network" },
+  brand:        { key: "representation.brand",        fallback: "Brand" },
+  fees:         { key: "representation.fees",         fallback: "Fees" },
+  agreement:    { key: "representation.agreement",    fallback: "Agreement" },
+  faqs:         { key: "representation.faqs",         fallback: "FAQs" },
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
@@ -728,7 +739,7 @@ const RequestRepresentation = () => {
                     className="scroll-mt-[88px] md:scroll-mt-[96px]"
                     style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
                   >
-                    <SectionDivider label={GROUP_LABELS[g]} />
+                    <SectionDivider label={t(GROUP_LABELS[g].key, GROUP_LABELS[g].fallback)} />
                     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:gap-5">
                       {cards.map((card, index) => {
                         const Icon = card.icon;
@@ -751,7 +762,7 @@ const RequestRepresentation = () => {
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
                               </div>
                               <div>
-                                <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{card.title}</p>
+                                <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
                               </div>
                             </div>
