@@ -98,6 +98,9 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
   useEffect(() => {
     preloadPlayer3DVariant("two");
     preloadPlayer3DVariant("one");
+    // Tell the audio layer the cinematic has begun so it can attempt
+    // playback (and arm a one-shot gesture unlock for mobile).
+    try { window.dispatchEvent(new Event("rep-intro-start")); } catch {}
   }, []);
 
   const finishIntro = useCallback(() => {
