@@ -1101,7 +1101,7 @@ const DetailView = ({
 
               {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
-                <div className="h-[420px] md:h-[560px] lg:h-[640px]">
+                <div className="h-[640px] md:h-[760px] lg:h-[860px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
               </div>
