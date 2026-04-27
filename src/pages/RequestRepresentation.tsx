@@ -123,6 +123,12 @@ const formatCardSubtitle = (key: CardKey, text: string) => {
   return text;
 };
 
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+};
+
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
 
 /** Three-letter language label shown next to the map selector flag. */
@@ -421,12 +427,6 @@ const RequestRepresentation = () => {
   const inScoutingTop = activeCard === "scouting" && scoutingPosition === null;
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  };
 
   const openCard = (card: CardKey) => {
     scrollToTop();
