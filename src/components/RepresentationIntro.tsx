@@ -84,10 +84,40 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
+  // Block the line sequence until Bebas Neue is loaded so the centred,
+  // wide-tracked text does not reflow from a fallback font (which made
+  // each line appear shifted to the right before snapping into place).
+  const [fontReady, setFontReady] = useState(false);
 
   useEffect(() => {
     preloadPlayer3DVariant("two");
     preloadPlayer3DVariant("one");
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const markReady = () => { if (!cancelled) setFontReady(true); };
+
+    // Safety net: never wait more than 1.5s for the font.
+    const safety = setTimeout(markReady, 1500);
+
+    const fonts: any = (document as any).fonts;
+    if (fonts && typeof fonts.load === "function") {
+      Promise.all([
+        fonts.load('1em "Bebas Neue"'),
+        fonts.load('700 1em "Bebas Neue"'),
+      ])
+        .then(() => fonts.ready)
+        .then(markReady)
+        .catch(markReady);
+    } else {
+      markReady();
+    }
+
+    return () => {
+      cancelled = true;
+      clearTimeout(safety);
+    };
   }, []);
 
   const finishIntro = useCallback(() => {
@@ -106,10 +136,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
 
   // Drive phase transitions.
   useEffect(() => {
+    if (!fontReady) return;
     if (phase === "done") { finishIntro(); return; }
     const t = setTimeout(() => setPhase(NEXT[phase]), PHASE_DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase, finishIntro]);
+  }, [phase, finishIntro, fontReady]);
 
   if (phase === "done") return null;
 
