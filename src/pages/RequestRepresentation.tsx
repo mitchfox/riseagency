@@ -16,7 +16,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
-import { RepresentationEntryPulse } from "@/components/RepresentationEntryPulse";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { RepDobPicker } from "@/components/RepDobPicker";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
@@ -417,6 +416,19 @@ const RequestRepresentation = () => {
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
+  const openCard = (card: CardKey) => {
+    scrollToTop();
+    setActiveCard(card);
+    setScoutingPosition(null);
+    setPerformanceSub(null);
+  };
+
   // Recommended scouting position (derived from the position chosen on the
   // home rectangle). NOTE: we no longer auto-open it — Scouting must lead
   // with the network intro + map, then the position breakdown.
@@ -436,12 +448,9 @@ const RequestRepresentation = () => {
           rolls into the Omotoye loop. */}
       <RepresentationAudio />
 
-      {/* Route entry pulse, then cinematic intro. */}
+      {/* Cinematic intro. It now ends on the shader animation before revealing the page. */}
       <AnimatePresence>
-        {!pulseDone && (
-          <RepresentationEntryPulse key="entry-pulse" onComplete={() => setPulseDone(true)} />
-        )}
-        {pulseDone && !introDone && (
+        {!introDone && (
           <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
         )}
       </AnimatePresence>
@@ -775,7 +784,7 @@ const RequestRepresentation = () => {
                             whileHover={{ scale: 1.03, y: -3 }}
                             whileTap={{ scale: 0.97 }}
                             transition={{ delay: index * 0.04, duration: 0.42 }}
-                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); }}
+                             onClick={() => openCard(card.key)}
                             className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
                             style={solidBlackSectionStyle}
                           >
@@ -786,7 +795,7 @@ const RequestRepresentation = () => {
                               </div>
                               <div>
                                 <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
-                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback)}</p>
+                                  <p className="mx-auto mt-1.5 max-w-[9.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">{formatCardSubtitle(card.key, t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback))}</p>
                               </div>
                             </div>
                           </motion.button>
@@ -818,7 +827,8 @@ const RequestRepresentation = () => {
                         // top-level group hub.
                         if (performanceSub) { setPerformanceSub(null); return; }
                         if (scoutingPosition) { setScoutingPosition(null); return; }
-                        setActiveCard(null);
+                         scrollToTop();
+                         setActiveCard(null);
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
                     >
@@ -835,7 +845,7 @@ const RequestRepresentation = () => {
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: t(CARD_TITLE_KEYS[c.key].key, CARD_TITLE_KEYS[c.key].fallback) }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
-                    onChange={(k) => { setActiveCard(k as CardKey); setScoutingPosition(null); setPerformanceSub(null); }}
+                    onChange={(k) => openCard(k as CardKey)}
                   />
                 </div>
               </div>
