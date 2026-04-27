@@ -632,10 +632,10 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                        <p className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
                           {t("representation.choose_position", "Choose your position")}
                         </p>
-                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                        <p className="italic text-sm leading-snug text-foreground/85 md:text-base">
                           {t(
                             "representation.personalised_breakdown",
                             "For a more personalised breakdown of what representation will look like for you."
@@ -657,10 +657,10 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
+                        <p className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
                           {t("representation.dob_heading", "Date of birth")}
                         </p>
-                        <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
+                        <p className="italic text-sm leading-snug text-foreground/85 md:text-base">
                           {t(
                             "representation.personalised_breakdown",
                             "For a more personalised breakdown of what representation will look like for you."
