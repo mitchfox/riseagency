@@ -692,13 +692,13 @@ const RequestRepresentation = () => {
                   <RiseLogoShine className="h-14 md:h-20" />
                   {/* Title with framing rules. Tracking + responsive
                       sizing keep it inside a 360px viewport. */}
-                  <div className="relative flex w-full items-center gap-2 md:gap-4">
-                    <span className="h-px flex-1 bg-primary/45" />
-                    <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.18em] text-foreground sm:text-3xl md:text-6xl md:tracking-[0.24em] lg:text-7xl">
-                      Representation
-                    </h1>
-                    <span className="h-px flex-1 bg-primary/45" />
-                  </div>
+                   <div className="relative flex w-full items-center gap-2 md:gap-4">
+                     <span className="h-px flex-1 bg-primary/45" />
+                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-foreground sm:text-3xl md:text-5xl md:tracking-[0.16em] lg:text-6xl lg:tracking-[0.18em]">
+                       {t("representation.representation", "Representation")}
+                     </h1>
+                     <span className="h-px flex-1 bg-primary/45" />
+                   </div>
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
