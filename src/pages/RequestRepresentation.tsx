@@ -365,6 +365,10 @@ const RequestRepresentation = () => {
   // the cinematic text sequence is allowed to mount. Intro plays on
   // every fresh page mount so it's never silently skipped.
   const [introDone, setIntroDone] = useState(false);
+  /** Becomes true the moment the intro reaches its shader phase, so the
+   *  age-group screen mounts behind the shader and is ready to be
+   *  revealed without any blank gap. */
+  const [introShaderStarted, setIntroShaderStarted] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
   const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
@@ -461,12 +465,16 @@ const RequestRepresentation = () => {
       {/* Cinematic intro. It now ends on the shader animation before revealing the page. */}
       <AnimatePresence>
         {!introDone && (
-          <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
+          <RepresentationIntro
+            key="intro"
+            onComplete={() => setIntroDone(true)}
+            onShaderStart={() => setIntroShaderStarted(true)}
+          />
         )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {introDone && !ageGroup ? (
+        {(introDone || introShaderStarted) && !ageGroup ? (
           /* ============ AGE GROUP SCREEN ============ */
           <motion.section
             key="age"
