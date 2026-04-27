@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
@@ -181,74 +181,32 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
         <IntroPlayerLayer variant="one" />
       </motion.div>
 
-      {/* Lines stack: 2 fixed slots so the second line can appear
-          *underneath* the first without pushing it. The lines use the
-          body font (font-sans) instead of Bebas Neue because Bebas was
-          loading after first paint and visibly shifting the centred,
-          tracked text from the right. */}
+      {/* Lines stack: no AnimatePresence remounts between pairs. The same
+          two DOM slots stay mounted so lines 3-5 cannot inherit a side
+          entry/reflow from a new text node or delayed font measurement. */}
       {!inLogo && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-[28vh] text-center md:gap-6 md:pb-[22vh]">
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
-            <AnimatePresence>
-              {(showTopGold || showTopGold2) && (
-                <motion.p
-                  key={showTopGold ? "top-1" : "top-3"}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-semibold uppercase tracking-[0.18em] text-lg text-primary md:text-2xl lg:text-3xl"
-                  style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
-                >
-                  {showTopGold ? LINE1 : LINE3}
-                </motion.p>
-              )}
-              {showFifth && (
-                <motion.p
-                  key="line5"
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-semibold uppercase tracking-[0.32em] text-2xl md:text-4xl"
-                  style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
-                >
-                  {LINE5}
-                </motion.p>
-              )}
-            </AnimatePresence>
+            <motion.p
+              animate={{ opacity: (showTopGold || showTopGold2 || showFifth) ? 1 : 0, y: (showTopGold || showTopGold2 || showFifth) ? 0 : 14 }}
+              transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+              className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full font-semibold uppercase`}
+              style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
+            >
+              {showFifth ? LINE5 : showTopGold ? LINE1 : LINE3}
+            </motion.p>
           </div>
           {/* BOTTOM slot */}
           <div className="flex h-12 w-full items-start justify-center md:h-16">
-            <AnimatePresence>
-              {showSecond && (
-                <motion.p
-                  key="line2"
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
-                  style={{ fontFamily: SYSTEM_FONT_STACK }}
-                >
-                  {LINE2}
-                </motion.p>
-              )}
-              {showFourth && (
-                <motion.p
-                  key="line4"
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
-                  style={{ fontFamily: SYSTEM_FONT_STACK }}
-                >
-                  {LINE4}
-                </motion.p>
-              )}
-            </AnimatePresence>
+            <motion.p
+              animate={{ opacity: (showSecond || showFourth) ? 1 : 0, y: (showSecond || showFourth) ? 0 : 14 }}
+              transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-full font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
+              style={{ fontFamily: SYSTEM_FONT_STACK }}
+            >
+              {showSecond ? LINE2 : LINE4}
+            </motion.p>
           </div>
         </div>
       )}

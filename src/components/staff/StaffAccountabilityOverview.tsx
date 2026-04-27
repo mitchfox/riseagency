@@ -77,6 +77,8 @@ function countCompletions(log: string[] | null, since: Date): number {
   }).length;
 }
 
+const hasCompletionSince = (log: string[] | null | undefined, since: Date): boolean => countCompletions(log || null, since) > 0;
+
 interface ScheduleTaskItem {
   id: string;
   post_type: string;
@@ -86,6 +88,9 @@ interface ScheduleTaskItem {
   status: string | null;
   platform_format: string | null;
   image_url: string | null;
+  last_completed_at?: string | null;
+  completion_log?: string[] | null;
+  updated_at?: string | null;
 }
 
 type TaskFeedItem =
@@ -192,7 +197,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }, { data: fixturesData }, { data: representedPlayers }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at, last_completed_at, completion_log'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
       supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
       supabase.from('players').select('name, club').in('representation_status', ['represented', 'mandated']),
@@ -293,18 +298,18 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           title: item.post_type,
           description: null,
           assigned_to: item.owner_id ? [item.owner_id] : [],
-          completed: (item.status || "").toLowerCase() === "posted",
+          completed: hasCompletionSince(item.completion_log, weekStart),
           priority: "medium",
           category: null,
           display_order: 0,
           created_at: "",
           updated_at: "",
           deadline: null,
-          is_recurring: false,
-          recurrence_label: null,
-          last_completed_at: null,
+          is_recurring: true,
+          recurrence_label: "Weekly",
+          last_completed_at: item.last_completed_at || null,
           image_url: item.image_url,
-          completion_log: null,
+          completion_log: item.completion_log || null,
           scheduleItem: item,
         })),
       ]
@@ -405,13 +410,16 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   const handleMarkScheduleDone = async (scheduleId: string) => {
     const realId = scheduleId.replace("schedule-", "");
-    const { error } = await supabase.from('marketing_schedule_items').update({ status: 'posted' }).eq('id', realId);
+    const item = scheduleItems.find(s => s.id === realId);
+    const nowIso = new Date().toISOString();
+    const currentLog = item?.completion_log || [];
+    const updates = { status: 'posted', last_completed_at: nowIso, completion_log: [...currentLog, nowIso] };
+    const { error } = await supabase.from('marketing_schedule_items').update(updates).eq('id', realId);
     if (error) toast.error("Failed to mark as done");
     else {
-      setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, status: 'posted' } : s));
+      setScheduleItems(prev => prev.map(s => s.id === realId ? { ...s, ...updates } : s));
       toast.success("Marked as done");
       const memberName = staffAliases[activeMember?.id || ''] || activeMember?.full_name || activeMember?.email?.split('@')[0] || 'Someone';
-      const item = scheduleItems.find(s => s.id === realId);
       supabase.from('staff_notification_events').insert({
         event_type: 'schedule_item_completed',
         title: `${memberName} completed a schedule item`,
@@ -1042,7 +1050,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
               const isCurrent = m.id === userId;
               const memberTaskCount =
                 tasks.filter(t => t.assigned_to?.includes(m.id) && !t.completed).length +
-                scheduleItems.filter(s => s.owner_id === m.id && (s.status || "").toLowerCase() !== "posted").length;
+                scheduleItems.filter(s => s.owner_id === m.id && !hasCompletionSince(s.completion_log, weekStart)).length;
               const displayName = getDisplayName(m);
               return (
                 <button

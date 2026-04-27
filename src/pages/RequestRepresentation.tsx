@@ -54,7 +54,7 @@ const INTRO_SEEN_KEY = "rep_intro_seen_v1";
 type GroupKey = "who" | "how" | "terms";
 type CardKey =
   | "scouting" | "expectations"
-  | "performance" | "network" | "brand"
+  | "performance" | "network" | "brand" | "negotiation"
   | "fees" | "agreement" | "faqs";
 type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology";
 
@@ -62,7 +62,7 @@ const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-rona
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
 const MISSION_BIO =
-  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe and Africa informing recruitment and placement through evidence, standards and proven pathways - our stars share our ethic, mindset and attention to detail to performance.";
+  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
 
 interface CardMeta {
   key: CardKey;
@@ -74,12 +74,13 @@ interface CardMeta {
 
 const CARD_META: CardMeta[] = [
   // Who We Select
-  { key: "scouting",     title: "Scouting",      icon: Search,        subtitle: "How we assess fit by position",     group: "who" },
+  { key: "scouting",     title: "Scouting",      icon: Search,        subtitle: "How We Assess Star Potential",     group: "who" },
   { key: "expectations", title: "Expectations",  icon: Target,        subtitle: "Standards on and off the pitch",    group: "who" },
   // How We Work
-  { key: "performance",  title: "Performance",   icon: Gauge,         subtitle: "How we measure & develop your game", group: "how" },
+  { key: "performance",  title: "Performance",   icon: Gauge,         subtitle: "How We Ensure On-Pitch Success", group: "how" },
   { key: "network",      title: "Club Network",  icon: Users,         subtitle: "Introductions with proper context", group: "how" },
   { key: "brand",        title: "Brand",         icon: Sparkles,      subtitle: "A sharper public-facing profile",   group: "how" },
+  { key: "negotiation",  title: "Negotiation",   icon: FileText,      subtitle: "Short and long-term deal strategy", group: "how" },
   // What Are The Terms
   { key: "fees",         title: "Fees",          icon: PoundSterling, subtitle: "Clear from the start",              group: "terms" },
   { key: "agreement",    title: "Agreement",     icon: FileText,      subtitle: "What the relationship covers",      group: "terms" },
@@ -98,9 +99,22 @@ const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   performance:  { key: "representation.performance",  fallback: "Performance" },
   network:      { key: "representation.club_network", fallback: "Club Network" },
   brand:        { key: "representation.brand",        fallback: "Brand" },
+  negotiation:  { key: "representation.negotiation",  fallback: "Negotiation" },
   fees:         { key: "representation.fees",         fallback: "Fees" },
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
+};
+
+const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+  scouting:     { key: "representation.scouting_subtitle",     fallback: "How We Assess Star Potential" },
+  expectations: { key: "representation.expectations_subtitle", fallback: "Standards on and off the pitch" },
+  performance:  { key: "representation.performance_subtitle",  fallback: "How We Ensure On-Pitch Success" },
+  network:      { key: "representation.club_network_subtitle", fallback: "Introductions with proper context" },
+  brand:        { key: "representation.brand_subtitle",        fallback: "A sharper public-facing profile" },
+  negotiation:  { key: "representation.negotiation_subtitle",  fallback: "Short and long-term deal strategy" },
+  fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
+  agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
+  faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
@@ -179,6 +193,15 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
       "We tighten the way your football is shown across clips, reports and public materials.",
       "The goal is not hype. It is clarity, consistency and a more professional first impression.",
       "When the football is strong, the presentation should not let it down.",
+    ],
+  },
+  negotiation: {
+    eyebrow: "Short and long-term deal strategy",
+    points: [
+      "We prepare negotiations around the player's evidence, current value and realistic next step.",
+      "Short-term terms are handled with care so the immediate deal protects the player properly.",
+      "Long-term planning matters too, because the wrong clause or pathway can restrict the next move.",
+      "The aim is simple: better deals, clearer protection and decisions that support the player's career.",
     ],
   },
   fees: {
@@ -548,7 +571,7 @@ const RequestRepresentation = () => {
                            initial={{ opacity: 0, scale: 0.96 }}
                            animate={{ opacity: 1, scale: 1 }}
                            transition={{ duration: 0.8, delay: 0.15 }}
-                           className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                            className="max-w-full font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-primary sm:text-3xl md:text-4xl lg:text-4xl lg:tracking-[0.16em]"
                            style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                          >
                            {t("representation.representation", "Representation")}
@@ -705,7 +728,7 @@ const RequestRepresentation = () => {
                       sizing keep it inside a 360px viewport. */}
                    <div className="relative flex w-full items-center gap-2 md:gap-4">
                      <span className="h-px flex-1 bg-primary/45" />
-                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-foreground sm:text-3xl md:text-5xl md:tracking-[0.16em] lg:text-6xl lg:tracking-[0.18em]">
+                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.1em] text-foreground sm:text-3xl md:text-4xl md:tracking-[0.12em] lg:text-5xl lg:tracking-[0.14em]">
                        {t("representation.representation", "Representation")}
                      </h1>
                      <span className="h-px flex-1 bg-primary/45" />
@@ -722,7 +745,7 @@ const RequestRepresentation = () => {
                         overflowWrap: "normal",
                       }}
                     >
-                      {MISSION_BIO}
+                      {t("representation.mission_bio", MISSION_BIO)}
                     </p>
                   </div>
                 </div>
@@ -763,7 +786,7 @@ const RequestRepresentation = () => {
                               </div>
                               <div>
                                 <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
-                                <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
+                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback)}</p>
                               </div>
                             </div>
                           </motion.button>
@@ -887,6 +910,7 @@ const DetailView = ({
   recommendedScoutingPosition,
   onBack,
 }: DetailViewProps) => {
+  const { t } = useLanguage();
   const meta = CARD_META.find((c) => c.key === activeCard)!;
   const Icon = meta.icon;
   const content = (cardContent as any)[activeCard];
@@ -1004,7 +1028,7 @@ const DetailView = ({
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-6 md:pb-60 lg:px-16"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-        <TitlePlate icon={Icon} title={meta.title} eyebrow={content?.eyebrow ?? meta.subtitle} />
+        <TitlePlate icon={Icon} title={t(CARD_TITLE_KEYS[activeCard].key, CARD_TITLE_KEYS[activeCard].fallback)} eyebrow={content?.eyebrow ?? t(CARD_SUBTITLE_KEYS[activeCard].key, CARD_SUBTITLE_KEYS[activeCard].fallback)} />
 
         <div className="mt-5 space-y-3 md:mt-7">
           {/* FAQs */}

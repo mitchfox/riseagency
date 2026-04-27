@@ -2201,11 +2201,13 @@ export type Database = {
       }
       marketing_schedule_items: {
         Row: {
+          completion_log: string[] | null
           created_at: string | null
           day_of_week: string
           display_order: number | null
           id: string
           image_url: string | null
+          last_completed_at: string | null
           linked_draft_id: string | null
           notes: string | null
           owner_id: string | null
@@ -2216,11 +2218,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          completion_log?: string[] | null
           created_at?: string | null
           day_of_week: string
           display_order?: number | null
           id?: string
           image_url?: string | null
+          last_completed_at?: string | null
           linked_draft_id?: string | null
           notes?: string | null
           owner_id?: string | null
@@ -2231,11 +2235,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          completion_log?: string[] | null
           created_at?: string | null
           day_of_week?: string
           display_order?: number | null
           id?: string
           image_url?: string | null
+          last_completed_at?: string | null
           linked_draft_id?: string | null
           notes?: string | null
           owner_id?: string | null
