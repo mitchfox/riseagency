@@ -939,6 +939,7 @@ const SortablePointCard = ({
                             existingCrop={point.video_crops?.[url]}
                             clipNotes={matchingClip?.notes}
                             pointTitles={allPointTitles}
+                            analysisId={analysisId}
                             onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
                             onAnnotationSaved={(annotationId) => {
                               const currentIds = point.annotation_ids || {};
