@@ -74,10 +74,6 @@ const SharedContact = lazy(() => import("./pages/SharedContact"));
 const TransferReportView = lazy(() => import("./pages/TransferReportView"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
-// Loading fallback component
-import { PageLoading } from "@/components/LoadingSpinner";
-const PageLoader = () => <PageLoading />;
-
 const queryClient = new QueryClient();
 
 const SubdomainRouter = () => {
@@ -127,7 +123,7 @@ const App = () => {
               <PageTransition>
                 {(displayLocation) => (
                   <main>
-                    <Suspense fallback={<PageLoader />}>
+                    <Suspense fallback={null}>
                     <Routes location={displayLocation}>
                       <Route path="/" element={<Home />} />
                       {createLocalizedRoutes('/players', <PlayersPage />)}
