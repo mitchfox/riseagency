@@ -517,6 +517,7 @@ const RequestRepresentation = () => {
             <motion.div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-10"
+              style={{ transform: "translateY(4px)" }}
               initial={{ opacity: 0, scale: 1.03 }}
               animate={{ opacity: 0.92, scale: 1 }}
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
