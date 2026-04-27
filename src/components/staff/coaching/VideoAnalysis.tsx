@@ -2934,26 +2934,29 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         {/* Attach clip to report action dialog */}
         <Dialog open={showAttachDialog} onOpenChange={(open) => { setShowAttachDialog(open); if (!open) setShowActionsWithClips(false); }}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Attach Clip to Action</DialogTitle>
+              <DialogTitle>Attach Clip</DialogTitle>
             </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto space-y-4">
               {loadingAttachActions ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : linkedReportActions.length === 0 ? (
+              ) : linkedReportActions.length === 0 && linkedAnalysisPoints.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Paperclip className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No actions found on linked reports.</p>
-                  <p className="text-xs mt-1">Add actions to the performance report first.</p>
+                  <p className="text-sm">Nothing to attach to yet.</p>
+                  <p className="text-xs mt-1">Link this video analysis to a report or an analysis from the Link / Export button first.</p>
                 </div>
-              ) : (() => {
+              ) : (
+                <>
+                {linkedReportActions.length > 0 && (() => {
                 const actionsWithoutClip = linkedReportActions.filter(a => !a.video_url);
                 const actionsWithClip = linkedReportActions.filter(a => !!a.video_url);
                 return (
-                  <>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Performance Report Actions</p>
                     {/* Actions without clips - shown prominently */}
                     <button
                       onClick={() => {
@@ -3025,9 +3028,38 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                         ))}
                       </div>
                     )}
-                  </>
+                  </div>
                 );
-              })()}
+                })()}
+                {linkedAnalysisPoints.length > 0 && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Analysis Points</p>
+                    <div className="space-y-1">
+                      {linkedAnalysisPoints.map((p) => (
+                        <button
+                          key={`${p.analysisId}-${p.pointIndex}`}
+                          onClick={() => handleAttachClipToAnalysisPoint(p.analysisId, p.pointIndex)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                        >
+                          <span className="text-xs font-mono text-muted-foreground shrink-0">#{p.pointIndex + 1}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{p.pointTitle}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              <span>{p.analysisType.replace('-', ' ')}</span>
+                              <span className="ml-2 opacity-60">{p.analysisTitle}</span>
+                              {p.videoCount > 0 && (
+                                <span className="ml-1.5 text-amber-500/80">· {p.videoCount} clip{p.videoCount !== 1 ? 's' : ''}</span>
+                              )}
+                            </p>
+                          </div>
+                          <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
