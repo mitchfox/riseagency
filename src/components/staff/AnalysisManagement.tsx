@@ -869,7 +869,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       if (insertErr) throw insertErr;
 
       toast.success("Analysis duplicated");
-      logActivity({ action: 'duplicated', entityType: 'analysis', entityId: inserted?.id });
+      logActivity({ action: 'created', entityType: 'analysis', entityId: inserted?.id, details: { duplicated_from: id } });
       fetchAnalyses();
     } catch (error: any) {
       toast.error(error.message || "Failed to duplicate analysis");
