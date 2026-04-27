@@ -1104,7 +1104,8 @@ const Dashboard = () => {
             away_team,
             home_score,
             away_score,
-            category
+            category,
+            fixture_id
           )
         `)
         .eq("player_id", playerData.id)
@@ -1124,29 +1125,46 @@ const Dashboard = () => {
           if (taggedAnalysis.category === "training") return;
 
           const matchDate = taggedAnalysis.match_date;
+          const taggedFixtureId = taggedAnalysis.fixture_id;
           const homeTeam = taggedAnalysis.home_team?.toLowerCase()?.trim();
           const awayTeam = taggedAnalysis.away_team?.toLowerCase()?.trim();
 
-          updatedAnalyses.forEach((pa, idx) => {
+          // Build matching candidate rows. Prefer fixture_id (1-to-1 with a
+          // specific fixture); fall back to date+opponent only when neither
+          // side has a fixture_id. This guarantees that two analyses against
+          // the same opponent on different dates (e.g. two RFC Liege fixtures)
+          // attach to their own performance reports rather than collapsing
+          // into one.
+          const matches: number[] = [];
+          updatedAnalyses.forEach((pa: any, idx) => {
+            if (taggedFixtureId && pa.fixture_id) {
+              if (taggedFixtureId === pa.fixture_id) matches.push(idx);
+              return;
+            }
             const paOpponent = pa.opponent?.toLowerCase()?.trim();
             const paDate = pa.analysis_date;
-            
             const dateMatch = matchDate && paDate && matchDate === paDate;
             const opponentMatch = paOpponent && (paOpponent === homeTeam || paOpponent === awayTeam);
+            if (dateMatch && opponentMatch) matches.push(idx);
+          });
 
-            if (dateMatch && opponentMatch) {
-              // If no analysis_writer_data yet, set it directly
-              if (!updatedAnalyses[idx].analysis_writer_data) {
-                updatedAnalyses[idx].analysis_writer_data = taggedAnalysis;
-                updatedAnalyses[idx].analysis_writer_id = taggedAnalysis.id;
-              } else if (updatedAnalyses[idx].analysis_writer_data.analysis_type !== taggedAnalysis.analysis_type) {
-                // Different type (e.g. already has post-match, adding pre-match)
-                if (!updatedAnalyses[idx].tagged_analyses) {
-                  updatedAnalyses[idx].tagged_analyses = [];
-                }
-                updatedAnalyses[idx].tagged_analyses.push(taggedAnalysis);
-              }
-              // Skip if same type already linked (avoid duplicates)
+          matches.forEach(idx => {
+            const row: any = updatedAnalyses[idx];
+            const sameId = (a: any) => a && a.id === taggedAnalysis.id;
+            const writerHasIt = sameId(row.analysis_writer_data);
+            const taggedHasIt = (row.tagged_analyses || []).some(sameId);
+            if (writerHasIt || taggedHasIt) return; // exact same analysis already attached
+
+            if (!row.analysis_writer_data) {
+              row.analysis_writer_data = taggedAnalysis;
+              row.analysis_writer_id = taggedAnalysis.id;
+            } else {
+              // Always append additional analyses (same type or different).
+              // Previously the same-type case was silently dropped, which
+              // hid the second of two pre-match (or post-match) analyses
+              // against the same opponent.
+              if (!row.tagged_analyses) row.tagged_analyses = [];
+              row.tagged_analyses.push(taggedAnalysis);
             }
           });
         });

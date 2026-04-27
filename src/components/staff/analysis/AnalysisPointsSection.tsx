@@ -302,38 +302,54 @@ const VideoItem = ({
         return;
       }
 
-      // Check if the project row already exists. If so, update without
-      // overwriting user_id (RLS for INSERT requires user_id = auth.uid(),
-      // and we don't want to steal ownership from the original creator).
-      const { data: existing } = await supabase
+      // Atomically update if the row exists; otherwise insert. The previous
+      // select-then-insert approach was racy: two near-simultaneous saves
+      // (e.g. autosave + manual save) could both pass the `existing == null`
+      // check, both attempt INSERT, and the second would crash with
+      // "duplicate key value violates unique constraint annotation_projects_pkey".
+      const klipsPayload = JSON.parse(JSON.stringify(proj.klips));
+      const { data: updated, error: updateError } = await supabase
         .from("annotation_projects")
-        .select("id, user_id")
+        .update({
+          name: proj.name,
+          video_url: proj.videoUrl,
+          video_name: proj.videoName,
+          klips: klipsPayload,
+        })
         .eq("id", proj.id)
-        .maybeSingle();
+        .select("id");
+      if (updateError) throw updateError;
 
-      if (existing) {
-        const { error } = await supabase
-          .from("annotation_projects")
-          .update({
-            name: proj.name,
-            video_url: proj.videoUrl,
-            video_name: proj.videoName,
-            klips: JSON.parse(JSON.stringify(proj.klips)),
-          })
-          .eq("id", proj.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
+      if (!updated || updated.length === 0) {
+        // Row didn't exist yet — insert it. If a parallel save just inserted
+        // the same id (PK conflict 23505), fall back to a final update so the
+        // user never sees a duplicate-key error.
+        const { error: insertError } = await supabase
           .from("annotation_projects")
           .insert({
             id: proj.id,
             name: proj.name,
             video_url: proj.videoUrl,
             video_name: proj.videoName,
-            klips: JSON.parse(JSON.stringify(proj.klips)),
+            klips: klipsPayload,
             user_id: user.id,
           });
-        if (error) throw error;
+        if (insertError) {
+          if ((insertError as any).code === "23505") {
+            const { error: retryError } = await supabase
+              .from("annotation_projects")
+              .update({
+                name: proj.name,
+                video_url: proj.videoUrl,
+                video_name: proj.videoName,
+                klips: klipsPayload,
+              })
+              .eq("id", proj.id);
+            if (retryError) throw retryError;
+          } else {
+            throw insertError;
+          }
+        }
       }
 
       setAnnotationProject(proj);
