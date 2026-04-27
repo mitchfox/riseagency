@@ -92,8 +92,9 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
               className="h-16 md:h-20"
               style={{
                 animation:
-                  "logoFadeIn 0.4s ease-out forwards, logoPulse 0.3s ease-out 0.8s forwards, logoFadeOut 0.4s ease-out 1.3s forwards",
+                  "logoFadeIn 0.35s ease-out forwards, logoBreathe 1.4s ease-in-out 0.35s infinite, logoFadeOut 0.35s ease-out 1.7s forwards",
                 opacity: 0,
+                filter: "drop-shadow(0 0 18px hsl(var(--gold) / 0.55))",
               }}
             />
           </div>
@@ -111,16 +112,21 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           to { opacity: 0; }
         }
 
-        @keyframes pageStreak {
-          0%   { transform: translate(-50%, -50%) scaleX(0);    opacity: 0; }
-          20%  { opacity: 1; }
-          100% { transform: translate(-50%, -50%) scaleX(2200); opacity: 0; }
+        @keyframes shockRing {
+          0%   { transform: translate(-50%, -50%) scale(0.18); opacity: 0; }
+          15%  { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(14);   opacity: 0; }
         }
 
-        @keyframes pageRing {
-          0%   { transform: translate(-50%, -50%) scale(0.25); opacity: 0; }
-          30%  { opacity: 0.72; }
-          100% { transform: translate(-50%, -50%) scale(5.8);  opacity: 0; }
+        @keyframes shockGlow {
+          0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+          25%  { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+        }
+
+        @keyframes logoBreathe {
+          0%, 100% { transform: scale(1);    opacity: 0.92; }
+          50%      { transform: scale(1.08); opacity: 1; }
         }
 
         @keyframes riseSliderCover {
@@ -152,12 +158,6 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
             opacity: 1;
             transform: scale(1);
           }
-        }
-
-        @keyframes logoPulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-          100% { transform: scale(1); }
         }
 
         @keyframes logoFadeOut {
