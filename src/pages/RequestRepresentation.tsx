@@ -16,7 +16,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
-import { RepresentationEntryPulse } from "@/components/RepresentationEntryPulse";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { RepDobPicker } from "@/components/RepDobPicker";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
@@ -115,6 +114,19 @@ const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
   agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
+};
+
+const formatCardSubtitle = (key: CardKey, text: string) => {
+  if (key === "fees" && text.toLowerCase().trim() === "clear from the start") {
+    return "Clear from\nthe start";
+  }
+  return text;
+};
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
@@ -352,7 +364,6 @@ const RequestRepresentation = () => {
   // Representation always starts with the central pulse and wave before
   // the cinematic text sequence is allowed to mount. Intro plays on
   // every fresh page mount so it's never silently skipped.
-  const [pulseDone, setPulseDone] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
@@ -417,6 +428,17 @@ const RequestRepresentation = () => {
   // Slider only shows when inside a single section (not on hub, not on performance grid).
   const showSlider = !!activeCard;
 
+  const openCard = (card: CardKey) => {
+    scrollToTop();
+    setActiveCard(card);
+    setScoutingPosition(null);
+    setPerformanceSub(null);
+  };
+
+  useEffect(() => {
+    if (activeCard || scoutingPosition || performanceSub) scrollToTop();
+  }, [activeCard, scoutingPosition, performanceSub]);
+
   // Recommended scouting position (derived from the position chosen on the
   // home rectangle). NOTE: we no longer auto-open it — Scouting must lead
   // with the network intro + map, then the position breakdown.
@@ -436,12 +458,9 @@ const RequestRepresentation = () => {
           rolls into the Omotoye loop. */}
       <RepresentationAudio />
 
-      {/* Route entry pulse, then cinematic intro. */}
+      {/* Cinematic intro. It now ends on the shader animation before revealing the page. */}
       <AnimatePresence>
-        {!pulseDone && (
-          <RepresentationEntryPulse key="entry-pulse" onComplete={() => setPulseDone(true)} />
-        )}
-        {pulseDone && !introDone && (
+        {!introDone && (
           <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
         )}
       </AnimatePresence>
@@ -684,8 +703,9 @@ const RequestRepresentation = () => {
             setPerformanceSub={setPerformanceSub}
             recommendedScoutingPosition={recommendedScoutingPosition}
             onBack={() => {
-              if (performanceSub) { setPerformanceSub(null); return; }
-              if (scoutingPosition) { setScoutingPosition(null); return; }
+                        scrollToTop();
+                        if (performanceSub) { setPerformanceSub(null); return; }
+                        if (scoutingPosition) { setScoutingPosition(null); return; }
               setActiveCard(null);
             }}
           />
@@ -775,7 +795,7 @@ const RequestRepresentation = () => {
                             whileHover={{ scale: 1.03, y: -3 }}
                             whileTap={{ scale: 0.97 }}
                             transition={{ delay: index * 0.04, duration: 0.42 }}
-                            onClick={() => { setActiveCard(card.key); setScoutingPosition(null); setPerformanceSub(null); }}
+                             onClick={() => openCard(card.key)}
                             className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
                             style={solidBlackSectionStyle}
                           >
@@ -786,7 +806,7 @@ const RequestRepresentation = () => {
                               </div>
                               <div>
                                 <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
-                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback)}</p>
+                                  <p className="mx-auto mt-1.5 max-w-[9.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">{formatCardSubtitle(card.key, t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback))}</p>
                               </div>
                             </div>
                           </motion.button>
@@ -818,7 +838,8 @@ const RequestRepresentation = () => {
                         // top-level group hub.
                         if (performanceSub) { setPerformanceSub(null); return; }
                         if (scoutingPosition) { setScoutingPosition(null); return; }
-                        setActiveCard(null);
+                         scrollToTop();
+                         setActiveCard(null);
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10"
                     >
@@ -835,7 +856,7 @@ const RequestRepresentation = () => {
                   <SectionSliderWheel
                     sections={groupSiblings.map((c) => ({ key: c.key, label: t(CARD_TITLE_KEYS[c.key].key, CARD_TITLE_KEYS[c.key].fallback) }))}
                     activeKey={activeCard ?? groupSiblings[0].key}
-                    onChange={(k) => { setActiveCard(k as CardKey); setScoutingPosition(null); setPerformanceSub(null); }}
+                    onChange={(k) => openCard(k as CardKey)}
                   />
                 </div>
               </div>
@@ -1110,7 +1131,7 @@ const DetailView = ({
               {recommendedScoutingPosition ? (
                 <button
                   type="button"
-                  onClick={() => setScoutingPosition(recommendedScoutingPosition)}
+                  onClick={() => { scrollToTop(); setScoutingPosition(recommendedScoutingPosition); }}
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
@@ -1127,7 +1148,7 @@ const DetailView = ({
                       <button
                         key={pos}
                         type="button"
-                        onClick={() => setScoutingPosition(pos)}
+                        onClick={() => { scrollToTop(); setScoutingPosition(pos); }}
                         className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 transition-colors hover:border-primary/60 hover:bg-card/70 md:text-base"
                       >
                         {pos}
@@ -1162,7 +1183,7 @@ const DetailView = ({
                     <button
                       key={sub.key}
                       type="button"
-                      onClick={() => setPerformanceSub(sub.key)}
+                      onClick={() => { scrollToTop(); setPerformanceSub(sub.key); }}
                       className="group rounded-2xl border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
                     >
                       <div className="flex items-center gap-2">
@@ -1203,7 +1224,7 @@ const DetailView = ({
           )}
 
           {/* Generic content */}
-          {(activeCard === "brand" || activeCard === "fees" || activeCard === "agreement" || activeCard === "expectations") && (
+          {(activeCard === "brand" || activeCard === "fees" || activeCard === "agreement" || activeCard === "expectations" || activeCard === "negotiation") && (
             <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
               {content.points.map((point: string, index: number) => (
                 <motion.div

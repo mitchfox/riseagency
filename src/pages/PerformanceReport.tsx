@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { supabase } from "@/integrations/supabase/client";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 
 /**
  * Standalone shared performance report page (/performance-report/:slug).
@@ -81,7 +81,11 @@ const PerformanceReport = () => {
       </div>
 
       <main className="min-h-[60vh] flex items-center justify-center px-4 py-8">
-        {resolving && <LoadingSpinner />}
+        {resolving && (
+          <div className="relative h-[60vh] w-full overflow-hidden rounded-lg bg-background">
+            <ShaderAnimation />
+          </div>
+        )}
         {!resolving && notFound && (
           <div className="text-center text-muted-foreground py-16">
             <p className="text-lg font-semibold">Performance report not found</p>
