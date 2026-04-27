@@ -175,9 +175,9 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           tear down between phases. Opacity does the work. */}
       <motion.div
         key="pair1-3d"
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.55 }}
         animate={{ opacity: pair1Opacity }}
-        transition={{ duration: 0.9, ease: "easeInOut" }}
+        transition={{ duration: phase === "p1-fade" ? 0.9 : 0.2, ease: "easeInOut" }}
         className="pointer-events-none absolute inset-0"
       >
         <IntroPlayerLayer variant="two" />
