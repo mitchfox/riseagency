@@ -289,6 +289,18 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
   const activeMember = visibleStaff[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
   const memberScheduleItems = activeMember ? scheduleItems.filter(s => s.owner_id === activeMember.id) : [];
+
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const monthStart = startOfMonth(now);
+  const yearStart = startOfYear(now);
+  // Rolling one-month window: e.g. on 23 April this covers everything since 23 March.
+  const rollingMonthAgo = (() => {
+    const d = new Date(now);
+    d.setMonth(d.getMonth() - 1);
+    return d;
+  })();
+
   const memberTaskFeed: TaskFeedItem[] = activeMember
     ? [
         ...memberTasks.map((task) => ({ ...task, kind: "task" as const })),
@@ -314,17 +326,6 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         })),
       ]
     : [];
-
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const monthStart = startOfMonth(now);
-  const yearStart = startOfYear(now);
-  // Rolling one-month window: e.g. on 23 April this covers everything since 23 March.
-  const rollingMonthAgo = (() => {
-    const d = new Date(now);
-    d.setMonth(d.getMonth() - 1);
-    return d;
-  })();
 
   const weekCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
   const monthCount = memberTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, monthStart), 0);
