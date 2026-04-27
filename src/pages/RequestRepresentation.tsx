@@ -565,7 +565,7 @@ const RequestRepresentation = () => {
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex w-full flex-col items-center"
-                style={{ paddingLeft: "10px" }}
+                style={{ paddingLeft: "18px" }}
               >
                 <RiseLogoShine className="h-12 md:h-16" />
               </motion.div>
@@ -598,7 +598,7 @@ const RequestRepresentation = () => {
                            initial={{ opacity: 0, scale: 0.96 }}
                            animate={{ opacity: 1, scale: 1 }}
                            transition={{ duration: 0.8, delay: 0.15 }}
-                            className="max-w-full font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-primary sm:text-3xl md:text-4xl lg:text-4xl lg:tracking-[0.16em]"
+                            className="max-w-full break-words hyphens-auto font-bebas text-[clamp(1.25rem,7vw,2rem)] uppercase leading-[0.95] tracking-[0.1em] text-primary sm:text-3xl md:text-4xl md:tracking-[0.14em] lg:text-4xl lg:tracking-[0.16em]"
                            style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                          >
                            {t("representation.representation", "Representation")}
@@ -607,7 +607,7 @@ const RequestRepresentation = () => {
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
                             "representation.hero_subtitle",
-                            "Realise potential with our experienced intermediary & English Premier League star performance team."
+                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team."
                           )}
                         </p>
                         <motion.p
