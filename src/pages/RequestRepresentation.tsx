@@ -1224,7 +1224,7 @@ const DetailView = ({
           )}
 
           {/* Generic content */}
-          {(activeCard === "brand" || activeCard === "fees" || activeCard === "agreement" || activeCard === "expectations") && (
+          {(activeCard === "brand" || activeCard === "fees" || activeCard === "agreement" || activeCard === "expectations" || activeCard === "negotiation") && (
             <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
               {content.points.map((point: string, index: number) => (
                 <motion.div
