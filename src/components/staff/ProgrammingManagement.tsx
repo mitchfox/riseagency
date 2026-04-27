@@ -1585,6 +1585,16 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                             Edit
                           </Button>
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => duplicateProgram(program.id)}
+                            disabled={loading}
+                            title="Duplicate programme"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate
+                          </Button>
+                          <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => deleteProgram(program.id)}
