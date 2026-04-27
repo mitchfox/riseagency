@@ -195,6 +195,15 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
       "When the football is strong, the presentation should not let it down.",
     ],
   },
+  negotiation: {
+    eyebrow: "Short and long-term deal strategy",
+    points: [
+      "We prepare negotiations around the player's evidence, current value and realistic next step.",
+      "Short-term terms are handled with care so the immediate deal protects the player properly.",
+      "Long-term planning matters too, because the wrong clause or pathway can restrict the next move.",
+      "The aim is simple: better deals, clearer protection and decisions that support the player's career.",
+    ],
+  },
   fees: {
     eyebrow: "Simple and upfront",
     points: ageGroup === "under18"
@@ -562,7 +571,7 @@ const RequestRepresentation = () => {
                            initial={{ opacity: 0, scale: 0.96 }}
                            animate={{ opacity: 1, scale: 1 }}
                            transition={{ duration: 0.8, delay: 0.15 }}
-                           className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                            className="max-w-full font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-primary sm:text-3xl md:text-4xl lg:text-4xl lg:tracking-[0.16em]"
                            style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                          >
                            {t("representation.representation", "Representation")}
@@ -719,7 +728,7 @@ const RequestRepresentation = () => {
                       sizing keep it inside a 360px viewport. */}
                    <div className="relative flex w-full items-center gap-2 md:gap-4">
                      <span className="h-px flex-1 bg-primary/45" />
-                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-foreground sm:text-3xl md:text-5xl md:tracking-[0.16em] lg:text-6xl lg:tracking-[0.18em]">
+                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.1em] text-foreground sm:text-3xl md:text-4xl md:tracking-[0.12em] lg:text-5xl lg:tracking-[0.14em]">
                        {t("representation.representation", "Representation")}
                      </h1>
                      <span className="h-px flex-1 bg-primary/45" />
@@ -736,7 +745,7 @@ const RequestRepresentation = () => {
                         overflowWrap: "normal",
                       }}
                     >
-                      {MISSION_BIO}
+                      {t("representation.mission_bio", MISSION_BIO)}
                     </p>
                   </div>
                 </div>
@@ -777,7 +786,7 @@ const RequestRepresentation = () => {
                               </div>
                               <div>
                                 <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
-                                <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{card.subtitle}</p>
+                                 <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-xs">{t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback)}</p>
                               </div>
                             </div>
                           </motion.button>
