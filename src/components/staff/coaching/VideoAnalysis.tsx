@@ -173,6 +173,12 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [showActionsWithClips, setShowActionsWithClips] = useState(false);
   const [loadingAttachActions, setLoadingAttachActions] = useState(false);
 
+  // Clip-to-analysis-point attachment (mirrors clip-to-report flow)
+  const [linkedAnalysisIds, setLinkedAnalysisIds] = useState<string[]>([]);
+  const [linkedAnalysisPoints, setLinkedAnalysisPoints] = useState<
+    { analysisId: string; analysisTitle: string; analysisType: string; pointIndex: number; pointTitle: string; videoCount: number }[]
+  >([]);
+
   // Clip saved toast
   const [clipSavedToast, setClipSavedToast] = useState(false);
   const clipSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
