@@ -1089,13 +1089,13 @@ const DetailView = ({
               {/* 1. Network intro — mirrors Players page wording. */}
               <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
                 <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
-                  Eyes Across All Of Europe
+                  {t("scouting_network.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
                 <p className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.12em] md:text-5xl">
-                  Scouting <span className="text-primary">Network</span>
+                  {t("scouting_network.scouting", "Scouting")} <span className="text-primary">{t("scouting_network.network", "Network")}</span>
                 </p>
                 <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
-                  If you're a professional or academy player in Europe, chances are we already know about you.
+                  {t("scouting_network.intro_blurb", "If you're a professional or academy player in Europe, chances are we already know about you.")}
                 </p>
               </div>
 
@@ -1109,9 +1109,9 @@ const DetailView = ({
               {/* 3. The same three explanation cards from the Players page. */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
                 {[
-                  { n: "01", title: "Deep European Network", desc: "We have built an extensive scouting network across Europe, with eyes at every level of the professional game." },
-                  { n: "02", title: "Future-Focused Scouting", desc: "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career." },
-                  { n: "03", title: "Complete Player Knowledge", desc: "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up." },
+                  { n: "01", title: t("scouting_network.card1_title", "Deep European Network"), desc: t("scouting_network.card1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.") },
+                  { n: "02", title: t("scouting_network.card2_title", "Future-Focused Scouting"), desc: t("scouting_network.card2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
+                  { n: "03", title: t("scouting_network.card3_title", "Complete Player Knowledge"), desc: t("scouting_network.card3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
                 ].map((p) => (
                   <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
                     <div className="flex items-start gap-4">
@@ -1125,7 +1125,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label="What we look for" />
+              <SectionDivider label={t("scouting_network.what_we_look_for", "What we look for")} />
 
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
@@ -1135,7 +1135,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label="Position breakdown" />
+              <SectionDivider label={t("scouting_network.position_breakdown", "Position breakdown")} />
 
               {recommendedScoutingPosition ? (
                 <button
@@ -1144,14 +1144,14 @@ const DetailView = ({
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
-                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">What we look for in your position</p>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">{t("scouting_network.what_we_look_for_position", "What we look for in your position")}</p>
                     <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-primary" />
                 </button>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground md:text-sm">Open any position to see exactly what we look for in it.</p>
+                  <p className="text-xs text-muted-foreground md:text-sm">{t("scouting_network.open_position_hint", "Open any position to see exactly what we look for in it.")}</p>
                   <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
                     {SCOUTING_POSITIONS.map((pos) => (
                       <button
