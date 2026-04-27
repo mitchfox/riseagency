@@ -1334,6 +1334,10 @@ const Dashboard = () => {
     let playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
     if (!playerEmail) return;
 
+    const refetchPortalData = () => {
+      fetchAnalyses(playerEmail);
+    };
+
     const channel = supabase
       .channel('dashboard-analysis-changes')
       .on(
@@ -1343,10 +1347,27 @@ const Dashboard = () => {
           schema: 'public',
           table: 'player_analysis'
         },
-        () => {
-          // Refetch analyses when any change occurs
-          fetchAnalyses(playerEmail);
-        }
+        refetchPortalData
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'analysis_player_tags' },
+        refetchPortalData
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'analyses' },
+        refetchPortalData
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'player_fixtures' },
+        refetchPortalData
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fixtures' },
+        refetchPortalData
       )
       .subscribe();
 
