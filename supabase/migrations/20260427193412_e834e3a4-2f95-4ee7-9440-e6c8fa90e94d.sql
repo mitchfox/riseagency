@@ -1,0 +1,26 @@
+INSERT INTO public.translations (page_name, text_key, english, spanish, portuguese, french, german, italian, polish, czech, russian, turkish, croatian, norwegian) VALUES
+('representation', 'representation.who_we_select', 'Who We Select', 'A Quién Seleccionamos', 'Quem Seleccionamos', 'Qui Nous Sélectionnons', 'Wen Wir Auswählen', 'Chi Selezioniamo', 'Kogo Wybieramy', 'Koho Vybíráme', 'Кого Мы Выбираем', 'Kimi Seçiyoruz', 'Koga Biramo', 'Hvem Vi Velger'),
+('representation', 'representation.how_we_work', 'How We Work', 'Cómo Trabajamos', 'Como Trabalhamos', 'Comment Nous Travaillons', 'Wie Wir Arbeiten', 'Come Lavoriamo', 'Jak Pracujemy', 'Jak Pracujeme', 'Как Мы Работаем', 'Nasıl Çalışıyoruz', 'Kako Radimo', 'Hvordan Vi Jobber'),
+('representation', 'representation.what_are_the_terms', 'What Are The Terms', 'Cuáles Son Los Términos', 'Quais São Os Termos', 'Quels Sont Les Termes', 'Was Sind Die Bedingungen', 'Quali Sono I Termini', 'Jakie Są Warunki', 'Jaké Jsou Podmínky', 'Каковы Условия', 'Şartlar Nelerdir', 'Koji Su Uvjeti', 'Hva Er Vilkårene'),
+('representation', 'representation.fees', 'Fees', 'Tarifas', 'Taxas', 'Tarifs', 'Gebühren', 'Tariffe', 'Opłaty', 'Poplatky', 'Сборы', 'Ücretler', 'Naknade', 'Honorarer'),
+('representation', 'representation.agreement', 'Agreement', 'Acuerdo', 'Acordo', 'Accord', 'Vereinbarung', 'Accordo', 'Umowa', 'Smlouva', 'Соглашение', 'Anlaşma', 'Ugovor', 'Avtale'),
+('representation', 'representation.faqs', 'FAQs', 'Preguntas Frecuentes', 'Perguntas Frequentes', 'FAQ', 'FAQ', 'FAQ', 'FAQ', 'Časté Dotazy', 'Часто Задаваемые Вопросы', 'SSS', 'Česta Pitanja', 'Vanlige Spørsmål'),
+('representation', 'representation.performance', 'Performance', 'Rendimiento', 'Desempenho', 'Performance', 'Leistung', 'Prestazione', 'Wydajność', 'Výkon', 'Производительность', 'Performans', 'Učinak', 'Prestasjon'),
+('representation', 'representation.club_network', 'Club Network', 'Red de Clubes', 'Rede de Clubes', 'Réseau de Clubs', 'Vereinsnetzwerk', 'Rete di Club', 'Sieć Klubów', 'Síť Klubů', 'Сеть Клубов', 'Kulüp Ağı', 'Mreža Klubova', 'Klubbnettverk'),
+('representation', 'representation.brand', 'Brand', 'Marca', 'Marca', 'Marque', 'Marke', 'Marchio', 'Marka', 'Značka', 'Бренд', 'Marka', 'Brend', 'Merke'),
+('representation', 'representation.scouting', 'Scouting', 'Ojeo', 'Observação', 'Détection', 'Scouting', 'Scouting', 'Scouting', 'Scouting', 'Скаутинг', 'Skautluk', 'Skauting', 'Speiding'),
+('representation', 'representation.expectations', 'Expectations', 'Expectativas', 'Expectativas', 'Attentes', 'Erwartungen', 'Aspettative', 'Oczekiwania', 'Očekávání', 'Ожидания', 'Beklentiler', 'Očekivanja', 'Forventninger'),
+('representation', 'representation.representation', 'Representation', 'Representación', 'Representação', 'Représentation', 'Vertretung', 'Rappresentanza', 'Reprezentacja', 'Zastoupení', 'Представительство', 'Temsil', 'Zastupanje', 'Representasjon')
+ON CONFLICT (page_name, text_key) DO UPDATE SET
+  english = EXCLUDED.english,
+  spanish = EXCLUDED.spanish,
+  portuguese = EXCLUDED.portuguese,
+  french = EXCLUDED.french,
+  german = EXCLUDED.german,
+  italian = EXCLUDED.italian,
+  polish = EXCLUDED.polish,
+  czech = EXCLUDED.czech,
+  russian = EXCLUDED.russian,
+  turkish = EXCLUDED.turkish,
+  croatian = EXCLUDED.croatian,
+  norwegian = EXCLUDED.norwegian;
