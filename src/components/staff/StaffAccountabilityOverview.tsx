@@ -77,6 +77,8 @@ function countCompletions(log: string[] | null, since: Date): number {
   }).length;
 }
 
+const hasCompletionSince = (log: string[] | null | undefined, since: Date): boolean => countCompletions(log || null, since) > 0;
+
 interface ScheduleTaskItem {
   id: string;
   post_type: string;
@@ -296,18 +298,18 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
           title: item.post_type,
           description: null,
           assigned_to: item.owner_id ? [item.owner_id] : [],
-          completed: (item.status || "").toLowerCase() === "posted",
+          completed: hasCompletionSince(item.completion_log, weekStart),
           priority: "medium",
           category: null,
           display_order: 0,
           created_at: "",
           updated_at: "",
           deadline: null,
-          is_recurring: false,
-          recurrence_label: null,
-          last_completed_at: null,
+          is_recurring: true,
+          recurrence_label: "Weekly",
+          last_completed_at: item.last_completed_at || null,
           image_url: item.image_url,
-          completion_log: null,
+          completion_log: item.completion_log || null,
           scheduleItem: item,
         })),
       ]
