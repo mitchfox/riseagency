@@ -223,6 +223,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
             <motion.p
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showTopGold || showTopGold2 || showFifth) ? 1 : 0, y: (showTopGold || showTopGold2 || showFifth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
               className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full font-semibold uppercase`}
@@ -234,6 +235,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           {/* BOTTOM slot */}
           <div className="flex h-12 w-full items-start justify-center md:h-16">
             <motion.p
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showSecond || showFourth) ? 1 : 0, y: (showSecond || showFourth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-full font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
