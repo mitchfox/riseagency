@@ -49,28 +49,24 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           {/* Solid base */}
           <div className="absolute inset-0 z-10 bg-background" />
 
-          {/* Central pulse — gold ring expanding outward from the centre. */}
-          <div className="absolute inset-0 z-15 flex items-center justify-center pointer-events-none">
-            <span
-              aria-hidden="true"
-              className="block rounded-full border border-primary/60"
-              style={{
-                width: "24px",
-                height: "24px",
-                boxShadow: "0 0 60px hsl(var(--gold) / 0.45)",
-                animation: "pageTransitionPulse 1.6s ease-out 0.2s 1 both",
-              }}
-            />
-            <span
-              aria-hidden="true"
-              className="absolute block rounded-full border border-primary/40"
-              style={{
-                width: "24px",
-                height: "24px",
-                animation: "pageTransitionPulse 1.6s ease-out 0.5s 1 both",
-              }}
-            />
-          </div>
+          {/* Horizontal gold streak shooting across the centre */}
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 z-15 h-[1px] w-[1px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/70"
+            style={{
+              boxShadow: "0 0 48px hsl(var(--gold) / 0.85)",
+              animation: "pageStreak 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards",
+            }}
+          />
+          {/* Expanding gold ring */}
+          <div
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 z-15 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/50"
+            style={{
+              animation: "pageRing 1.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards",
+              opacity: 0,
+            }}
+          />
 
           <div className="absolute inset-0 z-20 flex items-center justify-center">
             <img
@@ -98,18 +94,16 @@ export const PageTransition = ({ children }: PageTransitionProps) => {
           to { opacity: 0; }
         }
 
-        @keyframes pageTransitionPulse {
-          0% {
-            transform: scale(0);
-            opacity: 0.9;
-          }
-          70% {
-            opacity: 0.35;
-          }
-          100% {
-            transform: scale(120);
-            opacity: 0;
-          }
+        @keyframes pageStreak {
+          0%   { transform: translate(-50%, -50%) scaleX(0);    opacity: 0; }
+          20%  { opacity: 1; }
+          100% { transform: translate(-50%, -50%) scaleX(2200); opacity: 0; }
+        }
+
+        @keyframes pageRing {
+          0%   { transform: translate(-50%, -50%) scale(0.25); opacity: 0; }
+          30%  { opacity: 0.72; }
+          100% { transform: translate(-50%, -50%) scale(5.8);  opacity: 0; }
         }
 
         @keyframes riseSliderCover {

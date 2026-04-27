@@ -220,6 +220,7 @@ const VideoItem = ({
   clipNotes,
   pointTitles,
   lazyLoad = false,
+  analysisId,
 }: {
   url: string;
   onRemove: () => void;
@@ -234,6 +235,7 @@ const VideoItem = ({
   clipNotes?: string;
   pointTitles?: string[];
   lazyLoad?: boolean;
+  analysisId?: string;
 }) => {
   const [trimOpen, setTrimOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
@@ -300,23 +302,71 @@ const VideoItem = ({
         return;
       }
 
-      const { error } = await supabase
+      // Check if the project row already exists. If so, update without
+      // overwriting user_id (RLS for INSERT requires user_id = auth.uid(),
+      // and we don't want to steal ownership from the original creator).
+      const { data: existing } = await supabase
         .from("annotation_projects")
-        .upsert({
-          id: proj.id,
-          name: proj.name,
-          video_url: proj.videoUrl,
-          video_name: proj.videoName,
-          klips: JSON.parse(JSON.stringify(proj.klips)),
-          user_id: user.id,
-        });
+        .select("id, user_id")
+        .eq("id", proj.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabase
+          .from("annotation_projects")
+          .update({
+            name: proj.name,
+            video_url: proj.videoUrl,
+            video_name: proj.videoName,
+            klips: JSON.parse(JSON.stringify(proj.klips)),
+          })
+          .eq("id", proj.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("annotation_projects")
+          .insert({
+            id: proj.id,
+            name: proj.name,
+            video_url: proj.videoUrl,
+            video_name: proj.videoName,
+            klips: JSON.parse(JSON.stringify(proj.klips)),
+            user_id: user.id,
+          });
+        if (error) throw error;
+      }
 
       setAnnotationProject(proj);
       setAnnotationVersion(v => v + 1);
       onAnnotationSaved?.(proj.id);
-      toast.success("Annotations saved — remember to save the analysis to persist the link");
+
+      // Auto-persist the annotation_id link to the parent analyses row so a
+      // page reload doesn't lose the connection between the clip and the
+      // saved annotation. Without this, users must remember to also click
+      // "Save Analysis" — and the link silently disappears on refresh.
+      if (analysisId) {
+        try {
+          const { data: row } = await supabase
+            .from("analyses")
+            .select("points")
+            .eq("id", analysisId)
+            .maybeSingle();
+          const points: any[] = Array.isArray(row?.points) ? JSON.parse(JSON.stringify(row.points)) : [];
+          if (points[pointIndex]) {
+            const ids = { ...(points[pointIndex].annotation_ids || {}) };
+            ids[url] = proj.id;
+            points[pointIndex].annotation_ids = ids;
+            await supabase
+              .from("analyses")
+              .update({ points })
+              .eq("id", analysisId);
+          }
+        } catch (persistErr) {
+          console.error("Failed to auto-persist annotation link:", persistErr);
+        }
+      }
+
+      toast.success("Annotations saved");
     } catch (err: any) {
       toast.error("Failed to save annotations: " + err.message);
     }
@@ -525,6 +575,7 @@ interface SortablePointCardProps {
   videoAnalysisClips: VideoAnalysisClip[];
   concepts: CoachingConcept[];
   allPointTitles: string[];
+  analysisId?: string;
 }
 
 const SortablePointCard = ({
@@ -547,6 +598,7 @@ const SortablePointCard = ({
   videoAnalysisClips,
   concepts,
   allPointTitles,
+  analysisId,
 }: SortablePointCardProps) => {
   const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
   const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
@@ -887,6 +939,7 @@ const SortablePointCard = ({
                             existingCrop={point.video_crops?.[url]}
                             clipNotes={matchingClip?.notes}
                             pointTitles={allPointTitles}
+                            analysisId={analysisId}
                             onMoveToPoint={(targetIdx) => onMoveVideoToPoint(index, vidIndex, targetIdx)}
                             onAnnotationSaved={(annotationId) => {
                               const currentIds = point.annotation_ids || {};
@@ -1216,6 +1269,7 @@ export const AnalysisPointsSection = ({
                   videoAnalysisClips={vaClips}
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
+                  analysisId={analysisId}
                 />
                 {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">

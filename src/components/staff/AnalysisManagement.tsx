@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
@@ -1627,6 +1627,38 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <Button variant="outline" onClick={handleCloseDialog}>
               ← Back
             </Button>
+            {editingAnalysis && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="Reload this analysis from the database without refreshing the page"
+                onClick={async () => {
+                  if (!editingAnalysis?.id) return;
+                  try {
+                    const { data, error } = await supabase
+                      .from("analyses")
+                      .select("*")
+                      .eq("id", editingAnalysis.id)
+                      .single();
+                    if (error) throw error;
+                    if (data) {
+                      const pointsWithIds = Array.isArray((data as any).points)
+                        ? (data as any).points.map((p: any) => ({ ...p, _id: p._id || crypto.randomUUID() }))
+                        : [];
+                      setEditingAnalysis(data as Analysis);
+                      setFormData({ ...(data as any), points: pointsWithIds });
+                      toast.success("Analysis reloaded");
+                    }
+                  } catch (err: any) {
+                    toast.error("Failed to reload analysis");
+                    console.error(err);
+                  }
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-1.5" />
+                Refresh
+              </Button>
+            )}
             <h2 className="text-2xl font-bold">
               {editingAnalysis ? "Edit" : "New"} {isPreMatch ? "Pre-Match Analysis" : isPostMatch ? "Post-Match Analysis" : "Concept"}
             </h2>
