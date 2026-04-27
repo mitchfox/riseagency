@@ -56,6 +56,7 @@ import { SectionDivider } from "@/components/portal/SectionDivider";
 import { MobileBottomNav } from "@/components/portal/MobileBottomNav";
 import { PortalMusicPlayer } from "@/components/portal/PortalMusicPlayer";
 import { PortalMusicControls } from "@/components/portal/PortalMusicControls";
+import { normalizeClubName } from "@/lib/clubNameUtils";
 
 interface Analysis {
   id: string;
@@ -67,6 +68,7 @@ interface Analysis {
   opponent: string | null;
   result: string | null;
   minutes_played: number | null;
+  fixture_id?: string | null;
   analysis_writer_id?: string | null;
   analysis_writer_data?: any;
   striker_stats?: any;
