@@ -231,6 +231,7 @@ export const AnalysisQuickLink = ({
 
     const updateData: any = {
       ...formData,
+      fixture_id: fixture.id,
       match_date: fixture.match_date,
       home_team: fixture.home_team,
       away_team: fixture.away_team,
