@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
