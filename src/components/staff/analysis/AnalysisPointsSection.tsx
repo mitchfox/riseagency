@@ -1269,6 +1269,7 @@ export const AnalysisPointsSection = ({
                   videoAnalysisClips={vaClips}
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
+                  analysisId={analysisId}
                 />
                 {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">
