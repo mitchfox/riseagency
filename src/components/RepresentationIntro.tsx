@@ -83,7 +83,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
   const LINE1 = t("representation.intro_line1", "Realise your potential.");
   const LINE2 = t("representation.intro_line2", "See where you are going.");
   const LINE3 = t("representation.intro_line3", "Realise your potential.");
-  const LINE4 = t("representation.intro_line4", "Work with us to make it a reality.");
+  const LINE4 = t("representation.intro_line4", "Work with us\nto make it a reality.");
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
@@ -219,14 +219,14 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
       )}
 
       {!inShader && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-[28vh] text-center md:gap-6 md:pb-[22vh]">
+        <div className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center md:gap-6 ${showFifth ? "" : "pb-[28vh] md:pb-[22vh]"}`}>
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
             <motion.p
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showTopGold || showTopGold2 || showFifth) ? 1 : 0, y: (showTopGold || showTopGold2 || showFifth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-              className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full font-semibold uppercase`}
+              className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full whitespace-pre-line font-semibold uppercase`}
               style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
             >
               {topLine}
@@ -238,7 +238,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showSecond || showFourth) ? 1 : 0, y: (showSecond || showFourth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-full font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
+              className="max-w-full whitespace-pre-line font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
               style={{ fontFamily: SYSTEM_FONT_STACK }}
             >
               {bottomLine}
