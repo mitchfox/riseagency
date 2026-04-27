@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import logoWhite from "@/assets/RISEWhite.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -42,8 +42,7 @@ type Phase =
   | "p2-fade"
   | "p3-line5"
   | "p3-fade"
-  | "logo"
-  | "descend"
+  | "shader"
   | "done";
 
 // Total ≈ 20s. Each entry is the *duration to stay in that phase*.
@@ -56,8 +55,7 @@ const PHASE_DURATIONS: Record<Phase, number> = {
   "p2-fade":   900,
   "p3-line5": 2200,
   "p3-fade":   900,
-  "logo":     3800,
-  "descend":  2400,
+  "shader":   2200,
   "done":        0,
 };
 
@@ -69,9 +67,8 @@ const NEXT: Record<Phase, Phase> = {
   "p2-both":  "p2-fade",
   "p2-fade":  "p3-line5",
   "p3-line5": "p3-fade",
-  "p3-fade":  "logo",
-  "logo":     "descend",
-  "descend":  "done",
+  "p3-fade":  "shader",
+  "shader":   "done",
   "done":     "done",
 };
 
@@ -126,9 +123,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const showTopGold2  = ["p2-line3", "p2-both"].includes(phase);
   const showFourth    = phase === "p2-both";
   const showFifth     = phase === "p3-line5";
-  const inLogo        = phase === "logo" || phase === "descend";
+  const inShader      = phase === "shader";
   const inPair1       = ["p1-line1", "p1-both", "p1-fade"].includes(phase);
   const inPair2       = ["p2-line3", "p2-both", "p2-fade"].includes(phase);
+  const topLine = inPair1 ? LINE1 : inPair2 ? LINE3 : showFifth ? LINE5 : "";
+  const bottomLine = inPair1 ? LINE2 : inPair2 ? LINE4 : "";
   // Per-pair 3D layer opacity. Always mounted; opacity decides
   // visibility so we never retrigger the texture load.
   const pair1Opacity =
@@ -184,7 +183,20 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       {/* Lines stack: no AnimatePresence remounts between pairs. The same
           two DOM slots stay mounted so lines 3-5 cannot inherit a side
           entry/reflow from a new text node or delayed font measurement. */}
-      {!inLogo && (
+      {inShader && (
+        <motion.div
+          key="rep-intro-shader"
+          className="absolute inset-0 z-40 bg-background"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.45, ease: "easeInOut" }}
+        >
+          <ShaderAnimation />
+        </motion.div>
+      )}
+
+      {!inShader && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-[28vh] text-center md:gap-6 md:pb-[22vh]">
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
@@ -194,7 +206,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full font-semibold uppercase`}
               style={{ color: "hsl(var(--gold))", fontFamily: SYSTEM_FONT_STACK }}
             >
-              {showFifth ? LINE5 : showTopGold ? LINE1 : LINE3}
+              {topLine}
             </motion.p>
           </div>
           {/* BOTTOM slot */}
@@ -205,35 +217,10 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
               className="max-w-full font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
               style={{ fontFamily: SYSTEM_FONT_STACK }}
             >
-              {showSecond ? LINE2 : LINE4}
+              {bottomLine}
             </motion.p>
           </div>
         </div>
-      )}
-
-      {/* Logo phase: appears only after the line sequence finishes.
-          The intro logo stays centred and simply fades out at the
-          end so there is no jump to a position that does not match
-          the actual page layout. The Representation page renders
-          its own logo in its real header position. */}
-      {inLogo && (
-        <motion.img
-          key="rep-intro-logo"
-          src={logoWhite}
-          alt="RISE"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={
-            phase === "logo"
-              ? { opacity: 1, scale: [0.95, 1.04, 1, 1.06, 1] }
-              : { opacity: 0, scale: 1 }
-          }
-          transition={
-            phase === "logo"
-              ? { duration: 3.6, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
-              : { duration: 1.6, ease: [0.22, 1, 0.36, 1] }
-          }
-          className="pointer-events-none relative z-10 h-20 w-auto md:h-[6.666rem]"
-        />
       )}
 
       {/* Skip */}
