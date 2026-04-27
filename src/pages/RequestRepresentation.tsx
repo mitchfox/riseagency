@@ -116,6 +116,13 @@ const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
 };
 
+const formatCardSubtitle = (key: CardKey, text: string) => {
+  if (key === "fees" && text.toLowerCase().trim() === "clear from the start") {
+    return "Clear from\nthe start";
+  }
+  return text;
+};
+
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
 
 /** Three-letter language label shown next to the map selector flag. */
@@ -351,7 +358,6 @@ const RequestRepresentation = () => {
   // Representation always starts with the central pulse and wave before
   // the cinematic text sequence is allowed to mount. Intro plays on
   // every fresh page mount so it's never silently skipped.
-  const [pulseDone, setPulseDone] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
@@ -428,6 +434,10 @@ const RequestRepresentation = () => {
     setScoutingPosition(null);
     setPerformanceSub(null);
   };
+
+  useEffect(() => {
+    if (activeCard || scoutingPosition || performanceSub) scrollToTop();
+  }, [activeCard, scoutingPosition, performanceSub]);
 
   // Recommended scouting position (derived from the position chosen on the
   // home rectangle). NOTE: we no longer auto-open it — Scouting must lead
