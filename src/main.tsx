@@ -165,54 +165,8 @@ if ('serviceWorker' in navigator && !isLovablePreviewEnv) {
 }
 
 const root = createRoot(document.getElementById("root")!);
-
-// Hide loading splash once React is mounted and ready
 root.render(
   <HelmetProvider>
     <App />
   </HelmetProvider>
 );
-
-// Remove loading splash after React has rendered - only show on /portal and /staff routes
-const removeSplash = () => {
-  const splash = document.getElementById('loading-splash');
-  if (splash) {
-    splash.classList.add('hidden');
-    setTimeout(() => splash.remove(), 400);
-  }
-};
-
-setTimeout(() => {
-  const splash = document.getElementById('loading-splash');
-  const currentPath = window.location.pathname;
-  const shouldShowSplash = currentPath === '/portal' || currentPath.startsWith('/portal/') || 
-                           currentPath === '/staff' || currentPath.startsWith('/staff/');
-
-  // In Lovable preview, never leave the splash covering the app
-  if (isLovablePreviewEnv) {
-    requestAnimationFrame(() => requestAnimationFrame(removeSplash));
-    setTimeout(removeSplash, 250);
-    return;
-  }
-
-  if (splash && !shouldShowSplash) {
-    splash.classList.add('hidden');
-    setTimeout(() => splash.remove(), 500);
-  } else if (splash && shouldShowSplash) {
-    setTimeout(() => {
-      removeSplash();
-    }, 1000);
-
-    setTimeout(() => {
-      removeSplash();
-    }, 4000);
-  }
-}, 100);
-
-// Safety net: ensure splash is ALWAYS removed after 5 seconds regardless of state
-setTimeout(() => {
-  const splash = document.getElementById('loading-splash');
-  if (splash) {
-    splash.remove();
-  }
-}, 5000);
