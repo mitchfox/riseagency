@@ -197,9 +197,10 @@ export const RepresentationDialog = ({
             <Label htmlFor="name">{t('representation.full_name', 'Full Name')} *</Label>
             <Input
               id="name"
+              ref={nameRef}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+              onKeyDown={advance(phoneRef)}
               placeholder="John Doe"
               required
             />
@@ -210,10 +211,11 @@ export const RepresentationDialog = ({
               <Label htmlFor="phone">{t('representation.phone', 'Phone Number')} *</Label>
               <Input
                 id="phone"
+                ref={phoneRef}
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(emailRef)}
                 placeholder="+44 7340 184399"
                 required
               />
@@ -223,10 +225,11 @@ export const RepresentationDialog = ({
               <Label htmlFor="email">{t('representation.email', 'Email')}</Label>
               <Input
                 id="email"
+                ref={emailRef}
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(clubRef)}
                 placeholder="john@example.com"
               />
             </div>
@@ -237,9 +240,10 @@ export const RepresentationDialog = ({
               <Label htmlFor="currentClub">{t('representation.current_club', 'Current Club')} *</Label>
               <Input
                 id="currentClub"
+                ref={clubRef}
                 value={formData.currentClub}
                 onChange={(e) => setFormData({ ...formData, currentClub: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                onKeyDown={advance(isUnder18 ? parentNameRef : firstVideoRef)}
                 placeholder="e.g., Manchester United U21"
                 required
               />
@@ -276,9 +280,10 @@ export const RepresentationDialog = ({
                   <Label htmlFor="parentName">{t('representation.parent_name', "Parent or Guardian Name")}</Label>
                   <Input
                     id="parentName"
+                    ref={parentNameRef}
                     value={formData.parentName}
                     onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    onKeyDown={advance(parentPhoneRef)}
                     placeholder="Jane Doe"
                     required={isUnder18}
                   />
@@ -287,10 +292,11 @@ export const RepresentationDialog = ({
                   <Label htmlFor="parentPhone">{t('representation.parent_phone', "Parent or Guardian Phone")}</Label>
                   <Input
                     id="parentPhone"
+                    ref={parentPhoneRef}
                     type="tel"
                     value={formData.parentPhone}
                     onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    onKeyDown={advance(firstVideoRef)}
                     placeholder="+44 7340 184399"
                     required={isUnder18}
                   />
@@ -300,10 +306,16 @@ export const RepresentationDialog = ({
           )}
 
           <div className="space-y-2">
-            <Label>{t('representation.video_links', 'Match Video Links')} <span className="text-muted-foreground text-xs">({t('representation.video_links_hint', 'Full match videos preferred, highlights also accepted')})</span></Label>
+            <Label className="block">
+              {t('representation.video_links', 'Match Video Links')}
+              <span className="block text-muted-foreground text-xs mt-0.5">
+                ({t('representation.video_links_hint', 'Full Match Videos Preferred, Highlights Also Accepted')})
+              </span>
+            </Label>
             {formData.videoLinks.map((link, idx) => (
               <div key={idx} className="flex gap-2">
                 <Input
+                  ref={idx === 0 ? firstVideoRef : undefined}
                   value={link}
                   onChange={(e) => {
                     const updated = [...formData.videoLinks];
