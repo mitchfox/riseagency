@@ -365,6 +365,10 @@ const RequestRepresentation = () => {
   // the cinematic text sequence is allowed to mount. Intro plays on
   // every fresh page mount so it's never silently skipped.
   const [introDone, setIntroDone] = useState(false);
+  /** Becomes true the moment the intro reaches its shader phase, so the
+   *  age-group screen mounts behind the shader and is ready to be
+   *  revealed without any blank gap. */
+  const [introShaderStarted, setIntroShaderStarted] = useState(false);
   // Pre-form state collected on the home rectangle. Both feed into
   // the form prefill *and* derive the age group automatically.
   const [chosenPosition, setChosenPosition] = useState<PlayerPosition | null>(null);
@@ -461,12 +465,16 @@ const RequestRepresentation = () => {
       {/* Cinematic intro. It now ends on the shader animation before revealing the page. */}
       <AnimatePresence>
         {!introDone && (
-          <RepresentationIntro key="intro" onComplete={() => setIntroDone(true)} />
+          <RepresentationIntro
+            key="intro"
+            onComplete={() => setIntroDone(true)}
+            onShaderStart={() => setIntroShaderStarted(true)}
+          />
         )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {introDone && !ageGroup ? (
+        {(introDone || introShaderStarted) && !ageGroup ? (
           /* ============ AGE GROUP SCREEN ============ */
           <motion.section
             key="age"
@@ -557,7 +565,7 @@ const RequestRepresentation = () => {
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex w-full flex-col items-center"
-                style={{ paddingLeft: "10px" }}
+                style={{ paddingLeft: "18px" }}
               >
                 <RiseLogoShine className="h-12 md:h-16" />
               </motion.div>
@@ -590,7 +598,7 @@ const RequestRepresentation = () => {
                            initial={{ opacity: 0, scale: 0.96 }}
                            animate={{ opacity: 1, scale: 1 }}
                            transition={{ duration: 0.8, delay: 0.15 }}
-                            className="max-w-full font-bebas text-2xl uppercase leading-none tracking-[0.14em] text-primary sm:text-3xl md:text-4xl lg:text-4xl lg:tracking-[0.16em]"
+                            className="max-w-full break-words hyphens-auto font-bebas text-[clamp(1.25rem,7vw,2rem)] uppercase leading-[0.95] tracking-[0.1em] text-primary sm:text-3xl md:text-4xl md:tracking-[0.14em] lg:text-4xl lg:tracking-[0.16em]"
                            style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
                          >
                            {t("representation.representation", "Representation")}
@@ -599,7 +607,7 @@ const RequestRepresentation = () => {
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
                             "representation.hero_subtitle",
-                            "Realise potential with our experienced intermediary & English Premier League star performance team."
+                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team."
                           )}
                         </p>
                         <motion.p
@@ -805,7 +813,7 @@ const RequestRepresentation = () => {
                                 <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
                               </div>
                               <div>
-                                <p className="font-bebas text-lg uppercase leading-none tracking-[0.1em] md:text-2xl lg:text-3xl">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
+                                <p className="break-words hyphens-auto font-bebas text-[clamp(0.85rem,3.6vw,1.125rem)] uppercase leading-[1.05] tracking-[0.08em] md:text-[clamp(1rem,2.4vw,1.5rem)] md:tracking-[0.1em] lg:text-[clamp(1.1rem,2vw,1.875rem)]">{t(CARD_TITLE_KEYS[card.key].key, CARD_TITLE_KEYS[card.key].fallback)}</p>
                                   <p className="mx-auto mt-1.5 max-w-[9.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">{formatCardSubtitle(card.key, t(CARD_SUBTITLE_KEYS[card.key].key, CARD_SUBTITLE_KEYS[card.key].fallback))}</p>
                               </div>
                             </div>

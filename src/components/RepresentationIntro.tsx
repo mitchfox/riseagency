@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 
 /**
  * Cinematic intro for the /representation page. Total runtime ~20s.
@@ -19,7 +20,12 @@ import { ShaderAnimation } from "@/components/ui/shader-animation";
  * sits behind the text.
  */
 
-interface Props { onComplete: () => void; }
+interface Props {
+  onComplete: () => void;
+  /** Fired the moment the shader phase begins, so the page underneath
+   *  can mount and be ready before the shader fades away. */
+  onShaderStart?: () => void;
+}
 
 /**
  * Both 3D player layers stay mounted for the full intro so the
@@ -72,7 +78,7 @@ const NEXT: Record<Phase, Phase> = {
   "done":     "done",
 };
 
-export const RepresentationIntro = ({ onComplete }: Props) => {
+export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
   const { t } = useLanguage();
   const LINE1 = t("representation.intro_line1", "Realise your potential.");
   const LINE2 = t("representation.intro_line2", "See where you are going.");
@@ -114,6 +120,12 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
     const t = setTimeout(() => setPhase(NEXT[phase]), PHASE_DURATIONS[phase]);
     return () => clearTimeout(t);
   }, [phase, finishIntro]);
+
+  // Tell the parent the moment we hit the shader so the page below
+  // can mount and be ready behind the shader curtain.
+  useEffect(() => {
+    if (phase === "shader") onShaderStart?.();
+  }, [phase, onShaderStart]);
 
   if (phase === "done") return null;
 
@@ -186,13 +198,23 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       {inShader && (
         <motion.div
           key="rep-intro-shader"
-          className="absolute inset-0 z-40 bg-background"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.45, ease: "easeInOut" }}
         >
-          <ShaderAnimation />
+          <div className="absolute inset-0">
+            <ShaderAnimation />
+          </div>
+          <motion.img
+            src={riseLogoWhite}
+            alt="RISE"
+            className="relative z-10 h-16 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.6)] md:h-20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: [0, 1, 1, 0.85], scale: [0.9, 1, 1.04, 1] }}
+            transition={{ duration: 2.0, times: [0, 0.25, 0.7, 1], ease: "easeInOut" }}
+          />
         </motion.div>
       )}
 
@@ -201,6 +223,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
             <motion.p
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showTopGold || showTopGold2 || showFifth) ? 1 : 0, y: (showTopGold || showTopGold2 || showFifth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
               className={`${showFifth ? "text-2xl tracking-[0.22em] md:text-4xl" : "text-lg tracking-[0.16em] md:text-2xl lg:text-3xl"} max-w-full font-semibold uppercase`}
@@ -212,6 +235,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
           {/* BOTTOM slot */}
           <div className="flex h-12 w-full items-start justify-center md:h-16">
             <motion.p
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: (showSecond || showFourth) ? 1 : 0, y: (showSecond || showFourth) ? 0 : 14 }}
               transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-full font-semibold uppercase tracking-[0.16em] text-lg text-foreground md:text-2xl lg:text-3xl"
