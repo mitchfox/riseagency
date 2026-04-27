@@ -703,8 +703,9 @@ const RequestRepresentation = () => {
             setPerformanceSub={setPerformanceSub}
             recommendedScoutingPosition={recommendedScoutingPosition}
             onBack={() => {
-              if (performanceSub) { setPerformanceSub(null); return; }
-              if (scoutingPosition) { setScoutingPosition(null); return; }
+                        scrollToTop();
+                        if (performanceSub) { setPerformanceSub(null); return; }
+                        if (scoutingPosition) { setScoutingPosition(null); return; }
               setActiveCard(null);
             }}
           />
@@ -1130,7 +1131,7 @@ const DetailView = ({
               {recommendedScoutingPosition ? (
                 <button
                   type="button"
-                  onClick={() => setScoutingPosition(recommendedScoutingPosition)}
+                  onClick={() => { scrollToTop(); setScoutingPosition(recommendedScoutingPosition); }}
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
@@ -1147,7 +1148,7 @@ const DetailView = ({
                       <button
                         key={pos}
                         type="button"
-                        onClick={() => setScoutingPosition(pos)}
+                        onClick={() => { scrollToTop(); setScoutingPosition(pos); }}
                         className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 transition-colors hover:border-primary/60 hover:bg-card/70 md:text-base"
                       >
                         {pos}
@@ -1182,7 +1183,7 @@ const DetailView = ({
                     <button
                       key={sub.key}
                       type="button"
-                      onClick={() => setPerformanceSub(sub.key)}
+                      onClick={() => { scrollToTop(); setPerformanceSub(sub.key); }}
                       className="group rounded-2xl border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
                     >
                       <div className="flex items-center gap-2">
