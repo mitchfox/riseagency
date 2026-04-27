@@ -285,6 +285,34 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('my-tasks-live-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_tasks' }, (payload) => {
+        const next = payload.new as StaffTask | null;
+        const old = payload.old as Partial<StaffTask> | null;
+        setTasks(prev => {
+          if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== old?.id);
+          if (!next) return prev;
+          const exists = prev.some(t => t.id === next.id);
+          return exists ? prev.map(t => t.id === next.id ? next : t) : [...prev, next];
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'marketing_schedule_items' }, (payload) => {
+        const next = payload.new as ScheduleTaskItem | null;
+        const old = payload.old as Partial<ScheduleTaskItem> | null;
+        setScheduleItems(prev => {
+          if (payload.eventType === 'DELETE') return prev.filter(s => s.id !== old?.id);
+          if (!next) return prev;
+          const exists = prev.some(s => s.id === next.id);
+          return exists ? prev.map(s => s.id === next.id ? next : s) : [...prev, next];
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const visibleStaff = staffMembers;
   const activeMember = visibleStaff[activeStaffIndex];
   const memberTasks = activeMember ? tasks.filter(t => t.assigned_to?.includes(activeMember.id)) : [];
@@ -703,10 +731,10 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const taskFour = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, rollingMonthAgo), 0);
     const taskWeek = mTasks.reduce((sum, t) => sum + countCompletions(t.completion_log, weekStart), 0);
 
-    const mSchedule = scheduleItems.filter(s => s.owner_id === m.id && (s.status || '').toLowerCase() === 'posted');
-    const scheduleAll = mSchedule.length;
-    const scheduleFour = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= rollingMonthAgo).length;
-    const scheduleWeek = mSchedule.filter(s => (s as any).updated_at && new Date((s as any).updated_at) >= weekStart).length;
+    const mSchedule = scheduleItems.filter(s => s.owner_id === m.id);
+    const scheduleAll = mSchedule.reduce((sum, s) => sum + (s.completion_log?.length || 0), 0);
+    const scheduleFour = mSchedule.reduce((sum, s) => sum + countCompletions(s.completion_log || null, rollingMonthAgo), 0);
+    const scheduleWeek = mSchedule.reduce((sum, s) => sum + countCompletions(s.completion_log || null, weekStart), 0);
 
     const mActivity = activityLog.filter(a => a.user_id === m.id);
     const activityAll = mActivity.length;
