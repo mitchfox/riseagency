@@ -86,6 +86,9 @@ interface ScheduleTaskItem {
   status: string | null;
   platform_format: string | null;
   image_url: string | null;
+  last_completed_at?: string | null;
+  completion_log?: string[] | null;
+  updated_at?: string | null;
 }
 
 type TaskFeedItem =
@@ -192,7 +195,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     const [{ data: tasksData }, { data: profilesData }, { data: scheduleData }, { data: activityData }, { data: fixturesData }, { data: representedPlayers }] = await Promise.all([
       supabase.from('staff_tasks').select('*').order('display_order'),
       supabase.from('profiles').select('id, email, full_name'),
-      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at'),
+      supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at, last_completed_at, completion_log'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
       supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
       supabase.from('players').select('name, club').in('representation_status', ['represented', 'mandated']),
