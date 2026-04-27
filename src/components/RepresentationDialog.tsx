@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,16 @@ export const RepresentationDialog = ({
 }: RepresentationDialogProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  // Refs for the input fields so Enter can advance to the next one.
+  // Date of Birth and Position are skipped intentionally (they're
+  // pre-filled from the home rectangle and require manual interaction).
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const clubRef = useRef<HTMLInputElement>(null);
+  const parentNameRef = useRef<HTMLInputElement>(null);
+  const parentPhoneRef = useRef<HTMLInputElement>(null);
+  const firstVideoRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -70,6 +80,14 @@ export const RepresentationDialog = ({
       position: initialPosition || prev.position,
     }));
   }, [open, initialDob, initialPosition]);
+
+  /** Enter on a field advances focus to the next ref in the chain. */
+  const advance = (next: React.RefObject<HTMLInputElement>) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      next.current?.focus();
+    };
 
   // Derive under-18 status either from the upfront age choice OR the entered DOB.
   const isUnder18FromDob = (() => {
@@ -133,7 +151,33 @@ export const RepresentationDialog = ({
   };
 
   const handleWhatsApp = () => {
-    window.open("https://wa.me/447508342901", "_blank");
+    // Build a WhatsApp message that includes whatever the user has
+    // already typed so the conversation starts with full context.
+    const lines: string[] = [
+      t("representation.whatsapp_intro", "Hi RISE — I'd like to enquire about representation."),
+      "",
+    ];
+    if (formData.name) lines.push(`Name: ${formData.name}`);
+    if (formData.phone) lines.push(`Phone: ${formData.phone}`);
+    if (formData.email) lines.push(`Email: ${formData.email}`);
+    if (formData.currentClub) lines.push(`Current club: ${formData.currentClub}`);
+    if (formData.dob) lines.push(`Date of birth: ${formData.dob}`);
+    if (formData.position) lines.push(`Position: ${formData.position}`);
+    if (isUnder18) {
+      if (formData.parentName) lines.push(`Parent/guardian: ${formData.parentName}`);
+      if (formData.parentPhone) lines.push(`Parent/guardian phone: ${formData.parentPhone}`);
+    }
+    const videos = formData.videoLinks.filter((v) => v.trim());
+    if (videos.length) {
+      lines.push("Match videos:");
+      videos.forEach((v) => lines.push(`- ${v}`));
+    }
+    if (formData.message) {
+      lines.push("");
+      lines.push(`Notes: ${formData.message}`);
+    }
+    const text = encodeURIComponent(lines.join("\n"));
+    window.open(`https://wa.me/447508342901?text=${text}`, "_blank");
   };
 
   return (
