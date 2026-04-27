@@ -84,40 +84,14 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
   const LINE5 = t("representation.intro_line5", "Then…");
   const [phase, setPhase] = useState<Phase>("p1-line1");
   const [completed, setCompleted] = useState(false);
-  // Block the line sequence until Bebas Neue is loaded so the centred,
-  // wide-tracked text does not reflow from a fallback font (which made
-  // each line appear shifted to the right before snapping into place).
-  const [fontReady, setFontReady] = useState(false);
+  // Use the body font (Inter / system) for the intro lines so there is
+  // never a font-swap reflow. Bebas Neue's tracked, centred lines were
+  // visibly snapping in from the right when the web font finished
+  // loading — using a font that is always available avoids that.
 
   useEffect(() => {
     preloadPlayer3DVariant("two");
     preloadPlayer3DVariant("one");
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const markReady = () => { if (!cancelled) setFontReady(true); };
-
-    // Safety net: never wait more than 1.5s for the font.
-    const safety = setTimeout(markReady, 1500);
-
-    const fonts: any = (document as any).fonts;
-    if (fonts && typeof fonts.load === "function") {
-      Promise.all([
-        fonts.load('1em "Bebas Neue"'),
-        fonts.load('700 1em "Bebas Neue"'),
-      ])
-        .then(() => fonts.ready)
-        .then(markReady)
-        .catch(markReady);
-    } else {
-      markReady();
-    }
-
-    return () => {
-      cancelled = true;
-      clearTimeout(safety);
-    };
   }, []);
 
   const finishIntro = useCallback(() => {
@@ -136,11 +110,10 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
 
   // Drive phase transitions.
   useEffect(() => {
-    if (!fontReady) return;
     if (phase === "done") { finishIntro(); return; }
     const t = setTimeout(() => setPhase(NEXT[phase]), PHASE_DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase, finishIntro, fontReady]);
+  }, [phase, finishIntro]);
 
   if (phase === "done") return null;
 
@@ -206,8 +179,11 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
       </motion.div>
 
       {/* Lines stack: 2 fixed slots so the second line can appear
-          *underneath* the first without pushing it. */}
-      {!inLogo && fontReady && (
+          *underneath* the first without pushing it. The lines use the
+          body font (font-sans) instead of Bebas Neue because Bebas was
+          loading after first paint and visibly shifting the centred,
+          tracked text from the right. */}
+      {!inLogo && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-[28vh] text-center md:gap-6 md:pb-[22vh]">
           {/* TOP slot */}
           <div className="flex h-12 w-full items-end justify-center md:h-16">
@@ -219,8 +195,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase tracking-[0.22em] text-xl text-primary md:text-3xl lg:text-4xl"
-                  style={{ color: "hsl(var(--gold))", marginRight: "-0.22em" }}
+                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-primary md:text-2xl lg:text-3xl"
+                  style={{ color: "hsl(var(--gold))" }}
                 >
                   {showTopGold ? LINE1 : LINE3}
                 </motion.p>
@@ -232,8 +208,8 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase text-3xl tracking-[0.42em] md:text-5xl"
-                  style={{ color: "hsl(var(--gold))", marginRight: "-0.42em" }}
+                  className="font-sans font-semibold uppercase tracking-[0.32em] text-2xl md:text-4xl"
+                  style={{ color: "hsl(var(--gold))" }}
                 >
                   {LINE5}
                 </motion.p>
@@ -250,8 +226,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
-                  style={{ marginRight: "-0.22em" }}
+                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
                 >
                   {LINE2}
                 </motion.p>
@@ -263,8 +238,7 @@ export const RepresentationIntro = ({ onComplete }: Props) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="font-bebas uppercase tracking-[0.22em] text-xl text-foreground md:text-3xl lg:text-4xl"
-                  style={{ marginRight: "-0.22em" }}
+                  className="font-sans font-semibold uppercase tracking-[0.18em] text-lg text-foreground md:text-2xl lg:text-3xl"
                 >
                   {LINE4}
                 </motion.p>

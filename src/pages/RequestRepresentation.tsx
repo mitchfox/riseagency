@@ -504,6 +504,7 @@ const RequestRepresentation = () => {
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex w-full flex-col items-center"
+                style={{ paddingLeft: "10px" }}
               >
                 <RiseLogoShine className="h-12 md:h-16" />
               </motion.div>
@@ -543,7 +544,10 @@ const RequestRepresentation = () => {
                         </motion.h1>
                         <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
-                          Realise potential with our experienced intermediary &amp; English Premier League star performance team.
+                          {t(
+                            "representation.hero_subtitle",
+                            "Realise potential with our experienced intermediary & English Premier League star performance team."
+                          )}
                         </p>
                         <motion.p
                           animate={{ opacity: [0.5, 1, 0.5] }}
@@ -814,7 +818,7 @@ const RequestRepresentation = () => {
                     style={scrolled ? { fontSize: footerFontSize } : undefined}
                     className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
                   >
-                    <HoverText text="Request Representation" />
+                    <HoverText text={t("representation.cta_request", "Request Representation")} />
                   </motion.span>
                 </div>
               </motion.button>
@@ -829,7 +833,7 @@ const RequestRepresentation = () => {
                     style={scrolled ? { fontSize: footerFontSize } : undefined}
                     className="block w-full whitespace-normal break-words px-0.5 text-[13px] leading-[1.05] md:text-base"
                   >
-                    <HoverText text="Contact Us" />
+                    <HoverText text={t("representation.cta_contact", "Contact Us")} />
                   </motion.span>
                 </div>
               </motion.button>

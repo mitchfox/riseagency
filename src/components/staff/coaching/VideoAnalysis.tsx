@@ -173,6 +173,12 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [showActionsWithClips, setShowActionsWithClips] = useState(false);
   const [loadingAttachActions, setLoadingAttachActions] = useState(false);
 
+  // Clip-to-analysis-point attachment (mirrors clip-to-report flow)
+  const [linkedAnalysisIds, setLinkedAnalysisIds] = useState<string[]>([]);
+  const [linkedAnalysisPoints, setLinkedAnalysisPoints] = useState<
+    { analysisId: string; analysisTitle: string; analysisType: string; pointIndex: number; pointTitle: string; videoCount: number }[]
+  >([]);
+
   // Clip saved toast
   const [clipSavedToast, setClipSavedToast] = useState(false);
   const clipSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1444,6 +1450,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       }
 
       toast.success(`Video analysis linked. Clips are now available for selection when editing points.`);
+      fetchLinkedAnalyses();
       setShowExportDialog(false);
     } catch (err: any) {
       toast.error(err.message || "Failed to link to analysis");
@@ -1729,6 +1736,26 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     fetchLinkedReports();
   }, [fetchLinkedReports]);
 
+  // Fetch linked analysis IDs (pre-match / post-match / concept) so the
+  // attach dialog can also offer analysis points as a destination — same
+  // experience as the report linking flow.
+  const fetchLinkedAnalyses = useCallback(async () => {
+    if (!selectedVideo) return;
+    const { data } = await supabase
+      .from("analyses")
+      .select("id, linked_video_analysis_ids")
+      .contains("linked_video_analysis_ids", [selectedVideo.id]);
+    if (data && data.length > 0) {
+      setLinkedAnalysisIds(data.map((d: any) => d.id));
+    } else {
+      setLinkedAnalysisIds([]);
+    }
+  }, [selectedVideo]);
+
+  useEffect(() => {
+    fetchLinkedAnalyses();
+  }, [fetchLinkedAnalyses]);
+
   const handleOpenAttachClip = async (clip: Clip) => {
     setAttachClip(clip);
     setShowAttachDialog(true);
@@ -1736,38 +1763,159 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     try {
       if (linkedReportIds.length === 0) {
         setLinkedReportActions([]);
-        setLoadingAttachActions(false);
-        return;
+      } else {
+        const { data: reports } = await supabase
+          .from("player_analysis")
+          .select("id, opponent, analysis_date")
+          .in("id", linkedReportIds);
+        const { data: actions } = await supabase
+          .from("performance_report_actions")
+          .select("id, action_number, action_type, action_description, analysis_id, minute, video_url")
+          .in("analysis_id", linkedReportIds)
+          .order("action_number");
+        if (actions && reports) {
+          setLinkedReportActions(actions.map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            action_type: a.action_type || '',
+            action_description: a.action_description || '',
+            analysis_id: a.analysis_id,
+            minute: a.minute,
+            video_url: a.video_url,
+            report_title: reports.find(r => r.id === a.analysis_id)?.opponent
+              ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
+              : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
+          })));
+        }
       }
-      const { data: reports } = await supabase
-        .from("player_analysis")
-        .select("id, opponent, analysis_date")
-        .in("id", linkedReportIds);
 
-      const { data: actions } = await supabase
-        .from("performance_report_actions")
-        .select("id, action_number, action_type, action_description, analysis_id, minute, video_url")
-        .in("analysis_id", linkedReportIds)
-        .order("action_number");
-
-      if (actions && reports) {
-        setLinkedReportActions(actions.map(a => ({
-          id: a.id,
-          action_number: a.action_number,
-          action_type: a.action_type || '',
-          action_description: a.action_description || '',
-          analysis_id: a.analysis_id,
-          minute: a.minute,
-          video_url: a.video_url,
-          report_title: reports.find(r => r.id === a.analysis_id)?.opponent
-            ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
-            : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
-        })));
+      // Also load points from any linked analyses so the user can pick a
+      // point as the destination — exactly mirroring the report flow.
+      if (linkedAnalysisIds.length === 0) {
+        setLinkedAnalysisPoints([]);
+      } else {
+        const { data: analyses } = await supabase
+          .from("analyses")
+          .select("id, title, analysis_type, points")
+          .in("id", linkedAnalysisIds);
+        if (analyses) {
+          const flat: typeof linkedAnalysisPoints = [];
+          for (const a of analyses as any[]) {
+            const points: any[] = Array.isArray(a.points) ? a.points : [];
+            points.forEach((p, idx) => {
+              const vids = (p.video_urls && Array.isArray(p.video_urls))
+                ? p.video_urls.length
+                : (p.video_url ? 1 : 0);
+              flat.push({
+                analysisId: a.id,
+                analysisTitle: a.title || `${a.analysis_type} analysis`,
+                analysisType: a.analysis_type || '',
+                pointIndex: idx,
+                pointTitle: p.title || `Point ${idx + 1}`,
+                videoCount: vids,
+              });
+            });
+          }
+          setLinkedAnalysisPoints(flat);
+        }
       }
     } catch (err) {
       console.error('Error fetching actions:', err);
     }
     setLoadingAttachActions(false);
+  };
+
+  // Attach a clip to an analysis point. Trims the clip to a standalone
+  // file (so the point never plays back the full match recording) and
+  // pushes its URL into the point's video_urls array.
+  const handleAttachClipToAnalysisPoint = async (analysisId: string, pointIndex: number) => {
+    if (!attachClip || !selectedVideo) return;
+    setShowAttachDialog(false);
+    const clipRef = attachClip;
+    const videoRef2 = selectedVideo;
+    setAttachClip(null);
+
+    const toastId = toast.loading("Extracting and attaching clip...", { duration: Infinity });
+    try {
+      let clipUrl: string;
+      try {
+        clipUrl = await extractClipFile(videoRef2.video_url, clipRef.id, clipRef.start, clipRef.end);
+      } catch (err) {
+        console.error("Clip extraction failed for analysis point:", err);
+        throw new Error("Clip could not be trimmed — try again.");
+      }
+
+      const { data: analysis, error: fetchErr } = await supabase
+        .from("analyses")
+        .select("points")
+        .eq("id", analysisId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const points: any[] = Array.isArray(analysis?.points) ? [...(analysis!.points as any[])] : [];
+      if (!points[pointIndex]) throw new Error("Point no longer exists");
+
+      const point = { ...points[pointIndex] };
+      const existing = point.video_urls
+        ? [...point.video_urls]
+        : (point.video_url ? [point.video_url] : []);
+      point.video_urls = [...existing, clipUrl];
+      delete point.video_url;
+      points[pointIndex] = point;
+
+      const { error: updateErr } = await supabase
+        .from("analyses")
+        .update({ points })
+        .eq("id", analysisId);
+      if (updateErr) throw updateErr;
+
+      toast.success("Clip attached to analysis point", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to attach clip to analysis point", { id: toastId });
+    }
+  };
+
+  // Unlink the current video analysis from a target (report or analysis).
+  const handleUnlinkFromReport = async (reportId: string) => {
+    if (!selectedVideo) return;
+    try {
+      const { data: report } = await supabase
+        .from("player_analysis")
+        .select("linked_video_analysis_ids")
+        .eq("id", reportId)
+        .single();
+      const next = ((report?.linked_video_analysis_ids || []) as string[]).filter(id => id !== selectedVideo.id);
+      const { error } = await supabase
+        .from("player_analysis")
+        .update({ linked_video_analysis_ids: next })
+        .eq("id", reportId);
+      if (error) throw error;
+      toast.success("Unlinked from report");
+      fetchLinkedReports();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
+  };
+
+  const handleUnlinkFromAnalysis = async (analysisId: string) => {
+    if (!selectedVideo) return;
+    try {
+      const { data: analysis } = await supabase
+        .from("analyses")
+        .select("linked_video_analysis_ids")
+        .eq("id", analysisId)
+        .single();
+      const next = ((analysis?.linked_video_analysis_ids || []) as string[]).filter(id => id !== selectedVideo.id);
+      const { error } = await supabase
+        .from("analyses")
+        .update({ linked_video_analysis_ids: next })
+        .eq("id", analysisId);
+      if (error) throw error;
+      toast.success("Unlinked from analysis");
+      fetchLinkedAnalyses();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
   };
 
   const handleAttachClipToAction = async (actionId: string) => {
@@ -2490,13 +2638,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
-                  {linkedReportIds.length > 0 && (
+                  {(linkedReportIds.length > 0 || linkedAnalysisIds.length > 0) && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-primary shrink-0"
                       onClick={() => handleOpenAttachClip(clip)}
-                      title="Attach to report action"
+                      title="Attach to report action or analysis point"
                     >
                       <Paperclip className="h-3 w-3" />
                     </Button>
@@ -2587,6 +2735,39 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               <DialogTitle>Export Clips</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* Currently linked targets — quick unlink */}
+              {(linkedReportIds.length > 0 || linkedAnalysisIds.length > 0) && (
+                <div className="rounded-md border p-2 space-y-1">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Currently linked</p>
+                  {linkedReportIds.map((id) => (
+                    <div key={`r-${id}`} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate">Report · {id.slice(0, 8)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-destructive hover:text-destructive"
+                        onClick={() => handleUnlinkFromReport(id)}
+                      >
+                        <X className="h-3 w-3 mr-1" /> Unlink
+                      </Button>
+                    </div>
+                  ))}
+                  {linkedAnalysisIds.map((id) => (
+                    <div key={`a-${id}`} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate">Analysis · {id.slice(0, 8)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-destructive hover:text-destructive"
+                        onClick={() => handleUnlinkFromAnalysis(id)}
+                      >
+                        <X className="h-3 w-3 mr-1" /> Unlink
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Destination toggle */}
               <div className="flex rounded-lg border overflow-hidden">
                 <button
@@ -2786,26 +2967,29 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         {/* Attach clip to report action dialog */}
         <Dialog open={showAttachDialog} onOpenChange={(open) => { setShowAttachDialog(open); if (!open) setShowActionsWithClips(false); }}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Attach Clip to Action</DialogTitle>
+              <DialogTitle>Attach Clip</DialogTitle>
             </DialogHeader>
-            <div className="max-h-[400px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto space-y-4">
               {loadingAttachActions ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : linkedReportActions.length === 0 ? (
+              ) : linkedReportActions.length === 0 && linkedAnalysisPoints.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Paperclip className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No actions found on linked reports.</p>
-                  <p className="text-xs mt-1">Add actions to the performance report first.</p>
+                  <p className="text-sm">Nothing to attach to yet.</p>
+                  <p className="text-xs mt-1">Link this video analysis to a report or an analysis from the Link / Export button first.</p>
                 </div>
-              ) : (() => {
+              ) : (
+                <>
+                {linkedReportActions.length > 0 && (() => {
                 const actionsWithoutClip = linkedReportActions.filter(a => !a.video_url);
                 const actionsWithClip = linkedReportActions.filter(a => !!a.video_url);
                 return (
-                  <>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Performance Report Actions</p>
                     {/* Actions without clips - shown prominently */}
                     <button
                       onClick={() => {
@@ -2877,9 +3061,38 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                         ))}
                       </div>
                     )}
-                  </>
+                  </div>
                 );
-              })()}
+                })()}
+                {linkedAnalysisPoints.length > 0 && (
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Analysis Points</p>
+                    <div className="space-y-1">
+                      {linkedAnalysisPoints.map((p) => (
+                        <button
+                          key={`${p.analysisId}-${p.pointIndex}`}
+                          onClick={() => handleAttachClipToAnalysisPoint(p.analysisId, p.pointIndex)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors text-left"
+                        >
+                          <span className="text-xs font-mono text-muted-foreground shrink-0">#{p.pointIndex + 1}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{p.pointTitle}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              <span>{p.analysisType.replace('-', ' ')}</span>
+                              <span className="ml-2 opacity-60">{p.analysisTitle}</span>
+                              {p.videoCount > 0 && (
+                                <span className="ml-1.5 text-amber-500/80">· {p.videoCount} clip{p.videoCount !== 1 ? 's' : ''}</span>
+                              )}
+                            </p>
+                          </div>
+                          <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
