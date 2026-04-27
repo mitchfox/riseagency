@@ -1920,6 +1920,9 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(type, analysis)}>
               <Pencil className="w-4 h-4" />
             </Button>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Duplicate" onClick={() => handleDuplicate(analysis.id)}>
+              <Copy className="w-4 h-4" />
+            </Button>
             {isAdmin && (
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleDelete(analysis.id)}>
                 <Trash2 className="w-4 h-4" />
@@ -1954,6 +1957,9 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate(`/staff/coaching?tab=analysis&edit=${concept.id}`)}>
               <Pencil className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" title="Duplicate" onClick={() => handleDuplicate(concept.id)}>
+              <Copy className="w-4 h-4" />
             </Button>
             {isAdmin && (
               <Button variant="ghost" size="sm" onClick={() => handleDeleteConcept(concept.id)}>
