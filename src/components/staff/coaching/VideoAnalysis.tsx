@@ -2637,13 +2637,13 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
-                  {linkedReportIds.length > 0 && (
+                  {(linkedReportIds.length > 0 || linkedAnalysisIds.length > 0) && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 opacity-0 group-hover/clip:opacity-100 text-muted-foreground hover:text-primary shrink-0"
                       onClick={() => handleOpenAttachClip(clip)}
-                      title="Attach to report action"
+                      title="Attach to report action or analysis point"
                     >
                       <Paperclip className="h-3 w-3" />
                     </Button>
