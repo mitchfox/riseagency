@@ -917,7 +917,7 @@ const Dashboard = () => {
       const { data: playerData, error: playerError } = await supabase
         .from("players")
         .select("*")
-        .eq("email", email)
+        .ilike("email", email.trim().toLowerCase())
         .maybeSingle();
 
       if (playerError) throw playerError;
@@ -1384,7 +1384,7 @@ const Dashboard = () => {
       const { data: playerData, error: playerError } = await supabase
         .from("players")
         .select("id")
-        .eq("email", email)
+        .ilike("email", email.trim().toLowerCase())
         .maybeSingle();
 
       if (playerError) throw playerError;
@@ -1497,7 +1497,7 @@ const Dashboard = () => {
       const { data: playerData, error: playerError } = await supabase
         .from("players")
         .select("id")
-        .eq("email", email)
+        .ilike("email", email.trim().toLowerCase())
         .maybeSingle();
 
       if (playerError) throw playerError;
