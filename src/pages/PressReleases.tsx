@@ -24,7 +24,7 @@ const createSlug = (title: string): string =>
 
 const getImage = (r: PressRelease) => r.image_url || riseWhiteLogo;
 
-const ARTICLES_PER_PAGE = 9;
+const ARTICLES_PER_PAGE = 12;
 
 const PressReleases = () => {
   const { releaseId } = useParams();
@@ -63,47 +63,57 @@ const PressReleases = () => {
         url={releaseId ? `/press-releases/${releaseId}` : "/press-releases"}
       />
       <Header />
-      <div className="min-h-screen bg-background pt-32 md:pt-24 touch-pan-y overflow-x-hidden">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-background pt-28 md:pt-20 touch-pan-y overflow-x-hidden">
+        <div className="container mx-auto px-4 py-8 md:py-10">
+          <div className="max-w-7xl mx-auto">
             {releaseId ? (
               loading ? (
                 <Skeleton className="w-full h-96" />
               ) : current ? (
                 <>
                   <Link to="/press-releases">
-                    <Button variant="ghost" className="mb-6">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                    <Button variant="ghost" size="sm" className="mb-4 font-bebas uppercase tracking-wider text-xs">
+                      <ArrowLeft className="mr-2 h-3.5 w-3.5" />
                       {t("press.back", "Back to Press Releases")}
                     </Button>
                   </Link>
-                  <article>
-                    <div className="w-full mb-8">
-                      <img
-                        src={getImage(current)}
-                        alt={current.title}
-                        className={`w-full h-auto rounded-lg ${!current.image_url ? 'max-w-md mx-auto bg-card p-12' : ''}`}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-primary font-bebas uppercase tracking-wider">
+                  <article className="max-w-4xl mx-auto">
+                    {current.image_url ? (
+                      <div className="w-full mb-6 overflow-hidden rounded-md border border-primary/20">
+                        <img
+                          src={current.image_url}
+                          alt={current.title}
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full mb-6 aspect-[16/7] rounded-md border border-primary/20 bg-gradient-to-br from-black via-card to-black flex items-center justify-center overflow-hidden">
+                        <img
+                          src={riseWhiteLogo}
+                          alt="RISE"
+                          className="h-12 md:h-14 w-auto object-contain opacity-90"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mb-3 pb-3 border-b border-primary/20">
+                      <span className="text-[11px] text-primary font-bebas uppercase tracking-[0.25em]">
                         {t("press.label", "Press Release")}
                       </span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground font-bebas uppercase tracking-[0.2em]">
                         {new Date(current.published_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </span>
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground mb-6">
+                    <h1 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider text-foreground mb-5 leading-tight">
                       {current.title}
                     </h1>
                     {current.excerpt && (
-                      <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+                      <p className="text-lg text-muted-foreground mb-6 leading-relaxed border-l-2 border-primary/60 pl-4">
                         {current.excerpt}
                       </p>
                     )}
                     <div className="prose prose-lg max-w-none text-foreground">
                       {current.content.split('\n').map((paragraph, i) => (
-                        <p key={i} className="mb-4 leading-relaxed">{paragraph}</p>
+                        <p key={i} className="mb-3 leading-relaxed">{paragraph}</p>
                       ))}
                     </div>
                   </article>
@@ -117,13 +127,13 @@ const PressReleases = () => {
               )
             ) : (
               <>
-                <div className="text-center mb-12 space-y-3 animate-fade-in">
+                <div className="text-center mb-8 md:mb-10 space-y-2 animate-fade-in">
                   <div className="inline-block">
-                    <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
+                    <span className="text-[11px] font-bebas uppercase tracking-[0.3em] text-primary border-y border-primary/40 px-4 py-1">
                       {t("press.label", "Official Announcements")}
                     </span>
                   </div>
-                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground">
+                  <h1 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
                     {t("press.title", "Press")} <span className="text-primary">{t("press.releases", "Releases")}</span>
                   </h1>
                 </div>
@@ -145,36 +155,50 @@ const PressReleases = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                     {releases.slice((page - 1) * ARTICLES_PER_PAGE, page * ARTICLES_PER_PAGE).map(item => (
                       <Link key={item.id} to={`/press-releases/${createSlug(item.title)}`}>
-                        <div className="group cursor-pointer overflow-hidden rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-lg">
-                          <div className="relative aspect-[4/3] overflow-hidden bg-black flex items-center justify-center">
-                            <img
-                              src={getImage(item)}
-                              alt={item.title}
-                              className={`${item.image_url ? 'w-full h-full object-cover group-hover:scale-110 transition-transform duration-500' : 'max-w-[60%] max-h-[60%] object-contain'}`}
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" />
-                            <div className="absolute top-4 left-4">
-                              <span className="text-xs font-bebas uppercase tracking-wider text-white bg-primary/90 px-3 py-1 rounded shadow-lg">
-                                {new Date(item.published_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        <article className="group h-full cursor-pointer overflow-hidden rounded-md border border-border bg-card hover:border-primary/60 transition-all duration-300 hover:shadow-[0_8px_30px_-12px_hsl(var(--gold)/0.4)]">
+                          <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-black via-card to-black flex items-center justify-center">
+                            {item.image_url ? (
+                              <>
+                                <img
+                                  src={item.image_url}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-70 group-hover:opacity-85 transition-opacity pointer-events-none" />
+                              </>
+                            ) : (
+                              <>
+                                <img
+                                  src={riseWhiteLogo}
+                                  alt="RISE"
+                                  className="h-10 md:h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                              </>
+                            )}
+                            <div className="absolute top-2.5 left-2.5">
+                              <span className="text-[10px] font-bebas uppercase tracking-[0.2em] text-white bg-primary/90 px-2 py-0.5 rounded-sm shadow-lg">
+                                {new Date(item.published_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                               </span>
                             </div>
                           </div>
-                          <div className="p-6 bg-card">
-                            <span className="text-xs text-primary font-bebas uppercase tracking-wider">
+                          <div className="p-4 border-t border-primary/10">
+                            <span className="text-[10px] text-primary font-bebas uppercase tracking-[0.25em]">
                               {t("press.label", "Press Release")}
                             </span>
-                            <h3 className="text-xl md:text-2xl font-bebas uppercase tracking-wider text-foreground group-hover:text-primary transition-colors mt-1 mb-2 line-clamp-2">
+                            <h3 className="text-base md:text-lg font-bebas uppercase tracking-wide text-foreground group-hover:text-primary transition-colors mt-1 mb-1.5 line-clamp-2 leading-tight">
                               {item.title}
                             </h3>
                             {item.excerpt && (
-                              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{item.excerpt}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{item.excerpt}</p>
                             )}
                           </div>
-                        </div>
+                        </article>
                       </Link>
                     ))}
                   </div>
