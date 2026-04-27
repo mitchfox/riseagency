@@ -1735,6 +1735,26 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     fetchLinkedReports();
   }, [fetchLinkedReports]);
 
+  // Fetch linked analysis IDs (pre-match / post-match / concept) so the
+  // attach dialog can also offer analysis points as a destination — same
+  // experience as the report linking flow.
+  const fetchLinkedAnalyses = useCallback(async () => {
+    if (!selectedVideo) return;
+    const { data } = await supabase
+      .from("analyses")
+      .select("id, linked_video_analysis_ids")
+      .contains("linked_video_analysis_ids", [selectedVideo.id]);
+    if (data && data.length > 0) {
+      setLinkedAnalysisIds(data.map((d: any) => d.id));
+    } else {
+      setLinkedAnalysisIds([]);
+    }
+  }, [selectedVideo]);
+
+  useEffect(() => {
+    fetchLinkedAnalyses();
+  }, [fetchLinkedAnalyses]);
+
   const handleOpenAttachClip = async (clip: Clip) => {
     setAttachClip(clip);
     setShowAttachDialog(true);
@@ -1742,38 +1762,159 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     try {
       if (linkedReportIds.length === 0) {
         setLinkedReportActions([]);
-        setLoadingAttachActions(false);
-        return;
+      } else {
+        const { data: reports } = await supabase
+          .from("player_analysis")
+          .select("id, opponent, analysis_date")
+          .in("id", linkedReportIds);
+        const { data: actions } = await supabase
+          .from("performance_report_actions")
+          .select("id, action_number, action_type, action_description, analysis_id, minute, video_url")
+          .in("analysis_id", linkedReportIds)
+          .order("action_number");
+        if (actions && reports) {
+          setLinkedReportActions(actions.map(a => ({
+            id: a.id,
+            action_number: a.action_number,
+            action_type: a.action_type || '',
+            action_description: a.action_description || '',
+            analysis_id: a.analysis_id,
+            minute: a.minute,
+            video_url: a.video_url,
+            report_title: reports.find(r => r.id === a.analysis_id)?.opponent
+              ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
+              : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
+          })));
+        }
       }
-      const { data: reports } = await supabase
-        .from("player_analysis")
-        .select("id, opponent, analysis_date")
-        .in("id", linkedReportIds);
 
-      const { data: actions } = await supabase
-        .from("performance_report_actions")
-        .select("id, action_number, action_type, action_description, analysis_id, minute, video_url")
-        .in("analysis_id", linkedReportIds)
-        .order("action_number");
-
-      if (actions && reports) {
-        setLinkedReportActions(actions.map(a => ({
-          id: a.id,
-          action_number: a.action_number,
-          action_type: a.action_type || '',
-          action_description: a.action_description || '',
-          analysis_id: a.analysis_id,
-          minute: a.minute,
-          video_url: a.video_url,
-          report_title: reports.find(r => r.id === a.analysis_id)?.opponent
-            ? `vs ${reports.find(r => r.id === a.analysis_id)!.opponent}`
-            : `Report ${reports.find(r => r.id === a.analysis_id)?.analysis_date || ''}`,
-        })));
+      // Also load points from any linked analyses so the user can pick a
+      // point as the destination — exactly mirroring the report flow.
+      if (linkedAnalysisIds.length === 0) {
+        setLinkedAnalysisPoints([]);
+      } else {
+        const { data: analyses } = await supabase
+          .from("analyses")
+          .select("id, title, analysis_type, points")
+          .in("id", linkedAnalysisIds);
+        if (analyses) {
+          const flat: typeof linkedAnalysisPoints = [];
+          for (const a of analyses as any[]) {
+            const points: any[] = Array.isArray(a.points) ? a.points : [];
+            points.forEach((p, idx) => {
+              const vids = (p.video_urls && Array.isArray(p.video_urls))
+                ? p.video_urls.length
+                : (p.video_url ? 1 : 0);
+              flat.push({
+                analysisId: a.id,
+                analysisTitle: a.title || `${a.analysis_type} analysis`,
+                analysisType: a.analysis_type || '',
+                pointIndex: idx,
+                pointTitle: p.title || `Point ${idx + 1}`,
+                videoCount: vids,
+              });
+            });
+          }
+          setLinkedAnalysisPoints(flat);
+        }
       }
     } catch (err) {
       console.error('Error fetching actions:', err);
     }
     setLoadingAttachActions(false);
+  };
+
+  // Attach a clip to an analysis point. Trims the clip to a standalone
+  // file (so the point never plays back the full match recording) and
+  // pushes its URL into the point's video_urls array.
+  const handleAttachClipToAnalysisPoint = async (analysisId: string, pointIndex: number) => {
+    if (!attachClip || !selectedVideo) return;
+    setShowAttachDialog(false);
+    const clipRef = attachClip;
+    const videoRef2 = selectedVideo;
+    setAttachClip(null);
+
+    const toastId = toast.loading("Extracting and attaching clip...", { duration: Infinity });
+    try {
+      let clipUrl: string;
+      try {
+        clipUrl = await extractClipFile(videoRef2.video_url, clipRef.id, clipRef.start, clipRef.end);
+      } catch (err) {
+        console.error("Clip extraction failed for analysis point:", err);
+        throw new Error("Clip could not be trimmed — try again.");
+      }
+
+      const { data: analysis, error: fetchErr } = await supabase
+        .from("analyses")
+        .select("points")
+        .eq("id", analysisId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const points: any[] = Array.isArray(analysis?.points) ? [...(analysis!.points as any[])] : [];
+      if (!points[pointIndex]) throw new Error("Point no longer exists");
+
+      const point = { ...points[pointIndex] };
+      const existing = point.video_urls
+        ? [...point.video_urls]
+        : (point.video_url ? [point.video_url] : []);
+      point.video_urls = [...existing, clipUrl];
+      delete point.video_url;
+      points[pointIndex] = point;
+
+      const { error: updateErr } = await supabase
+        .from("analyses")
+        .update({ points })
+        .eq("id", analysisId);
+      if (updateErr) throw updateErr;
+
+      toast.success("Clip attached to analysis point", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to attach clip to analysis point", { id: toastId });
+    }
+  };
+
+  // Unlink the current video analysis from a target (report or analysis).
+  const handleUnlinkFromReport = async (reportId: string) => {
+    if (!selectedVideo) return;
+    try {
+      const { data: report } = await supabase
+        .from("player_analysis")
+        .select("linked_video_analysis_ids")
+        .eq("id", reportId)
+        .single();
+      const next = ((report?.linked_video_analysis_ids || []) as string[]).filter(id => id !== selectedVideo.id);
+      const { error } = await supabase
+        .from("player_analysis")
+        .update({ linked_video_analysis_ids: next })
+        .eq("id", reportId);
+      if (error) throw error;
+      toast.success("Unlinked from report");
+      fetchLinkedReports();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
+  };
+
+  const handleUnlinkFromAnalysis = async (analysisId: string) => {
+    if (!selectedVideo) return;
+    try {
+      const { data: analysis } = await supabase
+        .from("analyses")
+        .select("linked_video_analysis_ids")
+        .eq("id", analysisId)
+        .single();
+      const next = ((analysis?.linked_video_analysis_ids || []) as string[]).filter(id => id !== selectedVideo.id);
+      const { error } = await supabase
+        .from("analyses")
+        .update({ linked_video_analysis_ids: next })
+        .eq("id", analysisId);
+      if (error) throw error;
+      toast.success("Unlinked from analysis");
+      fetchLinkedAnalyses();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
   };
 
   const handleAttachClipToAction = async (actionId: string) => {
