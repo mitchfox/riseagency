@@ -607,8 +607,8 @@ const RequestRepresentation = () => {
                         <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
-                            "representation.hero_subtitle",
-                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team."
+                            "representation.hero_subtitle_v2",
+                            "Realise Potential With Our Experienced Intermediary & English Premier League Star Performance Team"
                           )}
                         </p>
                         <motion.p
