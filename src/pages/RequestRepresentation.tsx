@@ -54,7 +54,7 @@ const INTRO_SEEN_KEY = "rep_intro_seen_v1";
 type GroupKey = "who" | "how" | "terms";
 type CardKey =
   | "scouting" | "expectations"
-  | "performance" | "network" | "brand"
+  | "performance" | "network" | "brand" | "negotiation"
   | "fees" | "agreement" | "faqs";
 type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology";
 
@@ -62,7 +62,7 @@ const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-rona
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
 const MISSION_BIO =
-  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe and Africa informing recruitment and placement through evidence, standards and proven pathways - our stars share our ethic, mindset and attention to detail to performance.";
+  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
 
 interface CardMeta {
   key: CardKey;
@@ -74,12 +74,13 @@ interface CardMeta {
 
 const CARD_META: CardMeta[] = [
   // Who We Select
-  { key: "scouting",     title: "Scouting",      icon: Search,        subtitle: "How we assess fit by position",     group: "who" },
+  { key: "scouting",     title: "Scouting",      icon: Search,        subtitle: "How We Assess Star Potential",     group: "who" },
   { key: "expectations", title: "Expectations",  icon: Target,        subtitle: "Standards on and off the pitch",    group: "who" },
   // How We Work
-  { key: "performance",  title: "Performance",   icon: Gauge,         subtitle: "How we measure & develop your game", group: "how" },
+  { key: "performance",  title: "Performance",   icon: Gauge,         subtitle: "How We Ensure On-Pitch Success", group: "how" },
   { key: "network",      title: "Club Network",  icon: Users,         subtitle: "Introductions with proper context", group: "how" },
   { key: "brand",        title: "Brand",         icon: Sparkles,      subtitle: "A sharper public-facing profile",   group: "how" },
+  { key: "negotiation",  title: "Negotiation",   icon: FileText,      subtitle: "Short and long-term deal strategy", group: "how" },
   // What Are The Terms
   { key: "fees",         title: "Fees",          icon: PoundSterling, subtitle: "Clear from the start",              group: "terms" },
   { key: "agreement",    title: "Agreement",     icon: FileText,      subtitle: "What the relationship covers",      group: "terms" },
@@ -98,9 +99,22 @@ const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   performance:  { key: "representation.performance",  fallback: "Performance" },
   network:      { key: "representation.club_network", fallback: "Club Network" },
   brand:        { key: "representation.brand",        fallback: "Brand" },
+  negotiation:  { key: "representation.negotiation",  fallback: "Negotiation" },
   fees:         { key: "representation.fees",         fallback: "Fees" },
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
+};
+
+const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+  scouting:     { key: "representation.scouting_subtitle",     fallback: "How We Assess Star Potential" },
+  expectations: { key: "representation.expectations_subtitle", fallback: "Standards on and off the pitch" },
+  performance:  { key: "representation.performance_subtitle",  fallback: "How We Ensure On-Pitch Success" },
+  network:      { key: "representation.club_network_subtitle", fallback: "Introductions with proper context" },
+  brand:        { key: "representation.brand_subtitle",        fallback: "A sharper public-facing profile" },
+  negotiation:  { key: "representation.negotiation_subtitle",  fallback: "Short and long-term deal strategy" },
+  fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
+  agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
+  faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
 };
 
 const GROUPS: GroupKey[] = ["who", "how", "terms"];
