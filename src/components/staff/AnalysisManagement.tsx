@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
