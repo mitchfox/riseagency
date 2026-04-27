@@ -833,6 +833,50 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     }
   };
 
+  /**
+   * Duplicate an analysis (or concept) row, copying every field including
+   * JSONB content (points, matchups, scheme data, video URLs, images, kit
+   * colours, linked videos, etc.). Stripped: id, created_at, updated_at.
+   * The title gets " (Copy)" appended so the duplicate is easy to spot.
+   */
+  const handleDuplicate = async (id: string) => {
+    try {
+      const { data: row, error: fetchErr } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!row) throw new Error("Analysis not found");
+
+      const clone: any = JSON.parse(JSON.stringify(row));
+      delete clone.id;
+      delete clone.created_at;
+      delete clone.updated_at;
+      if (clone.title) clone.title = `${clone.title} (Copy)`;
+      else if (clone.concept) clone.concept = `${clone.concept} (Copy)`;
+      else if (clone.home_team || clone.away_team) {
+        clone.home_team = clone.home_team
+          ? `${clone.home_team} (Copy)`
+          : clone.home_team;
+      }
+
+      const { data: inserted, error: insertErr } = await supabase
+        .from("analyses")
+        .insert(clone)
+        .select()
+        .single();
+      if (insertErr) throw insertErr;
+
+      toast.success("Analysis duplicated");
+      logActivity({ action: 'duplicated', entityType: 'analysis', entityId: inserted?.id });
+      fetchAnalyses();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to duplicate analysis");
+      console.error(error);
+    }
+  };
+
   const addPoint = (insertAfterIndex?: number) => {
     const newPoint = { _id: crypto.randomUUID(), title: "", paragraph_1: "", paragraph_2: "", images: [] };
     const currentPoints = formData.points || [];
