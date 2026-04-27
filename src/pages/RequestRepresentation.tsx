@@ -533,15 +533,15 @@ const RequestRepresentation = () => {
                         transition={{ duration: 0.32 }}
                         className="flex flex-col items-center gap-3 text-center"
                       >
-                        <motion.h1
-                          initial={{ opacity: 0, scale: 0.96 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.8, delay: 0.15 }}
-                          className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
-                          style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
-                        >
-                          Representation
-                        </motion.h1>
+                         <motion.h1
+                           initial={{ opacity: 0, scale: 0.96 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           transition={{ duration: 0.8, delay: 0.15 }}
+                           className="font-bebas text-2xl uppercase leading-none tracking-[0.32em] text-primary sm:text-3xl md:text-4xl lg:text-5xl"
+                           style={{ textShadow: "0 0 18px hsl(var(--gold) / 0.55)" }}
+                         >
+                           {t("representation.representation", "Representation")}
+                         </motion.h1>
                         <span aria-hidden="true" className="block h-px w-16 bg-primary/60 md:w-24" />
                         <p className="text-balance text-sm leading-snug text-foreground md:text-base lg:text-lg">
                           {t(
