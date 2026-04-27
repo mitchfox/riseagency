@@ -988,9 +988,7 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
             onChange={e => setProjectName(e.target.value)}
             onBlur={() => setIsRenaming(false)}
             onKeyDown={e => { if (e.key === 'Enter') setIsRenaming(false); }}
-            spellCheck
-            autoCorrect="on"
-            autoCapitalize="sentences"
+            spellCheck={false}
             lang="en-GB"
             className="h-7 text-sm font-medium bg-white/5 border-white/10 text-white max-w-[200px]"
           />
