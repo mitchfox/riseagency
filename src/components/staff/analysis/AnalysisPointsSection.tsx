@@ -575,6 +575,7 @@ interface SortablePointCardProps {
   videoAnalysisClips: VideoAnalysisClip[];
   concepts: CoachingConcept[];
   allPointTitles: string[];
+  analysisId?: string;
 }
 
 const SortablePointCard = ({
@@ -597,6 +598,7 @@ const SortablePointCard = ({
   videoAnalysisClips,
   concepts,
   allPointTitles,
+  analysisId,
 }: SortablePointCardProps) => {
   const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
   const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
