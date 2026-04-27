@@ -1020,7 +1020,28 @@ const Dashboard = () => {
         };
       });
 
-      // Then fetch their analyses
+      // Build the Performance tab from fixtures first, then merge reports.
+      // This keeps separate same-opponent fixtures visible even when a report
+      // has not been created yet, so linked pre/post-match analysis can still show.
+      const { data: playerFixtureLinks } = await supabase
+        .from("player_fixtures")
+        .select(`
+          fixture_id,
+          minutes_played,
+          fixtures (
+            id,
+            home_team,
+            away_team,
+            home_score,
+            away_score,
+            match_date,
+            match_time,
+            venue,
+            competition
+          )
+        `)
+        .eq("player_id", playerData.id);
+
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
         .select("*")
@@ -1028,8 +1049,66 @@ const Dashboard = () => {
         .order("analysis_date", { ascending: false });
 
       if (analysisError) throw analysisError;
-      
-      setAnalyses(analysisData || []);
+
+      const reportByFixture = new Map<string, Analysis>();
+      (analysisData || []).forEach((report: any) => {
+        if (report.fixture_id) reportByFixture.set(report.fixture_id, report as Analysis);
+      });
+
+      const deriveOpponent = (fixture: any) => {
+        const playerClub = normalizeClubName(parsedPlayerData.club || "");
+        const home = normalizeClubName(fixture.home_team || "");
+        const away = normalizeClubName(fixture.away_team || "");
+        if (playerClub && home && (home.includes(playerClub) || playerClub.includes(home))) return fixture.away_team;
+        if (playerClub && away && (away.includes(playerClub) || playerClub.includes(away))) return fixture.home_team;
+        return fixture.away_team || fixture.home_team || null;
+      };
+
+      const deriveResult = (fixture: any) => {
+        if (fixture.home_score === null || fixture.home_score === undefined || fixture.away_score === null || fixture.away_score === undefined) return null;
+        return `${fixture.home_score}-${fixture.away_score}`;
+      };
+
+      const fixtureRows: Analysis[] = ((playerFixtureLinks || []) as any[])
+        .map((link) => {
+          const fixture = Array.isArray(link.fixtures) ? link.fixtures[0] : link.fixtures;
+          if (!fixture?.id) return null;
+          const existingReport = reportByFixture.get(fixture.id);
+          if (existingReport) {
+            return {
+              ...existingReport,
+              fixture_id: fixture.id,
+              analysis_date: existingReport.analysis_date || fixture.match_date,
+              opponent: existingReport.opponent || deriveOpponent(fixture),
+              result: existingReport.result || deriveResult(fixture),
+              minutes_played: existingReport.minutes_played ?? link.minutes_played ?? null,
+            } as Analysis;
+          }
+
+          return {
+            id: `fixture-${fixture.id}`,
+            fixture_id: fixture.id,
+            analysis_date: fixture.match_date,
+            r90_score: null as any,
+            pdf_url: null,
+            video_url: null,
+            notes: null,
+            opponent: deriveOpponent(fixture),
+            result: deriveResult(fixture),
+            minutes_played: link.minutes_played ?? null,
+            visibility_status: "live",
+          } as Analysis;
+        })
+        .filter(Boolean) as Analysis[];
+
+      const reportsWithoutFixture = ((analysisData || []) as Analysis[]).filter((report: any) => !report.fixture_id);
+      const initialAnalyses = [...fixtureRows, ...reportsWithoutFixture].sort((a, b) => {
+        const dateA = new Date(a.analysis_date || 0).getTime();
+        const dateB = new Date(b.analysis_date || 0).getTime();
+        return dateB - dateA;
+      });
+
+      setAnalyses(initialAnalyses);
 
       // Fetch all concepts from coaching_analysis (available to all players)
       const { data: conceptsData, error: conceptsError } = await supabase
@@ -1057,7 +1136,7 @@ const Dashboard = () => {
       }
 
       // Fetch all analyses (pre-match, post-match) linked to this player
-      let latestAnalyses = [...(analysisData || [])] as Analysis[];
+      let latestAnalyses = [...initialAnalyses] as Analysis[];
       const linkedAnalysisIds = (analysisData || [])
         .filter(a => a.analysis_writer_id)
         .map(a => a.analysis_writer_id);
