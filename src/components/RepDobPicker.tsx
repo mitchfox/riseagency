@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Sleek date-of-birth picker for /representation. Three vertical dial
@@ -11,9 +12,12 @@ import { ChevronRight } from "lucide-react";
  */
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
-const MONTHS = [
+const MONTH_KEYS = [
+  "jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec",
+] as const;
+const MONTH_FALLBACKS = [
   "JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC",
-];
+] as const;
 const THIS_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: THIS_YEAR - 1939 }, (_, i) => 1940 + i); // 1940..now
 
@@ -115,6 +119,10 @@ interface Props {
 }
 
 export const RepDobPicker = ({ onConfirm }: Props) => {
+  const { t } = useLanguage();
+  const monthLabels = MONTH_KEYS.map((k, i) =>
+    t(`representation.month_${k}`, MONTH_FALLBACKS[i])
+  );
   // Default 01 / 01 / 2000.
   const [day, setDay]     = useState<number>(0);                                  // index of 1
   const [month, setMonth] = useState<number>(0);                                  // index of JAN
@@ -139,7 +147,7 @@ export const RepDobPicker = ({ onConfirm }: Props) => {
     <div className="flex w-full items-center gap-3">
       <div className="grid flex-1 grid-cols-3 gap-2">
         <Dial ariaLabel="Day" values={DAYS} index={day} onChange={setDay} />
-        <Dial ariaLabel="Month" values={MONTHS} index={month} onChange={setMonth} />
+        <Dial ariaLabel="Month" values={monthLabels} index={month} onChange={setMonth} />
         <Dial ariaLabel="Year" values={YEARS} index={year} onChange={setYear} />
       </div>
       <button

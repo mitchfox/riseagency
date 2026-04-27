@@ -34,6 +34,7 @@ import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEdito
 import type { AnnotationProject } from "@/components/staff/annotations/AnnotationProjects";
 import { ReadOnlyAnnotationPlayback } from "@/components/portal/ReadOnlyAnnotationPlayback";
 import { supabase } from "@/integrations/supabase/client";
+import { trimAndUploadClip } from "@/lib/clientClipExtractor";
 
 import { toast } from "sonner";
 import {
@@ -784,9 +785,37 @@ const SortablePointCard = ({
                 <div className="mt-2">
                   <Select
                     value=""
-                    onValueChange={(value) => {
+                    onValueChange={async (value) => {
+                      // The select value carries the source video URL plus
+                      // the clip id and start/end (encoded as a hash) so we
+                      // can extract the standalone trimmed clip server-side.
+                      // We never store the raw "#t=" URL on the point —
+                      // that played the FULL video analysis recording in
+                      // place of the single clip.
+                      const [sourceUrl, meta] = value.split("|||");
+                      const [clipId, startStr, endStr] = (meta || "").split(",");
+                      const start = Number(startStr);
+                      const end = Number(endStr);
                       const currentVideos = point.video_urls || (point.video_url ? [point.video_url] : []);
-                      updatePoint(index, "video_urls", [...currentVideos, value]);
+                      const toastId = toast.loading("Trimming clip from video analysis…");
+                      try {
+                        const trimmedUrl = await trimAndUploadClip(
+                          sourceUrl,
+                          clipId || `va-${Date.now()}`,
+                          start,
+                          end,
+                          (msg) => toast.loading(msg, { id: toastId })
+                        );
+                        if (!trimmedUrl) throw new Error("Trim returned no URL");
+                        updatePoint(index, "video_urls", [...currentVideos, trimmedUrl]);
+                        toast.success("Clip added", { id: toastId });
+                      } catch (err: any) {
+                        console.error("VA clip trim failed:", err);
+                        toast.error(
+                          err?.message || "Could not trim that clip — try again",
+                          { id: toastId }
+                        );
+                      }
                     }}
                   >
                     <SelectTrigger>
@@ -794,7 +823,10 @@ const SortablePointCard = ({
                     </SelectTrigger>
                     <SelectContent>
                       {videoAnalysisClips.map((clip) => (
-                        <SelectItem key={clip.id} value={`${clip.video_url}#t=${clip.start},${clip.end}`}>
+                        <SelectItem
+                          key={clip.id}
+                          value={`${clip.video_url}|||${clip.id},${clip.start},${clip.end}`}
+                        >
                           <div className="flex items-center gap-2">
                             <Film className="w-3 h-3" />
                             <span className="truncate">

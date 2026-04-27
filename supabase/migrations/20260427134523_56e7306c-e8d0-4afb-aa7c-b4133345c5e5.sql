@@ -1,0 +1,17 @@
+INSERT INTO public.translations (page_name, text_key, english, spanish, portuguese, french, german, italian, polish, czech, russian, turkish, croatian, norwegian) VALUES
+('representation', 'representation.choose_position', 'Choose your position', 'Elige tu posición', 'Escolha a sua posição', 'Choisissez votre poste', 'Wähle deine Position', 'Scegli il tuo ruolo', 'Wybierz swoją pozycję', 'Vyber svou pozici', 'Выбери свою позицию', 'Pozisyonunu seç', 'Odaberi svoju poziciju', 'Velg din posisjon'),
+('representation', 'representation.personalised_breakdown', 'For a more personalised breakdown of what representation will look like for you.', 'Para un análisis más personalizado de cómo será tu representación.', 'Para uma análise mais personalizada de como será a sua representação.', 'Pour un aperçu plus personnalisé de ce à quoi ressemblera votre représentation.', 'Für eine persönlichere Aufschlüsselung, wie deine Vertretung aussehen wird.', 'Per un''analisi più personalizzata di come sarà la tua rappresentanza.', 'Aby uzyskać bardziej spersonalizowane podsumowanie tego, jak będzie wyglądać Twoja reprezentacja.', 'Pro osobnější přehled toho, jak bude vaše zastupování vypadat.', 'Чтобы получить более персональный разбор того, как будет выглядеть твоё представительство.', 'Temsiliyetinizin nasıl görüneceğine dair daha kişiselleştirilmiş bir döküm için.', 'Za personaliziraniji pregled kako će izgledati vaše zastupanje.', 'For en mer personlig oversikt over hvordan representasjonen din vil se ut.'),
+('representation', 'representation.dob_heading', 'Date of birth', 'Fecha de nacimiento', 'Data de nascimento', 'Date de naissance', 'Geburtsdatum', 'Data di nascita', 'Data urodzenia', 'Datum narození', 'Дата рождения', 'Doğum tarihi', 'Datum rođenja', 'Fødselsdato'),
+('representation', 'representation.month_jan', 'JAN', 'ENE', 'JAN', 'JAN', 'JAN', 'GEN', 'STY', 'LED', 'ЯНВ', 'OCA', 'SIJ', 'JAN'),
+('representation', 'representation.month_feb', 'FEB', 'FEB', 'FEV', 'FÉV', 'FEB', 'FEB', 'LUT', 'ÚNO', 'ФЕВ', 'ŞUB', 'VEL', 'FEB'),
+('representation', 'representation.month_mar', 'MAR', 'MAR', 'MAR', 'MAR', 'MÄR', 'MAR', 'MAR', 'BŘE', 'МАР', 'MAR', 'OŽU', 'MAR'),
+('representation', 'representation.month_apr', 'APR', 'ABR', 'ABR', 'AVR', 'APR', 'APR', 'KWI', 'DUB', 'АПР', 'NIS', 'TRA', 'APR'),
+('representation', 'representation.month_may', 'MAY', 'MAY', 'MAI', 'MAI', 'MAI', 'MAG', 'MAJ', 'KVĚ', 'МАЙ', 'MAY', 'SVI', 'MAI'),
+('representation', 'representation.month_jun', 'JUN', 'JUN', 'JUN', 'JUIN', 'JUN', 'GIU', 'CZE', 'ČVN', 'ИЮН', 'HAZ', 'LIP', 'JUN'),
+('representation', 'representation.month_jul', 'JUL', 'JUL', 'JUL', 'JUIL', 'JUL', 'LUG', 'LIP', 'ČVC', 'ИЮЛ', 'TEM', 'SRP', 'JUL'),
+('representation', 'representation.month_aug', 'AUG', 'AGO', 'AGO', 'AOÛT', 'AUG', 'AGO', 'SIE', 'SRP', 'АВГ', 'AĞU', 'KOL', 'AUG'),
+('representation', 'representation.month_sep', 'SEP', 'SEP', 'SET', 'SEP', 'SEP', 'SET', 'WRZ', 'ZÁŘ', 'СЕН', 'EYL', 'RUJ', 'SEP'),
+('representation', 'representation.month_oct', 'OCT', 'OCT', 'OUT', 'OCT', 'OKT', 'OTT', 'PAŹ', 'ŘÍJ', 'ОКТ', 'EKİ', 'LIS', 'OKT'),
+('representation', 'representation.month_nov', 'NOV', 'NOV', 'NOV', 'NOV', 'NOV', 'NOV', 'LIS', 'LIS', 'НОЯ', 'KAS', 'STU', 'NOV'),
+('representation', 'representation.month_dec', 'DEC', 'DIC', 'DEZ', 'DÉC', 'DEZ', 'DIC', 'GRU', 'PRO', 'ДЕК', 'ARA', 'PRO', 'DES')
+ON CONFLICT (page_name, text_key) DO NOTHING;

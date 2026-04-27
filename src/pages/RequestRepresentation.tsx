@@ -567,10 +567,13 @@ const RequestRepresentation = () => {
                         className="flex flex-col items-center gap-3 text-center"
                       >
                         <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
-                          Choose your position
+                          {t("representation.choose_position", "Choose your position")}
                         </p>
                         <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
-                          For a more personalised breakdown of what representation will look like for you.
+                          {t(
+                            "representation.personalised_breakdown",
+                            "For a more personalised breakdown of what representation will look like for you."
+                          )}
                         </p>
                         <FormationPositionPicker
                           onPick={(p) => { setChosenPosition(p); setIntroStep("dob"); }}
@@ -589,10 +592,13 @@ const RequestRepresentation = () => {
                         className="flex flex-col items-center gap-3 text-center"
                       >
                         <p className="font-bebas text-base uppercase tracking-[0.32em] text-primary md:text-lg">
-                          Date of birth
+                          {t("representation.dob_heading", "Date of birth")}
                         </p>
                         <p className="italic text-xs leading-snug text-foreground/85 md:text-sm">
-                          For a more personalised breakdown of what representation will look like for you.
+                          {t(
+                            "representation.personalised_breakdown",
+                            "For a more personalised breakdown of what representation will look like for you."
+                          )}
                         </p>
                         <div className="mt-1 w-full">
                           <RepDobPicker
