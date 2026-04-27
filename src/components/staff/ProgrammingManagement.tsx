@@ -774,6 +774,55 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     }
   };
 
+  /**
+   * Duplicate a programme — deep clones every JSONB field (sessions A-H +
+   * PRE-A-H, weekly_schedules with all per-day data, overview_text, phase
+   * info, schedule_notes, image URLs). The new row is never current and is
+   * placed at the end of the player's programme list with " (Copy)" suffix.
+   */
+  const duplicateProgram = async (programId: string) => {
+    setLoading(true);
+    try {
+      const { data: row, error: fetchErr } = await supabase
+        .from('player_programs')
+        .select('*')
+        .eq('id', programId)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!row) throw new Error('Programme not found');
+
+      const clone: any = JSON.parse(JSON.stringify(row));
+      delete clone.id;
+      delete clone.created_at;
+      delete clone.updated_at;
+      clone.is_current = false;
+      clone.program_name = `${clone.program_name || 'Programme'} (Copy)`;
+
+      const { data: existing } = await supabase
+        .from('player_programs')
+        .select('display_order')
+        .eq('player_id', row.player_id)
+        .order('display_order', { ascending: false })
+        .limit(1);
+      clone.display_order = existing && existing.length > 0
+        ? (existing[0].display_order || 0) + 1
+        : 1;
+
+      const { error: insertErr } = await supabase
+        .from('player_programs')
+        .insert(clone);
+      if (insertErr) throw insertErr;
+
+      toast.success('Programme duplicated');
+      loadPrograms();
+    } catch (error: any) {
+      console.error('Error duplicating programme:', error);
+      toast.error(error.message || 'Failed to duplicate programme');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateField = (field: keyof ProgrammingData, value: any) => {
     setProgrammingData(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
