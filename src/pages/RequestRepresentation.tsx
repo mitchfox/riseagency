@@ -1071,10 +1071,10 @@ const DetailView = ({
                   className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
                 >
                   <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
-                    {faq.q}
+                    {t(faq.q, faq.q)}
                   </AccordionTrigger>
                   <AccordionContent className="text-sm leading-relaxed text-foreground/80 md:text-base">
-                    {faq.a}
+                    {t(faq.a, faq.a)}
                   </AccordionContent>
                 </AccordionItem>
               ))}
