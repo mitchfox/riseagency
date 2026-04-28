@@ -281,48 +281,29 @@ interface PerfSubMeta {
   detail: string[];
 }
 
+/** All copy here is referenced by translation key so the i18n backfill
+ *  picks it up for every supported language. */
 const PERFORMANCE_SUBS: PerfSubMeta[] = [
-  { key: "analysis",   title: "Analysis",                icon: Gauge,    blurb: "Full match analysis & opponent breakdowns.", detail: [
-    "Full match analysis with chronological context, not just selected highlights.",
-    "Opponent breakdowns highlighting how the game shaped your decisions and outputs.",
-    "Clipped key moments turned into a clear development picture.",
-    "Used both for self-review and to give clubs an honest read of your level.",
+  { key: "analysis",   title: "representation.perf_analysis_title",   icon: Gauge,    blurb: "representation.perf_analysis_blurb", detail: [
+    "representation.perf_analysis_d1", "representation.perf_analysis_d2", "representation.perf_analysis_d3", "representation.perf_analysis_d4",
   ]},
-  { key: "actions",    title: "Action Reports",          icon: FileText, blurb: "R90-graded action reports for every meaningful touch.", detail: [
-    "Every meaningful touch graded with the R90 system.",
-    "Each clip carries a score, the surrounding context and the coaching point.",
-    "Actions are grouped into categories so themes and trends are easy to read.",
-    "See the Cristiano Ronaldo example below for the exact format.",
+  { key: "actions",    title: "representation.perf_actions_title",    icon: FileText, blurb: "representation.perf_actions_blurb", detail: [
+    "representation.perf_actions_d1", "representation.perf_actions_d2", "representation.perf_actions_d3", "representation.perf_actions_d4",
   ]},
-  { key: "sps",        title: "Strength, Power & Speed", icon: Dumbbell, blurb: "Position-specific physical benchmarks & programmes.", detail: [
-    "Physical benchmarks tied to position-specific demands, not generic gym standards.",
-    "Targeted programmes built around your in-game outputs and weak points.",
-    "Periodised so the heavy work serves the football, not the other way around.",
-    "Reviewed regularly so progress is measured, not assumed.",
+  { key: "sps",        title: "representation.perf_sps_title",        icon: Dumbbell, blurb: "representation.perf_sps_blurb", detail: [
+    "representation.perf_sps_d1", "representation.perf_sps_d2", "representation.perf_sps_d3", "representation.perf_sps_d4",
   ]},
-  { key: "nutrition",  title: "Nutrition",               icon: Apple,    blurb: "Practical fuelling, recovery and hydration guidance.", detail: [
-    "Practical fuelling shaped around training and match weeks.",
-    "Recovery and hydration guidance that fits real schedules.",
-    "Nothing faddish — just the work that actually keeps a player available and sharp.",
-    "Adjusted as workload, environment and goals change.",
+  { key: "nutrition",  title: "representation.perf_nutrition_title",  icon: Apple,    blurb: "representation.perf_nutrition_blurb", detail: [
+    "representation.perf_nutrition_d1", "representation.perf_nutrition_d2", "representation.perf_nutrition_d3", "representation.perf_nutrition_d4",
   ]},
-  { key: "technique",  title: "Technique",               icon: Cpu,      blurb: "Detailed technical reviews on touch, passing & finishing.", detail: [
-    "Detailed reviews on first touch, passing, finishing and position-specific actions.",
-    "Frame-by-frame breakdowns where it matters.",
-    "Focus stays on the technical detail clubs notice when they trust a player.",
-    "Reinforced with clear, repeatable correction work.",
+  { key: "technique",  title: "representation.perf_technique_title",  icon: Cpu,      blurb: "representation.perf_technique_blurb", detail: [
+    "representation.perf_technique_d1", "representation.perf_technique_d2", "representation.perf_technique_d3", "representation.perf_technique_d4",
   ]},
-  { key: "psychology", title: "Psychology",              icon: Heart,    blurb: "Mindset, focus and the mental side of competing.", detail: [
-    "Mindset, focus and consistency at the level we are pushing towards.",
-    "Honest conversations about pressure, setbacks and standards.",
-    "Tools and frameworks that help on and off the pitch.",
-    "The mental side is treated as part of performance, not an afterthought.",
+  { key: "psychology", title: "representation.perf_psychology_title", icon: Heart,    blurb: "representation.perf_psychology_blurb", detail: [
+    "representation.perf_psychology_d1", "representation.perf_psychology_d2", "representation.perf_psychology_d3", "representation.perf_psychology_d4",
   ]},
-  { key: "portal",     title: "Portal",                  icon: Users,    blurb: "Your private hub for analysis, reports and direct support.", detail: [
-    "A bespoke portal for every represented player with reports, analyses and clipped actions in one place.",
-    "Direct messaging with the team and a clear record of work shared throughout the season.",
-    "Training programmes, schedules and development notes always available on phone or desktop.",
-    "Use the live example portal to see exactly what an active player sees.",
+  { key: "portal",     title: "representation.perf_portal_title",     icon: Users,    blurb: "representation.perf_portal_blurb", detail: [
+    "representation.perf_portal_d1", "representation.perf_portal_d2", "representation.perf_portal_d3", "representation.perf_portal_d4",
   ]},
 ];
 
