@@ -787,7 +787,7 @@ const RequestRepresentation = () => {
                         overflowWrap: "normal",
                       }}
                     >
-                      {t("representation.mission_bio", MISSION_BIO)}
+                      {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
                     </p>
                   </div>
                 </div>
