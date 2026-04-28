@@ -1238,9 +1238,9 @@ const DetailView = ({
                     >
                       <div className="flex items-center gap-2">
                         <SIcon className="h-4 w-4 text-primary" />
-                        <p className="font-bebas text-sm uppercase tracking-[0.12em] md:text-base">{sub.title}</p>
+                        <p className="font-bebas text-sm uppercase tracking-[0.12em] md:text-base">{t(sub.title, sub.title)}</p>
                       </div>
-                      <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{sub.blurb}</p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{t(sub.blurb, sub.blurb)}</p>
                       <p className="mt-3 inline-flex items-center gap-1 text-[10px] font-bebas uppercase tracking-[0.2em] text-primary">
                         {t("representation.tap_for_more", "Tap for more")} <ChevronRight className="h-3 w-3" />
                       </p>
