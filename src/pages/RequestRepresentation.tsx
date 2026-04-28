@@ -55,7 +55,7 @@ type CardKey =
   | "scouting" | "expectations"
   | "performance" | "network" | "brand" | "negotiation"
   | "fees" | "agreement" | "faqs";
-type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology";
+type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
 const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 const WHATSAPP_URL = "https://wa.me/447508342901";
@@ -310,6 +310,12 @@ const PERFORMANCE_SUBS: PerfSubMeta[] = [
     "Honest conversations about pressure, setbacks and standards.",
     "Tools and frameworks that help on and off the pitch.",
     "The mental side is treated as part of performance, not an afterthought.",
+  ]},
+  { key: "portal",     title: "Portal",                  icon: Users,    blurb: "Your private hub for analysis, reports and direct support.", detail: [
+    "A bespoke portal for every represented player with reports, analyses and clipped actions in one place.",
+    "Direct messaging with the team and a clear record of work shared throughout the season.",
+    "Training programmes, schedules and development notes always available on phone or desktop.",
+    "Use the live example portal to see exactly what an active player sees.",
   ]},
 ];
 
