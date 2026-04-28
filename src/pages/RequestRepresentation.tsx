@@ -181,37 +181,30 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   performance: {
-    eyebrow: "Real R90 reporting and player development",
-    points: ageGroup === "under18"
-      ? [
-          "We build proper R90 reports, clipped actions and match reviews so the level is easy to understand.",
-          "Development work is shaped by what the footage actually shows, not generic advice.",
-          "Training themes, match detail and progress points are kept clear for the player and family.",
-          "The aim is to show where the player is now and what needs sharpening next.",
-        ]
-      : [
-          "We build real R90 reports, clipped actions and full match analysis to show your level properly.",
-          "Performance support is based on evidence from your games, with clear strengths and clear next steps.",
-          "Coaching input, review work and standards are shaped around what helps your football move forward.",
-          "The whole point is to make your level easier for clubs to trust and easier for you to improve.",
-        ],
+    eyebrow: "Real depth, real Premier League experience",
+    points: [
+      "representation.performance_p1",
+      "representation.performance_p2",
+      "representation.performance_p3",
+      "representation.performance_p4",
+    ],
   },
   network: {
     eyebrow: "Context before contact",
     points: [
-      "We do not throw players around blindly. We present them with footage, reports and proper context.",
-      "Introductions are stronger when the player profile is clear, current and backed up by evidence.",
-      "The focus is on the right opportunity, not pointless noise.",
-      "That means better conversations with clubs and a clearer route when interest is genuine.",
+      "representation.network_p1",
+      "representation.network_p2",
+      "representation.network_p3",
+      "representation.network_p4",
     ],
   },
   brand: {
-    eyebrow: "A stronger public-facing profile",
+    eyebrow: "Building presence and opportunity",
     points: [
-      "Your presentation should look serious and consistent wherever somebody checks your profile.",
-      "We tighten the way your football is shown across clips, reports and public materials.",
-      "The goal is not hype. It is clarity, consistency and a more professional first impression.",
-      "When the football is strong, the presentation should not let it down.",
+      "representation.brand_p1",
+      "representation.brand_p2",
+      "representation.brand_p3",
+      "representation.brand_p4",
     ],
   },
   negotiation: {
@@ -224,51 +217,51 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   fees: {
-    eyebrow: "Simple and upfront",
+    eyebrow: "A fair industry-standard 5%",
     points: ageGroup === "under18"
       ? [
-          "There is no commission for under-18 representation.",
-          "Any work, support or next step is explained clearly before anything moves forward.",
-          "There are no hidden extras dressed up afterwards.",
-          "Everything is discussed properly so everybody knows where they stand.",
+          "representation.fees_under18_p1",
+          "representation.fees_under18_p2",
+          "representation.fees_under18_p3",
+          "representation.fees_under18_p4",
         ]
       : [
-          "For players over 18, fees are discussed properly at the outset and set out clearly.",
-          "No hidden charges, no vague extras and no pretending later that something meant something else.",
-          "If we work together, the financial side is explained in plain terms before anything is signed.",
-          "Clarity matters because trust matters.",
+          "representation.fees_over18_p1",
+          "representation.fees_over18_p2",
+          "representation.fees_over18_p3",
+          "representation.fees_over18_p4",
         ],
   },
   agreement: {
-    eyebrow: "Clear terms, proper boundaries",
+    eyebrow: "How we sign together — typically 2 years",
     points: ageGroup === "under18"
       ? [
-          "For under-18 players, parent or guardian involvement is part of the process from the start.",
-          "The agreement sets out what we do, what support is included and how communication works.",
-          "Nothing should feel vague or hidden when a young player is being represented.",
-          "Questions can be dealt with properly before anything moves on.",
+          "representation.agreement_under18_p1",
+          "representation.agreement_under18_p2",
+          "representation.agreement_under18_p3",
+          "representation.agreement_under18_p4",
         ]
       : [
-          "The agreement sets out what we do, what support is included and what the working relationship looks like.",
-          "Scope, expectations and fees should all be clear before the relationship begins.",
-          "We would rather make terms easy to understand than fill the page with noise.",
-          "You should know exactly what you are signing and exactly what you can expect.",
+          "representation.agreement_over18_p1",
+          "representation.agreement_over18_p2",
+          "representation.agreement_over18_p3",
+          "representation.agreement_over18_p4",
         ],
   },
   expectations: {
-    eyebrow: "Standards matter",
+    eyebrow: "A different level of will",
     points: ageGroup === "under18"
       ? [
-          "We want players who listen, work and take development seriously.",
-          "Communication should stay honest and consistent so the player is supported properly.",
-          "Good habits on and off the pitch matter just as much as moments on the ball.",
-          "Progress is much easier when everybody is aligned and serious about the work.",
+          "representation.expectations_under18_p1",
+          "representation.expectations_under18_p2",
+          "representation.expectations_under18_p3",
+          "representation.expectations_under18_p4",
         ]
       : [
-          "We expect honesty, professionalism and a serious approach to improvement.",
-          "You have to be willing to hear clear feedback and act on it.",
-          "Communication needs to stay direct and reliable so we can actually move things forward.",
-          "The standards off the pitch should match the ambition on it.",
+          "representation.expectations_over18_p1",
+          "representation.expectations_over18_p2",
+          "representation.expectations_over18_p3",
+          "representation.expectations_over18_p4",
         ],
   },
 });
