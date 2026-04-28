@@ -1130,7 +1130,7 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
@@ -1175,15 +1175,15 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
 
-              <SectionDivider label="Inside Performance" />
+              <SectionDivider label={t("representation.inside_performance", "Inside Performance")} />
 
               <p className="text-xs text-muted-foreground md:text-sm">
-                Each area below opens on its own screen. Tap to see the detail.
+                {t("representation.area_intro", "Each area below opens on its own screen. Tap to see the detail.")}
               </p>
               <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4">
                 {PERFORMANCE_SUBS.map((sub) => {
@@ -1201,7 +1201,7 @@ const DetailView = ({
                       </div>
                       <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{sub.blurb}</p>
                       <p className="mt-3 inline-flex items-center gap-1 text-[10px] font-bebas uppercase tracking-[0.2em] text-primary">
-                        Tap for more <ChevronRight className="h-3 w-3" />
+                        {t("representation.tap_for_more", "Tap for more")} <ChevronRight className="h-3 w-3" />
                       </p>
                     </button>
                   );
@@ -1216,13 +1216,13 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
               <SectionDivider />
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary/85">
-                <Globe2 className="h-3.5 w-3.5" /> Our live scouting network
+                <Globe2 className="h-3.5 w-3.5" /> {t("representation.our_live_network", "Our live scouting network")}
               </div>
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
                 <div className="h-[420px] md:h-[600px]">
@@ -1243,7 +1243,7 @@ const DetailView = ({
                   transition={{ delay: index * 0.05, duration: 0.24 }}
                   className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
                 >
-                  {point}
+                  {point.startsWith("representation.") ? t(point, point) : point}
                 </motion.div>
               ))}
             </div>
