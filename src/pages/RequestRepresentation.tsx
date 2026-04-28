@@ -998,11 +998,11 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_performance", "Back to Performance")} />
-          <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
+          <TitlePlate icon={SIcon} title={t(sub.title, sub.title)} eyebrow={t(sub.blurb, sub.blurb)} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
               <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
-                {p}
+                {t(p, p)}
               </div>
             ))}
           </div>
