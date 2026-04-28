@@ -60,7 +60,9 @@ function Dial<T extends number | string>({ values, index, onChange, format, aria
         if (drag.current.pointerId !== e.pointerId) return;
         const dy = e.clientY - drag.current.startY;
         setLiveOffset(dy);
-        const steps = Math.round(-dy / ITEM_HEIGHT);
+        // Slightly faster than 1px:1px so the wheel feels lively without
+        // overshooting. ~1.55x sensitivity gets us to far values quickly.
+        const steps = Math.round((-dy * 1.55) / ITEM_HEIGHT);
         const next = clamp(drag.current.startIndex + steps);
         if (next !== index) onChange(next);
       }}
@@ -88,7 +90,7 @@ function Dial<T extends number | string>({ values, index, onChange, format, aria
         transition={
           drag.current.pointerId !== null
             ? { duration: 0 }
-            : { type: "spring", stiffness: 320, damping: 28 }
+            : { type: "spring", stiffness: 480, damping: 32, mass: 0.6 }
         }
         className="absolute inset-x-0 top-0 m-0 list-none p-0"
       >

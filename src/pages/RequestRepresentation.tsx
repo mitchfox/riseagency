@@ -55,10 +55,17 @@ type CardKey =
   | "scouting" | "expectations"
   | "performance" | "network" | "brand" | "negotiation"
   | "fees" | "agreement" | "faqs";
-type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology";
+type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
 const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 const WHATSAPP_URL = "https://wa.me/447508342901";
+
+/** Cristiano Ronaldo example assets used inside the Performance section. */
+const CRISTIANO_REAL_MADRID_REPORT_URL =
+  "/performance-report/0d632a2b-29a4-4fa2-8bbc-3d695afce17e-cristiano-ronaldo-vs-real-madrid";
+const CRISTIANO_GETAFE_ANALYSIS_URL =
+  "/analysis/f69a80b4-aa8b-4572-8186-a0828d84e9a8";
+const CRISTIANO_PORTAL_URL = "/portal?demo=cristiano-ronaldo";
 
 const MISSION_BIO =
   "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
@@ -146,20 +153,20 @@ const solidBlackSectionStyle: React.CSSProperties = {
 
 const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
   under18: [
-    { q: "Do you charge a fee to represent under-18 players?", a: "No. There is no commission for under-18 representation. Any future work is discussed openly with the player and family before anything moves on." },
-    { q: "Does a parent or guardian have to be involved?", a: "Yes. Parental or guardian involvement is required for under-18 representation. They sit in on key conversations and sign the agreement alongside the player." },
-    { q: "What footage should we send?", a: "Recent full-match footage is best. Highlights help, but full games show level, decision making and consistency. A short summary of current club and position is also useful." },
-    { q: "How long does the scouting process take?", a: "Once we have the footage and key details, we usually come back within a couple of weeks with a clear yes, a not yet, or further questions." },
-    { q: "Will my child train with RISE?", a: "We do not run a training programme. We support development through analysis, feedback and well-considered next steps with the existing club or a better-fitting one." },
-    { q: "What does the representation agreement actually cover?", a: "It sets out what we do, what support is included, how communication works and what the working relationship looks like. Everything is explained in plain terms." },
+    { q: "representation.faq_u18_q1", a: "representation.faq_u18_a1" },
+    { q: "representation.faq_u18_q2", a: "representation.faq_u18_a2" },
+    { q: "representation.faq_u18_q3", a: "representation.faq_u18_a3" },
+    { q: "representation.faq_u18_q4", a: "representation.faq_u18_a4" },
+    { q: "representation.faq_u18_q5", a: "representation.faq_u18_a5" },
+    { q: "representation.faq_u18_q6", a: "representation.faq_u18_a6" },
   ],
   over18: [
-    { q: "What does it actually cost?", a: "Fees are discussed properly at the outset and set out clearly. No hidden charges, no vague extras. If we work together, the financial side is explained in plain terms before anything is signed." },
-    { q: "How do you decide whether to represent a player?", a: "We look at level, position, evidence and whether there is a realistic fit for the player and the agency. If it is there, we move forward. If not, that is said clearly." },
-    { q: "Can I keep my current agent and add RISE?", a: "No. Standard intermediary rules mean we work as the sole representative once an agreement is in place. We will not move forward while another exclusive agreement is active." },
-    { q: "What is the agreement length?", a: "Standard intermediary terms apply. Length and scope are explained before signing so you know exactly what you are committing to and for how long." },
-    { q: "What kind of performance support do I get?", a: "Real R90 reports, clipped actions, full match analysis and clear next steps. The aim is to make your level easier for clubs to trust and easier for you to improve." },
-    { q: "How quickly will I hear back after submitting?", a: "We aim to respond within a few working days. Full assessment takes longer because we want to be properly informed before saying yes or no." },
+    { q: "representation.faq_o18_q1", a: "representation.faq_o18_a1" },
+    { q: "representation.faq_o18_q2", a: "representation.faq_o18_a2" },
+    { q: "representation.faq_o18_q3", a: "representation.faq_o18_a3" },
+    { q: "representation.faq_o18_q4", a: "representation.faq_o18_a4" },
+    { q: "representation.faq_o18_q5", a: "representation.faq_o18_a5" },
+    { q: "representation.faq_o18_q6", a: "representation.faq_o18_a6" },
   ],
 };
 
@@ -174,37 +181,30 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   performance: {
-    eyebrow: "Real R90 reporting and player development",
-    points: ageGroup === "under18"
-      ? [
-          "We build proper R90 reports, clipped actions and match reviews so the level is easy to understand.",
-          "Development work is shaped by what the footage actually shows, not generic advice.",
-          "Training themes, match detail and progress points are kept clear for the player and family.",
-          "The aim is to show where the player is now and what needs sharpening next.",
-        ]
-      : [
-          "We build real R90 reports, clipped actions and full match analysis to show your level properly.",
-          "Performance support is based on evidence from your games, with clear strengths and clear next steps.",
-          "Coaching input, review work and standards are shaped around what helps your football move forward.",
-          "The whole point is to make your level easier for clubs to trust and easier for you to improve.",
-        ],
+    eyebrow: "Real depth, real Premier League experience",
+    points: [
+      "representation.performance_p1",
+      "representation.performance_p2",
+      "representation.performance_p3",
+      "representation.performance_p4",
+    ],
   },
   network: {
     eyebrow: "Context before contact",
     points: [
-      "We do not throw players around blindly. We present them with footage, reports and proper context.",
-      "Introductions are stronger when the player profile is clear, current and backed up by evidence.",
-      "The focus is on the right opportunity, not pointless noise.",
-      "That means better conversations with clubs and a clearer route when interest is genuine.",
+      "representation.network_p1",
+      "representation.network_p2",
+      "representation.network_p3",
+      "representation.network_p4",
     ],
   },
   brand: {
-    eyebrow: "A stronger public-facing profile",
+    eyebrow: "Building presence and opportunity",
     points: [
-      "Your presentation should look serious and consistent wherever somebody checks your profile.",
-      "We tighten the way your football is shown across clips, reports and public materials.",
-      "The goal is not hype. It is clarity, consistency and a more professional first impression.",
-      "When the football is strong, the presentation should not let it down.",
+      "representation.brand_p1",
+      "representation.brand_p2",
+      "representation.brand_p3",
+      "representation.brand_p4",
     ],
   },
   negotiation: {
@@ -217,51 +217,51 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   fees: {
-    eyebrow: "Simple and upfront",
+    eyebrow: "A fair industry-standard 5%",
     points: ageGroup === "under18"
       ? [
-          "There is no commission for under-18 representation.",
-          "Any work, support or next step is explained clearly before anything moves forward.",
-          "There are no hidden extras dressed up afterwards.",
-          "Everything is discussed properly so everybody knows where they stand.",
+          "representation.fees_under18_p1",
+          "representation.fees_under18_p2",
+          "representation.fees_under18_p3",
+          "representation.fees_under18_p4",
         ]
       : [
-          "For players over 18, fees are discussed properly at the outset and set out clearly.",
-          "No hidden charges, no vague extras and no pretending later that something meant something else.",
-          "If we work together, the financial side is explained in plain terms before anything is signed.",
-          "Clarity matters because trust matters.",
+          "representation.fees_over18_p1",
+          "representation.fees_over18_p2",
+          "representation.fees_over18_p3",
+          "representation.fees_over18_p4",
         ],
   },
   agreement: {
-    eyebrow: "Clear terms, proper boundaries",
+    eyebrow: "How we sign together — typically 2 years",
     points: ageGroup === "under18"
       ? [
-          "For under-18 players, parent or guardian involvement is part of the process from the start.",
-          "The agreement sets out what we do, what support is included and how communication works.",
-          "Nothing should feel vague or hidden when a young player is being represented.",
-          "Questions can be dealt with properly before anything moves on.",
+          "representation.agreement_under18_p1",
+          "representation.agreement_under18_p2",
+          "representation.agreement_under18_p3",
+          "representation.agreement_under18_p4",
         ]
       : [
-          "The agreement sets out what we do, what support is included and what the working relationship looks like.",
-          "Scope, expectations and fees should all be clear before the relationship begins.",
-          "We would rather make terms easy to understand than fill the page with noise.",
-          "You should know exactly what you are signing and exactly what you can expect.",
+          "representation.agreement_over18_p1",
+          "representation.agreement_over18_p2",
+          "representation.agreement_over18_p3",
+          "representation.agreement_over18_p4",
         ],
   },
   expectations: {
-    eyebrow: "Standards matter",
+    eyebrow: "A different level of will",
     points: ageGroup === "under18"
       ? [
-          "We want players who listen, work and take development seriously.",
-          "Communication should stay honest and consistent so the player is supported properly.",
-          "Good habits on and off the pitch matter just as much as moments on the ball.",
-          "Progress is much easier when everybody is aligned and serious about the work.",
+          "representation.expectations_under18_p1",
+          "representation.expectations_under18_p2",
+          "representation.expectations_under18_p3",
+          "representation.expectations_under18_p4",
         ]
       : [
-          "We expect honesty, professionalism and a serious approach to improvement.",
-          "You have to be willing to hear clear feedback and act on it.",
-          "Communication needs to stay direct and reliable so we can actually move things forward.",
-          "The standards off the pitch should match the ambition on it.",
+          "representation.expectations_over18_p1",
+          "representation.expectations_over18_p2",
+          "representation.expectations_over18_p3",
+          "representation.expectations_over18_p4",
         ],
   },
 });
@@ -310,6 +310,12 @@ const PERFORMANCE_SUBS: PerfSubMeta[] = [
     "Honest conversations about pressure, setbacks and standards.",
     "Tools and frameworks that help on and off the pitch.",
     "The mental side is treated as part of performance, not an afterthought.",
+  ]},
+  { key: "portal",     title: "Portal",                  icon: Users,    blurb: "Your private hub for analysis, reports and direct support.", detail: [
+    "A bespoke portal for every represented player with reports, analyses and clipped actions in one place.",
+    "Direct messaging with the team and a clear record of work shared throughout the season.",
+    "Training programmes, schedules and development notes always available on phone or desktop.",
+    "Use the live example portal to see exactly what an active player sees.",
   ]},
 ];
 
@@ -854,10 +860,10 @@ const RequestRepresentation = () => {
                     >
                       <ChevronLeft className="h-3 w-3" />
                       {performanceSub
-                        ? "Back to Performance"
+                        ? t("representation.back_to_performance", "Back to Performance")
                         : scoutingPosition
-                          ? "Back to Scouting"
-                          : "Back to all"}
+                          ? t("representation.back_to_scouting", "Back to Scouting")
+                          : t("representation.back_to_all", "Back to all")}
                     </button>
                   </div>
                 )}
@@ -957,7 +963,7 @@ const DetailView = ({
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-          <BackPill onClick={onBack} label={`Back to Scouting`} />
+          <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
           <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
@@ -1003,7 +1009,7 @@ const DetailView = ({
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-          <BackPill onClick={onBack} label="Back to Performance" />
+          <BackPill onClick={onBack} label={t("representation.back_to_performance", "Back to Performance")} />
           <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
@@ -1030,14 +1036,42 @@ const DetailView = ({
           )}
           {performanceSub === "actions" && (
             <a
-              href={RONALDO_REPORT_URL}
+              href={CRISTIANO_REAL_MADRID_REPORT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
-                See an example performance report (Cristiano Ronaldo)
+                {t("representation.see_example_report", "See an example performance report (Cristiano Ronaldo vs Real Madrid, 25/01/2012)")}
+              </span>
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </a>
+          )}
+          {performanceSub === "analysis" && (
+            <a
+              href={CRISTIANO_GETAFE_ANALYSIS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            >
+              <span className="flex items-center gap-2">
+                <Gauge className="h-4 w-4 text-primary" />
+                {t("representation.see_example_analysis", "See an example match analysis (Cristiano Ronaldo vs Getafe)")}
+              </span>
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </a>
+          )}
+          {performanceSub === "portal" && (
+            <a
+              href={CRISTIANO_PORTAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            >
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                {t("representation.open_demo_portal", "Open a live example portal (Cristiano Ronaldo)")}
               </span>
               <ExternalLink className="h-4 w-4 text-primary" />
             </a>
@@ -1071,10 +1105,10 @@ const DetailView = ({
                   className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
                 >
                   <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
-                    {faq.q}
+                    {t(faq.q, faq.q)}
                   </AccordionTrigger>
                   <AccordionContent className="text-sm leading-relaxed text-foreground/80 md:text-base">
-                    {faq.a}
+                    {t(faq.a, faq.a)}
                   </AccordionContent>
                 </AccordionItem>
               ))}
@@ -1130,7 +1164,7 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
@@ -1175,15 +1209,15 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
 
-              <SectionDivider label="Inside Performance" />
+              <SectionDivider label={t("representation.inside_performance", "Inside Performance")} />
 
               <p className="text-xs text-muted-foreground md:text-sm">
-                Each area below opens on its own screen. Tap to see the detail.
+                {t("representation.area_intro", "Each area below opens on its own screen. Tap to see the detail.")}
               </p>
               <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4">
                 {PERFORMANCE_SUBS.map((sub) => {
@@ -1201,7 +1235,7 @@ const DetailView = ({
                       </div>
                       <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{sub.blurb}</p>
                       <p className="mt-3 inline-flex items-center gap-1 text-[10px] font-bebas uppercase tracking-[0.2em] text-primary">
-                        Tap for more <ChevronRight className="h-3 w-3" />
+                        {t("representation.tap_for_more", "Tap for more")} <ChevronRight className="h-3 w-3" />
                       </p>
                     </button>
                   );
@@ -1216,13 +1250,13 @@ const DetailView = ({
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
                   <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
-                    {p}
+                    {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
               </div>
               <SectionDivider />
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary/85">
-                <Globe2 className="h-3.5 w-3.5" /> Our live scouting network
+                <Globe2 className="h-3.5 w-3.5" /> {t("representation.our_live_network", "Our live scouting network")}
               </div>
               <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
                 <div className="h-[420px] md:h-[600px]">
@@ -1243,7 +1277,7 @@ const DetailView = ({
                   transition={{ delay: index * 0.05, duration: 0.24 }}
                   className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
                 >
-                  {point}
+                  {point.startsWith("representation.") ? t(point, point) : point}
                 </motion.div>
               ))}
             </div>
