@@ -73,8 +73,9 @@ const CRISTIANO_GETAFE_ANALYSIS_URL =
 const CRISTIANO_PORTAL_EMAIL = "cristiano.ronaldo@risefootballagency.com";
 const CRISTIANO_PORTAL_URL = `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}`;
 
-const MISSION_BIO =
-  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
+const MISSION_BIO_KEY = "representation.mission_bio";
+const MISSION_BIO_FALLBACK =
+  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways, our stars must share our work ethic, mindset and attention to detail to performance.";
 
 interface CardMeta {
   key: CardKey;
