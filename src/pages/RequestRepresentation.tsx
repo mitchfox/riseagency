@@ -447,8 +447,11 @@ const RequestRepresentation = () => {
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-black text-foreground">
       <SEO
-        title="Representation | RISE Football Agency"
-        description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
+        title={t("representation.seo_title", "Representation | RISE Football Agency")}
+        description={t(
+          "representation.seo_desc",
+          "Realise your potential with RISE: proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position.",
+        )}
       />
 
       {/* Page music. Starts the moment the page mounts so the RISE
@@ -952,7 +955,7 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
-          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
+          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")} />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
               const skills = POSITION_SKILLS[scoutingPosition].filter((s) => s.domain === domain);
