@@ -854,10 +854,10 @@ const RequestRepresentation = () => {
                     >
                       <ChevronLeft className="h-3 w-3" />
                       {performanceSub
-                        ? "Back to Performance"
+                        ? t("representation.back_to_performance", "Back to Performance")
                         : scoutingPosition
-                          ? "Back to Scouting"
-                          : "Back to all"}
+                          ? t("representation.back_to_scouting", "Back to Scouting")
+                          : t("representation.back_to_all", "Back to all")}
                     </button>
                   </div>
                 )}
@@ -957,7 +957,7 @@ const DetailView = ({
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-          <BackPill onClick={onBack} label={`Back to Scouting`} />
+          <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
           <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
@@ -1003,7 +1003,7 @@ const DetailView = ({
         className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-10 md:pb-60 lg:px-16"
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-          <BackPill onClick={onBack} label="Back to Performance" />
+          <BackPill onClick={onBack} label={t("representation.back_to_performance", "Back to Performance")} />
           <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
@@ -1030,14 +1030,42 @@ const DetailView = ({
           )}
           {performanceSub === "actions" && (
             <a
-              href={RONALDO_REPORT_URL}
+              href={CRISTIANO_REAL_MADRID_REPORT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
-                See an example performance report (Cristiano Ronaldo)
+                {t("representation.see_example_report", "See an example performance report (Cristiano Ronaldo vs Real Madrid, 25/01/2012)")}
+              </span>
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </a>
+          )}
+          {performanceSub === "analysis" && (
+            <a
+              href={CRISTIANO_GETAFE_ANALYSIS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            >
+              <span className="flex items-center gap-2">
+                <Gauge className="h-4 w-4 text-primary" />
+                {t("representation.see_example_analysis", "See an example match analysis (Cristiano Ronaldo vs Getafe)")}
+              </span>
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </a>
+          )}
+          {performanceSub === "portal" && (
+            <a
+              href={CRISTIANO_PORTAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            >
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                {t("representation.open_demo_portal", "Open a live example portal (Cristiano Ronaldo)")}
               </span>
               <ExternalLink className="h-4 w-4 text-primary" />
             </a>
