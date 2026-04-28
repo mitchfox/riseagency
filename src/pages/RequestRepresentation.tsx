@@ -60,6 +60,13 @@ type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique"
 const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
+/** Cristiano Ronaldo example assets used inside the Performance section. */
+const CRISTIANO_REAL_MADRID_REPORT_URL =
+  "/performance-report/0d632a2b-29a4-4fa2-8bbc-3d695afce17e-cristiano-ronaldo-vs-real-madrid";
+const CRISTIANO_GETAFE_ANALYSIS_URL =
+  "/analysis/f69a80b4-aa8b-4572-8186-a0828d84e9a8";
+const CRISTIANO_PORTAL_URL = "/portal?demo=cristiano-ronaldo";
+
 const MISSION_BIO =
   "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
 
@@ -146,20 +153,20 @@ const solidBlackSectionStyle: React.CSSProperties = {
 
 const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
   under18: [
-    { q: "Do you charge a fee to represent under-18 players?", a: "No. There is no commission for under-18 representation. Any future work is discussed openly with the player and family before anything moves on." },
-    { q: "Does a parent or guardian have to be involved?", a: "Yes. Parental or guardian involvement is required for under-18 representation. They sit in on key conversations and sign the agreement alongside the player." },
-    { q: "What footage should we send?", a: "Recent full-match footage is best. Highlights help, but full games show level, decision making and consistency. A short summary of current club and position is also useful." },
-    { q: "How long does the scouting process take?", a: "Once we have the footage and key details, we usually come back within a couple of weeks with a clear yes, a not yet, or further questions." },
-    { q: "Will my child train with RISE?", a: "We do not run a training programme. We support development through analysis, feedback and well-considered next steps with the existing club or a better-fitting one." },
-    { q: "What does the representation agreement actually cover?", a: "It sets out what we do, what support is included, how communication works and what the working relationship looks like. Everything is explained in plain terms." },
+    { q: "representation.faq_u18_q1", a: "representation.faq_u18_a1" },
+    { q: "representation.faq_u18_q2", a: "representation.faq_u18_a2" },
+    { q: "representation.faq_u18_q3", a: "representation.faq_u18_a3" },
+    { q: "representation.faq_u18_q4", a: "representation.faq_u18_a4" },
+    { q: "representation.faq_u18_q5", a: "representation.faq_u18_a5" },
+    { q: "representation.faq_u18_q6", a: "representation.faq_u18_a6" },
   ],
   over18: [
-    { q: "What does it actually cost?", a: "Fees are discussed properly at the outset and set out clearly. No hidden charges, no vague extras. If we work together, the financial side is explained in plain terms before anything is signed." },
-    { q: "How do you decide whether to represent a player?", a: "We look at level, position, evidence and whether there is a realistic fit for the player and the agency. If it is there, we move forward. If not, that is said clearly." },
-    { q: "Can I keep my current agent and add RISE?", a: "No. Standard intermediary rules mean we work as the sole representative once an agreement is in place. We will not move forward while another exclusive agreement is active." },
-    { q: "What is the agreement length?", a: "Standard intermediary terms apply. Length and scope are explained before signing so you know exactly what you are committing to and for how long." },
-    { q: "What kind of performance support do I get?", a: "Real R90 reports, clipped actions, full match analysis and clear next steps. The aim is to make your level easier for clubs to trust and easier for you to improve." },
-    { q: "How quickly will I hear back after submitting?", a: "We aim to respond within a few working days. Full assessment takes longer because we want to be properly informed before saying yes or no." },
+    { q: "representation.faq_o18_q1", a: "representation.faq_o18_a1" },
+    { q: "representation.faq_o18_q2", a: "representation.faq_o18_a2" },
+    { q: "representation.faq_o18_q3", a: "representation.faq_o18_a3" },
+    { q: "representation.faq_o18_q4", a: "representation.faq_o18_a4" },
+    { q: "representation.faq_o18_q5", a: "representation.faq_o18_a5" },
+    { q: "representation.faq_o18_q6", a: "representation.faq_o18_a6" },
   ],
 };
 
