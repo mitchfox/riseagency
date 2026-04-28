@@ -57,15 +57,21 @@ type CardKey =
   | "fees" | "agreement" | "faqs";
 type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
-const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
 /** Cristiano Ronaldo example assets used inside the Performance section. */
+/** Performance report slug must end with the UUID — the slug parser
+ *  extracts the UUID from the END of the path. */
 const CRISTIANO_REAL_MADRID_REPORT_URL =
-  "/performance-report/0d632a2b-29a4-4fa2-8bbc-3d695afce17e-cristiano-ronaldo-vs-real-madrid";
+  "/performance-report/cristiano-ronaldo-vs-real-madrid-0d632a2b-29a4-4fa2-8bbc-3d695afce17e";
+/** Real `analyses` table id for CRISTIANO RONALDO vs Getafe (post-match). */
 const CRISTIANO_GETAFE_ANALYSIS_URL =
-  "/analysis/f69a80b4-aa8b-4572-8186-a0828d84e9a8";
-const CRISTIANO_PORTAL_URL = "/portal?demo=cristiano-ronaldo";
+  "/analysis/cristiano-ronaldo-vs-getafe-4c79a209-9e87-47c6-be9f-2df8d95be5a5";
+/** Auto-logs into Cristiano's portal using the same staff_login pattern
+ *  used by the staff "View Portal" button. The synthetic email is set
+ *  in the players table so /portal accepts it as a valid session. */
+const CRISTIANO_PORTAL_EMAIL = "cristiano.ronaldo@risefootballagency.com";
+const CRISTIANO_PORTAL_URL = `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}`;
 
 const MISSION_BIO =
   "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
