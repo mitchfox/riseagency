@@ -179,16 +179,16 @@ const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string 
 
 const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
   scouting: {
-    eyebrow: "How we decide whether there is a fit",
+    eyebrow: "representation.scouting_eyebrow",
     points: [
-      "You send the key details, recent footage and enough information for us to assess properly.",
-      "We grade against 16 position-specific attributes across Physical, Mental, Technical and Tactical domains.",
-      "If the fit is there, we look more closely and speak directly about the next step.",
-      "If it is not there yet, that is better said clearly than dressed up with nonsense.",
+      "representation.scouting_p1",
+      "representation.scouting_p2",
+      "representation.scouting_p3",
+      "representation.scouting_p4",
     ],
   },
   performance: {
-    eyebrow: "Real depth, real Premier League experience",
+    eyebrow: "representation.performance_eyebrow",
     points: [
       "representation.performance_p1",
       "representation.performance_p2",
@@ -197,7 +197,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   network: {
-    eyebrow: "Context before contact",
+    eyebrow: "representation.network_eyebrow",
     points: [
       "representation.network_p1",
       "representation.network_p2",
@@ -206,7 +206,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   brand: {
-    eyebrow: "Building presence and opportunity",
+    eyebrow: "representation.brand_eyebrow",
     points: [
       "representation.brand_p1",
       "representation.brand_p2",
@@ -215,16 +215,16 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   negotiation: {
-    eyebrow: "Short and long-term deal strategy",
+    eyebrow: "representation.negotiation_eyebrow",
     points: [
-      "We prepare negotiations around the player's evidence, current value and realistic next step.",
-      "Short-term terms are handled with care so the immediate deal protects the player properly.",
-      "Long-term planning matters too, because the wrong clause or pathway can restrict the next move.",
-      "The aim is simple: better deals, clearer protection and decisions that support the player's career.",
+      "representation.negotiation_p1",
+      "representation.negotiation_p2",
+      "representation.negotiation_p3",
+      "representation.negotiation_p4",
     ],
   },
   fees: {
-    eyebrow: "A fair industry-standard 5%",
+    eyebrow: "representation.fees_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.fees_under18_p1",
@@ -240,7 +240,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
         ],
   },
   agreement: {
-    eyebrow: "How we sign together — typically 2 years",
+    eyebrow: "representation.agreement_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.agreement_under18_p1",
@@ -256,7 +256,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
         ],
   },
   expectations: {
-    eyebrow: "A different level of will",
+    eyebrow: "representation.expectations_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.expectations_under18_p1",
