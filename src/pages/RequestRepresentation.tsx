@@ -57,18 +57,25 @@ type CardKey =
   | "fees" | "agreement" | "faqs";
 type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
-const RONALDO_REPORT_URL = "https://risefootballagency.com/report/cristiano-ronaldo-vs-al-nassr";
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
 /** Cristiano Ronaldo example assets used inside the Performance section. */
+/** Performance report slug must end with the UUID — the slug parser
+ *  extracts the UUID from the END of the path. */
 const CRISTIANO_REAL_MADRID_REPORT_URL =
-  "/performance-report/0d632a2b-29a4-4fa2-8bbc-3d695afce17e-cristiano-ronaldo-vs-real-madrid";
+  "/performance-report/cristiano-ronaldo-vs-real-madrid-0d632a2b-29a4-4fa2-8bbc-3d695afce17e";
+/** Real `analyses` table id for CRISTIANO RONALDO vs Getafe (post-match). */
 const CRISTIANO_GETAFE_ANALYSIS_URL =
-  "/analysis/f69a80b4-aa8b-4572-8186-a0828d84e9a8";
-const CRISTIANO_PORTAL_URL = "/portal?demo=cristiano-ronaldo";
+  "/analysis/cristiano-ronaldo-vs-getafe-4c79a209-9e87-47c6-be9f-2df8d95be5a5";
+/** Auto-logs into Cristiano's portal using the same staff_login pattern
+ *  used by the staff "View Portal" button. The synthetic email is set
+ *  in the players table so /portal accepts it as a valid session. */
+const CRISTIANO_PORTAL_EMAIL = "cristiano.ronaldo@risefootballagency.com";
+const CRISTIANO_PORTAL_URL = `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}`;
 
-const MISSION_BIO =
-  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways - our stars must share our work ethic, mindset and attention to detail to performance.";
+const MISSION_BIO_KEY = "representation.mission_bio";
+const MISSION_BIO_FALLBACK =
+  "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways, our stars must share our work ethic, mindset and attention to detail to performance.";
 
 interface CardMeta {
   key: CardKey;
@@ -172,16 +179,16 @@ const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string 
 
 const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
   scouting: {
-    eyebrow: "How we decide whether there is a fit",
+    eyebrow: "representation.scouting_eyebrow",
     points: [
-      "You send the key details, recent footage and enough information for us to assess properly.",
-      "We grade against 16 position-specific attributes across Physical, Mental, Technical and Tactical domains.",
-      "If the fit is there, we look more closely and speak directly about the next step.",
-      "If it is not there yet, that is better said clearly than dressed up with nonsense.",
+      "representation.scouting_p1",
+      "representation.scouting_p2",
+      "representation.scouting_p3",
+      "representation.scouting_p4",
     ],
   },
   performance: {
-    eyebrow: "Real depth, real Premier League experience",
+    eyebrow: "representation.performance_eyebrow",
     points: [
       "representation.performance_p1",
       "representation.performance_p2",
@@ -190,7 +197,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   network: {
-    eyebrow: "Context before contact",
+    eyebrow: "representation.network_eyebrow",
     points: [
       "representation.network_p1",
       "representation.network_p2",
@@ -199,7 +206,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   brand: {
-    eyebrow: "Building presence and opportunity",
+    eyebrow: "representation.brand_eyebrow",
     points: [
       "representation.brand_p1",
       "representation.brand_p2",
@@ -208,16 +215,16 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
     ],
   },
   negotiation: {
-    eyebrow: "Short and long-term deal strategy",
+    eyebrow: "representation.negotiation_eyebrow",
     points: [
-      "We prepare negotiations around the player's evidence, current value and realistic next step.",
-      "Short-term terms are handled with care so the immediate deal protects the player properly.",
-      "Long-term planning matters too, because the wrong clause or pathway can restrict the next move.",
-      "The aim is simple: better deals, clearer protection and decisions that support the player's career.",
+      "representation.negotiation_p1",
+      "representation.negotiation_p2",
+      "representation.negotiation_p3",
+      "representation.negotiation_p4",
     ],
   },
   fees: {
-    eyebrow: "A fair industry-standard 5%",
+    eyebrow: "representation.fees_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.fees_under18_p1",
@@ -233,7 +240,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
         ],
   },
   agreement: {
-    eyebrow: "How we sign together — typically 2 years",
+    eyebrow: "representation.agreement_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.agreement_under18_p1",
@@ -249,7 +256,7 @@ const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
         ],
   },
   expectations: {
-    eyebrow: "A different level of will",
+    eyebrow: "representation.expectations_eyebrow",
     points: ageGroup === "under18"
       ? [
           "representation.expectations_under18_p1",
@@ -274,48 +281,29 @@ interface PerfSubMeta {
   detail: string[];
 }
 
+/** All copy here is referenced by translation key so the i18n backfill
+ *  picks it up for every supported language. */
 const PERFORMANCE_SUBS: PerfSubMeta[] = [
-  { key: "analysis",   title: "Analysis",                icon: Gauge,    blurb: "Full match analysis & opponent breakdowns.", detail: [
-    "Full match analysis with chronological context, not just selected highlights.",
-    "Opponent breakdowns highlighting how the game shaped your decisions and outputs.",
-    "Clipped key moments turned into a clear development picture.",
-    "Used both for self-review and to give clubs an honest read of your level.",
+  { key: "analysis",   title: "representation.perf_analysis_title",   icon: Gauge,    blurb: "representation.perf_analysis_blurb", detail: [
+    "representation.perf_analysis_d1", "representation.perf_analysis_d2", "representation.perf_analysis_d3", "representation.perf_analysis_d4",
   ]},
-  { key: "actions",    title: "Action Reports",          icon: FileText, blurb: "R90-graded action reports for every meaningful touch.", detail: [
-    "Every meaningful touch graded with the R90 system.",
-    "Each clip carries a score, the surrounding context and the coaching point.",
-    "Actions are grouped into categories so themes and trends are easy to read.",
-    "See the Cristiano Ronaldo example below for the exact format.",
+  { key: "actions",    title: "representation.perf_actions_title",    icon: FileText, blurb: "representation.perf_actions_blurb", detail: [
+    "representation.perf_actions_d1", "representation.perf_actions_d2", "representation.perf_actions_d3", "representation.perf_actions_d4",
   ]},
-  { key: "sps",        title: "Strength, Power & Speed", icon: Dumbbell, blurb: "Position-specific physical benchmarks & programmes.", detail: [
-    "Physical benchmarks tied to position-specific demands, not generic gym standards.",
-    "Targeted programmes built around your in-game outputs and weak points.",
-    "Periodised so the heavy work serves the football, not the other way around.",
-    "Reviewed regularly so progress is measured, not assumed.",
+  { key: "sps",        title: "representation.perf_sps_title",        icon: Dumbbell, blurb: "representation.perf_sps_blurb", detail: [
+    "representation.perf_sps_d1", "representation.perf_sps_d2", "representation.perf_sps_d3", "representation.perf_sps_d4",
   ]},
-  { key: "nutrition",  title: "Nutrition",               icon: Apple,    blurb: "Practical fuelling, recovery and hydration guidance.", detail: [
-    "Practical fuelling shaped around training and match weeks.",
-    "Recovery and hydration guidance that fits real schedules.",
-    "Nothing faddish — just the work that actually keeps a player available and sharp.",
-    "Adjusted as workload, environment and goals change.",
+  { key: "nutrition",  title: "representation.perf_nutrition_title",  icon: Apple,    blurb: "representation.perf_nutrition_blurb", detail: [
+    "representation.perf_nutrition_d1", "representation.perf_nutrition_d2", "representation.perf_nutrition_d3", "representation.perf_nutrition_d4",
   ]},
-  { key: "technique",  title: "Technique",               icon: Cpu,      blurb: "Detailed technical reviews on touch, passing & finishing.", detail: [
-    "Detailed reviews on first touch, passing, finishing and position-specific actions.",
-    "Frame-by-frame breakdowns where it matters.",
-    "Focus stays on the technical detail clubs notice when they trust a player.",
-    "Reinforced with clear, repeatable correction work.",
+  { key: "technique",  title: "representation.perf_technique_title",  icon: Cpu,      blurb: "representation.perf_technique_blurb", detail: [
+    "representation.perf_technique_d1", "representation.perf_technique_d2", "representation.perf_technique_d3", "representation.perf_technique_d4",
   ]},
-  { key: "psychology", title: "Psychology",              icon: Heart,    blurb: "Mindset, focus and the mental side of competing.", detail: [
-    "Mindset, focus and consistency at the level we are pushing towards.",
-    "Honest conversations about pressure, setbacks and standards.",
-    "Tools and frameworks that help on and off the pitch.",
-    "The mental side is treated as part of performance, not an afterthought.",
+  { key: "psychology", title: "representation.perf_psychology_title", icon: Heart,    blurb: "representation.perf_psychology_blurb", detail: [
+    "representation.perf_psychology_d1", "representation.perf_psychology_d2", "representation.perf_psychology_d3", "representation.perf_psychology_d4",
   ]},
-  { key: "portal",     title: "Portal",                  icon: Users,    blurb: "Your private hub for analysis, reports and direct support.", detail: [
-    "A bespoke portal for every represented player with reports, analyses and clipped actions in one place.",
-    "Direct messaging with the team and a clear record of work shared throughout the season.",
-    "Training programmes, schedules and development notes always available on phone or desktop.",
-    "Use the live example portal to see exactly what an active player sees.",
+  { key: "portal",     title: "representation.perf_portal_title",     icon: Users,    blurb: "representation.perf_portal_blurb", detail: [
+    "representation.perf_portal_d1", "representation.perf_portal_d2", "representation.perf_portal_d3", "representation.perf_portal_d4",
   ]},
 ];
 
@@ -459,8 +447,11 @@ const RequestRepresentation = () => {
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-black text-foreground">
       <SEO
-        title="Representation | RISE Football Agency"
-        description="Realise your potential with RISE — proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position."
+        title={t("representation.seo_title", "Representation | RISE Football Agency")}
+        description={t(
+          "representation.seo_desc",
+          "Realise your potential with RISE: proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position.",
+        )}
       />
 
       {/* Page music. Starts the moment the page mounts so the RISE
@@ -780,7 +771,7 @@ const RequestRepresentation = () => {
                         overflowWrap: "normal",
                       }}
                     >
-                      {t("representation.mission_bio", MISSION_BIO)}
+                      {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
                     </p>
                   </div>
                 </div>
@@ -964,7 +955,7 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
-          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow="Position breakdown" />
+          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")} />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
               const skills = POSITION_SKILLS[scoutingPosition].filter((s) => s.domain === domain);
@@ -1010,11 +1001,11 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_performance", "Back to Performance")} />
-          <TitlePlate icon={SIcon} title={sub.title} eyebrow={sub.blurb} />
+          <TitlePlate icon={SIcon} title={t(sub.title, sub.title)} eyebrow={t(sub.blurb, sub.blurb)} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
               <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
-                {p}
+                {t(p, p)}
               </div>
             ))}
           </div>
@@ -1063,18 +1054,29 @@ const DetailView = ({
             </a>
           )}
           {performanceSub === "portal" && (
-            <a
-              href={CRISTIANO_PORTAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            <button
+              type="button"
+              onClick={() => {
+                // Mirror the staff "View Portal" flow: seed both storages
+                // so Dashboard's checkAuth() recognises the player session
+                // immediately on first paint, then open in a new tab.
+                try {
+                  localStorage.removeItem("player_email");
+                  sessionStorage.removeItem("player_email");
+                  localStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
+                  sessionStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
+                  localStorage.setItem("player_login_timestamp", Date.now().toString());
+                } catch {}
+                window.open(`${window.location.origin}${CRISTIANO_PORTAL_URL}`, "_blank", "noopener,noreferrer");
+              }}
+              className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 {t("representation.open_demo_portal", "Open a live example portal (Cristiano Ronaldo)")}
               </span>
               <ExternalLink className="h-4 w-4 text-primary" />
-            </a>
+            </button>
           )}
         </div>
       </motion.section>
@@ -1092,7 +1094,15 @@ const DetailView = ({
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-6 md:pb-60 lg:px-16"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-        <TitlePlate icon={Icon} title={t(CARD_TITLE_KEYS[activeCard].key, CARD_TITLE_KEYS[activeCard].fallback)} eyebrow={content?.eyebrow ?? t(CARD_SUBTITLE_KEYS[activeCard].key, CARD_SUBTITLE_KEYS[activeCard].fallback)} />
+        <TitlePlate
+          icon={Icon}
+          title={t(CARD_TITLE_KEYS[activeCard].key, CARD_TITLE_KEYS[activeCard].fallback)}
+          eyebrow={
+            content?.eyebrow
+              ? t(content.eyebrow, content.eyebrow)
+              : t(CARD_SUBTITLE_KEYS[activeCard].key, CARD_SUBTITLE_KEYS[activeCard].fallback)
+          }
+        />
 
         <div className="mt-5 space-y-3 md:mt-7">
           {/* FAQs */}
@@ -1231,9 +1241,9 @@ const DetailView = ({
                     >
                       <div className="flex items-center gap-2">
                         <SIcon className="h-4 w-4 text-primary" />
-                        <p className="font-bebas text-sm uppercase tracking-[0.12em] md:text-base">{sub.title}</p>
+                        <p className="font-bebas text-sm uppercase tracking-[0.12em] md:text-base">{t(sub.title, sub.title)}</p>
                       </div>
-                      <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{sub.blurb}</p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-foreground/75 md:text-xs">{t(sub.blurb, sub.blurb)}</p>
                       <p className="mt-3 inline-flex items-center gap-1 text-[10px] font-bebas uppercase tracking-[0.2em] text-primary">
                         {t("representation.tap_for_more", "Tap for more")} <ChevronRight className="h-3 w-3" />
                       </p>
