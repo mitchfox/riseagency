@@ -154,27 +154,28 @@ export const RepresentationDialog = ({
     // Build a WhatsApp message that includes whatever the user has
     // already typed so the conversation starts with full context.
     const lines: string[] = [
-      t("representation.whatsapp_intro", "Hi RISE — I'd like to enquire about representation."),
+      t("representation.whatsapp_intro", "Hi RISE, I'd like to enquire about representation."),
       "",
     ];
-    if (formData.name) lines.push(`Name: ${formData.name}`);
-    if (formData.phone) lines.push(`Phone: ${formData.phone}`);
-    if (formData.email) lines.push(`Email: ${formData.email}`);
-    if (formData.currentClub) lines.push(`Current club: ${formData.currentClub}`);
-    if (formData.dob) lines.push(`Date of birth: ${formData.dob}`);
-    if (formData.position) lines.push(`Position: ${formData.position}`);
+    const L = (k: string, fb: string) => t(k, fb);
+    if (formData.name) lines.push(`${L("representation.wa_name", "Name")}: ${formData.name}`);
+    if (formData.phone) lines.push(`${L("representation.wa_phone", "Phone")}: ${formData.phone}`);
+    if (formData.email) lines.push(`${L("representation.wa_email", "Email")}: ${formData.email}`);
+    if (formData.currentClub) lines.push(`${L("representation.wa_current_club", "Current club")}: ${formData.currentClub}`);
+    if (formData.dob) lines.push(`${L("representation.wa_dob", "Date of birth")}: ${formData.dob}`);
+    if (formData.position) lines.push(`${L("representation.wa_position", "Position")}: ${formData.position}`);
     if (isUnder18) {
-      if (formData.parentName) lines.push(`Parent/guardian: ${formData.parentName}`);
-      if (formData.parentPhone) lines.push(`Parent/guardian phone: ${formData.parentPhone}`);
+      if (formData.parentName) lines.push(`${L("representation.wa_parent", "Parent/guardian")}: ${formData.parentName}`);
+      if (formData.parentPhone) lines.push(`${L("representation.wa_parent_phone", "Parent/guardian phone")}: ${formData.parentPhone}`);
     }
     const videos = formData.videoLinks.filter((v) => v.trim());
     if (videos.length) {
-      lines.push("Match videos:");
+      lines.push(`${L("representation.wa_match_videos", "Match videos")}:`);
       videos.forEach((v) => lines.push(`- ${v}`));
     }
     if (formData.message) {
       lines.push("");
-      lines.push(`Notes: ${formData.message}`);
+      lines.push(`${L("representation.wa_notes", "Notes")}: ${formData.message}`);
     }
     const text = encodeURIComponent(lines.join("\n"));
     window.open(`https://wa.me/447508342901?text=${text}`, "_blank");
