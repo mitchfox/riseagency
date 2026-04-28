@@ -61,7 +61,7 @@ const PHASE_DURATIONS: Record<Phase, number> = {
   "p2-fade":   900,
   "p3-line5": 2200,
   "p3-fade":   900,
-  "shader":   2200,
+  "shader":   3400,
   "done":        0,
 };
 
@@ -205,7 +205,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.45, ease: "easeInOut" }}
+          transition={{ duration: 1.4, ease: "easeInOut" }}
         >
           <div className="absolute inset-0">
             <ShaderAnimation />
@@ -215,8 +215,8 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
             alt="RISE"
             className="relative z-10 h-16 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.6)] md:h-20"
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: [0, 1, 1, 0.85], scale: [0.9, 1, 1.04, 1] }}
-            transition={{ duration: 2.0, times: [0, 0.25, 0.7, 1], ease: "easeInOut" }}
+            animate={{ opacity: [0, 1, 1, 0.92], scale: [0.9, 1, 1.04, 1.02] }}
+            transition={{ duration: 3.2, times: [0, 0.18, 0.78, 1], ease: "easeInOut" }}
           />
         </motion.div>
       )}
