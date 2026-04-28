@@ -1110,7 +1110,15 @@ const DetailView = ({
       className="relative min-h-[100dvh] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-56 md:px-8 md:pt-6 md:pb-60 lg:px-16"
     >
       <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
-        <TitlePlate icon={Icon} title={t(CARD_TITLE_KEYS[activeCard].key, CARD_TITLE_KEYS[activeCard].fallback)} eyebrow={content?.eyebrow ?? t(CARD_SUBTITLE_KEYS[activeCard].key, CARD_SUBTITLE_KEYS[activeCard].fallback)} />
+        <TitlePlate
+          icon={Icon}
+          title={t(CARD_TITLE_KEYS[activeCard].key, CARD_TITLE_KEYS[activeCard].fallback)}
+          eyebrow={
+            content?.eyebrow
+              ? t(content.eyebrow, content.eyebrow)
+              : t(CARD_SUBTITLE_KEYS[activeCard].key, CARD_SUBTITLE_KEYS[activeCard].fallback)
+          }
+        />
 
         <div className="mt-5 space-y-3 md:mt-7">
           {/* FAQs */}
