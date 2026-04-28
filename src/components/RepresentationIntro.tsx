@@ -203,9 +203,9 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           key="rep-intro-shader"
           className="absolute inset-0 z-40 flex items-center justify-center bg-background"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.4, ease: "easeInOut" }}
+          // Fade in fast, hold full opacity, then ease out gently into the page.
+          animate={{ opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 3.4, times: [0, 0.18, 0.7, 1], ease: "easeInOut" }}
         >
           <div className="absolute inset-0">
             <ShaderAnimation />
@@ -215,8 +215,8 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
             alt="RISE"
             className="relative z-10 h-16 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.6)] md:h-20"
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: [0, 1, 1, 0.92], scale: [0.9, 1, 1.04, 1.02] }}
-            transition={{ duration: 3.2, times: [0, 0.18, 0.78, 1], ease: "easeInOut" }}
+            animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1.04, 1.02] }}
+            transition={{ duration: 3.4, times: [0, 0.18, 0.7, 1], ease: "easeInOut" }}
           />
         </motion.div>
       )}
