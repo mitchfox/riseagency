@@ -1069,18 +1069,29 @@ const DetailView = ({
             </a>
           )}
           {performanceSub === "portal" && (
-            <a
-              href={CRISTIANO_PORTAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+            <button
+              type="button"
+              onClick={() => {
+                // Mirror the staff "View Portal" flow: seed both storages
+                // so Dashboard's checkAuth() recognises the player session
+                // immediately on first paint, then open in a new tab.
+                try {
+                  localStorage.removeItem("player_email");
+                  sessionStorage.removeItem("player_email");
+                  localStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
+                  sessionStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
+                  localStorage.setItem("player_login_timestamp", Date.now().toString());
+                } catch {}
+                window.open(`${window.location.origin}${CRISTIANO_PORTAL_URL}`, "_blank", "noopener,noreferrer");
+              }}
+              className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 {t("representation.open_demo_portal", "Open a live example portal (Cristiano Ronaldo)")}
               </span>
               <ExternalLink className="h-4 w-4 text-primary" />
-            </a>
+            </button>
           )}
         </div>
       </motion.section>
