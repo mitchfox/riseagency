@@ -24,6 +24,7 @@ import { sortActionsByMinute } from "@/lib/actionSorting";
 import { filterActionsByZone } from "@/lib/reportActionHelpers";
 import { t } from "@/lib/portalTranslations";
 import { getReportLanguage, getReportLocale, getTranslatedActionField, getTranslatedReportField, hasTranslatedReportContent } from "@/lib/reportTranslations";
+import { translateActionType, et } from "@/lib/exampleViewerTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 import { hasPlayableClip } from "@/lib/clipVideoUtils";
 import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
@@ -156,7 +157,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     : isPortalView
       ? (localStorage.getItem("portal_language_hint") || "en")
       : "en";
-  const reportLanguage = getReportLanguage(analysis?.translated_content, portalLanguage);
+  // When the report itself has no stored translation, fall back to the
+  // requested portal/override language so UI labels still localise.
+  const reportLanguage = hasTranslatedReportContent(analysis?.translated_content)
+    ? getReportLanguage(analysis?.translated_content, portalLanguage)
+    : (portalLanguage || "en");
   const portalLocale = getReportLocale(reportLanguage);
 
   const tc = analysis?.translated_content;
@@ -164,7 +169,15 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
   const tf = (key: string, fallback: string) => getTranslatedReportField(tc, key, fallback);
   const tAction = (index: number, field: "type" | "description" | "notes", fallback: string) => getTranslatedActionField(tc, index, field, fallback);
   const getTranslatedActionData = (action: PerformanceAction) => {
-    const translatedType = toTitleCase(tAction(action.action_number - 1, "type", action.action_type));
+    const baseType = tAction(action.action_number - 1, "type", action.action_type);
+    // If the report has no stored per-action translation, translate
+    // common action labels using the shared example viewer dictionary so
+    // public links like /performance-report/...?lang=pt show the right
+    // language even before staff have translated the report.
+    const localised = hasTranslation
+      ? baseType
+      : translateActionType(reportLanguage, baseType);
+    const translatedType = toTitleCase(localised);
     const translatedDescription = tAction(action.action_number - 1, "description", action.action_description);
     const translatedNotes = tAction(action.action_number - 1, "notes", action.notes || "") || null;
 
