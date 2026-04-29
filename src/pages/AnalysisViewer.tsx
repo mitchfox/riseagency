@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
@@ -22,6 +22,8 @@ import riseLogo from "@/assets/logo.png";
 import smokyBackground from "@/assets/smudged-marble-overlay.png";
 import blackMarble from "@/assets/black-marble.png";
 import whiteMarble from "@/assets/white-marble.png";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { et } from "@/lib/exampleViewerTranslations";
 
 interface Analysis {
   id: string;
@@ -538,7 +540,7 @@ const AnalysisHeader = ({
 };
 
 // Quick Navigation Dropdown
-const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string }[] }) => {
+const QuickNavDropdown = ({ sections, lang }: { sections: { id: string; label: string }[]; lang?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -616,7 +618,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                   backgroundPosition: 'center'
                 }}
               >
-                Jump to Section
+                {et(lang, "jump_to_section", "Jump to Section")}
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
@@ -630,7 +632,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               {keyInfoSections.length > 0 && (
                 <div className="relative mb-4 text-center">
                   <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
-                    Key Info
+                    {et(lang, "key_info", "Key Info")}
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {keyInfoSections.map((section) => (
@@ -658,7 +660,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               {pointSections.length > 0 && (
                 <div className="relative text-center">
                   <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
-                    Analysis Points
+                    {et(lang, "analysis_points", "Analysis Points")}
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {pointSections.map((section) => (
@@ -743,6 +745,12 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
 const AnalysisViewer = () => {
   const { analysisId: rawSlug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { language } = useLanguage();
+  // Public/example links from /representation pass `?lang=` so the viewer
+  // opens in the visitor's chosen site language. URL param wins over the
+  // global language context.
+  const lang = searchParams.get("lang") || language || "en";
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
@@ -861,7 +869,7 @@ const AnalysisViewer = () => {
       setAnalysis(parsedAnalysis);
     } catch (error: any) {
       console.error("Error fetching analysis:", error);
-      toast.error("Failed to load analysis");
+      toast.error(et(lang, "failed_to_load_analysis", "Failed to load analysis"));
     } finally {
       setLoading(false);
     }
@@ -904,7 +912,7 @@ const AnalysisViewer = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="font-bebas tracking-[0.4em] uppercase text-lg md:text-xl text-primary drop-shadow-lg"
           >
-            Loading Analysis
+            {et(lang, "loading_analysis", "Loading Analysis")}
           </motion.p>
           <div className="flex gap-3">
             {[0, 1, 2].map(i => (
@@ -925,10 +933,10 @@ const AnalysisViewer = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center px-4">
-          <p className="text-muted-foreground text-xl mb-4">Analysis not found</p>
+          <p className="text-muted-foreground text-xl mb-4">{et(lang, "analysis_not_found", "Analysis not found")}</p>
           <Button onClick={() => navigate(-1)} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Go Back
+            {et(lang, "go_back", "Go Back")}
           </Button>
         </div>
       </div>
@@ -965,12 +973,12 @@ const AnalysisViewer = () => {
 
   // Build quick nav sections
   const navSections = [];
-  if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: "Overview" });
-  if (analysis.opposition_strengths) navSections.push({ id: SECTION_IDS.strengths, label: "Opposition Strengths" });
-  if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: "Opposition Weaknesses" });
-  if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: "Potential Matchups" });
-  if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: "Scheme" });
-  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: "Strengths & Areas for Improvement" });
+  if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: et(lang, "overview", "Overview") });
+  if (analysis.opposition_strengths) navSections.push({ id: SECTION_IDS.strengths, label: et(lang, "opposition_strengths", "Opposition Strengths") });
+  if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: et(lang, "opposition_weaknesses", "Opposition Weaknesses") });
+  if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: et(lang, "potential_matchups", "Potential Matchups") });
+  if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: et(lang, "scheme", "Scheme") });
+  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: et(lang, "strengths_improvements", "Strengths & Areas for Improvement") });
   if (analysis.points && analysis.points.length > 0) {
     analysis.points.forEach((point: any, index: number) => {
       navSections.push({ id: `section-point-${index}`, label: point.title });
@@ -1009,7 +1017,7 @@ const AnalysisViewer = () => {
               className="font-bebas uppercase tracking-wider shadow-lg bg-primary text-black hover:bg-primary/90"
             >
               <Play className="w-4 h-4 mr-2" />
-              Watch Video
+              {et(lang, "watch_video", "Watch Video")}
             </Button>
           </motion.div>
         )}
@@ -1149,11 +1157,11 @@ const AnalysisViewer = () => {
               </div>
             )}
 
-            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} lang={lang} />}
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "overview", "Overview")} id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-black">
                     {analysis.key_details}
@@ -1164,7 +1172,7 @@ const AnalysisViewer = () => {
 
             {/* Opposition Strengths - Section 1 (flip) */}
             {analysis.opposition_strengths && (
-              <ExpandableSection title="Opposition Strengths" id={SECTION_IDS.strengths} icon="plus" flipBackground={true}>
+              <ExpandableSection title={et(lang, "opposition_strengths", "Opposition Strengths")} id={SECTION_IDS.strengths} icon="plus" flipBackground={true}>
                 <div className="space-y-3">
                   {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -1185,7 +1193,7 @@ const AnalysisViewer = () => {
 
             {/* Opposition Weaknesses - Section 2 (no flip) */}
             {analysis.opposition_weaknesses && (
-              <ExpandableSection title="Opposition Weaknesses" id={SECTION_IDS.weaknesses} icon="minus" flipBackground={false}>
+              <ExpandableSection title={et(lang, "opposition_weaknesses", "Opposition Weaknesses")} id={SECTION_IDS.weaknesses} icon="minus" flipBackground={false}>
                 <div className="space-y-3">
                   {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -1206,7 +1214,7 @@ const AnalysisViewer = () => {
 
             {/* Key Matchups - Section 3 (flip) */}
             {analysis.matchups && analysis.matchups.length > 0 && (
-            <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
+            <ExpandableSection title={et(lang, "potential_matchups", "Potential Matchup(s)")} id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
                 <div className="space-y-4">
                   {analysis.matchups.map((matchup: any, index: number) => (
                     <TextReveal key={index} delay={index * 0.15}>
@@ -1242,7 +1250,7 @@ const AnalysisViewer = () => {
 
             {/* Scheme Section - Section 4 (no flip) */}
             {(analysis.scheme_title || analysis.selected_scheme) && (
-              <ExpandableSection title={analysis.scheme_title || "Tactical Scheme"} id={SECTION_IDS.scheme} flipBackground={false}>
+              <ExpandableSection title={analysis.scheme_title || et(lang, "tactical_scheme", "Tactical Scheme")} id={SECTION_IDS.scheme} flipBackground={false}>
                 <div className="space-y-4 md:space-y-6">
                   {analysis.scheme_paragraph_1 && (
                     <TextReveal>
@@ -1510,11 +1518,11 @@ const AnalysisViewer = () => {
               </div>
             )}
 
-            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} lang={lang} />}
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "overview", "Overview")} id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.key_details}
@@ -1525,7 +1533,7 @@ const AnalysisViewer = () => {
 
             {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
-              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
+            <ExpandableSection title={et(lang, "strengths_improvements", "Strengths & Areas for Improvement")} id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
                 {(() => {
                   // Parse and group items by color
                   const items = analysis.strengths_improvements.split('|').map((part: string) => {
@@ -1586,7 +1594,7 @@ const AnalysisViewer = () => {
                   return (
                     <div className="space-y-4">
                       <CategoryCard 
-                        title="Strengths" 
+                        title={et(lang, "strengths", "Strengths")}
                         items={greenItems} 
                         borderColor="border-green-500" 
                         bgColor="bg-green-950/50"
@@ -1594,7 +1602,7 @@ const AnalysisViewer = () => {
                         delay={0}
                       />
                       <CategoryCard 
-                        title="Areas for Consistency" 
+                        title={et(lang, "areas_for_consistency", "Areas for Consistency")}
                         items={amberItems} 
                         borderColor="border-amber-500" 
                         bgColor="bg-amber-950/50"
@@ -1602,7 +1610,7 @@ const AnalysisViewer = () => {
                         delay={0.1}
                       />
                       <CategoryCard 
-                        title="Areas for Improvement" 
+                        title={et(lang, "areas_for_improvement", "Areas for Improvement")}
                         items={redItems} 
                         borderColor="border-red-500" 
                         bgColor="bg-red-950/50"
@@ -1699,9 +1707,9 @@ const AnalysisViewer = () => {
               <div className="relative px-4 md:px-6">
                 <ContentCard>
                   <div className="text-center">
-                    <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">Concept</span>
+                    <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">{et(lang, "concept", "Concept")}</span>
                     <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-wider text-black">
-                      {analysis.title || "Concept Analysis"}
+                      {analysis.title || et(lang, "concept_analysis", "Concept Analysis")}
                     </h1>
                   </div>
                 </ContentCard>
@@ -1710,7 +1718,7 @@ const AnalysisViewer = () => {
 
             {/* Concept - Section 0 (no flip) */}
             {analysis.concept && (
-              <ExpandableSection title="Concept" defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "concept", "Concept")} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.concept}
@@ -1721,7 +1729,7 @@ const AnalysisViewer = () => {
 
             {/* Explanation - Section 1 (flip) */}
             {analysis.explanation && (
-              <ExpandableSection title="Explanation" flipBackground={true}>
+              <ExpandableSection title={et(lang, "explanation", "Explanation")} flipBackground={true}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.explanation}
@@ -1798,7 +1806,7 @@ const AnalysisViewer = () => {
             className="font-bebas uppercase tracking-wider text-lg px-8 py-4 bg-primary text-black border-2 border-primary hover:bg-primary/90 rounded-2xl"
           >
             <ArrowLeft className="w-4 h-4 mr-2 rotate-90" />
-            Back to Top
+            {et(lang, "back_to_top", "Back to Top")}
           </Button>
         </motion.div>
       </main>
