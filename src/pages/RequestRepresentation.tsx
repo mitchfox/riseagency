@@ -1025,7 +1025,11 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
-          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")} />
+          <TitlePlate
+            icon={Icon}
+            title={translatePositionLabel(scoutingPosition)}
+            eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")}
+          />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
               const skills = POSITION_SKILLS[scoutingPosition].filter((s) => s.domain === domain);
@@ -1036,14 +1040,18 @@ const DetailView = ({
                 <div key={domain} className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.18em] ${dmeta.chip}`}>
-                      <DIcon className="h-3 w-3" /> {domain}
+                      <DIcon className="h-3 w-3" /> {translateDomainLabel(domain)}
                     </span>
                   </div>
                   <ul className="space-y-2.5">
                     {skills.map((s) => (
                       <li key={s.skill_name} className="rounded-xl border border-border/40 bg-background/40 p-3">
-                        <p className="font-bebas text-sm uppercase tracking-[0.12em] text-primary">{s.skill_name}</p>
-                        <p className="mt-1 text-xs leading-relaxed text-foreground/80 md:text-sm">{s.description}</p>
+                        <p className="font-bebas text-sm uppercase tracking-[0.12em] text-primary">
+                          {translateSkillField(s.skill_name, s.description, "title")}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-foreground/80 md:text-sm">
+                          {translateSkillField(s.skill_name, s.description, "desc")}
+                        </p>
                       </li>
                     ))}
                   </ul>
