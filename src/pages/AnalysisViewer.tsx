@@ -1017,7 +1017,7 @@ const AnalysisViewer = () => {
               className="font-bebas uppercase tracking-wider shadow-lg bg-primary text-black hover:bg-primary/90"
             >
               <Play className="w-4 h-4 mr-2" />
-              Watch Video
+              {et(lang, "watch_video", "Watch Video")}
             </Button>
           </motion.div>
         )}
