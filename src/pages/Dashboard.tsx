@@ -775,6 +775,19 @@ const Dashboard = () => {
       // Check URL params first (staff portal login passes email via URL)
       const urlParams = new URLSearchParams(window.location.search);
       const staffLoginEmail = urlParams.get("staff_login");
+      // Optional language override passed from public pages (e.g. the
+      // representation Cristiano example links). When present we lock it
+      // in immediately so the portal renders in that language even after
+      // we strip the URL params below, and so it wins over the demo
+      // player's stored portal_language.
+      const langParam = urlParams.get("lang");
+      if (langParam) {
+        try {
+          localStorage.setItem("portal_language_hint", langParam);
+          sessionStorage.setItem("portal_language_url_override", langParam);
+        } catch {}
+        setPortalLanguageHint(langParam);
+      }
       if (staffLoginEmail) {
         localStorage.setItem("player_email", staffLoginEmail);
         sessionStorage.setItem("player_email", staffLoginEmail);
@@ -877,8 +890,15 @@ const Dashboard = () => {
       }
 
       if (player?.portal_language) {
-        setPortalLanguageHint(player.portal_language);
-        localStorage.setItem("portal_language_hint", player.portal_language);
+        // If the visitor explicitly arrived with ?lang=, that wins over
+        // the player's stored portal_language for this session.
+        const urlOverride = (() => {
+          try { return sessionStorage.getItem("portal_language_url_override"); } catch { return null; }
+        })();
+        if (!urlOverride) {
+          setPortalLanguageHint(player.portal_language);
+          localStorage.setItem("portal_language_hint", player.portal_language);
+        }
       }
 
       await fetchAnalyses(playerEmail);
