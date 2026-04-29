@@ -4,6 +4,57 @@ const corsHeaders = {
 };
 
 const ALL_LANGUAGES = ['spanish', 'portuguese', 'french', 'german', 'italian', 'polish', 'czech', 'russian', 'turkish', 'croatian', 'norwegian'] as const;
+type LanguageColumn = typeof ALL_LANGUAGES[number];
+
+const isLanguageColumn = (value: string): value is LanguageColumn => (ALL_LANGUAGES as readonly string[]).includes(value);
+
+async function applyManualUpdates(
+  updates: Array<{ text_key?: string; translations?: Record<string, unknown> }>,
+  SUPABASE_URL: string,
+  SUPABASE_SERVICE_ROLE_KEY: string,
+) {
+  let updated = 0;
+  const errors: string[] = [];
+
+  for (const item of updates) {
+    const textKey = String(item.text_key || '');
+    if (!textKey.startsWith('representation.')) {
+      errors.push(`Skipped invalid key: ${textKey}`);
+      continue;
+    }
+
+    const updateObj: Record<string, string> = {};
+    for (const [column, value] of Object.entries(item.translations || {})) {
+      if (isLanguageColumn(column) && typeof value === 'string' && value.trim()) {
+        updateObj[column] = value.trim();
+      }
+    }
+
+    if (Object.keys(updateObj).length === 0) continue;
+
+    const updateRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/translations?page_name=eq.representation&text_key=eq.${encodeURIComponent(textKey)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ ...updateObj, updated_at: new Date().toISOString() }),
+      }
+    );
+
+    if (updateRes.ok) {
+      updated++;
+    } else {
+      errors.push(`${textKey}: ${await updateRes.text()}`);
+    }
+  }
+
+  return { updated, errors };
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,11 +66,29 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing required environment variables');
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing required backend environment variables');
     }
 
-    // Fetch all rows that have any missing language
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    if (Array.isArray(body?.updates)) {
+      const result = await applyManualUpdates(body.updates, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      return new Response(JSON.stringify({ message: 'Manual translation update complete', ...result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: result.errors.length ? 207 : 200,
+      });
+    }
+
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
     const condition = ALL_LANGUAGES.map(l => `${l}.is.null,${l}.eq.`).join(',');
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/translations?select=id,text_key,english,${ALL_LANGUAGES.join(',')}&or=(${condition})&limit=30`,
@@ -45,44 +114,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Process in batches of 15
     const BATCH_SIZE = 10;
     let totalUpdated = 0;
 
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
-      
-      // For each row, determine which languages are missing
       const textsToTranslate: string[] = [];
       const missingMap: { rowIndex: number; missingLangs: string[] }[] = [];
 
       for (let j = 0; j < batch.length; j++) {
         const row = batch[j];
         if (!row.english) continue;
-        
         const missing = ALL_LANGUAGES.filter(l => !row[l] || row[l] === '');
         if (missing.length === 0) continue;
-        
         textsToTranslate.push(row.english);
         missingMap.push({ rowIndex: j, missingLangs: missing as unknown as string[] });
       }
 
       if (textsToTranslate.length === 0) continue;
 
-      // Call AI to translate
       const numberedTexts = textsToTranslate.map((text, idx) => `[${idx}] ${text}`).join('\n');
-      
-      const systemPrompt = `You are a professional translator for a football/soccer agency website called RISE. Translate the following English texts into ALL of these languages: Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian, Norwegian.
+      const systemPrompt = `You are a professional translator for a football agency website called RISE. Translate the following English texts into all of these languages: Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian, Norwegian.
 
 Important:
 - Keep the same tone and style
 - Use appropriate football terminology for each language
 - Keep brand names (RISE, R90) unchanged
-- Use UK English spelling conventions where relevant
+- Return only valid JSON
 
-Return ONLY a valid JSON array with ${textsToTranslate.length} objects, one per input text. Each object must have keys: spanish, portuguese, french, german, italian, polish, czech, russian, turkish, croatian, norwegian.
-
-Example: [{"spanish":"...","portuguese":"...","french":"...","german":"...","italian":"...","polish":"...","czech":"...","russian":"...","turkish":"...","croatian":"...","norwegian":"..."}]`;
+Return a JSON array with ${textsToTranslate.length} objects, one per input text. Each object must have keys: spanish, portuguese, french, german, italian, polish, czech, russian, turkish, croatian, norwegian.`;
 
       const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -101,10 +161,9 @@ Example: [{"spanish":"...","portuguese":"...","french":"...","german":"...","ita
 
       if (!aiRes.ok) {
         console.error(`AI error for batch ${i}: ${aiRes.status}`);
-        // Wait and retry on rate limit
         if (aiRes.status === 429) {
           await new Promise(r => setTimeout(r, 5000));
-          i -= BATCH_SIZE; // retry this batch
+          i -= BATCH_SIZE;
           continue;
         }
         continue;
@@ -127,7 +186,6 @@ Example: [{"spanish":"...","portuguese":"...","french":"...","german":"...","ita
         continue;
       }
 
-      // Update each row with only the missing languages
       for (let k = 0; k < missingMap.length; k++) {
         const { rowIndex, missingLangs } = missingMap[k];
         const row = batch[rowIndex];
@@ -136,9 +194,7 @@ Example: [{"spanish":"...","portuguese":"...","french":"...","german":"...","ita
 
         const updateObj: Record<string, string> = {};
         for (const lang of missingLangs) {
-          if (trans[lang]) {
-            updateObj[lang] = trans[lang];
-          }
+          if (trans[lang]) updateObj[lang] = trans[lang];
         }
 
         if (Object.keys(updateObj).length === 0) continue;
@@ -157,19 +213,11 @@ Example: [{"spanish":"...","portuguese":"...","french":"...","german":"...","ita
           }
         );
 
-        if (updateRes.ok) {
-          totalUpdated++;
-        } else {
-          console.error(`Failed to update row ${row.id}: ${await updateRes.text()}`);
-        }
+        if (updateRes.ok) totalUpdated++;
+        else console.error(`Failed to update row ${row.id}: ${await updateRes.text()}`);
       }
 
-      console.log(`Batch ${i / BATCH_SIZE + 1} complete. Updated ${totalUpdated} rows so far.`);
-      
-      // Small delay between batches
-      if (i + BATCH_SIZE < rows.length) {
-        await new Promise(r => setTimeout(r, 1000));
-      }
+      if (i + BATCH_SIZE < rows.length) await new Promise(r => setTimeout(r, 1000));
     }
 
     return new Response(
