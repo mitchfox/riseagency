@@ -716,7 +716,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
               <ShaderAnimation />
             </div>
           ) : !analysis ? (
-            <div className="text-center py-8 text-muted-foreground">Performance report not found</div>
+            <div className="text-center py-8 text-muted-foreground">{et(reportLanguage, "analysis_not_found", "Performance report not found")}</div>
           ) : (analysis.visibility_status || "").toLowerCase() === "hidden" ? (
             <div className="text-center py-12 space-y-6">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
@@ -1221,7 +1221,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                              <td className="py-2 px-2">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</td>
+                              <td className="py-2 px-2">{toTitleCase(hasTranslation ? tAction(action.action_number - 1, "type", action.action_type) : translateActionType(reportLanguage, tAction(action.action_number - 1, "type", action.action_type)))}</td>
                               {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
                               <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
