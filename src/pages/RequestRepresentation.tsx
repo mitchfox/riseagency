@@ -71,7 +71,35 @@ const CRISTIANO_GETAFE_ANALYSIS_URL =
  *  used by the staff "View Portal" button. The synthetic email is set
  *  in the players table so /portal accepts it as a valid session. */
 const CRISTIANO_PORTAL_EMAIL = "cristiano.ronaldo@risefootballagency.com";
-const CRISTIANO_PORTAL_URL = `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}`;
+const buildCristianoPortalUrl = (lang: string) =>
+  `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}&lang=${encodeURIComponent(lang)}`;
+const withLang = (url: string, lang: string) =>
+  url + (url.includes("?") ? "&" : "?") + `lang=${encodeURIComponent(lang)}`;
+
+/** Translated full-position labels used in the representation position
+ *  breakdown. Falls back to English if the key is missing. */
+const POSITION_LABEL_KEYS: Record<ScoutingPosition, string> = {
+  "Goalkeeper": "scouts.position_goalkeeper",
+  "Full-Back": "scouts.position_fullback",
+  "Centre-Back": "scouts.position_centreback",
+  "Central Defensive Midfielder": "scouts.position_cdm_full",
+  "Central Midfielder": "scouts.position_cm_full",
+  "Central Attacking Midfielder": "scouts.position_cam_full",
+  "Winger / Wide Forward": "scouts.position_winger_full",
+  "Centre Forward / Striker": "scouts.position_striker_full",
+};
+
+const DOMAIN_LABEL_KEYS: Record<string, string> = {
+  Physical: "scouts.domain_physical",
+  Mental: "scouts.domain_mental",
+  Technical: "scouts.domain_technical",
+  Tactical: "scouts.domain_tactical",
+};
+
+const toCompactSkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const toLegacySkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
 
 const MISSION_BIO_KEY = "representation.mission_bio";
 const MISSION_BIO_FALLBACK =
