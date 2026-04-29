@@ -1097,7 +1097,7 @@ const DetailView = ({
           )}
           {performanceSub === "actions" && (
             <a
-              href={CRISTIANO_REAL_MADRID_REPORT_URL}
+              href={withLang(CRISTIANO_REAL_MADRID_REPORT_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
@@ -1111,7 +1111,7 @@ const DetailView = ({
           )}
           {performanceSub === "analysis" && (
             <a
-              href={CRISTIANO_GETAFE_ANALYSIS_URL}
+              href={withLang(CRISTIANO_GETAFE_ANALYSIS_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
@@ -1136,8 +1136,15 @@ const DetailView = ({
                   localStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
                   sessionStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
                   localStorage.setItem("player_login_timestamp", Date.now().toString());
+                  // Seed the portal language hint so the demo opens in the
+                  // current site language without waiting for a profile fetch.
+                  localStorage.setItem("portal_language_hint", language);
                 } catch {}
-                window.open(`${window.location.origin}${CRISTIANO_PORTAL_URL}`, "_blank", "noopener,noreferrer");
+                window.open(
+                  `${window.location.origin}${buildCristianoPortalUrl(language)}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
               }}
               className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
