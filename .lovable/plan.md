@@ -1,63 +1,47 @@
-I understand the issue now: previous changes only inserted many new English translation rows, but the non-English columns are still empty for most of the representation page. Because the page intentionally renders before translations finish loading, it falls back to English and the page appears untranslated. I’ll fix both the missing data and the rendering behaviour.
 
-Plan:
+## 1. Complete remaining translations (Representation page)
 
-1. Fix the intro reveal so the actual page is visible behind the shader
-   - Remove the shader phase’s solid black/background plate that is currently covering the page underneath.
-   - Keep the Representation main screen mounted as soon as the shader phase starts.
-   - Make the shader/logo layer itself fade from visible to transparent over the already-mounted page, so the user sees the main screen through the fade rather than getting black then page.
-   - Keep the player/home screen animation from starting too late by removing or reducing the delay on the player overlay fade-in during the shader reveal.
+**Diagnosis**: 93 keys across `representation.*`, `scouting_network.*` and `positions.*` are still English-only (FAQ Q&A blocks for U18/Over18, Fees/Agreement/Expectations paragraphs, plus a few stragglers). Total 217 keys, 93 missing in every non-English language → 1023 cells to fill.
 
-2. Balance the intro line break
-   - Force the fourth intro line to break as:
-     ```text
-     Work With Us
-     To Make It A Reality
-     ```
-   - Keep this as the English fallback and translation source where appropriate, so it is not left to browser wrapping that creates one-word second lines.
+**Approach**:
+- Run a script (Node + Lovable AI Gateway, model `google/gemini-2.5-flash`) that batches all 93 English source strings in one call per language, requesting a JSON map back, then UPSERTs the 11 language columns directly via the service role key.
+- Single batched approach (one round-trip per language, 11 total) is far cheaper on credits than the existing per-row worker and finishes in seconds.
+- If the AI gateway returns 402 mid-run, fall back to manually authoring the FAQ + paragraph blocks for the remaining languages (these are well-bounded football/legal copy I can translate directly via SQL inserts).
+- Verify with a `SELECT COUNT(*) FILTER (WHERE <lang> IS NULL OR <lang> = '')` for each language afterwards — must be 0 across the three domains.
 
-3. Language selector hover colour
-   - Update the language selector trigger on the representation main screen so hovering the selector box turns its background Rise Gold with dark text.
-   - Ensure the flag and language abbreviation remain readable while hovered.
+## 2. Fix Tyrese Omotoye's Video Reports access
 
-4. Fix the hero subtitle translation issue
-   - The key currently used for the hero subtitle is `representation.hero_subtitle_v2`.
-   - In the database it only has English filled in, so every other language falls back to English.
-   - Fill all 11 non-English language columns for that key and its older alias where needed.
-   - Also correct the spelling in the English source to “Experienced”, not “Experiecned”.
+**Root cause** (verified): `src/pages/Dashboard.tsx` builds the `analyses` array by merging real `player_analysis` rows with **synthetic placeholder rows for fixtures without a report**, using IDs in the form `fixture-${uuid}` (line 1089). `AnalysisVideoReports` then does:
 
-5. Fill all remaining representation translations
-   - Update every `representation.*` key used on `/representation` so Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian and Norwegian are filled.
-   - This includes: Scouting, FAQs, Back to all, section titles, card subtitles, scouting copy, expectations, performance copy, Inside Performance, Tap for more, performance service blurbs, example links, CTA labels and form/WhatsApp labels.
-   - Remove user-facing em dashes from these strings as part of the update.
+```ts
+const ids = analyses.map(a => a.id);
+supabase.from('performance_report_actions').select('*').in('analysis_id', ids)
+```
 
-6. Fix scouting network text on the representation page
-   - Ensure the scouting section uses translation keys for:
-     - Eyes Across All Of Europe
-     - Scouting Network
-     - intro blurb
-     - Deep European Network
-     - Future-Focused Scouting
-     - Complete Player Knowledge
-     - What we look for
-     - Position breakdown
-     - What we look for in your position
-   - Fill all non-English values for these keys.
+Because `fixture-…` is not a valid UUID, PostgREST rejects the entire `IN` filter with a 400 and zero actions are returned — so the Video Reports tab appears empty for any player with at least one fixture-without-report (Tyrese has plenty: confirmed 589 actions exist in the DB but the request fails). Same bug affects every player in the same situation.
 
-7. Localise scouting position breakdown labels
-   - The recommended position label currently displays the raw English scouting position, e.g. “Central Defensive Midfielder”.
-   - Add/use translation keys for the eight scouting position group names and render them through `t()`.
-   - Also translate the domain chips: Physical, Mental, Technical and Tactical.
-   - For the skill names/descriptions shown in the position breakdown, either add translation keys for the displayed scouting skill content or route them through stored translation rows so that section is not English-only.
+**Fix**: in `src/components/portal/AnalysisVideoReports.tsx`, filter `ids` to only valid UUIDs (or to `analyses.filter(a => !a.id.startsWith('fixture-'))`) before the `.in()` call. Add a `playerId` fallback query path: if the filtered list is empty, skip the request.
 
-8. Verify the database cause and avoid the same failure
-   - Do not create another migration that only seeds English.
-   - Use the proper data update path to populate existing translation rows and insert any missing rows with all language columns filled.
-   - If there are still many missing translation rows after that, use the existing translation backfill function or direct full-language inserts/updates so the page is complete immediately, not dependent on future background work.
+## 3. Play icon on Form for clipped/live games next to R90
 
-9. Final checks after implementation
-   - Check the representation page in at least Polish and one other language.
-   - Confirm the hero subtitle no longer remains English.
-   - Confirm the copied Scouting and Inside Performance content is translated.
-   - Confirm the shader fades over the visible main page, not over black.
-   - Confirm the language selector hover background turns Rise Gold.
+**Where**: the Form section bar chart in `src/pages/Dashboard.tsx` (the `LabelList` that currently renders the grade letter above each bar, lines ~3140-3168, and the X-axis tick that renders result/opponent, lines ~2996-3025).
+
+**Implementation**:
+- Enrich `chartData` (line 2768) with `visibilityStatus: a.visibility_status` and `analysisId` (already there).
+- Determine playable status: `isPlayable = visibilityStatus === 'live' || visibilityStatus === 'clipped'` AND the analysis exists in the real `player_analysis` set (skip synthetic `fixture-` rows).
+- Render a small Play icon (Lucide `Play`, filled, Rise Gold) inside the X-axis tick group, just below the result text (or as an SVG `<g>` overlaid on the bar top). Make it clickable: `onClick` → `navigate('/analysis/' + analysisId)` (existing route already used at line 2166/3205).
+- Keep it dark-mode safe (Rise Gold #C6A332) and only render when `isPlayable`.
+
+## Technical details
+
+- **Files touched**:
+  - `src/components/portal/AnalysisVideoReports.tsx` — UUID-filter fix.
+  - `src/pages/Dashboard.tsx` — add Play icon to Form chart axis ticks (and propagate `visibility_status` into `chartData`).
+  - DB: `translations` table — UPDATEs only, no schema change.
+- **No migrations needed.**
+- **No new dependencies.**
+
+## Out of scope
+
+- The translation worker function rewrite (the existing `fill-missing-translations` keeps working once credits are restored; we're just bypassing it once to clear the backlog).
+- Any UI redesign of the Form chart beyond the new Play affordance.
