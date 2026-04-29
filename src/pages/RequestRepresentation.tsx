@@ -965,10 +965,52 @@ const DetailView = ({
   recommendedScoutingPosition,
   onBack,
 }: DetailViewProps) => {
-  const { t } = useLanguage();
+  const { t, language, translations } = useLanguage();
   const meta = CARD_META.find((c) => c.key === activeCard)!;
   const Icon = meta.icon;
   const content = (cardContent as any)[activeCard];
+
+  /** Use the rich Scouts skill translations (scouts.skill_*) where
+   *  available so the position breakdown renders in the user's
+   *  language without duplicating the data layer. Falls back through
+   *  legacy slug → compact slug → fuzzy match → English. */
+  const translateSkillField = (
+    skillName: string,
+    description: string,
+    field: "title" | "desc",
+  ) => {
+    const legacy = toLegacySkillSlug(skillName);
+    const compact = toCompactSkillSlug(skillName);
+    const suffix = field === "desc" ? "_desc" : "";
+    const candidates = [
+      `scouts.skill_${legacy}${suffix}`,
+      `scouts.skill_${compact}${suffix}`,
+    ];
+    for (const key of candidates) {
+      const v = t(key, "");
+      if (v && v !== key) return v;
+    }
+    if (translations) {
+      const target = compact.replace(/_/g, "");
+      for (const key of translations.keys()) {
+        if (!key.startsWith("scouts.skill_")) continue;
+        const tail = key.slice("scouts.skill_".length);
+        const isDesc = tail.endsWith("_desc");
+        if ((field === "desc") !== isDesc) continue;
+        const stem = isDesc ? tail.slice(0, -5) : tail;
+        if (stem.replace(/_/g, "") === target) {
+          const v = t(key, "");
+          if (v && v !== key) return v;
+        }
+      }
+    }
+    return field === "desc" ? description : skillName;
+  };
+
+  const translatePositionLabel = (pos: ScoutingPosition) =>
+    t(POSITION_LABEL_KEYS[pos], pos);
+  const translateDomainLabel = (domain: string) =>
+    t(DOMAIN_LABEL_KEYS[domain] || "", domain);
 
   // Sub-screen: scouting position
   if (activeCard === "scouting" && scoutingPosition) {
