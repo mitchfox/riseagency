@@ -973,12 +973,12 @@ const AnalysisViewer = () => {
 
   // Build quick nav sections
   const navSections = [];
-  if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: "Overview" });
-  if (analysis.opposition_strengths) navSections.push({ id: SECTION_IDS.strengths, label: "Opposition Strengths" });
-  if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: "Opposition Weaknesses" });
-  if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: "Potential Matchups" });
-  if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: "Scheme" });
-  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: "Strengths & Areas for Improvement" });
+  if (analysis.key_details) navSections.push({ id: SECTION_IDS.overview, label: et(lang, "overview", "Overview") });
+  if (analysis.opposition_strengths) navSections.push({ id: SECTION_IDS.strengths, label: et(lang, "opposition_strengths", "Opposition Strengths") });
+  if (analysis.opposition_weaknesses) navSections.push({ id: SECTION_IDS.weaknesses, label: et(lang, "opposition_weaknesses", "Opposition Weaknesses") });
+  if (analysis.matchups?.length > 0) navSections.push({ id: SECTION_IDS.matchups, label: et(lang, "potential_matchups", "Potential Matchups") });
+  if (analysis.scheme_title || analysis.selected_scheme) navSections.push({ id: SECTION_IDS.scheme, label: et(lang, "scheme", "Scheme") });
+  if (analysis.strengths_improvements) navSections.push({ id: SECTION_IDS.improvements, label: et(lang, "strengths_improvements", "Strengths & Areas for Improvement") });
   if (analysis.points && analysis.points.length > 0) {
     analysis.points.forEach((point: any, index: number) => {
       navSections.push({ id: `section-point-${index}`, label: point.title });
