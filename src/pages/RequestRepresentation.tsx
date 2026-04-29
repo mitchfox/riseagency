@@ -386,7 +386,17 @@ const RequestRepresentation = () => {
   // Representation always starts with the central pulse and wave before
   // the cinematic text sequence is allowed to mount. Intro plays on
   // every fresh page mount so it's never silently skipped.
-  const [introDone, setIntroDone] = useState(false);
+  // …unless the visitor has already played/skipped it this session — in
+  // that case (e.g. they swapped language and the page reloaded) we drop
+  // straight into the main page rather than re-playing the cinematic.
+  const [introDone, setIntroDone] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   /** Becomes true the moment the intro reaches its shader phase, so the
    *  age-group screen mounts behind the shader and is ready to be
    *  revealed without any blank gap. */
@@ -409,6 +419,14 @@ const RequestRepresentation = () => {
   useEffect(() => {
     preloadPlayer3DVariant("home");
   }, []);
+
+  // Persist the "intro seen" flag whenever the cinematic finishes so a
+  // subsequent in-session reload (typically caused by a language switch)
+  // skips it.
+  useEffect(() => {
+    if (!introDone) return;
+    try { sessionStorage.setItem(INTRO_SEEN_KEY, "1"); } catch {}
+  }, [introDone]);
 
   // While the hub is the active screen, enable proximity scroll-snap on
   // the document so each category title parks just below the mini header.
