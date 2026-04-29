@@ -1,40 +1,63 @@
-## The bug
+I understand the issue now: previous changes only inserted many new English translation rows, but the non-English columns are still empty for most of the representation page. Because the page intentionally renders before translations finish loading, it falls back to English and the page appears untranslated. I’ll fix both the missing data and the rendering behaviour.
 
-The magnifier annotation works in the **editor** (`AnnotationCanvas.tsx`) but renders the **entire frame squashed into the lens circle** in the read-only playback used on the portal, analysis viewer, public reports, etc. (`ReadOnlyAnnotationPlayback.tsx`).
+Plan:
 
-## Root cause
+1. Fix the intro reveal so the actual page is visible behind the shader
+   - Remove the shader phase’s solid black/background plate that is currently covering the page underneath.
+   - Keep the Representation main screen mounted as soon as the shader phase starts.
+   - Make the shader/logo layer itself fade from visible to transparent over the already-mounted page, so the user sees the main screen through the fade rather than getting black then page.
+   - Keep the player/home screen animation from starting too late by removing or reducing the delay on the player overlay fade-in during the shader reveal.
 
-In `ReadOnlyAnnotationPlayback.tsx` (lines 691–747) the magnifier's sample-region maths is wrong. It samples a region sized to the **entire video divided by zoom**, ignoring the lens radius:
+2. Balance the intro line break
+   - Force the fourth intro line to break as:
+     ```text
+     Work With Us
+     To Make It A Reality
+     ```
+   - Keep this as the English fallback and translation source where appropriate, so it is not left to browser wrapping that creates one-word second lines.
 
-```
-regionW = vw / zoom    // e.g. 1920 / 1.5 = 1280 px  (~85% of frame)
-regionH = vh / zoom    // e.g. 1080 / 1.5 =  720 px
-```
+3. Language selector hover colour
+   - Update the language selector trigger on the representation main screen so hovering the selector box turns its background Rise Gold with dark text.
+   - Ensure the flag and language abbreviation remain readable while hovered.
 
-The editor (`AnnotationCanvas.tsx` lines 918–921) does it correctly — sample-region is sized to **lens diameter / zoom**:
+4. Fix the hero subtitle translation issue
+   - The key currently used for the hero subtitle is `representation.hero_subtitle_v2`.
+   - In the database it only has English filled in, so every other language falls back to English.
+   - Fill all 11 non-English language columns for that key and its older alias where needed.
+   - Also correct the spelling in the English source to “Experienced”, not “Experiecned”.
 
-```
-regionW = (radiusPxW * 2) / zoom    // e.g. (60 * 2) / 1.5 = 80 px  (~lens-sized window)
-regionH = (radiusPxH * 2) / zoom
-```
+5. Fill all remaining representation translations
+   - Update every `representation.*` key used on `/representation` so Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian and Norwegian are filled.
+   - This includes: Scouting, FAQs, Back to all, section titles, card subtitles, scouting copy, expectations, performance copy, Inside Performance, Tap for more, performance service blurbs, example links, CTA labels and form/WhatsApp labels.
+   - Remove user-facing em dashes from these strings as part of the update.
 
-The read-only version effectively shows almost the whole frame, squashed into a small circle, which is exactly the "full image not the zoom" symptom.
+6. Fix scouting network text on the representation page
+   - Ensure the scouting section uses translation keys for:
+     - Eyes Across All Of Europe
+     - Scouting Network
+     - intro blurb
+     - Deep European Network
+     - Future-Focused Scouting
+     - Complete Player Knowledge
+     - What we look for
+     - Position breakdown
+     - What we look for in your position
+   - Fill all non-English values for these keys.
 
-A secondary issue: the read-only path doesn't honour the `panX`/`panY` offset that the editor supports.
+7. Localise scouting position breakdown labels
+   - The recommended position label currently displays the raw English scouting position, e.g. “Central Defensive Midfielder”.
+   - Add/use translation keys for the eight scouting position group names and render them through `t()`.
+   - Also translate the domain chips: Physical, Mental, Technical and Tactical.
+   - For the skill names/descriptions shown in the position breakdown, either add translation keys for the displayed scouting skill content or route them through stored translation rows so that section is not English-only.
 
-## Fix
+8. Verify the database cause and avoid the same failure
+   - Do not create another migration that only seeds English.
+   - Use the proper data update path to populate existing translation rows and insert any missing rows with all language columns filled.
+   - If there are still many missing translation rows after that, use the existing translation backfill function or direct full-language inserts/updates so the page is complete immediately, not dependent on future background work.
 
-Replace the magnifier sample-region maths in `ReadOnlyAnnotationPlayback.tsx` to mirror the editor exactly:
-
-- Use the lens radius (in source-video pixels) as the sample-window size, not the whole frame.
-- Honour `panX` / `panY` so saved magnifiers with an offset stay correct on playback.
-- Keep the existing `outSize = 256` canvas, `xMidYMid slice` clipping, and animation loop unchanged.
-
-Also apply the same correction to `ReadOnlyAnnotationOverlay.tsx`'s magnifier branch (lines 437–497) so any future use of that component matches.
-
-## Files to change
-
-- `src/components/portal/ReadOnlyAnnotationPlayback.tsx` — magnifier case in `renderElement`
-- `src/components/portal/ReadOnlyAnnotationOverlay.tsx` — magnifier case in `renderElement` (already has the right `panX`/`panY` reads, just verify region maths matches editor)
-
-No changes to the editor, no DB changes, no schema changes. After this fix the magnifier in playback will sample only the lens-sized window of the underlying frame and zoom it, identical to what's shown in the editor.
+9. Final checks after implementation
+   - Check the representation page in at least Polish and one other language.
+   - Confirm the hero subtitle no longer remains English.
+   - Confirm the copied Scouting and Inside Performance content is translated.
+   - Confirm the shader fades over the visible main page, not over black.
+   - Confirm the language selector hover background turns Rise Gold.
