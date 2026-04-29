@@ -540,7 +540,7 @@ const AnalysisHeader = ({
 };
 
 // Quick Navigation Dropdown
-const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string }[] }) => {
+const QuickNavDropdown = ({ sections, lang }: { sections: { id: string; label: string }[]; lang?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -618,7 +618,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
                   backgroundPosition: 'center'
                 }}
               >
-                Jump to Section
+                {et(lang, "jump_to_section", "Jump to Section")}
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
@@ -632,7 +632,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               {keyInfoSections.length > 0 && (
                 <div className="relative mb-4 text-center">
                   <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
-                    Key Info
+                    {et(lang, "key_info", "Key Info")}
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {keyInfoSections.map((section) => (
@@ -660,7 +660,7 @@ const QuickNavDropdown = ({ sections }: { sections: { id: string; label: string 
               {pointSections.length > 0 && (
                 <div className="relative text-center">
                   <div className="py-2 text-xl md:text-2xl uppercase tracking-widest font-bebas border-b mb-4 text-primary border-primary/50">
-                    Analysis Points
+                    {et(lang, "analysis_points", "Analysis Points")}
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {pointSections.map((section) => (
