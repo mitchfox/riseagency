@@ -992,8 +992,13 @@ const Dashboard = () => {
 
       setPlayerData(parsedPlayerData);
       if (parsedPlayerData?.portal_language) {
-        setPortalLanguageHint(parsedPlayerData.portal_language);
-        localStorage.setItem("portal_language_hint", parsedPlayerData.portal_language);
+        const urlOverride = (() => {
+          try { return sessionStorage.getItem("portal_language_url_override"); } catch { return null; }
+        })();
+        if (!urlOverride) {
+          setPortalLanguageHint(parsedPlayerData.portal_language);
+          localStorage.setItem("portal_language_hint", parsedPlayerData.portal_language);
+        }
       }
 
       // Set initial scheme position to player's position
