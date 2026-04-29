@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
@@ -22,6 +22,8 @@ import riseLogo from "@/assets/logo.png";
 import smokyBackground from "@/assets/smudged-marble-overlay.png";
 import blackMarble from "@/assets/black-marble.png";
 import whiteMarble from "@/assets/white-marble.png";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { et } from "@/lib/exampleViewerTranslations";
 
 interface Analysis {
   id: string;
