@@ -3015,9 +3015,22 @@ const Dashboard = () => {
                                         >
                                           {data?.result || ''}
                                         </text>
+                                        {data?.isPlayable && (
+                                          <g
+                                            transform="translate(0, 32)"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              navigate(`/analysis/${data.analysisId}`);
+                                            }}
+                                          >
+                                            <circle r={9} fill="hsl(43, 49%, 61%)" />
+                                            <polygon points="-3,-4 -3,4 4,0" fill="#000" />
+                                          </g>
+                                        )}
                                         <text 
                                           x={0} 
-                                          y={30} 
+                                          y={data?.isPlayable ? 48 : 30} 
                                           dy={16} 
                                           textAnchor="end"
                                           fill="hsl(var(--muted-foreground))"
