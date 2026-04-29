@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
@@ -7,6 +7,7 @@ import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Standalone shared performance report page (/performance-report/:slug).
@@ -18,6 +19,12 @@ import { ShaderAnimation } from "@/components/ui/shader-animation";
 const PerformanceReport = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { language } = useLanguage();
+  // The example Cristiano Ronaldo report is linked from /representation
+  // with ?lang=xx so the visitor sees it in the language they were
+  // already browsing. URL param wins over the global language context.
+  const reportLanguage = searchParams.get("lang") || language || "en";
 
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [resolving, setResolving] = useState(true);
@@ -99,6 +106,7 @@ const PerformanceReport = () => {
           open={true}
           onOpenChange={handleOpenChange}
           analysisId={analysisId}
+          languageOverride={reportLanguage}
         />
       )}
 

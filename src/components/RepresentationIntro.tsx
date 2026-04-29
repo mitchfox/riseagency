@@ -255,7 +255,7 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
         onClick={(e) => { e.stopPropagation(); finishIntro(); }}
         className="absolute bottom-4 right-4 z-20 rounded-full border border-border/50 px-3 py-1 text-[10px] font-bebas uppercase tracking-[0.24em] text-muted-foreground hover:bg-muted/40 hover:text-foreground"
       >
-        Skip
+        {t("representation.skip", "Skip")}
       </button>
     </motion.div>
   );

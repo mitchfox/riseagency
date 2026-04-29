@@ -71,7 +71,35 @@ const CRISTIANO_GETAFE_ANALYSIS_URL =
  *  used by the staff "View Portal" button. The synthetic email is set
  *  in the players table so /portal accepts it as a valid session. */
 const CRISTIANO_PORTAL_EMAIL = "cristiano.ronaldo@risefootballagency.com";
-const CRISTIANO_PORTAL_URL = `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}`;
+const buildCristianoPortalUrl = (lang: string) =>
+  `/portal?staff_login=${encodeURIComponent(CRISTIANO_PORTAL_EMAIL)}&lang=${encodeURIComponent(lang)}`;
+const withLang = (url: string, lang: string) =>
+  url + (url.includes("?") ? "&" : "?") + `lang=${encodeURIComponent(lang)}`;
+
+/** Translated full-position labels used in the representation position
+ *  breakdown. Falls back to English if the key is missing. */
+const POSITION_LABEL_KEYS: Record<ScoutingPosition, string> = {
+  "Goalkeeper": "scouts.position_goalkeeper",
+  "Full-Back": "scouts.position_fullback",
+  "Centre-Back": "scouts.position_centreback",
+  "Central Defensive Midfielder": "scouts.position_cdm_full",
+  "Central Midfielder": "scouts.position_cm_full",
+  "Central Attacking Midfielder": "scouts.position_cam_full",
+  "Winger / Wide Forward": "scouts.position_winger_full",
+  "Centre Forward / Striker": "scouts.position_striker_full",
+};
+
+const DOMAIN_LABEL_KEYS: Record<string, string> = {
+  Physical: "scouts.domain_physical",
+  Mental: "scouts.domain_mental",
+  Technical: "scouts.domain_technical",
+  Tactical: "scouts.domain_tactical",
+};
+
+const toCompactSkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+const toLegacySkillSlug = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
 
 const MISSION_BIO_KEY = "representation.mission_bio";
 const MISSION_BIO_FALLBACK =
@@ -937,10 +965,52 @@ const DetailView = ({
   recommendedScoutingPosition,
   onBack,
 }: DetailViewProps) => {
-  const { t } = useLanguage();
+  const { t, language, translations } = useLanguage();
   const meta = CARD_META.find((c) => c.key === activeCard)!;
   const Icon = meta.icon;
   const content = (cardContent as any)[activeCard];
+
+  /** Use the rich Scouts skill translations (scouts.skill_*) where
+   *  available so the position breakdown renders in the user's
+   *  language without duplicating the data layer. Falls back through
+   *  legacy slug → compact slug → fuzzy match → English. */
+  const translateSkillField = (
+    skillName: string,
+    description: string,
+    field: "title" | "desc",
+  ) => {
+    const legacy = toLegacySkillSlug(skillName);
+    const compact = toCompactSkillSlug(skillName);
+    const suffix = field === "desc" ? "_desc" : "";
+    const candidates = [
+      `scouts.skill_${legacy}${suffix}`,
+      `scouts.skill_${compact}${suffix}`,
+    ];
+    for (const key of candidates) {
+      const v = t(key, "");
+      if (v && v !== key) return v;
+    }
+    if (translations) {
+      const target = compact.replace(/_/g, "");
+      for (const key of translations.keys()) {
+        if (!key.startsWith("scouts.skill_")) continue;
+        const tail = key.slice("scouts.skill_".length);
+        const isDesc = tail.endsWith("_desc");
+        if ((field === "desc") !== isDesc) continue;
+        const stem = isDesc ? tail.slice(0, -5) : tail;
+        if (stem.replace(/_/g, "") === target) {
+          const v = t(key, "");
+          if (v && v !== key) return v;
+        }
+      }
+    }
+    return field === "desc" ? description : skillName;
+  };
+
+  const translatePositionLabel = (pos: ScoutingPosition) =>
+    t(POSITION_LABEL_KEYS[pos], pos);
+  const translateDomainLabel = (domain: string) =>
+    t(DOMAIN_LABEL_KEYS[domain] || "", domain);
 
   // Sub-screen: scouting position
   if (activeCard === "scouting" && scoutingPosition) {
@@ -955,7 +1025,11 @@ const DetailView = ({
       >
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
           <BackPill onClick={onBack} label={t("representation.back_to_scouting", "Back to Scouting")} />
-          <TitlePlate icon={Icon} title={`${scoutingPosition}`} eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")} />
+          <TitlePlate
+            icon={Icon}
+            title={translatePositionLabel(scoutingPosition)}
+            eyebrow={t("representation.position_breakdown_eyebrow", "Position breakdown")}
+          />
           <div className="mt-5 grid gap-3 md:mt-7 md:grid-cols-2">
             {(["Physical", "Mental", "Technical", "Tactical"] as const).map((domain) => {
               const skills = POSITION_SKILLS[scoutingPosition].filter((s) => s.domain === domain);
@@ -966,14 +1040,18 @@ const DetailView = ({
                 <div key={domain} className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.18em] ${dmeta.chip}`}>
-                      <DIcon className="h-3 w-3" /> {domain}
+                      <DIcon className="h-3 w-3" /> {translateDomainLabel(domain)}
                     </span>
                   </div>
                   <ul className="space-y-2.5">
                     {skills.map((s) => (
                       <li key={s.skill_name} className="rounded-xl border border-border/40 bg-background/40 p-3">
-                        <p className="font-bebas text-sm uppercase tracking-[0.12em] text-primary">{s.skill_name}</p>
-                        <p className="mt-1 text-xs leading-relaxed text-foreground/80 md:text-sm">{s.description}</p>
+                        <p className="font-bebas text-sm uppercase tracking-[0.12em] text-primary">
+                          {translateSkillField(s.skill_name, s.description, "title")}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-foreground/80 md:text-sm">
+                          {translateSkillField(s.skill_name, s.description, "desc")}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -1027,7 +1105,7 @@ const DetailView = ({
           )}
           {performanceSub === "actions" && (
             <a
-              href={CRISTIANO_REAL_MADRID_REPORT_URL}
+              href={withLang(CRISTIANO_REAL_MADRID_REPORT_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
@@ -1041,7 +1119,7 @@ const DetailView = ({
           )}
           {performanceSub === "analysis" && (
             <a
-              href={CRISTIANO_GETAFE_ANALYSIS_URL}
+              href={withLang(CRISTIANO_GETAFE_ANALYSIS_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
@@ -1066,8 +1144,15 @@ const DetailView = ({
                   localStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
                   sessionStorage.setItem("player_email", CRISTIANO_PORTAL_EMAIL);
                   localStorage.setItem("player_login_timestamp", Date.now().toString());
+                  // Seed the portal language hint so the demo opens in the
+                  // current site language without waiting for a profile fetch.
+                  localStorage.setItem("portal_language_hint", language);
                 } catch {}
-                window.open(`${window.location.origin}${CRISTIANO_PORTAL_URL}`, "_blank", "noopener,noreferrer");
+                window.open(
+                  `${window.location.origin}${buildCristianoPortalUrl(language)}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
               }}
               className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
@@ -1133,13 +1218,13 @@ const DetailView = ({
               {/* 1. Network intro — mirrors Players page wording. */}
               <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
                 <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
-                  {t("scouting_network.eyes_across_europe", "Eyes Across All Of Europe")}
+                  {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
                 <p className="mt-3 font-bebas text-3xl uppercase leading-none tracking-[0.12em] md:text-5xl">
-                  {t("scouting_network.scouting", "Scouting")} <span className="text-primary">{t("scouting_network.network", "Network")}</span>
+                  {t("home.scouting", "Scouting")} <span className="text-primary">{t("home.network", "Network")}</span>
                 </p>
                 <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-foreground/80 md:text-base">
-                  {t("scouting_network.intro_blurb", "If you're a professional or academy player in Europe, chances are we already know about you.")}
+                  {t("home.scouting_desc", "If you're a professional or academy player in Europe, chances are we know about you.")}
                 </p>
               </div>
 
@@ -1153,9 +1238,9 @@ const DetailView = ({
               {/* 3. The same three explanation cards from the Players page. */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
                 {[
-                  { n: "01", title: t("scouting_network.card1_title", "Deep European Network"), desc: t("scouting_network.card1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.") },
-                  { n: "02", title: t("scouting_network.card2_title", "Future-Focused Scouting"), desc: t("scouting_network.card2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
-                  { n: "03", title: t("scouting_network.card3_title", "Complete Player Knowledge"), desc: t("scouting_network.card3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
+                  { n: "01", title: t("home.scouting_point_1_title", "Deep European Network"), desc: t("home.scouting_point_1_desc", "We have built an extensive scouting network across Europe, with eyes at every level of the professional game.") },
+                  { n: "02", title: t("home.scouting_point_2_title", "Future-Focused Scouting"), desc: t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
+                  { n: "03", title: t("home.scouting_point_3_title", "Complete Player Knowledge"), desc: t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
                 ].map((p) => (
                   <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
                     <div className="flex items-start gap-4">
@@ -1169,7 +1254,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label={t("scouting_network.what_we_look_for", "What we look for")} />
+              <SectionDivider label={t("representation.what_we_look_for", "What we look for")} />
 
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
@@ -1179,7 +1264,7 @@ const DetailView = ({
                 ))}
               </div>
 
-              <SectionDivider label={t("scouting_network.position_breakdown", "Position breakdown")} />
+              <SectionDivider label={t("representation.position_breakdown", "Position breakdown")} />
 
               {recommendedScoutingPosition ? (
                 <button
@@ -1188,14 +1273,14 @@ const DetailView = ({
                   className="flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/50 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/15 md:p-5"
                 >
                   <div>
-                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">{t("scouting_network.what_we_look_for_position", "What we look for in your position")}</p>
-                    <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{recommendedScoutingPosition}</p>
+                    <p className="text-[10px] font-bebas uppercase tracking-[0.18em] text-primary md:text-xs">{t("representation.what_we_look_for_position", "What we look for in your position")}</p>
+                    <p className="mt-1 font-bebas text-lg uppercase tracking-[0.12em] md:text-2xl">{translatePositionLabel(recommendedScoutingPosition)}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-primary" />
                 </button>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground md:text-sm">{t("scouting_network.open_position_hint", "Open any position to see exactly what we look for in it.")}</p>
+                  <p className="text-xs text-muted-foreground md:text-sm">{t("representation.open_position_hint", "Open any position to see exactly what we look for in it.")}</p>
                   <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
                     {SCOUTING_POSITIONS.map((pos) => (
                       <button
@@ -1204,7 +1289,7 @@ const DetailView = ({
                         onClick={() => { scrollToTop(); setScoutingPosition(pos); }}
                         className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 text-left font-bebas text-sm uppercase tracking-[0.1em] text-foreground/80 transition-colors hover:border-primary/60 hover:bg-card/70 md:text-base"
                       >
-                        {pos}
+                        {translatePositionLabel(pos)}
                       </button>
                     ))}
                   </div>

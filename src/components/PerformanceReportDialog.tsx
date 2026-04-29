@@ -86,12 +86,17 @@ interface PerformanceReportDialogProps {
   onOpenChange: (open: boolean) => void;
   analysisId: string | null;
   isPortalView?: boolean;
+  /** Optional explicit language override. When set, takes precedence
+   *  over the portal language hint and the default English fallback.
+   *  Used by the public /performance-report page so the example
+   *  Cristiano Ronaldo report opens in the visitor's site language. */
+  languageOverride?: string | null;
 }
 
 const hasPlayableClipWindow = (clipStart?: number | null, clipEnd?: number | null) =>
   clipStart != null && clipEnd != null && clipEnd > clipStart;
 
-export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPortalView = false }: PerformanceReportDialogProps) => {
+export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPortalView = false, languageOverride = null }: PerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisDetails | null>(null);
   const [actions, setActions] = useState<PerformanceAction[]>([]);
@@ -146,7 +151,11 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
     setter(true);
   };
 
-  const portalLanguage = isPortalView ? (localStorage.getItem("portal_language_hint") || "en") : "en";
+  const portalLanguage = languageOverride
+    ? languageOverride
+    : isPortalView
+      ? (localStorage.getItem("portal_language_hint") || "en")
+      : "en";
   const reportLanguage = getReportLanguage(analysis?.translated_content, portalLanguage);
   const portalLocale = getReportLocale(reportLanguage);
 

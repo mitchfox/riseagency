@@ -1,47 +1,65 @@
+I found two separate issues causing the English text to leak on `/representation`.
 
-## 1. Complete remaining translations (Representation page)
+1. The scouting block was copied visually from the players/scouts pages, but the representation page uses new keys such as `scouting_network.card1_title`. Those keys do not exist in the database, so the page falls back to English.
+2. The position breakdown renders the raw `POSITION_SKILLS` data directly. The Scouts page already has translated skill keys, but representation is not using that translation lookup.
+3. The intro skip button is hardcoded as `Skip`, with no translation key.
+4. The Cristiano report/analysis/portal example links do not carry the current language into the opened page. The report dialog also forces `en` unless it is opened from the portal.
 
-**Diagnosis**: 93 keys across `representation.*`, `scouting_network.*` and `positions.*` are still English-only (FAQ Q&A blocks for U18/Over18, Fees/Agreement/Expectations paragraphs, plus a few stragglers). Total 217 keys, 93 missing in every non-English language → 1023 cells to fill.
+Plan:
 
-**Approach**:
-- Run a script (Node + Lovable AI Gateway, model `google/gemini-2.5-flash`) that batches all 93 English source strings in one call per language, requesting a JSON map back, then UPSERTs the 11 language columns directly via the service role key.
-- Single batched approach (one round-trip per language, 11 total) is far cheaper on credits than the existing per-row worker and finishes in seconds.
-- If the AI gateway returns 402 mid-run, fall back to manually authoring the FAQ + paragraph blocks for the remaining languages (these are well-bounded football/legal copy I can translate directly via SQL inserts).
-- Verify with a `SELECT COUNT(*) FILTER (WHERE <lang> IS NULL OR <lang> = '')` for each language afterwards — must be 0 across the three domains.
+1. Fix the hardcoded skip button
+   - Change `src/components/RepresentationIntro.tsx` from hardcoded `Skip` to `t("representation.skip", "Skip")`.
+   - Add or apply the `representation.skip` translation row for all supported languages.
 
-## 2. Fix Tyrese Omotoye's Video Reports access
+2. Fix representation scouting section translation keys
+   - In `src/pages/RequestRepresentation.tsx`, switch the copied scouting network text back to the existing translated keys from the Players page:
+     - `home.eyes_across_europe`
+     - `home.scouting`
+     - `home.network`
+     - `home.scouting_desc`
+     - `home.scouting_point_1_title` / `_desc`
+     - `home.scouting_point_2_title` / `_desc`
+     - `home.scouting_point_3_title` / `_desc`
+   - For representation-only labels such as `What we look for`, `Position breakdown`, `What we look for in your position`, and `Open any position...`, add/update proper `representation.*` keys rather than leaving them under missing `scouting_network.*` keys.
 
-**Root cause** (verified): `src/pages/Dashboard.tsx` builds the `analyses` array by merging real `player_analysis` rows with **synthetic placeholder rows for fixtures without a report**, using IDs in the form `fixture-${uuid}` (line 1089). `AnalysisVideoReports` then does:
+3. Fix position breakdown translations using the existing Scouts translations
+   - Import or copy the Scouts helper logic into `RequestRepresentation.tsx`:
+     - position display names/abbreviations
+     - domain labels
+     - skill title and skill description lookup
+   - Render each scouting position through a translated position label rather than raw English, for example `Centre Forward / Striker` becomes the existing localized `scouts.pos_striker` label or a full-position translation if available.
+   - Render each skill title and description using the existing `scouts.skill_*` rows, matching the Scouts page logic with legacy and compact slug fallback.
+   - This uses the 151 already-translated Scouts skill rows currently in the database, instead of creating a second translation set.
 
-```ts
-const ids = analyses.map(a => a.id);
-supabase.from('performance_report_actions').select('*').in('analysis_id', ids)
-```
+4. Add missing representation/scouting utility translations in the database
+   - Apply data updates, not schema migrations, for the missing rows such as:
+     - `representation.skip`
+     - `representation.what_we_look_for`
+     - `representation.position_breakdown`
+     - `representation.what_we_look_for_position`
+     - `representation.open_position_hint`
+     - optionally full position names if the existing Scouts abbreviations are too short for the representation page.
+   - Verify the rows have non-empty Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian and Norwegian columns.
 
-Because `fixture-…` is not a valid UUID, PostgREST rejects the entire `IN` filter with a 400 and zero actions are returned — so the Video Reports tab appears empty for any player with at least one fixture-without-report (Tyrese has plenty: confirmed 589 actions exist in the DB but the request fails). Same bug affects every player in the same situation.
+5. Preserve language when opening Cristiano examples
+   - Update the example report and analysis URLs in `RequestRepresentation.tsx` to append `?lang=${language}`.
+   - Update the Cristiano portal button to append `&lang=${language}` and seed the demo player’s language hint in local/session storage before opening the portal.
+   - This means a Portuguese user opens the Cristiano examples in Portuguese where translations exist.
 
-**Fix**: in `src/components/portal/AnalysisVideoReports.tsx`, filter `ids` to only valid UUIDs (or to `analyses.filter(a => !a.id.startsWith('fixture-'))`) before the `.in()` call. Add a `playerId` fallback query path: if the filtered list is empty, skip the request.
+6. Make the standalone report page respect the page language
+   - Update `PerformanceReportDialog` to accept an optional language override, not only `isPortalView`.
+   - Pass the current `useLanguage().language` from `src/pages/PerformanceReport.tsx` into the dialog.
+   - Keep portal behaviour unchanged for real players.
 
-## 3. Play icon on Form for clipped/live games next to R90
+7. Make analysis examples ready for language-aware viewing
+   - Update `AnalysisViewer` to read the current language context or `?lang=` and use it for static UI labels like loading, overview, watch video, not found, quick-nav labels, and status labels.
+   - If the analysis table does not yet store translated analysis body fields, keep source analysis content as-is, but ensure every UI label around it opens in the selected user language. If translated analysis content exists later, the same language parameter can be used to select it.
 
-**Where**: the Form section bar chart in `src/pages/Dashboard.tsx` (the `LabelList` that currently renders the grade letter above each bar, lines ~3140-3168, and the X-axis tick that renders result/opponent, lines ~2996-3025).
-
-**Implementation**:
-- Enrich `chartData` (line 2768) with `visibilityStatus: a.visibility_status` and `analysisId` (already there).
-- Determine playable status: `isPlayable = visibilityStatus === 'live' || visibilityStatus === 'clipped'` AND the analysis exists in the real `player_analysis` set (skip synthetic `fixture-` rows).
-- Render a small Play icon (Lucide `Play`, filled, Rise Gold) inside the X-axis tick group, just below the result text (or as an SVG `<g>` overlaid on the bar top). Make it clickable: `onClick` → `navigate('/analysis/' + analysisId)` (existing route already used at line 2166/3205).
-- Keep it dark-mode safe (Rise Gold #C6A332) and only render when `isPlayable`.
-
-## Technical details
-
-- **Files touched**:
-  - `src/components/portal/AnalysisVideoReports.tsx` — UUID-filter fix.
-  - `src/pages/Dashboard.tsx` — add Play icon to Form chart axis ticks (and propagate `visibility_status` into `chartData`).
-  - DB: `translations` table — UPDATEs only, no schema change.
-- **No migrations needed.**
-- **No new dependencies.**
-
-## Out of scope
-
-- The translation worker function rewrite (the existing `fill-missing-translations` keeps working once credits are restored; we're just bypassing it once to clear the backlog).
-- Any UI redesign of the Form chart beyond the new Play affordance.
+8. Verification
+   - Check `/representation?lang=pt` and navigate through:
+     - intro skip button
+     - Scouting card
+     - position breakdown
+     - Centre Forward / Striker breakdown
+   - Confirm no listed English strings remain when Portuguese translations exist.
+   - Check Cristiano performance report, analysis and portal links from Portuguese and confirm the opened page receives the Portuguese language context.
