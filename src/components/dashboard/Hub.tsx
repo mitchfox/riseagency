@@ -983,19 +983,18 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           );
                         })()}
                         {/* Full Game Clips button */}
-                        {analysis.video_url && (
+                        {isPlayableReport(analysis) && (
                           <Button
                             variant="ghost"
                             size="sm"
                             className="p-0 h-8 w-8 bg-black text-[hsl(43,49%,61%)] border border-[hsl(43,49%,61%)] hover:bg-[hsl(43,49%,61%)] hover:text-black rounded flex items-center justify-center"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedReportId(analysis.id);
-                              setReportDialogOpen(true);
+                              handleClipsClick(analysis);
                             }}
                             title="Watch Full Game Clips"
                           >
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><polygon points="5,3 19,12 5,21" /></svg>
+                            <Play className="h-4 w-4 fill-current" />
                           </Button>
                         )}
                         {(() => {
@@ -1012,7 +1011,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           if (isClipped) {
                             return (
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleClippedClick(analysis); }}
+                                onClick={(e) => { e.stopPropagation(); handleClipsClick(analysis); }}
                                 className="px-3 py-1 rounded text-white/60 text-sm font-bold bg-zinc-700 border-2 border-zinc-600 hover:border-primary/60 transition-colors cursor-pointer"
                                 title="Click to view clips"
                               >
@@ -1021,12 +1020,15 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                             );
                           }
                           return effectiveR90 != null ? (
-                            <div 
-                              className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200"
+                            <button 
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); isPlayableReport(analysis) ? handleClipsClick(analysis) : undefined; }}
+                              className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200 disabled:pointer-events-none"
                               style={{ backgroundColor: getR90Color(effectiveR90) }}
+                              disabled={!isPlayableReport(analysis)}
                             >
                               R90: {effectiveR90.toFixed(2)}
-                            </div>
+                            </button>
                           ) : null;
                         })()}
                       </div>
