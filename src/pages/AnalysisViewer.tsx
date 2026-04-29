@@ -745,6 +745,12 @@ const AnnotatedPointVideo = ({ url, annotationId, crop, audioUrl }: { url: strin
 const AnalysisViewer = () => {
   const { analysisId: rawSlug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { language } = useLanguage();
+  // Public/example links from /representation pass `?lang=` so the viewer
+  // opens in the visitor's chosen site language. URL param wins over the
+  // global language context.
+  const lang = searchParams.get("lang") || language || "en";
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [playerName, setPlayerName] = useState<string | null>(null);
