@@ -1157,11 +1157,11 @@ const AnalysisViewer = () => {
               </div>
             )}
 
-            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} lang={lang} />}
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "overview", "Overview")} id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-base md:text-lg text-black">
                     {analysis.key_details}
