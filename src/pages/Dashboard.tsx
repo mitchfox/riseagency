@@ -2772,7 +2772,13 @@ const Dashboard = () => {
                             displayLabel: `${a.opponent || "Unknown"}${a.result ? ` (${a.result})` : ""}`,
                             analysisId: a.id,
                             minutesPlayed: a.minutes_played,
-                            strikerStats: (a as any).striker_stats
+                            strikerStats: (a as any).striker_stats,
+                            visibilityStatus: (a as any).visibility_status,
+                            isPlayable: (
+                              ((a as any).visibility_status === 'live' || (a as any).visibility_status === 'clipped')
+                              && typeof a.id === 'string'
+                              && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a.id)
+                            ),
                           }));
 
                         // Calculate max Y-axis value - dynamic based on metric
