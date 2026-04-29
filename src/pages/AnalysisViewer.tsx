@@ -1172,7 +1172,7 @@ const AnalysisViewer = () => {
 
             {/* Opposition Strengths - Section 1 (flip) */}
             {analysis.opposition_strengths && (
-              <ExpandableSection title="Opposition Strengths" id={SECTION_IDS.strengths} icon="plus" flipBackground={true}>
+              <ExpandableSection title={et(lang, "opposition_strengths", "Opposition Strengths")} id={SECTION_IDS.strengths} icon="plus" flipBackground={true}>
                 <div className="space-y-3">
                   {analysis.opposition_strengths.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -1193,7 +1193,7 @@ const AnalysisViewer = () => {
 
             {/* Opposition Weaknesses - Section 2 (no flip) */}
             {analysis.opposition_weaknesses && (
-              <ExpandableSection title="Opposition Weaknesses" id={SECTION_IDS.weaknesses} icon="minus" flipBackground={false}>
+              <ExpandableSection title={et(lang, "opposition_weaknesses", "Opposition Weaknesses")} id={SECTION_IDS.weaknesses} icon="minus" flipBackground={false}>
                 <div className="space-y-3">
                   {analysis.opposition_weaknesses.split('\n').filter(line => line.trim()).map((line, idx) => {
                     const cleanLine = line.trim().replace(/^[-•]\s*/, '');
@@ -1214,7 +1214,7 @@ const AnalysisViewer = () => {
 
             {/* Key Matchups - Section 3 (flip) */}
             {analysis.matchups && analysis.matchups.length > 0 && (
-            <ExpandableSection title="Potential Matchup(s)" id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
+            <ExpandableSection title={et(lang, "potential_matchups", "Potential Matchup(s)")} id={SECTION_IDS.matchups} transparentContent flipBackground={true}>
                 <div className="space-y-4">
                   {analysis.matchups.map((matchup: any, index: number) => (
                     <TextReveal key={index} delay={index * 0.15}>
@@ -1250,7 +1250,7 @@ const AnalysisViewer = () => {
 
             {/* Scheme Section - Section 4 (no flip) */}
             {(analysis.scheme_title || analysis.selected_scheme) && (
-              <ExpandableSection title={analysis.scheme_title || "Tactical Scheme"} id={SECTION_IDS.scheme} flipBackground={false}>
+              <ExpandableSection title={analysis.scheme_title || et(lang, "tactical_scheme", "Tactical Scheme")} id={SECTION_IDS.scheme} flipBackground={false}>
                 <div className="space-y-4 md:space-y-6">
                   {analysis.scheme_paragraph_1 && (
                     <TextReveal>
@@ -1518,11 +1518,11 @@ const AnalysisViewer = () => {
               </div>
             )}
 
-            {navSections.length > 0 && <QuickNavDropdown sections={navSections} />}
+            {navSections.length > 0 && <QuickNavDropdown sections={navSections} lang={lang} />}
 
             {/* Overview - Section 0 (no flip) */}
             {analysis.key_details && (
-              <ExpandableSection title="Overview" id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "overview", "Overview")} id={SECTION_IDS.overview} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.key_details}
@@ -1533,7 +1533,7 @@ const AnalysisViewer = () => {
 
             {/* Improvements - Section 1 (flip) */}
             {analysis.strengths_improvements && (
-              <ExpandableSection title="Strengths & Areas for Improvement" id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
+            <ExpandableSection title={et(lang, "strengths_improvements", "Strengths & Areas for Improvement")} id={SECTION_IDS.improvements} flipBackground={true} transparentContent>
                 {(() => {
                   // Parse and group items by color
                   const items = analysis.strengths_improvements.split('|').map((part: string) => {
@@ -1594,7 +1594,7 @@ const AnalysisViewer = () => {
                   return (
                     <div className="space-y-4">
                       <CategoryCard 
-                        title="Strengths" 
+                        title={et(lang, "strengths", "Strengths")}
                         items={greenItems} 
                         borderColor="border-green-500" 
                         bgColor="bg-green-950/50"
@@ -1602,7 +1602,7 @@ const AnalysisViewer = () => {
                         delay={0}
                       />
                       <CategoryCard 
-                        title="Areas for Consistency" 
+                        title={et(lang, "areas_for_consistency", "Areas for Consistency")}
                         items={amberItems} 
                         borderColor="border-amber-500" 
                         bgColor="bg-amber-950/50"
@@ -1610,7 +1610,7 @@ const AnalysisViewer = () => {
                         delay={0.1}
                       />
                       <CategoryCard 
-                        title="Areas for Improvement" 
+                        title={et(lang, "areas_for_improvement", "Areas for Improvement")}
                         items={redItems} 
                         borderColor="border-red-500" 
                         bgColor="bg-red-950/50"
@@ -1707,9 +1707,9 @@ const AnalysisViewer = () => {
               <div className="relative px-4 md:px-6">
                 <ContentCard>
                   <div className="text-center">
-                    <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">Concept</span>
+                    <span className="text-xs md:text-sm font-bebas uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 bg-primary text-black">{et(lang, "concept", "Concept")}</span>
                     <h1 className="text-2xl md:text-4xl font-bebas uppercase tracking-wider text-black">
-                      {analysis.title || "Concept Analysis"}
+                      {analysis.title || et(lang, "concept_analysis", "Concept Analysis")}
                     </h1>
                   </div>
                 </ContentCard>
@@ -1718,7 +1718,7 @@ const AnalysisViewer = () => {
 
             {/* Concept - Section 0 (no flip) */}
             {analysis.concept && (
-              <ExpandableSection title="Concept" defaultOpen flipBackground={false}>
+              <ExpandableSection title={et(lang, "concept", "Concept")} defaultOpen flipBackground={false}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.concept}
@@ -1729,7 +1729,7 @@ const AnalysisViewer = () => {
 
             {/* Explanation - Section 1 (flip) */}
             {analysis.explanation && (
-              <ExpandableSection title="Explanation" flipBackground={true}>
+              <ExpandableSection title={et(lang, "explanation", "Explanation")} flipBackground={true}>
                 <TextReveal>
                   <p className="leading-relaxed whitespace-pre-wrap text-sm md:text-lg text-black">
                     {analysis.explanation}
@@ -1806,7 +1806,7 @@ const AnalysisViewer = () => {
             className="font-bebas uppercase tracking-wider text-lg px-8 py-4 bg-primary text-black border-2 border-primary hover:bg-primary/90 rounded-2xl"
           >
             <ArrowLeft className="w-4 h-4 mr-2 rotate-90" />
-            Back to Top
+            {et(lang, "back_to_top", "Back to Top")}
           </Button>
         </motion.div>
       </main>
