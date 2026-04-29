@@ -869,7 +869,7 @@ const AnalysisViewer = () => {
       setAnalysis(parsedAnalysis);
     } catch (error: any) {
       console.error("Error fetching analysis:", error);
-      toast.error("Failed to load analysis");
+      toast.error(et(lang, "failed_to_load_analysis", "Failed to load analysis"));
     } finally {
       setLoading(false);
     }
@@ -912,7 +912,7 @@ const AnalysisViewer = () => {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="font-bebas tracking-[0.4em] uppercase text-lg md:text-xl text-primary drop-shadow-lg"
           >
-            Loading Analysis
+            {et(lang, "loading_analysis", "Loading Analysis")}
           </motion.p>
           <div className="flex gap-3">
             {[0, 1, 2].map(i => (
@@ -933,10 +933,10 @@ const AnalysisViewer = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center px-4">
-          <p className="text-muted-foreground text-xl mb-4">Analysis not found</p>
+          <p className="text-muted-foreground text-xl mb-4">{et(lang, "analysis_not_found", "Analysis not found")}</p>
           <Button onClick={() => navigate(-1)} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Go Back
+            {et(lang, "go_back", "Go Back")}
           </Button>
         </div>
       </div>
