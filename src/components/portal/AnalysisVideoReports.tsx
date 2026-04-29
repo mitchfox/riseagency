@@ -52,7 +52,11 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   useEffect(() => {
     const fetchActions = async () => {
       if (analyses.length === 0) { setLoading(false); return; }
-      const ids = analyses.map(a => a.id);
+      // Filter out synthetic fixture-* placeholder rows from Dashboard;
+      // only real player_analysis UUIDs are valid for the IN() filter.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const ids = analyses.map(a => a.id).filter(id => UUID_RE.test(id));
+      if (ids.length === 0) { setAllActions([]); setLoading(false); return; }
       const { data, error } = await supabase
         .from('performance_report_actions')
         .select('*')
