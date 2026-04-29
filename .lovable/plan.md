@@ -1,65 +1,47 @@
-I found two separate issues causing the English text to leak on `/representation`.
-
-1. The scouting block was copied visually from the players/scouts pages, but the representation page uses new keys such as `scouting_network.card1_title`. Those keys do not exist in the database, so the page falls back to English.
-2. The position breakdown renders the raw `POSITION_SKILLS` data directly. The Scouts page already has translated skill keys, but representation is not using that translation lookup.
-3. The intro skip button is hardcoded as `Skip`, with no translation key.
-4. The Cristiano report/analysis/portal example links do not carry the current language into the opened page. The report dialog also forces `en` unless it is opened from the portal.
+I’ll fix this as a language propagation and translation-coverage issue, not another partial patch.
 
 Plan:
 
-1. Fix the hardcoded skip button
-   - Change `src/components/RepresentationIntro.tsx` from hardcoded `Skip` to `t("representation.skip", "Skip")`.
-   - Add or apply the `representation.skip` translation row for all supported languages.
+1. Keep `/representation` on the main page when changing language
+   - The existing intro skip flag is defined but not actually used.
+   - Initialise the representation intro state from `sessionStorage` so once the intro has completed, skipped, or the page is already in use, language switching does not replay it.
+   - Set the flag when the intro completes and before triggering a language switch from the representation page.
+   - Keep this scoped to the current session so a fresh visit can still show the intro.
 
-2. Fix representation scouting section translation keys
-   - In `src/pages/RequestRepresentation.tsx`, switch the copied scouting network text back to the existing translated keys from the Players page:
-     - `home.eyes_across_europe`
-     - `home.scouting`
-     - `home.network`
-     - `home.scouting_desc`
-     - `home.scouting_point_1_title` / `_desc`
-     - `home.scouting_point_2_title` / `_desc`
-     - `home.scouting_point_3_title` / `_desc`
-   - For representation-only labels such as `What we look for`, `Position breakdown`, `What we look for in your position`, and `Open any position...`, add/update proper `representation.*` keys rather than leaving them under missing `scouting_network.*` keys.
+2. Preserve `?lang=` through portal example login
+   - Fix the portal auth flow so `/portal?staff_login=...&lang=pt` stores `portal_language_hint=pt` before it cleans the URL.
+   - Prevent the Cristiano demo player’s saved default language from immediately overwriting the language the visitor arrived with.
+   - Result: if the user is browsing representation in Portuguese, the Cristiano portal opens in Portuguese even after the URL is cleaned.
 
-3. Fix position breakdown translations using the existing Scouts translations
-   - Import or copy the Scouts helper logic into `RequestRepresentation.tsx`:
-     - position display names/abbreviations
-     - domain labels
-     - skill title and skill description lookup
-   - Render each scouting position through a translated position label rather than raw English, for example `Centre Forward / Striker` becomes the existing localized `scouts.pos_striker` label or a full-position translation if available.
-   - Render each skill title and description using the existing `scouts.skill_*` rows, matching the Scouts page logic with legacy and compact slug fallback.
-   - This uses the 151 already-translated Scouts skill rows currently in the database, instead of creating a second translation set.
+3. Translate the portal example hub, analysis and data tabs from the propagated language
+   - Pass the active `portalLanguageHint` into the portal example areas that still rely on hardcoded English.
+   - For `AnalysisVideoReports`, replace English labels, toasts and clip category names with existing portal translation keys where available and add missing keys where needed.
+   - For `AnalysisDataTab`, localise visible headings and controls such as Data, Player Summary, Name, Age, Club, Minutes Played, Season R90, Matches, Season Averages, select-all style controls and chart/table labels that currently render in English.
+   - Keep player names, club names, opposition names and raw stored football data unchanged unless there is translated report content for it.
 
-4. Add missing representation/scouting utility translations in the database
-   - Apply data updates, not schema migrations, for the missing rows such as:
-     - `representation.skip`
-     - `representation.what_we_look_for`
-     - `representation.position_breakdown`
-     - `representation.what_we_look_for_position`
-     - `representation.open_position_hint`
-     - optionally full position names if the existing Scouts abbreviations are too short for the representation page.
-   - Verify the rows have non-empty Spanish, Portuguese, French, German, Italian, Polish, Czech, Russian, Turkish, Croatian and Norwegian columns.
+4. Fix the standalone performance report language selection
+   - The current report viewer only uses stored `translated_content` if the report itself has a translation. Cristiano’s example report currently has no stored `translated_content`, so `?lang=pt` still shows English action types.
+   - Change report rendering so the requested language from `?lang=` controls all UI labels regardless of stored report content.
+   - Add a safe action-type translation helper for common action labels such as Applied Pressure, Loose Ball, Hold-Up Play, Offensive Positioning, Offer In Behind, Aerial Duel, Triple Threat, Shot, Pass, Foul, Fouled, Dribble, Cross and combined comma-separated labels.
+   - This means the example report can display translated UI and translated action labels even when the saved report body has not been manually translated.
 
-5. Preserve language when opening Cristiano examples
-   - Update the example report and analysis URLs in `RequestRepresentation.tsx` to append `?lang=${language}`.
-   - Update the Cristiano portal button to append `&lang=${language}` and seed the demo player’s language hint in local/session storage before opening the portal.
-   - This means a Portuguese user opens the Cristiano examples in Portuguese where translations exist.
+5. Translate the standalone analysis example UI
+   - Update `AnalysisViewer` to read `?lang=` using the same portal translation helper.
+   - Replace hardcoded UI labels including Loading Analysis, Analysis not found, Go Back, Watch Video, Jump to Section, Key Info, Analysis Points, Overview, Opposition Strengths, Opposition Weaknesses, Potential Matchups, Scheme, Strengths & Areas for Improvement, Back to Top, Concept and Explanation.
+   - Where analysis body content is stored only in English, leave the actual analyst-written content untouched until a translated content store exists, but remove the English UI chrome around it.
 
-6. Make the standalone report page respect the page language
-   - Update `PerformanceReportDialog` to accept an optional language override, not only `isPortalView`.
-   - Pass the current `useLanguage().language` from `src/pages/PerformanceReport.tsx` into the dialog.
-   - Keep portal behaviour unchanged for real players.
+6. Fix “Return to all / Return to Performance” labels fully
+   - Add any missing `representation.back_to_*` translation rows for all supported public languages.
+   - Make both the top detail back pills and the sticky bottom return button use the same translated labels.
+   - Verify the exact labels no longer fall back to English on Portuguese.
 
-7. Make analysis examples ready for language-aware viewing
-   - Update `AnalysisViewer` to read the current language context or `?lang=` and use it for static UI labels like loading, overview, watch video, not found, quick-nav labels, and status labels.
-   - If the analysis table does not yet store translated analysis body fields, keep source analysis content as-is, but ensure every UI label around it opens in the selected user language. If translated analysis content exists later, the same language parameter can be used to select it.
+7. Add missing translation keys in code and database
+   - Extend the existing portal UI translation map for the new labels used by portal examples, performance reports and analysis examples.
+   - Add or update representation database translation rows for the return labels and any missing section controls.
+   - No schema changes are needed.
 
 8. Verification
-   - Check `/representation?lang=pt` and navigate through:
-     - intro skip button
-     - Scouting card
-     - position breakdown
-     - Centre Forward / Striker breakdown
-   - Confirm no listed English strings remain when Portuguese translations exist.
-   - Check Cristiano performance report, analysis and portal links from Portuguese and confirm the opened page receives the Portuguese language context.
+   - Check `/representation?lang=pt`, skip the intro, change language and confirm it stays on the main representation page.
+   - From Portuguese representation, open the Cristiano portal, performance report and analysis example.
+   - Confirm the portal shell, analysis/data examples, report controls, return buttons and standalone analysis UI use Portuguese rather than English.
+   - Spot check English still works and real portal behaviour is unchanged.
