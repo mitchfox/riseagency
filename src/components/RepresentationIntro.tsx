@@ -61,7 +61,7 @@ const PHASE_DURATIONS: Record<Phase, number> = {
   "p2-fade":   900,
   "p3-line5": 2200,
   "p3-fade":   900,
-  "shader":   3400,
+  "shader":   5400,
   "done":        0,
 };
 
@@ -207,15 +207,17 @@ export const RepresentationIntro = ({ onComplete, onShaderStart }: Props) => {
           className="absolute inset-0 z-40 flex items-center justify-center"
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
-          transition={{ duration: 3.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 4.2, delay: 1.0, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="absolute inset-0">
             <ShaderAnimation />
           </div>
-          <img
+          <motion.img
             src={riseLogoWhite}
             alt="RISE"
             className="relative z-10 h-16 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.6)] md:h-20"
+            animate={{ opacity: [0.85, 1, 0.9], scale: [0.99, 1.02, 1] }}
+            transition={{ duration: 4.6, ease: "easeInOut" }}
           />
         </motion.div>
       )}
