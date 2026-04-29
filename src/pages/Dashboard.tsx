@@ -898,6 +898,14 @@ const Dashboard = () => {
         if (!urlOverride) {
           setPortalLanguageHint(player.portal_language);
           localStorage.setItem("portal_language_hint", player.portal_language);
+        } else {
+          // Force the player's effective portal_language to the URL override
+          // so every `t(playerData?.portal_language, ...)` call and every
+          // child `portalLanguage` prop downstream renders in the visitor's
+          // chosen language instead of the demo player's stored English.
+          (player as any).portal_language = urlOverride;
+          setPortalLanguageHint(urlOverride);
+          localStorage.setItem("portal_language_hint", urlOverride);
         }
       }
 
@@ -991,6 +999,17 @@ const Dashboard = () => {
       }
 
       setPlayerData(parsedPlayerData);
+      // Apply URL ?lang= override BEFORE downstream renders so all
+      // `t(playerData?.portal_language, ...)` calls and child
+      // `portalLanguage={playerData?.portal_language}` props use the
+      // visitor's chosen language for example portals (e.g. Cristiano).
+      try {
+        const urlOverride = sessionStorage.getItem("portal_language_url_override");
+        if (urlOverride) {
+          parsedPlayerData = { ...parsedPlayerData, portal_language: urlOverride };
+          setPlayerData(parsedPlayerData);
+        }
+      } catch {}
       if (parsedPlayerData?.portal_language) {
         const urlOverride = (() => {
           try { return sessionStorage.getItem("portal_language_url_override"); } catch { return null; }
@@ -998,6 +1017,11 @@ const Dashboard = () => {
         if (!urlOverride) {
           setPortalLanguageHint(parsedPlayerData.portal_language);
           localStorage.setItem("portal_language_hint", parsedPlayerData.portal_language);
+        } else {
+          // Override already applied to parsedPlayerData below; ensure
+          // the loading-screen hint is also in sync.
+          setPortalLanguageHint(urlOverride);
+          localStorage.setItem("portal_language_hint", urlOverride);
         }
       }
 
