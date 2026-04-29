@@ -3,7 +3,7 @@ import { t } from "@/lib/portalTranslations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ArrowRight, Trophy, X, FileText, Eye } from "lucide-react";
+import { Calendar, TrendingUp, ArrowRight, Trophy, X, FileText, Eye, Play } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine, Rectangle } from "recharts";
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval, addDays } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
@@ -176,20 +176,30 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
   const [clippedClips, setClippedClips] = React.useState<any[]>([]);
 
-  const handleClippedClick = React.useCallback(async (analysis: PlayerAnalysis) => {
+  const isPlayableReport = React.useCallback((analysis: PlayerAnalysis) => {
+    const status = String(analysis.visibility_status || "").toLowerCase();
+    return (status === "live" || status === "clipped") && !String(analysis.id || "").startsWith("fixture-");
+  }, []);
+
+  const handleClipsClick = React.useCallback(async (analysis: PlayerAnalysis) => {
     try {
       const { data } = await (supabase as any)
         .from('performance_report_actions')
-        .select('id, action_type, video_url, start_time, end_time, display_order')
-        .eq('report_id', analysis.id)
+        .select('id, action_number, action_type, action_description, action_score, minute, notes, video_url, clip_start, clip_end')
+        .eq('analysis_id', analysis.id)
         .not('video_url', 'is', null)
-        .order('display_order', { ascending: true });
+        .order('action_number', { ascending: true });
 
       const clips = (data || []).map((a: any) => ({
+        id: a.id,
+        action_number: a.action_number ?? 0,
         action_type: a.action_type,
+        action_description: a.action_description || '',
         video_url: a.video_url,
-        start_time: a.start_time,
-        end_time: a.end_time,
+        minute: Number(a.minute ?? 0),
+        notes: a.notes,
+        clip_start: a.clip_start,
+        clip_end: a.clip_end,
       }));
 
       if (clips.length === 0) {
