@@ -15,6 +15,7 @@ interface MatchClipPlayerProps {
   playerName: string;
   opponent: string;
   onClose: () => void;
+  enableAnnotations?: boolean;
 }
 
 interface ClipAction {
@@ -77,7 +78,7 @@ type SortMode = 'match' | 'score' | 'type';
 
 
 
-export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: MatchClipPlayerProps) => {
+export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, enableAnnotations = true }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -121,7 +122,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     return () => {
       if (clipEnforcementRef.current) clearInterval(clipEnforcementRef.current);
     };
-  }, []);
+  }, [enableAnnotations]);
 
   const currentClip = clips[currentIndex];
 
@@ -187,11 +188,11 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    if (drawingMode && !vid.paused) {
+    if (enableAnnotations && drawingMode && !vid.paused) {
       vid.pause();
       setIsPlaying(false);
     }
-  }, [drawingMode]);
+  }, [drawingMode, enableAnnotations]);
 
   useEffect(() => {
     const vid = videoRef.current;
@@ -261,6 +262,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     const el = containerRef.current;
     if (!el) return;
     const handler = (e: MouseEvent) => {
+      if (!enableAnnotations) return;
       e.preventDefault();
       if (elements.length > 0) {
         clearAnnotations();
@@ -272,13 +274,14 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     };
     el.addEventListener('contextmenu', handler);
     return () => el.removeEventListener('contextmenu', handler);
-  }, [elements.length, clearAnnotations]);
+  }, [elements.length, clearAnnotations, enableAnnotations]);
 
   // Mouse wheel zoom - prevent page scroll
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const handler = (e: WheelEvent) => {
+      if (!enableAnnotations) return;
       e.preventDefault();
       e.stopPropagation();
       setZoom(prev => {
@@ -292,7 +295,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
   // Left-click on video to toggle drawing mode
   const handleVideoAreaClick = useCallback((e: React.MouseEvent) => {
-    if (drawingMode) return;
+    if (!enableAnnotations || drawingMode) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="button"]')) return;
     
@@ -302,7 +305,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
       setIsPlaying(false);
     }
     setDrawingMode(true);
-  }, [drawingMode]);
+  }, [drawingMode, enableAnnotations]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -322,13 +325,13 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
       if (e.key === ' ') { e.preventDefault(); togglePlay(); return; }
       if (e.key === 'ArrowRight' && currentIndex < clips.length - 1) goToClip(currentIndex + 1);
       if (e.key === 'ArrowLeft' && currentIndex > 0) goToClip(currentIndex - 1);
-      if (e.key === 'd' || e.key === 'D') {
+      if (enableAnnotations && (e.key === 'd' || e.key === 'D')) {
         setDrawingMode(prev => {
           if (prev) { setElements([]); setSelectedId(null); }
           return !prev;
         });
       }
-      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedId && drawingMode) {
+      if (enableAnnotations && (e.key === 'Backspace' || e.key === 'Delete') && selectedId && drawingMode) {
         e.preventDefault();
         setElements(prev => prev.filter(el => el.id !== selectedId));
         setSelectedId(null);
@@ -336,7 +339,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [currentIndex, clips.length, goToClip, togglePlay, onClose, elements.length, drawingMode, clearAnnotations, selectedId]);
+  }, [currentIndex, clips.length, goToClip, togglePlay, onClose, elements.length, drawingMode, clearAnnotations, selectedId, enableAnnotations]);
 
   const handleToolUsed = useCallback(() => {
     setActiveTool('select');
@@ -421,7 +424,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
       {/* Main area */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left: annotation toolbar (visible when drawing, hide on mobile to save space) */}
-        {drawingMode && !isMobile && (
+        {enableAnnotations && drawingMode && !isMobile && (
           <AnnotationToolbar
             activeTool={activeTool}
             setActiveTool={setActiveTool}
@@ -436,7 +439,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
 
         {/* Centre: video + annotation overlay */}
         <div
-          className="flex-1 relative flex items-center justify-center bg-[#0a0c10] min-h-0 overflow-hidden cursor-crosshair"
+          className={`flex-1 relative flex items-center justify-center bg-[#0a0c10] min-h-0 overflow-hidden ${enableAnnotations ? "cursor-crosshair" : "cursor-default"}`}
           onClick={handleVideoAreaClick}
         >
           {currentClip && (
@@ -453,6 +456,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
                 />
 
                 {/* Annotation canvas — matches video exactly via object-fill parity */}
+                {enableAnnotations && (
                 <div style={{ pointerEvents: drawingMode ? 'auto' : 'none' }} className="absolute inset-0">
                   <AnnotationCanvas
                     elements={elements}
@@ -471,6 +475,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
                     onToolUsed={handleToolUsed}
                   />
                 </div>
+                )}
               </div>
 
               {/* Floating action score badge */}
@@ -500,7 +505,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
               </div>
 
               {/* Drawing mode indicator */}
-              {drawingMode && (
+              {enableAnnotations && drawingMode && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#C6A332]/90 text-white text-[9px] md:text-[10px] px-3 py-1 rounded-full flex items-center gap-1.5 z-30 backdrop-blur-sm">
                   <Pencil className="w-3 h-3" /> {isMobile ? 'Drawing' : 'Drawing — right-click or Esc to clear'}
                 </div>
@@ -530,7 +535,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose }: M
             <div className="ml-auto flex items-center gap-1">
               {!isMobile && (
                 <span className="text-white/10 text-[10px] hidden lg:inline">
-                  Click to draw · Right-click clear · ←→ clips · Space play · Scroll zoom
+                  {enableAnnotations ? 'Click to draw · Right-click clear · ←→ clips · Space play · Scroll zoom' : '←→ clips · Space play'}
                 </span>
               )}
               <Button size="sm" variant="ghost" className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] gap-1 h-7"
