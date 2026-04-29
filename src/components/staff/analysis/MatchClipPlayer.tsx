@@ -291,7 +291,7 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, ena
     };
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
-  }, []);
+  }, [enableAnnotations]);
 
   // Left-click on video to toggle drawing mode
   const handleVideoAreaClick = useCallback((e: React.MouseEvent) => {

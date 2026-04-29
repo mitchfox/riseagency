@@ -10,7 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
-import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { MatchClipPlayer } from "@/components/staff/analysis/MatchClipPlayer";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
 import { NewsFeed } from "./NewsFeed";
@@ -174,44 +174,16 @@ interface HubProps {
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
   const navigate = useNavigate();
   const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
-  const [clippedClips, setClippedClips] = React.useState<any[]>([]);
 
   const isPlayableReport = React.useCallback((analysis: PlayerAnalysis) => {
     const status = String(analysis.visibility_status || "").toLowerCase();
     return (status === "live" || status === "clipped") && !String(analysis.id || "").startsWith("fixture-");
   }, []);
 
-  const handleClipsClick = React.useCallback(async (analysis: PlayerAnalysis) => {
-    try {
-      const { data } = await (supabase as any)
-        .from('performance_report_actions')
-        .select('id, action_number, action_type, action_description, action_score, minute, notes, video_url, clip_start, clip_end')
-        .eq('analysis_id', analysis.id)
-        .not('video_url', 'is', null)
-        .order('action_number', { ascending: true });
-
-      const clips = (data || []).map((a: any) => ({
-        id: a.id,
-        action_number: a.action_number ?? 0,
-        action_type: a.action_type,
-        action_description: a.action_description || '',
-        video_url: a.video_url,
-        minute: Number(a.minute ?? 0),
-        notes: a.notes,
-        clip_start: a.clip_start,
-        clip_end: a.clip_end,
-      }));
-
-      if (clips.length === 0) {
-        return;
-      }
-
-      setClippedClips(clips);
-      setClippedAnalysis(analysis);
-    } catch {
-      // silently fail
-    }
-  }, []);
+  const handleClipsClick = React.useCallback((analysis: PlayerAnalysis) => {
+    if (!isPlayableReport(analysis)) return;
+    setClippedAnalysis(analysis);
+  }, [isPlayableReport]);
 
   const getEffectiveR90 = (a: PlayerAnalysis): number | null => {
     const isDraft = String(a.visibility_status || "").toLowerCase() === "draft";
@@ -1099,12 +1071,13 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
         </div>
       )}
 
-      {clippedAnalysis && clippedClips.length > 0 && (
-        <ClippedActionsPlayer
-          open={!!clippedAnalysis}
-          onOpenChange={(open) => { if (!open) { setClippedAnalysis(null); setClippedClips([]); } }}
-          clips={clippedClips}
-          title={`vs ${clippedAnalysis.opponent}`}
+      {clippedAnalysis && (
+        <MatchClipPlayer
+          analysisId={clippedAnalysis.id}
+          playerName={playerData?.name || "Player"}
+          opponent={clippedAnalysis.opponent || "Unknown"}
+          onClose={() => setClippedAnalysis(null)}
+          enableAnnotations={false}
         />
       )}
     </>
