@@ -999,6 +999,17 @@ const Dashboard = () => {
       }
 
       setPlayerData(parsedPlayerData);
+      // Apply URL ?lang= override BEFORE downstream renders so all
+      // `t(playerData?.portal_language, ...)` calls and child
+      // `portalLanguage={playerData?.portal_language}` props use the
+      // visitor's chosen language for example portals (e.g. Cristiano).
+      try {
+        const urlOverride = sessionStorage.getItem("portal_language_url_override");
+        if (urlOverride) {
+          parsedPlayerData = { ...parsedPlayerData, portal_language: urlOverride };
+          setPlayerData(parsedPlayerData);
+        }
+      } catch {}
       if (parsedPlayerData?.portal_language) {
         const urlOverride = (() => {
           try { return sessionStorage.getItem("portal_language_url_override"); } catch { return null; }
