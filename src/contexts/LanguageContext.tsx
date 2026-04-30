@@ -119,69 +119,86 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [translationsLoaded, setTranslationsLoaded] = useState(false);
 
-  // Initialize language on mount
+  // Initialize language on mount.
+  // CRITICAL: this must NEVER block on a network call. Anything that requires
+  // an edge-function round-trip (IP geolocation) is fired-and-forgotten in
+  // the background and `setLanguage` is called when it resolves — so the
+  // page renders translations on the very first React tick.
   useEffect(() => {
-    async function initializeLanguage() {
-      // First check URL parameter (highest priority for testing)
-      const urlParams = new URLSearchParams(window.location.search);
-      const langParam = urlParams.get('lang');
-      if (langParam && validLanguages.includes(langParam as LanguageCode)) {
-        // Store in sessionStorage so it persists during navigation
-        sessionStorage.setItem('url_language_override', langParam);
-        setLanguage(langParam as LanguageCode);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // Check if we have a session override from URL param
-      const sessionOverride = sessionStorage.getItem('url_language_override');
-      if (sessionOverride && validLanguages.includes(sessionOverride as LanguageCode)) {
-        setLanguage(sessionOverride as LanguageCode);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // Then check subdomain
-      const subdomainLang = detectLanguageFromSubdomain();
-      
-      if (subdomainLang) {
-        // Subdomain explicitly sets language
-        setLanguage(subdomainLang);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // For preview/local environments, check stored preference first
-      if (isPreviewOrLocalEnvironment()) {
-        const stored = localStorage.getItem('preferred_language');
-        if (stored && validLanguages.includes(stored as LanguageCode)) {
-          setLanguage(stored as LanguageCode);
-          setIsInitialized(true);
-          return;
-        }
-        
-        // Check if we've already done IP detection this session
-        const sessionDetected = sessionStorage.getItem('ip_language_detected');
-        if (sessionDetected && validLanguages.includes(sessionDetected as LanguageCode)) {
-          setLanguage(sessionDetected as LanguageCode);
-          setIsInitialized(true);
-          return;
-        }
-      }
-      
-      // No subdomain and no stored preference - detect from IP
-      const detectedLang = await detectLanguageFromIP();
-      
-      // Store in session so we don't re-detect on every page load
-      if (isPreviewOrLocalEnvironment()) {
-        sessionStorage.setItem('ip_language_detected', detectedLang);
-      }
-      
-      setLanguage(detectedLang);
+    // 1. URL ?lang= param (highest priority — testing / direct links)
+    const urlParams = new URLSearchParams(window.location.search);
+    const langParam = urlParams.get('lang');
+    if (langParam && validLanguages.includes(langParam as LanguageCode)) {
+      sessionStorage.setItem('url_language_override', langParam);
+      setLanguage(langParam as LanguageCode);
       setIsInitialized(true);
+      return;
     }
-    
-    initializeLanguage();
+
+    const sessionOverride = sessionStorage.getItem('url_language_override');
+    if (sessionOverride && validLanguages.includes(sessionOverride as LanguageCode)) {
+      setLanguage(sessionOverride as LanguageCode);
+      setIsInitialized(true);
+      return;
+    }
+
+    // 2. Subdomain — synchronous, no flash
+    const subdomainLang = detectLanguageFromSubdomain();
+    if (subdomainLang) {
+      setLanguage(subdomainLang);
+      setIsInitialized(true);
+      return;
+    }
+
+    // 3. Saved preference (stored as plain string OR {lang, host} JSON)
+    let savedLang: LanguageCode | null = null;
+    let savedHost: string | null = null;
+    try {
+      const raw = localStorage.getItem('preferred_language');
+      if (raw) {
+        if (raw.startsWith('{')) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.lang && validLanguages.includes(parsed.lang)) {
+            savedLang = parsed.lang as LanguageCode;
+            savedHost = parsed.host || null;
+          }
+        } else if (validLanguages.includes(raw as LanguageCode)) {
+          savedLang = raw as LanguageCode;
+        }
+      }
+    } catch {}
+
+    // Honour saved preference only when it was made on this same base domain
+    // (or when no host is recorded — legacy format).
+    const currentBase = (() => {
+      try { return getSubdomainInfo().baseDomain; } catch { return ''; }
+    })();
+    if (savedLang && (!savedHost || savedHost === currentBase)) {
+      setLanguage(savedLang);
+      setIsInitialized(true);
+      return;
+    }
+
+    // 4. Cached IP detection from this session — instant
+    const sessionDetected = sessionStorage.getItem('ip_language_detected');
+    if (sessionDetected && validLanguages.includes(sessionDetected as LanguageCode)) {
+      setLanguage(sessionDetected as LanguageCode);
+      setIsInitialized(true);
+      return;
+    }
+
+    // 5. Nothing known — render English immediately and detect IP in the
+    //    background. If detection returns a different language, switch to it.
+    setLanguage('en');
+    setIsInitialized(true);
+    detectLanguageFromIP()
+      .then((detected) => {
+        try { sessionStorage.setItem('ip_language_detected', detected); } catch {}
+        if (detected && detected !== 'en' && validLanguages.includes(detected)) {
+          setLanguage(detected);
+        }
+      })
+      .catch(() => { /* keep English */ });
   }, []);
 
   useEffect(() => {
