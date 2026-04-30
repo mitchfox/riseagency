@@ -96,7 +96,7 @@
     const pathname = window.location.pathname;
     const search = window.location.search;
 
-    // Only the representation routes
+    // Only the representation routes (English + every localised slug)
     const REPRESENTATION_PATHS = new Set([
       '/representation',
       '/request-representation',
@@ -112,31 +112,50 @@
         hostname.includes('lovable.app') ||
         hostname.includes('lovableproject.com')) return;
 
-    // Skip if explicit language override in URL or saved preference
+    // Skip if explicit language override in URL
     if (new URLSearchParams(search).get('lang')) return;
-    try {
-      if (localStorage.getItem('preferred_language')) return;
-    } catch {}
-
-    // One-shot guard against loops
-    try {
-      if (sessionStorage.getItem('representation_redirected') === '1') return;
-      sessionStorage.setItem('representation_redirected', '1');
-    } catch {}
 
     // Determine base domain and whether we're already on a language subdomain
     const LANGUAGE_SUBDOMAINS = ['en','es','pt','fr','de','it','pl','cs','cz','ru','tr','hr','no'];
-    const parts = hostname.split('.');
-    let baseDomain = hostname;
-    let firstPart = '';
-    if (parts.length >= 3) {
-      // strip optional www
-      const stripped = parts[0].toLowerCase() === 'www' ? parts.slice(1) : parts;
-      firstPart = stripped[0]?.toLowerCase() || '';
-      baseDomain = stripped.slice(-2).join('.');
-    }
-    // If already on a language subdomain, do nothing
+    const rawParts = hostname.split('.');
+    const stripped = rawParts[0].toLowerCase() === 'www' ? rawParts.slice(1) : rawParts;
+    const firstPart = stripped.length >= 3 ? (stripped[0]?.toLowerCase() || '') : '';
+    const baseDomain = stripped.slice(-2).join('.');
+
+    // If already on a language subdomain, do nothing — page will render in
+    // that language synchronously via subdomain detection.
     if (LANGUAGE_SUBDOMAINS.includes(firstPart)) return;
+
+    // Honour a saved preference ONLY when it was made on this same base domain
+    // (prevents a stale "I once chose Czech" choice from blocking a fresh
+    // visit by a Spanish IP on the apex).
+    try {
+      const raw = localStorage.getItem('preferred_language');
+      if (raw) {
+        // Two formats supported: legacy plain string, or JSON {lang, host}
+        let savedLang: string | null = null;
+        let savedBase: string | null = null;
+        if (raw.startsWith('{')) {
+          const parsed = JSON.parse(raw);
+          savedLang = parsed?.lang || null;
+          savedBase = parsed?.host || null;
+        } else {
+          savedLang = raw;
+        }
+        if (savedLang && savedBase && savedBase === baseDomain) {
+          // Saved preference was made on this base domain — respect it.
+          return;
+        }
+      }
+    } catch {}
+
+    // Loop guard scoped to this host, so a manual switch elsewhere doesn't
+    // poison a future apex visit.
+    const sentinelKey = 'rep_redirected_for:' + baseDomain;
+    try {
+      if (sessionStorage.getItem(sentinelKey) === '1') return;
+      sessionStorage.setItem(sentinelKey, '1');
+    } catch {}
 
     // Block React from mounting until the redirect resolves so there's no flash
     document.documentElement.style.visibility = 'hidden';
@@ -147,7 +166,7 @@
 
     // Hard cap so a slow function never blocks the page for long
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1500);
+    const timer = setTimeout(() => controller.abort(), 800);
 
     fetch(endpoint, {
       method: 'GET',
@@ -158,11 +177,18 @@
       .then((data) => {
         clearTimeout(timer);
         const target: string | null = data?.url || null;
-        if (target && target !== window.location.href) {
-          window.location.replace(target);
-        } else {
-          document.documentElement.style.visibility = '';
+        // Only redirect when target host differs from current — avoids no-op
+        // reloads on the English apex.
+        if (target) {
+          try {
+            const t = new URL(target);
+            if (t.host !== window.location.host) {
+              window.location.replace(target);
+              return;
+            }
+          } catch {}
         }
+        document.documentElement.style.visibility = '';
       })
       .catch(() => {
         clearTimeout(timer);

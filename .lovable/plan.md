@@ -1,40 +1,60 @@
-## Real root cause (you were right to push back)
+## Why it's still slow
 
-Source video size has nothing to do with this. The actual failure is at the database insert step.
+Two bugs are stacking:
 
-The Barcelona Leg 1 clips were created back in February using the old `mm:ss` (colon) format for `minute` — e.g. `"0:35"`, `"2:55"`, `"3:15"`. Since then we standardised to `mm.ss` (dot), e.g. `"45.30"`. The `performance_report_actions.minute` column is **`numeric`**, and Postgres rejects `"0:35"` with `invalid input syntax for type numeric`. I confirmed this directly against the DB.
+1. **The edge geo-redirect almost never runs.** In `src/main.tsx` the redirect IIFE bails out if `localStorage.preferred_language` exists. After the recent change, `switchLanguage` writes that key for every manual change — so any returning visitor who ever picked a language can never be auto-redirected on `/representation` again. The redirect also bails on `www.` hosts because the www-stripping IIFE above it reloads the page first, and on that reload the visibility-hide trick double-flashes.
 
-In `backgroundExportService.ts` the export does:
-```ts
-minute: clip.minute || getMatchMinute(...)
-```
-Because every old clip already has a `minute` string set, the colon value is used as-is and every single insert fails — exactly the symptom you described. The clip file probably gets trimmed and uploaded successfully first, but the row insert blows up, so nothing lands on the report.
+2. **When the redirect is skipped, `LanguageContext` blocks on `supabase.functions.invoke('detect-language')` before fetching translations.** That call cold-starts at 5–10s. The page renders English first, then pops to the detected language. That is exactly the delay you're seeing.
 
-## Plan
+## Fix
 
-1. **Sanitise `minute` at the export boundary** in `src/lib/backgroundExportService.ts`:
-   - Add a `normaliseMinute()` helper: if the value is already a finite number or matches `^\d+(\.\d+)?$`, pass it through. If it matches `^\d+:\d+$`, convert `mm:ss` → `mm.ss` (snapping seconds to the nearest 5 to match `fmtClipMinute`). Otherwise fall back to `getMatchMinute(clip.start, ...)`.
-   - Apply it to `clip.minute` before the insert, replacing the current `clip.minute || getMatchMinute(...)`.
-   - This single fix unblocks Barcelona Leg 1 and any other legacy video analysis with colon minutes.
+### 1. Make the edge redirect actually fire
 
-2. **Backfill the underlying `video_analyses.clips` JSON** so the colons don't keep haunting the rest of the UI (clip list labels, dedup, etc.). One-off SQL migration that walks `clips` and rewrites any element whose `minute` matches `^\d+:\d+$` into `mm.ss`. The `label` field uses the same colon (`"Clip 0:35"`) — rewrite that too. Scoped to rows where at least one clip has a colon minute, so we don't touch healthy data.
+In `src/main.tsx`'s `/representation` IIFE:
 
-3. **Surface the real error in the export progress widget** so this kind of failure isn't silent next time:
-   - In `backgroundExportService.ts`, capture the per-clip error message into the `statuses` map (extend it from `"error"` to `{ status: "error", message: string }`) and include it in `notify`.
-   - In `ExportProgressFloat.tsx`, render the message under the failed clip row with a small "Copy" affordance. No layout overhaul, just a one-line tooltip-style line.
+- Remove the `localStorage.getItem('preferred_language')` short-circuit. Instead, only respect the saved preference when its language matches the **current** subdomain. The point of the redirect is precisely to honour geo when no subdomain is set; a stale preference on the apex shouldn't block it.
+- Add `'/request-representation'` and all the localised slugs to the trigger set (already done) but also trigger when the path is exactly `/` and the user came from a marketing link with `?ref=rep` — not strictly needed, skip if you'd rather keep scope tight.
+- Reorder the two IIFEs so the geo-redirect runs **before** the www-strip when the host starts with `www.{apex}` (no language subdomain in front), and pass the stripped host into the redirect call. This avoids the double reload.
+- Drop the `sessionStorage.representation_redirected = '1'` write to a *path-scoped* key (`rep_redirected_for:<host>`) so a manual map-selector switch on a language subdomain doesn't poison the apex visit later.
+- Lower the abort timeout from 1500ms to 800ms; the function is tiny (just header read + JSON) and 800ms is plenty when warm. Keeps worst-case flash short.
 
-4. **Verify** by re-running the Barcelona Leg 1 export end-to-end after the fix and confirming the 62 actions land on the report with playable `/clips/*.webm` URLs.
+### 2. Make `LanguageContext` non-blocking when geo-detect is needed
+
+In `src/contexts/LanguageContext.tsx`:
+
+- Stop awaiting `detectLanguageFromIP()` in the initialiser. Instead:
+  - Synchronously set `language = 'en'` (or last-saved preference) and call `setIsInitialized(true)` immediately, so translations begin loading right away.
+  - Kick off `detectLanguageFromIP()` in the background. If it resolves to a different language, call `setLanguage(detected)` — which retriggers the translations fetch for the correct language.
+  - Cache the result in `sessionStorage` (`ip_language_detected`) on **all** environments, not only preview, so the second page in a session is instant.
+- This means: on first visit, the page renders in the saved/default language within ~200ms, and if IP-detect returns a different language a few seconds later it swaps in. For `/representation` specifically, the edge redirect from step 1 means the visitor is already on the right subdomain before React boots, so `detectLanguageFromSubdomain()` returns synchronously and IP detection is never invoked at all — instant correct language.
+
+### 3. Make `detect-language` itself faster
+
+In `supabase/functions/detect-language/index.ts`:
+
+- Add the same expanded country mapping that `representation-redirect` already has (Spain + LatAm, Portuguese-speaking Africa, Francophone Africa, Croatia, Norway, etc.) so that when IP detection *is* used (other pages), it returns the correct language for the same set of countries the redirect handles.
+- When `cf-ipcountry` is present, return immediately and **skip** the `ip-api.com` HTTP call — currently it only skips when the country is non-empty and not `XX`, which is fine, but ensure we never await network IO on the Cloudflare-warm path. Already true — no change needed beyond verification.
+- Add `Cache-Control: public, max-age=300` to the response so the browser/edge can short-circuit the second call within five minutes.
+
+### 4. Persist the manual override correctly
+
+In `LanguageContext.switchLanguage`:
+
+- Keep writing `preferred_language`, but **also** stamp the current host in it (`{lang: 'cs', host: 'cz.risefootballagency.com'}`). The geo-redirect's "respect saved preference" check then only honours it when the saved host matches the **base domain** the user is currently on — preventing a stale "I once chose Czech" choice from blocking a fresh apex visit from Spain.
+
+### 5. Verification
+
+After deploying:
+
+- Apex visit from a Czech IP to `risefootballagency.com/representation` should `window.location.replace` to `cz.risefootballagency.com/zastoupeni` in <800ms — no English flash.
+- Direct visit to `cz.risefootballagency.com/zastoupeni` should render Czech immediately because `detectLanguageFromSubdomain()` returns `'cs'` synchronously and the translations query starts on first React tick.
+- Apex visit from a UK IP should render English instantly with no redirect attempt visible.
+- Manual switch via the map selector to Polish from any subdomain should land on `pl.risefootballagency.com/reprezentacja` and stay there on subsequent visits.
 
 ## Files to change
 
-- `src/lib/backgroundExportService.ts` — add `normaliseMinute()`, use it in the insert; widen the per-clip status to carry an error message.
-- `src/components/staff/ExportProgressFloat.tsx` — show the per-clip error message.
-- New migration to backfill `video_analyses.clips[*].minute` and `clips[*].label` colon → dot.
+- `src/main.tsx` — rework the `/representation` geo-redirect IIFE (remove blanket `preferred_language` block, scope sentinel by host, drop www double-hop, lower timeout).
+- `src/contexts/LanguageContext.tsx` — make IP detection non-blocking; update `switchLanguage` to host-scope the saved preference; cache `ip_language_detected` outside preview too.
+- `supabase/functions/detect-language/index.ts` — expand country map to mirror `representation-redirect`; add short cache header.
 
-## What I'm NOT changing
-
-- The trim pipeline / size limits — they're working fine for everything else and weren't the problem.
-- The `minute` column type — staying `numeric` is correct; `mm.ss` (e.g. `2.35`) parses cleanly as `2.35`.
-- Existing rows on already-exported reports — only the source `video_analyses.clips` data needs the colon cleanup.
-
-Approve and I'll implement, deploy, and walk you through retrying the Barcelona Leg 1 export.
+No DB or new edge-function work required.
