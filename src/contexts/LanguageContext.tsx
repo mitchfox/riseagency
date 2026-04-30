@@ -130,6 +130,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const langParam = urlParams.get('lang');
     if (langParam && validLanguages.includes(langParam as LanguageCode)) {
       sessionStorage.setItem('url_language_override', langParam);
+      // Persist as a host-scoped preference so future visits to this
+      // origin (without ?lang=) don't fall back to IP detection.
+      try {
+        const base = getSubdomainInfo().baseDomain;
+        localStorage.setItem(
+          'preferred_language',
+          JSON.stringify({ lang: langParam, host: base })
+        );
+      } catch {}
       setLanguage(langParam as LanguageCode);
       setIsInitialized(true);
       return;
@@ -375,7 +384,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
 
     const newUrl = `${protocol}//${newHostname}${finalPath}`;
-    window.location.href = newUrl;
+    // Append ?lang=xx so the destination origin (which has its own,
+    // separate localStorage) honours the user's explicit choice on first
+    // load instead of falling through to IP detection.
+    const sep = finalPath.includes('?') ? '&' : '?';
+    window.location.href = `${newUrl}${sep}lang=${lang}`;
   }, []);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
