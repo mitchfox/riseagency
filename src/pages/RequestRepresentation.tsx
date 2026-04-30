@@ -23,6 +23,7 @@ import ScoutingNetworkMap from "@/components/ScoutingNetworkMap";
 import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
 import riseLogoWhite from "@/assets/RISEWhite.png";
+import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 
 type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
@@ -685,7 +686,11 @@ const RequestRepresentation = () => {
                           )}
                         </p>
                         <FormationPositionPicker
-                          onPick={(p) => { setChosenPosition(p); setIntroStep("dob"); }}
+                          onPick={(p) => {
+                            setChosenPosition(p);
+                            setIntroStep("dob");
+                            void trackRepresentationVisitor({ position: p, language });
+                          }}
                           translate={(abbr) => t(`positions.${abbr}`, abbr)}
                         />
                       </motion.div>
@@ -718,7 +723,14 @@ const RequestRepresentation = () => {
                               let age = today.getFullYear() - dob.getFullYear();
                               const m = today.getMonth() - dob.getMonth();
                               if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                              setAgeGroup(age < 18 ? "under18" : "over18");
+                              const group = age < 18 ? "under18" : "over18";
+                              setAgeGroup(group);
+                              void trackRepresentationVisitor({
+                                dob: iso,
+                                ageGroup: group,
+                                position: chosenPosition,
+                                language,
+                              });
                             }}
                           />
                         </div>
