@@ -5,28 +5,37 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map countries to language codes
+// Map countries to language codes — kept in sync with representation-redirect
 const countryToLanguage: Record<string, string> = {
-  // Spanish
-  'ES': 'es', 'MX': 'es', 'AR': 'es', 'CO': 'es', 'CL': 'es', 'PE': 'es', 'VE': 'es', 'EC': 'es', 'GT': 'es', 'CU': 'es', 'BO': 'es', 'DO': 'es', 'HN': 'es', 'PY': 'es', 'SV': 'es', 'NI': 'es', 'CR': 'es', 'PA': 'es', 'UY': 'es',
+  // Spanish (Spain + Latin America)
+  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es', VE: 'es',
+  EC: 'es', GT: 'es', CU: 'es', BO: 'es', DO: 'es', HN: 'es', PY: 'es',
+  SV: 'es', NI: 'es', CR: 'es', PA: 'es', UY: 'es', PR: 'es', GQ: 'es',
   // Portuguese
-  'PT': 'pt', 'BR': 'pt', 'AO': 'pt', 'MZ': 'pt',
-  // French
-  'FR': 'fr', 'BE': 'fr', 'CH': 'fr', 'CA': 'fr', 'SN': 'fr', 'CI': 'fr', 'CM': 'fr', 'MG': 'fr', 'ML': 'fr',
+  PT: 'pt', BR: 'pt', AO: 'pt', MZ: 'pt', CV: 'pt', GW: 'pt', ST: 'pt', TL: 'pt',
+  // French (France + Francophone Africa + Belgium/Luxembourg/Monaco)
+  FR: 'fr', BE: 'fr', LU: 'fr', MC: 'fr',
+  SN: 'fr', CI: 'fr', CM: 'fr', MG: 'fr', ML: 'fr', BF: 'fr', NE: 'fr',
+  TG: 'fr', BJ: 'fr', GA: 'fr', CG: 'fr', CD: 'fr', CF: 'fr', TD: 'fr',
+  DJ: 'fr', KM: 'fr', GN: 'fr', RW: 'fr', BI: 'fr',
   // German
-  'DE': 'de', 'AT': 'de', 'LI': 'de',
+  DE: 'de', AT: 'de', LI: 'de',
   // Italian
-  'IT': 'it', 'SM': 'it', 'VA': 'it',
+  IT: 'it', SM: 'it', VA: 'it',
   // Polish
-  'PL': 'pl',
+  PL: 'pl',
   // Czech
-  'CZ': 'cs',
+  CZ: 'cs',
   // Russian
-  'RU': 'ru', 'BY': 'ru', 'KZ': 'ru', 'KG': 'ru',
+  RU: 'ru', BY: 'ru', KZ: 'ru', KG: 'ru',
   // Turkish
-  'TR': 'tr', 'CY': 'tr',
-  // English (default for these)
-  'GB': 'en', 'US': 'en', 'AU': 'en', 'NZ': 'en', 'IE': 'en', 'ZA': 'en',
+  TR: 'tr',
+  // Croatian
+  HR: 'hr',
+  // Norwegian
+  NO: 'no',
+  // English (explicit so we don't fall through)
+  GB: 'en', US: 'en', AU: 'en', NZ: 'en', IE: 'en', ZA: 'en', CA: 'en',
 };
 
 serve(async (req) => {
@@ -42,7 +51,7 @@ serve(async (req) => {
       const language = countryToLanguage[cfCountry.toUpperCase()] || "en";
       return new Response(
         JSON.stringify({ language, country: cfCountry, source: "cloudflare" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } }
       );
     }
 
@@ -75,7 +84,7 @@ serve(async (req) => {
       const language = countryToLanguage[geoData.countryCode.toUpperCase()] || "en";
       return new Response(
         JSON.stringify({ language, country: geoData.countryCode, source: "ip-api" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } }
       );
     }
 
