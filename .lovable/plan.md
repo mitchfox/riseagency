@@ -1,60 +1,69 @@
-## Why it's still slow
+# Why the redirect "isn't happening"
 
-Two bugs are stacking:
+Verified live with the browser tool on `https://risefootballagency.com/representation`:
 
-1. **The edge geo-redirect almost never runs.** In `src/main.tsx` the redirect IIFE bails out if `localStorage.preferred_language` exists. After the recent change, `switchLanguage` writes that key for every manual change — so any returning visitor who ever picked a language can never be auto-redirected on `/representation` again. The redirect also bails on `www.` hosts because the www-stripping IIFE above it reloads the page first, and on that reload the visibility-hide trick double-flashes.
+- The `representation-redirect` edge function **is** being called and **does** return JSON.
+- For my US IP it correctly returned `{language:"en", url:"https://risefootballagency.com/representation"}` — same host, so no redirect (correct).
+- For a Czech visitor it would return `https://cz.risefootballagency.com/zastoupeni`, but **the call is fired from `main.tsx`**, which is a `type="module"` bundled script. Modules are deferred — they only execute **after** the entire HTML body parses and the bundle downloads + parses. On a fresh visit that's typically 1–3 s, and the round-trip to `us-west-2` adds another 200–600 ms.
+- That's why you see English first and translations swap in ~10 s later: the redirect fires too late, so React mounts in English, then the translations query (1.5 s) finishes and content updates.
 
-2. **When the redirect is skipped, `LanguageContext` blocks on `supabase.functions.invoke('detect-language')` before fetching translations.** That call cold-starts at 5–10s. The page renders English first, then pops to the detected language. That is exactly the delay you're seeing.
+Bottom line: a *bundled* JS redirect can never be "instant". To match sites that redirect cleanly we need to (a) run the redirect synchronously in `<head>` before anything else, and (b) avoid a slow Supabase round-trip for the country lookup.
 
-## Fix
+# The fix
 
-### 1. Make the edge redirect actually fire
+## 1. Move the geo-redirect into an inline blocking script in `index.html` `<head>`
 
-In `src/main.tsx`'s `/representation` IIFE:
+Replace the `(function(){...})()` IIFE currently at the top of `src/main.tsx` with an inline `<script>` tag placed **first** inside `<head>` of `index.html`, before all other tags. Because it's not `defer`/`module`, the browser pauses HTML parsing until it runs — we can issue the redirect before a single body byte is parsed.
 
-- Remove the `localStorage.getItem('preferred_language')` short-circuit. Instead, only respect the saved preference when its language matches the **current** subdomain. The point of the redirect is precisely to honour geo when no subdomain is set; a stale preference on the apex shouldn't block it.
-- Add `'/request-representation'` and all the localised slugs to the trigger set (already done) but also trigger when the path is exactly `/` and the user came from a marketing link with `?ref=rep` — not strictly needed, skip if you'd rather keep scope tight.
-- Reorder the two IIFEs so the geo-redirect runs **before** the www-strip when the host starts with `www.{apex}` (no language subdomain in front), and pass the stripped host into the redirect call. This avoids the double reload.
-- Drop the `sessionStorage.representation_redirected = '1'` write to a *path-scoped* key (`rep_redirected_for:<host>`) so a manual map-selector switch on a language subdomain doesn't poison the apex visit later.
-- Lower the abort timeout from 1500ms to 800ms; the function is tiny (just header read + JSON) and 800ms is plenty when warm. Keeps worst-case flash short.
+The script will:
+- Bail immediately on preview/local hosts, on language subdomains, and on non-representation paths.
+- Honour `?lang=` URL override and host-scoped saved preference (same logic as today, kept verbatim).
+- Hide `<html>` (`visibility:hidden`) only while the lookup is in flight, with a hard 600 ms cap so a slow lookup never holds the page.
 
-### 2. Make `LanguageContext` non-blocking when geo-detect is needed
+## 2. Switch the country lookup from Supabase Edge Function → Cloudflare trace
 
-In `src/contexts/LanguageContext.tsx`:
+The site is fronted by Cloudflare. Cloudflare exposes a free, no-auth, no-CORS endpoint that returns the visitor's country in **~30–80 ms globally**:
 
-- Stop awaiting `detectLanguageFromIP()` in the initialiser. Instead:
-  - Synchronously set `language = 'en'` (or last-saved preference) and call `setIsInitialized(true)` immediately, so translations begin loading right away.
-  - Kick off `detectLanguageFromIP()` in the background. If it resolves to a different language, call `setLanguage(detected)` — which retriggers the translations fetch for the correct language.
-  - Cache the result in `sessionStorage` (`ip_language_detected`) on **all** environments, not only preview, so the second page in a session is instant.
-- This means: on first visit, the page renders in the saved/default language within ~200ms, and if IP-detect returns a different language a few seconds later it swaps in. For `/representation` specifically, the edge redirect from step 1 means the visitor is already on the right subdomain before React boots, so `detectLanguageFromSubdomain()` returns synchronously and IP detection is never invoked at all — instant correct language.
+```
+https://www.cloudflare.com/cdn-cgi/trace
+```
 
-### 3. Make `detect-language` itself faster
+Response body includes a line like `loc=CZ`. We parse that single line, look it up in a small JS country→language map (inlined directly into the script, mirroring the edge function), and `window.location.replace()` to the localised subdomain + slug.
 
-In `supabase/functions/detect-language/index.ts`:
+Benefits over the Supabase function:
+- ~10× faster (CDN edge vs us-west-2 round-trip).
+- No bundle, no auth header, no CORS preflight.
+- Works without ever touching a deferred module.
 
-- Add the same expanded country mapping that `representation-redirect` already has (Spain + LatAm, Portuguese-speaking Africa, Francophone Africa, Croatia, Norway, etc.) so that when IP detection *is* used (other pages), it returns the correct language for the same set of countries the redirect handles.
-- When `cf-ipcountry` is present, return immediately and **skip** the `ip-api.com` HTTP call — currently it only skips when the country is non-empty and not `XX`, which is fine, but ensure we never await network IO on the Cloudflare-warm path. Already true — no change needed beyond verification.
-- Add `Cache-Control: public, max-age=300` to the response so the browser/edge can short-circuit the second call within five minutes.
+Cloudflare is already a preconnected origin elsewhere in the codebase, so DNS cost is negligible.
 
-### 4. Persist the manual override correctly
+## 3. Keep `representation-redirect` edge function as a fallback only
 
-In `LanguageContext.switchLanguage`:
+If the `cdn-cgi/trace` request fails (e.g., the site is ever moved off Cloudflare), the inline script falls through to a `setTimeout` that simply unhides the page and lets `LanguageContext` perform its existing background IP detection. No regressions.
 
-- Keep writing `preferred_language`, but **also** stamp the current host in it (`{lang: 'cs', host: 'cz.risefootballagency.com'}`). The geo-redirect's "respect saved preference" check then only honours it when the saved host matches the **base domain** the user is currently on — preventing a stale "I once chose Czech" choice from blocking a fresh apex visit from Spain.
+## 4. Translations: fetch on the cache while redirecting
 
-### 5. Verification
+The translations query (currently 1.5 s) is the secondary cause of the "10 s wait" feeling on slow connections. Add a `<link rel="preconnect">` for the Supabase REST endpoint (already there) and ensure the `LanguageProvider`'s translation fetch is fired in parallel with the redirect path, not after it. Today it already is — but the inline-script change means the redirect never blocks the bundle from starting to download, so translations begin loading immediately for non-redirected visitors.
 
-After deploying:
+# Files to change
 
-- Apex visit from a Czech IP to `risefootballagency.com/representation` should `window.location.replace` to `cz.risefootballagency.com/zastoupeni` in <800ms — no English flash.
-- Direct visit to `cz.risefootballagency.com/zastoupeni` should render Czech immediately because `detectLanguageFromSubdomain()` returns `'cs'` synchronously and the translations query starts on first React tick.
-- Apex visit from a UK IP should render English instantly with no redirect attempt visible.
-- Manual switch via the map selector to Polish from any subdomain should land on `pl.risefootballagency.com/reprezentacja` and stay there on subsequent visits.
+```text
+index.html
+  └─ Add inline <script> at very top of <head> (before any other tag) implementing the
+     redirect described in §1 + §2.
 
-## Files to change
+src/main.tsx
+  └─ Remove the existing redirect IIFE (now lives in index.html).
+  └─ Keep the www-strip IIFE (it's fine where it is).
 
-- `src/main.tsx` — rework the `/representation` geo-redirect IIFE (remove blanket `preferred_language` block, scope sentinel by host, drop www double-hop, lower timeout).
-- `src/contexts/LanguageContext.tsx` — make IP detection non-blocking; update `switchLanguage` to host-scope the saved preference; cache `ip_language_detected` outside preview too.
-- `supabase/functions/detect-language/index.ts` — expand country map to mirror `representation-redirect`; add short cache header.
+supabase/functions/representation-redirect/index.ts
+  └─ No code change required. Function is kept as fallback for non-Cloudflare scenarios.
+```
 
-No DB or new edge-function work required.
+# Manual verification plan (after the change ships)
+
+1. Open `https://risefootballagency.com/representation` from a Czech IP (or use a VPN). Expect the URL bar to flip to `https://cz.risefootballagency.com/zastoupeni` within ~100 ms, with no English flash.
+2. Repeat from a Spanish IP → `https://es.risefootballagency.com/representacion`.
+3. From a US/UK IP → stays on apex, no redirect (verified during planning).
+4. Open `cz.risefootballagency.com/zastoupeni` → no redirect loop, page renders in Czech immediately.
+5. Manually pick a different language from the map selector → URL changes to that subdomain and stays there on refresh (host-scoped preference).

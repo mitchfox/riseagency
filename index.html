@@ -3,6 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- Geo-redirect for /representation. Runs SYNCHRONOUSLY before HTML body
+         parses or any module loads, so visitors are sent to their language
+         subdomain instantly with no English flash. Uses Cloudflare's free
+         /cdn-cgi/trace endpoint (~50ms global) instead of an edge function. -->
+    <script>
+      (function () {
+        try {
+          var hostname = location.hostname;
+          var pathname = location.pathname;
+
+          // Only the representation routes (English + every localised slug)
+          var REP_PATHS = {
+            '/representation': 1, '/request-representation': 1,
+            '/representacion': 1, '/representacao': 1, '/vertretung': 1,
+            '/rappresentanza': 1, '/reprezentacja': 1, '/zastoupeni': 1,
+            '/predstavitelstvo': 1, '/temsil': 1, '/zastupanje': 1,
+            '/representasjon': 1
+          };
+          if (!REP_PATHS[pathname]) return;
+
+          // Skip preview/local
+          if (hostname === 'localhost' ||
+              /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
+              hostname.indexOf('lovable.app') !== -1 ||
+              hostname.indexOf('lovableproject.com') !== -1) return;
+
+          // Skip if explicit ?lang= override
+          if (location.search.indexOf('lang=') !== -1) return;
+
+          // Determine if already on a language subdomain — if so do nothing.
+          var LANG_SUBS = {en:1,es:1,pt:1,fr:1,de:1,it:1,pl:1,cs:1,cz:1,ru:1,tr:1,hr:1,no:1};
+          var rawParts = hostname.split('.');
+          var stripped = rawParts[0].toLowerCase() === 'www' ? rawParts.slice(1) : rawParts;
+          var firstPart = stripped.length >= 3 ? (stripped[0] || '').toLowerCase() : '';
+          var baseDomain = stripped.slice(-2).join('.');
+          if (LANG_SUBS[firstPart]) return;
+
+          // Honour saved preference only when made on this same base domain
+          try {
+            var raw = localStorage.getItem('preferred_language');
+            if (raw) {
+              var savedLang = null, savedHost = null;
+              if (raw.charAt(0) === '{') {
+                var p = JSON.parse(raw);
+                savedLang = p && p.lang; savedHost = p && p.host;
+              } else { savedLang = raw; }
+              if (savedLang && savedHost && savedHost === baseDomain) return;
+            }
+          } catch (e) {}
+
+          // Loop guard scoped to this host
+          var sentinel = 'rep_redirected_for:' + baseDomain;
+          try {
+            if (sessionStorage.getItem(sentinel) === '1') return;
+            sessionStorage.setItem(sentinel, '1');
+          } catch (e) {}
+
+          // Hide page until lookup resolves (hard cap so it never blocks long)
+          document.documentElement.style.visibility = 'hidden';
+          var unhideTimer = setTimeout(function () {
+            document.documentElement.style.visibility = '';
+          }, 700);
+
+          // Country -> language
+          var C2L = {
+            ES:'es',MX:'es',AR:'es',CO:'es',CL:'es',PE:'es',VE:'es',EC:'es',
+            GT:'es',CU:'es',BO:'es',DO:'es',HN:'es',PY:'es',SV:'es',NI:'es',
+            CR:'es',PA:'es',UY:'es',PR:'es',GQ:'es',
+            PT:'pt',BR:'pt',AO:'pt',MZ:'pt',CV:'pt',GW:'pt',ST:'pt',TL:'pt',
+            FR:'fr',BE:'fr',LU:'fr',MC:'fr',SN:'fr',CI:'fr',CM:'fr',MG:'fr',
+            ML:'fr',BF:'fr',NE:'fr',TG:'fr',BJ:'fr',GA:'fr',CG:'fr',CD:'fr',
+            CF:'fr',TD:'fr',DJ:'fr',KM:'fr',GN:'fr',RW:'fr',BI:'fr',
+            DE:'de',AT:'de',LI:'de',
+            IT:'it',SM:'it',VA:'it',
+            PL:'pl', CZ:'cs',
+            RU:'ru',BY:'ru',KZ:'ru',KG:'ru',
+            TR:'tr', HR:'hr', NO:'no',
+            GB:'en',US:'en',AU:'en',NZ:'en',IE:'en',ZA:'en',CA:'en'
+          };
+          var SUB = {en:'',es:'es',pt:'pt',fr:'fr',de:'de',it:'it',pl:'pl',
+                     cs:'cz',ru:'ru',tr:'tr',hr:'hr',no:'no'};
+          var SLUG = {
+            en:'/representation', es:'/representacion', pt:'/representacao',
+            fr:'/representation', de:'/vertretung', it:'/rappresentanza',
+            pl:'/reprezentacja', cs:'/zastoupeni', ru:'/predstavitelstvo',
+            tr:'/temsil', hr:'/zastupanje', no:'/representasjon'
+          };
+
+          var ctrl = new AbortController();
+          var abortTimer = setTimeout(function () { ctrl.abort(); }, 600);
+
+          fetch('https://www.cloudflare.com/cdn-cgi/trace', {
+            method: 'GET', cache: 'no-store', signal: ctrl.signal
+          })
+            .then(function (r) { return r.text(); })
+            .then(function (text) {
+              clearTimeout(abortTimer);
+              var m = /(?:^|\n)loc=([A-Z]{2})/.exec(text);
+              var country = m ? m[1] : '';
+              var lang = C2L[country] || 'en';
+              if (lang === 'en') {
+                clearTimeout(unhideTimer);
+                document.documentElement.style.visibility = '';
+                return;
+              }
+              var sub = SUB[lang] || '';
+              var slug = SLUG[lang] || '/representation';
+              var host = sub ? (sub + '.' + baseDomain) : baseDomain;
+              var target = location.protocol + '//' + host + slug;
+              try {
+                // Mark target host so its own guard doesn't loop back
+                sessionStorage.setItem('rep_redirected_for:' + host, '1');
+              } catch (e) {}
+              if (host !== location.host) {
+                location.replace(target);
+              } else {
+                clearTimeout(unhideTimer);
+                document.documentElement.style.visibility = '';
+              }
+            })
+            .catch(function () {
+              clearTimeout(abortTimer);
+              clearTimeout(unhideTimer);
+              document.documentElement.style.visibility = '';
+            });
+        } catch (e) {
+          document.documentElement.style.visibility = '';
+        }
+      })();
+    </script>
     <title>RISE Football Agency | Realise Potential</title>
     
     <!-- Critical SEO Meta Tags -->
