@@ -4522,6 +4522,48 @@ export type Database = {
         }
         Relationships: []
       }
+      representation_visitors: {
+        Row: {
+          age_group: string | null
+          country_code: string | null
+          created_at: string
+          dob: string | null
+          id: string
+          language: string | null
+          position: string | null
+          referrer: string | null
+          updated_at: string
+          user_agent: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          age_group?: string | null
+          country_code?: string | null
+          created_at?: string
+          dob?: string | null
+          id?: string
+          language?: string | null
+          position?: string | null
+          referrer?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          age_group?: string | null
+          country_code?: string | null
+          created_at?: string
+          dob?: string | null
+          id?: string
+          language?: string | null
+          position?: string | null
+          referrer?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           can_edit: boolean
