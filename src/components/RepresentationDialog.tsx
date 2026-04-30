@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 
 interface RepresentationDialogProps {
   open: boolean;
@@ -44,7 +45,7 @@ export const RepresentationDialog = ({
   open, onOpenChange, ageGroup,
   initialPosition = "", initialDob = "",
 }: RepresentationDialogProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   // Refs for the input fields so Enter can advance to the next one.
   // Date of Birth and Position are skipped intentionally (they're
@@ -101,6 +102,20 @@ export const RepresentationDialog = ({
     return age < 18;
   })();
   const isUnder18 = ageGroup === "under18" || isUnder18FromDob;
+
+  // Whenever DOB / position change inside the form, mirror them into
+  // the representation visitor tracker so staff see them in real time
+  // even if the visitor never submits.
+  useEffect(() => {
+    if (!open) return;
+    if (!formData.dob && !formData.position) return;
+    void trackRepresentationVisitor({
+      dob: formData.dob || null,
+      position: formData.position || null,
+      ageGroup: ageGroup ?? (isUnder18 ? "under18" : null),
+      language,
+    });
+  }, [open, formData.dob, formData.position, ageGroup, isUnder18, language]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
