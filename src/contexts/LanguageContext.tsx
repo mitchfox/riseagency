@@ -305,11 +305,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const pathname = window.location.pathname;
     const protocol = window.location.protocol;
 
-    // User made an explicit choice — persist preference and never let the
-    // /representation geo-redirect override it.
+    // User made an explicit choice — persist a host-scoped preference so
+    // the /representation geo-redirect on a DIFFERENT base domain can still
+    // honour the visitor's location.
+    const info = getSubdomainInfo(hostname);
     try {
-      localStorage.setItem('preferred_language', lang);
-      sessionStorage.setItem('representation_redirected', '1');
+      localStorage.setItem(
+        'preferred_language',
+        JSON.stringify({ lang, host: info.baseDomain })
+      );
+      // Mark the destination host as already-resolved so the redirect IIFE
+      // there doesn't fire on next load.
+      const targetSub = languageUrlSubdomains[lang];
+      const targetHost = targetSub ? `${targetSub}.${info.baseDomain}` : info.baseDomain;
+      sessionStorage.setItem('rep_redirected_for:' + info.baseDomain, '1');
+      sessionStorage.setItem('rep_redirected_for:' + targetHost, '1');
     } catch {}
     
     // Convert current path to English, then to the target language
@@ -318,7 +328,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     
     // For preview/localhost environments, use localStorage and navigate
     if (isPreviewOrLocalEnvironment()) {
-      localStorage.setItem('preferred_language', lang);
       sessionStorage.setItem('ip_language_detected', lang); // Override IP detection
       // Use window.location to ensure full page reload with new language
       if (pathname !== localizedPath) {
@@ -329,7 +338,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const info = getSubdomainInfo(hostname);
     const baseDomain = info.baseDomain;
     
     // Check if we're on a role subdomain
