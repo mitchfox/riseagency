@@ -196,6 +196,22 @@ export const routeTranslations: Record<string, Record<string, string>> = {
   },
 };
 
+// Representation page slugs (added via separate block to avoid disturbing existing entries)
+routeTranslations['/representation'] = {
+  en: '/representation',
+  es: '/representacion',
+  pt: '/representacao',
+  fr: '/representation',
+  de: '/vertretung',
+  it: '/rappresentanza',
+  pl: '/reprezentacja',
+  cs: '/zastoupeni',
+  ru: '/predstavitelstvo',
+  tr: '/temsil',
+  hr: '/zastupanje',
+  no: '/representasjon',
+};
+
 // Create reverse mapping: localized path -> english path
 export const reverseRouteMap: Record<string, string> = {};
 Object.entries(routeTranslations).forEach(([englishPath, translations]) => {
