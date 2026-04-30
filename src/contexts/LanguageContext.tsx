@@ -375,7 +375,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
 
     const newUrl = `${protocol}//${newHostname}${finalPath}`;
-    window.location.href = newUrl;
+    // Append ?lang=xx so the destination origin (which has its own,
+    // separate localStorage) honours the user's explicit choice on first
+    // load instead of falling through to IP detection.
+    const sep = finalPath.includes('?') ? '&' : '?';
+    window.location.href = `${newUrl}${sep}lang=${lang}`;
   }, []);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
