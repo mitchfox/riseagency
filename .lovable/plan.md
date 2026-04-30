@@ -1,55 +1,50 @@
-I checked the backend data and the issue is clear now:
+## Problem
 
-- The representation page visits are being recorded in the existing visitor log. That is why you can see them in notifications.
-- The new representation visitor table is still empty, so the Staff → Submissions → Representation Requests tracker has nothing to display.
-- The current tracker also only tries to record after the position or DOB step, not when someone first lands on the page.
-- It uses a different browser visitor ID from the existing site visitor tracking, so even if it did write later, it would not reliably connect to the same person you see in notifications.
-- The popup form fields themselves are not currently updating the visitor tracker, so someone can enter DOB/position in the form and submit successfully without the tracking panel ever seeing those in-progress details.
+The DOB and position ARE being recorded — the database has rows with this data. The staff "Visitor Tracking" panel just isn't showing them.
 
-Plan to fix it properly:
+The UI starts from `site_visits` and only shows representation_visitors entries whose `visitor_id` exists in `site_visits`. Several recorded entries (including the ones with DOB and position) have a different `visitor_id` value from what `site_visits` stored for the same person, so they get silently dropped from the panel.
 
-1. Use the existing visitor log as the base source for representation tracking
-   - The tracker panel will show everyone who enters `/representation` and the translated representation routes.
-   - This means the bare minimum will show immediately: city, country and IP-derived location from the already-working visitor tracking.
-   - It will no longer depend on the separate representation visitor table having a row before showing a visitor.
+Root cause for the mismatched IDs: a few visitors arrive with a `visitor_id` already in `localStorage` that doesn't follow the `visitor_TIMESTAMP_xxx` pattern (e.g. UUIDs left over from other tabs / sessions / browsers). The shared key works for most users but not all, and when it diverges the panel hides the row entirely.
 
-2. Link representation details to the same visitor ID
-   - Update the representation detail tracker to use the same `visitor_id` key as the normal site visitor tracker.
-   - This allows page-entry location and later DOB/position details to merge into one staff row.
+## Fix
 
-3. Track on page entry, not just after details
-   - Add a lightweight page-entry tracking call on the representation page mount.
-   - The Staff tracker will display visitors even before they click anything.
+### 1. Staff panel: show every recorded entry, joined when possible
 
-4. Track DOB and position everywhere they can be entered
-   - Keep tracking when the cinematic position picker and DOB picker are used.
-   - Also track when DOB or position is typed/changed inside the Request Representation popup form.
-   - Only DOB, position, age group and language will be stored in this visitor tracker. Names, phone numbers and emails will stay in the actual submitted request only.
+Rewrite `RepresentationVisitorsTracker.tsx` so the **base list is `representation_visitors`**, not `site_visits`:
 
-5. Make the backend tracking function more reliable
-   - Change it from “insert only unless the browser remembers a row ID” to “update the latest row for this visitor ID, otherwise insert”.
-   - This prevents missed updates when session storage is cleared or the user reloads.
-   - Add proper city/country/IP location handling only through the backend, using the same approach that already works for the notification visitor log.
+- Pull all recent `representation_visitors` rows (last 200, ordered by `updated_at`).
+- Pull recent `site_visits` rows for representation paths and index by `visitor_id`.
+- For each rep_visitor row, attach city / country / IP from the matching site_visit if one exists; otherwise show just the country_code that the rep tracker recorded.
+- Also include site_visits visitors who landed on the rep page but never triggered the tracker (so we still see "page entered, no details yet"), shown below the ones with details.
 
-6. Improve the Staff UI
-   - The collapsed “Visitor Tracking” section will show:
-     - when they entered the representation page
-     - city
-     - country
-     - IP-derived country/location
-     - position
-     - date of birth
-     - calculated age
-     - language
-     - last updated time
-   - If there are representation page visitors but no DOB/position yet, it will still show the visitor with those fields as blank rather than saying “No visitor entries yet”.
+Result: every row currently in the database (the BG-CM-2007 row, the BA-RB row, etc.) shows up immediately, with whatever location info we can attach.
 
-7. Verify after implementation
-   - Check the backend rows for recent representation page visits.
-   - Open the staff section and confirm the UK visit appears before any form submission.
-   - Enter DOB/position and confirm the same row updates.
-   - Submit the form and confirm the actual request still appears as before.
+### 2. Harden the shared visitor id
 
-<lov-actions>
-<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
-</lov-actions>
+In `usePageTracking.ts` and `representationVisitorTracker.ts`, treat the `visitor_id` key as authoritative only if it matches the expected `visitor_*` shape. If the stored value is anything else (a stray UUID or empty), overwrite it with a freshly generated `visitor_*` id and use that everywhere. This guarantees future rep_visitor rows and site_visit rows always share the same id and join cleanly.
+
+### 3. Make sure DOB / position pings actually fire from the form
+
+Verify in `RepresentationDialog.tsx` that `trackRepresentationVisitor({ position, dob, ageGroup, language })` is called:
+
+- on every position change in the form
+- on every DOB blur in the form
+- on dialog open with the prefilled values
+
+If any of these are missing or only fire on submit, add them so partially-filled forms still record DOB/position.
+
+### 4. Verify after deploy
+
+- Open the rep page in a fresh browser → confirm a new row appears with city/country.
+- Pick a position → confirm the same row updates with `position`.
+- Enter a DOB in the dialog → confirm the same row updates with `dob` and `age_group`.
+- Confirm the existing 2 historical rows (BG-CM and BA-RB) now appear in the staff panel.
+
+## Files to change
+
+- `src/components/staff/RepresentationVisitorsTracker.tsx` — rewrite the data join so rep_visitors is the base list.
+- `src/lib/representationVisitorTracker.ts` — sanitize/normalize the shared visitor_id.
+- `src/hooks/usePageTracking.ts` — same sanitisation, so both writers agree.
+- `src/components/RepresentationDialog.tsx` — ensure tracker fires on position change, DOB blur, and dialog open.
+
+No database migration or edge function change needed — the data is already being written correctly, the panel just wasn't surfacing it.
