@@ -59,6 +59,7 @@
     '/between-the-lines': { en: '/between-the-lines', es: '/entre-lineas', pt: '/entre-linhas', fr: '/entre-les-lignes', de: '/zwischen-den-zeilen', it: '/tra-le-righe', pl: '/miedzy-wierszami', cs: '/mezi-radky', ru: '/mezhdu-strok', tr: '/satirlar-arasi' },
     '/login': { en: '/login', es: '/acceso', pt: '/entrar', fr: '/connexion', de: '/anmelden', it: '/accedi', pl: '/logowanie', cs: '/prihlaseni', ru: '/vhod', tr: '/giris' },
     '/portal': { en: '/portal', es: '/portal', pt: '/portal', fr: '/portail', de: '/portal', it: '/portale', pl: '/portal', cs: '/portal', ru: '/portal', tr: '/portal' },
+    '/representation': { en: '/representation', es: '/representacion', pt: '/representacao', fr: '/representation', de: '/vertretung', it: '/rappresentanza', pl: '/reprezentacja', cs: '/zastoupeni', ru: '/predstavitelstvo', tr: '/temsil' },
   };
   
   // Check for www.{subdomain}.domain.com format (4+ parts with www prefix)
@@ -83,6 +84,92 @@
     
     const newUrl = `${window.location.protocol}//${newHostname}${pathname}${window.location.search}${window.location.hash}`;
     window.location.replace(newUrl);
+  }
+})();
+
+// Edge geo-redirect for /representation: instantly send visitors on the apex
+// (or non-language host) to their language subdomain + localised slug.
+// Runs before React renders so there is no flash of English.
+(function() {
+  try {
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    const search = window.location.search;
+
+    // Only the representation routes
+    const REPRESENTATION_PATHS = new Set([
+      '/representation',
+      '/request-representation',
+      '/representacion', '/representacao', '/vertretung', '/rappresentanza',
+      '/reprezentacja', '/zastoupeni', '/predstavitelstvo', '/temsil',
+      '/zastupanje', '/representasjon',
+    ]);
+    if (!REPRESENTATION_PATHS.has(pathname)) return;
+
+    // Skip preview/local
+    if (hostname === 'localhost' ||
+        /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
+        hostname.includes('lovable.app') ||
+        hostname.includes('lovableproject.com')) return;
+
+    // Skip if explicit language override in URL or saved preference
+    if (new URLSearchParams(search).get('lang')) return;
+    try {
+      if (localStorage.getItem('preferred_language')) return;
+    } catch {}
+
+    // One-shot guard against loops
+    try {
+      if (sessionStorage.getItem('representation_redirected') === '1') return;
+      sessionStorage.setItem('representation_redirected', '1');
+    } catch {}
+
+    // Determine base domain and whether we're already on a language subdomain
+    const LANGUAGE_SUBDOMAINS = ['en','es','pt','fr','de','it','pl','cs','cz','ru','tr','hr','no'];
+    const parts = hostname.split('.');
+    let baseDomain = hostname;
+    let firstPart = '';
+    if (parts.length >= 3) {
+      // strip optional www
+      const stripped = parts[0].toLowerCase() === 'www' ? parts.slice(1) : parts;
+      firstPart = stripped[0]?.toLowerCase() || '';
+      baseDomain = stripped.slice(-2).join('.');
+    }
+    // If already on a language subdomain, do nothing
+    if (LANGUAGE_SUBDOMAINS.includes(firstPart)) return;
+
+    // Block React from mounting until the redirect resolves so there's no flash
+    document.documentElement.style.visibility = 'hidden';
+
+    const projectRef = 'qwethimbtaamlhbajmal';
+    const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZXRoaW1idGFhbWxoYmFqbWFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3ODQzNDMsImV4cCI6MjA3NjM2MDM0M30.FNM354bgxhdtM4F_KGbQQnJwX7-WngaX58kPvPYnUEY';
+    const endpoint = `https://${projectRef}.supabase.co/functions/v1/representation-redirect?base=${encodeURIComponent(baseDomain)}&protocol=${encodeURIComponent(window.location.protocol)}`;
+
+    // Hard cap so a slow function never blocks the page for long
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
+
+    fetch(endpoint, {
+      method: 'GET',
+      headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` },
+      signal: controller.signal,
+    })
+      .then(r => r.json())
+      .then((data) => {
+        clearTimeout(timer);
+        const target: string | null = data?.url || null;
+        if (target && target !== window.location.href) {
+          window.location.replace(target);
+        } else {
+          document.documentElement.style.visibility = '';
+        }
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        document.documentElement.style.visibility = '';
+      });
+  } catch {
+    document.documentElement.style.visibility = '';
   }
 })();
 

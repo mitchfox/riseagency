@@ -287,6 +287,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
     const protocol = window.location.protocol;
+
+    // User made an explicit choice — persist preference and never let the
+    // /representation geo-redirect override it.
+    try {
+      localStorage.setItem('preferred_language', lang);
+      sessionStorage.setItem('representation_redirected', '1');
+    } catch {}
     
     // Convert current path to English, then to the target language
     const englishPath = getEnglishPath(pathname);
