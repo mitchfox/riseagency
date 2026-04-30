@@ -421,6 +421,14 @@ const RequestRepresentation = () => {
     preloadPlayer3DVariant("home");
   }, []);
 
+  // Track every visitor entering the representation flow so the staff
+  // panel sees them immediately (city / country come from the existing
+  // page-visit log; this row is what holds DOB / position later).
+  useEffect(() => {
+    void trackRepresentationVisitor({ language });
+    // Only on mount + when language changes.
+  }, [language]);
+
   // Persist the "intro seen" flag whenever the cinematic finishes so a
   // subsequent in-session reload (typically caused by a language switch)
   // skips it.

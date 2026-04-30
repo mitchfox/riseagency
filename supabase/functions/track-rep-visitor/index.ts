@@ -48,11 +48,36 @@ serve(async (req) => {
 
     let resultId = rowId ?? null;
 
-    if (rowId) {
+    // Find the latest existing row for this visitor (if any), so reloads
+    // / lost session state still merge into the same row instead of
+    // creating duplicates.
+    if (!resultId && visitorId) {
+      const { data: existing } = await supabase
+        .from("representation_visitors")
+        .select("id")
+        .eq("visitor_id", visitorId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing?.id) resultId = existing.id;
+    }
+
+    // When updating, only overwrite fields that have new non-null values
+    // so a page-mount ping doesn't blank out an earlier-entered position.
+    const mergePayload: Record<string, unknown> = { ...payload };
+    Object.keys(mergePayload).forEach((k) => {
+      if (mergePayload[k] === null || mergePayload[k] === undefined) {
+        delete mergePayload[k];
+      }
+    });
+    // Always bump visitor_id so it stays linked even if previously null.
+    mergePayload.visitor_id = visitorId ?? null;
+
+    if (resultId) {
       const { error } = await supabase
         .from("representation_visitors")
-        .update(payload)
-        .eq("id", rowId);
+        .update(mergePayload)
+        .eq("id", resultId);
       if (error) throw error;
     } else {
       const { data, error } = await supabase
