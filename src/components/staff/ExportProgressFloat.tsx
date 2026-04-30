@@ -133,22 +133,33 @@ export const ExportProgressFloat = () => {
       {!progress.finished && (
         <div className="max-h-32 overflow-y-auto space-y-0.5">
           {Object.entries(progress.statuses).map(([id, status]) => (
-            <div key={id} className="flex items-center gap-1.5 text-[10px]">
-              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                status === "done" ? "bg-green-500" :
-                status === "skipped" ? "bg-yellow-500" :
-                status === "error" ? "bg-destructive" :
-                "bg-muted-foreground/30"
-              }`} />
-              <span className="truncate text-muted-foreground">{id.slice(0, 8)}...</span>
-              <span className={`ml-auto shrink-0 ${
-                status === "done" ? "text-green-600" :
-                status === "skipped" ? "text-yellow-600" :
-                status === "error" ? "text-destructive" :
-                "text-muted-foreground"
-              }`}>
-                {status === "done" ? "Done" : status === "skipped" ? "Skipped" : status === "error" ? "Failed" : "..."}
-              </span>
+            <div key={id} className="text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                  status === "done" ? "bg-green-500" :
+                  status === "skipped" ? "bg-yellow-500" :
+                  status === "error" ? "bg-destructive" :
+                  "bg-muted-foreground/30"
+                }`} />
+                <span className="truncate text-muted-foreground">{id.slice(0, 8)}...</span>
+                <span className={`ml-auto shrink-0 ${
+                  status === "done" ? "text-green-600" :
+                  status === "skipped" ? "text-yellow-600" :
+                  status === "error" ? "text-destructive" :
+                  "text-muted-foreground"
+                }`}>
+                  {status === "done" ? "Done" : status === "skipped" ? "Skipped" : status === "error" ? "Failed" : "..."}
+                </span>
+              </div>
+              {status === "error" && progress.errors?.[id] && (
+                <div
+                  className="pl-3 pr-1 text-destructive/80 break-words cursor-pointer"
+                  title="Click to copy"
+                  onClick={() => navigator.clipboard?.writeText(progress.errors![id])}
+                >
+                  {progress.errors[id]}
+                </div>
+              )}
             </div>
           ))}
         </div>
