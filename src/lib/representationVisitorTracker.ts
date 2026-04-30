@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
  * Tracks visitors on the representation page as soon as they enter
  * their position or date of birth — even if they never submit the
  * full form. One row per browser session, upserted as more details
- * become available.
+ * become available. Routed through an edge function so anonymous
+ * visitors can write to the table via the service role.
  */
 
 const STORAGE_KEY = "rep_visitor_tracker_v1";
@@ -23,9 +24,9 @@ const getVisitorId = (): string => {
     const existing = localStorage.getItem(SESSION_VISITOR_KEY);
     if (existing) return existing;
     const fresh =
-      (typeof crypto !== "undefined" && "randomUUID" in crypto
+      typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `v_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+        : `v_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     localStorage.setItem(SESSION_VISITOR_KEY, fresh);
     return fresh;
   } catch {
@@ -65,7 +66,6 @@ export async function trackRepresentationVisitor(partial: {
   ageGroup?: string | null;
   language?: string | null;
 }): Promise<void> {
-  // Serialise calls so an insert finishes before the next update.
   const run = async () => {
     try {
       const state = loadState();
@@ -81,36 +81,24 @@ export async function trackRepresentationVisitor(partial: {
       }
 
       const visitorId = getVisitorId();
-      const payload: Record<string, any> = {
-        visitor_id: visitorId,
+      const body = {
+        rowId: state.rowId,
+        visitorId,
         position: next.position,
         dob: next.dob,
-        age_group: next.ageGroup,
-        country_code: next.countryCode,
+        ageGroup: next.ageGroup,
+        countryCode: next.countryCode,
         language: partial.language ?? null,
-        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
         referrer: typeof document !== "undefined" ? document.referrer || null : null,
       };
 
-      if (state.rowId) {
-        const { error } = await supabase
-          .from("representation_visitors")
-          .update(payload)
-          .eq("id", state.rowId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("representation_visitors")
-          .insert(payload)
-          .select("id")
-          .single();
-        if (error) throw error;
-        next.rowId = data?.id ?? null;
-      }
+      const { data, error } = await supabase.functions.invoke("track-rep-visitor", { body });
+      if (error) throw error;
+      if (data?.id) next.rowId = data.id;
 
       saveState(next);
     } catch (err) {
-      // Tracking is best-effort — never throw to the page.
       console.warn("[rep-visitor] tracking failed", err);
     }
   };
