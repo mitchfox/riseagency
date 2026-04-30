@@ -40,6 +40,7 @@ export interface ExportProgress {
   current: number;
   total: number;
   statuses: Record<string, "pending" | "done" | "skipped" | "error">;
+  errors?: Record<string, string>;
   finished: boolean;
 }
 
@@ -126,6 +127,33 @@ function getMatchMinute(
   return `${mins}.${roundedSecs.toString().padStart(2, "0")}`;
 }
 
+/**
+ * The `performance_report_actions.minute` column is `numeric`. Legacy clips
+ * stored `minute` in `mm:ss` format (e.g. "0:35") which Postgres rejects with
+ * `invalid input syntax for type numeric`, silently failing every insert.
+ * Normalise to the modern `mm.ss` form, snapping seconds to the nearest 5
+ * to match `getMatchMinute`.
+ */
+function normaliseMinute(
+  raw: string | number | undefined,
+  fallbackStart: number,
+  job: { matchMinuteOffset?: number; secondHalfOffset?: number | null; secondHalfVideoTime?: number | null }
+): string {
+  const fallback = () => getMatchMinute(fallbackStart, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime);
+  if (raw == null || raw === "") return fallback();
+  if (typeof raw === "number" && Number.isFinite(raw)) return String(raw);
+  const str = String(raw).trim();
+  if (/^\d+(\.\d+)?$/.test(str)) return str;
+  const colon = str.match(/^(\d+):(\d{1,2})$/);
+  if (colon) {
+    const mins = parseInt(colon[1], 10);
+    const secs = Math.min(59, parseInt(colon[2], 10));
+    const rounded = Math.floor(secs / 5) * 5;
+    return `${mins}.${rounded.toString().padStart(2, "0")}`;
+  }
+  return fallback();
+}
+
 export async function startExportJob(job: ExportJob): Promise<void> {
   if (running) {
     toast.error("An export is already in progress");
@@ -135,6 +163,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
   running = true;
   lastJob = job;
   const statuses: Record<string, "pending" | "done" | "skipped" | "error"> = {};
+  const errors: Record<string, string> = {};
   job.clips.forEach((c) => {
     statuses[c.id] = "pending";
   });
@@ -144,6 +173,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
     current: 0,
     total: job.clips.length,
     statuses: { ...statuses },
+    errors: { ...errors },
     finished: false,
   };
   notify(progress);
@@ -202,7 +232,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
         const insertRow: any = {
           analysis_id: job.reportId,
           action_number: nextNumber,
-          minute: clip.minute || getMatchMinute(clip.start, job.matchMinuteOffset, job.secondHalfOffset, job.secondHalfVideoTime),
+          minute: normaliseMinute(clip.minute, clip.start, job),
           action_type: clip.action_type || "",
           action_description: clip.action_description || "",
           notes: clip.notes || null,
@@ -229,10 +259,11 @@ export async function startExportJob(job: ExportJob): Promise<void> {
       } catch (err) {
         console.error(`Failed to export clip ${clip.id}:`, err);
         statuses[clip.id] = "error";
+        errors[clip.id] = err instanceof Error ? err.message : String(err);
         failed++;
       }
 
-      notify({ ...progress, statuses: { ...statuses } });
+      notify({ ...progress, statuses: { ...statuses }, errors: { ...errors } });
     }
 
     const parts = [`${success} exported`];
@@ -247,7 +278,7 @@ export async function startExportJob(job: ExportJob): Promise<void> {
     toast.error(err.message || "Export failed");
   } finally {
     progress.finished = true;
-    notify({ ...progress, statuses: { ...statuses }, finished: true });
+    notify({ ...progress, statuses: { ...statuses }, errors: { ...errors }, finished: true });
     running = false;
     setTimeout(() => {
       if (activeJob?.finished) activeJob = null;

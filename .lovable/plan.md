@@ -1,36 +1,40 @@
-## Problem
+## Real root cause (you were right to push back)
 
-1. The closing shader on `/representation` is too brief — it appears and fades almost immediately.
-2. Opening the Cristiano example portal from a non-English representation page still renders the entire portal in English. Nicky Medja Beloko's portal works because his stored `portal_language` is `fr`. Cristiano's stored `portal_language` is `en`, and the portal UI reads its language from `playerData.portal_language` directly — the `?lang=` URL override we save is never actually consumed by the render.
+Source video size has nothing to do with this. The actual failure is at the database insert step.
 
-## Fix
+The Barcelona Leg 1 clips were created back in February using the old `mm:ss` (colon) format for `minute` — e.g. `"0:35"`, `"2:55"`, `"3:15"`. Since then we standardised to `mm.ss` (dot), e.g. `"45.30"`. The `performance_report_actions.minute` column is **`numeric`**, and Postgres rejects `"0:35"` with `invalid input syntax for type numeric`. I confirmed this directly against the DB.
 
-### 1. Slow the shader closing beat (`src/components/RepresentationIntro.tsx`)
+In `backgroundExportService.ts` the export does:
+```ts
+minute: clip.minute || getMatchMinute(...)
+```
+Because every old clip already has a `minute` string set, the colon value is used as-is and every single insert fails — exactly the symptom you described. The clip file probably gets trimmed and uploaded successfully first, but the row insert blows up, so nothing lands on the report.
 
-- Increase the `shader` phase dwell from `3400ms` to about `5200ms` so the shader and white RISE logo sit on screen for a noticeably longer beat before dissolving.
-- Lengthen the shader's fade-out `transition.duration` from `3.2s` to about `4.2s` so the dissolve itself is slower and softer rather than a quick flash.
-- Slightly extend the logo pulse breathing so the held moment feels intentional, not static (small scale + opacity oscillation tuned to the new dwell).
-- Keep total intro length within an acceptable range; the earlier text phases stay untouched.
+## Plan
 
-### 2. Make the visitor's `?lang=` actually drive the portal UI (`src/pages/Dashboard.tsx`)
+1. **Sanitise `minute` at the export boundary** in `src/lib/backgroundExportService.ts`:
+   - Add a `normaliseMinute()` helper: if the value is already a finite number or matches `^\d+(\.\d+)?$`, pass it through. If it matches `^\d+:\d+$`, convert `mm:ss` → `mm.ss` (snapping seconds to the nearest 5 to match `fmtClipMinute`). Otherwise fall back to `getMatchMinute(clip.start, ...)`.
+   - Apply it to `clip.minute` before the insert, replacing the current `clip.minute || getMatchMinute(...)`.
+   - This single fix unblocks Barcelona Leg 1 and any other legacy video analysis with colon minutes.
 
-The portal renders labels with `t(playerData?.portal_language, key)` and passes `portalLanguage={playerData.portal_language}` to children. So the only reliable fix is to override `playerData.portal_language` itself when a URL language hint is present.
+2. **Backfill the underlying `video_analyses.clips` JSON** so the colons don't keep haunting the rest of the UI (clip list labels, dedup, etc.). One-off SQL migration that walks `clips` and rewrites any element whose `minute` matches `^\d+:\d+$` into `mm.ss`. The `label` field uses the same colon (`"Clip 0:35"`) — rewrite that too. Scoped to rows where at least one clip has a colon minute, so we don't touch healthy data.
 
-- When `?lang=xx` is detected on `/portal` (existing block at lines 783–790), keep storing `portal_language_url_override` in `sessionStorage`, but also remember the value in a local variable for use later in the same auth flow.
-- In the `players` fetch (around line 892) and again in `fetchAnalyses` (around line 994), if a URL override exists, set `player.portal_language = override` (and `parsedPlayerData.portal_language = override`) before calling `setPlayerData`. This way every downstream `t(playerData?.portal_language, ...)` call and every child `portalLanguage={playerData?.portal_language}` prop renders in the visitor's chosen language.
-- Preserve `portal_language` in the merge of `bioData` so the override is not stomped (the `preservedFields` block already protects this — we just need to seed it with the override, not the DB value, when present).
-- Keep the existing `portalLanguageHint` state in sync for the loading screen (`PageLoading text={t(portalLanguageHint, "loading")}`).
-- The URL override should only apply for the lifetime of the session (already in `sessionStorage`), so a real Cristiano login from a non-representation entry point still uses the stored DB language.
+3. **Surface the real error in the export progress widget** so this kind of failure isn't silent next time:
+   - In `backgroundExportService.ts`, capture the per-clip error message into the `statuses` map (extend it from `"error"` to `{ status: "error", message: string }`) and include it in `notify`.
+   - In `ExportProgressFloat.tsx`, render the message under the failed clip row with a small "Copy" affordance. No layout overhaul, just a one-line tooltip-style line.
 
-### 3. Sanity sweep
+4. **Verify** by re-running the Barcelona Leg 1 export end-to-end after the fix and confirming the 62 actions land on the report with playable `/clips/*.webm` URLs.
 
-- Verify the override propagates into the portal Hub, Analysis tabs, Data tab, and the bottom navigation (all of which read `playerData?.portal_language`).
-- Spot check that opening the example performance report and example analysis from the same Portuguese representation session continues to honour `?lang=pt` as already wired.
-- Confirm Nicky's portal (which has a real stored `portal_language`) is unchanged.
+## Files to change
 
-## Files
+- `src/lib/backgroundExportService.ts` — add `normaliseMinute()`, use it in the insert; widen the per-clip status to carry an error message.
+- `src/components/staff/ExportProgressFloat.tsx` — show the per-clip error message.
+- New migration to backfill `video_analyses.clips[*].minute` and `clips[*].label` colon → dot.
 
-- `src/components/RepresentationIntro.tsx` — extend shader dwell + fade.
-- `src/pages/Dashboard.tsx` — apply URL `?lang=` override directly onto `playerData.portal_language` before render.
+## What I'm NOT changing
 
-No database changes, no schema changes.
+- The trim pipeline / size limits — they're working fine for everything else and weren't the problem.
+- The `minute` column type — staying `numeric` is correct; `mm.ss` (e.g. `2.35`) parses cleanly as `2.35`.
+- Existing rows on already-exported reports — only the source `video_analyses.clips` data needs the colon cleanup.
+
+Approve and I'll implement, deploy, and walk you through retrying the Barcelona Leg 1 export.
