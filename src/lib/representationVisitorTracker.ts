@@ -20,15 +20,23 @@ interface TrackerState {
   countryCode: string | null;
 }
 
+/** site_visits / page-tracking format: visitor_<timestamp>_<random>.
+ *  If the stored value is anything else (e.g. a stray UUID from another
+ *  app/tab/iframe) we discard it and write a fresh one so both writers
+ *  always agree on the same id, allowing the staff panel join to work. */
+const VISITOR_ID_RE = /^visitor_\d+_[a-z0-9]+$/i;
+const makeVisitorId = () =>
+  `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 const getVisitorId = (): string => {
   try {
     const existing = localStorage.getItem(SHARED_VISITOR_KEY);
-    if (existing) return existing;
-    const fresh = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (existing && VISITOR_ID_RE.test(existing)) return existing;
+    const fresh = makeVisitorId();
     localStorage.setItem(SHARED_VISITOR_KEY, fresh);
     return fresh;
   } catch {
-    return `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return makeVisitorId();
   }
 };
 
