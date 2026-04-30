@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { Mail, Users, MessageSquare, Calendar, Send, MessageCircle } from "lucide-react";
 import { EmailResponseDialog } from "./EmailResponseDialog";
 import { openExternalUrl, openMailto } from "@/utils/openExternalUrl";
+import { RepresentationVisitorsTracker } from "./RepresentationVisitorsTracker";
 
 interface FormSubmission {
   id: string;
@@ -264,6 +265,8 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
     return <div className="text-center p-8">Loading submissions...</div>;
   }
 
+  const representationSubmissions = groupedSubmissions["representation"] || [];
+
   return (
     <Card>
       <CardHeader>
@@ -272,6 +275,17 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <Tabs defaultValue="submissions" className="w-full">
+          <TabsList className="mb-4 grid grid-cols-2 w-full sm:w-auto sm:inline-grid">
+            <TabsTrigger value="submissions" className="text-xs sm:text-sm">
+              All Submissions ({submissions.length})
+            </TabsTrigger>
+            <TabsTrigger value="representation" className="text-xs sm:text-sm">
+              Representation Requests ({representationSubmissions.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="submissions">
         <Tabs defaultValue="all" className="w-full">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <TabsList className="mb-4 w-max sm:w-auto">
@@ -362,6 +376,53 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
               ))}
             </TabsContent>
           ))}
+        </Tabs>
+          </TabsContent>
+
+          <TabsContent value="representation" className="space-y-4">
+            <RepresentationVisitorsTracker />
+
+            {representationSubmissions.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No representation requests yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {representationSubmissions.map((submission) => (
+                  <Card key={submission.id}>
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2">
+                          {getFormIcon(submission.form_type)}
+                          <Badge variant="secondary" className="text-xs">
+                            {getFormTypeLabel(submission.form_type)}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">
+                            {format(new Date(submission.created_at), "MMM d, yyyy 'at' h:mm a")}
+                          </span>
+                          {getSubmissionEmail(submission) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSendEmail(submission)}
+                              className="gap-2 w-full sm:w-auto"
+                            >
+                              <Send className="w-4 h-4" />
+                              <span className="hidden sm:inline">Send Email</span>
+                              <span className="sm:hidden">Email</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      {renderSubmissionDetails(submission)}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </CardContent>
 
