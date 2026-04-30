@@ -1,15 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Tracks visitors on the representation page as soon as they enter
- * their position or date of birth — even if they never submit the
- * full form. One row per browser session, upserted as more details
- * become available. Routed through an edge function so anonymous
- * visitors can write to the table via the service role.
+ * Tracks visitors on the representation page so staff can see who is
+ * exploring the flow even before they submit the form. Linked to the
+ * same visitor_id used by site_visits so the staff panel can join
+ * IP/city/country onto the same person.
  */
 
 const STORAGE_KEY = "rep_visitor_tracker_v1";
-const SESSION_VISITOR_KEY = "rep_visitor_id_v1";
+// Reuse the SAME visitor id as the global page tracker so we can join
+// onto site_visits (where the IP-derived city/country lives).
+const SHARED_VISITOR_KEY = "visitor_id";
 
 interface TrackerState {
   rowId: string | null;
@@ -21,16 +22,13 @@ interface TrackerState {
 
 const getVisitorId = (): string => {
   try {
-    const existing = localStorage.getItem(SESSION_VISITOR_KEY);
+    const existing = localStorage.getItem(SHARED_VISITOR_KEY);
     if (existing) return existing;
-    const fresh =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `v_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(SESSION_VISITOR_KEY, fresh);
+    const fresh = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem(SHARED_VISITOR_KEY, fresh);
     return fresh;
   } catch {
-    return `v_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 };
 
