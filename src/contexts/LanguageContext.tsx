@@ -130,6 +130,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const langParam = urlParams.get('lang');
     if (langParam && validLanguages.includes(langParam as LanguageCode)) {
       sessionStorage.setItem('url_language_override', langParam);
+      // Persist as a host-scoped preference so future visits to this
+      // origin (without ?lang=) don't fall back to IP detection.
+      try {
+        const base = getSubdomainInfo().baseDomain;
+        localStorage.setItem(
+          'preferred_language',
+          JSON.stringify({ lang: langParam, host: base })
+        );
+      } catch {}
       setLanguage(langParam as LanguageCode);
       setIsInitialized(true);
       return;
