@@ -9,27 +9,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
-interface DetailsRow {
-  visitor_id: string | null;
-  position: string | null;
-  dob: string | null;
-  age_group: string | null;
-  language: string | null;
-  country_code: string | null;
-  updated_at: string;
-}
-
-interface VisitRow {
-  id: string;
-  visitor_id: string;
-  page_path: string;
-  location: any;
-  created_at: string;
-}
-
 interface MergedRow {
   id: string;
-  visitor_id: string;
+  visitor_id: string | null;
   visited_at: string;
   city: string | null;
   country: string | null;
@@ -40,6 +22,7 @@ interface MergedRow {
   age_group: string | null;
   language: string | null;
   details_updated_at: string | null;
+  has_details: boolean;
 }
 
 const calcAge = (iso: string | null): string => {
@@ -66,7 +49,19 @@ export const RepresentationVisitorsTracker = () => {
   const fetchRows = async () => {
     setLoading(true);
     try {
-      // 1. All page visits to the representation flow (any language route).
+      // Base list = recorded representation visitors (DOB / position
+      // pings). Every entry will be shown, regardless of whether we can
+      // join it onto a site_visits row.
+      const { data: details } = await supabase
+        .from("representation_visitors")
+        .select("id, visitor_id, position, dob, age_group, language, country_code, created_at, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(200);
+
+      // Pull recent representation-page visits and index them by
+      // visitor_id so we can attach city/country/IP whenever the ids
+      // match. When they don't, we still show the row using whatever
+      // country the rep tracker recorded.
       const { data: visits } = await supabase
         .from("site_visits")
         .select("id, visitor_id, page_path, location, created_at")
@@ -87,27 +82,45 @@ export const RepresentationVisitorsTracker = () => {
         .order("created_at", { ascending: false })
         .limit(500);
 
-      // 2. All recorded representation details (DOB / position / age / language).
-      const { data: details } = await supabase
-        .from("representation_visitors")
-        .select("visitor_id, position, dob, age_group, language, country_code, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(1000);
-
-      const detailsByVisitor = new Map<string, DetailsRow>();
-      (details || []).forEach((d: any) => {
-        if (!d.visitor_id) return;
-        // Keep the most recent (already ordered desc).
-        if (!detailsByVisitor.has(d.visitor_id)) detailsByVisitor.set(d.visitor_id, d);
+      const visitsByVisitor = new Map<string, any>();
+      (visits || []).forEach((v: any) => {
+        if (!v.visitor_id) return;
+        if (!visitsByVisitor.has(v.visitor_id)) visitsByVisitor.set(v.visitor_id, v);
       });
 
-      // 3. Keep one row per visitor (their most recent representation visit).
-      const seen = new Set<string>();
       const merged: MergedRow[] = [];
-      (visits || []).forEach((v: VisitRow) => {
-        if (!v.visitor_id || seen.has(v.visitor_id)) return;
+      const detailVisitorIds = new Set<string>();
+
+      (details || []).forEach((d: any) => {
+        const v = d.visitor_id ? visitsByVisitor.get(d.visitor_id) : null;
+        const loc = v?.location || {};
+        if (d.visitor_id) detailVisitorIds.add(d.visitor_id);
+        merged.push({
+          id: d.id,
+          visitor_id: d.visitor_id,
+          visited_at: d.updated_at || v?.created_at || d.created_at,
+          city: loc.city ?? null,
+          country: loc.country ?? null,
+          country_code: d.country_code ?? null,
+          ip: loc.ip ?? null,
+          position: d.position ?? null,
+          dob: d.dob ?? null,
+          age_group: d.age_group ?? null,
+          language: d.language ?? null,
+          details_updated_at: d.updated_at ?? null,
+          has_details: !!(d.position || d.dob),
+        });
+      });
+
+      // Append site_visits rows for visitors who landed on the rep
+      // page but never triggered the tracker yet — so staff still see
+      // "page entered, no details yet".
+      const seen = new Set<string>();
+      (visits || []).forEach((v: any) => {
+        if (!v.visitor_id) return;
+        if (detailVisitorIds.has(v.visitor_id)) return;
+        if (seen.has(v.visitor_id)) return;
         seen.add(v.visitor_id);
-        const det = detailsByVisitor.get(v.visitor_id) || null;
         const loc = v.location || {};
         merged.push({
           id: v.id,
@@ -115,14 +128,22 @@ export const RepresentationVisitorsTracker = () => {
           visited_at: v.created_at,
           city: loc.city ?? null,
           country: loc.country ?? null,
-          country_code: det?.country_code ?? null,
+          country_code: null,
           ip: loc.ip ?? null,
-          position: det?.position ?? null,
-          dob: det?.dob ?? null,
-          age_group: det?.age_group ?? null,
-          language: det?.language ?? null,
-          details_updated_at: det?.updated_at ?? null,
+          position: null,
+          dob: null,
+          age_group: null,
+          language: null,
+          details_updated_at: null,
+          has_details: false,
         });
+      });
+
+      // Sort: rows with details first (newest first), then page-only
+      // visitors (newest first).
+      merged.sort((a, b) => {
+        if (a.has_details !== b.has_details) return a.has_details ? -1 : 1;
+        return new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime();
       });
 
       setRows(merged);

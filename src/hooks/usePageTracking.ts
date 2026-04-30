@@ -14,7 +14,10 @@ export const usePageTracking = () => {
 
   useEffect(() => {
     let visitorId = localStorage.getItem("visitor_id");
-    if (!visitorId) {
+    // Only accept the canonical visitor_<ts>_<rand> shape — otherwise
+    // overwrite with a fresh one. Keeps this hook and the rep tracker
+    // sharing the same id so the staff panel join works.
+    if (!visitorId || !/^visitor_\d+_[a-z0-9]+$/i.test(visitorId)) {
       visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       localStorage.setItem("visitor_id", visitorId);
     }
