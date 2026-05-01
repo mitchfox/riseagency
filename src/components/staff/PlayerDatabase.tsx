@@ -211,6 +211,7 @@ export const PlayerDatabase = () => {
   const [nationFilter, setNationFilter] = useState<string>('all');
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+  const [birthMonthFilter, setBirthMonthFilter] = useState<string>('all');
   const [birthdayFilterOffset, setBirthdayFilterOffset] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
@@ -414,6 +415,10 @@ export const PlayerDatabase = () => {
       if (dobFrom && player.date_of_birth && player.date_of_birth < dobFrom) return false;
       if (dobTo && player.date_of_birth && player.date_of_birth > dobTo) return false;
       if ((dobFrom || dobTo) && !player.date_of_birth) return false;
+      if (birthMonthFilter !== 'all') {
+        const month = getMonthDayFromDob(player.date_of_birth)?.month;
+        if (month !== Number(birthMonthFilter)) return false;
+      }
       if (nationFilter !== 'all' && player.nationality !== nationFilter) return false;
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
@@ -439,7 +444,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthdayFilterOffset, sortField, sortDirection]);
+  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -452,6 +457,7 @@ export const PlayerDatabase = () => {
     setSourceFilter([]);
     setDobFrom('');
     setDobTo('');
+    setBirthMonthFilter('all');
     setBirthdayFilterOffset(null);
   };
 
@@ -459,7 +465,7 @@ export const PlayerDatabase = () => {
     ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
     : null;
 
-  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthdayFilterOffset !== null);
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     setSelectedPlayer(player);
@@ -688,6 +694,15 @@ export const PlayerDatabase = () => {
                   <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-7 text-xs flex-1" />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Birth Month</Label>
+                <select value={birthMonthFilter} onChange={e => setBirthMonthFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                  <option value="all">Any Month</option>
+                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                    <option key={m} value={String(i + 1)}>{m}</option>
+                  ))}
+                </select>
+              </div>
               {hasActiveFilters && (
                 <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground w-full text-center py-1 border rounded">Clear All Filters</button>
               )}
@@ -750,6 +765,7 @@ export const PlayerDatabase = () => {
           {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
           {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
           {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
+          {birthMonthFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">Born {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(birthMonthFilter) - 1]}</Badge>}
           {activeBirthdayLabel && <Badge variant="secondary" className="text-[10px]">Birthday: {activeBirthdayLabel}</Badge>}
           <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground ml-1">Clear</button>
         </div>

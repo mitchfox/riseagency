@@ -139,7 +139,7 @@ export const TableSettingsPopover = ({
           <Settings className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px] sm:max-w-[540px]">
+      <SheetContent side="right" className="w-full max-w-full sm:w-[540px] sm:max-w-[540px] p-4 sm:p-6">
         <SheetHeader>
           <SheetTitle>Table Settings</SheetTitle>
         </SheetHeader>
