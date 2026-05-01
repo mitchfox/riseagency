@@ -217,7 +217,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat, is_first_half")
           .eq("analysis_id", id)
           .order("action_number", { ascending: true })
       ]);
