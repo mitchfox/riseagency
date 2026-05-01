@@ -200,7 +200,9 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at, last_completed_at, completion_log'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
       supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
-      supabase.from('players').select('name, club').in('representation_status', ['represented', 'mandated']),
+      // Only true 'represented' players surface in the My Tasks fixture list.
+      // 'mandated' status (e.g. Loris Mettler) is intentionally excluded.
+      supabase.from('players').select('name, club').eq('representation_status', 'represented'),
     ]);
 
     // Filter fixtures to only those involving a represented player's club

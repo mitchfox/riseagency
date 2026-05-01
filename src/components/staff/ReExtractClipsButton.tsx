@@ -49,11 +49,9 @@ export const ReExtractClipsButton = ({ analysisId, onComplete }: Props) => {
         setProgress(`Extracting clip ${i + 1}/${legacyActions.length}...`);
 
         try {
-          // Parse #t=start,end from the URL
           const url = action.video_url!;
           const match = url.match(/#t=([\d.]+),([\d.]+)/);
           if (!match) {
-            // No time fragment - skip, cannot determine boundaries
             console.warn(`Action #${action.action_number}: no #t= fragment, skipping`);
             failed++;
             continue;
@@ -68,10 +66,9 @@ export const ReExtractClipsButton = ({ analysisId, onComplete }: Props) => {
             clipId,
             start,
             end,
-            (msg) => setProgress(`Clip ${i + 1}/${legacyActions.length}: ${msg}`)
+            (msg) => setProgress(`Clip ${i + 1}/${legacyActions.length}: ${msg}`),
           );
 
-          // Update the action's video_url to the new clean URL
           const { error: updateError } = await supabase
             .from("performance_report_actions")
             .update({ video_url: newUrl })

@@ -2779,6 +2779,7 @@ export type Database = {
           clip_start: number | null
           created_at: string | null
           id: string
+          is_first_half: boolean
           is_successful: boolean | null
           minute: number | null
           notes: string | null
@@ -2801,6 +2802,7 @@ export type Database = {
           clip_start?: number | null
           created_at?: string | null
           id?: string
+          is_first_half?: boolean
           is_successful?: boolean | null
           minute?: number | null
           notes?: string | null
@@ -2823,6 +2825,7 @@ export type Database = {
           clip_start?: number | null
           created_at?: string | null
           id?: string
+          is_first_half?: boolean
           is_successful?: boolean | null
           minute?: number | null
           notes?: string | null

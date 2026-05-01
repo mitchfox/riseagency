@@ -235,7 +235,7 @@ export const PerformanceActionsDialog = ({
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, is_successful, recorded_stat, zone_details")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, is_successful, recorded_stat, zone_details, is_first_half")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 

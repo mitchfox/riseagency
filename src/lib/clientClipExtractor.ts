@@ -145,17 +145,33 @@ async function _doClientSideTrim(
     // No audio or already captured
   }
 
-  // Codec selection: prefer VP9+Opus for best quality
-  const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-    ? "video/webm;codecs=vp9,opus"
-    : MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-      ? "video/webm;codecs=vp9"
-      : "video/webm";
+  // Codec selection: prefer H.264 in MP4 because it is hardware-decoded
+  // everywhere and plays back smoothly on mobile. VP9 in WebM at high
+  // bitrates causes stuttering on many devices, which is why we treat it
+  // strictly as a last resort. Order: H.264 mp4 -> H.264 webm -> VP8 ->
+  // VP9 (last).
+  const mimeType = MediaRecorder.isTypeSupported("video/mp4;codecs=avc1.42E01E,mp4a.40.2")
+    ? "video/mp4;codecs=avc1.42E01E,mp4a.40.2"
+    : MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")
+      ? "video/mp4;codecs=avc1"
+      : MediaRecorder.isTypeSupported("video/webm;codecs=h264,opus")
+        ? "video/webm;codecs=h264,opus"
+        : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+          ? "video/webm;codecs=vp8,opus"
+          : MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+            ? "video/webm;codecs=vp9,opus"
+            : "video/webm";
 
-  // Scale bitrate based on resolution for quality preservation
+  // Scale bitrate based on resolution but cap at sane values. The previous
+  // 25–40 Mbps target produced clips that stuttered on playback; ~6–10 Mbps
+  // matches typical streaming bitrates and decodes smoothly even on
+  // mid-range mobile.
   const pixels = (video.videoWidth || 1280) * (video.videoHeight || 720);
-  // ~40Mbps for 1080p, scales proportionally
-  const targetBitrate = Math.max(25_000_000, Math.round((pixels / (1920 * 1080)) * 40_000_000));
+  // ~8 Mbps for 1080p, ~3.5 Mbps for 720p, scales proportionally.
+  const targetBitrate = Math.min(
+    10_000_000,
+    Math.max(2_500_000, Math.round((pixels / (1920 * 1080)) * 8_000_000)),
+  );
 
   const recorder = new MediaRecorder(stream, {
     mimeType,
@@ -221,7 +237,8 @@ async function _doClientSideTrim(
 
   onProgress?.("Uploading clip...");
 
-  const clipPath = `clips/${clipId}.webm`;
+  const isMp4 = mimeType.startsWith("video/mp4");
+  const clipPath = `clips/${clipId}.${isMp4 ? "mp4" : "webm"}`;
   const { error: uploadError } = await supabase.storage
     .from("analysis-videos")
     .upload(clipPath, blob, {
