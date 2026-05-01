@@ -694,6 +694,15 @@ export const PlayerDatabase = () => {
                   <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-7 text-xs flex-1" />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Birth Month</Label>
+                <select value={birthMonthFilter} onChange={e => setBirthMonthFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+                  <option value="all">Any Month</option>
+                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                    <option key={m} value={String(i + 1)}>{m}</option>
+                  ))}
+                </select>
+              </div>
               {hasActiveFilters && (
                 <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-foreground w-full text-center py-1 border rounded">Clear All Filters</button>
               )}
