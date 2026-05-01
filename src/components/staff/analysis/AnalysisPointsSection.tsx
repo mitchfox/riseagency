@@ -871,8 +871,44 @@ const SortablePointCard = ({
                           (msg) => toast.loading(msg, { id: toastId })
                         );
                         if (!trimmedUrl) throw new Error("Trim returned no URL");
-                        updatePoint(index, "video_urls", [...currentVideos, trimmedUrl]);
-                        toast.success("Clip added", { id: toastId });
+                        const newVideos = [...currentVideos, trimmedUrl];
+                        updatePoint(index, "video_urls", newVideos);
+                        // Persist to database immediately so the user does not
+                        // have to remember to click Save Analysis. Without this
+                        // the trimmed clip lives only in local form state and
+                        // is silently lost as soon as they navigate away — the
+                        // root cause of "toast says exported but nothing
+                        // appears on the analysis".
+                        if (analysisId) {
+                          try {
+                            const { data: row, error: fetchErr } = await supabase
+                              .from("analyses")
+                              .select("points")
+                              .eq("id", analysisId)
+                              .single();
+                            if (fetchErr) throw fetchErr;
+                            const dbPoints = Array.isArray(row?.points) ? [...(row!.points as any[])] : [];
+                            // Match by stable _id when present, else fall back to index
+                            const targetIdx = (point as any)._id
+                              ? dbPoints.findIndex((p: any) => p?._id === (point as any)._id)
+                              : index;
+                            if (targetIdx >= 0 && targetIdx < dbPoints.length) {
+                              const existing = dbPoints[targetIdx] || {};
+                              const existingVideos = existing.video_urls || (existing.video_url ? [existing.video_url] : []);
+                              dbPoints[targetIdx] = { ...existing, video_urls: [...existingVideos, trimmedUrl], video_url: undefined };
+                              const { error: updErr } = await supabase
+                                .from("analyses")
+                                .update({ points: dbPoints })
+                                .eq("id", analysisId);
+                              if (updErr) throw updErr;
+                            }
+                          } catch (persistErr: any) {
+                            console.error("Failed to persist trimmed clip:", persistErr);
+                            toast.error("Clip trimmed but not saved — click Save Analysis", { id: toastId });
+                            return;
+                          }
+                        }
+                        toast.success(analysisId ? "Clip added and saved" : "Clip added — remember to save", { id: toastId });
                       } catch (err: any) {
                         console.error("VA clip trim failed:", err);
                         toast.error(
