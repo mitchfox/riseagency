@@ -1363,7 +1363,7 @@ export const CreatePerformanceReportDialog = ({
     try {
       const { data: actionsData, error } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details, is_first_half")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
@@ -1385,6 +1385,7 @@ export const CreatePerformanceReportDialog = ({
             zone: action.zone || null,
             zone_details: (action as any).zone_details || null,
             shot_map: extractShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
+            is_first_half: (action as any).is_first_half ?? false,
           }));
         setActions(sortActionsChronologically(mappedActions));
       }
