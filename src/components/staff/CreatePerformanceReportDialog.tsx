@@ -1730,6 +1730,7 @@ export const CreatePerformanceReportDialog = ({
             recorded_stat: mergeShotMapIntoRecordedStat((a.recorded_stat || null) as any, a.shot_map || null) as any,
             zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
             zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
+            is_first_half: a.is_first_half ?? false,
           };
         });
       
