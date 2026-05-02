@@ -552,31 +552,41 @@ export const DatabaseExport = () => {
               {/* Page Transition / Components Section */}
               <div>
                 <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Components & Animations</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {SITE_COMPONENTS.map(comp => (
-                    <div key={comp.id} className="p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm">{comp.label}</p>
-                          <p className="text-xs text-muted-foreground">{comp.description}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                          disabled={downloadingAsset === comp.id}
-                          onClick={() => handleRecordTransition(comp.id)}
-                        >
-                          {downloadingAsset === comp.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Download className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </div>
+                {SITE_COMPONENTS.map(comp => (
+                  <div key={comp.id} className="p-4 rounded-lg border bg-card mb-3">
+                    <div className="mb-3">
+                      <p className="font-medium text-sm">{comp.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {comp.description} — includes the Rise logo. Pick the view to download.
+                      </p>
                     </div>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {SHADER_VIEW_PRESETS.map(preset => {
+                        const Icon = preset.icon;
+                        const key = `page-transition-${preset.id}`;
+                        const busy = downloadingAsset === key;
+                        return (
+                          <Button
+                            key={preset.id}
+                            variant="outline"
+                            size="sm"
+                            disabled={busy || downloadingAsset !== null}
+                            onClick={() => handleRecordTransition(preset)}
+                            className="flex flex-col items-center gap-1 h-auto py-3"
+                          >
+                            {busy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Icon className="h-4 w-4" />
+                            )}
+                            <span className="text-[11px] leading-tight text-center">{preset.label.split(" (")[0]}</span>
+                            <span className="text-[10px] text-muted-foreground">{preset.width}×{preset.height}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Static Assets Section */}
