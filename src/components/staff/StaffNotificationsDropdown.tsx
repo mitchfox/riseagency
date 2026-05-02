@@ -302,26 +302,95 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         }
         return `Visited ${page}`;
       }
-      case "form_submission":
-        return data?.form_type ? `${data.form_type} form submitted` : "New form submission";
+      case "form_submission": {
+        const form = data?.form_type ? String(data.form_type) : "form";
+        const inner = data?.data || {};
+        const name = inner.name || inner.fullName || inner.first_name;
+        const dob = inner.dob || inner.date_of_birth;
+        const club = inner.currentClub || inner.club;
+        const position = inner.position;
+        let age: number | null = null;
+        if (dob) {
+          const d = new Date(dob);
+          if (!isNaN(d.getTime())) {
+            const diff = Date.now() - d.getTime();
+            age = Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+          }
+        }
+        const parts: string[] = [];
+        if (name) parts.push(String(name));
+        if (age != null) parts.push(`age ${age}`);
+        if (position) parts.push(String(position));
+        if (club) parts.push(String(club));
+        if (parts.length === 0) return `${form} form submitted`;
+        return `${form}: ${parts.join(" • ")}`;
+      }
       case "clip_upload":
         return data?.player_name ? `Clip for ${data.player_name}` : "New clip uploaded";
       case "playlist_change":
         return data?.event ? `Playlist ${data.event.toLowerCase()}` : "Playlist updated";
-      case "calendar_event":
-        return data?.title ? `${data.title}` : "New event added to your calendar";
-      case "task_assigned":
-        return data?.title ? `${data.title}` : "You've been assigned a new task";
-      case "task_completed":
-        return data?.title ? `${data.title} marked complete` : "A task was completed";
+      case "calendar_event": {
+        const title = data?.title || "Event";
+        const when = data?.event_date || data?.start_date || data?.date;
+        if (when) {
+          const d = new Date(when);
+          if (!isNaN(d.getTime())) {
+            return `${title} • ${format(d, "EEE d MMM, h:mm a")}`;
+          }
+        }
+        return String(title);
+      }
+      case "task_assigned": {
+        const title = data?.title || data?.task_title || "Task";
+        const due = data?.due_date || data?.due_at;
+        const assigner = data?.assigned_by_name;
+        const parts = [String(title)];
+        if (due) {
+          const d = new Date(due);
+          if (!isNaN(d.getTime())) parts.push(`due ${format(d, "EEE d MMM")}`);
+        }
+        if (assigner) parts.push(`from ${assigner}`);
+        return parts.join(" • ");
+      }
+      case "task_completed": {
+        const title = data?.task_title || data?.title || "A task";
+        const who = data?.user_name;
+        return who ? `${who} completed ${title}` : `${title} marked complete`;
+      }
+      case "task_reminder": {
+        const title = data?.title || data?.task_title || "Task";
+        const due = data?.due_date || data?.due_at;
+        if (due) {
+          const d = new Date(due);
+          if (!isNaN(d.getTime())) return `${title} • due ${format(d, "EEE d MMM")}`;
+        }
+        return String(title);
+      }
+      case "schedule_item_completed": {
+        const who = data?.user_name || "Someone";
+        const postType = data?.post_type;
+        const fmt = data?.platform_format;
+        const parts = [`${who} completed`];
+        if (postType) parts.push(String(postType));
+        if (fmt) parts.push(`(${fmt})`);
+        return parts.join(" ");
+      }
       case "goal_added":
         return data?.title ? `${data.title}` : "A new goal was set";
-      case "portal_login":
-        return data?.player_name ? `${data.player_name} logged in` : "A player logged into their portal";
-      case "portal_performance_view":
-        return data?.player_name ? `${data.player_name} viewed their reports` : "Player viewed performance reports";
-      case "portal_analysis_view":
-        return data?.player_name ? `${data.player_name} viewed analysis` : "Player viewed analysis content";
+      case "portal_login": {
+        const name = data?.player_name || data?.player_email || "A player";
+        const when = format(new Date(notification.created_at), "EEE d MMM, h:mm a");
+        return `${name} logged in at ${when}`;
+      }
+      case "portal_performance_view": {
+        const name = data?.player_name || "A player";
+        return `${name} opened their performance reports`;
+      }
+      case "portal_analysis_view": {
+        const name = data?.player_name || "A player";
+        const sub = data?.sub_tab ? ` (${String(data.sub_tab).replace(/-/g, ' ')})` : "";
+        return `${name} opened analysis${sub}`;
+      }
       case "portal_transfer_submission":
         return data?.player_name ? `${data.player_name} made a submission` : "New transfer hub submission";
       case "portal_club_submission":
@@ -344,19 +413,43 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
         return data?.player_name ? `${data.player_name} signed a contract` : "New contract signed";
       case "comparison_request":
         return data?.player_name ? `Comparison requested for ${data.player_name}` : "New comparison request";
-      case "player_birthday":
-        return data?.player_name
-          ? `${data.player_name} turns ${data.age || '?'} today`
-          : "Player birthday today";
-      case "player_turning_18":
-        return data?.player_name ? `${data.player_name} turns 18 today` : "Player turning 18 today";
+      case "player_birthday": {
+        const name = data?.player_name || "Player";
+        const age = data?.age;
+        const club = data?.club;
+        const parts = [`${name} turns ${age || '?'} today`];
+        if (club) parts.push(String(club));
+        return parts.join(" • ");
+      }
+      case "player_turning_18": {
+        const name = data?.player_name || "Player";
+        const club = data?.club;
+        return club ? `${name} turns 18 today • ${club}` : `${name} turns 18 today`;
+      }
+      case "player_contactable_age": {
+        const name = data?.player_name || "Player";
+        const minAge = data?.min_contact_age;
+        const club = data?.club;
+        const country = data?.country;
+        const parts = [`${name} now contactable${minAge ? ` (age ${minAge}+)` : ''}`];
+        if (club) parts.push(String(club));
+        if (country) parts.push(String(country));
+        return parts.join(" • ");
+      }
+      case "error_report": {
+        const route = data?.route || "unknown route";
+        const ctx = data?.context;
+        return ctx ? `${route} • ${String(ctx).slice(0, 80)}` : String(route);
+      }
       case "fixture_countdown": {
         const matchDate = data?.match_date as string | undefined;
         const matchTime = (data?.match_time as string | undefined) || "15:00";
         const home = data?.home_team || "Home";
         const away = data?.away_team || "Away";
+        const competition = data?.competition;
+        const venue = data?.venue && data.venue !== "TBD" ? data.venue : null;
         if (!matchDate) return notification.body || `${home} vs ${away}`;
-        const kickoff = new Date(`${matchDate}T${matchTime}:00`).getTime();
+        const kickoff = new Date(`${matchDate}T${matchTime || "15:00"}:00`).getTime();
         const diffMs = kickoff - Date.now();
         let when: string;
         if (diffMs <= -90 * 60_000) {
@@ -380,7 +473,11 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
             }
           }
         }
-        return `${home} vs ${away} ${when}`;
+        // Show the actual match date/kickoff, not the notification's created_at
+        const dateLabel = format(new Date(`${matchDate}T${matchTime || "15:00"}:00`), "EEE d MMM, HH:mm");
+        const tail = [competition, venue].filter(Boolean).join(" • ");
+        const head = `${home} vs ${away} • ${dateLabel} (${when})`;
+        return tail ? `${head} • ${tail}` : head;
       }
       default:
         return notification.body || "";
