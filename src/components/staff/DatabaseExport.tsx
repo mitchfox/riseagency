@@ -233,15 +233,33 @@ export const DatabaseExport = () => {
     setDownloadingAsset(null);
   };
 
-  const handleRecordTransition = async (componentId: string) => {
-    setDownloadingAsset(componentId);
+  const handleRecordTransition = async (preset: ShaderViewPreset) => {
+    const downloadKey = `page-transition-${preset.id}`;
+    setDownloadingAsset(downloadKey);
     try {
-      toast.info("Recording transition animation...");
-      
-      const canvas = document.createElement("canvas");
-      canvas.width = 1920;
-      canvas.height = 1080;
-      
+      toast.info(`Rendering ${preset.label}…`);
+
+      // Pre-load the Rise logo so we can composite it on top of every frame
+      const logoImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = logoUrl;
+      });
+
+      // Two canvases: WebGL for the shader, 2D for compositing the logo on top.
+      // We render frame-by-frame (no real-time playback) so the resulting
+      // video is silky-smooth at 60fps regardless of CPU load.
+      const glCanvas = document.createElement("canvas");
+      glCanvas.width = preset.width;
+      glCanvas.height = preset.height;
+
+      const outCanvas = document.createElement("canvas");
+      outCanvas.width = preset.width;
+      outCanvas.height = preset.height;
+      const outCtx = outCanvas.getContext("2d", { alpha: false })!;
+
       const THREE = await import("three");
       const camera = new THREE.Camera();
       camera.position.z = 1;
@@ -249,12 +267,14 @@ export const DatabaseExport = () => {
       const geometry = new THREE.PlaneGeometry(2, 2);
       const uniforms = {
         time: { type: "f", value: 1.0 },
-        resolution: { type: "v2", value: new THREE.Vector2(canvas.width * 2, canvas.height * 2) },
+        resolution: { type: "v2", value: new THREE.Vector2(preset.width, preset.height) },
       };
       const material = new THREE.ShaderMaterial({
         uniforms,
         vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
         fragmentShader: `
+          #define TWO_PI 6.2831853072
+          #define PI 3.14159265359
           precision highp float;
           uniform vec2 resolution;
           uniform float time;
@@ -277,43 +297,131 @@ export const DatabaseExport = () => {
       });
       const mesh = new THREE.Mesh(geometry, material);
       scene.add(mesh);
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-      renderer.setSize(canvas.width, canvas.height);
-      
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+      const renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: true, preserveDrawingBuffer: true });
+      renderer.setSize(preset.width, preset.height, false);
+
+      // Mirror the live PageTransition timing exactly:
+      // 0.0–0.3s    overlay fade in
+      // 0.4–0.8s    logo fade in
+      // 0.8–1.1s    logo pulse
+      // 1.3–1.7s    logo fade out
+      // 1.7–2.0s    overlay fade out
+      const FPS = 60;
+      const DURATION_S = 2.0;
+      const totalFrames = Math.round(FPS * DURATION_S);
+
+      // Logo sizing parity with PageTransition: h-16 mobile / h-20 md+
+      const logoTargetH = preset.width < 1100 ? 96 : 144;
+      const logoScale = logoTargetH / logoImg.naturalHeight;
+      const logoW = logoImg.naturalWidth * logoScale;
+      const logoH = logoImg.naturalHeight * logoScale;
+
+      // High-bitrate stream from the *output* canvas (which has the logo composited)
+      const stream = outCanvas.captureStream(0); // manual frame requests
+      const trackAny = stream.getVideoTracks()[0] as any;
+      // Pick the best available codec
+      const candidateMimes = [
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm",
+      ];
+      const mimeType = candidateMimes.find((m) => MediaRecorder.isTypeSupported(m)) || "video/webm";
+      // Bitrate scales with pixels: ~0.15 bits per pixel per frame at 60fps
+      const videoBitsPerSecond = Math.min(
+        25_000_000,
+        Math.round(preset.width * preset.height * 0.15 * FPS),
+      );
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond });
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-      
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `rise-page-transition-${new Date().toISOString().split("T")[0]}.webm`;
-        a.click();
-        URL.revokeObjectURL(url);
-        renderer.dispose();
-        geometry.dispose();
-        material.dispose();
-        toast.success("Transition video downloaded");
-        setDownloadingAsset(null);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
       };
-      
+
+      const finished = new Promise<Blob>((resolve) => {
+        recorder.onstop = () => resolve(new Blob(chunks, { type: "video/webm" }));
+      });
+
       recorder.start();
-      let frame = 0;
-      const totalFrames = 120;
-      const animate = () => {
-        if (frame >= totalFrames) { recorder.stop(); return; }
-        uniforms.time.value += 0.05;
-        renderer.render(scene, camera);
-        frame++;
-        requestAnimationFrame(animate);
+
+      const easing = {
+        linear: (x: number) => Math.max(0, Math.min(1, x)),
       };
-      animate();
+
+      for (let frame = 0; frame < totalFrames; frame++) {
+        const t = frame / FPS; // seconds
+
+        // Drive the shader by frame index so every clip is identical/smooth
+        uniforms.time.value = 1.0 + frame * 0.05;
+        renderer.render(scene, camera);
+
+        // Overlay opacity (0–0.3s in, 1.7–2.0s out)
+        let overlayAlpha = 1;
+        if (t < 0.3) overlayAlpha = easing.linear(t / 0.3);
+        else if (t > 1.7) overlayAlpha = easing.linear((2.0 - t) / 0.3);
+
+        outCtx.fillStyle = "#000";
+        outCtx.fillRect(0, 0, preset.width, preset.height);
+        outCtx.globalAlpha = overlayAlpha;
+        outCtx.drawImage(glCanvas, 0, 0, preset.width, preset.height);
+
+        // Logo opacity & scale (0.4–0.8 in, 0.8–1.1 pulse, 1.3–1.7 out)
+        let logoAlpha = 0;
+        let logoScaleMul = 1;
+        if (t >= 0.4 && t < 0.8) {
+          const p = (t - 0.4) / 0.4;
+          logoAlpha = p;
+          logoScaleMul = 0.8 + 0.2 * p;
+        } else if (t >= 0.8 && t < 1.1) {
+          const p = (t - 0.8) / 0.3;
+          logoAlpha = 1;
+          // 1.0 → 1.08 → 1.0 sin curve
+          logoScaleMul = 1 + 0.08 * Math.sin(p * Math.PI);
+        } else if (t >= 1.1 && t < 1.3) {
+          logoAlpha = 1;
+        } else if (t >= 1.3 && t < 1.7) {
+          const p = (t - 1.3) / 0.4;
+          logoAlpha = 1 - p;
+          logoScaleMul = 1 - 0.05 * p;
+        }
+
+        if (logoAlpha > 0) {
+          outCtx.globalAlpha = overlayAlpha * logoAlpha;
+          const w = logoW * logoScaleMul;
+          const h = logoH * logoScaleMul;
+          outCtx.drawImage(
+            logoImg,
+            (preset.width - w) / 2,
+            (preset.height - h) / 2,
+            w,
+            h,
+          );
+        }
+        outCtx.globalAlpha = 1;
+
+        // Push exactly one frame to the recorder
+        if (typeof trackAny.requestFrame === "function") {
+          trackAny.requestFrame();
+        }
+        // Yield so the encoder can ingest the frame
+        await new Promise((r) => setTimeout(r, 1000 / FPS));
+      }
+
+      recorder.stop();
+      const blob = await finished;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rise-page-transition-${preset.id}-${new Date().toISOString().split("T")[0]}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
+      toast.success(`Downloaded ${preset.label}`);
     } catch (err) {
       console.error("Error recording transition:", err);
-      toast.error("Failed to record transition");
+      toast.error("Failed to render transition");
+    } finally {
       setDownloadingAsset(null);
     }
   };
