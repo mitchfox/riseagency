@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Loader2, Database, Image, FileDown } from "lucide-react";
+import { Download, Loader2, Database, Image, FileDown, Monitor, Tablet, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
+import logoUrl from "@/assets/logo.png";
 
 interface ExportCategory {
   id: string;
@@ -115,6 +116,22 @@ interface SiteComponent {
 
 const SITE_COMPONENTS: SiteComponent[] = [
   { id: "page-transition", label: "Page Transition (Shader)", description: "The animated shader transition that plays between page navigations", type: "component" },
+];
+
+// Export size presets matching the four common viewport classes
+interface ShaderViewPreset {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+  icon: typeof Monitor;
+}
+
+const SHADER_VIEW_PRESETS: ShaderViewPreset[] = [
+  { id: "desktop", label: "Desktop (1920x1080)", width: 1920, height: 1080, icon: Monitor },
+  { id: "tablet-landscape", label: "Tablet Landscape (1366x1024)", width: 1366, height: 1024, icon: Tablet },
+  { id: "tablet-portrait", label: "Tablet Portrait (1024x1366)", width: 1024, height: 1366, icon: Tablet },
+  { id: "mobile", label: "Mobile (1080x1920)", width: 1080, height: 1920, icon: Smartphone },
 ];
 
 function jsonToCsv(data: any[]): string {
