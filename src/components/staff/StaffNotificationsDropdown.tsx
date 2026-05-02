@@ -645,7 +645,25 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                                 )}
                                 
                                 <p className="text-xs text-muted-foreground/70 mt-0.5">
-                                  {format(new Date(notification.created_at), "MMM d, h:mm a")}
+                                  {(() => {
+                                    const d = notification.event_data;
+                                    // For fixture countdowns, surface the match's kickoff date instead
+                                    // of when the reminder fired.
+                                    if (notification.event_type === "fixture_countdown" && d?.match_date) {
+                                      const t = d.match_time || "15:00";
+                                      const dt = new Date(`${d.match_date}T${t}:00`);
+                                      if (!isNaN(dt.getTime())) return `Kickoff ${format(dt, "EEE d MMM, HH:mm")}`;
+                                    }
+                                    if (notification.event_type === "calendar_event" && (d?.event_date || d?.start_date || d?.date)) {
+                                      const dt = new Date(d.event_date || d.start_date || d.date);
+                                      if (!isNaN(dt.getTime())) return format(dt, "EEE d MMM, h:mm a");
+                                    }
+                                    if ((notification.event_type === "task_assigned" || notification.event_type === "task_reminder") && (d?.due_date || d?.due_at)) {
+                                      const dt = new Date(d.due_date || d.due_at);
+                                      if (!isNaN(dt.getTime())) return `Due ${format(dt, "EEE d MMM")}`;
+                                    }
+                                    return format(new Date(notification.created_at), "MMM d, h:mm a");
+                                  })()}
                                 </p>
                               </div>
                               {!isRead && (
