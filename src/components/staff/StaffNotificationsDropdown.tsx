@@ -604,6 +604,11 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                               <div className="flex-1 min-w-0">
                                 <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
                                   {getNotificationTitle(notification)}
+                                  {notification.event_data?.cross_site_source_label && (
+                                    <span className="ml-2 text-[10px] uppercase tracking-wider text-primary border border-primary/30 rounded px-1.5 py-0.5 align-middle">
+                                      {notification.event_data.cross_site_source_label}
+                                    </span>
+                                  )}
                                 </p>
                                 
                                 {/* Rich improvement report card */}
