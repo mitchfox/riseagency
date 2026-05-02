@@ -21,9 +21,6 @@ verify_jwt = false
 [functions.track-visit]
 verify_jwt = false
 
-[functions.ingest-cross-site-notification]
-verify_jwt = false
-
 [functions.fetch-team-fixtures]
 verify_jwt = true
 
