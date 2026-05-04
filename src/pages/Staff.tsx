@@ -155,6 +155,7 @@ import {
   LayoutGrid,
   Monitor,
   BarChart3,
+  Brain,
 } from "lucide-react";
 
 const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
@@ -905,6 +906,7 @@ const Staff = () => {
           { id: '_group_programming', title: 'Programming', isGroupLabel: true },
           { id: 'strengthpower', title: 'Strength, Power & Speed', icon: Dumbbell },
           { id: 'nutrition', title: 'Nutrition', icon: UtensilsCrossed },
+          { id: 'psychology', title: 'Psychology', icon: Brain },
         ]
       },
       {
@@ -1116,6 +1118,7 @@ const Staff = () => {
     videoanalysis: ['video', 'footage', 'annotations', 'clips', 'timestamps'],
     strengthpower: ['strength', 'power', 'speed', 'gym', 'training', 'exercises', 'programming'],
     nutrition: ['nutrition', 'diet', 'food', 'macros', 'calories', 'meal', 'supplements'],
+    psychology: ['psychology', 'spq', 'mental', 'confidence', 'resilience', 'personality'],
     activitylog: ['audit', 'activity', 'log', 'history', 'actions'],
     dataexport: ['export', 'backup', 'download', 'csv', 'data'],
     streams: ['stream', 'live', 'watch', 'channel', 'broadcast', 'tv'],
@@ -1748,6 +1751,7 @@ const Staff = () => {
                   {expandedSection === 'tacticsboard' && <TacticsBoard />}
                   {expandedSection === 'meetings' && <Meetings />}
                   {expandedSection === 'coachingdata' && <CoachingDataSection />}
+                  {expandedSection === 'psychology' && <PsychologySection />}
                   {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
