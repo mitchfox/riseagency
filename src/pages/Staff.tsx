@@ -95,6 +95,7 @@ import { DatabaseExport } from "@/components/staff/DatabaseExport";
 import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
+import { PsychologySection } from "@/components/staff/programming/PsychologySection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
 import { TransferReports } from "@/components/staff/TransferReports";
 import { PortalManagement } from "@/components/staff/PortalManagement";
@@ -154,6 +155,7 @@ import {
   LayoutGrid,
   Monitor,
   BarChart3,
+  Brain,
 } from "lucide-react";
 
 const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
@@ -182,7 +184,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -904,6 +906,7 @@ const Staff = () => {
           { id: '_group_programming', title: 'Programming', isGroupLabel: true },
           { id: 'strengthpower', title: 'Strength, Power & Speed', icon: Dumbbell },
           { id: 'nutrition', title: 'Nutrition', icon: UtensilsCrossed },
+          { id: 'psychology', title: 'Psychology', icon: Brain },
         ]
       },
       {
@@ -1115,6 +1118,7 @@ const Staff = () => {
     videoanalysis: ['video', 'footage', 'annotations', 'clips', 'timestamps'],
     strengthpower: ['strength', 'power', 'speed', 'gym', 'training', 'exercises', 'programming'],
     nutrition: ['nutrition', 'diet', 'food', 'macros', 'calories', 'meal', 'supplements'],
+    psychology: ['psychology', 'spq', 'mental', 'confidence', 'resilience', 'personality'],
     activitylog: ['audit', 'activity', 'log', 'history', 'actions'],
     dataexport: ['export', 'backup', 'download', 'csv', 'data'],
     streams: ['stream', 'live', 'watch', 'channel', 'broadcast', 'tv'],
@@ -1747,6 +1751,7 @@ const Staff = () => {
                   {expandedSection === 'tacticsboard' && <TacticsBoard />}
                   {expandedSection === 'meetings' && <Meetings />}
                   {expandedSection === 'coachingdata' && <CoachingDataSection />}
+                  {expandedSection === 'psychology' && <PsychologySection />}
                   {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}

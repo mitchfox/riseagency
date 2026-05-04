@@ -4387,6 +4387,84 @@ export type Database = {
         }
         Relationships: []
       }
+      psychology_spq_reports: {
+        Row: {
+          age_band: string | null
+          created_at: string
+          created_by: string | null
+          factor_scores: Json
+          gender_norm: string
+          id: string
+          is_shared: boolean
+          parsed_answers: Json
+          pasted_answers: string | null
+          player_id: string | null
+          player_name: string
+          recommendations: string | null
+          report_summary: string | null
+          scale_scores: Json
+          share_slug: string
+          updated_at: string
+          visual_one_url: string | null
+          visual_two_url: string | null
+        }
+        Insert: {
+          age_band?: string | null
+          created_at?: string
+          created_by?: string | null
+          factor_scores?: Json
+          gender_norm?: string
+          id?: string
+          is_shared?: boolean
+          parsed_answers?: Json
+          pasted_answers?: string | null
+          player_id?: string | null
+          player_name: string
+          recommendations?: string | null
+          report_summary?: string | null
+          scale_scores?: Json
+          share_slug?: string
+          updated_at?: string
+          visual_one_url?: string | null
+          visual_two_url?: string | null
+        }
+        Update: {
+          age_band?: string | null
+          created_at?: string
+          created_by?: string | null
+          factor_scores?: Json
+          gender_norm?: string
+          id?: string
+          is_shared?: boolean
+          parsed_answers?: Json
+          pasted_answers?: string | null
+          player_id?: string | null
+          player_name?: string
+          recommendations?: string | null
+          report_summary?: string | null
+          scale_scores?: Json
+          share_slug?: string
+          updated_at?: string
+          visual_one_url?: string | null
+          visual_two_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psychology_spq_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psychology_spq_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_config: {
         Row: {
           created_at: string | null
@@ -6422,6 +6500,22 @@ export type Database = {
       }
       cleanup_expired_video_analyses: { Args: never; Returns: undefined }
       get_player_name_by_email: { Args: { _email: string }; Returns: string }
+      get_shared_spq_report: {
+        Args: { _share_slug: string }
+        Returns: {
+          age_band: string
+          created_at: string
+          factor_scores: Json
+          gender_norm: string
+          id: string
+          player_name: string
+          recommendations: string
+          report_summary: string
+          scale_scores: Json
+          visual_one_url: string
+          visual_two_url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
