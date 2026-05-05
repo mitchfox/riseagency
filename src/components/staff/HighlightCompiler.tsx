@@ -363,6 +363,25 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
     updateClips([...accepted, ...pending]);
   };
 
+  const movePendingClip = (index: number, direction: "up" | "down") => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = clips.filter(c => c.status === "pending");
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (target < 0 || target >= pending.length) return;
+    [pending[index], pending[target]] = [pending[target], pending[index]];
+    updateClips([...accepted, ...pending]);
+  };
+
+  const sortPendingByScore = () => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = [...clips.filter(c => c.status === "pending")];
+    const hasScore = pending.filter(c => c.r90Score != null || c.actionScore != null);
+    const noScore = pending.filter(c => c.r90Score == null && c.actionScore == null);
+    hasScore.sort((a, b) => (b.actionScore ?? b.r90Score ?? 0) - (a.actionScore ?? a.r90Score ?? 0));
+    updateClips([...accepted, ...hasScore, ...noScore]);
+    toast.success("Pending clips sorted by score (highest first)");
+  };
+
   const togglePlay = (id: string) => {
     const video = videoRefs.current[id];
     if (!video) return;
