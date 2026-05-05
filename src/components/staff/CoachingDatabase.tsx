@@ -255,8 +255,8 @@ const getScoreColor = (score: number | string | null) => {
   return 'bg-muted text-muted-foreground';
 };
 
-export const CoachingDatabase = ({ isAdmin }: { isAdmin: boolean }) => {
-  const [activeTab, setActiveTab] = useState<TableType>('coaching_sessions');
+export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: boolean; initialTable?: TableType }) => {
+  const [activeTab, setActiveTab] = useState<TableType>(initialTable ?? 'coaching_sessions');
   const [items, setItems] = useState<CoachingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
