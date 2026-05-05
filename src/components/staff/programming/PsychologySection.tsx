@@ -171,7 +171,13 @@ export const PsychologySection = () => {
         <h2 className="text-xl font-semibold">Psychology</h2>
       </div>
       <Tabs defaultValue="spq">
-        <TabsList><TabsTrigger value="spq">SPQ</TabsTrigger></TabsList>
+        <TabsList>
+          <TabsTrigger value="spq">SPQ</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
+        </TabsList>
+        <TabsContent value="sessions" className="space-y-4">
+          <CoachingDatabase initialTable="psychological_sessions" />
+        </TabsContent>
         <TabsContent value="spq" className="space-y-4">
           <Card>
             <CardContent className="grid gap-4 p-4 lg:grid-cols-[1fr_1.4fr]">
@@ -208,6 +214,8 @@ export const PsychologySection = () => {
                     <div className="grid grid-cols-[180px_1fr_60px] items-center gap-2 text-[10px] text-muted-foreground">
                       <div />
                       <div className="relative h-5">
+                        <span className="absolute left-0 -translate-x-3 text-foreground font-bold">&lt;</span>
+                        <span className="absolute right-0 translate-x-3 text-foreground font-bold">&gt;</span>
                         {Array.from({ length: 11 }, (_, i) => i).map(n => (
                           <div key={n} className="absolute -translate-x-1/2 text-center" style={{ left: `${(n / 10) * 100}%` }}>{n}</div>
                         ))}
@@ -287,28 +295,75 @@ export const PsychologySection = () => {
                   <Button variant="outline" size="sm" onClick={() => captureVisual(visualTwoRef.current, `${playerName || 'player'}-spq-matrix`)} className="gap-2"><Download className="h-4 w-4" />Download Matrix</Button>
                 </div>
 
-                {/* Scale band table */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Scale bands</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-[1fr_60px_120px] gap-2 text-xs">
-                      <div className="font-semibold">Scale</div>
-                      <div className="text-right font-semibold">Sten</div>
-                      <div className="font-semibold">Band</div>
-                      {scaleScores.map(s => {
-                        const b = stenBand(s.sten);
-                        const c = stenBandColor(b);
-                        return (
-                          <div key={s.scale} className="contents">
-                            <div>{s.scale}</div>
-                            <div className="text-right font-semibold" style={{ color: c }}>{formatSten(s.stenRounded)}</div>
-                            <div style={{ color: c }}>{stenBandLabel(b)}</div>
+                {/* Scale bands as percentile lineup (1 best of 100 → 100 worst of 100) */}
+                <Card ref={visualThreeRef} className="bg-background">
+                  <CardHeader>
+                    <CardTitle className="text-base">{playerName || "Player"} SPQ Scale Bands</CardTitle>
+                    <p className="text-xs text-muted-foreground">Lineup of 1 to 100, where 1 is the best in 100 and 100 is the worst in 100, against the {genderNorm} norm group.</p>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {scaleScores.map(s => {
+                      const rank = stenToRankOf100(s.sten, s.z);
+                      const b = stenBand(s.sten);
+                      const c = stenBandColor(b);
+                      return (
+                        <div key={s.scale} className="grid grid-cols-[180px_1fr_70px_110px] items-center gap-2 text-xs">
+                          <div className="font-medium">{s.scale}</div>
+                          <div className="relative h-5 rounded border border-border bg-card overflow-hidden">
+                            {/* tick marks every 10 */}
+                            {Array.from({ length: 11 }, (_, i) => i * 10).map(t => (
+                              <div key={t} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${t}%` }} />
+                            ))}
+                            <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${rank}%`, background: c }} />
                           </div>
-                        );
-                      })}
+                          <div className="text-right font-bold" style={{ color: c }}>{rank}/100</div>
+                          <div className="text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
+                        </div>
+                      );
+                    })}
+                    <div className="grid grid-cols-[180px_1fr_70px_110px] items-center gap-2 text-[10px] text-muted-foreground pt-1">
+                      <div />
+                      <div className="relative h-3">
+                        <span className="absolute left-0 -translate-x-2 font-bold text-foreground">&lt;</span>
+                        <span className="absolute right-0 translate-x-2 font-bold text-foreground">&gt;</span>
+                        <span className="absolute left-0">1</span>
+                        <span className="absolute left-1/2 -translate-x-1/2">50</span>
+                        <span className="absolute right-0">100</span>
+                      </div>
+                      <div />
+                      <div />
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Areas to work on — guidance from SPQ manual */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Areas to focus on</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    {scaleScores.map(s => {
+                      const b = stenBand(s.sten);
+                      const c = stenBandColor(b);
+                      const guidance = SPQ_SCALE_GUIDANCE[s.scale];
+                      const advice = !guidance ? "" : b === 'work-on' ? guidance.workOn : b === 'improve-on' ? guidance.improveOn : guidance.capitaliseOn;
+                      return (
+                        <div key={s.scale} className="rounded-md border border-border p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
+                              <span className="font-semibold">{s.scale}</span>
+                              <span className="text-xs text-muted-foreground">{stenBandLabel(b)} · sten {formatSten(s.stenRounded)}</span>
+                            </div>
+                          </div>
+                          {advice && <p className="mt-1 text-xs text-foreground/85">{advice}</p>}
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => captureVisual(visualThreeRef.current, `${playerName || 'player'}-spq-bands`)} className="gap-2"><Download className="h-4 w-4" />Download Scale Bands</Button>
+                </div>
               </div>
             </CardContent>
           </Card>
