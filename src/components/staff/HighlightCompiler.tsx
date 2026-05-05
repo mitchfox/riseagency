@@ -662,6 +662,11 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
               <Badge variant="secondary" className="text-xs">{pendingClips.length}</Badge>
             </div>
             <div className="flex gap-2">
+              {pendingClips.some(c => c.r90Score != null || c.actionScore != null) && (
+                <Button variant="outline" size="sm" onClick={sortPendingByScore} className="text-xs h-7">
+                  <ArrowDownWideNarrow className="h-3 w-3 mr-1" /> Sort by Score
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={acceptAll} className="text-xs h-7">
                 <Check className="h-3 w-3 mr-1" /> Accept All
               </Button>
@@ -717,6 +722,14 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
                   </div>
 
                   <div className="flex border-t">
+                    <button onClick={() => movePendingClip(pendingClips.indexOf(clip), 'up')} disabled={pendingClips.indexOf(clip) === 0} className="px-2 flex items-center justify-center text-xs hover:bg-accent disabled:opacity-30">
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="w-px bg-border" />
+                    <button onClick={() => movePendingClip(pendingClips.indexOf(clip), 'down')} disabled={pendingClips.indexOf(clip) === pendingClips.length - 1} className="px-2 flex items-center justify-center text-xs hover:bg-accent disabled:opacity-30">
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="w-px bg-border" />
                     <button onClick={() => acceptClip(clip.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-primary">
                       <Check className="h-3.5 w-3.5" /> Accept
                     </button>
