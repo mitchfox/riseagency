@@ -163,11 +163,26 @@ const GENDER_NORMS: Record<SpqGenderNorm, Record<string, { mean: number; sd: num
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
+export type SpqBand = 'work-on' | 'improve-on' | 'capitalise-on';
+
+export const stenBand = (sten: number): SpqBand => {
+  if (sten <= 3.5) return 'work-on';
+  if (sten <= 7.5) return 'improve-on';
+  return 'capitalise-on';
+};
+
+export const stenBandLabel = (band: SpqBand) =>
+  band === 'work-on' ? 'Work On' : band === 'improve-on' ? 'Improve On' : 'Capitalise On';
+
+export const stenBandColor = (band: SpqBand) =>
+  band === 'work-on' ? '#d14343' : band === 'improve-on' ? '#e0a826' : '#3aa564';
+
 export const parseSpqAnswers = (text: string): Record<number, number> => {
   const answers: Record<number, number> = {};
   const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   for (const line of lines) {
-    const match = line.match(/^\s*(\d{1,3})\D+([0-4])\s*$/);
+    // Match: leading item number, then anything (statement may contain digits like "100 percent"), then trailing 0-4 answer.
+    const match = line.match(/^\s*(\d{1,3})\b[\s\S]*?([0-4])\s*$/);
     if (!match) continue;
     const item = Number(match[1]);
     const value = Number(match[2]);
@@ -189,7 +204,9 @@ export const calculateSpqScores = (answers: Record<number, number>, gender: SpqG
     const answered = items.filter(item => answers[item.item] != null).length;
     const norm = GENDER_NORMS[gender][scale];
     const z = norm ? (raw - norm.mean) / norm.sd : 0;
-    const sten = clamp((z * 2) + 5.5, 1, 10);
+    const stenRaw = (z * 2) + 5.5;
+    // Per manual: cap at 10.0, floor at 0.0; show one decimal.
+    const sten = clamp(stenRaw, 0, 10);
     return {
       scale,
       factor,
@@ -200,9 +217,9 @@ export const calculateSpqScores = (answers: Record<number, number>, gender: SpqG
       sd: norm?.sd ?? 1,
       z,
       sten,
-      stenRounded: clamp(Math.round(sten), 1, 10),
-      confidenceLow: clamp(Math.round(sten) - 1, 1, 10),
-      confidenceHigh: clamp(Math.round(sten) + 1, 1, 10),
+      stenRounded: Math.round(sten * 10) / 10,
+      confidenceLow: Math.max(0, Math.round((sten - 1) * 10) / 10),
+      confidenceHigh: Math.min(10, Math.round((sten + 1) * 10) / 10),
     } satisfies SpqScaleScore;
   });
 
