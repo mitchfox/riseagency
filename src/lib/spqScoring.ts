@@ -177,6 +177,104 @@ export const stenBandLabel = (band: SpqBand) =>
 export const stenBandColor = (band: SpqBand) =>
   band === 'work-on' ? '#d14343' : band === 'improve-on' ? '#e0a826' : '#3aa564';
 
+// Cumulative normal distribution → percentile (0..1) from a z-score.
+// Approximation good to ~1e-7. Used to express SPQ scale results as a
+// "1 = best of 100, 100 = worst of 100" league-style ranking, since the
+// SPQ manual frames results as relative position vs the norm group.
+const cdfNormal = (z: number) => {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422804014327 * Math.exp(-z * z / 2);
+  const p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z >= 0 ? 1 - p : p;
+};
+
+/** Return rank-from-best out of 100, where 1 = best, 100 = worst (clamped 1..100). */
+export const stenToRankOf100 = (sten: number, z: number): number => {
+  // Higher sten = better, so percentile-from-top = 1 - CDF(z)
+  const fromTop = 1 - cdfNormal(z);
+  const rank = Math.round(fromTop * 99) + 1; // 1..100
+  return Math.max(1, Math.min(100, rank));
+};
+
+/** Short, manual-aligned guidance for each SPQ scale. Used in the report. */
+export const SPQ_SCALE_GUIDANCE: Record<string, { workOn: string; improveOn: string; capitaliseOn: string }> = {
+  Achievement: {
+    workOn: 'Reset goals around effort and standards. Track daily commitment and protect non-negotiables before sessions.',
+    improveOn: 'Stretch the bar in training. Add one progressive challenge each week and review against personal best.',
+    capitaliseOn: 'Channel drive into leadership and standards across the squad. Use as a model for newer players.',
+  },
+  Adaptability: {
+    workOn: 'Practise reacting to in-session change-ups. Rehearse one new constraint or rule per session and reflect on it.',
+    improveOn: 'Add variability to drills and game scenarios. Force decisions in unfamiliar shapes or numbers.',
+    capitaliseOn: 'Use as a tool for tactical flexibility. Take on roles in multiple positions or systems.',
+  },
+  Competitiveness: {
+    workOn: 'Build small competitive cues into solo work. Frame drills as duels with measurable winners.',
+    improveOn: 'Use score-based mini games and 1v1 contexts to sharpen the edge without losing composure.',
+    capitaliseOn: 'Drive intensity in tight game phases. Use this energy to lift teammates in big moments.',
+  },
+  Conscientiousness: {
+    workOn: 'Tighten daily routines: sleep, prep, recovery. Build a non-negotiable pre-session checklist.',
+    improveOn: 'Add structure to the week and review adherence honestly. Small daily wins compound.',
+    capitaliseOn: 'Lean on this consistency to take ownership of standards and lead the prep culture.',
+  },
+  Visualisation: {
+    workOn: 'Start with 3 minutes daily of guided imagery: rehearse the next session in detail.',
+    improveOn: 'Add specific match scenarios and decision moments to visual rehearsal.',
+    capitaliseOn: 'Use pre-match imagery as part of activation. Rehearse high-pressure moments in advance.',
+  },
+  Intuition: {
+    workOn: 'Trust first reads in low-stakes drills. Reflect after sessions on what your gut said vs what happened.',
+    improveOn: 'Pair instinct with structured cues. Decide-then-confirm on tactical patterns.',
+    capitaliseOn: 'Lead through anticipation. Communicate reads early to teammates.',
+  },
+  'Goal Setting': {
+    workOn: 'Set one weekly process goal that is specific and measurable. Review it each Sunday.',
+    improveOn: 'Add tiered goals (session, week, block) with concrete metrics.',
+    capitaliseOn: 'Use long-range goals to map a development pathway and share it with coaches.',
+  },
+  'Managing Pressure': {
+    workOn: 'Practise pressure rehearsal: scoreboard, time-on-clock, crowd audio. Add breathing reset routines.',
+    improveOn: 'Build pre-performance routines and trigger words for high-stakes phases.',
+    capitaliseOn: 'Take responsibility in critical moments — penalties, last actions, set pieces.',
+  },
+  'Self-Efficacy': {
+    workOn: 'Bank evidence: log small wins after every session to rebuild belief.',
+    improveOn: 'Connect prep quality to game confidence. Speak in specific, evidence-based terms.',
+    capitaliseOn: 'Use confidence to back risk-taking decisions and lead in tight phases.',
+  },
+  'Fear of Failure': {
+    workOn: 'Reframe errors as data. Use a "next play" cue and focus on the very next action only.',
+    improveOn: 'Practise low-stakes risk-taking in training to build a healthier relationship with mistakes.',
+    capitaliseOn: 'Stay brave on the ball in important moments and back teammates to do the same.',
+  },
+  Flow: {
+    workOn: 'Reduce overthinking: use external focus cues (where the ball goes, not how you move).',
+    improveOn: 'Build pre-session routines that reliably trigger immersion.',
+    capitaliseOn: 'Identify the conditions that get you "in the zone" and engineer them on match days.',
+  },
+  'Stress Management': {
+    workOn: 'Address the basics: sleep, nutrition, downtime. Add one daily decompression habit.',
+    improveOn: 'Layer breathing, journaling and recovery rituals around heavy weeks.',
+    capitaliseOn: 'Use composure to set tone for the squad in heavy fixture runs.',
+  },
+  Emotions: {
+    workOn: 'Build a simple "name it to tame it" habit post-session. Talk it out with one trusted person.',
+    improveOn: 'Use a routine for cooling off between drills or after errors.',
+    capitaliseOn: 'Lead emotionally on big days; set tone in dressing room and warm-up.',
+  },
+  'Self-Talk': {
+    workOn: 'Replace one recurring negative phrase with a specific cue word. Practise it on the training pitch.',
+    improveOn: 'Build a small set of trigger phrases for different moments (start, recovery, pressure).',
+    capitaliseOn: 'Coach yourself loudly and back others with positive cues during play.',
+  },
+  'Self-Awareness': {
+    workOn: 'Open up to feedback. Schedule short weekly check-ins with a coach or mentor.',
+    improveOn: 'Pair self-review (clip, journal) with external feedback to triangulate.',
+    capitaliseOn: 'Use insight to fast-track development plans and own your next steps.',
+  },
+};
+
 export const parseSpqAnswers = (text: string): Record<number, number> => {
   const answers: Record<number, number> = {};
   const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);

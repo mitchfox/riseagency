@@ -4406,6 +4406,7 @@ export type Database = {
           share_slug: string
           updated_at: string
           visual_one_url: string | null
+          visual_three_url: string | null
           visual_two_url: string | null
         }
         Insert: {
@@ -4426,6 +4427,7 @@ export type Database = {
           share_slug?: string
           updated_at?: string
           visual_one_url?: string | null
+          visual_three_url?: string | null
           visual_two_url?: string | null
         }
         Update: {
@@ -4446,6 +4448,7 @@ export type Database = {
           share_slug?: string
           updated_at?: string
           visual_one_url?: string | null
+          visual_three_url?: string | null
           visual_two_url?: string | null
         }
         Relationships: [
@@ -6513,6 +6516,7 @@ export type Database = {
           report_summary: string
           scale_scores: Json
           visual_one_url: string
+          visual_three_url: string
           visual_two_url: string
         }[]
       }

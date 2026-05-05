@@ -1,0 +1,1 @@
+ALTER TABLE public.psychology_spq_reports ADD COLUMN IF NOT EXISTS visual_three_url text;

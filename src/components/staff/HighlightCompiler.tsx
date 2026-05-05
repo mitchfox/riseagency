@@ -363,6 +363,25 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
     updateClips([...accepted, ...pending]);
   };
 
+  const movePendingClip = (index: number, direction: "up" | "down") => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = clips.filter(c => c.status === "pending");
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (target < 0 || target >= pending.length) return;
+    [pending[index], pending[target]] = [pending[target], pending[index]];
+    updateClips([...accepted, ...pending]);
+  };
+
+  const sortPendingByScore = () => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = [...clips.filter(c => c.status === "pending")];
+    const hasScore = pending.filter(c => c.r90Score != null || c.actionScore != null);
+    const noScore = pending.filter(c => c.r90Score == null && c.actionScore == null);
+    hasScore.sort((a, b) => (b.actionScore ?? b.r90Score ?? 0) - (a.actionScore ?? a.r90Score ?? 0));
+    updateClips([...accepted, ...hasScore, ...noScore]);
+    toast.success("Pending clips sorted by score (highest first)");
+  };
+
   const togglePlay = (id: string) => {
     const video = videoRefs.current[id];
     if (!video) return;
@@ -643,6 +662,11 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
               <Badge variant="secondary" className="text-xs">{pendingClips.length}</Badge>
             </div>
             <div className="flex gap-2">
+              {pendingClips.some(c => c.r90Score != null || c.actionScore != null) && (
+                <Button variant="outline" size="sm" onClick={sortPendingByScore} className="text-xs h-7">
+                  <ArrowDownWideNarrow className="h-3 w-3 mr-1" /> Sort by Score
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={acceptAll} className="text-xs h-7">
                 <Check className="h-3 w-3 mr-1" /> Accept All
               </Button>
@@ -698,6 +722,14 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
                   </div>
 
                   <div className="flex border-t">
+                    <button onClick={() => movePendingClip(pendingClips.indexOf(clip), 'up')} disabled={pendingClips.indexOf(clip) === 0} className="px-2 flex items-center justify-center text-xs hover:bg-accent disabled:opacity-30">
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="w-px bg-border" />
+                    <button onClick={() => movePendingClip(pendingClips.indexOf(clip), 'down')} disabled={pendingClips.indexOf(clip) === pendingClips.length - 1} className="px-2 flex items-center justify-center text-xs hover:bg-accent disabled:opacity-30">
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="w-px bg-border" />
                     <button onClick={() => acceptClip(clip.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium hover:bg-accent transition-colors text-primary">
                       <Check className="h-3.5 w-3.5" /> Accept
                     </button>

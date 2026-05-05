@@ -13,6 +13,7 @@ type Report = {
   report_summary: string | null;
   visual_one_url: string | null;
   visual_two_url: string | null;
+  visual_three_url: string | null;
   created_at: string;
 };
 
@@ -50,6 +51,7 @@ const SharedSpqReport = () => {
           {report.visual_one_url && <img src={report.visual_one_url} alt="SPQ sten profile" className="rounded-md border border-border" />}
           {report.visual_two_url && <img src={report.visual_two_url} alt="SPQ matrix" className="rounded-md border border-border" />}
         </div>
+        {report.visual_three_url && <img src={report.visual_three_url} alt="SPQ scale bands" className="rounded-md border border-border w-full" />}
       </section>
     </main>
   );
