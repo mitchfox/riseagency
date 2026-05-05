@@ -20,9 +20,12 @@ import {
   stenBand,
   stenBandColor,
   stenBandLabel,
+  stenToRankOf100,
+  SPQ_SCALE_GUIDANCE,
   type SpqGenderNorm,
   type SpqScaleScore,
 } from "@/lib/spqScoring";
+import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 
 type PlayerOption = { id: string; name: string; position?: string | null; image_url?: string | null; representation_status?: string | null };
 
@@ -57,6 +60,7 @@ export const PsychologySection = () => {
   const [savedOpen, setSavedOpen] = useState(false);
   const visualOneRef = useRef<HTMLDivElement>(null);
   const visualTwoRef = useRef<HTMLDivElement>(null);
+  const visualThreeRef = useRef<HTMLDivElement>(null);
 
   const loadSaved = async () => {
     const { data } = await (supabase as any)
@@ -100,7 +104,7 @@ export const PsychologySection = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${safeName}.jpg`;
+      a.download = `${safeName}.png`;
       a.click();
       URL.revokeObjectURL(url);
       return null;
@@ -117,6 +121,7 @@ export const PsychologySection = () => {
     try {
       const visualOneUrl = await captureVisual(visualOneRef.current, `${playerName}-spq-sten`, true);
       const visualTwoUrl = await captureVisual(visualTwoRef.current, `${playerName}-spq-matrix`, true);
+      const visualThreeUrl = await captureVisual(visualThreeRef.current, `${playerName}-spq-bands`, true);
       const { data, error } = await (supabase as any).from("psychology_spq_reports").insert({
         player_id: playerId === "none" ? null : playerId,
         player_name: playerName.trim(),
@@ -130,6 +135,7 @@ export const PsychologySection = () => {
         recommendations: reportText || null,
         visual_one_url: visualOneUrl,
         visual_two_url: visualTwoUrl,
+        visual_three_url: visualThreeUrl,
       }).select("share_slug").single();
       if (error) throw error;
       const url = `${window.location.origin}/spq-report/${data.share_slug}`;
