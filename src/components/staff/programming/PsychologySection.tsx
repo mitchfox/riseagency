@@ -26,6 +26,15 @@ import {
   type SpqScaleScore,
 } from "@/lib/spqScoring";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
+import { MarkdownContent } from "@/utils/markdownRenderer";
+
+// Tiny inline person silhouette icon for the scale-bands marker.
+const PersonMarker = ({ color }: { color: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <circle cx="12" cy="6" r="3.5" fill={color} />
+    <path d="M4 22c0-4.4 3.6-8 8-8s8 3.6 8 8" fill={color} />
+  </svg>
+);
 
 type PlayerOption = { id: string; name: string; position?: string | null; image_url?: string | null; representation_status?: string | null };
 
