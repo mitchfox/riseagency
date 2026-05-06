@@ -387,7 +387,7 @@ export const PsychologySection = () => {
                             <div className="flex items-center gap-2">
                               <span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
                               <span className="font-semibold">{s.scale}</span>
-                              <span className="text-xs text-muted-foreground">{stenBandLabel(b)} · sten {formatSten(s.stenRounded)}</span>
+                              <span className="text-xs text-muted-foreground">{stenBandLabel(b)} · {ordinal(stenToRankOf100(s.sten, s.z))} of 100</span>
                             </div>
                           </div>
                           {advice && <p className="mt-1 text-xs text-foreground/85">{advice}</p>}
