@@ -195,36 +195,24 @@ const SpqPublicTest = () => {
           <Brain className="h-7 w-7 text-primary" />
           <h1 className="text-2xl font-semibold">{name || 'Your'} SPQ Results</h1>
         </div>
-        <Card><CardHeader><CardTitle>Sten profile</CardTitle></CardHeader><CardContent className="space-y-2">
-          {results?.scaleScores.map(s => {
-            const b = stenBand(s.sten); const c = stenBandColor(b);
-            const pct = (s.stenRounded / 10) * 100;
-            return (
-              <div key={s.scale} className="grid grid-cols-[160px_1fr_70px] items-center gap-3 text-sm">
-                <div className="font-medium">{s.scale}</div>
-                <div className="relative h-6 rounded border border-border bg-card">
-                  <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ left: `${pct}%`, background: c }} />
-                </div>
-                <div className="text-right font-bold" style={{ color: c }}>{s.stenRounded.toFixed(1)}</div>
-              </div>
-            );
-          })}
-        </CardContent></Card>
-        <Card><CardHeader><CardTitle>Percentile lineup (1 best of 100)</CardTitle></CardHeader><CardContent className="space-y-2">
+        <Card><CardHeader><CardTitle>Where you rank (1 = best of 100)</CardTitle></CardHeader><CardContent className="space-y-2">
           {results?.scaleScores.map(s => {
             const rank = stenToRankOf100(s.sten, s.z);
             const b = stenBand(s.sten); const c = stenBandColor(b);
+            const ord = (n: number) => { const v = n % 100; const s = ['th','st','nd','rd']; return n + (s[(v-20)%10] || s[v] || s[0]); };
+            const leftPct = 100 - rank; // best on the right
             return (
-              <div key={s.scale} className="grid grid-cols-[160px_1fr_70px_110px] items-center gap-3 text-sm">
+              <div key={s.scale} className="grid grid-cols-[140px_1fr_70px_110px] items-center gap-3 text-sm">
                 <div className="font-medium">{s.scale}</div>
                 <div className="relative h-5 rounded border border-border bg-card">
-                  <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ left: `${rank}%`, background: c }} />
+                  <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ left: `${leftPct}%`, background: c }} />
                 </div>
-                <div className="text-right font-bold" style={{ color: c }}>{rank}/100</div>
+                <div className="text-right font-bold" style={{ color: c }}>{ord(rank)}</div>
                 <div className="text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
               </div>
             );
           })}
+          <div className="pt-1 text-[11px] text-muted-foreground">← Worst in 100 · Best in 100 →</div>
         </CardContent></Card>
         <Card><CardHeader><CardTitle>What to focus on</CardTitle></CardHeader><CardContent className="space-y-2">
           {results?.scaleScores.map(s => {
