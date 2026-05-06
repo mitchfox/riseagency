@@ -1363,13 +1363,13 @@ const PlayerDetail = () => {
           
           {/* Season Report Dialog - Shows the season data table */}
           <Dialog open={seasonReportOpen} onOpenChange={setSeasonReportOpen}>
-            <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[100vw] sm:max-w-5xl w-full max-h-[90dvh] overflow-y-auto p-3 sm:p-6 pt-12 sm:pt-12">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {player?.name} - Season Performance Report
                 </DialogTitle>
               </DialogHeader>
-              <div className="mt-2">
+              <div className="mt-2 overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
                 {performanceReports.length > 0 ? (
                   <AnalysisDataTab
                     analyses={performanceReports.map((r: any) => ({
