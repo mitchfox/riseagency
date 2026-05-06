@@ -5475,6 +5475,82 @@ export type Database = {
         }
         Relationships: []
       }
+      spq_test_submissions: {
+        Row: {
+          age_band: string
+          created_at: string
+          factor_scores: Json
+          gender_norm: string
+          id: string
+          matched_player_id: string | null
+          responses: Json
+          saved_report_id: string | null
+          scale_scores: Json
+          submitter_email: string | null
+          submitter_name: string | null
+          visitor_city: string | null
+          visitor_country: string | null
+          visitor_ip: string | null
+          visitor_user_agent: string | null
+        }
+        Insert: {
+          age_band: string
+          created_at?: string
+          factor_scores: Json
+          gender_norm: string
+          id?: string
+          matched_player_id?: string | null
+          responses: Json
+          saved_report_id?: string | null
+          scale_scores: Json
+          submitter_email?: string | null
+          submitter_name?: string | null
+          visitor_city?: string | null
+          visitor_country?: string | null
+          visitor_ip?: string | null
+          visitor_user_agent?: string | null
+        }
+        Update: {
+          age_band?: string
+          created_at?: string
+          factor_scores?: Json
+          gender_norm?: string
+          id?: string
+          matched_player_id?: string | null
+          responses?: Json
+          saved_report_id?: string | null
+          scale_scores?: Json
+          submitter_email?: string | null
+          submitter_name?: string | null
+          visitor_city?: string | null
+          visitor_country?: string | null
+          visitor_ip?: string | null
+          visitor_user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spq_test_submissions_matched_player_id_fkey"
+            columns: ["matched_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spq_test_submissions_matched_player_id_fkey"
+            columns: ["matched_player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spq_test_submissions_saved_report_id_fkey"
+            columns: ["saved_report_id"]
+            isOneToOne: false
+            referencedRelation: "psychology_spq_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_activity_log: {
         Row: {
           action: string
