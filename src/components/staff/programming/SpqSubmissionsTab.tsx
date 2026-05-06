@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInYears, parseISO } from "date-fns";
+import { stenToRankOf100 } from "@/lib/spqScoring";
+
+const ord = (n: number) => { const s = ["th","st","nd","rd"]; const v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
 
 type Submission = {
   id: string;
@@ -156,7 +159,8 @@ export const SpqSubmissionsTab = () => {
                           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {(s.scale_scores || []).map((sc: any) => (
                               <div key={sc.scale} className="rounded-md border border-border bg-card p-2 text-xs">
-                                <div className="flex justify-between"><span className="font-semibold">{sc.scale}</span><span className="font-bold text-primary">{Number(sc.stenRounded).toFixed(1)}/10</span></div>
+                                <div className="flex justify-between"><span className="font-semibold">{sc.scale}</span><span className="font-bold text-primary">{ord(stenToRankOf100(sc.sten ?? sc.stenRounded ?? 5.5, sc.z ?? 0))}</span></div>
+                                <div className="text-[10px] text-muted-foreground">out of 100</div>
                               </div>
                             ))}
                           </div>
