@@ -4,6 +4,8 @@ import { FORM_STAT_OPTIONS } from "@/components/staff/PlayerFormConfigTab";
 
 interface Props { playerId: string; }
 
+type StatItem = { key: string; mode: 'auto' | 'manual'; value: string };
+
 const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
 
 const num = (row: any, key: string): number | null => {
@@ -33,7 +35,7 @@ const fmt = (v: number | null, key: string) => {
 const SUM_KEYS = new Set(["goals", "assists", "xg", "xa"]);
 
 export const PlayerFormBanner = ({ playerId }: Props) => {
-  const [config, setConfig] = useState<{ window_size: number; stats: string[] } | null>(null);
+  const [config, setConfig] = useState<{ window_size: number; stats: StatItem[] } | null>(null);
   const [rows, setRows] = useState<any[]>([]);
 
   useEffect(() => {
@@ -46,7 +48,14 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
         .eq("player_id", playerId)
         .maybeSingle();
       if (cancelled || !cfg || !Array.isArray(cfg.stats) || cfg.stats.length === 0) return;
-      setConfig({ window_size: cfg.window_size || 5, stats: cfg.stats });
+      const items: StatItem[] = cfg.stats
+        .map((it: any) =>
+          typeof it === 'string'
+            ? { key: it, mode: 'auto' as const, value: '' }
+            : { key: it.key, mode: (it.mode === 'manual' ? 'manual' : 'auto') as 'auto' | 'manual', value: it.value != null ? String(it.value) : '' }
+        )
+        .filter((it: StatItem) => FORM_STAT_OPTIONS.some(o => o.key === it.key));
+      setConfig({ window_size: cfg.window_size || 5, stats: items });
 
       const { data: analyses } = await supabase
         .from("player_analysis")
@@ -59,14 +68,23 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
     return () => { cancelled = true; };
   }, [playerId]);
 
-  if (!config || rows.length === 0) return null;
+  if (!config || config.stats.length === 0) return null;
 
-  const items = config.stats.map((key) => {
-    const opt = FORM_STAT_OPTIONS.find(o => o.key === key);
+  const items = config.stats.map((s) => {
+    const opt = FORM_STAT_OPTIONS.find(o => o.key === s.key);
     if (!opt) return null;
-    const mode = SUM_KEYS.has(key) ? 'sum' : 'avg';
-    const value = sumOrAvg(rows, key, mode);
-    return { key, label: opt.label, value };
+    let value: number | null = null;
+    if (s.mode === 'manual') {
+      const trimmed = (s.value ?? '').trim();
+      if (trimmed !== '') {
+        const n = parseFloat(trimmed);
+        value = isNaN(n) ? null : n;
+      }
+    } else {
+      const aggMode = SUM_KEYS.has(s.key) ? 'sum' : 'avg';
+      value = rows.length > 0 ? sumOrAvg(rows, s.key, aggMode) : null;
+    }
+    return { key: s.key, label: opt.label, value };
   }).filter(Boolean) as { key: string; label: string; value: number | null }[];
 
   if (items.length === 0) return null;
