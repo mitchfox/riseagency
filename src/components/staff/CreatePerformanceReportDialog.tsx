@@ -541,7 +541,7 @@ export const CreatePerformanceReportDialog = ({
         // Create mode
         setIsEditMode(false);
         resetForm();
-        fetchPreviousReportStats();
+        // Auto-add of stats removed: staff will manually pick which stats to display.
       }
       fetchFixtures();
       fetchPlayerClub();
@@ -801,12 +801,7 @@ export const CreatePerformanceReportDialog = ({
         
         if (!statsError && stats) {
           setAvailableStats(stats);
-          if (!analysisId) {
-            const nonPer90Keys = stats
-              .filter(s => !s.stat_key.endsWith('_per90') && !hiddenKeys.includes(s.stat_key))
-              .map(s => s.stat_key);
-            setSelectedStatKeys(nonPer90Keys);
-          }
+          // No auto-selection of stats in create mode — staff manually chooses which stats to display.
         }
       }
     } catch (error: any) {
