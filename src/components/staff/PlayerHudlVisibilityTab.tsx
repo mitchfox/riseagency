@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { Loader2, GripVertical, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -233,7 +233,7 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     return m;
   }, [actions]);
 
-  const handleSave = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
     event?.stopPropagation();
     setSaving(true);
