@@ -24,6 +24,7 @@ import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, sea
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { PlayerFormBanner } from "@/components/PlayerFormBanner";
+import { PageLoading } from "@/components/LoadingSpinner";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -459,14 +460,7 @@ const PlayerDetail = () => {
   }, [player]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
-        {!isModal && <Header />}
-        <div className="flex-shrink-0 text-center py-16">
-          <h1 className="text-2xl font-bold text-foreground">{loadingPlayerLabel}</h1>
-        </div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   if (!player) {
