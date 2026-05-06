@@ -23,6 +23,7 @@ import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels, inNumbersStatTranslations } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
+import { PlayerFormBanner } from "@/components/PlayerFormBanner";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
