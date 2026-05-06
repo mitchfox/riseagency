@@ -26,6 +26,15 @@ import {
   type SpqScaleScore,
 } from "@/lib/spqScoring";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
+import { MarkdownContent } from "@/utils/markdownRenderer";
+
+// Tiny inline person silhouette icon for the scale-bands marker.
+const PersonMarker = ({ color }: { color: string }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <circle cx="12" cy="6" r="3.5" fill={color} />
+    <path d="M4 22c0-4.4 3.6-8 8-8s8 3.6 8 8" fill={color} />
+  </svg>
+);
 
 type PlayerOption = { id: string; name: string; position?: string | null; image_url?: string | null; representation_status?: string | null };
 
@@ -180,7 +189,7 @@ export const PsychologySection = () => {
         </TabsContent>
         <TabsContent value="spq" className="space-y-4">
           <Card>
-            <CardContent className="grid gap-4 p-4 lg:grid-cols-[1fr_1.4fr]">
+            <CardContent className="space-y-4 p-4">
               <div className="space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div><Label>Assign to player</Label><PlayerCombobox players={players} value={playerId} onChange={setPlayerId} allValue="none" allLabel="No assigned player" className="mt-1" /></div>
@@ -194,6 +203,13 @@ export const PsychologySection = () => {
                   <Button onClick={generateReport} size="sm" className="gap-2"><Sparkles className="h-4 w-4" />Generate report</Button>
                 </div>
                 <Textarea value={reportText} onChange={e => setReportText(e.target.value)} rows={7} spellCheck lang="en-GB" placeholder="Generated report text" />
+                {reportText && (
+                  <Card className="bg-background">
+                    <CardContent className="p-4 text-sm leading-relaxed">
+                      <MarkdownContent content={reportText} />
+                    </CardContent>
+                  </Card>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={saveReport} disabled={saving} className="gap-2">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save share report</Button>
                   {shareUrl && <Button variant="outline" onClick={() => navigator.clipboard.writeText(shareUrl)} className="gap-2"><Link2 className="h-4 w-4" />Copy URL</Button>}
@@ -205,15 +221,16 @@ export const PsychologySection = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 overflow-x-auto">
+              {/* Visuals — stacked on separate rows so each renders large/high quality */}
+              <div className="space-y-6">
                 {/* Sten Profile */}
-                <Card ref={visualOneRef} className="min-w-[820px] bg-background">
+                <Card ref={visualOneRef} className="bg-background">
                   <CardHeader><CardTitle>{playerName || "Player"} SPQ Sten Profile</CardTitle></CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-2.5">
                     {/* Axis */}
-                    <div className="grid grid-cols-[180px_1fr_60px] items-center gap-2 text-[10px] text-muted-foreground">
+                    <div className="grid grid-cols-[200px_1fr_60px] items-center gap-3 text-[11px] text-muted-foreground">
                       <div />
-                      <div className="relative h-5">
+                      <div className="relative h-6">
                         <span className="absolute left-0 -translate-x-3 text-foreground font-bold">&lt;</span>
                         <span className="absolute right-0 translate-x-3 text-foreground font-bold">&gt;</span>
                         {Array.from({ length: 11 }, (_, i) => i).map(n => (
@@ -229,33 +246,36 @@ export const PsychologySection = () => {
                       const lowPct = (score.confidenceLow / 10) * 100;
                       const highPct = (score.confidenceHigh / 10) * 100;
                       return (
-                        <div key={score.scale} className="grid grid-cols-[180px_1fr_60px] items-center gap-2 text-xs">
+                        <div key={score.scale} className="grid grid-cols-[200px_1fr_60px] items-center gap-3 text-sm">
                           <div className="font-medium">{score.scale}</div>
-                          <div className="relative h-6 rounded border border-border bg-card">
+                          <div className="relative h-8 rounded border border-border bg-card">
                             {Array.from({ length: 9 }, (_, i) => i + 1).map(n => (
                               <div key={n} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${(n / 10) * 100}%` }} />
                             ))}
-                            <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full" style={{ left: `${lowPct}%`, width: `${Math.max(0, highPct - lowPct)}%`, background: colour, opacity: 0.35 }} />
-                            <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${pct}%`, background: colour }} />
+                            <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ left: `${lowPct}%`, width: `${Math.max(0, highPct - lowPct)}%`, background: colour, opacity: 0.35 }} />
+                            <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${pct}%`, background: colour }} />
                           </div>
                           <div className="text-right font-semibold" style={{ color: colour }}>{formatSten(score.stenRounded)}</div>
                         </div>
                       );
                     })}
-                    <div className="pt-2 text-[11px] text-muted-foreground">Bar shows ±1 sten confidence interval. Marker is the sten score (0.1 intervals, capped at 10.0).</div>
                   </CardContent>
                 </Card>
 
                 {/* Matrix */}
-                <Card ref={visualTwoRef} className="min-w-[560px] bg-background">
-                  <CardHeader><CardTitle>SPQ MATRIX</CardTitle></CardHeader>
+                <Card ref={visualTwoRef} className="bg-background">
+                  <CardHeader><CardTitle>SPQ Matrix</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-[28px_1fr] gap-2">
-                      <div className="flex items-center justify-center">
-                        <div className="rotate-180 text-xs font-bold uppercase tracking-wider" style={{ writingMode: "vertical-rl" }}>ACHIEVEMENT AND COMPETITIVENESS →</div>
-                      </div>
-                      <div>
-                        <div className="relative aspect-square w-full border-2 border-foreground">
+                    <div className="mx-auto max-w-[640px]">
+                      <div className="grid grid-cols-[40px_1fr] gap-3">
+                        <div className="flex items-center justify-center">
+                          {/* Y-axis label rotated so it reads bottom→top, ending with arrow at the top */}
+                          <div className="text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+                            Achievement and Competitiveness →
+                          </div>
+                        </div>
+                        <div>
+                          <div className="relative aspect-square w-full border-2 border-foreground">
                           {/* 10x10 grid */}
                           <div className="absolute inset-0 grid grid-cols-10 grid-rows-10">
                             {Array.from({ length: 100 }, (_, i) => {
@@ -278,14 +298,13 @@ export const PsychologySection = () => {
                             <div key={`y${n}`} className="absolute -left-5 -translate-y-1/2 text-[10px] text-muted-foreground" style={{ top: `${100 - (n / 10) * 100}%` }}>{n}</div>
                           ))}
                           {/* Player marker */}
-                          <div className="absolute text-3xl font-black text-primary" style={{ left: `${(matrixX / 10) * 100}%`, top: `${100 - (matrixY / 10) * 100}%`, transform: "translate(-50%, -50%)" }}>×</div>
+                          <div className="absolute" style={{ left: `${(matrixX / 10) * 100}%`, top: `${100 - (matrixY / 10) * 100}%`, transform: "translate(-50%, -50%)" }}>
+                            <PersonMarker color="hsl(var(--primary))" />
+                          </div>
+                          </div>
+                          <div className="mt-6 text-center text-xs font-bold uppercase tracking-wider">Confidence and Resilience →</div>
                         </div>
-                        <div className="mt-6 text-center text-xs font-bold uppercase tracking-wider">CONFIDENCE AND RESILIENCE →</div>
                       </div>
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
-                      <div>AC sten: <span className="font-semibold text-foreground">{acFactor ? formatSten(acFactor.averageSten) : "—"}</span></div>
-                      <div>CR sten: <span className="font-semibold text-foreground">{crFactor ? formatSten(crFactor.averageSten) : "—"}</span></div>
                     </div>
                   </CardContent>
                 </Card>
@@ -299,40 +318,40 @@ export const PsychologySection = () => {
                 <Card ref={visualThreeRef} className="bg-background">
                   <CardHeader>
                     <CardTitle className="text-base">{playerName || "Player"} SPQ Scale Bands</CardTitle>
-                    <p className="text-xs text-muted-foreground">Lineup of 1 to 100, where 1 is the best in 100 and 100 is the worst in 100, against the {genderNorm} norm group.</p>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-2.5">
+                    {/* Top scale showing best→worst lineup */}
+                    <div className="grid grid-cols-[200px_1fr_70px_110px] items-center gap-3 text-[11px] text-muted-foreground">
+                      <div className="text-right font-semibold text-foreground">Best in 100 →</div>
+                      <div className="relative h-4">
+                        {Array.from({ length: 11 }, (_, i) => i * 10).map(t => (
+                          <span key={t} className="absolute -translate-x-1/2" style={{ left: `${t}%` }}>{t === 0 ? 1 : t}</span>
+                        ))}
+                      </div>
+                      <div className="text-left font-semibold text-foreground">→ Worst in 100</div>
+                      <div />
+                    </div>
                     {scaleScores.map(s => {
                       const rank = stenToRankOf100(s.sten, s.z);
                       const b = stenBand(s.sten);
                       const c = stenBandColor(b);
                       return (
-                        <div key={s.scale} className="grid grid-cols-[180px_1fr_70px_110px] items-center gap-2 text-xs">
+                        <div key={s.scale} className="grid grid-cols-[200px_1fr_70px_110px] items-center gap-3 text-sm">
                           <div className="font-medium">{s.scale}</div>
-                          <div className="relative h-5 rounded border border-border bg-card overflow-hidden">
+                          <div className="relative h-7 rounded border border-border bg-card overflow-visible">
                             {/* tick marks every 10 */}
                             {Array.from({ length: 11 }, (_, i) => i * 10).map(t => (
                               <div key={t} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${t}%` }} />
                             ))}
-                            <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${rank}%`, background: c }} />
+                            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${rank}%` }} title={`${rank}/100`}>
+                              <PersonMarker color={c} />
+                            </div>
                           </div>
                           <div className="text-right font-bold" style={{ color: c }}>{rank}/100</div>
                           <div className="text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
                         </div>
                       );
                     })}
-                    <div className="grid grid-cols-[180px_1fr_70px_110px] items-center gap-2 text-[10px] text-muted-foreground pt-1">
-                      <div />
-                      <div className="relative h-3">
-                        <span className="absolute left-0 -translate-x-2 font-bold text-foreground">&lt;</span>
-                        <span className="absolute right-0 translate-x-2 font-bold text-foreground">&gt;</span>
-                        <span className="absolute left-0">1</span>
-                        <span className="absolute left-1/2 -translate-x-1/2">50</span>
-                        <span className="absolute right-0">100</span>
-                      </div>
-                      <div />
-                      <div />
-                    </div>
                   </CardContent>
                 </Card>
 
