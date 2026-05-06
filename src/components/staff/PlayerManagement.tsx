@@ -39,6 +39,8 @@ import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
+import { PlayerHudlVisibilityTab } from "./PlayerHudlVisibilityTab";
+import { PlayerFormConfigTab } from "./PlayerFormConfigTab";
 
 interface Player {
   id: string;
@@ -3561,6 +3563,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <TabsTrigger value="stats" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Stats</TabsTrigger>
                   <TabsTrigger value="links" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Links</TabsTrigger>
                   <TabsTrigger value="highlight" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Highlighted Game</TabsTrigger>
+                  <TabsTrigger value="hudl" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Hudl Reports</TabsTrigger>
+                  <TabsTrigger value="form" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Form</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}
@@ -4427,6 +4431,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     playerHighlights={editingPlayer?.highlights}
                     playerName={editingPlayer?.name}
                   />
+                </TabsContent>
+
+                {/* Hudl Reports Tab */}
+                <TabsContent value="hudl" className="space-y-4">
+                  {editingPlayer && <PlayerHudlVisibilityTab playerId={editingPlayer.id} />}
+                </TabsContent>
+
+                {/* Form Tab */}
+                <TabsContent value="form" className="space-y-4">
+                  {editingPlayer && <PlayerFormConfigTab playerId={editingPlayer.id} />}
                 </TabsContent>
               </Tabs>
 

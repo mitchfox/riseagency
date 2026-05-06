@@ -23,6 +23,7 @@ import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { usePlayerTranslations, usePlayerProfileLabel, useTranslatedCountry, seasonStatTranslations, schemeHistoryLabels, inNumbersStatTranslations } from "@/hooks/usePlayerTranslations";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
+import { PlayerFormBanner } from "@/components/PlayerFormBanner";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -641,6 +642,7 @@ const PlayerDetail = () => {
 
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
+            {player.id && <PlayerFormBanner playerId={player.id} />}
             <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
                {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                  <>

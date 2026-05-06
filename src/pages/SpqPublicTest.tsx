@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Brain, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Brain, Loader2, Download } from "lucide-react";
+import html2canvas from "html2canvas";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,8 @@ const SpqPublicTest = () => {
   const [step, setStep] = useState<"intro" | "test" | "details" | "results">("intro");
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<ReturnType<typeof calculateSpqScores> | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [savingImage, setSavingImage] = useState(false);
 
   useEffect(() => {
     document.title = "SPQ Sport Performance Questionnaire";
@@ -195,6 +198,7 @@ const SpqPublicTest = () => {
           <Brain className="h-7 w-7 text-primary" />
           <h1 className="text-2xl font-semibold">{name || 'Your'} SPQ Results</h1>
         </div>
+        <div ref={reportRef} className="space-y-5 bg-background p-1">
         <Card><CardHeader><CardTitle>Where you rank (1 = best of 100)</CardTitle></CardHeader><CardContent className="space-y-2">
           {results?.scaleScores.map(s => {
             const rank = stenToRankOf100(s.sten, s.z);
@@ -202,13 +206,13 @@ const SpqPublicTest = () => {
             const ord = (n: number) => { const v = n % 100; const s = ['th','st','nd','rd']; return n + (s[(v-20)%10] || s[v] || s[0]); };
             const leftPct = 100 - rank; // best on the right
             return (
-              <div key={s.scale} className="grid grid-cols-[140px_1fr_70px_110px] items-center gap-3 text-sm">
-                <div className="font-medium">{s.scale}</div>
+              <div key={s.scale} className="grid grid-cols-[110px_1fr_60px] sm:grid-cols-[140px_1fr_70px_110px] items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                <div className="font-medium truncate">{s.scale}</div>
                 <div className="relative h-5 rounded border border-border bg-card">
                   <div className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ left: `${leftPct}%`, background: c }} />
                 </div>
                 <div className="text-right font-bold" style={{ color: c }}>{ord(rank)}</div>
-                <div className="text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
+                <div className="hidden sm:block text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
               </div>
             );
           })}
@@ -227,6 +231,29 @@ const SpqPublicTest = () => {
             );
           })}
         </CardContent></Card>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={async () => {
+            if (!reportRef.current) return;
+            setSavingImage(true);
+            try {
+              const canvas = await html2canvas(reportRef.current, { backgroundColor: '#0f0f0f', scale: 2, useCORS: true });
+              const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+              if (!blob) throw new Error('Could not export');
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `${(name || 'spq').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}-report.png`;
+              a.click(); URL.revokeObjectURL(url);
+              toast.success('Report saved');
+            } catch (e: any) {
+              toast.error(e?.message || 'Could not save');
+            } finally {
+              setSavingImage(false);
+            }
+          }} disabled={savingImage} className="gap-2">
+            {savingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Save my report
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground">Your responses have been saved. The Rise Football Agency staff team can review them with you on request.</p>
       </section>
     </main>
