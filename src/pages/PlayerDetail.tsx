@@ -25,6 +25,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { PlayerFormBanner } from "@/components/PlayerFormBanner";
 import { PageLoading } from "@/components/LoadingSpinner";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { normaliseActionKey } from "@/components/staff/PlayerHudlVisibilityTab";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -304,14 +306,15 @@ const PlayerDetail = () => {
             try {
               const { data: visRows } = await (supabase as any)
                 .from("player_hudl_visibility")
-                .select("clip_video_url, visible, sort_order, playlist_id")
+                .select("clip_video_url, visible, sort_order, playlist_id, playlist_key")
                 .eq("player_id", data.id);
               if (visRows && visRows.length > 0) {
                 const clipMap: Record<string, { visible: boolean; sort_order: number }> = {};
                 const catMap: Record<string, { visible: boolean; sort_order: number }> = {};
                 visRows.forEach((r: any) => {
+                  const catKey = r.playlist_key || (r.playlist_id ? normaliseActionKey(r.playlist_id) : null);
                   if (r.clip_video_url) clipMap[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
-                  else if (r.playlist_id) catMap[r.playlist_id] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  else if (catKey) catMap[catKey] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
                 });
                 setHudlVisibility(clipMap);
                 setHudlCategoryConfig(catMap);
@@ -324,59 +327,45 @@ const PlayerDetail = () => {
               setHudlCategoryConfig(null);
             }
             
-            // Fetch top video actions for video report buttons (limit to recent 10 reports for speed)
+            // Fetch ALL clipped actions with positive R90 across all reports
             if (analysisData && analysisData.length > 0) {
-              const analysisIds = analysisData.slice(0, 10).map((a: any) => a.id);
-              const { data: actionData } = await supabase
-                .from('performance_report_actions')
-                .select('id, action_type, action_score, video_url, minute, analysis_id')
-                .in('analysis_id', analysisIds)
-                .not('video_url', 'is', null)
-                .gt('action_score', 0)
-                .order('action_score', { ascending: false })
-                .limit(50);
-              
-              if (actionData && actionData.length > 0) {
-                // Group by action type and get average score per type
-                const typeScores: Record<string, { total: number; count: number; actions: any[] }> = {};
-                actionData.forEach((a: any) => {
-                  const types = a.action_type?.includes(',')
-                    ? a.action_type.split(',').map((t: string) => t.trim())
-                    : [a.action_type];
-                  types.forEach((type: string) => {
-                    if (!typeScores[type]) typeScores[type] = { total: 0, count: 0, actions: [] };
-                    typeScores[type].total += a.action_score || 0;
-                    typeScores[type].count++;
-                    typeScores[type].actions.push(a);
+              const analysisIds = analysisData.map((a: any) => a.id);
+              const allActions: any[] = [];
+              const pageSize = 1000;
+              let from = 0;
+              while (true) {
+                const { data: pageData, error } = await supabase
+                  .from('performance_report_actions')
+                  .select('id, action_type, action_score, video_url, minute, analysis_id, action_number, action_description, notes, clip_start, clip_end')
+                  .in('analysis_id', analysisIds)
+                  .not('video_url', 'is', null)
+                  .gt('action_score', 0)
+                  .order('action_score', { ascending: false })
+                  .range(from, from + pageSize - 1);
+                if (error) break;
+                const chunk = pageData || [];
+                allActions.push(...chunk);
+                if (chunk.length < pageSize) break;
+                from += pageSize;
+              }
+
+              if (allActions.length > 0) {
+                const topActions: any[] = [];
+                // Best Actions category
+                allActions.filter((a: any) => (a.action_score || 0) >= 0.05).forEach((a: any) => {
+                  topActions.push({ ...a, categoryKey: 'best_actions', categoryLabel: 'Best Actions' });
+                });
+                // Per-action-type categories (normalised + merged)
+                allActions.forEach((a: any) => {
+                  const parts = a.action_type?.includes(',')
+                    ? a.action_type.split(',').map((t: string) => t.trim()).filter(Boolean)
+                    : [a.action_type || 'Other'];
+                  parts.forEach((rawType: string) => {
+                    const key = normaliseActionKey(rawType || 'other');
+                    const label = rawType.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                    topActions.push({ ...a, categoryKey: key, categoryLabel: label });
                   });
                 });
-                
-                // Best actions (score >= 0.05) sorted by score desc
-                const bestActions = actionData.filter((a: any) => a.action_score >= 0.05);
-                
-                // Top 4 action types by average r90 score per clip
-                const sortedTypes = Object.entries(typeScores)
-                  .map(([type, data]) => ({ type, avg: data.total / data.count, actions: data.actions }))
-                  .sort((a, b) => b.avg - a.avg)
-                  .slice(0, 4);
-                
-                // Build category-based structure: Best Actions category, then top type categories
-                const topActions: any[] = [];
-                
-                // Add best actions as a category
-                bestActions.forEach((a: any) => {
-                  topActions.push({ ...a, category: 'Best Actions' });
-                });
-                
-                // Add top type categories (all actions in each type)
-                sortedTypes.forEach(({ type, actions: typeActions }) => {
-                  typeActions
-                    .sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0))
-                    .forEach((a: any) => {
-                      topActions.push({ ...a, category: type });
-                    });
-                });
-                
                 setTopVideoActions(topActions);
               }
             }
