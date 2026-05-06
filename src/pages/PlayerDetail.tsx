@@ -935,7 +935,7 @@ const PlayerDetail = () => {
 
           {/* Biography Dialog */}
           <Dialog open={bioDialogOpen} onOpenChange={setBioDialogOpen}>
-            <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[100vw] sm:w-[95vw] max-w-4xl max-h-[90dvh] overflow-y-auto pt-12 p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {player.name} - {biographyLabel}
