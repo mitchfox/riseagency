@@ -170,7 +170,9 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     setSaving(true);
     try {
       const stats = order
@@ -236,7 +238,7 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
         </DndContext>
       </div>
 
-      <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>
+      <Button type="button" onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>
     </div>
   );
 };
