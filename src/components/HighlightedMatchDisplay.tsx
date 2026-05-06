@@ -50,6 +50,33 @@ const STAT_LABELS: Record<string, string> = {
   shots_on_target: "On Target",
 };
 
+// Mobile-only abbreviations to avoid overflow on small screens
+const MOBILE_STAT_LABELS: Record<string, string> = {
+  "Crossing xC": "Cross xC",
+  "In Behind xC": "In Behind",
+  "To Feet xC": "To Feet",
+  "Triple Threat xC": "Triple Threat",
+  "Down Side xC": "Down Side",
+  "Prog Passes": "Prog Pass",
+  "Aerial Duels": "Aerial",
+  "xG Chain": "xG Chain",
+};
+
+// Strip _per90 suffix and look up base label, appending /90
+const resolveStatLabel = (statKey: string): string => {
+  if (STAT_LABELS[statKey]) return STAT_LABELS[statKey];
+  if (statKey.endsWith("_per90")) {
+    const base = statKey.slice(0, -"_per90".length);
+    const baseLabel = STAT_LABELS[base];
+    if (baseLabel) return `${baseLabel} /90`;
+    // Fallback humanised
+    return base.replace(/_/g, " ") + " /90";
+  }
+  // Special-case keys not in map
+  if (statKey === "movement_down_side_xC") return "Down Side xC";
+  return statKey.replace(/_/g, " ");
+};
+
 export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, onViewReport }: HighlightedMatchProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,7 +91,20 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
   // Translate stat labels based on language
   const getTranslatedStatLabel = useMemo(() => {
     return (statKey: string): string => {
-      const englishLabel = STAT_LABELS[statKey] || statKey;
+      const englishLabel = resolveStatLabel(statKey);
+      if (language === 'en') return englishLabel;
+      return performanceStatTranslations[englishLabel]?.[language] || englishLabel;
+    };
+  }, [language]);
+
+  const getMobileStatLabel = useMemo(() => {
+    return (statKey: string): string => {
+      const full = resolveStatLabel(statKey);
+      // Try mobile abbreviation, possibly with /90 suffix preserved
+      const per90 = full.endsWith(" /90");
+      const base = per90 ? full.slice(0, -" /90".length) : full;
+      const abbr = MOBILE_STAT_LABELS[base] || base;
+      const englishLabel = per90 ? `${abbr} /90` : abbr;
       if (language === 'en') return englishLabel;
       return performanceStatTranslations[englishLabel]?.[language] || englishLabel;
     };
@@ -206,7 +246,8 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
                       {formatStatValue(highlightedMatch.stats[statKey])}
                     </div>
                     <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold break-words leading-tight">
-                      {getTranslatedStatLabel(statKey)}
+                      <span className="md:hidden">{getMobileStatLabel(statKey)}</span>
+                      <span className="hidden md:inline">{getTranslatedStatLabel(statKey)}</span>
                     </div>
                   </div>
                   {/* Subtle glow effect on hover */}
