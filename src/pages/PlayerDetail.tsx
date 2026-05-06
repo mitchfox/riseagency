@@ -799,9 +799,16 @@ const PlayerDetail = () => {
 
           {/* Video Report Action Categories - Below highlights */}
           {topVideoActions.length > 0 && (() => {
+            // Apply staff visibility filter & ordering when configured
+            const filteredActions = hudlVisibility
+              ? topVideoActions
+                  .filter((a: any) => !a.video_url || hudlVisibility[a.video_url]?.visible !== false)
+                  .map((a: any) => ({ ...a, _order: a.video_url ? (hudlVisibility[a.video_url]?.sort_order ?? 0) : 0 }))
+                  .sort((a: any, b: any) => a._order - b._order)
+              : topVideoActions;
             // Group actions by category
             const categories: Record<string, any[]> = {};
-            topVideoActions.forEach((a: any) => {
+            filteredActions.forEach((a: any) => {
               const cat = a.category || 'Other';
               if (!categories[cat]) categories[cat] = [];
               categories[cat].push(a);
