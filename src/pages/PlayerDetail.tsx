@@ -511,7 +511,7 @@ const PlayerDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{player.name} | ${player.position} | RISE Football Agency</title>
+        <title>{player.name} | {player.position} | RISE Football Agency</title>
         <meta name="description" content={metaDescription} />
         <link rel="canonical" href={`${mainDomain}/stars/${playername}`} />
         
