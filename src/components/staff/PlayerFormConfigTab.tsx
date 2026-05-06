@@ -1,35 +1,56 @@
 import { useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-export const FORM_STAT_OPTIONS = [
+// Stat options: key matches data shape used by PlayerFormBanner
+export const FORM_STAT_OPTIONS: { key: string; label: string }[] = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
-  { key: "passes_per_game", label: "Passes / game" },
-  { key: "pass_pct", label: "Pass %" },
-  { key: "dribbles_per_game", label: "Dribbles / game" },
-  { key: "dribble_pct", label: "Dribble %" },
-  { key: "shots_per_game", label: "Shots / game" },
-  { key: "shots_on_target_pct", label: "Shots on Target %" },
-  { key: "tackles_per_game", label: "Tackles / game" },
-  { key: "interceptions_per_game", label: "Interceptions / game" },
+  { key: "xg", label: "xG" },
+  { key: "xa", label: "xA" },
+  { key: "shots_on_target_per90", label: "Shots on Target /90" },
+  { key: "key_passes_per90", label: "Key Passes /90" },
+  { key: "pass_accuracy_pct", label: "Pass %" },
+  { key: "dribble_success_pct", label: "Dribble %" },
+  { key: "successful_dribbles_per90", label: "Dribbles /90" },
+  { key: "tackles_won_per90", label: "Tackles /90" },
+  { key: "interceptions_per90", label: "Interceptions /90" },
   { key: "duels_won_pct", label: "Duels Won %" },
-  { key: "aerial_duels_won_pct", label: "Aerial Duels Won %" },
-  { key: "minutes_per_game", label: "Minutes / game" },
+  { key: "aerials_won_pct", label: "Aerial Duels Won %" },
+  { key: "minutes_played", label: "Minutes /game" },
 ];
 
 interface Props { playerId: string; }
+
+const SortableStat = ({ id, label, checked, onToggle }: { id: string; label: string; checked: boolean; onToggle: () => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 rounded border border-border bg-card p-2">
+      <button type="button" {...attributes} {...listeners} className="cursor-grab text-muted-foreground hover:text-foreground" aria-label="Reorder">
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <Switch checked={checked} onCheckedChange={onToggle} />
+      <span className="flex-1 text-sm">{label}</span>
+    </div>
+  );
+};
 
 export const PlayerFormConfigTab = ({ playerId }: Props) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windowSize, setWindowSize] = useState<number>(5);
-  const [stats, setStats] = useState<string[]>([]);
+  // Ordered list of all keys; selected ones are stored true in `enabled`
+  const [order, setOrder] = useState<string[]>(FORM_STAT_OPTIONS.map(o => o.key));
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!playerId) return;
@@ -44,20 +65,34 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
       if (cancelled) return;
       if (data) {
         setWindowSize(data.window_size || 5);
-        setStats(Array.isArray(data.stats) ? data.stats : []);
+        const saved: string[] = Array.isArray(data.stats) ? data.stats : [];
+        // Order: saved (in saved order) first, then remaining defaults
+        const remaining = FORM_STAT_OPTIONS.map(o => o.key).filter(k => !saved.includes(k));
+        setOrder([...saved.filter(k => FORM_STAT_OPTIONS.some(o => o.key === k)), ...remaining]);
+        const en: Record<string, boolean> = {};
+        saved.forEach(k => { en[k] = true; });
+        setEnabled(en);
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [playerId]);
 
-  const toggle = (key: string) => {
-    setStats(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  const sensors = useSensors(useSensor(PointerSensor));
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!e.over || e.active.id === e.over.id) return;
+    setOrder(prev => {
+      const oi = prev.indexOf(e.active.id as string);
+      const ni = prev.indexOf(e.over!.id as string);
+      if (oi < 0 || ni < 0) return prev;
+      return arrayMove(prev, oi, ni);
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const stats = order.filter(k => enabled[k]);
       const { error } = await (supabase as any)
         .from("player_form_config")
         .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
@@ -74,7 +109,7 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Pick the form stats to display as a banner on this player's public Stars profile.</p>
+      <p className="text-sm text-muted-foreground">Pick and order the form stats shown as a banner on this player's public Stars profile. Drag to reorder.</p>
 
       <div className="max-w-xs space-y-2">
         <Label>Window</Label>
@@ -88,15 +123,26 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
       </div>
 
       <div>
-        <Label className="mb-2 block">Stats to display</Label>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {FORM_STAT_OPTIONS.map(opt => (
-            <label key={opt.key} className="flex items-center gap-2 rounded border border-border bg-card/50 px-3 py-2 text-sm">
-              <Checkbox checked={stats.includes(opt.key)} onCheckedChange={() => toggle(opt.key)} />
-              <span>{opt.label}</span>
-            </label>
-          ))}
-        </div>
+        <Label className="mb-2 block">Stats (drag to reorder, toggle to show)</Label>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={order} strategy={verticalListSortingStrategy}>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {order.map(key => {
+                const opt = FORM_STAT_OPTIONS.find(o => o.key === key);
+                if (!opt) return null;
+                return (
+                  <SortableStat
+                    key={key}
+                    id={key}
+                    label={opt.label}
+                    checked={!!enabled[key]}
+                    onToggle={() => setEnabled(p => ({ ...p, [key]: !p[key] }))}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>

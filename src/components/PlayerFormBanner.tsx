@@ -4,52 +4,33 @@ import { FORM_STAT_OPTIONS } from "@/components/staff/PlayerFormConfigTab";
 
 interface Props { playerId: string; }
 
-const STAT_DERIVERS: Record<string, (rows: any[]) => number | null> = {
-  goals: rows => sum(rows, "goals"),
-  assists: rows => sum(rows, "assists"),
-  passes_per_game: rows => avg(rows, "passes_completed"),
-  pass_pct: rows => pct(rows, "passes_completed", "passes_attempted"),
-  dribbles_per_game: rows => avg(rows, "dribbles_completed"),
-  dribble_pct: rows => pct(rows, "dribbles_completed", "dribbles_attempted"),
-  shots_per_game: rows => avg(rows, "shots"),
-  shots_on_target_pct: rows => pct(rows, "shots_on_target", "shots"),
-  tackles_per_game: rows => avg(rows, "tackles"),
-  interceptions_per_game: rows => avg(rows, "interceptions"),
-  duels_won_pct: rows => pct(rows, "duels_won", "duels_total"),
-  aerial_duels_won_pct: rows => pct(rows, "aerial_duels_won", "aerial_duels_total"),
-  minutes_per_game: rows => avg(rows, "minutes_played"),
-};
-
-const isPct = (k: string) => k.endsWith("_pct");
+const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
 
 const num = (row: any, key: string): number | null => {
   const fs = row.fixture_stats || {};
   const ss = row.striker_stats || {};
   const v = fs[key] ?? ss[key] ?? row[key];
-  return typeof v === "number" ? v : v != null && !isNaN(parseFloat(v)) ? parseFloat(v) : null;
+  if (v == null) return null;
+  if (typeof v === "number") return v;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
 };
-const sum = (rows: any[], key: string) => {
+
+const sumOrAvg = (rows: any[], key: string, mode: 'sum' | 'avg') => {
   const vals = rows.map(r => num(r, key)).filter((v): v is number => v != null);
   if (vals.length === 0) return null;
-  return vals.reduce((s, v) => s + v, 0);
-};
-const avg = (rows: any[], key: string) => {
-  const total = sum(rows, key);
-  if (total == null) return null;
-  return total / rows.length;
-};
-const pct = (rows: any[], successKey: string, totalKey: string) => {
-  const s = sum(rows, successKey);
-  const t = sum(rows, totalKey);
-  if (s == null || t == null || t === 0) return null;
-  return (s / t) * 100;
+  const total = vals.reduce((s, v) => s + v, 0);
+  return mode === 'sum' ? total : total / vals.length;
 };
 
 const fmt = (v: number | null, key: string) => {
   if (v == null) return "—";
   if (isPct(key)) return `${Math.round(v)}%`;
-  return v % 1 === 0 ? v.toString() : v.toFixed(1);
+  return v % 1 === 0 ? v.toString() : v.toFixed(2);
 };
+
+// Counting stats summed across the window; rate/percentage stats averaged
+const SUM_KEYS = new Set(["goals", "assists", "xg", "xa"]);
 
 export const PlayerFormBanner = ({ playerId }: Props) => {
   const [config, setConfig] = useState<{ window_size: number; stats: string[] } | null>(null);
@@ -83,8 +64,8 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
   const items = config.stats.map((key) => {
     const opt = FORM_STAT_OPTIONS.find(o => o.key === key);
     if (!opt) return null;
-    const deriver = STAT_DERIVERS[key];
-    const value = deriver ? deriver(rows) : null;
+    const mode = SUM_KEYS.has(key) ? 'sum' : 'avg';
+    const value = sumOrAvg(rows, key, mode);
     return { key, label: opt.label, value };
   }).filter(Boolean) as { key: string; label: string; value: number | null }[];
 
