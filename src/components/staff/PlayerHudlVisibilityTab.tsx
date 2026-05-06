@@ -34,16 +34,29 @@ const SortableItem = ({ id, children }: { id: string; children: React.ReactNode 
 
 const titleCase = (s: string) => s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
+// Normalise action types so "Flick-on", "flick on", "Flick On" all map to the same key.
+export const normaliseActionKey = (raw: string): string => {
+  return (raw || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, '_');
+};
+
+const prettyLabelFromKey = (key: string): string =>
+  titleCase(key.replace(/_/g, ' '));
+
 export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [actions, setActions] = useState<ActionRow[]>([]);
   // visibility per video_url
   const [visibleClips, setVisibleClips] = useState<Record<string, boolean>>({});
-  // ordering per category
+  // ordering per category (stored by normalised key)
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [clipsByCategory, setClipsByCategory] = useState<Record<string, string[]>>({});
   const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({});
+  const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!playerId) return;
@@ -51,84 +64,97 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     (async () => {
       setLoading(true);
 
-      // get player's analyses, then their actions (mirrors PlayerDetail logic)
+      // Get ALL of the player's analyses (no slice), then all their clipped actions with positive R90.
       const { data: analyses } = await supabase
         .from('player_analysis')
         .select('id')
         .eq('player_id', playerId)
         .order('analysis_date', { ascending: false });
 
-      const ids = (analyses || []).slice(0, 10).map((a: any) => a.id);
+      const ids = (analyses || []).map((a: any) => a.id);
       let actionData: ActionRow[] = [];
       if (ids.length > 0) {
-        const { data } = await supabase
-          .from('performance_report_actions')
-          .select('id, action_type, action_score, video_url, minute, analysis_id')
-          .in('analysis_id', ids)
-          .not('video_url', 'is', null)
-          .gt('action_score', 0)
-          .order('action_score', { ascending: false })
-          .limit(50);
-        actionData = (data || []) as any;
+        // Page through to bypass the 1000-row default limit
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('performance_report_actions')
+            .select('id, action_type, action_score, video_url, minute, analysis_id')
+            .in('analysis_id', ids)
+            .not('video_url', 'is', null)
+            .gt('action_score', 0)
+            .order('action_score', { ascending: false })
+            .range(from, from + pageSize - 1);
+          if (error) break;
+          const chunk = (data || []) as any as ActionRow[];
+          actionData.push(...chunk);
+          if (chunk.length < pageSize) break;
+          from += pageSize;
+        }
       }
 
       const { data: visRows } = await (supabase as any)
         .from('player_hudl_visibility')
-        .select('clip_video_url, visible, sort_order, playlist_id')
+        .select('clip_video_url, visible, sort_order, playlist_id, playlist_key')
         .eq('player_id', playerId);
 
       if (cancelled) return;
 
-      // Build categories: Best Actions (>= 0.05) + per action_type
+      // Build categories: "Best Actions" (>= 0.05) + per normalised action_type.
+      // Merge variant labels (e.g. "Flick-on" / "flick on") under one normalised key.
       const typeMap: Record<string, ActionRow[]> = {};
+      const labelMap: Record<string, string> = {};
       actionData.forEach(a => {
         if (!a.video_url) return;
-        const types = a.action_type?.includes(',')
-          ? a.action_type.split(',').map(t => t.trim())
+        const parts = a.action_type?.includes(',')
+          ? a.action_type.split(',').map(t => t.trim()).filter(Boolean)
           : [a.action_type || 'Other'];
-        types.forEach(type => {
-          const t = type || 'Other';
-          if (!typeMap[t]) typeMap[t] = [];
-          typeMap[t].push(a);
+        parts.forEach(rawType => {
+          const key = normaliseActionKey(rawType || 'other');
+          if (!typeMap[key]) typeMap[key] = [];
+          typeMap[key].push(a);
+          if (!labelMap[key]) labelMap[key] = prettyLabelFromKey(key);
         });
       });
 
+      const bestKey = 'best_actions';
       const bestActions = actionData.filter(a => (a.action_score || 0) >= 0.05);
-      const sortedTypes = Object.entries(typeMap)
-        .map(([type, arr]) => ({
-          type,
-          avg: arr.reduce((s, x) => s + (x.action_score || 0), 0) / arr.length,
-          actions: arr,
-        }))
-        .sort((a, b) => b.avg - a.avg)
-        .slice(0, 4);
+      labelMap[bestKey] = 'Best Actions';
 
       const cats: Record<string, ActionRow[]> = {};
-      if (bestActions.length > 0) cats['Best Actions'] = bestActions;
-      sortedTypes.forEach(({ type, actions: arr }) => {
-        cats[type] = [...arr].sort((a, b) => (b.action_score || 0) - (a.action_score || 0));
-      });
+      if (bestActions.length > 0) cats[bestKey] = bestActions;
+      Object.entries(typeMap)
+        .sort((a, b) => {
+          const avgA = a[1].reduce((s, x) => s + (x.action_score || 0), 0) / a[1].length;
+          const avgB = b[1].reduce((s, x) => s + (x.action_score || 0), 0) / b[1].length;
+          return avgB - avgA;
+        })
+        .forEach(([key, arr]) => {
+          cats[key] = [...arr].sort((a, b) => (b.action_score || 0) - (a.action_score || 0));
+        });
 
-      const categoryNames = Object.keys(cats);
+      const categoryKeys = Object.keys(cats);
 
-      // Apply saved ordering/visibility
-      const visMap: Record<string, boolean> = {};
-      const catVis: Record<string, boolean> = {};
+      // Apply saved ordering/visibility (default OFF when no saved row)
+      const savedClipVis: Record<string, boolean> = {};
+      const savedCatVis: Record<string, boolean> = {};
       const catOrderHints: Record<string, number> = {};
       const clipOrderHints: Record<string, number> = {};
       (visRows || []).forEach((r: any) => {
+        const catKey = r.playlist_key || (r.playlist_id ? normaliseActionKey(r.playlist_id) : null);
         if (r.clip_video_url) {
-          visMap[r.clip_video_url] = !!r.visible;
+          savedClipVis[r.clip_video_url] = !!r.visible;
           clipOrderHints[r.clip_video_url] = r.sort_order ?? 0;
-        } else if (r.playlist_id) {
-          catVis[r.playlist_id] = !!r.visible;
-          catOrderHints[r.playlist_id] = r.sort_order ?? 0;
+        } else if (catKey) {
+          savedCatVis[catKey] = !!r.visible;
+          catOrderHints[catKey] = r.sort_order ?? 0;
         }
       });
 
-      const orderedCats = [...categoryNames].sort((a, b) => {
-        const av = catOrderHints[a] ?? categoryNames.indexOf(a);
-        const bv = catOrderHints[b] ?? categoryNames.indexOf(b);
+      const orderedCats = [...categoryKeys].sort((a, b) => {
+        const av = catOrderHints[a] ?? categoryKeys.indexOf(a);
+        const bv = catOrderHints[b] ?? categoryKeys.indexOf(b);
         return av - bv;
       });
 
@@ -143,17 +169,20 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
         });
         clipsCat[cat] = ordered;
         ordered.forEach(u => {
-          clipVis[u] = visMap[u] ?? true;
+          // Default ON for clips inside a saved-on category, OFF otherwise.
+          if (savedClipVis[u] != null) clipVis[u] = savedClipVis[u];
+          else clipVis[u] = !!savedCatVis[cat]; // default off
         });
       });
       const cVis: Record<string, boolean> = {};
-      orderedCats.forEach(c => { cVis[c] = catVis[c] ?? true; });
+      orderedCats.forEach(c => { cVis[c] = savedCatVis[c] ?? false; }); // default OFF
 
       setActions(actionData);
       setCategoryOrder(orderedCats);
       setClipsByCategory(clipsCat);
       setVisibleClips(clipVis);
       setVisibleCategories(cVis);
+      setCategoryLabels(labelMap);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -210,10 +239,10 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
       await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
       const rows: any[] = [];
       categoryOrder.forEach((cat, ci) => {
-        // store category-level visibility/order using playlist_id field as the category name
         rows.push({
           player_id: playerId,
           playlist_id: cat,
+          playlist_key: cat,
           clip_id: null,
           clip_video_url: null,
           visible: visibleCategories[cat] ?? true,
@@ -223,6 +252,7 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
           rows.push({
             player_id: playerId,
             playlist_id: cat,
+            playlist_key: cat,
             clip_id: url,
             clip_video_url: url,
             visible: visibleClips[url] ?? true,
@@ -242,16 +272,30 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     }
   };
 
+  // Toggling a category ON should turn ALL its clips on (until manually deselected).
+  // Toggling OFF should hide the category entirely.
+  const toggleCategory = (cat: string, value: boolean) => {
+    setVisibleCategories(p => ({ ...p, [cat]: value }));
+    if (value) {
+      const urls = clipsByCategory[cat] || [];
+      setVisibleClips(p => {
+        const next = { ...p };
+        urls.forEach(u => { next[u] = true; });
+        return next;
+      });
+    }
+  };
+
   if (loading) return <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading clips…</div>;
 
   if (categoryOrder.length === 0) {
-    return <p className="p-4 text-sm text-muted-foreground">No video report actions for this player yet. Add action clips with R90 scores in performance reports.</p>;
+    return <p className="p-4 text-sm text-muted-foreground">No positive R90 video report actions for this player yet.</p>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Reorder/hide categories and individual clips. R90 action scores shown.</p>
+        <p className="text-sm text-muted-foreground">All action types start off. Toggle a type on to show all of its clips, then deselect any clips you don't want.</p>
         <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save'}</Button>
       </div>
 
@@ -265,12 +309,12 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Switch checked={visibleCategories[cat] ?? true} onCheckedChange={(v) => setVisibleCategories(p => ({ ...p, [cat]: v }))} />
-                        <span className="font-semibold">{titleCase(cat)}</span>
+                        <Switch checked={visibleCategories[cat] ?? false} onCheckedChange={(v) => toggleCategory(cat, v)} />
+                        <span className="font-semibold">{categoryLabels[cat] || prettyLabelFromKey(cat)}</span>
                         <span className="text-xs text-muted-foreground">({clipUrls.length})</span>
                       </div>
                     </div>
-                    {clipUrls.length > 0 && (
+                    {clipUrls.length > 0 && visibleCategories[cat] && (
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onClipDragEnd(cat)}>
                         <SortableContext items={clipUrls} strategy={verticalListSortingStrategy}>
                           <div className="space-y-1.5 pl-2">
