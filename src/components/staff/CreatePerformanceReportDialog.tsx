@@ -1320,7 +1320,7 @@ export const CreatePerformanceReportDialog = ({
     setShowStrikerStats(false);
     setAdditionalStats({});
     setOriginalStrikerStats(null);
-    setSelectedStatKeys(availableStats.filter(s => !s.stat_key.endsWith('_per90') && !hiddenStatKeys.includes(s.stat_key)).map(s => s.stat_key)); // Reset to position-specific stats (excluding per90 and hidden)
+    setSelectedStatKeys([]); // Staff manually picks which stats to display.
     setStrikerStats({
       xGChain: "",
       xGChain_per90: "",
