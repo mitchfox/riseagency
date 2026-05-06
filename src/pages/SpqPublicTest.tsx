@@ -94,9 +94,10 @@ const SpqPublicTest = () => {
             <h1 className="text-2xl font-semibold">SPQ Sport Performance Questionnaire</h1>
           </div>
           <Card><CardContent className="space-y-3 p-5 text-sm leading-relaxed">
+            <p>This questionnaire is designed to assess where you are mentally as a performer and to compare your profile against the rough profile of professional players.</p>
+            <p>Use it to understand which mental skills are strongest for you and which ones to work on next.</p>
             <p>You will read {total} statements. For each, choose how true it is for you, from <span className="font-semibold">Never / Almost never</span> through to <span className="font-semibold">Nearly always / Always</span>.</p>
             <p>There are no right or wrong answers. Be honest, work quickly, and trust your first reaction.</p>
-            <p>Each statement is marked as <span className="text-emerald-500 font-semibold">positive</span> or <span className="text-rose-500 font-semibold">negative</span> so you know how it is keyed when scored.</p>
           </CardContent></Card>
           <Button size="lg" onClick={() => setStep("test")}>Begin</Button>
         </section>
@@ -119,24 +120,27 @@ const SpqPublicTest = () => {
             </div>
           </div>
           {items.map((it, i) => (
-            <Card key={it.item}>
+            <Card key={it.item} data-spq-item={i}>
               <CardContent className="space-y-3 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-base font-medium">{i + 1}. {it.statement}</p>
-                  <span className={`shrink-0 rounded px-2 py-0.5 text-[11px] font-bold ${it.keying === 'p' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>
-                    {it.keying === 'p' ? 'Positive' : 'Negative'}
-                  </span>
-                </div>
+                <p className="text-base font-medium">{i + 1}. {it.statement}</p>
                 <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-5">
                   {ANSWER_LABELS.map(opt => {
                     const sel = answers[it.item] === opt.value;
                     return (
                       <button
                         key={opt.value}
-                        onClick={() => setAnswers(prev => ({ ...prev, [it.item]: opt.value }))}
+                        onClick={() => {
+                          setAnswers(prev => ({ ...prev, [it.item]: opt.value }));
+                          // On mobile, advance to next statement and scroll into the centre of the viewport.
+                          if (typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches) {
+                            requestAnimationFrame(() => {
+                              const next = document.querySelector(`[data-spq-item="${i + 1}"]`) as HTMLElement | null;
+                              next?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            });
+                          }
+                        }}
                         className={`rounded-md border px-2 py-2 text-xs transition ${sel ? 'border-primary bg-primary/15 text-foreground font-semibold' : 'border-border bg-card hover:border-primary/50'}`}
                       >
-                        <div className="text-sm font-bold">{opt.value}</div>
                         <div className="leading-tight">{opt.label}</div>
                       </button>
                     );
