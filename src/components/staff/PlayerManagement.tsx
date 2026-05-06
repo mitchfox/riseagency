@@ -4432,6 +4432,16 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     playerName={editingPlayer?.name}
                   />
                 </TabsContent>
+
+                {/* Hudl Reports Tab */}
+                <TabsContent value="hudl" className="space-y-4">
+                  {editingPlayer && <PlayerHudlVisibilityTab playerId={editingPlayer.id} />}
+                </TabsContent>
+
+                {/* Form Tab */}
+                <TabsContent value="form" className="space-y-4">
+                  {editingPlayer && <PlayerFormConfigTab playerId={editingPlayer.id} />}
+                </TabsContent>
               </Tabs>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 pt-4 border-t sticky bottom-0 bg-background pb-2">
