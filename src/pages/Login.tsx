@@ -224,7 +224,11 @@ const Login = () => {
                 className="btn-shine font-bebas text-lg uppercase tracking-wider h-12 px-8"
                 disabled={loading}
               >
-                {loading ? "..." : t('login.enter', 'ENTER')}
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/40 border-t-transparent animate-spin" />
+                  </span>
+                ) : t('login.enter', 'ENTER')}
               </Button>
             </div>
             <div className="flex items-center justify-center mt-4 gap-2">

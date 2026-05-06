@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LateralFilter } from "@/components/LateralFilter";
 import { LayoutGrid, List, Users, MessageCircle, ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { PageLoading } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { parsePlayerBio } from "@/lib/playerDataParser";
 import { DeclareInterestDialog } from "@/components/DeclareInterestDialog";
@@ -134,17 +135,7 @@ const Stars = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background overflow-x-hidden">
-        <Header />
-        <main className="pt-16">
-          <div className="container mx-auto px-4 py-24 text-center">
-            <p className="text-xl text-muted-foreground">{t('stars.loading', 'Loading players...')}</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (
