@@ -49,6 +49,7 @@ const PlayerDetail = () => {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
   const [topVideoActions, setTopVideoActions] = useState<any[]>([]);
+  const [hudlVisibility, setHudlVisibility] = useState<Record<string, { visible: boolean; sort_order: number }> | null>(null);
   const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
   const [videoClipPlaylist, setVideoClipPlaylist] = useState<string[]>([]);
   const [videoClipPlaylistIndex, setVideoClipPlaylistIndex] = useState(0);
