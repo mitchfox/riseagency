@@ -511,7 +511,7 @@ const PlayerDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{player.name} | ${player.position} | RISE Football Agency</title>
+        <title>{player.name} | {player.position} | RISE Football Agency</title>
         <meta name="description" content={metaDescription} />
         <link rel="canonical" href={`${mainDomain}/stars/${playername}`} />
         
@@ -905,13 +905,13 @@ const PlayerDetail = () => {
               {biographyLabel}
               <span className="flex-1 h-1 bg-primary/20"></span>
             </h2>
-            <div className="flex gap-6 items-stretch">
-              {/* Player Image - Matches text height */}
-              <div className="relative overflow-hidden w-48 rounded-lg flex-shrink-0 self-start">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-stretch">
+              {/* Player Image - full width on mobile, fixed width on desktop */}
+              <div className="relative overflow-hidden w-full md:w-48 rounded-lg flex-shrink-0 self-start">
                 <img
                   src={player.image_url}
                   alt={player.name}
-                  className="w-full h-full object-cover min-h-[300px]"
+                  className="w-full h-full object-cover min-h-[220px] md:min-h-[300px]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
               </div>
@@ -935,7 +935,7 @@ const PlayerDetail = () => {
 
           {/* Biography Dialog */}
           <Dialog open={bioDialogOpen} onOpenChange={setBioDialogOpen}>
-            <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[100vw] sm:w-[95vw] max-w-4xl max-h-[90dvh] overflow-y-auto pt-12 p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {player.name} - {biographyLabel}
@@ -1363,13 +1363,13 @@ const PlayerDetail = () => {
           
           {/* Season Report Dialog - Shows the season data table */}
           <Dialog open={seasonReportOpen} onOpenChange={setSeasonReportOpen}>
-            <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[100vw] sm:max-w-5xl w-full max-h-[90dvh] overflow-y-auto p-3 sm:p-6 pt-12 sm:pt-12">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {player?.name} - Season Performance Report
                 </DialogTitle>
               </DialogHeader>
-              <div className="mt-2">
+              <div className="mt-2 overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
                 {performanceReports.length > 0 ? (
                   <AnalysisDataTab
                     analyses={performanceReports.map((r: any) => ({

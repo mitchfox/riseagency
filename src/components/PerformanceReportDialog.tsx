@@ -676,7 +676,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[98vw] md:max-w-[95vw] w-full max-h-[95vh] overflow-y-auto overflow-x-hidden p-0">
+      <DialogContent className="max-w-[100vw] md:max-w-[95vw] w-full max-h-[95dvh] overflow-y-auto overflow-x-hidden p-0 pt-12 md:pt-0">
         <div className="sticky top-0 z-10 bg-background border-b p-2 md:p-4 flex items-center justify-between gap-2">
           <h2 className="text-base md:text-xl font-bebas uppercase tracking-wider truncate">{t(reportLanguage, "performance_report")}</h2>
           <div className="flex gap-1 md:gap-2 flex-shrink-0">

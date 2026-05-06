@@ -159,7 +159,7 @@ const Stars = () => {
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative py-8 md:py-12 px-4 overflow-hidden">
+        <section className="relative py-3 md:py-12 px-4 overflow-hidden">
           {/* Background accent */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
@@ -167,7 +167,7 @@ const Stars = () => {
           <div className="container mx-auto relative z-10">
             {/* Title Block */}
             <ScrollReveal>
-              <div className="text-center mb-12 md:mb-16">
+              <div className="text-center mb-4 md:mb-16">
                 <p className="text-primary uppercase tracking-[0.3em] text-xs md:text-sm font-medium mb-4">
                   {t('stars.subtitle', 'Elite Football Representation')}
                 </p>

@@ -50,6 +50,12 @@ type SavedReport = {
 
 const formatSten = (n: number) => n.toFixed(1);
 
+const ordinal = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
 const makeLocalReport = (playerName: string, scores: SpqScaleScore[]) => {
   const strongest = [...scores].sort((a, b) => b.sten - a.sten).slice(0, 4);
   const focus = [...scores].sort((a, b) => a.sten - b.sten).slice(0, 4);
@@ -250,6 +256,7 @@ export const PsychologySection = () => {
                       const pct = (score.stenRounded / 10) * 100;
                       const lowPct = (score.confidenceLow / 10) * 100;
                       const highPct = (score.confidenceHigh / 10) * 100;
+                      const rank = stenToRankOf100(score.sten, score.z);
                       return (
                         <div key={score.scale} className="grid grid-cols-[200px_1fr_60px] items-center gap-3 text-sm">
                           <div className="font-medium">{score.scale}</div>
@@ -260,7 +267,7 @@ export const PsychologySection = () => {
                             <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ left: `${lowPct}%`, width: `${Math.max(0, highPct - lowPct)}%`, background: colour, opacity: 0.35 }} />
                             <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${pct}%`, background: colour }} />
                           </div>
-                          <div className="text-right font-semibold" style={{ color: colour }}>{formatSten(score.stenRounded)}</div>
+                          <div className="text-right font-semibold" style={{ color: colour }}>{ordinal(rank)}</div>
                         </div>
                       );
                     })}
@@ -325,21 +332,26 @@ export const PsychologySection = () => {
                     <CardTitle className="text-base">{playerName || "Player"} SPQ Scale Bands</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2.5">
-                    {/* Top scale showing best→worst lineup */}
+                    {/* Top scale: 100th worst on the LEFT → 1st best on the RIGHT */}
                     <div className="grid grid-cols-[200px_1fr_70px_110px] items-center gap-3 text-[11px] text-muted-foreground">
-                      <div className="text-right font-semibold text-foreground">Best in 100 →</div>
+                      <div className="text-right font-semibold text-foreground">← Worst in 100</div>
                       <div className="relative h-4">
-                        {Array.from({ length: 11 }, (_, i) => i * 10).map(t => (
-                          <span key={t} className="absolute -translate-x-1/2" style={{ left: `${t}%` }}>{t === 0 ? 1 : t}</span>
-                        ))}
+                        {Array.from({ length: 11 }, (_, i) => i * 10).map(t => {
+                          const rankAtTick = t === 0 ? 100 : 100 - t; // left=100, right=1
+                          return (
+                            <span key={t} className="absolute -translate-x-1/2" style={{ left: `${t}%` }}>{rankAtTick === 0 ? 1 : rankAtTick}</span>
+                          );
+                        })}
                       </div>
-                      <div className="text-left font-semibold text-foreground">→ Worst in 100</div>
+                      <div className="text-left font-semibold text-foreground">Best in 100 →</div>
                       <div />
                     </div>
                     {scaleScores.map(s => {
                       const rank = stenToRankOf100(s.sten, s.z);
                       const b = stenBand(s.sten);
                       const c = stenBandColor(b);
+                      // Reverse: rank 1 (best) sits on the right.
+                      const leftPct = 100 - rank;
                       return (
                         <div key={s.scale} className="grid grid-cols-[200px_1fr_70px_110px] items-center gap-3 text-sm">
                           <div className="font-medium">{s.scale}</div>
@@ -348,11 +360,11 @@ export const PsychologySection = () => {
                             {Array.from({ length: 11 }, (_, i) => i * 10).map(t => (
                               <div key={t} className="absolute top-0 bottom-0 w-px bg-border/40" style={{ left: `${t}%` }} />
                             ))}
-                            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${rank}%` }} title={`${rank}/100`}>
+                            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${leftPct}%` }} title={`${ordinal(rank)} of 100`}>
                               <PersonMarker color={c} />
                             </div>
                           </div>
-                          <div className="text-right font-bold" style={{ color: c }}>{rank}/100</div>
+                          <div className="text-right font-bold" style={{ color: c }}>{ordinal(rank)}</div>
                           <div className="text-[11px]" style={{ color: c }}>{stenBandLabel(b)}</div>
                         </div>
                       );
@@ -375,7 +387,7 @@ export const PsychologySection = () => {
                             <div className="flex items-center gap-2">
                               <span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
                               <span className="font-semibold">{s.scale}</span>
-                              <span className="text-xs text-muted-foreground">{stenBandLabel(b)} · sten {formatSten(s.stenRounded)}</span>
+                              <span className="text-xs text-muted-foreground">{stenBandLabel(b)} · {ordinal(stenToRankOf100(s.sten, s.z))} of 100</span>
                             </div>
                           </div>
                           {advice && <p className="mt-1 text-xs text-foreground/85">{advice}</p>}
