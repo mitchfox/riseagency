@@ -3132,6 +3132,48 @@ export type Database = {
           },
         ]
       }
+      player_form_config: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          stats: Json
+          updated_at: string
+          window_size: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          stats?: Json
+          updated_at?: string
+          window_size?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          stats?: Json
+          updated_at?: string
+          window_size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_form_config_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_form_config_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_goals: {
         Row: {
           created_at: string
@@ -3188,6 +3230,57 @@ export type Database = {
           },
           {
             foreignKeyName: "player_hidden_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_hudl_visibility: {
+        Row: {
+          clip_id: string | null
+          clip_video_url: string | null
+          created_at: string
+          id: string
+          player_id: string
+          playlist_id: string
+          sort_order: number
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          clip_id?: string | null
+          clip_video_url?: string | null
+          created_at?: string
+          id?: string
+          player_id: string
+          playlist_id: string
+          sort_order?: number
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          clip_id?: string | null
+          clip_video_url?: string | null
+          created_at?: string
+          id?: string
+          player_id?: string
+          playlist_id?: string
+          sort_order?: number
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_hudl_visibility_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_hudl_visibility_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players_public"

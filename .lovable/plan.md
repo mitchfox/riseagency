@@ -1,73 +1,76 @@
-# Audit fixes
+Audit result: not complete. Several previous changes were partial, and the largest staff/player features were not built.
 
-## 1. SPQ public test (`/spq`)
+What is confirmed working or mostly working:
+- `/spq` route exists and loads the public SPQ test.
+- Public SPQ intro now explains mental profiling and comparison to professional players.
+- Public SPQ no longer shows Positive/Negative or numeric 0-4 beside statements.
+- Mobile SPQ answer buttons call `scrollIntoView({ block: 'center' })` for the next statement.
+- SPQ saved report uses `MarkdownContent` in the shared report page and staff preview.
+- Shared SPQ visuals are stacked full width.
+- Page transition wrapper uses `ShaderAnimation`, and route Suspense fallbacks are `null`.
+- Stars profile mobile video selector chips are now directly below the video.
+- Biography image/text now stack on mobile.
+- Read action report and season report dialogs have mobile top padding.
 
-`src/pages/SpqPublicTest.tsx`
-- Add an intro paragraph explaining the SPQ assesses where the player is mentally vs professional player profiles, and is used to identify which mental skills to work on.
-- Remove every "Positive / Negative" indicator and the visible 0–4 scale next to each statement. Show only the five answer labels (Never / Almost never, Occasionally, Fairly often, Very often, Nearly always / Always). The scoring stays internal.
-- After answering on mobile, smooth-scroll the next statement into the vertical centre of the viewport (`scrollIntoView({ block: 'center', behavior: 'smooth' })`).
+What is missing or failed:
+- No `player_hudl_visibility` table exists.
+- No `player_form_config` table exists.
+- Staff Edit Player has no Hudl Reports tab.
+- Staff Edit Player has no Form tab.
+- Stars profile does not read or render any saved Form stat banner.
+- Stars profile still auto-generates Hudl category chips from top action scores, not staff-selected playlist visibility/order.
+- Playlist management has up/down/hash controls, not the requested drag-handle reorder in the Hudl Reports tab.
+- SPQ submissions staff tab shows raw sten `/10` values when expanded, not the ordinal out-of-100 display used elsewhere.
+- SPQ public results have a desktop-style grid that can overflow on mobile.
+- SPQ public results do not include a save/download report action.
+- Performance report stats auto-add is mostly removed in create mode, but the code still contains an unused previous-report stat prefill function and action-recorded stats can still automatically populate unified stats.
+- Shader audit found unrelated page-level loading text such as `Loading player...` and button `...`, so the transition work was not a full audit.
+- Stars main mobile spacing is still visually tall due to hero/action card blocks, even though padding was reduced.
 
-## 2. SPQ saved report (staff `PsychologySection.tsx` + `SharedSpqReport.tsx`)
+Plan to complete everything:
 
-- Render the AI-generated report through `MarkdownContent` (it currently still ships through a plain `whitespace-pre-wrap` block in `SharedSpqReport.tsx`, which is why `**bold**` shows asterisks). Apply the same to any block in `PsychologySection` that still uses raw text.
-- Scale Scores card:
-  - Drop the "Raw X/32" line entirely.
-  - Convert each sten to a percentile rank using `percentile = round((1 - stenToPercentile(sten)) * 100)` with the same lookup already used for the lineup, then display as e.g. "22nd" with a small caption "out of 100".
-- Sten Profile and SPQ Matrix:
-  - Stack vertically (one per row, full width) on the saved report layout; remove the `md:grid-cols-2` that puts them side-by-side. Each visual rendered at full container width so they read large.
-- Scale Bands strip:
-  - Replace `13/100` labels with ordinal `13th`.
-  - Reverse the axis so 100 sits on the left and 1 on the right (further right = better). Update the header legend accordingly ("Worst in 100 ← → Best in 100"), and mirror marker positions (`left = (100 - percentile)%`).
+1. Backend tables for staff-controlled Stars display
+- Add `player_hudl_visibility` with player, playlist, optional clip id/url, visible, sort order and metadata.
+- Add `player_form_config` with player, selected window and selected stats JSON.
+- Add safe access rules: staff can manage, public can read only the display config needed by Stars pages.
 
-## 3. Stars profile page name
+2. Staff Edit Player: Hudl Reports tab
+- Add a new tab in the existing Edit Player dialog.
+- Load that player's playlists from `playlists`.
+- Show every playlist with a “Visible on Stars page” toggle.
+- Show each clip under the playlist with visibility, action score where it can be matched, and drag-handle reorder using dnd-kit.
+- Save visibility/order to `player_hudl_visibility`.
 
-`src/pages/PlayerDetail.tsx` (or wherever the SEO/page title is built) — currently outputs `$CF` before the name. Remove the stray `$` from the template literal so it renders as just `CF Tyrese Omotoye`.
+3. Staff Edit Player: Form tab
+- Add a new tab in the Edit Player dialog.
+- Let staff choose stat window: last 5 or last 10.
+- Let staff choose display stats from the requested list: Goals, Passes/game, Pass %, Dribbles/game, Dribble %, plus existing available fixture/player stats where present.
+- Save to `player_form_config`.
 
-## 4. Player edit (Staff → Management → Edit player)
+4. Stars profile rendering
+- Fetch `player_form_config` for the profile player.
+- Render a slim, horizontally scrollable form banner between the player info block and main video.
+- Fetch `player_hudl_visibility` and use it to determine which Hudl playlists/clips appear on the public Stars page.
+- Stop showing auto-generated Hudl chips when staff visibility config exists. Fall back only if there is no config, so current pages do not go blank before staff config is set.
 
-Add two new tabs to the existing edit dialog/page:
+5. SPQ completion fixes
+- Make public SPQ result rows responsive on mobile so no grid overflow occurs.
+- Add a “Save report” button at the end of `/spq` results that downloads or saves a visual/text report for the user.
+- Update staff SPQ Submissions expanded results to show ordinal rank out of 100, not raw sten `/10`.
+- Reuse the same `stenToRankOf100` helper for consistency.
 
-### Hudl Reports tab
-- Lists every Hudl playlist linked to the player.
-- Toggle per playlist: "Visible on Stars page".
-- Inside each playlist, list the clips with:
-  - Visibility toggle.
-  - Drag-handle reorder (dnd-kit, same pattern used elsewhere in the app).
-  - Action score badge shown beside each clip when one exists.
-- Persist to a new `player_hudl_visibility` table (playlist_id, clip_id, visible, sort_order, player_id) via Lovable Cloud migration.
+6. Performance report stat auto-add cleanup
+- Remove the unused `fetchPreviousReportStats` function so it cannot be accidentally called later.
+- Adjust action-recorded stat sync so recorded action stats only update stats already selected by staff, instead of adding new stats automatically.
+- Keep per-90 calculations for stats staff manually selected, because those are real calculations from entered values.
 
-### Form tab
-- Lets staff pick which form stats to show (Goals, Passes/game, Pass %, Dribbles/game, Dribble %, etc.) and which window (last 5 / last 10).
-- Saved selection rendered on the public stars profile as a slim banner between the key info block and the video player at the top of the page (`PlayerDetail.tsx`). Banner is short height, horizontally scrollable on mobile.
-- Persist to `player_form_config` (player_id, window, stats jsonb).
+7. Mobile polish and transition audit
+- Shorten Stars mobile hero/action area so cards appear sooner.
+- Ensure long Highlighted Performance labels use a mobile label map and do not overflow.
+- Replace route-change visible loading text/dot fallbacks in the audited public pages with blank or shader-compatible states where appropriate, without removing meaningful in-page loading states for forms/buttons.
 
-## 5. Page transition — restore shader
-
-`src/components/PageTransition.tsx` already renders `ShaderAnimation`, so the "..." the user is seeing is coming from a Suspense fallback or a separate loading element. Audit:
-- `src/App.tsx` `<Suspense fallback={null}>` — confirm nothing else (e.g. `LoadingSpinner`, dot text) is rendering during route changes.
-- Search `src/` for any component still rendering "..." or a dot loader during navigation and remove it.
-- Ensure `PageTransition` overlay always mounts `ShaderAnimation` (no conditional that falls back to a text loader).
-- Verify in preview by navigating between pages that only the shader+logo overlay shows.
-
-## 6. Stars main page (mobile)
-
-`src/pages/Stars.tsx`
-- Reduce vertical spacing on the hero/intro/filter rows above the player cards on mobile only (`py-*` / `mt-*` → smaller `sm:` values, e.g. `py-4 md:py-12`). Goal: cards visible within roughly one swipe.
-
-## 7. Stars profile page (mobile)
-
-`src/pages/PlayerDetail.tsx`
-- Move the "which video to show" selector chips to **directly below** the video player on mobile (`order-*` flex utilities). Desktop layout unchanged.
-- Biography section on mobile: image becomes full-width, with the bio paragraph stacked underneath it.
-- Highlighted Performance metrics card: stat keys like `crossing_movement_xc` overflow. Apply `break-words`, smaller mobile font, and on `<sm` either:
-  - Abbreviate via a label map (`crossing_movement_xc → xC Crossing`), or
-  - Break key/value onto two lines (`flex-col sm:flex-row`).
-- "Read action report" popup (`Dialog`): add `pt-12` (or `mt-12`) to the content so the sticky "Enquire about Tyrese Omotoye" header doesn't cover the close button.
-- "View full season report" popup: add full mobile responsive styles — `max-w-[100vw] sm:max-w-3xl`, `max-h-[90dvh] overflow-y-auto`, internal padding `p-4 sm:p-6`, same `pt-12` top spacing for the close button.
-
-## Technical notes
-
-- All UI uses semantic tokens; no hardcoded colours.
-- New tables: standard RLS (staff full access, public read for `player_form_config` + `player_hudl_visibility` so the Stars page can render).
-- Percentile formula already exists in `src/lib/spqScoring.ts` — reuse, don't reinvent.
-- Stick to UK English throughout copy.
+8. Verification
+- Query the database to confirm both new tables exist.
+- Check `/spq` mobile for no numeric scoring labels and no result overflow.
+- Check `/stars/tyrese-omotoye` mobile for compact top layout, form banner location when configured, Hudl chips below video, no metric overflow, and closeable report dialogs.
+- Check Staff Player Management edit dialog has the new Hudl Reports and Form tabs.
