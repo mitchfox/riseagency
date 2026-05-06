@@ -1,4 +1,6 @@
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
+import { ShaderAnimation } from "@/components/ui/shader-animation";
+import logo from "@/assets/logo.png";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -15,18 +17,23 @@ interface PageLoadingProps {
 }
 
 /**
- * Site-wide full-page loader. Always uses the branded RISE loader
- * (black marble, pulsing logo, gold accent line, dot pulse). The
- * `text` prop is preserved for backwards compatibility but mapped to
- * the branded loader's own `label` so we never expose generic
- * "Loading..." copy.
+ * Site-wide full-page loader. Uses the RISE shader animation with the
+ * pulsing logo overlay so route transitions stay branded and never
+ * fall back to plain text or "...".
  */
-export const PageLoading = ({ text }: PageLoadingProps) => {
-  // Treat the legacy default "Loading..." as no label, so we get the
- // branded "Loading" wordmark instead.
-  const label =
-    !text || text.trim().toLowerCase().replace(/\.+$/, "") === "loading"
-      ? undefined
-      : text;
-  return <RiseBrandedLoader label={label} />;
+export const PageLoading = (_: PageLoadingProps) => {
+  return (
+    <div className="fixed inset-0 z-[150] bg-black overflow-hidden">
+      <div className="absolute inset-0">
+        <ShaderAnimation />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src={logo}
+          alt="RISE"
+          className="h-16 md:h-20 animate-pulse drop-shadow-2xl"
+        />
+      </div>
+    </div>
+  );
 };

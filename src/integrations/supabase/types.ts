@@ -3244,7 +3244,8 @@ export type Database = {
           created_at: string
           id: string
           player_id: string
-          playlist_id: string
+          playlist_id: string | null
+          playlist_key: string | null
           sort_order: number
           updated_at: string
           visible: boolean
@@ -3255,7 +3256,8 @@ export type Database = {
           created_at?: string
           id?: string
           player_id: string
-          playlist_id: string
+          playlist_id?: string | null
+          playlist_key?: string | null
           sort_order?: number
           updated_at?: string
           visible?: boolean
@@ -3266,7 +3268,8 @@ export type Database = {
           created_at?: string
           id?: string
           player_id?: string
-          playlist_id?: string
+          playlist_id?: string | null
+          playlist_key?: string | null
           sort_order?: number
           updated_at?: string
           visible?: boolean

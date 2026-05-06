@@ -1,76 +1,58 @@
-Audit result: not complete. Several previous changes were partial, and the largest staff/player features were not built.
+Priority order is fixed:
 
-What is confirmed working or mostly working:
-- `/spq` route exists and loads the public SPQ test.
-- Public SPQ intro now explains mental profiling and comparison to professional players.
-- Public SPQ no longer shows Positive/Negative or numeric 0-4 beside statements.
-- Mobile SPQ answer buttons call `scrollIntoView({ block: 'center' })` for the next statement.
-- SPQ saved report uses `MarkdownContent` in the shared report page and staff preview.
-- Shared SPQ visuals are stacked full width.
-- Page transition wrapper uses `ShaderAnimation`, and route Suspense fallbacks are `null`.
-- Stars profile mobile video selector chips are now directly below the video.
-- Biography image/text now stack on mobile.
-- Read action report and season report dialogs have mobile top padding.
+1. Page transitions first
+2. Stat options and Stars form banner second
+3. Hudl playlists/player last
 
-What is missing or failed:
-- No `player_hudl_visibility` table exists.
-- No `player_form_config` table exists.
-- Staff Edit Player has no Hudl Reports tab.
-- Staff Edit Player has no Form tab.
-- Stars profile does not read or render any saved Form stat banner.
-- Stars profile still auto-generates Hudl category chips from top action scores, not staff-selected playlist visibility/order.
-- Playlist management has up/down/hash controls, not the requested drag-handle reorder in the Hudl Reports tab.
-- SPQ submissions staff tab shows raw sten `/10` values when expanded, not the ordinal out-of-100 display used elsewhere.
-- SPQ public results have a desktop-style grid that can overflow on mobile.
-- SPQ public results do not include a save/download report action.
-- Performance report stats auto-add is mostly removed in create mode, but the code still contains an unused previous-report stat prefill function and action-recorded stats can still automatically populate unified stats.
-- Shader audit found unrelated page-level loading text such as `Loading player...` and button `...`, so the transition work was not a full audit.
-- Stars main mobile spacing is still visually tall due to hero/action card blocks, even though padding was reduced.
+Plan:
 
-Plan to complete everything:
+1. Fix page transitions before anything else
+   - Replace `PageLoading` so it uses `ShaderAnimation` directly with the RISE logo overlay.
+   - Use that shader loader for route `Suspense` fallback.
+   - Replace the Stars profile loading state with the shader loader instead of text.
+   - Replace the Stars main page loading state with the shader loader instead of `Loading players...`.
+   - Remove the login button `...` loading text and use a proper loading icon/state.
+   - Search afterwards for remaining route/page-level `...`, `Loading...`, and `Loading…` surfaces tied to navigation.
 
-1. Backend tables for staff-controlled Stars display
-- Add `player_hudl_visibility` with player, playlist, optional clip id/url, visible, sort order and metadata.
-- Add `player_form_config` with player, selected window and selected stats JSON.
-- Add safe access rules: staff can manage, public can read only the display config needed by Stars pages.
+2. Fix stat options and the Stars form banner not showing
+   - Keep the form banner exactly between the key info block and the video player on the Stars profile.
+   - Change the banner so it does not disappear just because automatic data is missing.
+   - Add manual stat mode in staff form config using the existing `player_form_config.stats` JSON field.
+   - Let each stat be set to either:
+     - automatic value from recent reports
+     - manual value entered by staff
+   - Keep drag ordering for the shown form stats.
+   - Add missing stat options including passes per 90, progressive passes per 90, accurate passes per 90, forward passes per 90, passes into final third per 90, long balls/crosses, touches in box, npxG/xA/xG Chain, xT and the existing xC movement stats.
+   - Preserve support for `0` and `0.00` manual values.
+   - Render a dash only for an enabled automatic stat with no data, not hide the full banner.
 
-2. Staff Edit Player: Hudl Reports tab
-- Add a new tab in the existing Edit Player dialog.
-- Load that player's playlists from `playlists`.
-- Show every playlist with a “Visible on Stars page” toggle.
-- Show each clip under the playlist with visibility, action score where it can be matched, and drag-handle reorder using dnd-kit.
-- Save visibility/order to `player_hudl_visibility`.
+3. Fix Hudl save failure and available playlist options
+   - Migrate `player_hudl_visibility.playlist_id` away from forced UUID-only storage so staff can save named playlist/action-type groups without errors.
+   - Fetch all available clipped video report actions for the player, not only the last 10 reports and not only the top 4 categories.
+   - Exclude negative and zero R90/action-score clips from playlist options entirely.
+   - Start every action-type group toggled off by default when there is no saved config.
+   - When an action type is toggled on, automatically turn all clips in that action type on.
+   - Still allow individual clips inside that enabled action type to be manually deselected.
 
-3. Staff Edit Player: Form tab
-- Add a new tab in the Edit Player dialog.
-- Let staff choose stat window: last 5 or last 10.
-- Let staff choose display stats from the requested list: Goals, Passes/game, Pass %, Dribbles/game, Dribble %, plus existing available fixture/player stats where present.
-- Save to `player_form_config`.
+4. Merge duplicated action-type groups
+   - Normalise action type labels before grouping.
+   - Merge variants that mean the same thing, including punctuation and spacing differences such as `flick-on` and `flick on`.
+   - Apply the same normalisation on both staff configuration and Stars display so saved settings match what appears publicly.
+   - Keep the visible label clean and title-cased.
 
-4. Stars profile rendering
-- Fetch `player_form_config` for the profile player.
-- Render a slim, horizontally scrollable form banner between the player info block and main video.
-- Fetch `player_hudl_visibility` and use it to determine which Hudl playlists/clips appear on the public Stars page.
-- Stop showing auto-generated Hudl chips when staff visibility config exists. Fall back only if there is no config, so current pages do not go blank before staff config is set.
+5. Fix Stars Hudl display and mobile layout
+   - Remove the public Stars cap that limits Hudl categories to 5.
+   - Show only staff-enabled action-type groups and enabled clips.
+   - On mobile, make playlist buttons wrap across multiple lines so all selected options are visible.
+   - Keep category order and clip order from staff config.
 
-5. SPQ completion fixes
-- Make public SPQ result rows responsive on mobile so no grid overflow occurs.
-- Add a “Save report” button at the end of `/spq` results that downloads or saves a visual/text report for the user.
-- Update staff SPQ Submissions expanded results to show ordinal rank out of 100, not raw sten `/10`.
-- Reuse the same `stenToRankOf100` helper for consistency.
+6. Replace the Stars Hudl player
+   - Reuse the existing staff-style `ClippedActionsPlayer` for Stars Hudl playlists.
+   - Open the selected playlist with a full clip list, previous/next controls and easy skipping.
+   - Pass the ordered visible clips into the player so it behaves like the staff video reports player.
 
-6. Performance report stat auto-add cleanup
-- Remove the unused `fetchPreviousReportStats` function so it cannot be accidentally called later.
-- Adjust action-recorded stat sync so recorded action stats only update stats already selected by staff, instead of adding new stats automatically.
-- Keep per-90 calculations for stats staff manually selected, because those are real calculations from entered values.
-
-7. Mobile polish and transition audit
-- Shorten Stars mobile hero/action area so cards appear sooner.
-- Ensure long Highlighted Performance labels use a mobile label map and do not overflow.
-- Replace route-change visible loading text/dot fallbacks in the audited public pages with blank or shader-compatible states where appropriate, without removing meaningful in-page loading states for forms/buttons.
-
-8. Verification
-- Query the database to confirm both new tables exist.
-- Check `/spq` mobile for no numeric scoring labels and no result overflow.
-- Check `/stars/tyrese-omotoye` mobile for compact top layout, form banner location when configured, Hudl chips below video, no metric overflow, and closeable report dialogs.
-- Check Staff Player Management edit dialog has the new Hudl Reports and Form tabs.
+7. Verify before completion
+   - Query Tyrese’s positive clipped actions and merged action-type groups to confirm all valid options exist.
+   - Confirm the Hudl visibility schema accepts saved action-type keys.
+   - Search code for remaining page-transition ellipsis/loading fallbacks.
+   - Confirm the Stars form banner render path handles manual values and missing automatic data.
