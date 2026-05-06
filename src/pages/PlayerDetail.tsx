@@ -50,6 +50,7 @@ const PlayerDetail = () => {
   const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
   const [topVideoActions, setTopVideoActions] = useState<any[]>([]);
   const [hudlVisibility, setHudlVisibility] = useState<Record<string, { visible: boolean; sort_order: number }> | null>(null);
+  const [hudlCategoryConfig, setHudlCategoryConfig] = useState<Record<string, { visible: boolean; sort_order: number }> | null>(null);
   const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
   const [videoClipPlaylist, setVideoClipPlaylist] = useState<string[]>([]);
   const [videoClipPlaylistIndex, setVideoClipPlaylistIndex] = useState(0);
@@ -298,23 +299,28 @@ const PlayerDetail = () => {
             
             setPerformanceReports(analysisData || []);
 
-            // Fetch staff-defined Hudl clip visibility (if any)
+            // Fetch staff-defined Hudl clip + category visibility (if any)
             try {
               const { data: visRows } = await (supabase as any)
                 .from("player_hudl_visibility")
-                .select("clip_video_url, visible, sort_order")
+                .select("clip_video_url, visible, sort_order, playlist_id")
                 .eq("player_id", data.id);
               if (visRows && visRows.length > 0) {
-                const map: Record<string, { visible: boolean; sort_order: number }> = {};
+                const clipMap: Record<string, { visible: boolean; sort_order: number }> = {};
+                const catMap: Record<string, { visible: boolean; sort_order: number }> = {};
                 visRows.forEach((r: any) => {
-                  if (r.clip_video_url) map[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  if (r.clip_video_url) clipMap[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  else if (r.playlist_id) catMap[r.playlist_id] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
                 });
-                setHudlVisibility(map);
+                setHudlVisibility(clipMap);
+                setHudlCategoryConfig(catMap);
               } else {
                 setHudlVisibility(null);
+                setHudlCategoryConfig(null);
               }
             } catch {
               setHudlVisibility(null);
+              setHudlCategoryConfig(null);
             }
             
             // Fetch top video actions for video report buttons (limit to recent 10 reports for speed)
@@ -850,13 +856,23 @@ const PlayerDetail = () => {
               .filter(c => c.actions.length > 0);
             
             categoryEntries.sort((a, b) => {
+              if (hudlCategoryConfig) {
+                const ao = hudlCategoryConfig[a.name]?.sort_order;
+                const bo = hudlCategoryConfig[b.name]?.sort_order;
+                if (ao != null || bo != null) return (ao ?? 999) - (bo ?? 999);
+              }
               if (a.name === 'Best Actions') return -1;
               if (b.name === 'Best Actions') return 1;
               return b.avgScore - a.avgScore;
             });
 
+            // Apply category-level visibility from staff config
+            const visibleCats = hudlCategoryConfig
+              ? categoryEntries.filter(c => hudlCategoryConfig[c.name]?.visible !== false)
+              : categoryEntries;
+
             // Show Best Actions + top 4 others
-            const displayCategories = categoryEntries.slice(0, 5);
+            const displayCategories = visibleCats.slice(0, 5);
 
             return (
               <div className="mb-6 w-full">
