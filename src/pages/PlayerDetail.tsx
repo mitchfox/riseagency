@@ -723,9 +723,9 @@ const PlayerDetail = () => {
                 </div>
               )}
               
-              {/* Club Logo Overlays - Top - Show database highlights with horizontal scroll */}
+              {/* Club Logo Overlays - Show database highlights with horizontal scroll (desktop only over video) */}
               {dbHighlights.length > 0 && (
-                <div className="absolute bottom-[23px] md:bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
+                <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
                   <div className="relative flex items-center justify-center gap-2">
                     {dbHighlights.length > 10 && (
                       <button
@@ -795,6 +795,32 @@ const PlayerDetail = () => {
                 </div>
               )}
             </div>
+            {/* Mobile club logo selector - rendered below video so native controls aren't covered */}
+            {dbHighlights.length > 0 && (
+              <div className="md:hidden mt-2 flex items-center gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                {dbHighlights.map((highlight, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentVideoType(index)}
+                    className={`flex-shrink-0 w-9 h-9 rounded border transition-all overflow-hidden bg-background/90 ${
+                      currentVideoType === index
+                        ? 'border-[hsl(var(--gold))] scale-110'
+                        : 'border-[hsl(var(--gold))]/30'
+                    }`}
+                    title={highlight.name || `Highlight ${index + 1}`}
+                  >
+                    {(highlight.logoUrl || highlight.clubLogo) && (
+                      <img
+                        src={highlight.logoUrl || highlight.clubLogo}
+                        alt={highlight.name || `Highlight ${index + 1}`}
+                        className="w-full h-full object-contain p-0.5"
+                        loading="eager"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Video Report Action Categories - Below highlights */}
