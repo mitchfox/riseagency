@@ -297,6 +297,25 @@ const PlayerDetail = () => {
               .order('analysis_date', { ascending: false });
             
             setPerformanceReports(analysisData || []);
+
+            // Fetch staff-defined Hudl clip visibility (if any)
+            try {
+              const { data: visRows } = await (supabase as any)
+                .from("player_hudl_visibility")
+                .select("clip_video_url, visible, sort_order")
+                .eq("player_id", data.id);
+              if (visRows && visRows.length > 0) {
+                const map: Record<string, { visible: boolean; sort_order: number }> = {};
+                visRows.forEach((r: any) => {
+                  if (r.clip_video_url) map[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                });
+                setHudlVisibility(map);
+              } else {
+                setHudlVisibility(null);
+              }
+            } catch {
+              setHudlVisibility(null);
+            }
             
             // Fetch top video actions for video report buttons (limit to recent 10 reports for speed)
             if (analysisData && analysisData.length > 0) {
