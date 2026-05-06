@@ -50,7 +50,7 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
 
       const { data: analyses } = await supabase
         .from("player_analysis")
-        .select("analysis_date, striker_stats, fixture_stats, minutes_played, goals, assists")
+        .select("analysis_date, striker_stats, fixture_stats, minutes_played")
         .eq("player_id", playerId)
         .order("analysis_date", { ascending: false })
         .limit(cfg.window_size || 5);
