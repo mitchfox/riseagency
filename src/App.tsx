@@ -73,6 +73,7 @@ const Diagnostics = lazy(() => import("./pages/Diagnostics"));
 const SharedContact = lazy(() => import("./pages/SharedContact"));
 const TransferReportView = lazy(() => import("./pages/TransferReportView"));
 const SharedSpqReport = lazy(() => import("./pages/SharedSpqReport"));
+const SpqPublicTest = lazy(() => import("./pages/SpqPublicTest"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 const queryClient = new QueryClient();
@@ -172,6 +173,7 @@ const App = () => {
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />
                       <Route path="/transfer-report/:slug" element={<TransferReportView />} />
                       <Route path="/spq-report/:slug" element={<SharedSpqReport />} />
+                      <Route path="/spq" element={<SpqPublicTest />} />
                       <Route path="/analysis/:analysisId" element={<AnalysisViewer />} />
                       <Route path="/import-program" element={<ImportProgramCSV />} />
                       <Route path="/replace-program" element={<ReplaceProgram />} />
