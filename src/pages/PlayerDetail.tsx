@@ -49,6 +49,7 @@ const PlayerDetail = () => {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [translatedStatDescriptions, setTranslatedStatDescriptions] = useState<Record<number, string>>({});
   const [topVideoActions, setTopVideoActions] = useState<any[]>([]);
+  const [hudlVisibility, setHudlVisibility] = useState<Record<string, { visible: boolean; sort_order: number }> | null>(null);
   const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
   const [videoClipPlaylist, setVideoClipPlaylist] = useState<string[]>([]);
   const [videoClipPlaylistIndex, setVideoClipPlaylistIndex] = useState(0);
@@ -296,6 +297,25 @@ const PlayerDetail = () => {
               .order('analysis_date', { ascending: false });
             
             setPerformanceReports(analysisData || []);
+
+            // Fetch staff-defined Hudl clip visibility (if any)
+            try {
+              const { data: visRows } = await (supabase as any)
+                .from("player_hudl_visibility")
+                .select("clip_video_url, visible, sort_order")
+                .eq("player_id", data.id);
+              if (visRows && visRows.length > 0) {
+                const map: Record<string, { visible: boolean; sort_order: number }> = {};
+                visRows.forEach((r: any) => {
+                  if (r.clip_video_url) map[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                });
+                setHudlVisibility(map);
+              } else {
+                setHudlVisibility(null);
+              }
+            } catch {
+              setHudlVisibility(null);
+            }
             
             // Fetch top video actions for video report buttons (limit to recent 10 reports for speed)
             if (analysisData && analysisData.length > 0) {
@@ -779,9 +799,16 @@ const PlayerDetail = () => {
 
           {/* Video Report Action Categories - Below highlights */}
           {topVideoActions.length > 0 && (() => {
+            // Apply staff visibility filter & ordering when configured
+            const filteredActions = hudlVisibility
+              ? topVideoActions
+                  .filter((a: any) => !a.video_url || hudlVisibility[a.video_url]?.visible !== false)
+                  .map((a: any) => ({ ...a, _order: a.video_url ? (hudlVisibility[a.video_url]?.sort_order ?? 0) : 0 }))
+                  .sort((a: any, b: any) => a._order - b._order)
+              : topVideoActions;
             // Group actions by category
             const categories: Record<string, any[]> = {};
-            topVideoActions.forEach((a: any) => {
+            filteredActions.forEach((a: any) => {
               const cat = a.category || 'Other';
               if (!categories[cat]) categories[cat] = [];
               categories[cat].push(a);
