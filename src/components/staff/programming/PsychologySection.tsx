@@ -27,6 +27,7 @@ import {
 } from "@/lib/spqScoring";
 import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
 import { MarkdownContent } from "@/utils/markdownRenderer";
+import { SpqSubmissionsTab } from "./SpqSubmissionsTab";
 
 // Tiny inline person silhouette icon for the scale-bands marker.
 const PersonMarker = ({ color }: { color: string }) => (
@@ -183,9 +184,13 @@ export const PsychologySection = () => {
         <TabsList>
           <TabsTrigger value="spq">SPQ</TabsTrigger>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          <TabsTrigger value="submissions">Submissions</TabsTrigger>
         </TabsList>
         <TabsContent value="sessions" className="space-y-4">
           <CoachingDatabase initialTable="psychological_sessions" />
+        </TabsContent>
+        <TabsContent value="submissions" className="space-y-4">
+          <SpqSubmissionsTab />
         </TabsContent>
         <TabsContent value="spq" className="space-y-4">
           <Card>

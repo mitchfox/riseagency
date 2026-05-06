@@ -279,11 +279,14 @@ export const parseSpqAnswers = (text: string): Record<number, number> => {
   const answers: Record<number, number> = {};
   const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   for (const line of lines) {
-    // Match: leading item number, then anything (statement may contain digits like "100 percent"), then trailing 0-4 answer.
-    const match = line.match(/^\s*(\d{1,3})\b[\s\S]*?([0-4])\s*$/);
-    if (!match) continue;
-    const item = Number(match[1]);
-    const value = Number(match[2]);
+    // Capture leading item number and the LAST 0-4 token on the line as the answer.
+    // This avoids picking digits inside the statement (e.g. "100 percent").
+    const head = line.match(/^\s*(\d{1,3})\b/);
+    if (!head) continue;
+    const tail = line.match(/([0-4])(?!.*[0-4])\s*$/);
+    if (!tail) continue;
+    const item = Number(head[1]);
+    const value = Number(tail[1]);
     if (item >= 1 && item <= 168) answers[item] = value;
   }
   return answers;
