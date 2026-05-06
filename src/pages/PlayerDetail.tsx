@@ -57,6 +57,9 @@ const PlayerDetail = () => {
   const [videoClipModalUrl, setVideoClipModalUrl] = useState<string | null>(null);
   const [videoClipPlaylist, setVideoClipPlaylist] = useState<string[]>([]);
   const [videoClipPlaylistIndex, setVideoClipPlaylistIndex] = useState(0);
+  const [hudlPlayerOpen, setHudlPlayerOpen] = useState(false);
+  const [hudlPlayerClips, setHudlPlayerClips] = useState<any[]>([]);
+  const [hudlPlayerTitle, setHudlPlayerTitle] = useState<string>('');
   const [seasonReportOpen, setSeasonReportOpen] = useState(false);
   const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -814,81 +817,84 @@ const PlayerDetail = () => {
 
           {/* Video Report Action Categories - Below highlights */}
           {topVideoActions.length > 0 && (() => {
-            // Apply staff visibility filter & ordering when configured
-            const filteredActions = hudlVisibility
-              ? topVideoActions
-                  .filter((a: any) => !a.video_url || hudlVisibility[a.video_url]?.visible !== false)
-                  .map((a: any) => ({ ...a, _order: a.video_url ? (hudlVisibility[a.video_url]?.sort_order ?? 0) : 0 }))
-                  .sort((a: any, b: any) => a._order - b._order)
-              : topVideoActions;
-            // Group actions by category
-            const categories: Record<string, any[]> = {};
-            filteredActions.forEach((a: any) => {
-              const cat = a.category || 'Other';
-              if (!categories[cat]) categories[cat] = [];
-              categories[cat].push(a);
+            // Group by normalised categoryKey, drop clips hidden by staff config
+            const groups = new Map<string, { label: string; actions: any[] }>();
+            topVideoActions.forEach((a: any) => {
+              if (!a.video_url) return;
+              if (hudlVisibility && hudlVisibility[a.video_url]?.visible === false) return;
+              const key = a.categoryKey || 'other';
+              const label = a.categoryLabel || key;
+              if (!groups.has(key)) groups.set(key, { label, actions: [] });
+              // de-dupe per category by video_url
+              const g = groups.get(key)!;
+              if (!g.actions.some((x: any) => x.video_url === a.video_url)) g.actions.push(a);
             });
-            
-            // Sort: Best Actions first, then by category average score
-            const categoryEntries = Object.entries(categories)
-              .map(([name, actions]) => ({
-                name,
-                actions: actions.filter((a: any) => a.action_score > 0).sort((a: any, b: any) => (b.action_score || 0) - (a.action_score || 0)),
-                avgScore: actions.reduce((sum: number, a: any) => sum + (a.action_score || 0), 0) / actions.length,
+
+            // Default OFF: only show categories the staff has explicitly turned on
+            const visibleEntries = Array.from(groups.entries())
+              .filter(([k]) => hudlCategoryConfig?.[k]?.visible === true)
+              .map(([k, v]) => ({
+                key: k,
+                label: v.label,
+                actions: v.actions
+                  .filter((a: any) => !hudlVisibility || hudlVisibility[a.video_url]?.visible !== false)
+                  .map((a: any) => ({ ...a, _order: hudlVisibility?.[a.video_url]?.sort_order ?? 0 }))
+                  .sort((a: any, b: any) => a._order - b._order),
               }))
-              .filter(c => c.actions.length > 0);
-            
-            categoryEntries.sort((a, b) => {
-              if (hudlCategoryConfig) {
-                const ao = hudlCategoryConfig[a.name]?.sort_order;
-                const bo = hudlCategoryConfig[b.name]?.sort_order;
-                if (ao != null || bo != null) return (ao ?? 999) - (bo ?? 999);
-              }
-              if (a.name === 'Best Actions') return -1;
-              if (b.name === 'Best Actions') return 1;
-              return b.avgScore - a.avgScore;
+              .filter(v => v.actions.length > 0);
+
+            visibleEntries.sort((a, b) => {
+              const ao = hudlCategoryConfig?.[a.key]?.sort_order ?? 999;
+              const bo = hudlCategoryConfig?.[b.key]?.sort_order ?? 999;
+              return ao - bo;
             });
 
-            // Apply category-level visibility from staff config
-            const visibleCats = hudlCategoryConfig
-              ? categoryEntries.filter(c => hudlCategoryConfig[c.name]?.visible !== false)
-              : categoryEntries;
-
-            // Show Best Actions + top 4 others
-            const displayCategories = visibleCats.slice(0, 5);
+            if (visibleEntries.length === 0) return null;
 
             return (
               <div className="mb-6 w-full">
-              <div className="flex items-center gap-3 w-full flex-wrap">
-                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60" />
-                  {displayCategories.map(({ name, actions }) => {
-                    // Title Case and pluralise category names
-                    let displayName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                    // Pluralise: add 's' if last word doesn't already end in 's'
-                    if (displayName && !displayName.endsWith('s')) {
-                      displayName = displayName + 's';
-                    }
-                    return (
+                <div className="flex items-start gap-3 w-full flex-wrap">
+                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 mt-1.5" />
+                  <div className="flex flex-wrap gap-2 flex-1">
+                    {visibleEntries.map(({ key, label, actions }) => (
                       <button
-                        key={name}
+                        key={key}
                         onClick={() => {
-                          if (actions.length > 0) {
-                            setVideoClipModalUrl(actions[0].video_url);
-                            setVideoClipPlaylist(actions.map((a: any) => a.video_url).filter(Boolean));
-                            setVideoClipPlaylistIndex(0);
-                          }
+                          const clips = actions.map((a: any, i: number) => ({
+                            id: a.id,
+                            action_number: a.action_number ?? i + 1,
+                            action_type: (a.action_type || label).split(',')[0].trim(),
+                            action_description: a.action_description || '',
+                            video_url: a.video_url,
+                            minute: a.minute ?? 0,
+                            notes: a.notes,
+                            clip_start: a.clip_start,
+                            clip_end: a.clip_end,
+                          }));
+                          setHudlPlayerClips(clips);
+                          setHudlPlayerTitle(label);
+                          setHudlPlayerOpen(true);
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-secondary/30 hover:bg-primary/10 hover:border-primary/40 transition-colors text-sm"
                       >
                         <Play className="h-3 w-3 text-primary" />
-                        <span className="font-medium">{displayName}</span>
+                        <span className="font-medium">{label}</span>
+                        <span className="text-xs text-muted-foreground">({actions.length})</span>
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               </div>
             );
           })()}
+
+          {/* Hudl playlist player — same UX as staff video reports */}
+          <ClippedActionsPlayer
+            open={hudlPlayerOpen}
+            onOpenChange={setHudlPlayerOpen}
+            clips={hudlPlayerClips}
+            title={hudlPlayerTitle}
+          />
 
           {/* Video Clip Playback Modal - supports playlist navigation */}
           <Dialog open={!!videoClipModalUrl} onOpenChange={() => { setVideoClipModalUrl(null); setVideoClipPlaylist([]); setVideoClipPlaylistIndex(0); }}>
