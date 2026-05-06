@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { Loader2, Save, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,7 +170,7 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
     });
   };
 
-  const handleSave = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
     event?.stopPropagation();
     setSaving(true);
