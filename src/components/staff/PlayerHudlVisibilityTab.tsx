@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { Loader2, GripVertical, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -233,7 +233,9 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     return m;
   }, [actions]);
 
-  const handleSave = async () => {
+  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     setSaving(true);
     try {
       await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
@@ -296,7 +298,7 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">All action types start off. Toggle a type on to show all of its clips, then deselect any clips you don't want.</p>
-        <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save'}</Button>
+        <Button type="button" onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save'}</Button>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCategoryDragEnd}>

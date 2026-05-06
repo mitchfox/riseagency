@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { Loader2, Save, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,7 +170,9 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
     setSaving(true);
     try {
       const stats = order
@@ -236,7 +238,7 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
         </DndContext>
       </div>
 
-      <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>
+      <Button type="button" onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>
     </div>
   );
 };
