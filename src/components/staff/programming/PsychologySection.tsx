@@ -50,6 +50,12 @@ type SavedReport = {
 
 const formatSten = (n: number) => n.toFixed(1);
 
+const ordinal = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
 const makeLocalReport = (playerName: string, scores: SpqScaleScore[]) => {
   const strongest = [...scores].sort((a, b) => b.sten - a.sten).slice(0, 4);
   const focus = [...scores].sort((a, b) => a.sten - b.sten).slice(0, 4);
@@ -250,6 +256,7 @@ export const PsychologySection = () => {
                       const pct = (score.stenRounded / 10) * 100;
                       const lowPct = (score.confidenceLow / 10) * 100;
                       const highPct = (score.confidenceHigh / 10) * 100;
+                      const rank = stenToRankOf100(score.sten, score.z);
                       return (
                         <div key={score.scale} className="grid grid-cols-[200px_1fr_60px] items-center gap-3 text-sm">
                           <div className="font-medium">{score.scale}</div>
@@ -260,7 +267,7 @@ export const PsychologySection = () => {
                             <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full" style={{ left: `${lowPct}%`, width: `${Math.max(0, highPct - lowPct)}%`, background: colour, opacity: 0.35 }} />
                             <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background" style={{ left: `${pct}%`, background: colour }} />
                           </div>
-                          <div className="text-right font-semibold" style={{ color: colour }}>{formatSten(score.stenRounded)}</div>
+                          <div className="text-right font-semibold" style={{ color: colour }}>{ordinal(rank)}</div>
                         </div>
                       );
                     })}
