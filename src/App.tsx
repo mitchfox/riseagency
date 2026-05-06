@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { PageLoading } from "@/components/LoadingSpinner";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -125,7 +126,7 @@ const App = () => {
               <PageTransition>
                 {(displayLocation) => (
                   <main>
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<PageLoading />}>
                     <Routes location={displayLocation}>
                       <Route path="/" element={<Home />} />
                       {createLocalizedRoutes('/players', <PlayersPage />)}
