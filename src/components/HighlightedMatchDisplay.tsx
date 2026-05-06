@@ -198,14 +198,14 @@ export const HighlightedMatchDisplay = ({ highlightedMatch, onVideoPlayChange, o
         {highlightedMatch.selected_stats && highlightedMatch.selected_stats.length > 0 && (
           <div className="bg-gradient-to-br from-background/50 via-background to-background/50 p-5 border-y border-primary/10">
             <h3 className="text-lg font-bebas text-primary uppercase tracking-widest mb-4 text-center">{performanceMetricsLabel}</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {highlightedMatch.selected_stats.map((statKey) => (
                 <div key={statKey} className="relative group">
-                  <div className="bg-gradient-to-br from-secondary/30 to-secondary/10 backdrop-blur-sm rounded-lg p-4 border border-primary/10 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105">
-                    <div className="text-4xl font-bebas text-primary mb-1 text-center">
+                  <div className="bg-gradient-to-br from-secondary/30 to-secondary/10 backdrop-blur-sm rounded-lg p-3 md:p-4 border border-primary/10 hover:border-primary/30 transition-all hover:shadow-lg hover:scale-105 min-w-0">
+                    <div className="text-3xl md:text-4xl font-bebas text-primary mb-1 text-center">
                       {formatStatValue(highlightedMatch.stats[statKey])}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold">
+                    <div className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider text-center font-semibold break-words leading-tight">
                       {getTranslatedStatLabel(statKey)}
                     </div>
                   </div>
