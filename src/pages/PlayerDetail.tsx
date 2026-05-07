@@ -667,7 +667,10 @@ const PlayerDetail = () => {
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
             {player.id && <PlayerFormBanner playerId={player.id} />}
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
+            <div
+              className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]"
+              onMouseLeave={() => { try { videoRef.current?.pause(); } catch {} }}
+            >
                {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                  <>
                <LazyVideo 
