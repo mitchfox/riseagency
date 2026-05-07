@@ -432,20 +432,6 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
               </div>
             )}
 
-            {radarData.length >= 3 && (
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="font-semibold mb-4">Performance Radar</h4>
-                <ResponsiveContainer width="100%" height={350}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                    <PolarRadiusAxis tick={{ fontSize: 9 }} />
-                    <Radar name="Average" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} strokeWidth={2} />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </>
         )}
       </CardContent>
