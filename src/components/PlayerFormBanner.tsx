@@ -11,6 +11,20 @@ const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
 const num = (row: any, key: string): number | null => {
   const fs = row.fixture_stats || {};
   const ss = row.striker_stats || {};
+  if (key === "passes_total_per90") {
+    const direct = fs.passes_total_per90 ?? ss.passes_total_per90 ?? row.passes_total_per90;
+    if (direct != null) {
+      const n = typeof direct === "number" ? direct : parseFloat(direct);
+      return isNaN(n) ? null : n;
+    }
+    const total = fs.passes_total ?? ss.passes_total;
+    const minutes = row.minutes_played;
+    const totalNumber = typeof total === "number" ? total : parseFloat(total);
+    const minutesNumber = typeof minutes === "number" ? minutes : parseFloat(minutes);
+    if (!isNaN(totalNumber) && !isNaN(minutesNumber) && minutesNumber > 0) {
+      return (totalNumber / minutesNumber) * 90;
+    }
+  }
   const v = fs[key] ?? ss[key] ?? row[key];
   if (v == null) return null;
   if (typeof v === "number") return v;
