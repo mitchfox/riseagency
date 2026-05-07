@@ -27,6 +27,7 @@ export const FORM_STAT_OPTIONS: { key: string; label: string }[] = [
   { key: "total_shots_per90", label: "Shots /90" },
   { key: "shots_inside_box_per90", label: "Shots in Box /90" },
   { key: "touches_in_opp_box_per90", label: "Touches in Box /90" },
+  { key: "passes_total_per90", label: "Passes /90" },
   { key: "key_passes_per90", label: "Key Passes /90" },
   { key: "pass_accuracy_pct", label: "Pass %" },
   { key: "accurate_passes_per90", label: "Accurate Passes /90" },
