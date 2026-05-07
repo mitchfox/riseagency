@@ -889,9 +889,9 @@ const PlayerDetail = () => {
 
             return (
               <div className="mb-6 w-full">
-                <div className="flex items-start gap-3 w-full flex-wrap">
-                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 mt-1.5" />
-                  <div className="flex flex-wrap gap-2 flex-1">
+                <div className="flex flex-col items-center gap-2 md:flex-row md:items-start md:gap-3 w-full">
+                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 md:mt-1.5" />
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2 flex-1">
                     {visibleEntries.map(({ key, label, actions }) => (
                       <button
                         key={key}
@@ -906,6 +906,7 @@ const PlayerDetail = () => {
                             notes: a.notes,
                             clip_start: a.clip_start,
                             clip_end: a.clip_end,
+                            clip_logo_url: a.clip_logo_url || null,
                           }));
                           setHudlPlayerClips(clips);
                           setHudlPlayerTitle(label);
@@ -915,7 +916,6 @@ const PlayerDetail = () => {
                       >
                         <Play className="h-3 w-3 text-primary" />
                         <span className="font-medium">{label}</span>
-                        <span className="text-xs text-muted-foreground">({actions.length})</span>
                       </button>
                     ))}
                   </div>
