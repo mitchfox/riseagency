@@ -98,11 +98,13 @@ export function EditHighlightDialog({
       
       if (isArrayFormat && highlightType === 'match') {
         // Old array format - update directly
-        const updatedHighlights = highlights.map((h: any) =>
-          (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
+        const updatedHighlights = highlights.map((h: any) => {
+          const idMatch = highlight.id && h.id && h.id === highlight.id;
+          const urlMatch = h.videoUrl && highlight.videoUrl && h.videoUrl === highlight.videoUrl;
+          return (idMatch || urlMatch)
             ? { ...h, name: clipName, logoUrl: logoUrl, venue: venue || null }
-            : h
-        );
+            : h;
+        });
         
         const { error: updateError } = await supabase
           .from('players')
@@ -117,11 +119,13 @@ export function EditHighlightDialog({
         
         const updatedHighlights = {
           ...highlights,
-          [targetArray]: currentHighlights.map((h: any) =>
-            (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
+          [targetArray]: currentHighlights.map((h: any) => {
+            const idMatch = highlight.id && h.id && h.id === highlight.id;
+            const urlMatch = h.videoUrl && highlight.videoUrl && h.videoUrl === highlight.videoUrl;
+            return (idMatch || urlMatch)
               ? { ...h, name: clipName, logoUrl: logoUrl, venue: venue || null }
-              : h
-          )
+              : h;
+          })
         };
 
         const { error: updateError } = await supabase
