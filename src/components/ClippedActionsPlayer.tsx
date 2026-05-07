@@ -19,6 +19,7 @@ interface ClipAction {
   notes?: string | null;
   clip_start?: number | null;
   clip_end?: number | null;
+  clip_logo_url?: string | null;
 }
 
 interface ClippedActionsPlayerProps {
@@ -347,7 +348,18 @@ export const ClippedActionsPlayer = ({
                       onClick={() => jumpToClip(clip.id)}
                       className="flex-1 flex items-center gap-3 text-left"
                     >
-                      <span className="font-bold text-white/50 w-6 text-center">#{clip.action_number}</span>
+                      <span className="w-6 h-6 flex items-center justify-center shrink-0">
+                        {clip.clip_logo_url ? (
+                          <img
+                            src={clip.clip_logo_url}
+                            alt=""
+                            className="w-6 h-6 object-contain"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-[hsl(var(--gold))] font-bold">—</span>
+                        )}
+                      </span>
                       <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
                       <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
                       {clip.id === currentClip.id && (
