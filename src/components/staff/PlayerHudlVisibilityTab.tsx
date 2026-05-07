@@ -1,4 +1,4 @@
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import { type MouseEvent, forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Loader2, GripVertical, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +46,9 @@ export const normaliseActionKey = (raw: string): string => {
 const prettyLabelFromKey = (key: string): string =>
   titleCase(key.replace(/_/g, ' '));
 
-export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
+export type PlayerHudlVisibilityHandle = { saveNow: () => Promise<boolean> };
+
+export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Props>(({ playerId }, ref) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [actions, setActions] = useState<ActionRow[]>([]);
@@ -233,45 +235,54 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
     return m;
   }, [actions]);
 
-  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    setSaving(true);
-    try {
-      await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
-      const rows: any[] = [];
-      categoryOrder.forEach((cat, ci) => {
+  const persist = async (): Promise<boolean> => {
+    await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
+    const rows: any[] = [];
+    categoryOrder.forEach((cat, ci) => {
+      rows.push({
+        player_id: playerId,
+        playlist_id: cat,
+        playlist_key: cat,
+        clip_id: null,
+        clip_video_url: null,
+        visible: visibleCategories[cat] ?? false,
+        sort_order: ci,
+      });
+      (clipsByCategory[cat] || []).forEach((url, idx) => {
         rows.push({
           player_id: playerId,
           playlist_id: cat,
           playlist_key: cat,
-          clip_id: null,
-          clip_video_url: null,
-          visible: visibleCategories[cat] ?? true,
-          sort_order: ci,
-        });
-        (clipsByCategory[cat] || []).forEach((url, idx) => {
-          rows.push({
-            player_id: playerId,
-            playlist_id: cat,
-            playlist_key: cat,
-            clip_id: url,
-            clip_video_url: url,
-            visible: visibleClips[url] ?? true,
-            sort_order: idx,
-          });
+          clip_id: url,
+          clip_video_url: url,
+          visible: visibleClips[url] ?? false,
+          sort_order: idx,
         });
       });
-      if (rows.length > 0) {
-        const { error } = await (supabase as any).from('player_hudl_visibility').insert(rows);
-        if (error) throw error;
-      }
-      toast.success('Hudl visibility saved');
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to save');
-    } finally {
-      setSaving(false);
+    });
+    if (rows.length > 0) {
+      const { error } = await (supabase as any).from('player_hudl_visibility').insert(rows);
+      if (error) throw error;
     }
+    return true;
+  };
+
+  useImperativeHandle(ref, () => ({
+    saveNow: async () => {
+      try { await persist(); return true; } catch (e: any) {
+        toast.error('Hudl visibility: ' + (e?.message || 'Failed to save'));
+        return false;
+      }
+    }
+  }), [categoryOrder, clipsByCategory, visibleCategories, visibleClips, playerId]);
+
+  const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setSaving(true);
+    try { await persist(); toast.success('Hudl visibility saved'); }
+    catch (e: any) { toast.error(e?.message || 'Failed to save'); }
+    finally { setSaving(false); }
   };
 
   // Toggling a category ON should turn ALL its clips on (until manually deselected).
@@ -345,6 +356,7 @@ export const PlayerHudlVisibilityTab = ({ playerId }: Props) => {
       </DndContext>
     </div>
   );
-};
+});
+PlayerHudlVisibilityTab.displayName = "PlayerHudlVisibilityTab";
 
 export default PlayerHudlVisibilityTab;

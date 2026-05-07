@@ -1,4 +1,4 @@
-import { type MouseEvent, useEffect, useState } from "react";
+import { type MouseEvent, forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Loader2, Save, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,7 +105,9 @@ const SortableStat = ({ id, label, checked, mode, manualValue, onToggle, onModeC
   );
 };
 
-export const PlayerFormConfigTab = ({ playerId }: Props) => {
+export type PlayerFormConfigHandle = { saveNow: () => Promise<boolean> };
+
+export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ playerId }, ref) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windowSize, setWindowSize] = useState<number>(5);
@@ -170,22 +172,36 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
     });
   };
 
+  const persist = async (): Promise<boolean> => {
+    const stats = order
+      .filter(k => enabled[k])
+      .map(k => ({
+        key: k,
+        mode: modes[k] || 'auto',
+        value: (modes[k] === 'manual' ? (manualValues[k] ?? '') : ''),
+      }));
+    const { error } = await (supabase as any)
+      .from("player_form_config")
+      .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
+    if (error) throw error;
+    return true;
+  };
+
+  useImperativeHandle(ref, () => ({
+    saveNow: async () => {
+      try { await persist(); return true; } catch (e: any) {
+        toast.error('Form config: ' + (e?.message || 'Failed to save'));
+        return false;
+      }
+    }
+  }), [order, enabled, modes, manualValues, windowSize, playerId]);
+
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
     event?.stopPropagation();
     setSaving(true);
     try {
-      const stats = order
-        .filter(k => enabled[k])
-        .map(k => ({
-          key: k,
-          mode: modes[k] || 'auto',
-          value: (modes[k] === 'manual' ? (manualValues[k] ?? '') : ''),
-        }));
-      const { error } = await (supabase as any)
-        .from("player_form_config")
-        .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
-      if (error) throw error;
+      await persist();
       toast.success("Form configuration saved");
     } catch (e: any) {
       toast.error(e?.message || "Failed to save");
@@ -241,6 +257,7 @@ export const PlayerFormConfigTab = ({ playerId }: Props) => {
       <Button type="button" onClick={handleSave} disabled={saving} size="sm" className="gap-2"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save"}</Button>
     </div>
   );
-};
+});
+PlayerFormConfigTab.displayName = "PlayerFormConfigTab";
 
 export default PlayerFormConfigTab;

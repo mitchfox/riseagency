@@ -39,8 +39,8 @@ import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
-import { PlayerHudlVisibilityTab } from "./PlayerHudlVisibilityTab";
-import { PlayerFormConfigTab } from "./PlayerFormConfigTab";
+import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
+import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
 
 interface Player {
   id: string;
@@ -128,6 +128,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [nutritionPrograms, setNutritionPrograms] = useState<Record<string, any[]>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const formConfigRef = useRef<PlayerFormConfigHandle | null>(null);
+  const hudlVisibilityRef = useRef<PlayerHudlVisibilityHandle | null>(null);
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
   const [editingHighlight, setEditingHighlight] = useState<{ highlight: any; type: 'match' | 'best' } | null>(null);
   const [draggedHighlightIndex, setDraggedHighlightIndex] = useState<number | null>(null);
@@ -1277,6 +1279,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       toast.success("Player updated successfully");
+      // Also persist Form and Hudl tab configs alongside the main save
+      try { await formConfigRef.current?.saveNow(); } catch {}
+      try { await hudlVisibilityRef.current?.saveNow(); } catch {}
       setIsEditDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
@@ -4435,12 +4440,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                 {/* Hudl Reports Tab */}
                 <TabsContent value="hudl" className="space-y-4">
-                  {editingPlayer && <PlayerHudlVisibilityTab playerId={editingPlayer.id} />}
+                  {editingPlayer && <PlayerHudlVisibilityTab ref={hudlVisibilityRef} playerId={editingPlayer.id} />}
                 </TabsContent>
 
                 {/* Form Tab */}
                 <TabsContent value="form" className="space-y-4">
-                  {editingPlayer && <PlayerFormConfigTab playerId={editingPlayer.id} />}
+                  {editingPlayer && <PlayerFormConfigTab ref={formConfigRef} playerId={editingPlayer.id} />}
                 </TabsContent>
               </Tabs>
 
