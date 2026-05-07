@@ -342,7 +342,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
                               const score = scoresByUrl[url];
                               return (
                                 <SortableItem key={`${cat}::${url}`} id={url}>
-                                  <Switch checked={visibleClips[url] ?? true} onCheckedChange={(v) => setVisibleClips(p => ({ ...p, [url]: v }))} />
+                                  <Switch checked={visibleClips[url] ?? true} onCheckedChange={(v) => { setDirty(true); setVisibleClips(p => ({ ...p, [url]: v })); }} />
                                   <span className="flex-1 truncate text-sm">{labelByUrl[url] || url.split('/').pop()}</span>
                                   {typeof score === 'number' && (
                                     <span className="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">R90 {score.toFixed(2)}</span>
