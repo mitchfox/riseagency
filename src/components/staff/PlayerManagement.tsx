@@ -39,8 +39,8 @@ import { downloadVideo } from "@/lib/videoDownload";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
-import { PlayerHudlVisibilityTab } from "./PlayerHudlVisibilityTab";
-import { PlayerFormConfigTab } from "./PlayerFormConfigTab";
+import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
+import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
 
 interface Player {
   id: string;
