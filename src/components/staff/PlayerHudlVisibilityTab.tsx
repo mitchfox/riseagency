@@ -268,17 +268,19 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
       const { error } = await (supabase as any).from('player_hudl_visibility').insert(rows);
       if (error) throw error;
     }
+    setDirty(false);
     return true;
   };
 
   useImperativeHandle(ref, () => ({
     saveNow: async () => {
+      if (loading || !dirty) return true;
       try { await persist(); return true; } catch (e: any) {
         toast.error('Hudl visibility: ' + (e?.message || 'Failed to save'));
         return false;
       }
     }
-  }), [categoryOrder, clipsByCategory, visibleCategories, visibleClips, playerId]);
+  }), [categoryOrder, clipsByCategory, visibleCategories, visibleClips, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -292,6 +294,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   // Toggling a category ON should turn ALL its clips on (until manually deselected).
   // Toggling OFF should hide the category entirely.
   const toggleCategory = (cat: string, value: boolean) => {
+    setDirty(true);
     setVisibleCategories(p => ({ ...p, [cat]: value }));
     if (value) {
       const urls = clipsByCategory[cat] || [];
