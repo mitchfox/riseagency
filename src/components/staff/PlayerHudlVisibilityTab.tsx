@@ -59,6 +59,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   const [clipsByCategory, setClipsByCategory] = useState<Record<string, string[]>>({});
   const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({});
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!playerId) return;
@@ -185,6 +186,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
       setVisibleClips(clipVis);
       setVisibleCategories(cVis);
       setCategoryLabels(labelMap);
+      setDirty(false);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -194,6 +196,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
 
   const onCategoryDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setCategoryOrder(prev => {
       const oi = prev.indexOf(e.active.id as string);
       const ni = prev.indexOf(e.over!.id as string);
@@ -204,6 +207,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
 
   const onClipDragEnd = (cat: string) => (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setClipsByCategory(prev => {
       const list = prev[cat] || [];
       const oi = list.indexOf(e.active.id as string);
