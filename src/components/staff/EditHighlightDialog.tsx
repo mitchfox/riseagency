@@ -17,6 +17,7 @@ interface EditHighlightDialogProps {
     name: string;
     videoUrl: string;
     logoUrl?: string | null;
+    venue?: 'H' | 'A' | null;
   };
   onSave: () => void;
 }
@@ -32,12 +33,14 @@ export function EditHighlightDialog({
   const [clipName, setClipName] = useState(highlight.name);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(highlight.logoUrl || null);
+  const [venue, setVenue] = useState<'H' | 'A' | ''>((highlight.venue as any) || '');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setClipName(highlight.name);
     setLogoPreview(highlight.logoUrl || null);
     setLogoFile(null);
+    setVenue((highlight.venue as any) || '');
   }, [highlight]);
 
   const handleLogoSelect = (file: File) => {
@@ -97,7 +100,7 @@ export function EditHighlightDialog({
         // Old array format - update directly
         const updatedHighlights = highlights.map((h: any) =>
           (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
-            ? { ...h, name: clipName, logoUrl: logoUrl }
+            ? { ...h, name: clipName, logoUrl: logoUrl, venue: venue || null }
             : h
         );
         
@@ -116,7 +119,7 @@ export function EditHighlightDialog({
           ...highlights,
           [targetArray]: currentHighlights.map((h: any) =>
             (h.id === highlight.id || h.videoUrl === highlight.videoUrl)
-              ? { ...h, name: clipName, logoUrl: logoUrl }
+              ? { ...h, name: clipName, logoUrl: logoUrl, venue: venue || null }
               : h
           )
         };
@@ -197,6 +200,24 @@ export function EditHighlightDialog({
                 <ImageIcon className="w-4 h-4 mr-2" />
                 {logoPreview ? 'Change Logo' : 'Add Logo'}
               </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Home / Away</Label>
+            <div className="flex items-center gap-2">
+              {(['H', 'A', ''] as const).map((v) => (
+                <Button
+                  key={v || 'none'}
+                  type="button"
+                  variant={venue === v ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVenue(v)}
+                  className={venue === v ? 'bg-primary text-primary-foreground' : ''}
+                >
+                  {v === '' ? 'None' : v}
+                </Button>
+              ))}
             </div>
           </div>
         </div>
