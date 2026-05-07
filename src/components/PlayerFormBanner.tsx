@@ -104,15 +104,22 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-4 -mx-4 overflow-x-auto px-4">
-      <div className="flex min-w-max items-stretch gap-2 rounded-md border border-primary/20 bg-secondary/30 p-2">
-        <div className="flex items-center px-2 text-lg md:text-xl font-bebas uppercase tracking-wide text-primary leading-none whitespace-nowrap">Form · Last {config.window_size}</div>
-        {items.map(item => (
-          <div key={item.key} className="flex flex-col items-center justify-center rounded bg-background/40 px-3 py-1.5 min-w-[78px]">
-            <span className="font-bebas text-xl text-primary leading-none">{fmt(item.value, item.key)}</span>
-            <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground text-center leading-tight">{item.label}</span>
-          </div>
-        ))}
+    <div className="mb-4">
+      <div className="rounded-md border border-primary/20 bg-secondary/30 p-2">
+        <div className="px-2 pb-2 text-lg md:text-xl font-bebas uppercase tracking-wide text-primary leading-none">
+          Form · Last {config.window_size}
+        </div>
+        <div
+          className="grid w-full gap-2"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
+          {items.map(item => (
+            <div key={item.key} className="flex flex-col items-center justify-center rounded bg-background/40 px-2 py-1.5 min-w-0">
+              <span className="font-bebas text-xl sm:text-2xl md:text-3xl text-primary leading-none">{fmt(item.value, item.key)}</span>
+              <span className="mt-1 text-[9px] sm:text-[10px] md:text-xs uppercase tracking-wider text-muted-foreground text-center leading-tight">{item.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
