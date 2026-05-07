@@ -197,7 +197,7 @@ export const ClippedActionsPlayer = ({
         <DialogTitle className="sr-only">{t(language, "full_match_video")}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-4 py-2 pt-[calc(env(safe-area-inset-top)+12px)] md:pt-2 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
