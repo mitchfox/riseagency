@@ -223,7 +223,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
 
       <div className="max-w-xs space-y-2">
         <Label>Window</Label>
-        <Select value={String(windowSize)} onValueChange={(v) => setWindowSize(parseInt(v))}>
+        <Select value={String(windowSize)} onValueChange={(v) => { setDirty(true); setWindowSize(parseInt(v)); }}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="5">Last 5 matches</SelectItem>
@@ -248,9 +248,9 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
                     checked={!!enabled[key]}
                     mode={modes[key] || 'auto'}
                     manualValue={manualValues[key] ?? ''}
-                    onToggle={() => setEnabled(p => ({ ...p, [key]: !p[key] }))}
-                    onModeChange={(m) => setModes(p => ({ ...p, [key]: m }))}
-                    onManualChange={(v) => setManualValues(p => ({ ...p, [key]: v }))}
+                    onToggle={() => { setDirty(true); setEnabled(p => ({ ...p, [key]: !p[key] })); }}
+                    onModeChange={(m) => { setDirty(true); setModes(p => ({ ...p, [key]: m })); }}
+                    onManualChange={(v) => { setDirty(true); setManualValues(p => ({ ...p, [key]: v })); }}
                   />
                 );
               })}
