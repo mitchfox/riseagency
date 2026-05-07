@@ -62,6 +62,8 @@ const PlayerDetail = () => {
   const [hudlPlayerTitle, setHudlPlayerTitle] = useState<string>('');
   const [seasonReportOpen, setSeasonReportOpen] = useState(false);
   const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
+  const [carouselStart, setCarouselStart] = useState(0);
+  const [mobileVisibleRows, setMobileVisibleRows] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
