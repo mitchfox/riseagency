@@ -285,31 +285,12 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
           </div>
 
-          {/* Core averages from all categories */}
-          {(() => {
-            const availableStats = positionMetrics.filter(m => seasonAverages[m.key] != null);
-            if (availableStats.length === 0) return null;
-            return (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Season Averages</p>
-                <div className="flex flex-wrap gap-3">
-                  {availableStats.map(m => (
-                    <div key={m.key} className="bg-muted/50 px-3 py-1.5 rounded text-sm">
-                      <span className="text-muted-foreground">{m.label}:</span>{' '}
-                      <span className="font-semibold">{seasonAverages[m.key]?.toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
         </div>
 
         {/* Category filter tabs for match data */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm uppercase tracking-wider">Match-by-Match</h3>
-            <Button variant="ghost" size="sm" onClick={selectAll}>Select All</Button>
           </div>
 
           <Tabs value={activeStatCategory} onValueChange={setActiveStatCategory} className="mb-4">
@@ -451,20 +432,6 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
               </div>
             )}
 
-            {radarData.length >= 3 && (
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="font-semibold mb-4">Performance Radar</h4>
-                <ResponsiveContainer width="100%" height={350}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                    <PolarRadiusAxis tick={{ fontSize: 9 }} />
-                    <Radar name="Average" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} strokeWidth={2} />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </>
         )}
       </CardContent>

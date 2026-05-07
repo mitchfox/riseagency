@@ -106,7 +106,7 @@ export const PlayerFormBanner = ({ playerId }: Props) => {
   return (
     <div className="mb-4 -mx-4 overflow-x-auto px-4">
       <div className="flex min-w-max items-stretch gap-2 rounded-md border border-primary/20 bg-secondary/30 p-2">
-        <div className="flex items-center px-2 text-[10px] font-bebas uppercase tracking-widest text-primary">Form · Last {config.window_size}</div>
+        <div className="flex items-center px-2 text-lg md:text-xl font-bebas uppercase tracking-wide text-primary leading-none whitespace-nowrap">Form · Last {config.window_size}</div>
         {items.map(item => (
           <div key={item.key} className="flex flex-col items-center justify-center rounded bg-background/40 px-3 py-1.5 min-w-[78px]">
             <span className="font-bebas text-xl text-primary leading-none">{fmt(item.value, item.key)}</span>

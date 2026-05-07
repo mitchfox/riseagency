@@ -62,6 +62,8 @@ const PlayerDetail = () => {
   const [hudlPlayerTitle, setHudlPlayerTitle] = useState<string>('');
   const [seasonReportOpen, setSeasonReportOpen] = useState(false);
   const [isTranslatingDescriptions, setIsTranslatingDescriptions] = useState(false);
+  const [carouselStart, setCarouselStart] = useState(0);
+  const [mobileVisibleRows, setMobileVisibleRows] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
@@ -338,6 +340,10 @@ const PlayerDetail = () => {
             // Fetch ALL clipped actions with positive R90 across all reports
             if (analysisData && analysisData.length > 0) {
               const analysisIds = analysisData.map((a: any) => a.id);
+              const analysisLogoMap: Record<string, string | null> = {};
+              analysisData.forEach((a: any) => {
+                analysisLogoMap[a.id] = a.club_logo_url || null;
+              });
               const allActions: any[] = [];
               const pageSize = 1000;
               let from = 0;
@@ -361,7 +367,7 @@ const PlayerDetail = () => {
                 const topActions: any[] = [];
                 // Best Actions category
                 allActions.filter((a: any) => (a.action_score || 0) >= 0.05).forEach((a: any) => {
-                  topActions.push({ ...a, categoryKey: 'best_actions', categoryLabel: 'Best Actions' });
+                  topActions.push({ ...a, clip_logo_url: analysisLogoMap[a.analysis_id] || null, categoryKey: 'best_actions', categoryLabel: 'Best Actions' });
                 });
                 // Per-action-type categories (normalised + merged)
                 allActions.forEach((a: any) => {
@@ -371,7 +377,7 @@ const PlayerDetail = () => {
                   parts.forEach((rawType: string) => {
                     const key = normaliseActionKey(rawType || 'other');
                     const label = rawType.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-                    topActions.push({ ...a, categoryKey: key, categoryLabel: label });
+                    topActions.push({ ...a, clip_logo_url: analysisLogoMap[a.analysis_id] || null, categoryKey: key, categoryLabel: label });
                   });
                 });
                 setTopVideoActions(topActions);
@@ -721,67 +727,70 @@ const PlayerDetail = () => {
               )}
               
               {/* Club Logo Overlays - Show database highlights with horizontal scroll (desktop only over video) */}
-              {dbHighlights.length > 0 && (
-                <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
-                  <div className="relative flex items-center justify-center gap-2">
-                    {dbHighlights.length > 10 && (
-                      <button
-                        onClick={() => {
-                          const container = document.getElementById('club-logos-container');
-                          if (container) {
-                            container.scrollBy({ left: -200, behavior: 'smooth' });
-                          }
-                        }}
-                        className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
-                        aria-label="Scroll left"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-                    )}
-                    <div 
-                      id="club-logos-container"
-                      className="flex gap-1 md:gap-2 overflow-x-auto scrollbar-hide scroll-smooth max-w-[calc(100%-80px)] pointer-events-auto"
-                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                      {dbHighlights.map((highlight, index) => (
+              {dbHighlights.length > 0 && (() => {
+                const PAGE = 12;
+                const total = dbHighlights.length;
+                const useCarousel = total > PAGE;
+                const start = useCarousel ? ((carouselStart % total) + total) % total : 0;
+                const visible = useCarousel
+                  ? Array.from({ length: PAGE }, (_, i) => ({
+                      highlight: dbHighlights[(start + i) % total],
+                      index: (start + i) % total,
+                    }))
+                  : dbHighlights.map((highlight, index) => ({ highlight, index }));
+                return (
+                  <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
+                    <div className="relative flex items-center justify-center gap-2">
+                      {useCarousel && (
                         <button
-                          key={index}
-                          onClick={() => setCurrentVideoType(index)}
-                          className={`flex-shrink-0 w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
-                            currentVideoType === index
-                              ? 'border-[hsl(var(--gold))] scale-110'
-                              : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
-                          }`}
-                          title={highlight.name || `Highlight ${index + 1}`}
+                          onClick={() => setCarouselStart(s => s - PAGE)}
+                          className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                          aria-label="Previous logos"
                         >
-                          {(highlight.logoUrl || highlight.clubLogo) && (
-                            <img 
-                              src={highlight.logoUrl || highlight.clubLogo} 
-                              alt={highlight.name || `Highlight ${index + 1}`}
-                              className="w-full h-full object-contain p-0.5"
-                              loading="eager"
-                            />
-                          )}
+                          <ChevronLeft className="w-5 h-5" />
                         </button>
-                      ))}
+                      )}
+                      <div className="flex gap-1 md:gap-2 pointer-events-auto">
+                        {visible.map(({ highlight, index }) => (
+                          <button
+                            key={`${index}-${highlight.videoUrl}`}
+                            onClick={() => setCurrentVideoType(index)}
+                            className={`relative flex-shrink-0 w-6 h-6 md:w-10 md:h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
+                              currentVideoType === index
+                                ? 'border-[hsl(var(--gold))] scale-110'
+                                : 'border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/50'
+                            }`}
+                            title={highlight.name || `Highlight ${index + 1}`}
+                          >
+                            {(highlight.logoUrl || highlight.clubLogo) && (
+                              <img
+                                src={highlight.logoUrl || highlight.clubLogo}
+                                alt={highlight.name || `Highlight ${index + 1}`}
+                                className="w-full h-full object-contain p-0.5"
+                                loading="eager"
+                              />
+                            )}
+                            {(highlight.venue === 'H' || highlight.venue === 'A') && (
+                              <span className="absolute bottom-0 right-0 leading-none text-[8px] md:text-[9px] font-bebas font-bold text-[hsl(var(--gold))] bg-black/70 px-[2px] rounded-tl">
+                                {highlight.venue}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      {useCarousel && (
+                        <button
+                          onClick={() => setCarouselStart(s => s + PAGE)}
+                          className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
+                          aria-label="Next logos"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
-                    {dbHighlights.length > 10 && (
-                      <button
-                        onClick={() => {
-                          const container = document.getElementById('club-logos-container');
-                          if (container) {
-                            container.scrollBy({ left: 200, behavior: 'smooth' });
-                          }
-                        }}
-                        className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
-                        aria-label="Scroll right"
-                      >
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {/* Recent Match Highlights Overlay - Left of Club Logos */}
               {dbHighlights.length > 0 && (
@@ -793,31 +802,51 @@ const PlayerDetail = () => {
               )}
             </div>
             {/* Mobile club logo selector - rendered below video so native controls aren't covered */}
-            {dbHighlights.length > 0 && (
-              <div className="md:hidden mt-2 flex items-center gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                {dbHighlights.map((highlight, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentVideoType(index)}
-                    className={`flex-shrink-0 w-9 h-9 rounded border transition-all overflow-hidden bg-background/90 ${
-                      currentVideoType === index
-                        ? 'border-[hsl(var(--gold))] scale-110'
-                        : 'border-[hsl(var(--gold))]/30'
-                    }`}
-                    title={highlight.name || `Highlight ${index + 1}`}
-                  >
-                    {(highlight.logoUrl || highlight.clubLogo) && (
-                      <img
-                        src={highlight.logoUrl || highlight.clubLogo}
-                        alt={highlight.name || `Highlight ${index + 1}`}
-                        className="w-full h-full object-contain p-0.5"
-                        loading="eager"
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+            {dbHighlights.length > 0 && (() => {
+              const PER_ROW = 8;
+              const visibleCount = Math.min(dbHighlights.length, PER_ROW * mobileVisibleRows);
+              const remaining = dbHighlights.length - visibleCount;
+              return (
+                <div className="md:hidden mt-2">
+                  <div className="grid grid-cols-8 gap-1.5">
+                    {dbHighlights.slice(0, visibleCount).map((highlight, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentVideoType(index)}
+                        className={`relative aspect-square rounded border transition-all overflow-hidden bg-background/90 ${
+                          currentVideoType === index
+                            ? 'border-[hsl(var(--gold))] scale-110'
+                            : 'border-[hsl(var(--gold))]/30'
+                        }`}
+                        title={highlight.name || `Highlight ${index + 1}`}
+                      >
+                        {(highlight.logoUrl || highlight.clubLogo) && (
+                          <img
+                            src={highlight.logoUrl || highlight.clubLogo}
+                            alt={highlight.name || `Highlight ${index + 1}`}
+                            className="w-full h-full object-contain p-0.5"
+                            loading="eager"
+                          />
+                        )}
+                        {(highlight.venue === 'H' || highlight.venue === 'A') && (
+                          <span className="absolute bottom-0 right-0 leading-none text-[8px] font-bebas font-bold text-[hsl(var(--gold))] bg-black/70 px-[2px] rounded-tl">
+                            {highlight.venue}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {remaining > 0 && (
+                    <button
+                      onClick={() => setMobileVisibleRows(r => r + 1)}
+                      className="mt-2 w-full text-xs font-bebas uppercase tracking-wider text-[hsl(var(--gold))] border border-[hsl(var(--gold))]/40 rounded py-1.5 hover:bg-[hsl(var(--gold))]/10"
+                    >
+                      See more ({remaining})
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Video Report Action Categories - Below highlights */}
@@ -860,9 +889,9 @@ const PlayerDetail = () => {
 
             return (
               <div className="mb-6 w-full">
-                <div className="flex items-start gap-3 w-full flex-wrap">
-                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 mt-1.5" />
-                  <div className="flex flex-wrap gap-2 flex-1">
+                <div className="flex flex-col items-center gap-2 md:flex-row md:items-start md:gap-3 w-full">
+                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 md:mt-1.5" />
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2 flex-1">
                     {visibleEntries.map(({ key, label, actions }) => (
                       <button
                         key={key}
@@ -877,6 +906,7 @@ const PlayerDetail = () => {
                             notes: a.notes,
                             clip_start: a.clip_start,
                             clip_end: a.clip_end,
+                            clip_logo_url: a.clip_logo_url || null,
                           }));
                           setHudlPlayerClips(clips);
                           setHudlPlayerTitle(label);
@@ -886,7 +916,6 @@ const PlayerDetail = () => {
                       >
                         <Play className="h-3 w-3 text-primary" />
                         <span className="font-medium">{label}</span>
-                        <span className="text-xs text-muted-foreground">({actions.length})</span>
                       </button>
                     ))}
                   </div>
