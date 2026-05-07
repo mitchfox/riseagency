@@ -226,14 +226,19 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
       <p className="text-sm text-muted-foreground">Pick and order the form stats shown as a banner on this player's public Stars profile. Drag to reorder.</p>
 
       <div className="max-w-xs space-y-2">
-        <Label>Window</Label>
-        <Select value={String(windowSize)} onValueChange={(v) => { setDirty(true); setWindowSize(parseInt(v)); }}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="5">Last 5 matches</SelectItem>
-            <SelectItem value="10">Last 10 matches</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label>Window — last N matches</Label>
+        <Input
+          type="number"
+          min={1}
+          max={50}
+          value={windowSize}
+          onChange={(e) => {
+            const n = parseInt(e.target.value);
+            if (isNaN(n)) return;
+            setDirty(true);
+            setWindowSize(Math.max(1, Math.min(50, n)));
+          }}
+        />
       </div>
 
       <div>
