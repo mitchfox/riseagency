@@ -66,6 +66,13 @@ const PlayerDetail = () => {
   const [carouselStart, setCarouselStart] = useState(0);
   const [mobileVisibleRows, setMobileVisibleRows] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Pause the Stars highlight video whenever a clip player / modal opens
+  useEffect(() => {
+    if (hudlPlayerOpen || videoClipModalUrl) {
+      try { videoRef.current?.pause(); } catch {}
+    }
+  }, [hudlPlayerOpen, videoClipModalUrl]);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
 
