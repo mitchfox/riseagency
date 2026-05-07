@@ -1541,9 +1541,9 @@ const PlayerDetail = () => {
             <h2 className="text-4xl font-bebas text-center uppercase tracking-wider text-foreground mb-12">
               {getInTouchLabel}
             </h2>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-3 md:gap-8">
               {/* Clubs/Agents */}
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-2 md:space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {clubsAgentsLabel}
                 </h3>
@@ -1562,7 +1562,7 @@ const PlayerDetail = () => {
               </div>
 
               {/* Media */}
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-2 md:space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {mediaLabel}
                 </h3>
@@ -1582,7 +1582,7 @@ const PlayerDetail = () => {
               </div>
 
               {/* Sponsors */}
-              <div className="text-center space-y-4">
+              <div className="text-center space-y-2 md:space-y-4">
                 <h3 className="text-2xl font-bebas uppercase tracking-wider text-primary">
                   {sponsorsLabel}
                 </h3>
