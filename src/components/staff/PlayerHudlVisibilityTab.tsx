@@ -240,7 +240,6 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   }, [actions]);
 
   const persist = async (): Promise<boolean> => {
-    await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
     const rows: any[] = [];
     categoryOrder.forEach((cat, ci) => {
       rows.push({
@@ -264,10 +263,11 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
         });
       });
     });
-    if (rows.length > 0) {
-      const { error } = await (supabase as any).from('player_hudl_visibility').insert(rows);
-      if (error) throw error;
-    }
+    const { error } = await (supabase as any).rpc('replace_player_hudl_visibility', {
+      _player_id: playerId,
+      _rows: rows,
+    });
+    if (error) throw error;
     setDirty(false);
     return true;
   };
