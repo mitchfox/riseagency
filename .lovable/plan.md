@@ -1,58 +1,28 @@
-Priority order is fixed:
-
-1. Page transitions first
-2. Stat options and Stars form banner second
-3. Hudl playlists/player last
+I traced the actual staff Form and Hudl tabs against Tyrese Omotoye. The public Stars page is wired to read `player_form_config` and `player_hudl_visibility`, but Tyrese currently has no saved rows in either table despite 29 analyses and 484 positive video actions. So the issue is not the Stars page “choosing not to show” them. The staff edit tabs are not leaving saved configuration behind.
 
 Plan:
 
-1. Fix page transitions before anything else
-   - Replace `PageLoading` so it uses `ShaderAnimation` directly with the RISE logo overlay.
-   - Use that shader loader for route `Suspense` fallback.
-   - Replace the Stars profile loading state with the shader loader instead of text.
-   - Replace the Stars main page loading state with the shader loader instead of `Loading players...`.
-   - Remove the login button `...` loading text and use a proper loading icon/state.
-   - Search afterwards for remaining route/page-level `...`, `Loading...`, and `Loading…` surfaces tied to navigation.
+1. Fix staff tab persistence first
+- Make the Form and Hudl tabs save independently from the main edit profile form.
+- Stop the parent “Save Changes” form/dialog from swallowing or clearing those tab saves.
+- Add hard error handling so failed saves show the real database error and successful saves immediately re-read the row count before saying saved.
 
-2. Fix stat options and the Stars form banner not showing
-   - Keep the form banner exactly between the key info block and the video player on the Stars profile.
-   - Change the banner so it does not disappear just because automatic data is missing.
-   - Add manual stat mode in staff form config using the existing `player_form_config.stats` JSON field.
-   - Let each stat be set to either:
-     - automatic value from recent reports
-     - manual value entered by staff
-   - Keep drag ordering for the shown form stats.
-   - Add missing stat options including passes per 90, progressive passes per 90, accurate passes per 90, forward passes per 90, passes into final third per 90, long balls/crosses, touches in box, npxG/xA/xG Chain, xT and the existing xC movement stats.
-   - Preserve support for `0` and `0.00` manual values.
-   - Render a dash only for an enabled automatic stat with no data, not hide the full banner.
+2. Make Form on Stars profile resilient
+- Keep the Form banner tied to the Form tab config on player edit profile.
+- Render the banner whenever selected stats exist, including manual values and automatic stats with missing data shown as a dash.
+- Confirm it appears between the key info panel and the main video player on the public Stars profile.
 
-3. Fix Hudl save failure and available playlist options
-   - Migrate `player_hudl_visibility.playlist_id` away from forced UUID-only storage so staff can save named playlist/action-type groups without errors.
-   - Fetch all available clipped video report actions for the player, not only the last 10 reports and not only the top 4 categories.
-   - Exclude negative and zero R90/action-score clips from playlist options entirely.
-   - Start every action-type group toggled off by default when there is no saved config.
-   - When an action type is toggled on, automatically turn all clips in that action type on.
-   - Still allow individual clips inside that enabled action type to be manually deselected.
+3. Fix Hudl/video report visibility end-to-end
+- Keep all positive R90 video report actions available in the Hudl tab.
+- Keep merged action groups for spelling variants like “flick-on” and “flick on”.
+- Save category rows and clip rows reliably, defaulting all groups off until toggled on.
+- On Stars, only show saved visible groups/clips and preserve their staff-defined order.
 
-4. Merge duplicated action-type groups
-   - Normalise action type labels before grouping.
-   - Merge variants that mean the same thing, including punctuation and spacing differences such as `flick-on` and `flick on`.
-   - Apply the same normalisation on both staff configuration and Stars display so saved settings match what appears publicly.
-   - Keep the visible label clean and title-cased.
+4. Verify with Tyrese specifically
+- Query Tyrese’s Form and Hudl config after saving path fixes.
+- If there are still no rows because the earlier saves never persisted, seed the current intended visible config only where it is safe to do so from existing positive actions, then verify the Stars profile has both sections available.
 
-5. Fix Stars Hudl display and mobile layout
-   - Remove the public Stars cap that limits Hudl categories to 5.
-   - Show only staff-enabled action-type groups and enabled clips.
-   - On mobile, make playlist buttons wrap across multiple lines so all selected options are visible.
-   - Keep category order and clip order from staff config.
-
-6. Replace the Stars Hudl player
-   - Reuse the existing staff-style `ClippedActionsPlayer` for Stars Hudl playlists.
-   - Open the selected playlist with a full clip list, previous/next controls and easy skipping.
-   - Pass the ordered visible clips into the player so it behaves like the staff video reports player.
-
-7. Verify before completion
-   - Query Tyrese’s positive clipped actions and merged action-type groups to confirm all valid options exist.
-   - Confirm the Hudl visibility schema accepts saved action-type keys.
-   - Search code for remaining page-transition ellipsis/loading fallbacks.
-   - Confirm the Stars form banner render path handles manual values and missing automatic data.
+Technical details:
+- Files involved: `PlayerManagement.tsx`, `PlayerFormConfigTab.tsx`, `PlayerHudlVisibilityTab.tsx`, `PlayerFormBanner.tsx`, `PlayerDetail.tsx`.
+- Database tables involved: `player_form_config`, `player_hudl_visibility`, `player_analysis`, `performance_report_actions`.
+- No dummy data will be used. Only existing Tyrese player data and existing positive R90 video report actions will be read or shown.
