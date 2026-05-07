@@ -128,6 +128,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [nutritionPrograms, setNutritionPrograms] = useState<Record<string, any[]>>({});
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const formConfigRef = useRef<PlayerFormConfigHandle | null>(null);
+  const hudlVisibilityRef = useRef<PlayerHudlVisibilityHandle | null>(null);
   const [isEditHighlightOpen, setIsEditHighlightOpen] = useState(false);
   const [editingHighlight, setEditingHighlight] = useState<{ highlight: any; type: 'match' | 'best' } | null>(null);
   const [draggedHighlightIndex, setDraggedHighlightIndex] = useState<number | null>(null);
