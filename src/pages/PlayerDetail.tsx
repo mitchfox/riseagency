@@ -822,28 +822,30 @@ const PlayerDetail = () => {
 
           {/* Video Report Action Categories - Below highlights */}
           {topVideoActions.length > 0 && (() => {
-            // Group by normalised categoryKey, drop clips hidden by staff config
+            // Group by normalised categoryKey
             const groups = new Map<string, { label: string; actions: any[] }>();
             topVideoActions.forEach((a: any) => {
               if (!a.video_url) return;
-              if (hudlVisibility && hudlVisibility[a.video_url]?.visible === false) return;
               const key = a.categoryKey || 'other';
               const label = a.categoryLabel || key;
               if (!groups.has(key)) groups.set(key, { label, actions: [] });
-              // de-dupe per category by video_url
               const g = groups.get(key)!;
               if (!g.actions.some((x: any) => x.video_url === a.video_url)) g.actions.push(a);
             });
 
-            // Default OFF: only show categories the staff has explicitly turned on
+            // Default OFF: only show categories the staff has explicitly turned on.
+            // Clip visibility is per-category (`${catKey}::${url}`).
             const visibleEntries = Array.from(groups.entries())
               .filter(([k]) => hudlCategoryConfig?.[k]?.visible === true)
               .map(([k, v]) => ({
                 key: k,
                 label: v.label,
                 actions: v.actions
-                  .filter((a: any) => !hudlVisibility || hudlVisibility[a.video_url]?.visible !== false)
-                  .map((a: any) => ({ ...a, _order: hudlVisibility?.[a.video_url]?.sort_order ?? 0 }))
+                  .filter((a: any) => {
+                    if (!hudlVisibility) return true;
+                    return hudlVisibility[`${k}::${a.video_url}`]?.visible !== false;
+                  })
+                  .map((a: any) => ({ ...a, _order: hudlVisibility?.[`${k}::${a.video_url}`]?.sort_order ?? 0 }))
                   .sort((a: any, b: any) => a._order - b._order),
               }))
               .filter(v => v.actions.length > 0);
