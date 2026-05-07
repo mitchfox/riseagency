@@ -116,6 +116,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [modes, setModes] = useState<Record<string, 'auto' | 'manual'>>({});
   const [manualValues, setManualValues] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!playerId) return;
@@ -156,6 +157,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         setModes(md);
         setManualValues(mv);
       }
+      setDirty(false);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -164,6 +166,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const sensors = useSensors(useSensor(PointerSensor));
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setOrder(prev => {
       const oi = prev.indexOf(e.active.id as string);
       const ni = prev.indexOf(e.over!.id as string);
@@ -184,17 +187,19 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
       .from("player_form_config")
       .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
     if (error) throw error;
+    setDirty(false);
     return true;
   };
 
   useImperativeHandle(ref, () => ({
     saveNow: async () => {
+      if (loading || !dirty) return true;
       try { await persist(); return true; } catch (e: any) {
         toast.error('Form config: ' + (e?.message || 'Failed to save'));
         return false;
       }
     }
-  }), [order, enabled, modes, manualValues, windowSize, playerId]);
+  }), [order, enabled, modes, manualValues, windowSize, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
