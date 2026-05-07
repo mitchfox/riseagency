@@ -59,6 +59,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   const [clipsByCategory, setClipsByCategory] = useState<Record<string, string[]>>({});
   const [visibleCategories, setVisibleCategories] = useState<Record<string, boolean>>({});
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!playerId) return;
@@ -185,6 +186,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
       setVisibleClips(clipVis);
       setVisibleCategories(cVis);
       setCategoryLabels(labelMap);
+      setDirty(false);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -194,6 +196,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
 
   const onCategoryDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setCategoryOrder(prev => {
       const oi = prev.indexOf(e.active.id as string);
       const ni = prev.indexOf(e.over!.id as string);
@@ -204,6 +207,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
 
   const onClipDragEnd = (cat: string) => (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setClipsByCategory(prev => {
       const list = prev[cat] || [];
       const oi = list.indexOf(e.active.id as string);
@@ -236,7 +240,6 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   }, [actions]);
 
   const persist = async (): Promise<boolean> => {
-    await (supabase as any).from('player_hudl_visibility').delete().eq('player_id', playerId);
     const rows: any[] = [];
     categoryOrder.forEach((cat, ci) => {
       rows.push({
@@ -260,21 +263,24 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
         });
       });
     });
-    if (rows.length > 0) {
-      const { error } = await (supabase as any).from('player_hudl_visibility').insert(rows);
-      if (error) throw error;
-    }
+    const { error } = await (supabase as any).rpc('replace_player_hudl_visibility', {
+      _player_id: playerId,
+      _rows: rows,
+    });
+    if (error) throw error;
+    setDirty(false);
     return true;
   };
 
   useImperativeHandle(ref, () => ({
     saveNow: async () => {
+      if (loading || !dirty) return true;
       try { await persist(); return true; } catch (e: any) {
         toast.error('Hudl visibility: ' + (e?.message || 'Failed to save'));
         return false;
       }
     }
-  }), [categoryOrder, clipsByCategory, visibleCategories, visibleClips, playerId]);
+  }), [categoryOrder, clipsByCategory, visibleCategories, visibleClips, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -288,6 +294,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
   // Toggling a category ON should turn ALL its clips on (until manually deselected).
   // Toggling OFF should hide the category entirely.
   const toggleCategory = (cat: string, value: boolean) => {
+    setDirty(true);
     setVisibleCategories(p => ({ ...p, [cat]: value }));
     if (value) {
       const urls = clipsByCategory[cat] || [];
@@ -335,7 +342,7 @@ export const PlayerHudlVisibilityTab = forwardRef<PlayerHudlVisibilityHandle, Pr
                               const score = scoresByUrl[url];
                               return (
                                 <SortableItem key={`${cat}::${url}`} id={url}>
-                                  <Switch checked={visibleClips[url] ?? true} onCheckedChange={(v) => setVisibleClips(p => ({ ...p, [url]: v }))} />
+                                  <Switch checked={visibleClips[url] ?? true} onCheckedChange={(v) => { setDirty(true); setVisibleClips(p => ({ ...p, [url]: v })); }} />
                                   <span className="flex-1 truncate text-sm">{labelByUrl[url] || url.split('/').pop()}</span>
                                   {typeof score === 'number' && (
                                     <span className="rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">R90 {score.toFixed(2)}</span>

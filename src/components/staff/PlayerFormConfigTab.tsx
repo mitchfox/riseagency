@@ -27,6 +27,7 @@ export const FORM_STAT_OPTIONS: { key: string; label: string }[] = [
   { key: "total_shots_per90", label: "Shots /90" },
   { key: "shots_inside_box_per90", label: "Shots in Box /90" },
   { key: "touches_in_opp_box_per90", label: "Touches in Box /90" },
+  { key: "passes_total_per90", label: "Passes /90" },
   { key: "key_passes_per90", label: "Key Passes /90" },
   { key: "pass_accuracy_pct", label: "Pass %" },
   { key: "accurate_passes_per90", label: "Accurate Passes /90" },
@@ -116,6 +117,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [modes, setModes] = useState<Record<string, 'auto' | 'manual'>>({});
   const [manualValues, setManualValues] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!playerId) return;
@@ -156,6 +158,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         setModes(md);
         setManualValues(mv);
       }
+      setDirty(false);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -164,6 +167,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const sensors = useSensors(useSensor(PointerSensor));
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
+    setDirty(true);
     setOrder(prev => {
       const oi = prev.indexOf(e.active.id as string);
       const ni = prev.indexOf(e.over!.id as string);
@@ -181,20 +185,25 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         value: (modes[k] === 'manual' ? (manualValues[k] ?? '') : ''),
       }));
     const { error } = await (supabase as any)
-      .from("player_form_config")
-      .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
+      .rpc("save_player_form_config", {
+        _player_id: playerId,
+        _window_size: windowSize,
+        _stats: stats,
+      });
     if (error) throw error;
+    setDirty(false);
     return true;
   };
 
   useImperativeHandle(ref, () => ({
     saveNow: async () => {
+      if (loading || !dirty) return true;
       try { await persist(); return true; } catch (e: any) {
         toast.error('Form config: ' + (e?.message || 'Failed to save'));
         return false;
       }
     }
-  }), [order, enabled, modes, manualValues, windowSize, playerId]);
+  }), [order, enabled, modes, manualValues, windowSize, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -218,7 +227,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
 
       <div className="max-w-xs space-y-2">
         <Label>Window</Label>
-        <Select value={String(windowSize)} onValueChange={(v) => setWindowSize(parseInt(v))}>
+        <Select value={String(windowSize)} onValueChange={(v) => { setDirty(true); setWindowSize(parseInt(v)); }}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="5">Last 5 matches</SelectItem>
@@ -243,9 +252,9 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
                     checked={!!enabled[key]}
                     mode={modes[key] || 'auto'}
                     manualValue={manualValues[key] ?? ''}
-                    onToggle={() => setEnabled(p => ({ ...p, [key]: !p[key] }))}
-                    onModeChange={(m) => setModes(p => ({ ...p, [key]: m }))}
-                    onManualChange={(v) => setManualValues(p => ({ ...p, [key]: v }))}
+                    onToggle={() => { setDirty(true); setEnabled(p => ({ ...p, [key]: !p[key] })); }}
+                    onModeChange={(m) => { setDirty(true); setModes(p => ({ ...p, [key]: m })); }}
+                    onManualChange={(v) => { setDirty(true); setManualValues(p => ({ ...p, [key]: v })); }}
                   />
                 );
               })}

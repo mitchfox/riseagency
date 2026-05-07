@@ -6669,6 +6669,7 @@ export type Database = {
         Args: { new_value: string }
         Returns: undefined
       }
+      can_manage_player_profile_settings: { Args: never; Returns: boolean }
       check_enum_value_exists: {
         Args: { enum_name: string; value_name: string }
         Returns: boolean
@@ -6700,6 +6701,14 @@ export type Database = {
         Returns: boolean
       }
       mark_welcome_seen: { Args: { _player_id: string }; Returns: undefined }
+      replace_player_hudl_visibility: {
+        Args: { _player_id: string; _rows: Json }
+        Returns: number
+      }
+      save_player_form_config: {
+        Args: { _player_id: string; _stats: Json; _window_size: number }
+        Returns: undefined
+      }
       setup_app_settings: { Args: never; Returns: undefined }
     }
     Enums: {
