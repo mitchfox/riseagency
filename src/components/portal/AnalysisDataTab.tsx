@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
@@ -309,7 +308,6 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40px]"></TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Opponent</TableHead>
                 <TableHead>Mins</TableHead>
@@ -321,13 +319,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </TableHeader>
             <TableBody>
               {analyses.map(a => (
-                <TableRow key={a.id} className={selectedIds.has(a.id) ? '' : 'opacity-40'}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.has(a.id)}
-                      onCheckedChange={() => toggleMatch(a.id)}
-                    />
-                  </TableCell>
+                <TableRow key={a.id}>
                   <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString('en-GB')}</TableCell>
                   <TableCell className="text-sm font-medium">
                     {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}

@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, MessageCircle, ExternalLink, Video, ChevronLeft, ChevronRight, Play, BarChart3 } from "lucide-react";
-import hudlLogo from "@/assets/hudl-logo.png";
+import hudlLogo from "@/assets/wyscout-logo.png";
 import { FormationDisplay } from "@/components/FormationDisplay";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -27,6 +27,7 @@ import { PlayerFormBanner } from "@/components/PlayerFormBanner";
 import { PageLoading } from "@/components/LoadingSpinner";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { normaliseActionKey } from "@/components/staff/PlayerHudlVisibilityTab";
+import { toTitleCase } from "@/lib/titleCase";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -65,6 +66,13 @@ const PlayerDetail = () => {
   const [carouselStart, setCarouselStart] = useState(0);
   const [mobileVisibleRows, setMobileVisibleRows] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Pause the Stars highlight video whenever a clip player / modal opens
+  useEffect(() => {
+    if (hudlPlayerOpen || videoClipModalUrl) {
+      try { videoRef.current?.pause(); } catch {}
+    }
+  }, [hudlPlayerOpen, videoClipModalUrl]);
   
   const playerInfoSentinelRef = useRef<HTMLDivElement>(null);
 
@@ -376,7 +384,7 @@ const PlayerDetail = () => {
                     : [a.action_type || 'Other'];
                   parts.forEach((rawType: string) => {
                     const key = normaliseActionKey(rawType || 'other');
-                    const label = rawType.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                    const label = toTitleCase(rawType);
                     topActions.push({ ...a, clip_logo_url: analysisLogoMap[a.analysis_id] || null, categoryKey: key, categoryLabel: label });
                   });
                 });
@@ -666,7 +674,10 @@ const PlayerDetail = () => {
           {/* Highlights Video - Full Width 16:9 with Club Logo Overlays */}
           <div className="mb-8">
             {player.id && <PlayerFormBanner playerId={player.id} />}
-            <div className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]">
+            <div
+              className="relative aspect-video bg-secondary/30 rounded-lg overflow-hidden border-4 md:border-[6px] border-[hsl(var(--gold))]"
+              onMouseLeave={() => { try { videoRef.current?.pause(); } catch {} }}
+            >
                {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.videoUrl ? (
                  <>
                <LazyVideo 
@@ -890,7 +901,7 @@ const PlayerDetail = () => {
             return (
               <div className="mb-6 w-full">
                 <div className="flex flex-col items-center gap-2 md:flex-row md:items-start md:gap-3 w-full">
-                  <img src={hudlLogo} alt="Hudl" className="h-5 opacity-60 md:mt-1.5" />
+                  <img src={hudlLogo} alt="Wyscout" className="h-5 opacity-60 md:mt-1.5" />
                   <div className="flex flex-wrap justify-center md:justify-start gap-2 flex-1">
                     {visibleEntries.map(({ key, label, actions }) => (
                       <button

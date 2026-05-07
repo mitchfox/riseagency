@@ -205,12 +205,9 @@ export const ClippedActionsPlayer = ({
             <div className="min-w-0 flex-1">
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
               <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
-              {(currentClip.action_description || currentClip.notes) && (
+              {currentClip.action_description && (
                 <div className="mt-1 text-white/85 text-xs leading-snug">
-                  {currentClip.action_description && <p className="line-clamp-2">{currentClip.action_description}</p>}
-                  {currentClip.notes && (
-                    <p className="text-[10px] text-risegold italic mt-0.5 line-clamp-2">📝 {currentClip.notes}</p>
-                  )}
+                  <p className="line-clamp-2">{currentClip.action_description}</p>
                 </div>
               )}
             </div>
