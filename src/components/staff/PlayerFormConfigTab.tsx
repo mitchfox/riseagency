@@ -185,8 +185,11 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         value: (modes[k] === 'manual' ? (manualValues[k] ?? '') : ''),
       }));
     const { error } = await (supabase as any)
-      .from("player_form_config")
-      .upsert({ player_id: playerId, window_size: windowSize, stats }, { onConflict: "player_id" });
+      .rpc("save_player_form_config", {
+        _player_id: playerId,
+        _window_size: windowSize,
+        _stats: stats,
+      });
     if (error) throw error;
     setDirty(false);
     return true;
