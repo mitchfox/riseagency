@@ -1279,6 +1279,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       toast.success("Player updated successfully");
+      // Also persist Form and Hudl tab configs alongside the main save
+      try { await formConfigRef.current?.saveNow(); } catch {}
+      try { await hudlVisibilityRef.current?.saveNow(); } catch {}
       setIsEditDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
