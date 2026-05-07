@@ -312,12 +312,17 @@ const PlayerDetail = () => {
                 .select("clip_video_url, visible, sort_order, playlist_id, playlist_key")
                 .eq("player_id", data.id);
               if (visRows && visRows.length > 0) {
+                // Per-category clip visibility, keyed as `${categoryKey}::${url}`.
+                // A clip hidden in one category must NOT hide the same clip in another visible category.
                 const clipMap: Record<string, { visible: boolean; sort_order: number }> = {};
                 const catMap: Record<string, { visible: boolean; sort_order: number }> = {};
                 visRows.forEach((r: any) => {
                   const catKey = r.playlist_key || (r.playlist_id ? normaliseActionKey(r.playlist_id) : null);
-                  if (r.clip_video_url) clipMap[r.clip_video_url] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
-                  else if (catKey) catMap[catKey] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  if (r.clip_video_url && catKey) {
+                    clipMap[`${catKey}::${r.clip_video_url}`] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  } else if (catKey) {
+                    catMap[catKey] = { visible: !!r.visible, sort_order: r.sort_order ?? 0 };
+                  }
                 });
                 setHudlVisibility(clipMap);
                 setHudlCategoryConfig(catMap);
