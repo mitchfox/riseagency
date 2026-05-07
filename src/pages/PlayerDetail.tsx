@@ -340,6 +340,10 @@ const PlayerDetail = () => {
             // Fetch ALL clipped actions with positive R90 across all reports
             if (analysisData && analysisData.length > 0) {
               const analysisIds = analysisData.map((a: any) => a.id);
+              const analysisLogoMap: Record<string, string | null> = {};
+              analysisData.forEach((a: any) => {
+                analysisLogoMap[a.id] = a.club_logo_url || null;
+              });
               const allActions: any[] = [];
               const pageSize = 1000;
               let from = 0;
@@ -363,7 +367,7 @@ const PlayerDetail = () => {
                 const topActions: any[] = [];
                 // Best Actions category
                 allActions.filter((a: any) => (a.action_score || 0) >= 0.05).forEach((a: any) => {
-                  topActions.push({ ...a, categoryKey: 'best_actions', categoryLabel: 'Best Actions' });
+                  topActions.push({ ...a, clip_logo_url: analysisLogoMap[a.analysis_id] || null, categoryKey: 'best_actions', categoryLabel: 'Best Actions' });
                 });
                 // Per-action-type categories (normalised + merged)
                 allActions.forEach((a: any) => {
@@ -373,7 +377,7 @@ const PlayerDetail = () => {
                   parts.forEach((rawType: string) => {
                     const key = normaliseActionKey(rawType || 'other');
                     const label = rawType.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-                    topActions.push({ ...a, categoryKey: key, categoryLabel: label });
+                    topActions.push({ ...a, clip_logo_url: analysisLogoMap[a.analysis_id] || null, categoryKey: key, categoryLabel: label });
                   });
                 });
                 setTopVideoActions(topActions);
