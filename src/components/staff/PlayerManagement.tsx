@@ -4437,12 +4437,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
                 {/* Hudl Reports Tab */}
                 <TabsContent value="hudl" className="space-y-4">
-                  {editingPlayer && <PlayerHudlVisibilityTab playerId={editingPlayer.id} />}
+                  {editingPlayer && <PlayerHudlVisibilityTab ref={hudlVisibilityRef} playerId={editingPlayer.id} />}
                 </TabsContent>
 
                 {/* Form Tab */}
                 <TabsContent value="form" className="space-y-4">
-                  {editingPlayer && <PlayerFormConfigTab playerId={editingPlayer.id} />}
+                  {editingPlayer && <PlayerFormConfigTab ref={formConfigRef} playerId={editingPlayer.id} />}
                 </TabsContent>
               </Tabs>
 
