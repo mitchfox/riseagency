@@ -51,6 +51,40 @@ interface ConfirmedExample {
   description?: string;
 }
 
+interface FeedbackRow {
+  action_type: string | null;
+  feedback_type: string;
+  reason: string | null;
+  created_at: string;
+  expected_timestamp?: number | string | null;
+}
+
+interface PlayerIdentityRow {
+  identification_description?: string | null;
+  identification_reference_image_url?: string | null;
+  not_to_confuse_with?: string | null;
+}
+
+interface EdgeActionResult {
+  frameIndex: number;
+  actionType: string;
+  confidence: string;
+  description: string;
+  clipBefore?: number;
+  clipAfter?: number;
+}
+
+interface AiDetectionFeedbackInsert {
+  player_id: string;
+  video_analysis_id?: string | null;
+  action_type: string | null;
+  feedback_type: 'wrong_player' | 'wrong_action' | 'not_involved' | 'confirmed' | 'missed_detection' | 'timing_mismatch';
+  reason: string | null;
+  expected_timestamp?: number | null;
+  detected_timestamp?: number | null;
+  feedback_context?: Record<string, unknown>;
+}
+
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -68,6 +102,12 @@ interface Props {
 const STORAGE_KEY = "ai_player_descriptions";
 const SAMPLE_EVERY_SECONDS = 2;
 const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
+
+const feedbackClient = supabase as unknown as {
+  from: (table: 'ai_detection_feedback') => {
+    insert: (rows: AiDetectionFeedbackInsert | AiDetectionFeedbackInsert[]) => Promise<{ error: { message?: string } | null }>;
+  };
+};
 
 function loadSavedDescriptions(): Record<string, { description: string; notPlayer: string; kitDescription: string }> {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
