@@ -3157,7 +3157,7 @@ export const CreatePerformanceReportDialog = ({
           </div>
         </div>
         )}
-      </>
+      </div>
     );
 
   // Additional dialogs that need to be rendered regardless of mode
