@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Shield, Eye, Edit, Save, Loader2, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Shield, Eye, Edit, Save, Loader2, ChevronDown, ChevronUp, Plus, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +58,11 @@ export const RolePermissionsEditor = () => {
   const [newRoleDesc, setNewRoleDesc] = useState("");
   const [creatingRole, setCreatingRole] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editRoleOpen, setEditRoleOpen] = useState(false);
+  const [editRoleKey, setEditRoleKey] = useState<string | null>(null);
+  const [editRoleLabel, setEditRoleLabel] = useState("");
+  const [editRoleDesc, setEditRoleDesc] = useState("");
+  const [savingRoleEdit, setSavingRoleEdit] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -220,6 +225,34 @@ export const RolePermissionsEditor = () => {
     return roles.find((r) => r.role_key === roleKey)?.description || "";
   };
 
+  const openEditRole = (roleKey: string) => {
+    setEditRoleKey(roleKey);
+    setEditRoleLabel(getRoleLabel(roleKey));
+    setEditRoleDesc(getRoleDescription(roleKey));
+    setEditRoleOpen(true);
+  };
+
+  const handleSaveRoleLabel = async () => {
+    if (!editRoleKey) return;
+    setSavingRoleEdit(true);
+    try {
+      const { error } = await supabase.rpc("update_role_label", {
+        _role_key: editRoleKey,
+        _label: editRoleLabel.trim(),
+        _description: editRoleDesc.trim() || null,
+      });
+      if (error) throw error;
+      toast.success("Role updated");
+      setEditRoleOpen(false);
+      await fetchData();
+    } catch (error: any) {
+      console.error("Error updating role:", error);
+      toast.error(error.message || "Failed to update role");
+    } finally {
+      setSavingRoleEdit(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -330,13 +363,20 @@ export const RolePermissionsEditor = () => {
                   const grouped = groupPermissionsByCategory(role);
                   return (
                     <TabsContent key={role} value={role}>
-                      {getRoleDescription(role) && (
-                        <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm text-muted-foreground">
-                            {getRoleDescription(role)}
-                          </p>
-                        </div>
-                      )}
+                      <div className="mb-3 p-3 bg-muted/50 rounded-lg flex items-start justify-between gap-3">
+                        <p className="text-sm text-muted-foreground flex-1">
+                          {getRoleDescription(role) || <span className="italic">No description</span>}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 h-7 px-2"
+                          onClick={() => openEditRole(role)}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Rename
+                        </Button>
+                      </div>
                       <ScrollArea className="h-[400px] pr-4">
                         <div className="space-y-4">
                           {Object.entries(grouped).map(([categoryId, category]) => (
