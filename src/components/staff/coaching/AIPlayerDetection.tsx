@@ -83,7 +83,47 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [scanEndTime, setScanEndTime] = useState("");
   const [sampleInterval, setSampleInterval] = useState<string>("5");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
+  const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Pull a sample of confirmed action examples across the entire database — these
+  // act as few-shot training context for Gemini so the AI learns from the full
+  // RISE labelled-action corpus, not just this player's history.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('performance_report_actions')
+          .select('action_type, action_description, minute')
+          .not('action_type', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(400);
+        if (cancelled || !data) return;
+
+        // Spread across action types so the AI sees variety, not 400 of the same.
+        const perType = new Map<string, ConfirmedExample[]>();
+        for (const row of data) {
+          const type = String(row.action_type);
+          if (!perType.has(type)) perType.set(type, []);
+          const bucket = perType.get(type)!;
+          if (bucket.length < 8) {
+            bucket.push({
+              timestamp: row.minute ? Number(row.minute) * 60 : 0,
+              actionType: type,
+              description: row.action_description || undefined,
+            });
+          }
+        }
+        const flat: ConfirmedExample[] = [];
+        perType.forEach((arr) => flat.push(...arr));
+        setGlobalCorpus(flat);
+      } catch {
+        setGlobalCorpus([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // When a player is selected from dropdown, load saved description and previous report clips
   useEffect(() => {
@@ -259,6 +299,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const mergedConfirmedExamples = [
       ...(confirmedExamples || []),
       ...historicalConfirmedExamples,
+      ...globalCorpus,
     ];
 
     const allDetected: DetectedAction[] = [];
