@@ -19,13 +19,11 @@ const ScoutLogin = () => {
     const checkAuth = async () => {
       const scoutEmail = localStorage.getItem("scout_email") || sessionStorage.getItem("scout_email");
       if (scoutEmail) {
-        const { data } = await supabase
-          .from("scouts")
-          .select("id")
-          .ilike("email", scoutEmail.toLowerCase().trim())
-          .maybeSingle();
-          
-        if (data) {
+        const { data: resp } = await supabase.functions.invoke(
+          "scout-login-check",
+          { body: { email: scoutEmail } },
+        );
+        if ((resp as any)?.found) {
           navigate("/potential");
           return;
         } else {
@@ -52,13 +50,13 @@ const ScoutLogin = () => {
 
     try {
       const trimmedEmail = email.toLowerCase().trim();
-      const { data: scout, error: scoutError } = await supabase
-        .from("scouts")
-        .select("id, email, status")
-        .ilike("email", trimmedEmail)
-        .maybeSingle();
+      const { data: resp, error: scoutError } = await supabase.functions.invoke(
+        "scout-login-check",
+        { body: { email: trimmedEmail } },
+      );
 
       if (scoutError) throw scoutError;
+      const scout = (resp as any)?.scout ?? null;
       
       if (scout) {
         // Check if scout is active
