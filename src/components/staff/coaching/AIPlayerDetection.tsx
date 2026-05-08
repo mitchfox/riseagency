@@ -689,6 +689,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     inputMode="numeric"
                   />
                   <span className="text-xs text-muted-foreground">seconds</span>
+                  <span className="text-xs text-muted-foreground ml-3">Minimum confidence</span>
+                  <Select value={minConfidence} onValueChange={(v) => setMinConfidence(v as 'medium' | 'high')}>
+                    <SelectTrigger className="w-28 h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="medium">Medium+</SelectItem>
+                      <SelectItem value="high">High only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
                   {scanning ? (
