@@ -736,7 +736,7 @@ const SortablePointCard = ({
               <Input
                 value={point.title}
                 onChange={(e) => updatePoint(index, "title", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -757,7 +757,7 @@ const SortablePointCard = ({
               <Textarea
                 value={point.paragraph_1}
                 onChange={(e) => updatePoint(index, "paragraph_1", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -1032,7 +1032,7 @@ const SortablePointCard = ({
               <Textarea
                 value={point.paragraph_2}
                 onChange={(e) => updatePoint(index, "paragraph_2", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
