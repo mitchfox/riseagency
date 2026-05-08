@@ -195,6 +195,7 @@ export type Database = {
           home_team_bg_color: string | null
           home_team_logo: string | null
           id: string
+          is_example: boolean
           key_details: string | null
           kit_collar_color: string | null
           kit_number_color: string | null
@@ -239,6 +240,7 @@ export type Database = {
           home_team_bg_color?: string | null
           home_team_logo?: string | null
           id?: string
+          is_example?: boolean
           key_details?: string | null
           kit_collar_color?: string | null
           kit_number_color?: string | null
@@ -283,6 +285,7 @@ export type Database = {
           home_team_bg_color?: string | null
           home_team_logo?: string | null
           id?: string
+          is_example?: boolean
           key_details?: string | null
           kit_collar_color?: string | null
           kit_number_color?: string | null

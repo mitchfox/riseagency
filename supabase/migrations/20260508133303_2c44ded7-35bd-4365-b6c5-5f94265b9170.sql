@@ -1,0 +1,2 @@
+ALTER TABLE public.analyses ADD COLUMN IF NOT EXISTS is_example boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_analyses_is_example ON public.analyses (is_example) WHERE is_example = true;

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw, Link2, SpellCheck, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
@@ -182,6 +182,8 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   const [concepts, setConcepts] = useState<any[]>([]);
   const [taggedPlayerIds, setTaggedPlayerIds] = useState<string[]>([]);
   const [analysisLanguage, setAnalysisLanguage] = useState("en");
+  const [spellCheckOn, setSpellCheckOn] = useState(false);
+  const [examplesFilter, setExamplesFilter] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState<Record<string, any>>({
@@ -710,7 +712,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
         'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at',
-        'category'
+        'category', 'is_example'
       ];
 
       const dataToSave: Record<string, any> = {
@@ -1620,13 +1622,40 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" spellCheck={spellCheckOn}>
         {/* Header with back button */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={handleCloseDialog}>
               ← Back
             </Button>
+            <Button
+              variant={spellCheckOn ? "default" : "outline"}
+              size="sm"
+              title="Toggle browser spell check on every text field in this analysis"
+              onClick={() => setSpellCheckOn(s => !s)}
+            >
+              <SpellCheck className="w-4 h-4 mr-1.5" />
+              {spellCheckOn ? "Spell Check On" : "Spell Check"}
+            </Button>
+            {editingAnalysis && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="Copy public URL for this analysis"
+                onClick={() => {
+                  const slug = createAnalysisSlug(editingAnalysis.home_team, editingAnalysis.away_team, editingAnalysis.id);
+                  const url = `${window.location.origin}${slug}`;
+                  navigator.clipboard.writeText(url).then(
+                    () => toast.success("Link copied"),
+                    () => toast.error("Could not copy link")
+                  );
+                }}
+              >
+                <Link2 className="w-4 h-4 mr-1.5" />
+                Copy Link
+              </Button>
+            )}
             {editingAnalysis && (
               <Button
                 variant="outline"
@@ -1856,6 +1885,23 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                   </button>
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 ml-2">
+                <Label className="text-sm font-medium whitespace-nowrap">Example</Label>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, is_example: !formData.is_example })}
+                  className={`px-3 py-1 text-xs rounded-md border transition-colors inline-flex items-center gap-1 ${
+                    formData.is_example
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mark this analysis as an example so it can be filtered in the list"
+                >
+                  <Star className={`w-3 h-3 ${formData.is_example ? "fill-current" : ""}`} />
+                  {formData.is_example ? "Example" : "Set as Example"}
+                </button>
+              </div>
             </div>
 
             {(formData.visibility_status === "draft" || formData.visibility_status === "hidden" || formData.visibility_status === "clipped") && (
@@ -1892,6 +1938,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   const renderAnalysisList = (type: AnalysisType) => {
     const filtered = analyses.filter(a => {
       if (a.analysis_type !== type) return false;
+      if (examplesFilter && !(a as any).is_example) return false;
       // When embedded in Athlete Centre with a default player, only show analyses linked to that player
       if (defaultPlayerId) {
         const linked = linkedPlayers[a.id];
@@ -1907,6 +1954,12 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
               <h3 className="font-semibold text-sm sm:text-base truncate">
                 {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
               </h3>
+              {(analysis as any).is_example && (
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 bg-primary/20 text-primary">
+                  <Star className="w-2.5 h-2.5 fill-current" />
+                  Example
+                </span>
+              )}
               {(analysis as any).visibility_status && (analysis as any).visibility_status !== "live" && (
                 <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
                   (analysis as any).visibility_status === "draft"
@@ -1951,6 +2004,22 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(type, analysis)}>
               <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Copy share link"
+              onClick={() => {
+                const slug = createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id);
+                const url = `${window.location.origin}${slug}`;
+                navigator.clipboard.writeText(url).then(
+                  () => toast.success("Link copied"),
+                  () => toast.error("Could not copy link")
+                );
+              }}
+            >
+              <Link2 className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Duplicate" onClick={() => handleDuplicate(analysis.id)}>
               <Copy className="w-4 h-4" />
@@ -2039,24 +2108,44 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">
-          <Button
-            onClick={() => handleOpenDialog("pre-match")}
-            variant="secondary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Pre-Match Analysis
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => handleOpenDialog("pre-match")}
+              variant="secondary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Pre-Match Analysis
+            </Button>
+            <Button
+              variant={examplesFilter ? "default" : "outline"}
+              onClick={() => setExamplesFilter(f => !f)}
+              title="Show only analyses marked as examples"
+            >
+              <Star className={`w-4 h-4 mr-2 ${examplesFilter ? "fill-current" : ""}`} />
+              {examplesFilter ? "Showing Examples" : "Examples"}
+            </Button>
+          </div>
           {renderAnalysisList("pre-match")}
         </TabsContent>
 
         <TabsContent value="post-match" className="space-y-4">
-          <Button
-            onClick={() => handleOpenDialog("post-match")}
-            className="bg-gold text-foreground hover:bg-gold/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Post-Match Analysis
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => handleOpenDialog("post-match")}
+              className="bg-gold text-foreground hover:bg-gold/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Post-Match Analysis
+            </Button>
+            <Button
+              variant={examplesFilter ? "default" : "outline"}
+              onClick={() => setExamplesFilter(f => !f)}
+              title="Show only analyses marked as examples"
+            >
+              <Star className={`w-4 h-4 mr-2 ${examplesFilter ? "fill-current" : ""}`} />
+              {examplesFilter ? "Showing Examples" : "Examples"}
+            </Button>
+          </div>
           {renderAnalysisList("post-match")}
         </TabsContent>
 

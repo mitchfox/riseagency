@@ -261,6 +261,20 @@ export const ReadOnlyAnnotationPlayback = ({ videoUrl, annotationProjectId, prel
       }
 
       const relTime = video.currentTime - clipStart;
+
+      // Catch loop / seek backward jumps directly inside RAF — the
+      // `timeupdate` event is throttled (~250ms) and can fire AFTER
+      // playback already advanced into the new loop, which is what
+      // caused annotations to appear at the wrong time on replay.
+      const prev = lastTimeRef.current;
+      if (prev > 0 && video.currentTime < prev - 0.3) {
+        triggeredTimesRef.current.clear();
+        consumedIdsRef.current.clear();
+        lastFreezeTriggerTimeRef.current = -1;
+        setLoopCycleKey(k => k + 1);
+      }
+      lastTimeRef.current = video.currentTime;
+
       const computedRaw = computeVisibleElements(elements as AnnotationElement[], relTime, {
         forceOpacity: null,
       });
