@@ -481,7 +481,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   return (
     <>
       <Button variant="outline" size="sm" className="gap-1" onClick={() => setDialogOpen(true)}>
-        <UserSearch className="h-3.5 w-3.5" /> AI Player Scan
+        <UserSearch className="h-3.5 w-3.5" /> RISE Action Spotter
       </Button>
 
       <canvas ref={canvasRef} className="hidden" width={640} height={360} />
@@ -490,7 +490,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bebas uppercase tracking-wider text-primary">
-              AI Player Action Detection
+              RISE Action Spotter
             </DialogTitle>
           </DialogHeader>
 
