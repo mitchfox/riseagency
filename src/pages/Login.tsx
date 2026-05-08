@@ -67,13 +67,11 @@ const Login = () => {
 
       const scoutEmail = localStorage.getItem("scout_email") || sessionStorage.getItem("scout_email");
       if (scoutEmail) {
-        const { data } = await supabase
-          .from("scouts")
-          .select("id")
-          .ilike("email", scoutEmail.trim().toLowerCase())
-          .maybeSingle();
-          
-        if (data) {
+        const { data: resp } = await supabase.functions.invoke(
+          "scout-login-check",
+          { body: { email: scoutEmail } },
+        );
+        if ((resp as any)?.found) {
           navigate("/potential");
           return;
         } else {
@@ -148,13 +146,12 @@ const Login = () => {
         return;
       }
 
-      const { data: scout, error: scoutError } = await supabase
-        .from("scouts")
-        .select("id, email")
-        .ilike("email", normalizedEmail)
-        .maybeSingle();
-
+      const { data: scoutResp, error: scoutError } = await supabase.functions.invoke(
+        "scout-login-check",
+        { body: { email: normalizedEmail } },
+      );
       if (scoutError) throw scoutError;
+      const scout = (scoutResp as any)?.scout ?? null;
       
       if (scout) {
         const storedScoutEmail = scout.email || normalizedEmail;
