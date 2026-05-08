@@ -716,7 +716,8 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     setDrawingMode(false);
     setFreezeFrameUrl(null);
     setActiveTool('select');
-    setSelectedId(null);
+    // Preserve selection of the just-drawn annotation. The canvas set
+    // `selectedId` to the new element on placement, so we leave it alone here.
     // Clear all freeze/trigger state so newly drawn annotations are evaluated
     // against the resumed timeline as if from scratch — without this, the
     // previous annotation's freeze IDs bleed onto the next playback frame and
