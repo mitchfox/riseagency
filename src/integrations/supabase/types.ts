@@ -6710,6 +6710,10 @@ export type Database = {
         Returns: undefined
       }
       setup_app_settings: { Args: never; Returns: undefined }
+      update_role_label: {
+        Args: { _description: string; _label: string; _role_key: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
