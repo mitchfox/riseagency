@@ -86,6 +86,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [sampleInterval, setSampleInterval] = useState<string>("5");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
+  const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pull a sample of confirmed action examples across the entire database — these
@@ -134,6 +135,26 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     if (!player) return;
     
     setPlayerName(player.name);
+
+    // Pull persistent rejection feedback for this player so the AI learns across sessions.
+    (async () => {
+      const { data: fb } = await supabase
+        .from('ai_detection_feedback')
+        .select('action_type, feedback_type, reason, created_at')
+        .eq('player_id', selectedPlayerForScan)
+        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (fb) {
+        setPersistedRejections(fb.map((r: any) => ({
+          actionType: r.action_type || 'unknown',
+          reason: `${r.feedback_type}: ${r.reason || ''}`.trim(),
+          date: r.created_at,
+        })));
+      } else {
+        setPersistedRejections([]);
+      }
+    })();
     
     // Auto-load identification fields from the player record (set in Player Management).
     // Falls back to localStorage cache for back-compat.
