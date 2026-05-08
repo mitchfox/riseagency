@@ -551,6 +551,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Reference Image URL (auto-loaded from player record)</label>
+                    <Input
+                      value={referenceImageUrl}
+                      onChange={e => setReferenceImageUrl(e.target.value)}
+                      placeholder="https://… clear still of the player"
+                    />
+                  </div>
+                  {referenceImageUrl && (
+                    <img
+                      src={referenceImageUrl}
+                      alt="Reference"
+                      className="h-16 w-16 object-cover rounded border border-border"
+                    />
+                  )}
+                </div>
+                {persistedRejections.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Learning from {persistedRejections.length} stored coach correction{persistedRejections.length === 1 ? '' : 's'} for this player.
+                  </p>
+                )}
               </div>
 
               {/* Tag the player */}
