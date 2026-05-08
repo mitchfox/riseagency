@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +22,8 @@ interface BacktestRow {
   type: 'matched' | 'missed' | 'false_positive' | 'type_mismatch';
   expectedActionType?: string;
   expectedTimestamp?: number;
+  expectedEndTimestamp?: number;
+  actionDescription?: string;
   detectedActionType?: string;
   detectedTimestamp?: number;
   confidence?: string;
@@ -63,6 +65,8 @@ interface Props {
 
 // Persist player AI descriptions across videos
 const STORAGE_KEY = "ai_player_descriptions";
+const SAMPLE_EVERY_SECONDS = 2;
+const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
 
 function loadSavedDescriptions(): Record<string, { description: string; notPlayer: string; kitDescription: string }> {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
@@ -252,8 +256,61 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     });
   }, []);
 
-  const SAMPLE_EVERY_SECONDS = 2;
-  const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
+  const formatTime = (t?: number) => t == null ? '—' : `${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+  const formatWindow = (row: BacktestRow) => {
+    if (row.expectedTimestamp == null) return '—';
+    if (row.expectedEndTimestamp == null || row.expectedEndTimestamp === row.expectedTimestamp) return formatTime(row.expectedTimestamp);
+    return `${formatTime(row.expectedTimestamp)}-${formatTime(row.expectedEndTimestamp)}`;
+  };
+
+  const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
+    if (!selectedPlayerForScan) return;
+    const learningRows = rows
+      .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
+      .map((row) => ({
+        player_id: selectedPlayerForScan,
+        video_analysis_id: videoAnalysisId || null,
+        action_type: row.expectedActionType || row.detectedActionType || null,
+        feedback_type: row.type === 'missed' ? 'missed_detection' : 'timing_mismatch',
+        reason: row.reason || null,
+        expected_timestamp: row.expectedTimestamp ?? null,
+        detected_timestamp: row.detectedTimestamp ?? null,
+        feedback_context: {
+          expectedEnd: row.expectedEndTimestamp ?? null,
+          expectedAction: row.expectedActionType || null,
+          detectedAction: row.detectedActionType || null,
+          actionDescription: row.actionDescription || null,
+          detectedDescription: row.description || null,
+          framesSampled: totalFrames,
+          detectionsReturned: detectedCount,
+          sampleEverySeconds: SAMPLE_EVERY_SECONDS,
+          minimumConfidence: MIN_CONFIDENCE,
+        },
+      }));
+
+    if (learningRows.length === 0) {
+      setLearningSavedCount(0);
+      return;
+    }
+
+    const { error } = await supabase.from('ai_detection_feedback').insert(learningRows as any[]);
+    if (error) {
+      console.error('Could not save backtest learning', error);
+      toast.error('Backtest ran, but learning could not be saved');
+      return;
+    }
+
+    setLearningSavedCount(learningRows.length);
+    setPersistedRejections(prev => [
+      ...learningRows.map((row) => ({
+        actionType: String(row.action_type || 'unknown'),
+        reason: `${row.feedback_type}: ${row.reason || ''}`,
+        date: new Date().toISOString(),
+      })),
+      ...prev,
+    ].slice(0, 50));
+  };
 
   const startScan = async () => {
     if (!selectedPlayerForScan || !playerName.trim()) {
@@ -396,9 +453,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             type: 'missed',
             expectedActionType: clip.action_type || clip.label,
             expectedTimestamp: clip.start,
-            reason: 'AI returned no detections in this segment',
+            expectedEndTimestamp: clip.end,
+            actionDescription: clip.action_description,
+            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}, so this has been saved as a missed positive example for the next run.`,
           }));
           setBacktestResults(rows);
+          await saveBacktestLearning(rows, 0, totalFrames);
           toast.info(`Backtest: 0 detected, ${rows.length} existing clips missed`);
         } else {
           toast.info("No actions detected for this player");
@@ -421,40 +481,46 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }).filter((c) => c.end > c.start);
 
         if (backtestMode) {
-          const norm = (s: string) => s.toLowerCase().trim();
-          const TIME_TOL = 10; // seconds either side counts as the same play
-          const expected = (existingClips || []).filter((c) =>
-            c.start >= clampedStart - TIME_TOL && c.start <= clampedEnd + TIME_TOL
-          );
+          const norm = (value?: string | null) => (value || '').toLowerCase().trim();
+          const EDGE_TOL = 2;
+          const expected = (existingClips || []).filter((c) => c.end >= clampedStart && c.start <= clampedEnd);
           const usedExpected = new Set<number>();
           const rows: BacktestRow[] = [];
 
           for (const det of dedupedByWindow) {
-            // Find best expected clip overlapping this detection.
             let bestIdx = -1;
-            let bestDelta = Infinity;
+            let bestDistance = Infinity;
+
             expected.forEach((exp, idx) => {
               if (usedExpected.has(idx)) return;
-              const delta = Math.abs(exp.start - det.timestamp);
-              if (delta <= TIME_TOL && delta < bestDelta) {
-                bestDelta = delta;
+              const insideWindow = det.timestamp >= exp.start - EDGE_TOL && det.timestamp <= exp.end + EDGE_TOL;
+              if (!insideWindow) return;
+              const centre = exp.start + ((exp.end - exp.start) / 2);
+              const distance = Math.abs(centre - det.timestamp);
+              if (distance < bestDistance) {
+                bestDistance = distance;
                 bestIdx = idx;
               }
             });
 
             if (bestIdx >= 0) {
               const exp = expected[bestIdx];
-              const sameType = norm(exp.action_type || exp.label) === norm(det.actionType);
+              const expectedType = exp.action_type || exp.label;
+              const sameType = norm(expectedType) === norm(det.actionType);
               usedExpected.add(bestIdx);
               rows.push({
-                type: 'matched',
-                expectedActionType: exp.action_type || exp.label,
+                type: sameType ? 'matched' : 'type_mismatch',
+                expectedActionType: expectedType,
                 expectedTimestamp: exp.start,
+                expectedEndTimestamp: exp.end,
+                actionDescription: exp.action_description,
                 detectedActionType: det.actionType,
                 detectedTimestamp: det.timestamp,
                 confidence: det.confidence,
                 description: det.description,
-                reason: sameType ? 'Time + action type matched' : `Timing matched but action type differed (${exp.action_type || exp.label} vs ${det.actionType})`,
+                reason: sameType
+                  ? `Detected inside the confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}).`
+                  : `Found the right clip window, but called it ${det.actionType} instead of ${expectedType}. This has been saved as action-type learning.`,
               });
             } else {
               rows.push({
@@ -463,7 +529,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 detectedTimestamp: det.timestamp,
                 confidence: det.confidence,
                 description: det.description,
-                reason: 'AI flagged a moment with no matching confirmed clip',
+                reason: 'AI flagged a moment outside every confirmed clip window.',
               });
             }
           }
@@ -474,15 +540,19 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               type: 'missed',
               expectedActionType: exp.action_type || exp.label,
               expectedTimestamp: exp.start,
-              reason: 'No AI detection within ±10s of this confirmed clip',
+              expectedEndTimestamp: exp.end,
+              actionDescription: exp.action_description,
+              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). This has been saved as a missed positive example for the next run.`,
             });
           });
 
           setBacktestResults(rows);
+          await saveBacktestLearning(rows, dedupedByWindow.length, totalFrames);
           const matched = rows.filter((r) => r.type === 'matched').length;
           const missed = rows.filter((r) => r.type === 'missed').length;
+          const mismatched = rows.filter((r) => r.type === 'type_mismatch').length;
           const fp = rows.filter((r) => r.type === 'false_positive').length;
-          toast.success(`Backtest: ${matched} matched, ${missed} missed, ${fp} false positives`);
+          toast.success(`Backtest: ${matched} matched, ${missed} missed, ${mismatched} type mismatches, ${fp} false positives`);
         } else {
           onClipsAccepted(clips);
           toast.success(`${clips.length} potential actions added`);
