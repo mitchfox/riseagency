@@ -88,28 +88,40 @@ export type Database = {
           action_type: string | null
           created_at: string
           created_by: string | null
+          detected_timestamp: number | null
+          expected_timestamp: number | null
+          feedback_context: Json | null
           feedback_type: string
           id: string
           player_id: string | null
           reason: string | null
+          video_analysis_id: string | null
         }
         Insert: {
           action_type?: string | null
           created_at?: string
           created_by?: string | null
+          detected_timestamp?: number | null
+          expected_timestamp?: number | null
+          feedback_context?: Json | null
           feedback_type: string
           id?: string
           player_id?: string | null
           reason?: string | null
+          video_analysis_id?: string | null
         }
         Update: {
           action_type?: string | null
           created_at?: string
           created_by?: string | null
+          detected_timestamp?: number | null
+          expected_timestamp?: number | null
+          feedback_context?: Json | null
           feedback_type?: string
           id?: string
           player_id?: string | null
           reason?: string | null
+          video_analysis_id?: string | null
         }
         Relationships: [
           {
@@ -124,6 +136,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_detection_feedback_video_analysis_id_fkey"
+            columns: ["video_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "video_analyses"
             referencedColumns: ["id"]
           },
         ]
