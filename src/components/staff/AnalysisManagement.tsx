@@ -1622,13 +1622,40 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
     };
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" spellCheck={spellCheckOn}>
         {/* Header with back button */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={handleCloseDialog}>
               ← Back
             </Button>
+            <Button
+              variant={spellCheckOn ? "default" : "outline"}
+              size="sm"
+              title="Toggle browser spell check on every text field in this analysis"
+              onClick={() => setSpellCheckOn(s => !s)}
+            >
+              <SpellCheck className="w-4 h-4 mr-1.5" />
+              {spellCheckOn ? "Spell Check On" : "Spell Check"}
+            </Button>
+            {editingAnalysis && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="Copy public URL for this analysis"
+                onClick={() => {
+                  const slug = createAnalysisSlug(editingAnalysis.home_team, editingAnalysis.away_team, editingAnalysis.id);
+                  const url = `${window.location.origin}${slug}`;
+                  navigator.clipboard.writeText(url).then(
+                    () => toast.success("Link copied"),
+                    () => toast.error("Could not copy link")
+                  );
+                }}
+              >
+                <Link2 className="w-4 h-4 mr-1.5" />
+                Copy Link
+              </Button>
+            )}
             {editingAnalysis && (
               <Button
                 variant="outline"
