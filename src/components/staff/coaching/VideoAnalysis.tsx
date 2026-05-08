@@ -2129,7 +2129,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 opponent={selectedVideo.opponent}
                 players={players.map(p => ({ id: p.id, name: p.name }))}
                 selectedPlayerId={selectedVideo.player_id}
-                existingClips={selectedVideo.clips.map(c => ({ start: c.start, end: c.end, label: c.label, action_type: c.action_type }))}
+                videoAnalysisId={selectedVideo.id}
+                existingClips={selectedVideo.clips.map(c => ({ start: c.start, end: c.end, label: c.label, action_type: c.action_type, action_description: c.action_description }))}
                 onClipsAccepted={async (newClips) => {
                   if (!selectedVideo) return;
                   const clips: Clip[] = newClips.map(c => ({

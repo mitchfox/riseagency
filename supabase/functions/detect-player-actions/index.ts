@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence, sampleEverySeconds } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -129,7 +129,7 @@ ${confirmedExamples.map((ex: any) => `- ${ex.actionType} at ${Math.floor(ex.time
 These examples show the coach's standard for what counts as a valid detection. Match this level of involvement when deciding whether to flag new actions.`;
     }
 
-    const systemPrompt = `You are an elite professional football (soccer) match analyst with deep tactical knowledge. You are reviewing video frames sampled every 3 seconds from a competitive match recording — typically a wide-angle broadcast or touchline camera.
+    const systemPrompt = `You are an elite professional football match analyst with deep tactical knowledge. You are reviewing video frames sampled every ${sampleEverySeconds || 2} seconds from a competitive match recording, typically a wide-angle broadcast or touchline camera.
 
 PLAYER TO TRACK: ${playerInfo.name}
 ${playerInfo.description ? `VISUAL IDENTIFICATION: ${playerInfo.description}` : ''}
@@ -150,10 +150,10 @@ TWO-STAGE IDENTIFICATION (apply mentally before flagging):
 ${actionReference}${confirmedReference}
 ${Array.isArray(rejectionHistory) && rejectionHistory.length > 0 ? `
 PREVIOUS REJECTION FEEDBACK FROM COACH:
-The coach has previously rejected AI detections for the following reasons. Learn from this feedback and avoid making the same mistakes:
+The coach has previously corrected AI detections and backtests. Learn from this feedback before reviewing the frames. Missed detection means the coach confirmed that action happened at that time, so be more alert for similar player body shape, pitch location and ball involvement:
 ${rejectionHistory.slice(-20).map((r: any) => `- Action "${r.actionType}" rejected: "${r.reason}"`).join('\n')}
 
-Use this feedback to calibrate your detection threshold. If the coach says "player not involved" or "wrong player", be more conservative about those specific scenarios.` : ''}
+Use this feedback to calibrate your threshold. If feedback says wrong_player, wrong_action or not_involved, be more conservative. If feedback says missed_detection, be more attentive around that action type and visual setup, not more conservative.` : ''}
 ${allowedNames.length > 0 ? `
 ALLOWED ACTION TYPES (STRICT):
 - You may ONLY output actionType values from this list:
@@ -163,7 +163,7 @@ ${allowedNames.map((n) => `  • ${n}`).join('\n')}
 DETECTION RULES:
 1. BALL PROXIMITY: The player must be DIRECTLY interacting with the ball OR clearly about to receive/contest it. Simply being near the ball is not enough.
 
-2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR. Do NOT flag:
+2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR or the confirmed next receiver/defensive challenger in the immediate action. Do NOT flag:
    - Standing in position while play happens nearby
    - Jogging or running without purpose (unless a decisive run creating/exploiting space)
    - Being in shot but watching play develop elsewhere
@@ -177,7 +177,7 @@ DETECTION RULES:
 
 CONFIDENCE:
 - "high": Player clearly identifiable AND clearly performing the action
-- "medium": Player appears to be the right person and body position suggests the action
+- "medium": Player appears to be the right person and body position, ball path, nearby opponent or immediate receiving/contesting context suggests the action
 
 DO NOT REPORT:
 - Standing still, walking, or general repositioning

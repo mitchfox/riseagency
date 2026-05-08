@@ -1,13 +1,12 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Loader2, UserSearch, X, Tag } from "lucide-react";
+import { Loader2, UserSearch, Pencil, Brain, CheckCircle2 } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -21,19 +20,16 @@ interface DetectedAction {
 }
 
 interface BacktestRow {
-  type: 'matched' | 'missed' | 'false_positive';
+  type: 'matched' | 'missed' | 'false_positive' | 'type_mismatch';
   expectedActionType?: string;
   expectedTimestamp?: number;
+  expectedEndTimestamp?: number;
+  actionDescription?: string;
   detectedActionType?: string;
   detectedTimestamp?: number;
   confidence?: string;
   description?: string;
   reason?: string;
-}
-
-interface PlayerTag {
-  timestamp: number;
-  description: string;
 }
 
 interface PlayerOption {
@@ -55,6 +51,40 @@ interface ConfirmedExample {
   description?: string;
 }
 
+interface FeedbackRow {
+  action_type: string | null;
+  feedback_type: string;
+  reason: string | null;
+  created_at: string;
+  expected_timestamp?: number | string | null;
+}
+
+interface PlayerIdentityRow {
+  identification_description?: string | null;
+  identification_reference_image_url?: string | null;
+  not_to_confuse_with?: string | null;
+}
+
+interface EdgeActionResult {
+  frameIndex: number;
+  actionType: string;
+  confidence: string;
+  description: string;
+  clipBefore?: number;
+  clipAfter?: number;
+}
+
+interface AiDetectionFeedbackInsert {
+  player_id: string;
+  video_analysis_id?: string | null;
+  action_type: string | null;
+  feedback_type: 'wrong_player' | 'wrong_action' | 'not_involved' | 'confirmed' | 'missed_detection' | 'timing_mismatch';
+  reason: string | null;
+  expected_timestamp?: number | null;
+  detected_timestamp?: number | null;
+  feedback_context?: Record<string, unknown>;
+}
+
 interface Props {
   videoUrl: string;
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -62,44 +92,44 @@ interface Props {
   opponent?: string | null;
   players?: PlayerOption[];
   selectedPlayerId?: string | null;
-  existingClips?: { start: number; end: number; label: string; action_type: string }[];
+  videoAnalysisId?: string | null;
+  existingClips?: { start: number; end: number; label: string; action_type: string; action_description?: string }[];
   rejectionHistory?: RejectionFeedback[];
   confirmedExamples?: ConfirmedExample[];
 }
 
 // Persist player AI descriptions across videos
 const STORAGE_KEY = "ai_player_descriptions";
+const SAMPLE_EVERY_SECONDS = 2;
+const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
+
+const feedbackClient = supabase as unknown as {
+  from: (table: 'ai_detection_feedback') => {
+    insert: (rows: AiDetectionFeedbackInsert | AiDetectionFeedbackInsert[]) => Promise<{ error: { message?: string } | null }>;
+  };
+};
 
 function loadSavedDescriptions(): Record<string, { description: string; notPlayer: string; kitDescription: string }> {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
 }
 
-function saveDescription(playerName: string, data: { description: string; notPlayer: string; kitDescription: string }) {
-  const all = loadSavedDescriptions();
-  all[playerName.toLowerCase().trim()] = data;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-}
-
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, videoAnalysisId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
   const [notPlayer, setNotPlayer] = useState("");
   const [kitDescription, setKitDescription] = useState("");
   const [referenceImageUrl, setReferenceImageUrl] = useState("");
-  const [minConfidence, setMinConfidence] = useState<'medium' | 'high'>('medium');
-  const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
+  const [descriptionEditable, setDescriptionEditable] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
-  const [scanStartTime, setScanStartTime] = useState("");
-  const [scanEndTime, setScanEndTime] = useState("");
-  const [sampleInterval, setSampleInterval] = useState<string>("5");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const [backtestMode, setBacktestMode] = useState(false);
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
+  const [learningSavedCount, setLearningSavedCount] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pull a sample of confirmed action examples across the entire database — these
@@ -141,7 +171,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     return () => { cancelled = true; };
   }, []);
 
-  // When a player is selected from dropdown, load saved description and previous report clips
+  useEffect(() => {
+    setSelectedPlayerForScan(selectedPlayerId || "");
+  }, [selectedPlayerId]);
+
+  // When the linked player is available, load identity and previous learning.
   useEffect(() => {
     if (!selectedPlayerForScan || !players) return;
     const player = players.find(p => p.id === selectedPlayerForScan);
@@ -153,15 +187,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     (async () => {
       const { data: fb } = await supabase
         .from('ai_detection_feedback')
-        .select('action_type, feedback_type, reason, created_at')
+        .select('action_type, feedback_type, reason, created_at, expected_timestamp, feedback_context')
         .eq('player_id', selectedPlayerForScan)
-        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved'])
+        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved', 'missed_detection', 'timing_mismatch'])
         .order('created_at', { ascending: false })
         .limit(50);
       if (fb) {
-        setPersistedRejections(fb.map((r: any) => ({
+        setPersistedRejections((fb as FeedbackRow[]).map((r) => ({
           actionType: r.action_type || 'unknown',
-          reason: `${r.feedback_type}: ${r.reason || ''}`.trim(),
+          reason: `${r.feedback_type}: ${r.reason || ''}${r.expected_timestamp != null ? ` at ${Math.floor(Number(r.expected_timestamp) / 60)}.${String(Math.floor(Number(r.expected_timestamp) % 60)).padStart(2, '0')}` : ''}`.trim(),
           date: r.created_at,
         })));
       } else {
@@ -177,17 +211,18 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         .select('identification_description, identification_reference_image_url, not_to_confuse_with')
         .eq('id', selectedPlayerForScan)
         .maybeSingle();
-      const idDesc = (pdata as any)?.identification_description as string | null | undefined;
-      const idImg = (pdata as any)?.identification_reference_image_url as string | null | undefined;
-      const idNot = (pdata as any)?.not_to_confuse_with as string | null | undefined;
+      const identity = pdata as PlayerIdentityRow | null;
+      const idDesc = identity?.identification_description;
+      const idImg = identity?.identification_reference_image_url;
+      const idNot = identity?.not_to_confuse_with;
       const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
       setPlayerDescription(idDesc || saved?.description || "");
       setNotPlayer(idNot || saved?.notPlayer || "");
       setKitDescription(saved?.kitDescription || "");
+      setDescriptionEditable(false);
       setReferenceImageUrl(idImg || "");
     })();
     
-    // Load previous clips from performance reports as reference tags
     loadPreviousClips(selectedPlayerForScan);
   }, [selectedPlayerForScan, players]);
 
@@ -216,16 +251,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         return;
       }
 
-      const tags: PlayerTag[] = actions.map((a) => ({
-        timestamp: a.minute ? a.minute * 60 : 0,
-        description: `${a.action_type}${a.action_description ? `: ${a.action_description}` : ''} (report example)`,
-      }));
-
-      setPlayerTags(prev => {
-        const existing = new Set(prev.map(t => t.description));
-        return [...prev, ...tags.filter(t => !existing.has(t.description))];
-      });
-
       setHistoricalConfirmedExamples(actions
         .filter((a) => !!a.action_type)
         .map((a) => ({
@@ -237,24 +262,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     } catch {
       setHistoricalConfirmedExamples([]);
     }
-  };
-
-  const tagCurrentFrame = () => {
-    if (!videoRef.current) return;
-    const ts = videoRef.current.currentTime;
-    setPlayerTags(prev => [...prev, {
-      timestamp: ts,
-      description: `Tagged at ${Math.floor(ts / 60)}.${String(Math.floor(ts % 60)).padStart(2, '0')}`,
-    }]);
-    toast.success("Player tagged at current frame");
-  };
-
-  const tagFromExistingClip = (clip: { start: number; label: string; action_type: string }) => {
-    setPlayerTags(prev => [...prev, {
-      timestamp: clip.start,
-      description: `${clip.action_type || clip.label} (existing clip)`,
-    }]);
-    toast.success("Tagged from existing clip");
   };
 
   const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -291,33 +298,65 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     });
   }, []);
 
-  /** Parse "mm.ss" (preferred), "mm:ss" or raw seconds string to seconds */
-  const parseTimeToSeconds = (val: string): number | null => {
-    const input = val.trim();
-    if (!input) return null;
+  const formatTime = (t?: number) => t == null ? '—' : `${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
-    if (input.includes('.') || input.includes(':')) {
-      const parts = input.split(/[.:]/);
-      if (parts.length !== 2) return null;
-      const mins = Number(parts[0]);
-      const secs = Number(parts[1]);
-      if (!Number.isFinite(mins) || !Number.isFinite(secs) || secs < 0) return null;
-      return (mins * 60) + secs;
-    }
-
-    const seconds = Number(input);
-    return Number.isFinite(seconds) ? seconds : null;
+  const formatWindow = (row: BacktestRow) => {
+    if (row.expectedTimestamp == null) return '—';
+    if (row.expectedEndTimestamp == null || row.expectedEndTimestamp === row.expectedTimestamp) return formatTime(row.expectedTimestamp);
+    return `${formatTime(row.expectedTimestamp)}-${formatTime(row.expectedEndTimestamp)}`;
   };
 
-  const numericSampleInterval = useMemo(() => {
-    const parsed = parseInt(sampleInterval, 10);
-    if (!Number.isFinite(parsed)) return 5;
-    return Math.max(1, Math.min(15, parsed));
-  }, [sampleInterval]);
+  const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
+    if (!selectedPlayerForScan) return;
+    const learningRows = rows
+      .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
+      .map((row) => ({
+        player_id: selectedPlayerForScan,
+        video_analysis_id: videoAnalysisId || null,
+        action_type: row.expectedActionType || row.detectedActionType || null,
+        feedback_type: row.type === 'missed' ? 'missed_detection' : 'timing_mismatch',
+        reason: row.reason || null,
+        expected_timestamp: row.expectedTimestamp ?? null,
+        detected_timestamp: row.detectedTimestamp ?? null,
+        feedback_context: {
+          expectedEnd: row.expectedEndTimestamp ?? null,
+          expectedAction: row.expectedActionType || null,
+          detectedAction: row.detectedActionType || null,
+          actionDescription: row.actionDescription || null,
+          detectedDescription: row.description || null,
+          framesSampled: totalFrames,
+          detectionsReturned: detectedCount,
+          sampleEverySeconds: SAMPLE_EVERY_SECONDS,
+          minimumConfidence: MIN_CONFIDENCE,
+        },
+      }));
+
+    if (learningRows.length === 0) {
+      setLearningSavedCount(0);
+      return;
+    }
+
+    const { error } = await feedbackClient.from('ai_detection_feedback').insert(learningRows);
+    if (error) {
+      console.error('Could not save backtest learning', error);
+      toast.error('Backtest ran, but learning could not be saved');
+      return;
+    }
+
+    setLearningSavedCount(learningRows.length);
+    setPersistedRejections(prev => [
+      ...learningRows.map((row) => ({
+        actionType: String(row.action_type || 'unknown'),
+        reason: `${row.feedback_type}: ${row.reason || ''}`,
+        date: new Date().toISOString(),
+      })),
+      ...prev,
+    ].slice(0, 50));
+  };
 
   const startScan = async () => {
-    if (!playerName.trim()) {
-      toast.error("Enter the player's name first");
+    if (!selectedPlayerForScan || !playerName.trim()) {
+      toast.error("Link this analysis to a player first");
       return;
     }
     if (!videoRef.current || !videoRef.current.duration) {
@@ -325,19 +364,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       return;
     }
 
-    // Save description for future videos
-    saveDescription(playerName, { description: playerDescription, notPlayer, kitDescription });
-
     setScanning(true);
     setScanProgress(0);
+    setLearningSavedCount(0);
 
     const fullDuration = videoRef.current.duration;
-    const segStart = parseTimeToSeconds(scanStartTime) ?? 0;
-    const segEnd = parseTimeToSeconds(scanEndTime) ?? fullDuration;
-    const clampedStart = Math.max(0, Math.min(segStart, fullDuration));
-    const clampedEnd = Math.max(clampedStart, Math.min(segEnd, fullDuration));
+    const clampedStart = 0;
+    const clampedEnd = fullDuration;
 
-    const sampleEvery = numericSampleInterval;
+    const sampleEvery = SAMPLE_EVERY_SECONDS;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
     const batchSize = 15;
@@ -363,7 +398,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           const time = Math.min(clampedEnd, clampedStart + (i * sampleEvery));
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
-            frames.push({ dataUrl, timestamp: time, index: i });
+            frames.push({ dataUrl, timestamp: time, index: i - batchStart });
           } catch {
             // Skip frames that fail
           }
@@ -385,7 +420,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             },
             referenceImageUrl: referenceImageUrl || undefined,
             teamKitDescription: kitDescription || undefined,
-            minConfidence,
+            minConfidence: MIN_CONFIDENCE,
+            sampleEverySeconds: sampleEvery,
             rejectionHistory: (() => {
               const merged = [
                 ...(rejectionHistory || []),
@@ -405,9 +441,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (data?.actions) {
           const batchActions: DetectedAction[] = data.actions
-            .map((a: any) => {
+            .map((a: EdgeActionResult) => {
               const matchedTimestamp = frames.find(f => f.index === a.frameIndex)?.timestamp;
-              const fallbackTimestamp = clampedStart + (a.frameIndex * sampleEvery);
+              const fallbackTimestamp = clampedStart + ((batchStart + a.frameIndex) * sampleEvery);
               const timestamp = Number.isFinite(matchedTimestamp) ? matchedTimestamp : fallbackTimestamp;
 
               if (!Number.isFinite(timestamp)) return null;
@@ -461,9 +497,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             type: 'missed',
             expectedActionType: clip.action_type || clip.label,
             expectedTimestamp: clip.start,
-            reason: 'AI returned no detections in this segment',
+            expectedEndTimestamp: clip.end,
+            actionDescription: clip.action_description,
+            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}, so this has been saved as a missed positive example for the next run.`,
           }));
           setBacktestResults(rows);
+          await saveBacktestLearning(rows, 0, totalFrames);
           toast.info(`Backtest: 0 detected, ${rows.length} existing clips missed`);
         } else {
           toast.info("No actions detected for this player");
@@ -486,40 +525,46 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }).filter((c) => c.end > c.start);
 
         if (backtestMode) {
-          const norm = (s: string) => s.toLowerCase().trim();
-          const TIME_TOL = 10; // seconds either side counts as the same play
-          const expected = (existingClips || []).filter((c) =>
-            c.start >= clampedStart - TIME_TOL && c.start <= clampedEnd + TIME_TOL
-          );
+          const norm = (value?: string | null) => (value || '').toLowerCase().trim();
+          const EDGE_TOL = 2;
+          const expected = (existingClips || []).filter((c) => c.end >= clampedStart && c.start <= clampedEnd);
           const usedExpected = new Set<number>();
           const rows: BacktestRow[] = [];
 
           for (const det of dedupedByWindow) {
-            // Find best expected clip overlapping this detection.
             let bestIdx = -1;
-            let bestDelta = Infinity;
+            let bestDistance = Infinity;
+
             expected.forEach((exp, idx) => {
               if (usedExpected.has(idx)) return;
-              const delta = Math.abs(exp.start - det.timestamp);
-              if (delta <= TIME_TOL && delta < bestDelta) {
-                bestDelta = delta;
+              const insideWindow = det.timestamp >= exp.start - EDGE_TOL && det.timestamp <= exp.end + EDGE_TOL;
+              if (!insideWindow) return;
+              const centre = exp.start + ((exp.end - exp.start) / 2);
+              const distance = Math.abs(centre - det.timestamp);
+              if (distance < bestDistance) {
+                bestDistance = distance;
                 bestIdx = idx;
               }
             });
 
             if (bestIdx >= 0) {
               const exp = expected[bestIdx];
-              const sameType = norm(exp.action_type || exp.label) === norm(det.actionType);
+              const expectedType = exp.action_type || exp.label;
+              const sameType = norm(expectedType) === norm(det.actionType);
               usedExpected.add(bestIdx);
               rows.push({
-                type: 'matched',
-                expectedActionType: exp.action_type || exp.label,
+                type: sameType ? 'matched' : 'type_mismatch',
+                expectedActionType: expectedType,
                 expectedTimestamp: exp.start,
+                expectedEndTimestamp: exp.end,
+                actionDescription: exp.action_description,
                 detectedActionType: det.actionType,
                 detectedTimestamp: det.timestamp,
                 confidence: det.confidence,
                 description: det.description,
-                reason: sameType ? 'Time + action type matched' : `Timing matched but action type differed (${exp.action_type || exp.label} vs ${det.actionType})`,
+                reason: sameType
+                  ? `Detected inside the confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}).`
+                  : `Found the right clip window, but called it ${det.actionType} instead of ${expectedType}. This has been saved as action-type learning.`,
               });
             } else {
               rows.push({
@@ -528,7 +573,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 detectedTimestamp: det.timestamp,
                 confidence: det.confidence,
                 description: det.description,
-                reason: 'AI flagged a moment with no matching confirmed clip',
+                reason: 'AI flagged a moment outside every confirmed clip window.',
               });
             }
           }
@@ -539,23 +584,27 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               type: 'missed',
               expectedActionType: exp.action_type || exp.label,
               expectedTimestamp: exp.start,
-              reason: 'No AI detection within ±10s of this confirmed clip',
+              expectedEndTimestamp: exp.end,
+              actionDescription: exp.action_description,
+              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). This has been saved as a missed positive example for the next run.`,
             });
           });
 
           setBacktestResults(rows);
+          await saveBacktestLearning(rows, dedupedByWindow.length, totalFrames);
           const matched = rows.filter((r) => r.type === 'matched').length;
           const missed = rows.filter((r) => r.type === 'missed').length;
+          const mismatched = rows.filter((r) => r.type === 'type_mismatch').length;
           const fp = rows.filter((r) => r.type === 'false_positive').length;
-          toast.success(`Backtest: ${matched} matched, ${missed} missed, ${fp} false positives`);
+          toast.success(`Backtest: ${matched} matched, ${missed} missed, ${mismatched} type mismatches, ${fp} false positives`);
         } else {
           onClipsAccepted(clips);
           toast.success(`${clips.length} potential actions added`);
           setDialogOpen(false);
         }
       }
-    } catch (err: any) {
-      toast.error(err.message || "Scan failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Scan failed");
     } finally {
       if (hiddenVideo) {
         hiddenVideo.pause();
@@ -582,318 +631,187 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             <DialogTitle className="text-xl font-bebas uppercase tracking-wider text-primary">
               RISE Action Spotter
             </DialogTitle>
+            <DialogDescription>
+              Uses the linked analysis player, saved identity details and confirmed clips to scan the full video.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
-              {/* Player selection */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">1. Identify the Player</h4>
-                
-                {players && players.length > 0 && (
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Select Player</label>
-                    <Select value={selectedPlayerForScan} onValueChange={setSelectedPlayerForScan}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a player..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {players.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}{p.position ? ` (${p.position})` : ''}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+            <div className="rounded border border-border bg-muted/30 p-3 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Linked player</div>
+                  <div className="text-base font-semibold text-foreground">{playerName || 'No player linked'}</div>
+                  {opponent && <div className="text-xs text-muted-foreground">Opponent: {opponent}</div>}
+                </div>
+                <Badge variant={selectedPlayerForScan ? 'default' : 'destructive'}>
+                  {selectedPlayerForScan ? 'Auto loaded' : 'Missing link'}
+                </Badge>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Player Name *</label>
-                    <Input
-                      value={playerName}
-                      onChange={e => setPlayerName(e.target.value)}
-                      placeholder="e.g. Tyrese Omotoye"
-                    />
+              {selectedPlayerForScan ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Identification description</div>
+                    <Button type="button" variant="outline" size="sm" className="h-7 gap-1" onClick={() => setDescriptionEditable((v) => !v)}>
+                      <Pencil className="h-3.5 w-3.5" /> {descriptionEditable ? 'Lock' : 'Edit'}
+                    </Button>
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Description (appearance)</label>
-                    <Input
+                  {descriptionEditable ? (
+                    <Textarea
                       value={playerDescription}
-                      onChange={e => setPlayerDescription(e.target.value)}
-                      placeholder="e.g. #9, tall striker, dark skin"
+                      onChange={(e) => setPlayerDescription(e.target.value)}
+                      placeholder="Add shirt number, hair, skin tone, build, boots and other identifying cues."
+                      className="min-h-[90px]"
                     />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Kit Description (this game)</label>
-                    <Input
-                      value={kitDescription}
-                      onChange={e => setKitDescription(e.target.value)}
-                      placeholder="e.g. red shirt, white shorts, #9"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Who they are NOT (disambiguation)</label>
-                    <Input
-                      value={notPlayer}
-                      onChange={e => setNotPlayer(e.target.value)}
-                      placeholder="e.g. The shorter player also wearing red"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Reference Image URL (auto-loaded from player record)</label>
-                    <Input
-                      value={referenceImageUrl}
-                      onChange={e => setReferenceImageUrl(e.target.value)}
-                      placeholder="https://… clear still of the player"
-                    />
-                  </div>
-                  {referenceImageUrl && (
-                    <img
-                      src={referenceImageUrl}
-                      alt="Reference"
-                      className="h-16 w-16 object-cover rounded border border-border"
-                    />
-                  )}
-                </div>
-                {persistedRejections.length > 0 && (
-                  <p className="text-[10px] text-muted-foreground">
-                    Learning from {persistedRejections.length} stored coach correction{persistedRejections.length === 1 ? '' : 's'} for this player.
-                  </p>
-                )}
-              </div>
-
-              {/* Tag the player */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">2. Tag the Player in Video</h4>
-                <p className="text-xs text-muted-foreground">
-                  Navigate to moments in the video where the player is clearly visible, then click "Tag Here". Previous report clips are auto-loaded as references.
-                </p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button variant="outline" size="sm" onClick={tagCurrentFrame} className="gap-1">
-                    <Tag className="h-3.5 w-3.5" /> Tag Here
-                  </Button>
-                  {existingClips && existingClips.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => {
-                      existingClips.forEach(clip => tagFromExistingClip(clip));
-                    }} className="gap-1">
-                      <Tag className="h-3.5 w-3.5" /> Tag From All Clips ({existingClips.length})
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {playerTags.length} tag{playerTags.length !== 1 ? 's' : ''} added
-                  </span>
-                </div>
-                {existingClips && existingClips.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {existingClips.slice(0, 8).map((clip, i) => (
-                      <Badge key={i} variant="outline" className="text-xs cursor-pointer hover:bg-primary/10" onClick={() => tagFromExistingClip(clip)}>
-                        + {clip.action_type || clip.label}
-                      </Badge>
-                    ))}
-                    {existingClips.length > 8 && <Badge variant="outline" className="text-xs">+{existingClips.length - 8} more</Badge>}
-                  </div>
-                )}
-                {playerTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {playerTags.map((tag, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">
-                        {tag.description}
-                        <button onClick={() => setPlayerTags(prev => prev.filter((_, j) => j !== i))} className="ml-1">
-                          <X className="h-2.5 w-2.5" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Start scan */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">3. Set Scan Segment</h4>
-                <p className="text-xs text-muted-foreground">
-                  Optionally limit which portion of the video to scan. Leave blank to scan the entire video.
-                  Use mm.ss format (e.g. 5.30) or raw seconds (e.g. 330).
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Start time</label>
-                    <Input
-                      value={scanStartTime}
-                      onChange={e => setScanStartTime(e.target.value)}
-                      placeholder="0.00 (start)"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">End time</label>
-                    <Input
-                      value={scanEndTime}
-                      onChange={e => setScanEndTime(e.target.value)}
-                      placeholder="End of video"
-                    />
-                  </div>
-                </div>
-                {videoRef.current?.duration && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-[10px]"
-                      onClick={() => {
-                        if (!videoRef.current) return;
-                        const t = videoRef.current.currentTime;
-                        setScanStartTime(`${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`);
-                      }}
-                    >
-                      Set start to current position
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 text-[10px]"
-                      onClick={() => {
-                        if (!videoRef.current) return;
-                        const t = videoRef.current.currentTime;
-                        setScanEndTime(`${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`);
-                      }}
-                    >
-                      Set end to current position
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold uppercase tracking-wider">4. Start AI Scan</h4>
-                <p className="text-xs text-muted-foreground">
-                  Sampling every {numericSampleInterval}s with duplicate suppression.
-                </p>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-muted-foreground">Sample every</label>
-                  <Input
-                    value={sampleInterval}
-                    onChange={(e) => setSampleInterval(e.target.value)}
-                    className="w-16 h-7 text-xs"
-                    inputMode="numeric"
-                  />
-                  <span className="text-xs text-muted-foreground">seconds</span>
-                  <span className="text-xs text-muted-foreground ml-3">Minimum confidence</span>
-                  <Select value={minConfidence} onValueChange={(v) => setMinConfidence(v as 'medium' | 'high')}>
-                    <SelectTrigger className="w-28 h-7 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="medium">Medium+</SelectItem>
-                      <SelectItem value="high">High only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {existingClips && existingClips.length > 0 && (
-                  <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer p-2 rounded border border-border bg-muted/30">
-                    <input
-                      type="checkbox"
-                      checked={backtestMode}
-                      onChange={(e) => { setBacktestMode(e.target.checked); setBacktestResults(null); }}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      <strong className="text-foreground">Backtest mode</strong> — compare AI detections against the {existingClips.length} confirmed clip{existingClips.length === 1 ? '' : 's'} already on this analysis. Nothing will be added; you'll see matched / missed / false-positive breakdown.
-                    </span>
-                  </label>
-                )}
-                <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
-                  {scanning ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Scanning... {scanProgress}%
-                    </>
                   ) : (
-                    <>
-                      <UserSearch className="h-4 w-4" />
-                      {backtestMode ? 'Run Backtest' : 'Start Scan'}
-                    </>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">
+                      {playerDescription || 'No identification description saved in Player Management yet.'}
+                    </p>
                   )}
-                </Button>
-                {scanning && (
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${scanProgress}%` }}
-                    />
-                  </div>
-                )}
-                {backtestResults && (
-                  <div className="mt-3 space-y-2">
-                    {(() => {
-                      const matched = backtestResults.filter((r) => r.type === 'matched').length;
-                      const missed = backtestResults.filter((r) => r.type === 'missed').length;
-                      const fp = backtestResults.filter((r) => r.type === 'false_positive').length;
-                      const total = matched + missed;
-                      const recall = total > 0 ? Math.round((matched / total) * 100) : 0;
-                      return (
-                        <div className="flex items-center gap-2 flex-wrap text-xs">
-                          <Badge variant="default">Matched {matched}</Badge>
-                          <Badge variant="destructive">Missed {missed}</Badge>
-                          <Badge variant="secondary">False positives {fp}</Badge>
-                          <span className="text-muted-foreground">Recall: {recall}%</span>
-                        </div>
-                      );
-                    })()}
-                    <div className="max-h-72 overflow-y-auto border border-border rounded divide-y divide-border">
-                      {backtestResults.map((row, i) => {
-                        const fmt = (t?: number) => t == null ? '—' : `${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`;
-                        const colour = row.type === 'matched' ? 'text-green-500' : row.type === 'missed' ? 'text-red-500' : 'text-amber-500';
-                        const logFeedback = async (feedback_type: 'wrong_player' | 'wrong_action' | 'not_involved' | 'confirmed') => {
-                          if (!selectedPlayerForScan) {
-                            toast.error('Select a player first to log feedback');
-                            return;
-                          }
-                          const { error } = await supabase.from('ai_detection_feedback').insert({
-                            player_id: selectedPlayerForScan,
-                            action_type: row.detectedActionType || row.expectedActionType || null,
-                            feedback_type,
-                            reason: row.description || row.reason || null,
-                          });
-                          if (error) toast.error('Could not save feedback');
-                          else toast.success('Feedback saved — AI will learn from this');
-                        };
-                        return (
-                          <div key={i} className="p-2 text-xs space-y-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className={`font-semibold uppercase tracking-wider ${colour}`}>{row.type.replace('_', ' ')}</span>
-                              <span className="text-muted-foreground">
-                                {row.type === 'missed' ? `expected at ${fmt(row.expectedTimestamp)}` : `detected at ${fmt(row.detectedTimestamp)}`}
-                              </span>
-                            </div>
-                            <div className="text-foreground">
-                              {row.type === 'missed'
-                                ? `Expected: ${row.expectedActionType}`
-                                : `${row.detectedActionType}${row.confidence ? ` (${row.confidence})` : ''}${row.expectedActionType && row.expectedActionType !== row.detectedActionType ? ` vs expected ${row.expectedActionType}` : ''}`}
-                            </div>
-                            {row.description && <div className="text-muted-foreground italic">{row.description}</div>}
-                            <div className="text-muted-foreground">{row.reason}</div>
-                            {row.type === 'false_positive' && (
-                              <div className="flex gap-1 pt-1">
-                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_player')}>Wrong player</Button>
-                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_action')}>Wrong action</Button>
-                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('not_involved')}>Not involved</Button>
-                              </div>
-                            )}
-                            {row.type === 'matched' && (
-                              <div className="flex gap-1 pt-1">
-                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('confirmed')}>Confirm correct</Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  {notPlayer && (
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Do not confuse with:</span> {notPlayer}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Link this video analysis to a player first. The spotter no longer asks you to select or type the player manually.
+                </p>
+              )}
             </div>
+
+            <div className="rounded border border-border bg-muted/20 p-3 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Brain className="h-4 w-4 text-primary" />
+                Full video scan · sample every 2 seconds · Medium+ confidence · learning context loaded in the background
+              </div>
+              {persistedRejections.length > 0 && (
+                <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
+              )}
+            </div>
+
+            {existingClips && existingClips.length > 0 && (
+              <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer p-3 rounded border border-border bg-muted/30">
+                <input
+                  type="checkbox"
+                  checked={backtestMode}
+                  onChange={(e) => { setBacktestMode(e.target.checked); setBacktestResults(null); setLearningSavedCount(0); }}
+                  className="mt-0.5"
+                />
+                <span>
+                  <strong className="text-foreground">Backtest mode</strong> checks the scan against the {existingClips.length} confirmed clip{existingClips.length === 1 ? '' : 's'} already on this analysis and saves misses as learning for the next run.
+                </span>
+              </label>
+            )}
+
+            <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
+              {scanning ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Scanning... {scanProgress}%
+                </>
+              ) : (
+                <>
+                  <UserSearch className="h-4 w-4" />
+                  {backtestMode ? 'Run Backtest' : 'Start Full Scan'}
+                </>
+              )}
+            </Button>
+
+            {scanning && (
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${scanProgress}%` }}
+                />
+              </div>
+            )}
+
+            {backtestResults && (
+              <div className="mt-3 space-y-2">
+                {(() => {
+                  const matched = backtestResults.filter((r) => r.type === 'matched').length;
+                  const missed = backtestResults.filter((r) => r.type === 'missed').length;
+                  const mismatched = backtestResults.filter((r) => r.type === 'type_mismatch').length;
+                  const fp = backtestResults.filter((r) => r.type === 'false_positive').length;
+                  const total = matched + missed + mismatched;
+                  const recall = total > 0 ? Math.round((matched / total) * 100) : 0;
+                  return (
+                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                      <Badge variant="default">Matched {matched}</Badge>
+                      <Badge variant="destructive">Missed {missed}</Badge>
+                      <Badge variant="secondary">Type mismatches {mismatched}</Badge>
+                      <Badge variant="secondary">False positives {fp}</Badge>
+                      <span className="text-muted-foreground">Recall: {recall}%</span>
+                      {learningSavedCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Saved {learningSavedCount} learning record{learningSavedCount === 1 ? '' : 's'}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+                <div className="max-h-72 overflow-y-auto border border-border rounded divide-y divide-border">
+                  {backtestResults.map((row, i) => {
+                    const colour = row.type === 'matched' ? 'text-primary' : row.type === 'missed' ? 'text-destructive' : 'text-muted-foreground';
+                    const logFeedback = async (feedback_type: 'wrong_player' | 'wrong_action' | 'not_involved' | 'confirmed') => {
+                      if (!selectedPlayerForScan) {
+                        toast.error('Link a player first to log feedback');
+                        return;
+                      }
+                      const { error } = await feedbackClient.from('ai_detection_feedback').insert({
+                        player_id: selectedPlayerForScan,
+                        video_analysis_id: videoAnalysisId || null,
+                        action_type: row.detectedActionType || row.expectedActionType || null,
+                        feedback_type,
+                        reason: row.description || row.reason || null,
+                        expected_timestamp: row.expectedTimestamp ?? null,
+                        detected_timestamp: row.detectedTimestamp ?? null,
+                        feedback_context: {
+                          expectedEnd: row.expectedEndTimestamp ?? null,
+                          expectedAction: row.expectedActionType || null,
+                          detectedAction: row.detectedActionType || null,
+                          actionDescription: row.actionDescription || null,
+                        },
+                      });
+                      if (error) toast.error('Could not save feedback');
+                      else toast.success('Feedback saved');
+                    };
+                    return (
+                      <div key={i} className="p-2 text-xs space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`font-semibold uppercase tracking-wider ${colour}`}>{row.type.replace('_', ' ')}</span>
+                          <span className="text-muted-foreground">
+                            {row.type === 'missed' ? `expected ${formatWindow(row)}` : `detected ${formatTime(row.detectedTimestamp)}`}
+                          </span>
+                        </div>
+                        <div className="text-foreground">
+                          {row.type === 'missed'
+                            ? `Expected: ${row.expectedActionType}`
+                            : `${row.detectedActionType}${row.confidence ? ` (${row.confidence})` : ''}${row.expectedActionType && row.expectedActionType !== row.detectedActionType ? ` vs expected ${row.expectedActionType}` : ''}`}
+                        </div>
+                        {row.actionDescription && <div className="text-muted-foreground">Confirmed clip note: {row.actionDescription}</div>}
+                        {row.description && <div className="text-muted-foreground italic">AI reason: {row.description}</div>}
+                        <div className="text-muted-foreground">{row.reason}</div>
+                        {row.type === 'false_positive' && (
+                          <div className="flex gap-1 pt-1 flex-wrap">
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_player')}>Wrong player</Button>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_action')}>Wrong action</Button>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('not_involved')}>Not involved</Button>
+                          </div>
+                        )}
+                        {row.type === 'matched' && (
+                          <div className="flex gap-1 pt-1">
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('confirmed')}>Confirm correct</Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
