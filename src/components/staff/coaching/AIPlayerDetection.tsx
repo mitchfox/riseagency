@@ -357,7 +357,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           const time = Math.min(clampedEnd, clampedStart + (i * sampleEvery));
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
-            frames.push({ dataUrl, timestamp: time, index: i });
+            frames.push({ dataUrl, timestamp: time, index: i - batchStart });
           } catch {
             // Skip frames that fail
           }
