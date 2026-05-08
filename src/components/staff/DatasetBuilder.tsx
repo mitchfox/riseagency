@@ -8,11 +8,35 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Camera, Download, Trash2, RefreshCw, Search, Loader2, X, Play } from "lucide-react";
+import { Camera, Download, Trash2, RefreshCw, Search, Loader2, X, Play, Upload, Cloud } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
 import { DatasetFrameCapture } from "./DatasetFrameCapture";
 import { DatasetAnnotationCanvas, type BBox } from "./DatasetAnnotationCanvas";
 import JSZip from "jszip";
+
+// Capture a single midpoint frame from a video URL as a JPEG blob
+async function captureMidpointFrame(videoUrl: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement("video");
+    v.crossOrigin = "anonymous";
+    v.muted = true;
+    v.src = videoUrl;
+    v.onloadedmetadata = () => {
+      v.currentTime = (v.duration || 2) / 2;
+    };
+    v.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas ctx unavailable"));
+      ctx.drawImage(v, 0, 0);
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Blob failed"))), "image/jpeg", 0.85);
+      v.remove();
+    };
+    v.onerror = () => reject(new Error("Video load failed"));
+  });
+}
 
 interface ClipRow {
   id: string;
@@ -33,6 +57,7 @@ interface DatasetFrame {
   image_url: string;
   annotations: BBox[];
   exported: boolean;
+  roboflow_uploaded_at: string | null;
   created_at: string;
 }
 
@@ -52,6 +77,9 @@ export const DatasetBuilder = () => {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [pushing, setPushing] = useState(false);
+  const [pushProgress, setPushProgress] = useState(0);
+  const [seeding, setSeeding] = useState(false);
 
   const fetchClips = useCallback(async () => {
     setLoading(true);
@@ -237,6 +265,112 @@ export const DatasetBuilder = () => {
   const handleExportAll = (includeYolo: boolean) => doExport(frames, includeYolo, false);
 
   const unexportedCount = frames.filter((f) => !f.exported).length;
+  const unpushedFrames = frames.filter((f) => !f.roboflow_uploaded_at);
+
+  const handlePushToRoboflow = async () => {
+    if (unpushedFrames.length === 0) {
+      toast.info("All frames already pushed to Roboflow");
+      return;
+    }
+    setPushing(true);
+    setPushProgress(0);
+    try {
+      const BATCH = 5;
+      let success = 0;
+      let failed = 0;
+      for (let i = 0; i < unpushedFrames.length; i += BATCH) {
+        const batch = unpushedFrames.slice(i, i + BATCH);
+        const { data, error } = await supabase.functions.invoke<{
+          results: { id: string; ok: boolean; error?: string }[];
+        }>("roboflow-upload-training", {
+          body: {
+            frames: batch.map((f) => ({
+              id: f.id,
+              imageUrl: f.image_url,
+              actionType: f.action_type,
+              annotations: f.annotations || [],
+            })),
+          },
+        });
+        if (error) throw error;
+        const okIds = (data?.results || []).filter((r) => r.ok).map((r) => r.id);
+        const failedResults = (data?.results || []).filter((r) => !r.ok);
+        success += okIds.length;
+        failed += failedResults.length;
+        if (failedResults.length > 0) {
+          console.warn("Roboflow upload failures:", failedResults);
+        }
+        if (okIds.length > 0) {
+          await supabase
+            .from("dataset_frames")
+            .update({ roboflow_uploaded_at: new Date().toISOString() })
+            .in("id", okIds);
+        }
+        setPushProgress(Math.round(((i + batch.length) / unpushedFrames.length) * 100));
+      }
+      await fetchFrames();
+      if (failed === 0) {
+        toast.success(`Pushed ${success} frame${success !== 1 ? "s" : ""} to Roboflow`);
+      } else {
+        toast.warning(`Pushed ${success}, ${failed} failed — check console`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Push failed");
+    } finally {
+      setPushing(false);
+      setPushProgress(0);
+    }
+  };
+
+  // Bulk seed: capture the midpoint frame from every clip that doesn't already
+  // have a saved frame, label it with the clip's action_type, and persist it.
+  // Annotations stay empty — staff can draw bboxes later before pushing.
+  const handleBulkSeed = async () => {
+    const seenActionIds = new Set(frames.map((f) => f.action_id).filter(Boolean));
+    const candidates = clips.filter((c) => c.video_url && !seenActionIds.has(c.id));
+    if (candidates.length === 0) {
+      toast.info("Every clip already has a seed frame");
+      return;
+    }
+    if (!confirm(`Capture midpoint frame from ${candidates.length} clips?`)) return;
+
+    setSeeding(true);
+    let success = 0;
+    let failed = 0;
+    try {
+      for (let i = 0; i < candidates.length; i++) {
+        const clip = candidates[i];
+        try {
+          const blob = await captureMidpointFrame(clip.video_url!);
+          const fileName = `${clip.action_type}_${clip.id}_seed.jpg`.replace(/[^a-z0-9_.-]/gi, "_");
+          const filePath = `frames/seed/${fileName}`;
+          const { error: upErr } = await supabase.storage
+            .from("dataset-images")
+            .upload(filePath, blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: true });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from("dataset-images").getPublicUrl(filePath);
+          await supabase.from("dataset_frames").insert({
+            action_id: clip.id,
+            action_type: clip.action_type,
+            frame_time: 0,
+            image_url: urlData.publicUrl,
+            annotations: [],
+          });
+          success++;
+        } catch (err) {
+          console.error("Seed failed for clip", clip.id, err);
+          failed++;
+        }
+        setExportProgress(Math.round(((i + 1) / candidates.length) * 100));
+      }
+      await fetchFrames();
+      toast.success(`Seeded ${success} frames${failed ? ` (${failed} failed)` : ""}`);
+    } finally {
+      setSeeding(false);
+      setExportProgress(0);
+    }
+  };
+
   const framesByType: Record<string, number> = {};
   frames.forEach((f) => {
     framesByType[f.action_type] = (framesByType[f.action_type] || 0) + 1;
@@ -257,6 +391,16 @@ export const DatasetBuilder = () => {
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Refresh
           </Button>
+          <Button variant="outline" size="sm" onClick={handleBulkSeed} disabled={seeding}>
+            {seeding ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Camera className="h-4 w-4 mr-1.5" />}
+            Seed from clips
+          </Button>
+          {unpushedFrames.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handlePushToRoboflow} disabled={pushing}>
+              {pushing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Cloud className="h-4 w-4 mr-1.5" />}
+              Push {unpushedFrames.length} to Roboflow
+            </Button>
+          )}
           {frames.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => handleExportAll(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Download className="h-4 w-4 mr-1.5" />}
@@ -288,6 +432,9 @@ export const DatasetBuilder = () => {
 
       {exporting && (
         <Progress value={exportProgress} className="h-2" />
+      )}
+      {pushing && (
+        <Progress value={pushProgress} className="h-2" />
       )}
 
       {/* Filters */}

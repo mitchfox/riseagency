@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.track-rep-visitor]
 verify_jwt = false
+
+[functions.roboflow-upload-training]
+verify_jwt = true
