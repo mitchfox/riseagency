@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown, TrendingUp } from "lucide-react";
+import { Plus, Trash2, EyeOff, AlertTriangle, Search, Loader2, ChevronDown, ChevronUp, List, GripVertical, ArrowLeft, Save, X, ArrowUp, ArrowDown, ChevronsUpDown, Check, Video, Copy, FileDown, TrendingUp, SpellCheck } from "lucide-react";
 import { VideoActionEditor } from "./VideoActionEditor";
 import { ActionTypeEditor } from "./ActionTypeEditor";
 import { ScoreEditMode } from "./analysis/ScoreEditMode";
@@ -1838,9 +1838,23 @@ export const CreatePerformanceReportDialog = ({
     />
   );
 
+  const [spellCheckOn, setSpellCheckOn] = useState(false);
+  const spellCheckButton = (
+    <Button
+      type="button"
+      variant={spellCheckOn ? "default" : "outline"}
+      size="sm"
+      onClick={() => setSpellCheckOn(s => !s)}
+      title="Toggle browser spell check on every text field in this report"
+    >
+      <SpellCheck className="w-4 h-4 mr-1.5" />
+      {spellCheckOn ? "Spell Check On" : "Spell Check"}
+    </Button>
+  );
+
   // The main content (used in both inline and dialog modes)
   const mainContent = (
-    <>
+    <div spellCheck={spellCheckOn}>
       {loadingData ? (
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner size="md" />
@@ -1848,7 +1862,8 @@ export const CreatePerformanceReportDialog = ({
       ) : (
         <div className="space-y-4 sm:space-y-6 pb-20">
           {/* Type toggle — always visible at top so staff can switch into Highlights mode */}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            {spellCheckButton}
             <CategoryToggle value={reportCategory} onChange={setReportCategory} />
           </div>
 
