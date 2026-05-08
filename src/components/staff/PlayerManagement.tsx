@@ -834,6 +834,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       
       // Highlighted Match
       highlightedMatch: player.highlighted_match || null,
+      // AI Identification
+      identification_description: (player as any).identification_description || "",
+      identification_reference_image_url: (player as any).identification_reference_image_url || "",
+      not_to_confuse_with: (player as any).not_to_confuse_with || "",
     });
     setIsEditDialogOpen(true);
   };
