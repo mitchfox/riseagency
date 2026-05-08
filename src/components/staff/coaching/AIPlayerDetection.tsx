@@ -20,6 +20,17 @@ interface DetectedAction {
   clipAfter?: number;
 }
 
+interface BacktestRow {
+  type: 'matched' | 'missed' | 'false_positive';
+  expectedActionType?: string;
+  expectedTimestamp?: number;
+  detectedActionType?: string;
+  detectedTimestamp?: number;
+  confidence?: string;
+  description?: string;
+  reason?: string;
+}
+
 interface PlayerTag {
   timestamp: number;
   description: string;
@@ -87,6 +98,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
+  const [backtestMode, setBacktestMode] = useState(false);
+  const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pull a sample of confirmed action examples across the entire database — these
