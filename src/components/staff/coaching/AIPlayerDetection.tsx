@@ -575,6 +575,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(false);
   };
 
+  const learningExampleCount = (confirmedExamples?.length || 0) + historicalConfirmedExamples.length + globalCorpus.length;
+
   return (
     <>
       <Button variant="outline" size="sm" className="gap-1" onClick={() => setDialogOpen(true)}>
@@ -643,7 +645,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             <div className="rounded border border-border bg-muted/20 p-3 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Brain className="h-4 w-4 text-primary" />
-                Full video scan · sample every 2 seconds · Medium+ confidence · {mergedConfirmedExamples.length} hidden learning examples
+                Full video scan · sample every 2 seconds · Medium+ confidence · {learningExampleCount} hidden learning examples
               </div>
               {persistedRejections.length > 0 && (
                 <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
