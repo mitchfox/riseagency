@@ -402,7 +402,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           const batchActions: DetectedAction[] = data.actions
             .map((a: any) => {
               const matchedTimestamp = frames.find(f => f.index === a.frameIndex)?.timestamp;
-              const fallbackTimestamp = clampedStart + (a.frameIndex * sampleEvery);
+              const fallbackTimestamp = clampedStart + ((batchStart + a.frameIndex) * sampleEvery);
               const timestamp = Number.isFinite(matchedTimestamp) ? matchedTimestamp : fallbackTimestamp;
 
               if (!Number.isFinite(timestamp)) return null;
