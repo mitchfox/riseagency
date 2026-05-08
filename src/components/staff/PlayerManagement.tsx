@@ -1533,6 +1533,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     externalPlayerId: "",
                     links: [],
                     highlightedMatch: null,
+                    identification_description: "",
+                    identification_reference_image_url: "",
+                    not_to_confuse_with: "",
                   });
                   setIsAddPlayerDialogOpen(true);
                 }}>
