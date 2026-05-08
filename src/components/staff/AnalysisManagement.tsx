@@ -1938,6 +1938,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   const renderAnalysisList = (type: AnalysisType) => {
     const filtered = analyses.filter(a => {
       if (a.analysis_type !== type) return false;
+      if (examplesFilter && !(a as any).is_example) return false;
       // When embedded in Athlete Centre with a default player, only show analyses linked to that player
       if (defaultPlayerId) {
         const linked = linkedPlayers[a.id];
@@ -1953,6 +1954,12 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
               <h3 className="font-semibold text-sm sm:text-base truncate">
                 {analysis.title || `${analysis.home_team} vs ${analysis.away_team}`}
               </h3>
+              {(analysis as any).is_example && (
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 bg-primary/20 text-primary">
+                  <Star className="w-2.5 h-2.5 fill-current" />
+                  Example
+                </span>
+              )}
               {(analysis as any).visibility_status && (analysis as any).visibility_status !== "live" && (
                 <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
                   (analysis as any).visibility_status === "draft"
@@ -1997,6 +2004,22 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleOpenDialog(type, analysis)}>
               <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Copy share link"
+              onClick={() => {
+                const slug = createAnalysisSlug(analysis.home_team, analysis.away_team, analysis.id);
+                const url = `${window.location.origin}${slug}`;
+                navigator.clipboard.writeText(url).then(
+                  () => toast.success("Link copied"),
+                  () => toast.error("Could not copy link")
+                );
+              }}
+            >
+              <Link2 className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Duplicate" onClick={() => handleDuplicate(analysis.id)}>
               <Copy className="w-4 h-4" />
