@@ -1,13 +1,11 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Loader2, UserSearch, X, Tag } from "lucide-react";
+import { Loader2, UserSearch, Pencil, Brain, CheckCircle2 } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -21,7 +19,7 @@ interface DetectedAction {
 }
 
 interface BacktestRow {
-  type: 'matched' | 'missed' | 'false_positive';
+  type: 'matched' | 'missed' | 'false_positive' | 'type_mismatch';
   expectedActionType?: string;
   expectedTimestamp?: number;
   detectedActionType?: string;
@@ -29,11 +27,6 @@ interface BacktestRow {
   confidence?: string;
   description?: string;
   reason?: string;
-}
-
-interface PlayerTag {
-  timestamp: number;
-  description: string;
 }
 
 interface PlayerOption {
@@ -62,7 +55,8 @@ interface Props {
   opponent?: string | null;
   players?: PlayerOption[];
   selectedPlayerId?: string | null;
-  existingClips?: { start: number; end: number; label: string; action_type: string }[];
+  videoAnalysisId?: string | null;
+  existingClips?: { start: number; end: number; label: string; action_type: string; action_description?: string }[];
   rejectionHistory?: RejectionFeedback[];
   confirmedExamples?: ConfirmedExample[];
 }
@@ -74,32 +68,23 @@ function loadSavedDescriptions(): Record<string, { description: string; notPlaye
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
 }
 
-function saveDescription(playerName: string, data: { description: string; notPlayer: string; kitDescription: string }) {
-  const all = loadSavedDescriptions();
-  all[playerName.toLowerCase().trim()] = data;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-}
-
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, videoAnalysisId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
   const [notPlayer, setNotPlayer] = useState("");
   const [kitDescription, setKitDescription] = useState("");
   const [referenceImageUrl, setReferenceImageUrl] = useState("");
-  const [minConfidence, setMinConfidence] = useState<'medium' | 'high'>('medium');
-  const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
+  const [descriptionEditable, setDescriptionEditable] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
-  const [scanStartTime, setScanStartTime] = useState("");
-  const [scanEndTime, setScanEndTime] = useState("");
-  const [sampleInterval, setSampleInterval] = useState<string>("5");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const [backtestMode, setBacktestMode] = useState(false);
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
+  const [learningSavedCount, setLearningSavedCount] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pull a sample of confirmed action examples across the entire database — these
@@ -141,7 +126,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     return () => { cancelled = true; };
   }, []);
 
-  // When a player is selected from dropdown, load saved description and previous report clips
+  useEffect(() => {
+    setSelectedPlayerForScan(selectedPlayerId || "");
+  }, [selectedPlayerId]);
+
+  // When the linked player is available, load identity and previous learning.
   useEffect(() => {
     if (!selectedPlayerForScan || !players) return;
     const player = players.find(p => p.id === selectedPlayerForScan);
@@ -153,15 +142,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     (async () => {
       const { data: fb } = await supabase
         .from('ai_detection_feedback')
-        .select('action_type, feedback_type, reason, created_at')
+        .select('action_type, feedback_type, reason, created_at, expected_timestamp, feedback_context')
         .eq('player_id', selectedPlayerForScan)
-        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved'])
+        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved', 'missed_detection', 'timing_mismatch'])
         .order('created_at', { ascending: false })
         .limit(50);
       if (fb) {
         setPersistedRejections(fb.map((r: any) => ({
           actionType: r.action_type || 'unknown',
-          reason: `${r.feedback_type}: ${r.reason || ''}`.trim(),
+          reason: `${r.feedback_type}: ${r.reason || ''}${r.expected_timestamp != null ? ` at ${Math.floor(Number(r.expected_timestamp) / 60)}.${String(Math.floor(Number(r.expected_timestamp) % 60)).padStart(2, '0')}` : ''}`.trim(),
           date: r.created_at,
         })));
       } else {
@@ -184,10 +173,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       setPlayerDescription(idDesc || saved?.description || "");
       setNotPlayer(idNot || saved?.notPlayer || "");
       setKitDescription(saved?.kitDescription || "");
+      setDescriptionEditable(false);
       setReferenceImageUrl(idImg || "");
     })();
     
-    // Load previous clips from performance reports as reference tags
     loadPreviousClips(selectedPlayerForScan);
   }, [selectedPlayerForScan, players]);
 
@@ -216,16 +205,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         return;
       }
 
-      const tags: PlayerTag[] = actions.map((a) => ({
-        timestamp: a.minute ? a.minute * 60 : 0,
-        description: `${a.action_type}${a.action_description ? `: ${a.action_description}` : ''} (report example)`,
-      }));
-
-      setPlayerTags(prev => {
-        const existing = new Set(prev.map(t => t.description));
-        return [...prev, ...tags.filter(t => !existing.has(t.description))];
-      });
-
       setHistoricalConfirmedExamples(actions
         .filter((a) => !!a.action_type)
         .map((a) => ({
@@ -237,24 +216,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     } catch {
       setHistoricalConfirmedExamples([]);
     }
-  };
-
-  const tagCurrentFrame = () => {
-    if (!videoRef.current) return;
-    const ts = videoRef.current.currentTime;
-    setPlayerTags(prev => [...prev, {
-      timestamp: ts,
-      description: `Tagged at ${Math.floor(ts / 60)}.${String(Math.floor(ts % 60)).padStart(2, '0')}`,
-    }]);
-    toast.success("Player tagged at current frame");
-  };
-
-  const tagFromExistingClip = (clip: { start: number; label: string; action_type: string }) => {
-    setPlayerTags(prev => [...prev, {
-      timestamp: clip.start,
-      description: `${clip.action_type || clip.label} (existing clip)`,
-    }]);
-    toast.success("Tagged from existing clip");
   };
 
   const hiddenVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -291,33 +252,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     });
   }, []);
 
-  /** Parse "mm.ss" (preferred), "mm:ss" or raw seconds string to seconds */
-  const parseTimeToSeconds = (val: string): number | null => {
-    const input = val.trim();
-    if (!input) return null;
-
-    if (input.includes('.') || input.includes(':')) {
-      const parts = input.split(/[.:]/);
-      if (parts.length !== 2) return null;
-      const mins = Number(parts[0]);
-      const secs = Number(parts[1]);
-      if (!Number.isFinite(mins) || !Number.isFinite(secs) || secs < 0) return null;
-      return (mins * 60) + secs;
-    }
-
-    const seconds = Number(input);
-    return Number.isFinite(seconds) ? seconds : null;
-  };
-
-  const numericSampleInterval = useMemo(() => {
-    const parsed = parseInt(sampleInterval, 10);
-    if (!Number.isFinite(parsed)) return 5;
-    return Math.max(1, Math.min(15, parsed));
-  }, [sampleInterval]);
+  const SAMPLE_EVERY_SECONDS = 2;
+  const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
 
   const startScan = async () => {
-    if (!playerName.trim()) {
-      toast.error("Enter the player's name first");
+    if (!selectedPlayerForScan || !playerName.trim()) {
+      toast.error("Link this analysis to a player first");
       return;
     }
     if (!videoRef.current || !videoRef.current.duration) {
@@ -325,19 +265,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       return;
     }
 
-    // Save description for future videos
-    saveDescription(playerName, { description: playerDescription, notPlayer, kitDescription });
-
     setScanning(true);
     setScanProgress(0);
 
     const fullDuration = videoRef.current.duration;
-    const segStart = parseTimeToSeconds(scanStartTime) ?? 0;
-    const segEnd = parseTimeToSeconds(scanEndTime) ?? fullDuration;
-    const clampedStart = Math.max(0, Math.min(segStart, fullDuration));
-    const clampedEnd = Math.max(clampedStart, Math.min(segEnd, fullDuration));
+    const clampedStart = 0;
+    const clampedEnd = fullDuration;
 
-    const sampleEvery = numericSampleInterval;
+    const sampleEvery = SAMPLE_EVERY_SECONDS;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
     const batchSize = 15;
@@ -385,7 +320,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             },
             referenceImageUrl: referenceImageUrl || undefined,
             teamKitDescription: kitDescription || undefined,
-            minConfidence,
+            minConfidence: MIN_CONFIDENCE,
             rejectionHistory: (() => {
               const merged = [
                 ...(rejectionHistory || []),
