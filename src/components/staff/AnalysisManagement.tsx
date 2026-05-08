@@ -2108,24 +2108,44 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         </TabsList>
 
         <TabsContent value="pre-match" className="space-y-4">
-          <Button
-            onClick={() => handleOpenDialog("pre-match")}
-            variant="secondary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Pre-Match Analysis
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => handleOpenDialog("pre-match")}
+              variant="secondary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Pre-Match Analysis
+            </Button>
+            <Button
+              variant={examplesFilter ? "default" : "outline"}
+              onClick={() => setExamplesFilter(f => !f)}
+              title="Show only analyses marked as examples"
+            >
+              <Star className={`w-4 h-4 mr-2 ${examplesFilter ? "fill-current" : ""}`} />
+              {examplesFilter ? "Showing Examples" : "Examples"}
+            </Button>
+          </div>
           {renderAnalysisList("pre-match")}
         </TabsContent>
 
         <TabsContent value="post-match" className="space-y-4">
-          <Button
-            onClick={() => handleOpenDialog("post-match")}
-            className="bg-gold text-foreground hover:bg-gold/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Post-Match Analysis
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => handleOpenDialog("post-match")}
+              className="bg-gold text-foreground hover:bg-gold/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Post-Match Analysis
+            </Button>
+            <Button
+              variant={examplesFilter ? "default" : "outline"}
+              onClick={() => setExamplesFilter(f => !f)}
+              title="Show only analyses marked as examples"
+            >
+              <Star className={`w-4 h-4 mr-2 ${examplesFilter ? "fill-current" : ""}`} />
+              {examplesFilter ? "Showing Examples" : "Examples"}
+            </Button>
+          </div>
           {renderAnalysisList("post-match")}
         </TabsContent>
 
