@@ -373,7 +373,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             referenceImageUrl: referenceImageUrl || undefined,
             teamKitDescription: kitDescription || undefined,
             minConfidence,
-            rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
+            rejectionHistory: (() => {
+              const merged = [
+                ...(rejectionHistory || []),
+                ...persistedRejections,
+              ];
+              return merged.length > 0 ? merged : undefined;
+            })(),
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
