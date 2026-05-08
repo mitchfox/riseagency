@@ -790,6 +790,19 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     </SelectContent>
                   </Select>
                 </div>
+                {existingClips && existingClips.length > 0 && (
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer p-2 rounded border border-border bg-muted/30">
+                    <input
+                      type="checkbox"
+                      checked={backtestMode}
+                      onChange={(e) => { setBacktestMode(e.target.checked); setBacktestResults(null); }}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <strong className="text-foreground">Backtest mode</strong> — compare AI detections against the {existingClips.length} confirmed clip{existingClips.length === 1 ? '' : 's'} already on this analysis. Nothing will be added; you'll see matched / missed / false-positive breakdown.
+                    </span>
+                  </label>
+                )}
                 <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
                   {scanning ? (
                     <>
@@ -799,7 +812,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   ) : (
                     <>
                       <UserSearch className="h-4 w-4" />
-                      Start Scan
+                      {backtestMode ? 'Run Backtest' : 'Start Scan'}
                     </>
                   )}
                 </Button>
@@ -809,6 +822,74 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                       className="bg-primary h-2 rounded-full transition-all duration-300"
                       style={{ width: `${scanProgress}%` }}
                     />
+                  </div>
+                )}
+                {backtestResults && (
+                  <div className="mt-3 space-y-2">
+                    {(() => {
+                      const matched = backtestResults.filter((r) => r.type === 'matched').length;
+                      const missed = backtestResults.filter((r) => r.type === 'missed').length;
+                      const fp = backtestResults.filter((r) => r.type === 'false_positive').length;
+                      const total = matched + missed;
+                      const recall = total > 0 ? Math.round((matched / total) * 100) : 0;
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <Badge variant="default">Matched {matched}</Badge>
+                          <Badge variant="destructive">Missed {missed}</Badge>
+                          <Badge variant="secondary">False positives {fp}</Badge>
+                          <span className="text-muted-foreground">Recall: {recall}%</span>
+                        </div>
+                      );
+                    })()}
+                    <div className="max-h-72 overflow-y-auto border border-border rounded divide-y divide-border">
+                      {backtestResults.map((row, i) => {
+                        const fmt = (t?: number) => t == null ? '—' : `${Math.floor(t / 60)}.${String(Math.floor(t % 60)).padStart(2, '0')}`;
+                        const colour = row.type === 'matched' ? 'text-green-500' : row.type === 'missed' ? 'text-red-500' : 'text-amber-500';
+                        const logFeedback = async (feedback_type: 'wrong_player' | 'wrong_action' | 'not_involved' | 'confirmed') => {
+                          if (!selectedPlayerForScan) {
+                            toast.error('Select a player first to log feedback');
+                            return;
+                          }
+                          const { error } = await supabase.from('ai_detection_feedback').insert({
+                            player_id: selectedPlayerForScan,
+                            action_type: row.detectedActionType || row.expectedActionType || null,
+                            feedback_type,
+                            reason: row.description || row.reason || null,
+                          });
+                          if (error) toast.error('Could not save feedback');
+                          else toast.success('Feedback saved — AI will learn from this');
+                        };
+                        return (
+                          <div key={i} className="p-2 text-xs space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`font-semibold uppercase tracking-wider ${colour}`}>{row.type.replace('_', ' ')}</span>
+                              <span className="text-muted-foreground">
+                                {row.type === 'missed' ? `expected at ${fmt(row.expectedTimestamp)}` : `detected at ${fmt(row.detectedTimestamp)}`}
+                              </span>
+                            </div>
+                            <div className="text-foreground">
+                              {row.type === 'missed'
+                                ? `Expected: ${row.expectedActionType}`
+                                : `${row.detectedActionType}${row.confidence ? ` (${row.confidence})` : ''}${row.expectedActionType && row.expectedActionType !== row.detectedActionType ? ` vs expected ${row.expectedActionType}` : ''}`}
+                            </div>
+                            {row.description && <div className="text-muted-foreground italic">{row.description}</div>}
+                            <div className="text-muted-foreground">{row.reason}</div>
+                            {row.type === 'false_positive' && (
+                              <div className="flex gap-1 pt-1">
+                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_player')}>Wrong player</Button>
+                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('wrong_action')}>Wrong action</Button>
+                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('not_involved')}>Not involved</Button>
+                              </div>
+                            )}
+                            {row.type === 'matched' && (
+                              <div className="flex gap-1 pt-1">
+                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => logFeedback('confirmed')}>Confirm correct</Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
