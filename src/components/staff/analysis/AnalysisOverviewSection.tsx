@@ -51,6 +51,7 @@ interface OverviewSectionProps {
   generateOverviewWithAI?: () => Promise<void>;
   aiGenerating?: boolean;
   onOpenSettings?: (category: string) => void;
+  spellCheckOn?: boolean;
 }
 
 export const AnalysisOverviewSection = ({
@@ -73,6 +74,7 @@ export const AnalysisOverviewSection = ({
   generateOverviewWithAI,
   aiGenerating = false,
   onOpenSettings,
+  spellCheckOn = false,
 }: OverviewSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
@@ -208,7 +210,7 @@ export const AnalysisOverviewSection = ({
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
                 placeholder="Key tactical information about the match..."
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -221,7 +223,7 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Strong aerial presence
 • Fast counter attacks
 • Set piece threat"
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -234,7 +236,7 @@ export const AnalysisOverviewSection = ({
                 placeholder="• Weak on the left flank
 • Slow to transition
 • Vulnerable to through balls"
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -282,7 +284,7 @@ export const AnalysisOverviewSection = ({
                             value={matchup.notes || ""}
                             onChange={(e) => updateMatchup(index, "notes", e.target.value)}
                             rows={2}
-                            spellCheck={false}
+                            spellCheck={spellCheckOn}
                             lang="en-GB"
                           />
                         </div>
@@ -337,7 +339,7 @@ export const AnalysisOverviewSection = ({
               <Textarea
                 value={formData.key_details || ""}
                 onChange={(e) => setFormData({ ...formData, key_details: e.target.value })}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -403,7 +405,7 @@ export const AnalysisOverviewSection = ({
                 onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
                 placeholder="Detailed explanation of the concept..."
                 rows={4}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>

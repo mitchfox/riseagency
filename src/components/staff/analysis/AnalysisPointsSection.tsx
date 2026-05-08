@@ -105,6 +105,7 @@ interface PointsSectionProps {
   performanceReportClips?: PerformanceReportAction[];
   analysisId?: string;
   onSave?: () => void;
+  spellCheckOn?: boolean;
 }
 
 // Helper to get R90 action score color - matches PerformanceReportDialog exactly
@@ -592,6 +593,7 @@ interface SortablePointCardProps {
   concepts: CoachingConcept[];
   allPointTitles: string[];
   analysisId?: string;
+  spellCheckOn?: boolean;
 }
 
 const SortablePointCard = ({
@@ -615,6 +617,7 @@ const SortablePointCard = ({
   concepts,
   allPointTitles,
   analysisId,
+  spellCheckOn = false,
 }: SortablePointCardProps) => {
   const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
   const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
@@ -736,7 +739,7 @@ const SortablePointCard = ({
               <Input
                 value={point.title}
                 onChange={(e) => updatePoint(index, "title", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -757,7 +760,7 @@ const SortablePointCard = ({
               <Textarea
                 value={point.paragraph_1}
                 onChange={(e) => updatePoint(index, "paragraph_1", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -1032,7 +1035,7 @@ const SortablePointCard = ({
               <Textarea
                 value={point.paragraph_2}
                 onChange={(e) => updatePoint(index, "paragraph_2", e.target.value)}
-                spellCheck={false}
+                spellCheck={spellCheckOn}
                 lang="en-GB"
               />
             </div>
@@ -1156,6 +1159,7 @@ export const AnalysisPointsSection = ({
   performanceReportClips = [],
   analysisId,
   onSave,
+  spellCheckOn = false,
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [vaClips, setVaClips] = useState<VideoAnalysisClip[]>([]);
@@ -1316,6 +1320,7 @@ export const AnalysisPointsSection = ({
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
                   analysisId={analysisId}
+                  spellCheckOn={spellCheckOn}
                 />
                 {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">
