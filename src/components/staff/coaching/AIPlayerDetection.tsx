@@ -455,7 +455,19 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       }
 
       if (dedupedByWindow.length === 0) {
-        toast.info("No actions detected for this player");
+        if (backtestMode) {
+          // In backtest mode an empty detection set is still a result — every existing clip is a "miss".
+          const rows: BacktestRow[] = (existingClips || []).map((clip) => ({
+            type: 'missed',
+            expectedActionType: clip.action_type || clip.label,
+            expectedTimestamp: clip.start,
+            reason: 'AI returned no detections in this segment',
+          }));
+          setBacktestResults(rows);
+          toast.info(`Backtest: 0 detected, ${rows.length} existing clips missed`);
+        } else {
+          toast.info("No actions detected for this player");
+        }
       } else {
         const roundDown5 = (t: number) => Math.floor(t / 5) * 5;
 
@@ -473,9 +485,74 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           };
         }).filter((c) => c.end > c.start);
 
-        onClipsAccepted(clips);
-        toast.success(`${clips.length} potential actions added`);
-        setDialogOpen(false);
+        if (backtestMode) {
+          const norm = (s: string) => s.toLowerCase().trim();
+          const TIME_TOL = 10; // seconds either side counts as the same play
+          const expected = (existingClips || []).filter((c) =>
+            c.start >= clampedStart - TIME_TOL && c.start <= clampedEnd + TIME_TOL
+          );
+          const usedExpected = new Set<number>();
+          const rows: BacktestRow[] = [];
+
+          for (const det of dedupedByWindow) {
+            // Find best expected clip overlapping this detection.
+            let bestIdx = -1;
+            let bestDelta = Infinity;
+            expected.forEach((exp, idx) => {
+              if (usedExpected.has(idx)) return;
+              const delta = Math.abs(exp.start - det.timestamp);
+              if (delta <= TIME_TOL && delta < bestDelta) {
+                bestDelta = delta;
+                bestIdx = idx;
+              }
+            });
+
+            if (bestIdx >= 0) {
+              const exp = expected[bestIdx];
+              const sameType = norm(exp.action_type || exp.label) === norm(det.actionType);
+              usedExpected.add(bestIdx);
+              rows.push({
+                type: 'matched',
+                expectedActionType: exp.action_type || exp.label,
+                expectedTimestamp: exp.start,
+                detectedActionType: det.actionType,
+                detectedTimestamp: det.timestamp,
+                confidence: det.confidence,
+                description: det.description,
+                reason: sameType ? 'Time + action type matched' : `Timing matched but action type differed (${exp.action_type || exp.label} vs ${det.actionType})`,
+              });
+            } else {
+              rows.push({
+                type: 'false_positive',
+                detectedActionType: det.actionType,
+                detectedTimestamp: det.timestamp,
+                confidence: det.confidence,
+                description: det.description,
+                reason: 'AI flagged a moment with no matching confirmed clip',
+              });
+            }
+          }
+
+          expected.forEach((exp, idx) => {
+            if (usedExpected.has(idx)) return;
+            rows.push({
+              type: 'missed',
+              expectedActionType: exp.action_type || exp.label,
+              expectedTimestamp: exp.start,
+              reason: 'No AI detection within ±10s of this confirmed clip',
+            });
+          });
+
+          setBacktestResults(rows);
+          const matched = rows.filter((r) => r.type === 'matched').length;
+          const missed = rows.filter((r) => r.type === 'missed').length;
+          const fp = rows.filter((r) => r.type === 'false_positive').length;
+          toast.success(`Backtest: ${matched} matched, ${missed} missed, ${fp} false positives`);
+        } else {
+          onClipsAccepted(clips);
+          toast.success(`${clips.length} potential actions added`);
+          setDialogOpen(false);
+        }
       }
     } catch (err: any) {
       toast.error(err.message || "Scan failed");
