@@ -57,37 +57,22 @@ const SignContract = () => {
 
   const fetchContract = async () => {
     try {
-      // Decode the token in case it contains URL-encoded characters
-      const decodedToken = decodeURIComponent(token || '');
-      
-      // First get all active contracts to find by slug match
-      const { data: contractsData, error: contractsError } = await supabase
-        .from('signature_contracts')
-        .select('*')
-        .eq('status', 'active');
+      const { data: resp, error: contractsError } = await supabase.functions.invoke(
+        'get-signature-contract',
+        { body: { token: token || '' } },
+      );
 
       if (contractsError) {
-        console.error('Error fetching contracts:', contractsError);
+        console.error('Error fetching contract:', contractsError);
         toast.error('Failed to load contract');
         setLoading(false);
         return;
       }
 
-      // Find contract by matching slug from title (case-insensitive)
-      const generateSlug = (title: string) => {
-        return title
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .trim();
-      };
-
-      const normalizedToken = decodedToken.toLowerCase().replace(/-+/g, '-').trim();
-      const contractData = contractsData?.find(c => generateSlug(c.title) === normalizedToken);
+      const contractData = (resp as any)?.contract ?? null;
 
       if (!contractData) {
-        console.log('No contract found for token:', normalizedToken);
+        console.log('No contract found for token');
         toast.error('Contract not found or is no longer active');
         setLoading(false);
         return;

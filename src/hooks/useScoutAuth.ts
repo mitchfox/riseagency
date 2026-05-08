@@ -33,12 +33,12 @@ export const useScoutAuth = () => {
       }
 
       try {
-        const { data, error } = await supabase
-          .from("scouts")
-          .select("*")
-          .ilike("email", scoutEmail.toLowerCase().trim())
-          .maybeSingle();
+        const { data: resp, error } = await supabase.functions.invoke(
+          "scout-login-check",
+          { body: { email: scoutEmail } },
+        );
 
+        const data = (resp as any)?.scout ?? null;
         if (error || !data) {
           localStorage.removeItem("scout_email");
           sessionStorage.removeItem("scout_email");
