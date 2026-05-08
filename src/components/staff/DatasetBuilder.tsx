@@ -391,6 +391,16 @@ export const DatasetBuilder = () => {
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Refresh
           </Button>
+          <Button variant="outline" size="sm" onClick={handleBulkSeed} disabled={seeding}>
+            {seeding ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Camera className="h-4 w-4 mr-1.5" />}
+            Seed from clips
+          </Button>
+          {unpushedFrames.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handlePushToRoboflow} disabled={pushing}>
+              {pushing ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Cloud className="h-4 w-4 mr-1.5" />}
+              Push {unpushedFrames.length} to Roboflow
+            </Button>
+          )}
           {frames.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => handleExportAll(true)} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Download className="h-4 w-4 mr-1.5" />}
@@ -422,6 +432,9 @@ export const DatasetBuilder = () => {
 
       {exporting && (
         <Progress value={exportProgress} className="h-2" />
+      )}
+      {pushing && (
+        <Progress value={pushProgress} className="h-2" />
       )}
 
       {/* Filters */}
