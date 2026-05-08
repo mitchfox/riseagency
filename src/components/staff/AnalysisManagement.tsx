@@ -1885,6 +1885,23 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
                   </button>
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 ml-2">
+                <Label className="text-sm font-medium whitespace-nowrap">Example</Label>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, is_example: !formData.is_example })}
+                  className={`px-3 py-1 text-xs rounded-md border transition-colors inline-flex items-center gap-1 ${
+                    formData.is_example
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mark this analysis as an example so it can be filtered in the list"
+                >
+                  <Star className={`w-3 h-3 ${formData.is_example ? "fill-current" : ""}`} />
+                  {formData.is_example ? "Example" : "Set as Example"}
+                </button>
+              </div>
             </div>
 
             {(formData.visibility_status === "draft" || formData.visibility_status === "hidden" || formData.visibility_status === "clipped") && (
