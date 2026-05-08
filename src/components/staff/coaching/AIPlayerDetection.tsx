@@ -576,8 +576,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(false);
   };
 
-  const learningExampleCount = (confirmedExamples?.length || 0) + historicalConfirmedExamples.length + globalCorpus.length;
-
   return (
     <>
       <Button variant="outline" size="sm" className="gap-1" onClick={() => setDialogOpen(true)}>
