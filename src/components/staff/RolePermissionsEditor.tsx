@@ -454,6 +454,42 @@ export const RolePermissionsEditor = () => {
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
+
+      <Dialog open={editRoleOpen} onOpenChange={setEditRoleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Display Name</Label>
+              <Input
+                value={editRoleLabel}
+                onChange={(e) => setEditRoleLabel(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                The internal role key cannot be changed.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                value={editRoleDesc}
+                onChange={(e) => setEditRoleDesc(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSaveRoleLabel} disabled={savingRoleEdit}>
+              {savingRoleEdit ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
