@@ -205,6 +205,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       full_match_url: string;
       r90_report_url: string;
     } | null,
+    // AI Identification
+    identification_description: "",
+    identification_reference_image_url: "",
+    not_to_confuse_with: "",
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
