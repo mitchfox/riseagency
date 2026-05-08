@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logActivity } from "@/lib/activityLogger";
-import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Sparkles, Database, Copy, Settings, Eye, Users, ChevronDown, FileEdit, EyeOff, RefreshCw, Link2, SpellCheck, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createAnalysisSlug } from "@/lib/urlHelpers";
 import {
@@ -182,6 +182,8 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
   const [concepts, setConcepts] = useState<any[]>([]);
   const [taggedPlayerIds, setTaggedPlayerIds] = useState<string[]>([]);
   const [analysisLanguage, setAnalysisLanguage] = useState("en");
+  const [spellCheckOn, setSpellCheckOn] = useState(false);
+  const [examplesFilter, setExamplesFilter] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState<Record<string, any>>({
@@ -710,7 +712,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
         'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at',
-        'category'
+        'category', 'is_example'
       ];
 
       const dataToSave: Record<string, any> = {
