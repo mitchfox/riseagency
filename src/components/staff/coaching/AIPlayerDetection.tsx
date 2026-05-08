@@ -193,7 +193,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         .order('created_at', { ascending: false })
         .limit(50);
       if (fb) {
-        setPersistedRejections(fb.map((r: any) => ({
+        setPersistedRejections((fb as FeedbackRow[]).map((r) => ({
           actionType: r.action_type || 'unknown',
           reason: `${r.feedback_type}: ${r.reason || ''}${r.expected_timestamp != null ? ` at ${Math.floor(Number(r.expected_timestamp) / 60)}.${String(Math.floor(Number(r.expected_timestamp) % 60)).padStart(2, '0')}` : ''}`.trim(),
           date: r.created_at,
@@ -211,9 +211,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         .select('identification_description, identification_reference_image_url, not_to_confuse_with')
         .eq('id', selectedPlayerForScan)
         .maybeSingle();
-      const idDesc = (pdata as any)?.identification_description as string | null | undefined;
-      const idImg = (pdata as any)?.identification_reference_image_url as string | null | undefined;
-      const idNot = (pdata as any)?.not_to_confuse_with as string | null | undefined;
+      const identity = pdata as PlayerIdentityRow | null;
+      const idDesc = identity?.identification_description;
+      const idImg = identity?.identification_reference_image_url;
+      const idNot = identity?.not_to_confuse_with;
       const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
       setPlayerDescription(idDesc || saved?.description || "");
       setNotPlayer(idNot || saved?.notPlayer || "");
@@ -335,7 +336,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       return;
     }
 
-    const { error } = await supabase.from('ai_detection_feedback').insert(learningRows as any[]);
+    const { error } = await feedbackClient.from('ai_detection_feedback').insert(learningRows);
     if (error) {
       console.error('Could not save backtest learning', error);
       toast.error('Backtest ran, but learning could not be saved');
@@ -440,7 +441,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (data?.actions) {
           const batchActions: DetectedAction[] = data.actions
-            .map((a: any) => {
+            .map((a: EdgeActionResult) => {
               const matchedTimestamp = frames.find(f => f.index === a.frameIndex)?.timestamp;
               const fallbackTimestamp = clampedStart + ((batchStart + a.frameIndex) * sampleEvery);
               const timestamp = Number.isFinite(matchedTimestamp) ? matchedTimestamp : fallbackTimestamp;
@@ -602,8 +603,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           setDialogOpen(false);
         }
       }
-    } catch (err: any) {
-      toast.error(err.message || "Scan failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Scan failed");
     } finally {
       if (hiddenVideo) {
         hiddenVideo.pause();
@@ -758,7 +759,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                         toast.error('Link a player first to log feedback');
                         return;
                       }
-                      const { error } = await supabase.from('ai_detection_feedback').insert({
+                      const { error } = await feedbackClient.from('ai_detection_feedback').insert({
                         player_id: selectedPlayerForScan,
                         video_analysis_id: videoAnalysisId || null,
                         action_type: row.detectedActionType || row.expectedActionType || null,
@@ -772,7 +773,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                           detectedAction: row.detectedActionType || null,
                           actionDescription: row.actionDescription || null,
                         },
-                      } as any);
+                      });
                       if (error) toast.error('Could not save feedback');
                       else toast.success('Feedback saved');
                     };
