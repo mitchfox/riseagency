@@ -14,6 +14,30 @@ import { DatasetFrameCapture } from "./DatasetFrameCapture";
 import { DatasetAnnotationCanvas, type BBox } from "./DatasetAnnotationCanvas";
 import JSZip from "jszip";
 
+// Capture a single midpoint frame from a video URL as a JPEG blob
+async function captureMidpointFrame(videoUrl: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement("video");
+    v.crossOrigin = "anonymous";
+    v.muted = true;
+    v.src = videoUrl;
+    v.onloadedmetadata = () => {
+      v.currentTime = (v.duration || 2) / 2;
+    };
+    v.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas ctx unavailable"));
+      ctx.drawImage(v, 0, 0);
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Blob failed"))), "image/jpeg", 0.85);
+      v.remove();
+    };
+    v.onerror = () => reject(new Error("Video load failed"));
+  });
+}
+
 interface ClipRow {
   id: string;
   action_type: string;
