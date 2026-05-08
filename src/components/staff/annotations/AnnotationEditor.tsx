@@ -757,17 +757,13 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     setSelectedId(null);
   }, [activeKlipId, drawingStartElements]);
 
-  // After placing an annotation, switch to select and select the new element
+  // After placing an annotation, switch to select. The canvas itself already
+  // calls setSelectedId(id) with the freshly created element id — do NOT
+  // override that here. Reading `klips` from this closure can be stale and
+  // would re-select a previously-added element.
   const handleToolUsed = useCallback(() => {
     setActiveTool('select');
-    // The newly added element is the last in the array — select it after a tick
-    setTimeout(() => {
-      const latest = klips.find(k => k.id === activeKlipId)?.elements;
-      if (latest && latest.length > 0) {
-        setSelectedId(latest[latest.length - 1].id);
-      }
-    }, 0);
-  }, [klips, activeKlipId]);
+  }, []);
 
   const handleDeleteElement = useCallback(() => {
     if (selectedId) {
