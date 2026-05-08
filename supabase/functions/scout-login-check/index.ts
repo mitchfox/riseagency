@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     const trimmed = email.toLowerCase().trim();
     const { data, error } = await supabase
       .from("scouts")
-      .select("id, status")
+      .select("*")
       .ilike("email", trimmed)
       .maybeSingle();
 
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ found: true, id: data.id, status: data.status }),
+      JSON.stringify({ found: true, scout: data }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
     );
   } catch (err) {
