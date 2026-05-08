@@ -134,3 +134,9 @@ verify_jwt = false
 
 [functions.roboflow-upload-training]
 verify_jwt = true
+
+[functions.scout-login-check]
+verify_jwt = false
+
+[functions.get-signature-contract]
+verify_jwt = false
