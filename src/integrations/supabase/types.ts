@@ -1429,6 +1429,7 @@ export type Database = {
           frame_time: number
           id: string
           image_url: string
+          roboflow_uploaded_at: string | null
         }
         Insert: {
           action_id?: string | null
@@ -1439,6 +1440,7 @@ export type Database = {
           frame_time?: number
           id?: string
           image_url: string
+          roboflow_uploaded_at?: string | null
         }
         Update: {
           action_id?: string | null
@@ -1449,6 +1451,7 @@ export type Database = {
           frame_time?: number
           id?: string
           image_url?: string
+          roboflow_uploaded_at?: string | null
         }
         Relationships: [
           {
