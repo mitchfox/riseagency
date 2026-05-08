@@ -380,6 +380,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             referenceImageUrl: referenceImageUrl || undefined,
             teamKitDescription: kitDescription || undefined,
             minConfidence: MIN_CONFIDENCE,
+            sampleEverySeconds: sampleEvery,
             rejectionHistory: (() => {
               const merged = [
                 ...(rejectionHistory || []),
