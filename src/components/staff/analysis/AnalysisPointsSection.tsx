@@ -593,6 +593,7 @@ interface SortablePointCardProps {
   concepts: CoachingConcept[];
   allPointTitles: string[];
   analysisId?: string;
+  spellCheckOn?: boolean;
 }
 
 const SortablePointCard = ({
@@ -616,6 +617,7 @@ const SortablePointCard = ({
   concepts,
   allPointTitles,
   analysisId,
+  spellCheckOn = false,
 }: SortablePointCardProps) => {
   const [viewingConcept, setViewingConcept] = useState<CoachingConcept | null>(null);
   const [conceptPickerOpen, setConceptPickerOpen] = useState(false);
@@ -1157,6 +1159,7 @@ export const AnalysisPointsSection = ({
   performanceReportClips = [],
   analysisId,
   onSave,
+  spellCheckOn = false,
 }: PointsSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [vaClips, setVaClips] = useState<VideoAnalysisClip[]>([]);
@@ -1317,6 +1320,7 @@ export const AnalysisPointsSection = ({
                   concepts={concepts}
                   allPointTitles={(formData.points || []).map((p: Point) => p.title || '')}
                   analysisId={analysisId}
+                  spellCheckOn={spellCheckOn}
                 />
                 {/* Add Point + Save between each point — inserts after current index */}
                 <div className="flex items-center gap-2 my-2">

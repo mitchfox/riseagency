@@ -1783,6 +1783,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             setSelectedPerformanceReportId={setSelectedPerformanceReportId}
             analysisType="concept"
             defaultOpen={false}
+            spellCheckOn={spellCheckOn}
           />
         )}
 
@@ -1804,6 +1805,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
           performanceReportClips={performanceReportClips}
           analysisId={editingAnalysis?.id}
           onSave={handleSave}
+          spellCheckOn={spellCheckOn}
         />
 
         {/* Overview Section (Pre-Match and Post-Match - shown after points) - collapsed by default */}
@@ -1828,6 +1830,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             generateOverviewWithAI={generateOverviewFromPoints}
             aiGenerating={aiGenerating}
             onOpenSettings={handleOpenOverviewSettings}
+            spellCheckOn={spellCheckOn}
           />
         )}
 
