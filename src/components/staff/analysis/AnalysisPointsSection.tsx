@@ -105,6 +105,7 @@ interface PointsSectionProps {
   performanceReportClips?: PerformanceReportAction[];
   analysisId?: string;
   onSave?: () => void;
+  spellCheckOn?: boolean;
 }
 
 // Helper to get R90 action score color - matches PerformanceReportDialog exactly
