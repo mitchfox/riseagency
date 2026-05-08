@@ -205,6 +205,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       full_match_url: string;
       r90_report_url: string;
     } | null,
+    // AI Identification
+    identification_description: "",
+    identification_reference_image_url: "",
+    not_to_confuse_with: "",
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
   const [playerPrograms, setPlayerPrograms] = useState<Record<string, any[]>>({});
@@ -830,6 +834,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       
       // Highlighted Match
       highlightedMatch: player.highlighted_match || null,
+      // AI Identification
+      identification_description: (player as any).identification_description || "",
+      identification_reference_image_url: (player as any).identification_reference_image_url || "",
+      not_to_confuse_with: (player as any).not_to_confuse_with || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -1254,6 +1262,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           highlighted_match: formData.highlightedMatch || null,
           portal_language: formData.portal_language || "en",
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
+          identification_description: formData.identification_description || null,
+          identification_reference_image_url: formData.identification_reference_image_url || null,
+          not_to_confuse_with: formData.not_to_confuse_with || null,
         } as any)
         .eq("id", editingPlayer.id);
 
@@ -1525,6 +1536,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     externalPlayerId: "",
                     links: [],
                     highlightedMatch: null,
+                    identification_description: "",
+                    identification_reference_image_url: "",
+                    not_to_confuse_with: "",
                   });
                   setIsAddPlayerDialogOpen(true);
                 }}>
@@ -3815,6 +3829,52 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       className="h-5 w-5 sm:h-4 sm:w-4"
                     />
                     <Label htmlFor="visible_on_stars_page" className="text-sm cursor-pointer">Visible on Stars Page</Label>
+                  </div>
+
+                  {/* AI Identification — used by RISE Action Spotter to find this player in match footage */}
+                  <div className="border-t pt-4 mt-4 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold uppercase tracking-wider text-primary">AI Identification</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Used by the RISE Action Spotter to find this player in match footage. Written once, reused across every analysis.
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="identification_description" className="text-sm">Identification Description</Label>
+                      <Textarea
+                        id="identification_description"
+                        value={formData.identification_description}
+                        onChange={(e) => setFormData({ ...formData, identification_description: e.target.value })}
+                        placeholder="Describe shirt number, hair, skin tone, build, boots — anything that helps the AI find this player in match footage."
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="identification_reference_image_url" className="text-sm">Reference Image URL</Label>
+                      <Input
+                        id="identification_reference_image_url"
+                        value={formData.identification_reference_image_url}
+                        onChange={(e) => setFormData({ ...formData, identification_reference_image_url: e.target.value })}
+                        placeholder="https://… a clear still of the player (face/full body)"
+                      />
+                      {formData.identification_reference_image_url && (
+                        <img
+                          src={formData.identification_reference_image_url}
+                          alt="Reference"
+                          className="mt-2 h-24 w-24 object-cover rounded border border-border"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="not_to_confuse_with" className="text-sm">Not To Confuse With</Label>
+                      <Textarea
+                        id="not_to_confuse_with"
+                        value={formData.not_to_confuse_with}
+                        onChange={(e) => setFormData({ ...formData, not_to_confuse_with: e.target.value })}
+                        placeholder="Names or descriptions of teammates that look similar (same hair, same build, same kit number range, etc.)"
+                        className="min-h-[60px]"
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 

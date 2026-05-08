@@ -381,9 +381,9 @@ export const DatasetBuilder = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">Dataset Builder</h2>
+          <h2 className="text-xl font-bold">RISE Vision Trainer</h2>
           <p className="text-sm text-muted-foreground">
-            Capture frames from clips and annotate them for Roboflow training
+            Capture frames from clips and label them as training data for the RISE Action Spotter
           </p>
         </div>
         <div className="flex items-center gap-2">

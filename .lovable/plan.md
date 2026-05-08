@@ -1,72 +1,116 @@
-Three independent workstreams. Each can be shipped on its own.
+## Goal
+
+Make the internal AI detection (currently called "Roboflow" / "AI Player Detection") more accurate and lower-friction by auto-injecting player identity, adding a permanent identification field on the player record, layering in stronger recognition signals, and renaming the system to an internal RISE name.
 
 ---
 
-## 1. Roboflow audit & training pipeline
+## 1. Player identification field (permanent, reusable)
 
-### Current state (as built)
-- `supabase/functions/process-video-frames`: client extracts JPEG frames at N fps (1–30) from a video, sends batches of 10 to a single Roboflow model defined by `ROBOFLOW_MODEL_URL` + `ROBOFLOW_API_KEY`. Returns class, confidence, bbox, and a derived 18-zone / 162-sub-zone position. Confidence threshold 40, overlap 30. No tracking IDs (purely per-frame detections).
-- `RoboflowTracking.tsx` (coaching VideoAnalysis): triggers extraction, displays detections at the current timestamp, and feeds `generateActionSuggestions` (rule-based, not ML) to suggest action types from object positions.
-- `DatasetBuilder.tsx`: pulls every `performance_report_actions` row with a `video_url`, lets staff scrub frames, draw bounding boxes (`DatasetAnnotationCanvas`), and exports a YOLO zip locally. There is **no upload to Roboflow** today — export is manual.
-- No player re-ID model. The current model only outputs generic classes (ball, player, etc.) — there is no per-player identity.
+Add to `players` table:
 
-### What this plan delivers
+- `identification_description` (text) — free text: kit colour, hair, skin tone, build, boots, shirt number, distinguishing marks. Written once, reused everywhere AI runs.
+- `identification_reference_image_url` (text, optional) — a single still of the player used as a visual anchor for the AI.
+- `not_to_confuse_with` (text, optional) — names/descriptions of teammates that look similar.
 
-**A. Audit report (no code, written into chat after exploration):**
-- Confirm which Roboflow project/version the URL points to, list its classes, and document confidence/overlap defaults.
-- Verify clipping accuracy by running 3 sample game clips through the pipeline and comparing detected actions against the manually tagged `action_type` on the same clip.
-- Document failure modes (frame rate too low, occlusion, kit colour confusion, broadcast vs tactical camera).
+Surface these in **Player Management → Edit Player** in a new "AI Identification" section, with:
+- Textarea for description (with a short helper: "Describe shirt colour, number, hair, skin tone, build, boots — anything that helps the AI find this player in match footage.")
+- Image upload (reuses existing player photo bucket pattern).
+- Textarea for confusables.
 
-**B. Auto-feed training data from existing clips:**
-- New edge function `roboflow-upload-training-image` that POSTs an image + YOLO annotations to `https://api.roboflow.com/dataset/{workspace}/{project}/upload` using the existing `ROBOFLOW_API_KEY`. Adds two new secrets: `ROBOFLOW_WORKSPACE`, `ROBOFLOW_PROJECT`.
-- DatasetBuilder gets a "Push to Roboflow" button next to the local zip export. Each pushed frame is marked `exported = true` and a new `roboflow_uploaded_at` column on `dataset_frames` records the upload.
-- New "Bulk seed from action clips" job: for each `performance_report_actions` row with a `video_url` that hasn't been seeded, capture the midpoint frame, label it with `action_type` as a class tag, and queue it for upload (annotations stay empty until staff draws bboxes — Roboflow accepts unannotated images for the annotation queue).
+A "Generate description from photo" button calls Lovable AI (Gemini vision) on the player's existing portrait/highlight thumbnail to draft the description, which staff then edit.
 
-**C. Player re-identification track:**
-- New `dataset_player_crops` table: id, player_id, source_action_id, image_url, bbox, created_at.
-- New "Tag player crops" panel inside DatasetBuilder: for each existing action clip, capture the centred player crop using the action's `action_number`/notes plus a manual selector. Crops upload to a separate Roboflow project (`ROBOFLOW_PLAYER_REID_PROJECT`) configured for classification.
-- Inference path: extend `process-video-frames` to optionally call the re-ID model on each detected player bbox and return the most-likely `player_id`. Surfaced as a small badge on each detection in `RoboflowTracking`.
+## 2. Auto-feed identity to detection
 
-### Out of scope (not in this plan)
-- Training the model itself — that happens inside Roboflow's UI once data is uploaded.
-- Real-time tracking / Bytetrack-style ID continuity across frames.
+Currently `AIPlayerDetection.tsx` requires the operator to type description / not-confuse-with each time. Change to:
+
+- When a player is selected (via report, analysis link, or manual pick), auto-populate `playerInfo.description` and `playerInfo.notPlayer` from the player record.
+- Auto-populate **team kit colour** for the relevant match: pull from the fixture's team record (home/away kit) so the AI knows "today this player is in the white kit, not their usual red".
+- Show the identity card the AI will use (description, kit, confusables, reference image) above the Run button so staff can verify/override before running.
+- Allow per-run overrides without overwriting the saved player record.
+
+## 3. Stronger recognition pipeline
+
+Layered signals passed into `detect-player-actions`:
+
+a. **Team-first, then player.** Two-stage prompt: first identify which players on screen belong to the target team (kit colour for this match), then narrow to the target player. Reduces wrong-team false positives.
+
+b. **Reference image as a vision input.** Include the player's `identification_reference_image_url` as the first image in the multimodal call, labelled "REFERENCE: this is the player". Gemini handles visual anchoring well.
+
+c. **Confirmed-clip few-shot.** Already partly in place (global corpus). Extend it:
+- Pull up to 8 confirmed action clip thumbnails for *this specific player* and include them as labelled image examples ("This is X performing a Pass").
+- Pull up to 8 thumbnails of confirmed actions for *this action type from any player* as visual definition of the action.
+
+d. **Frame density controls.** Add UI controls for: frame interval (1s / 2s / 3s / 5s), confidence floor (medium/high), and a "second-pass verification" toggle that re-sends only flagged frames with a stricter prompt for confirmation before showing them to staff.
+
+e. **Temporal grouping.** Server-side: collapse detections of the same action within a 6-second window into one (already partly done — extend to per-action-type window using `typical_duration_seconds`).
+
+f. **Reasoning audit.** Store the AI's per-frame reasoning alongside each suggestion so staff can see *why* it flagged something. Already partly there via `description` — surface it in the review UI as expandable "AI reasoning".
+
+g. **Reject-and-learn loop.** Already partly in place via `rejectionHistory`. Make it persistent per player + per action type so feedback compounds across sessions, not just within one run.
+
+## 4. Internal renaming
+
+Roboflow-branded things → internal RISE names:
+
+- "Roboflow Dataset Builder" → **RISE Vision Trainer**
+- "AI Player Detection" → **RISE Action Spotter**
+- `roboflow-upload-training` edge function → keep filename (avoids breaking deploys) but relabel UI references.
+- Dataset Builder UI copy: remove "Roboflow" mentions; reframe as "training data for the RISE Action Spotter".
+- Keep the actual Roboflow API integration available behind the scenes for staff who want to push to Roboflow as an external backup, but it's no longer the primary framing.
+
+## 5. Review UI improvements
+
+In the detection review screen:
+- Show identity card used (description + reference image thumbnail).
+- Each suggestion shows: thumbnail, AI reasoning, confidence, suggested action type, suggested clip in/out — all editable inline before accepting.
+- "Wrong player" and "Wrong action" buttons (separate from generic reject) so the rejection feedback is structured and feeds the learning loop more usefully.
+- Bulk accept / bulk reject by confidence band.
 
 ---
 
-## 2. Role permissions editor improvements
+## Technical section
 
-### Issues
-- Labels (`role_label`) are not editable after creation.
-- New roles never appear in the contact-form / inbound-email role dropdown (the option list in `send-form-email` and any onboarding form is hardcoded; needs to read from `available_roles`).
-- `role_permissions` is missing many sections that exist in `Staff.tsx`. Confirmed gaps include: `dashboard`, `visionboard`, `docs`, `sheets`, `goalstasks`, `casestudies`, `transferreports`, `interactionhistory`, `requests`, `portalmanagement`, `marketingschedule`, `publiccontent`, `contentcreator` (label-only), `marketingideas` (label-only), `salesdeck`, `designstudio`, `annotations`, `videoanalysis`, `streams`, `videocompressor`, `highlightcompiler`, `musicstudio`, `coachingdata`, `strengthpower`, `nutrition`, `psychology`. Header sections (`header_*`) are present.
-- "Role loads correctly with just what it's supposed to show on login" — today, `useRolePermissions` defaults `can_view` to `false`, but on Staff.tsx the navigation pre-renders sections before permissions resolve, briefly flashing items. Need to gate the staff sidebar on `loading === false` and only then render the filtered list.
+**Migration**
+```sql
+ALTER TABLE players
+  ADD COLUMN identification_description text,
+  ADD COLUMN identification_reference_image_url text,
+  ADD COLUMN not_to_confuse_with text;
 
-### Changes
+CREATE TABLE ai_detection_feedback (
+  id uuid primary key default gen_random_uuid(),
+  player_id uuid references players(id) on delete cascade,
+  action_type text,
+  feedback_type text check (feedback_type in ('wrong_player','wrong_action','not_involved','confirmed')),
+  reason text,
+  created_by uuid,
+  created_at timestamptz default now()
+);
+-- RLS: staff/admin can read+write; restrict by has_role.
+```
 
-- **Edit role label inline**: small pencil icon next to each TabsTrigger opens a popover with `role_label` + `description` inputs. Updates `available_roles` row. Role key stays immutable (changing it would break enum + existing user_roles rows).
-- **Sync sections**: build a single canonical `STAFF_SECTIONS` constant (id, title, category) used by both `Staff.tsx` and a new migration that upserts one `role_permissions` row per (role × section). Migration reseeds missing sections for all roles with `can_view = false, can_edit = false` (admin keeps full access via existing logic).
-- **Role dropdown sources `available_roles`**: any form / edge function that lets a visitor pick a role (contact form, request representation, signup) reads from `available_roles` at render time. `send-form-email` already accepts free-text `form_type`, so the change is purely client-side.
-- **Login gating**: in the staff portal entry, defer rendering the section nav until `useRolePermissions` finishes loading. Per project memory, `expandedSection` already initialises as `null` to avoid flashes — extend the same pattern to the section list itself.
+**Files to edit**
+- `src/components/staff/PlayerEditDialog.tsx` (or equivalent player edit form): add AI Identification section.
+- `src/components/staff/coaching/AIPlayerDetection.tsx`:
+  - Auto-load identity from player record.
+  - Pass reference image + per-player confirmed clip thumbnails into the call.
+  - Add frame-interval / confidence / second-pass controls.
+  - Structured reject buttons writing to `ai_detection_feedback`.
+  - Rename to "RISE Action Spotter".
+- `supabase/functions/detect-player-actions/index.ts`:
+  - Accept `referenceImageUrl`, `teamKitDescription`, `perPlayerExamples`, `perActionExamples`.
+  - Two-stage prompt (team filter → player filter → action).
+  - Optional second-pass verification on flagged frames only.
+  - Pull persistent `ai_detection_feedback` for the player+action when building rejection history.
+- `src/components/staff/DatasetBuilder.tsx`: rename UI strings to "RISE Vision Trainer".
+- New helper `src/lib/aiDetectionContext.ts`: builds the identity payload from a player id + fixture id.
+
+**Cost note**
+Reference image + per-player examples + per-action examples adds tokens per run. Default to thumbnails (≤256px) to keep cost down; cap examples at 8 each.
 
 ---
 
-## 3. Annotation: keep the just-added annotation selected
-
-### Issue
-After drawing an annotation, the sidebar swaps the selection to a different element (or clears it). Root causes in `AnnotationEditor.tsx`:
-- `handleToolUsed` (line 761) reads `klips` from a stale closure when picking "the last element", so on rapid placements it can select a previously-existing element.
-- `saveDrawing` (line 715) explicitly calls `setSelectedId(null)` on save, which is fine for "save and exit" but the user expects the just-drawn annotation to remain selected if they exit drawing mode without saving, or to be re-selected on the resumed timeline.
-
-### Fix
-- Switch `handleToolUsed` to a ref-based read (`klipsRef.current`) so it always sees the latest klip elements, and capture the new element id from `setElements`'s functional updater rather than a post-tick lookup.
-- After `saveDrawing`, restore `selectedId` to the id of the element that was just added (track it via `lastDrawnIdRef`). Only clear the selection on `cancelDrawing` or when the user explicitly clicks empty canvas.
-- Never let the keyframe / list panels call `setSelectedId` to anything other than the element the user clicked. Audit the three call sites (lines 1264, 1379, 1436) to ensure none of them auto-fire on render.
-
----
-
-## Technical notes
-
-- All new Roboflow calls go through edge functions so the API key never reaches the browser.
-- New tables (`dataset_player_crops`, new column on `dataset_frames`) get RLS limited to authenticated staff — same policy pattern as existing `dataset_frames`.
-- Section seeding is a single migration; data backfill uses the insert tool, not migrations.
-- No design-token changes; UI additions reuse existing button/dialog/popover variants.
+## Out of scope for this plan
+- Building our own model training/hosting (covered previously — staying on Lovable AI Gemini).
+- Real-time live-stream detection.
+- Multi-player simultaneous tracking in one run.

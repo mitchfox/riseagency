@@ -75,6 +75,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [playerDescription, setPlayerDescription] = useState("");
   const [notPlayer, setNotPlayer] = useState("");
   const [kitDescription, setKitDescription] = useState("");
+  const [referenceImageUrl, setReferenceImageUrl] = useState("");
+  const [minConfidence, setMinConfidence] = useState<'medium' | 'high'>('medium');
   const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -84,6 +86,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [sampleInterval, setSampleInterval] = useState<string>("5");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
+  const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pull a sample of confirmed action examples across the entire database — these
@@ -132,14 +135,44 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     if (!player) return;
     
     setPlayerName(player.name);
+
+    // Pull persistent rejection feedback for this player so the AI learns across sessions.
+    (async () => {
+      const { data: fb } = await supabase
+        .from('ai_detection_feedback')
+        .select('action_type, feedback_type, reason, created_at')
+        .eq('player_id', selectedPlayerForScan)
+        .in('feedback_type', ['wrong_player', 'wrong_action', 'not_involved'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (fb) {
+        setPersistedRejections(fb.map((r: any) => ({
+          actionType: r.action_type || 'unknown',
+          reason: `${r.feedback_type}: ${r.reason || ''}`.trim(),
+          date: r.created_at,
+        })));
+      } else {
+        setPersistedRejections([]);
+      }
+    })();
     
-    // Load saved description
-    const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
-    if (saved) {
-      setPlayerDescription(saved.description || "");
-      setNotPlayer(saved.notPlayer || "");
-      setKitDescription(saved.kitDescription || "");
-    }
+    // Auto-load identification fields from the player record (set in Player Management).
+    // Falls back to localStorage cache for back-compat.
+    (async () => {
+      const { data: pdata } = await supabase
+        .from('players')
+        .select('identification_description, identification_reference_image_url, not_to_confuse_with')
+        .eq('id', selectedPlayerForScan)
+        .maybeSingle();
+      const idDesc = (pdata as any)?.identification_description as string | null | undefined;
+      const idImg = (pdata as any)?.identification_reference_image_url as string | null | undefined;
+      const idNot = (pdata as any)?.not_to_confuse_with as string | null | undefined;
+      const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
+      setPlayerDescription(idDesc || saved?.description || "");
+      setNotPlayer(idNot || saved?.notPlayer || "");
+      setKitDescription(saved?.kitDescription || "");
+      setReferenceImageUrl(idImg || "");
+    })();
     
     // Load previous clips from performance reports as reference tags
     loadPreviousClips(selectedPlayerForScan);
@@ -337,7 +370,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             videoContext: {
               opponent: opponent || undefined,
             },
-            rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
+            referenceImageUrl: referenceImageUrl || undefined,
+            teamKitDescription: kitDescription || undefined,
+            minConfidence,
+            rejectionHistory: (() => {
+              const merged = [
+                ...(rejectionHistory || []),
+                ...persistedRejections,
+              ];
+              return merged.length > 0 ? merged : undefined;
+            })(),
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
@@ -439,7 +481,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   return (
     <>
       <Button variant="outline" size="sm" className="gap-1" onClick={() => setDialogOpen(true)}>
-        <UserSearch className="h-3.5 w-3.5" /> AI Player Scan
+        <UserSearch className="h-3.5 w-3.5" /> RISE Action Spotter
       </Button>
 
       <canvas ref={canvasRef} className="hidden" width={640} height={360} />
@@ -448,7 +490,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bebas uppercase tracking-wider text-primary">
-              AI Player Action Detection
+              RISE Action Spotter
             </DialogTitle>
           </DialogHeader>
 
@@ -509,6 +551,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Reference Image URL (auto-loaded from player record)</label>
+                    <Input
+                      value={referenceImageUrl}
+                      onChange={e => setReferenceImageUrl(e.target.value)}
+                      placeholder="https://… clear still of the player"
+                    />
+                  </div>
+                  {referenceImageUrl && (
+                    <img
+                      src={referenceImageUrl}
+                      alt="Reference"
+                      className="h-16 w-16 object-cover rounded border border-border"
+                    />
+                  )}
+                </div>
+                {persistedRejections.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Learning from {persistedRejections.length} stored coach correction{persistedRejections.length === 1 ? '' : 's'} for this player.
+                  </p>
+                )}
               </div>
 
               {/* Tag the player */}
@@ -625,6 +689,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                     inputMode="numeric"
                   />
                   <span className="text-xs text-muted-foreground">seconds</span>
+                  <span className="text-xs text-muted-foreground ml-3">Minimum confidence</span>
+                  <Select value={minConfidence} onValueChange={(v) => setMinConfidence(v as 'medium' | 'high')}>
+                    <SelectTrigger className="w-28 h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="medium">Medium+</SelectItem>
+                      <SelectItem value="high">High only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button onClick={startScan} disabled={scanning || !playerName.trim()} className="gap-2">
                   {scanning ? (

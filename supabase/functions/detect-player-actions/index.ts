@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -135,12 +135,18 @@ PLAYER TO TRACK: ${playerInfo.name}
 ${playerInfo.description ? `VISUAL IDENTIFICATION: ${playerInfo.description}` : ''}
 ${playerInfo.notPlayer ? `DO NOT CONFUSE WITH: ${playerInfo.notPlayer}` : ''}
 ${videoContext?.opponent ? `OPPONENT: ${videoContext.opponent}` : ''}
+${teamKitDescription ? `TEAM KIT FOR THIS MATCH: ${teamKitDescription}` : ''}
+${referenceImageUrl ? `REFERENCE IMAGE: A reference still of the target player has been provided as the FIRST image in the message. Use it as your primary visual anchor for who this player is — match face, hair, build, and skin tone against it before flagging any frame.` : ''}
 
 UNDERSTANDING THE FOOTAGE:
 - These are static frame captures, not live video. You cannot see motion between frames.
 - The camera angle is usually wide, covering most of the pitch. Players will appear relatively small.
 - Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
 - If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
+
+TWO-STAGE IDENTIFICATION (apply mentally before flagging):
+  STAGE 1 — TEAM: For each frame, first determine which players are on the target team based on the kit description above. Ignore players in the opposite kit.
+  STAGE 2 — PLAYER: From the players on the target team, identify the specific target player using the reference image, description, and shirt number. Only then assess whether they are performing an action.
 ${actionReference}${confirmedReference}
 ${Array.isArray(rejectionHistory) && rejectionHistory.length > 0 ? `
 PREVIOUS REJECTION FEEDBACK FROM COACH:
@@ -201,6 +207,13 @@ For each detected action provide:
       },
     ])).flat();
 
+    const referenceContent: any[] = referenceImageUrl
+      ? [
+          { type: 'text' as const, text: `REFERENCE IMAGE — this is ${playerInfo.name}. Use this as your primary visual anchor.` },
+          { type: 'image_url' as const, image_url: { url: referenceImageUrl } },
+        ]
+      : [];
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -214,6 +227,7 @@ For each detected action provide:
           {
             role: 'user',
             content: [
+              ...referenceContent,
               ...imageContent,
               {
                 type: 'text',
@@ -302,6 +316,7 @@ For each detected action provide:
 
         const confidence = String(a.confidence || '').toLowerCase();
         if (confidence !== 'high' && confidence !== 'medium') return null;
+        if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
         const timing = durationMap[normaliseName(canonical)] || { before: 5, after: 5 };

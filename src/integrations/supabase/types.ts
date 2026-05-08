@@ -83,6 +83,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_detection_feedback: {
+        Row: {
+          action_type: string | null
+          created_at: string
+          created_by: string | null
+          feedback_type: string
+          id: string
+          player_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          feedback_type: string
+          id?: string
+          player_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          feedback_type?: string
+          id?: string
+          player_id?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_detection_feedback_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_detection_feedback_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_shell_decisions: {
         Row: {
           created_at: string
@@ -4056,12 +4101,15 @@ export type Database = {
           highlights: Json | null
           hover_image_url: string | null
           id: string
+          identification_description: string | null
+          identification_reference_image_url: string | null
           image_url: string | null
           league: string | null
           links: Json | null
           name: string
           nationality: string
           next_program_notes: string | null
+          not_to_confuse_with: string | null
           nutrition_next_program_notes: string | null
           nutrition_programming_notes: string | null
           player_list_order: number | null
@@ -4091,12 +4139,15 @@ export type Database = {
           highlights?: Json | null
           hover_image_url?: string | null
           id?: string
+          identification_description?: string | null
+          identification_reference_image_url?: string | null
           image_url?: string | null
           league?: string | null
           links?: Json | null
           name: string
           nationality: string
           next_program_notes?: string | null
+          not_to_confuse_with?: string | null
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           player_list_order?: number | null
@@ -4126,12 +4177,15 @@ export type Database = {
           highlights?: Json | null
           hover_image_url?: string | null
           id?: string
+          identification_description?: string | null
+          identification_reference_image_url?: string | null
           image_url?: string | null
           league?: string | null
           links?: Json | null
           name?: string
           nationality?: string
           next_program_notes?: string | null
+          not_to_confuse_with?: string | null
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           player_list_order?: number | null
