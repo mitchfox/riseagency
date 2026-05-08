@@ -75,6 +75,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [playerDescription, setPlayerDescription] = useState("");
   const [notPlayer, setNotPlayer] = useState("");
   const [kitDescription, setKitDescription] = useState("");
+  const [referenceImageUrl, setReferenceImageUrl] = useState("");
+  const [minConfidence, setMinConfidence] = useState<'medium' | 'high'>('medium');
   const [playerTags, setPlayerTags] = useState<PlayerTag[]>([]);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -133,13 +135,23 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     
     setPlayerName(player.name);
     
-    // Load saved description
-    const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
-    if (saved) {
-      setPlayerDescription(saved.description || "");
-      setNotPlayer(saved.notPlayer || "");
-      setKitDescription(saved.kitDescription || "");
-    }
+    // Auto-load identification fields from the player record (set in Player Management).
+    // Falls back to localStorage cache for back-compat.
+    (async () => {
+      const { data: pdata } = await supabase
+        .from('players')
+        .select('identification_description, identification_reference_image_url, not_to_confuse_with')
+        .eq('id', selectedPlayerForScan)
+        .maybeSingle();
+      const idDesc = (pdata as any)?.identification_description as string | null | undefined;
+      const idImg = (pdata as any)?.identification_reference_image_url as string | null | undefined;
+      const idNot = (pdata as any)?.not_to_confuse_with as string | null | undefined;
+      const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
+      setPlayerDescription(idDesc || saved?.description || "");
+      setNotPlayer(idNot || saved?.notPlayer || "");
+      setKitDescription(saved?.kitDescription || "");
+      setReferenceImageUrl(idImg || "");
+    })();
     
     // Load previous clips from performance reports as reference tags
     loadPreviousClips(selectedPlayerForScan);
@@ -337,6 +349,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             videoContext: {
               opponent: opponent || undefined,
             },
+            referenceImageUrl: referenceImageUrl || undefined,
+            teamKitDescription: kitDescription || undefined,
+            minConfidence,
             rejectionHistory: rejectionHistory && rejectionHistory.length > 0 ? rejectionHistory : undefined,
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
