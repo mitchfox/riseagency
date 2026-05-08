@@ -3830,6 +3830,52 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     />
                     <Label htmlFor="visible_on_stars_page" className="text-sm cursor-pointer">Visible on Stars Page</Label>
                   </div>
+
+                  {/* AI Identification — used by RISE Action Spotter to find this player in match footage */}
+                  <div className="border-t pt-4 mt-4 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold uppercase tracking-wider text-primary">AI Identification</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Used by the RISE Action Spotter to find this player in match footage. Written once, reused across every analysis.
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="identification_description" className="text-sm">Identification Description</Label>
+                      <Textarea
+                        id="identification_description"
+                        value={formData.identification_description}
+                        onChange={(e) => setFormData({ ...formData, identification_description: e.target.value })}
+                        placeholder="Describe shirt number, hair, skin tone, build, boots — anything that helps the AI find this player in match footage."
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="identification_reference_image_url" className="text-sm">Reference Image URL</Label>
+                      <Input
+                        id="identification_reference_image_url"
+                        value={formData.identification_reference_image_url}
+                        onChange={(e) => setFormData({ ...formData, identification_reference_image_url: e.target.value })}
+                        placeholder="https://… a clear still of the player (face/full body)"
+                      />
+                      {formData.identification_reference_image_url && (
+                        <img
+                          src={formData.identification_reference_image_url}
+                          alt="Reference"
+                          className="mt-2 h-24 w-24 object-cover rounded border border-border"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="not_to_confuse_with" className="text-sm">Not To Confuse With</Label>
+                      <Textarea
+                        id="not_to_confuse_with"
+                        value={formData.not_to_confuse_with}
+                        onChange={(e) => setFormData({ ...formData, not_to_confuse_with: e.target.value })}
+                        placeholder="Names or descriptions of teammates that look similar (same hair, same build, same kit number range, etc.)"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
 
                 {/* Career Info Tab */}
