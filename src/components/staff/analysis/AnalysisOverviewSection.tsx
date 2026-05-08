@@ -51,6 +51,7 @@ interface OverviewSectionProps {
   generateOverviewWithAI?: () => Promise<void>;
   aiGenerating?: boolean;
   onOpenSettings?: (category: string) => void;
+  spellCheckOn?: boolean;
 }
 
 export const AnalysisOverviewSection = ({
@@ -73,6 +74,7 @@ export const AnalysisOverviewSection = ({
   generateOverviewWithAI,
   aiGenerating = false,
   onOpenSettings,
+  spellCheckOn = false,
 }: OverviewSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
