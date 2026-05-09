@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link, Settings, Search as SearchIcon } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
 import { logActivity } from "@/lib/activityLogger";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
@@ -42,6 +42,7 @@ import { PlayerFixtureStats } from "./PlayerFixtureStats";
 import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
 import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
 import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
+import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
 
 interface Player {
   id: string;
@@ -229,6 +230,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const previousPlayerIdFromUrl = useRef<string | null>(null);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [playerSearchTerm, setPlayerSearchTerm] = useState("");
+  const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
   
   // Performance Report Dialog state
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
@@ -1091,7 +1094,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       const bioJSON = reconstructBioJSON();
-      
+      const { data: { user: _currentUser } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from("players")
         .insert({
@@ -1110,6 +1114,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
+          created_by: _currentUser?.id || null,
         } as any);
 
       if (error) throw error;
@@ -1338,14 +1343,17 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
   // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, prospect, other, scouted
+  const _searchedPlayers = playerSearchTerm.trim()
+    ? players.filter(p => (p.name || '').toLowerCase().includes(playerSearchTerm.trim().toLowerCase()))
+    : players;
   const groupedPlayers = {
-    represented: players.filter(p => p.representation_status === 'represented'),
-    mandated: players.filter(p => p.representation_status === 'mandated'),
-    previously_mandated: players.filter(p => p.representation_status === 'previously_mandated'),
-    fuel_for_football: players.filter(p => p.representation_status === 'fuel_for_football'),
-    prospect: players.filter(p => p.representation_status === 'prospect'),
-    other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
-    scouted: players.filter(p => p.representation_status === 'scouted'),
+    represented: _searchedPlayers.filter(p => p.representation_status === 'represented'),
+    mandated: _searchedPlayers.filter(p => p.representation_status === 'mandated'),
+    previously_mandated: _searchedPlayers.filter(p => p.representation_status === 'previously_mandated'),
+    fuel_for_football: _searchedPlayers.filter(p => p.representation_status === 'fuel_for_football'),
+    prospect: _searchedPlayers.filter(p => p.representation_status === 'prospect'),
+    other: _searchedPlayers.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
+    scouted: _searchedPlayers.filter(p => p.representation_status === 'scouted'),
   };
 
   // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
@@ -1515,6 +1523,24 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
+                <div className="relative hidden md:block">
+                  <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={playerSearchTerm}
+                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                    placeholder="Search players…"
+                    className="h-9 w-56 pl-7 text-sm"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  title="Manage player categories"
+                  onClick={() => setIsCategoriesDialogOpen(true)}
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
                 <AutoMatchPlayersButton onComplete={fetchPlayers} />
                 <SyncPlayerStatsButton onSynced={fetchPlayers} />
                 <Button onClick={() => {
@@ -4698,6 +4724,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         open={performanceReportDialogOpen}
         onOpenChange={setPerformanceReportDialogOpen}
         analysisId={selectedReportAnalysisId}
+      />
+
+      {/* Player Categories Management */}
+      <PlayerCategoriesDialog
+        open={isCategoriesDialogOpen}
+        onOpenChange={setIsCategoriesDialogOpen}
+        onSaved={fetchPlayers}
       />
     </div>
   );
