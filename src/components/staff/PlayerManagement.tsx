@@ -4725,6 +4725,13 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         onOpenChange={setPerformanceReportDialogOpen}
         analysisId={selectedReportAnalysisId}
       />
+
+      {/* Player Categories Management */}
+      <PlayerCategoriesDialog
+        open={isCategoriesDialogOpen}
+        onOpenChange={setIsCategoriesDialogOpen}
+        onSaved={fetchPlayers}
+      />
     </div>
   );
 };
