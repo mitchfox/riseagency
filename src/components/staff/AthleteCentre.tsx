@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { 
   User, Dumbbell, LineChart, Target, Calendar,
   Save, Loader2, ChevronRight, ChevronDown, ClipboardList, BarChart3, Film, Database, Plus, Trash2, GripHorizontal,
-  Zap, FileText, Search, Video, Pencil, Layers
+  Zap, FileText, Search, Video, Pencil, Layers, Brain
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { InjuryLog } from "@/components/portal/InjuryLog";
 import { PlayerFixtures } from "@/components/staff/PlayerFixtures";
+import { PlayerSpqHistory } from "@/components/staff/PlayerSpqHistory";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
