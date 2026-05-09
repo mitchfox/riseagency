@@ -892,27 +892,63 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               ) : (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link.
+                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link. Or scan an unlisted player without linking.
                   </p>
-                  {players && players.length > 0 ? (
+                  {!manualMode && players && players.length > 0 ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Select value={pendingLinkPlayerId} onValueChange={setPendingLinkPlayerId}>
-                        <SelectTrigger className="h-9 w-full sm:w-[280px]">
-                          <SelectValue placeholder="Choose a player to link" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[260px]">
-                          {[...players].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <PlayerCombobox
+                        players={[...players].sort((a, b) => a.name.localeCompare(b.name)).map(p => ({
+                          id: p.id, name: p.name, position: (p as any).position,
+                        }))}
+                        value={pendingLinkPlayerId || null}
+                        onChange={setPendingLinkPlayerId}
+                        placeholder="Type to search players..."
+                        className="h-9 w-full sm:w-[320px]"
+                        groupedByStatus={false}
+                        showAvatar={false}
+                      />
                       <Button type="button" size="sm" onClick={handleLinkPlayer} disabled={!pendingLinkPlayerId || linkingPlayer} className="gap-1">
                         {linkingPlayer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
                         Link to analysis
                       </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setManualMode(true)}>
+                        Player not in list?
+                      </Button>
                     </div>
-                  ) : (
+                  ) : !manualMode ? (
                     <p className="text-xs text-muted-foreground">No players available to link.</p>
+                  ) : null}
+                  {manualMode && (
+                    <div className="space-y-2 rounded border border-border bg-background/50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground">Scan an unlisted player</div>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setManualMode(false)}>Back to list</Button>
+                      </div>
+                      <Input
+                        placeholder="Player name (required)"
+                        value={manualName}
+                        onChange={(e) => setManualName(e.target.value)}
+                      />
+                      <Textarea
+                        placeholder="Identification description (required) — shirt number, hair, skin tone, build, boots, anything that uniquely identifies them on screen."
+                        value={manualDescription}
+                        onChange={(e) => setManualDescription(e.target.value)}
+                        className="min-h-[80px]"
+                      />
+                      <Input
+                        placeholder="Do not confuse with — names and brief look of similar teammates"
+                        value={manualNotPlayer}
+                        onChange={(e) => setManualNotPlayer(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Reference image URL (optional but strongly recommended)"
+                        value={manualReferenceImageUrl}
+                        onChange={(e) => setManualReferenceImageUrl(e.target.value)}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Manual scans are not stored against any player record. Past corrections cannot be applied because there is no player to learn against.
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
