@@ -4166,6 +4166,20 @@ const Dashboard = () => {
                   {playerData?.id && <InjuryLog playerId={playerData.id} />}
                 </CardContent>
               </Card>
+
+              {/* Psychology / SPQ Section */}
+              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 mt-6">
+                <CardHeader marble>
+                  <div className="container mx-auto px-4">
+                    <CardTitle className="font-heading tracking-tight flex items-center gap-2">
+                      <Brain className="h-5 w-5" /> Psychology
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="container mx-auto px-4 py-4">
+                  {playerData?.id && <PlayerSpqHistory playerId={playerData.id} variant="inline" />}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="invoices">
