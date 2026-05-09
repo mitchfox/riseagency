@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Loader2, UserSearch, Pencil, Brain, CheckCircle2, Link2 } from "lucide-react";
+import { Loader2, UserSearch, Pencil, Brain, CheckCircle2, Link2, PlayCircle, PauseCircle, RotateCcw } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -104,6 +104,42 @@ interface Props {
 const STORAGE_KEY = "ai_player_descriptions";
 const SAMPLE_EVERY_SECONDS = 2;
 const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
+const SCAN_STATE_PREFIX = "ai_action_spotter_scan_state::";
+
+interface PersistedScanState {
+  videoUrl: string;
+  playerId: string;
+  backtestMode: boolean;
+  totalFrames: number;
+  nextBatchStart: number; // index of next frame batch to process
+  allDetected: DetectedAction[];
+  savedAt: number;
+}
+
+function scanStateKey(videoUrl: string, playerId: string, mode: 'scan' | 'backtest') {
+  return `${SCAN_STATE_PREFIX}${mode}::${playerId}::${videoUrl}`;
+}
+function readScanState(videoUrl: string, playerId: string, mode: 'scan' | 'backtest'): PersistedScanState | null {
+  try {
+    const raw = localStorage.getItem(scanStateKey(videoUrl, playerId, mode));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedScanState;
+    // Expire after 7 days
+    if (Date.now() - parsed.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(scanStateKey(videoUrl, playerId, mode));
+      return null;
+    }
+    return parsed;
+  } catch { return null; }
+}
+function writeScanState(state: PersistedScanState, mode: 'scan' | 'backtest') {
+  try {
+    localStorage.setItem(scanStateKey(state.videoUrl, state.playerId, mode), JSON.stringify(state));
+  } catch { /* quota — ignore */ }
+}
+function clearScanState(videoUrl: string, playerId: string, mode: 'scan' | 'backtest') {
+  try { localStorage.removeItem(scanStateKey(videoUrl, playerId, mode)); } catch { /* ignore */ }
+}
 
 const feedbackClient = supabase as unknown as {
   from: (table: 'ai_detection_feedback') => {
@@ -130,10 +166,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [linkingPlayer, setLinkingPlayer] = useState(false);
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
+  const [playerActionsTotal, setPlayerActionsTotal] = useState(0);
+  const [globalActionsTotal, setGlobalActionsTotal] = useState(0);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const [backtestMode, setBacktestMode] = useState(false);
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const [learningSavedCount, setLearningSavedCount] = useState(0);
+  const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
+  const pauseRef = useRef(false);
+  const cancelledRef = useRef(false);
+  const [paused, setPaused] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleLinkPlayer = async () => {
@@ -155,6 +197,32 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     }
   };
 
+  // Detect unfinished scans for the current player+video so we can offer Resume.
+  useEffect(() => {
+    if (!selectedPlayerForScan || !videoUrl) { setResumeState(null); return; }
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
+    setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+  }, [selectedPlayerForScan, videoUrl, backtestMode, scanning]);
+
+  // If the user navigates away or hides the tab mid-scan, stop the loop and keep
+  // the checkpoint so a reload or revisit can resume from where we left off.
+  useEffect(() => {
+    const persistAndStop = () => {
+      if (scanning) {
+        pauseRef.current = true; // loop will write checkpoint at next batch boundary
+      }
+    };
+    window.addEventListener('beforeunload', persistAndStop);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') persistAndStop();
+    });
+    return () => {
+      window.removeEventListener('beforeunload', persistAndStop);
+      // On component unmount cancel cleanly so the loop stops on next batch
+      cancelledRef.current = true;
+    };
+  }, [scanning]);
+
   // Pull a sample of confirmed action examples across the entire database — these
   // act as few-shot training context for Gemini so the AI learns from the full
   // RISE labelled-action corpus, not just this player's history.
@@ -162,21 +230,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     let cancelled = false;
     (async () => {
       try {
+        // Use a HEAD count first so we can show the user how much labelled history is feeding the AI.
+        const { count } = await supabase
+          .from('performance_report_actions')
+          .select('id', { count: 'exact', head: true })
+          .not('action_type', 'is', null);
+        if (!cancelled) setGlobalActionsTotal(count || 0);
+
         const { data } = await supabase
           .from('performance_report_actions')
           .select('action_type, action_description, minute')
           .not('action_type', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(400);
+          .limit(1500);
         if (cancelled || !data) return;
 
-        // Spread across action types so the AI sees variety, not 400 of the same.
+        // Spread across action types so the AI sees variety, not 1500 of the same.
         const perType = new Map<string, ConfirmedExample[]>();
         for (const row of data) {
           const type = String(row.action_type);
           if (!perType.has(type)) perType.set(type, []);
           const bucket = perType.get(type)!;
-          if (bucket.length < 8) {
+          if (bucket.length < 12) {
             bucket.push({
               timestamp: row.minute ? Number(row.minute) * 60 : 0,
               actionType: type,
@@ -189,6 +264,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         setGlobalCorpus(flat);
       } catch {
         setGlobalCorpus([]);
+        setGlobalActionsTotal(0);
       }
     })();
     return () => { cancelled = true; };
@@ -263,14 +339,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
       if (!reports || reports.length === 0) {
         setHistoricalConfirmedExamples([]);
+        setPlayerActionsTotal(0);
         return;
       }
 
-      const { data: actions } = await supabase
+      // Pull ALL the player's confirmed actions (not just clipped ones) tagged with action_type
+      // so the AI gets the full per-player labelled history as context.
+      const { data: actions, count } = await supabase
         .from('performance_report_actions')
-        .select('action_type, action_description, minute, video_url')
+        .select('action_type, action_description, minute', { count: 'exact' })
         .in('analysis_id', reports.map(r => r.id))
-        .not('video_url', 'is', null);
+        .not('action_type', 'is', null)
+        .limit(1000);
+
+      setPlayerActionsTotal(count || (actions?.length ?? 0));
 
       if (!actions || actions.length === 0) {
         setHistoricalConfirmedExamples([]);
@@ -287,6 +369,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       );
     } catch {
       setHistoricalConfirmedExamples([]);
+      setPlayerActionsTotal(0);
     }
   };
 
@@ -403,6 +486,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
     setLearningSavedCount(0);
+    pauseRef.current = false;
+    cancelledRef.current = false;
+    setPaused(false);
 
     const fullDuration = videoRef.current.duration;
     const clampedStart = 0;
@@ -419,14 +505,48 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       ...globalCorpus,
     ];
 
-    const allDetected: DetectedAction[] = [];
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
+    const existing = readScanState(videoUrl, selectedPlayerForScan, mode);
+    const allDetected: DetectedAction[] =
+      existing && existing.totalFrames === totalFrames ? [...existing.allDetected] : [];
+    const startBatchAt =
+      existing && existing.totalFrames === totalFrames ? Math.max(0, existing.nextBatchStart) : 0;
+    if (startBatchAt > 0) {
+      setScanProgress(Math.round((startBatchAt / totalFrames) * 100));
+      toast.info(`Resuming previous scan at ${Math.round((startBatchAt / totalFrames) * 100)}%`);
+    }
+    setResumeState(null);
 
     let hiddenVideo: HTMLVideoElement | null = null;
     try {
       hiddenVideo = await createHiddenVideo();
       hiddenVideoRef.current = hiddenVideo;
 
-      for (let batchStart = 0; batchStart < totalFrames; batchStart += batchSize) {
+      for (let batchStart = startBatchAt; batchStart < totalFrames; batchStart += batchSize) {
+        if (cancelledRef.current) break;
+        if (pauseRef.current) {
+          // Persist progress and stop the loop until the user resumes (which restarts startScan)
+          writeScanState({
+            videoUrl,
+            playerId: selectedPlayerForScan,
+            backtestMode,
+            totalFrames,
+            nextBatchStart: batchStart,
+            allDetected,
+            savedAt: Date.now(),
+          }, mode);
+          toast.info(`Paused at ${Math.round((batchStart / totalFrames) * 100)}%. Press Resume to continue.`);
+          setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+          if (hiddenVideo) {
+            hiddenVideo.pause();
+            hiddenVideo.src = "";
+            hiddenVideo.remove();
+            hiddenVideoRef.current = null;
+          }
+          setScanning(false);
+          setPaused(false);
+          return;
+        }
         const batchEnd = Math.min(batchStart + batchSize, totalFrames);
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
@@ -500,7 +620,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
           allDetected.push(...batchActions);
         }
+
+        // Persist a checkpoint after every successful batch so a navigation/reload can resume.
+        writeScanState({
+          videoUrl,
+          playerId: selectedPlayerForScan,
+          backtestMode,
+          totalFrames,
+          nextBatchStart: batchEnd,
+          allDetected,
+          savedAt: Date.now(),
+        }, mode);
       }
+      // Completed cleanly — drop checkpoint
+      clearScanState(videoUrl, selectedPlayerForScan, mode);
 
       const confidenceRank: Record<string, number> = { high: 2, medium: 1 };
       const contactSensitive = /(foul|fouled|penalty|red card|yellow card)/i;
@@ -774,10 +907,35 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 <Brain className="h-4 w-4 text-primary" />
                 Full video scan · sample every 2 seconds · Medium+ confidence · learning context loaded in the background
               </div>
-              {persistedRejections.length > 0 && (
-                <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
-              )}
+              <div className="flex items-center gap-1 flex-wrap">
+                {persistedRejections.length > 0 && (
+                  <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
+                )}
+                {playerActionsTotal > 0 && (
+                  <Badge variant="outline">{playerActionsTotal} player actions loaded</Badge>
+                )}
+                {globalActionsTotal > 0 && (
+                  <Badge variant="outline">{globalActionsTotal.toLocaleString()} total actions loaded</Badge>
+                )}
+              </div>
             </div>
+
+            {resumeState && !scanning && (
+              <div className="rounded border border-primary/40 bg-primary/5 p-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-sm text-foreground flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 text-primary" />
+                  Previous {resumeState.backtestMode ? 'backtest' : 'scan'} paused at {Math.round((resumeState.nextBatchStart / Math.max(1, resumeState.totalFrames)) * 100)}% with {resumeState.allDetected.length} detection{resumeState.allDetected.length === 1 ? '' : 's'} held.
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="default" className="gap-1" onClick={() => { setBacktestMode(resumeState.backtestMode); startScan(); }}>
+                    <PlayCircle className="h-3.5 w-3.5" /> Resume
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { clearScanState(videoUrl, selectedPlayerForScan, resumeState.backtestMode ? 'backtest' : 'scan'); setResumeState(null); }}>
+                    Discard
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {existingClips && existingClips.length > 0 && (
               <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer p-3 rounded border border-border bg-muted/30">
@@ -793,19 +951,26 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               </label>
             )}
 
-            <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
-              {scanning ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Scanning... {scanProgress}%
-                </>
-              ) : (
-                <>
-                  <UserSearch className="h-4 w-4" />
-                  {backtestMode ? 'Run Backtest' : 'Start Full Scan'}
-                </>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
+                {scanning ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Scanning... {scanProgress}%
+                  </>
+                ) : (
+                  <>
+                    <UserSearch className="h-4 w-4" />
+                    {backtestMode ? 'Run Backtest' : 'Start Full Scan'}
+                  </>
+                )}
+              </Button>
+              {scanning && (
+                <Button variant="outline" className="gap-1" onClick={() => { pauseRef.current = true; setPaused(true); }} disabled={paused}>
+                  <PauseCircle className="h-4 w-4" /> {paused ? 'Pausing…' : 'Pause'}
+                </Button>
               )}
-            </Button>
+            </div>
 
             {scanning && (
               <div className="w-full bg-muted rounded-full h-2">
