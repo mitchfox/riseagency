@@ -1373,19 +1373,31 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
-  // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, prospect, other, scouted
+  const fallbackCategories = [
+    { id: 'represented', name: 'Signed', key: 'represented', sort_order: 10, is_system: true },
+    { id: 'mandated', name: 'Mandate', key: 'mandated', sort_order: 20, is_system: true },
+    { id: 'fuel_for_football', name: 'Fuel For Football', key: 'fuel_for_football', sort_order: 30, is_system: true },
+    { id: 'previously_mandated', name: 'Previously Mandated', key: 'previously_mandated', sort_order: 40, is_system: true },
+    { id: 'scouted', name: 'Scouted', key: 'scouted', sort_order: 50, is_system: true },
+    { id: 'other', name: 'Other', key: 'other', sort_order: 60, is_system: true },
+  ];
+  const categorySections = (customCategories.length > 0 ? customCategories : fallbackCategories)
+    .map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }));
+
+  // Group players directly from the managed Player Categories settings
   const _searchedPlayers = playerSearchTerm.trim()
     ? players.filter(p => (p.name || '').toLowerCase().includes(playerSearchTerm.trim().toLowerCase()))
     : players;
-  const groupedPlayers = {
-    represented: _searchedPlayers.filter(p => p.representation_status === 'represented'),
-    mandated: _searchedPlayers.filter(p => p.representation_status === 'mandated'),
-    previously_mandated: _searchedPlayers.filter(p => p.representation_status === 'previously_mandated'),
-    fuel_for_football: _searchedPlayers.filter(p => p.representation_status === 'fuel_for_football'),
-    prospect: _searchedPlayers.filter(p => p.representation_status === 'prospect'),
-    other: _searchedPlayers.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
-    scouted: _searchedPlayers.filter(p => p.representation_status === 'scouted'),
-  };
+  const groupedPlayers = categorySections.map(category => ({
+    ...category,
+    players: _searchedPlayers.filter(p => (p.representation_status || 'other') === category.key),
+  }));
+  const knownCategoryKeys = new Set(categorySections.map(c => c.key));
+  const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(p.representation_status || 'other'));
+  const visibleCategoryGroups = [
+    ...groupedPlayers,
+    ...(uncategorisedPlayers.length > 0 ? [{ id: 'uncategorised', name: 'Uncategorised', key: 'uncategorised', sort_order: 9999, is_system: false, players: uncategorisedPlayers }] : []),
+  ].filter(group => group.players.length > 0);
 
   // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
@@ -1403,13 +1415,50 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return <div className="flex items-center justify-center py-8">Loading players...</div>;
   }
 
-  const representedPlayers = groupedPlayers.represented;
-  const mandatedPlayers = groupedPlayers.mandated;
-  const previouslyMandatedPlayers = groupedPlayers.previously_mandated;
-  const fuelForFootballPlayers = groupedPlayers.fuel_for_football;
-  const prospectPlayers = groupedPlayers.prospect;
-  const otherPlayers = groupedPlayers.other;
-  const scoutedPlayers = groupedPlayers.scouted;
+  const renderPlayerCard = (player: Player) => {
+    const playerStats = stats[player.id];
+    return (
+      <Card key={player.id} className="cursor-pointer hover:shadow-lg transition-all" onClick={() => handlePlayerSelect(player.id)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
+              <p className="text-sm text-muted-foreground">{player.position}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                <span>{player.age}y</span>
+                <span>•</span>
+                <span>{player.nationality}</span>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {player.club && (
+            <div className="flex items-center gap-2 text-sm mb-3">
+              {player.club_logo && <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />}
+              <span className="text-muted-foreground truncate">{player.club}</span>
+            </div>
+          )}
+          {playerStats && (
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                <div className="text-muted-foreground">Matches</div>
+              </div>
+              <div>
+                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                <div className="text-muted-foreground">Minutes</div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="flex h-full gap-4 flex-col md:flex-row">
