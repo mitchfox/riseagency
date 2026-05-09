@@ -312,15 +312,26 @@ For each detected action provide:
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
       .map((a: any) => {
-        const canonical = canonicalNameMap[normaliseName(String(a.actionType || ''))];
-        if (!canonical) return null;
+        // Accept either a single action name or a comma-separated list of allowed names
+        const rawParts = String(a.actionType || '')
+          .split(',')
+          .map((p: string) => p.trim())
+          .filter(Boolean);
+        const canonicalParts: string[] = [];
+        for (const part of rawParts) {
+          const c = canonicalNameMap[normaliseName(part)];
+          if (c && !canonicalParts.includes(c)) canonicalParts.push(c);
+        }
+        if (canonicalParts.length === 0) return null;
+        const canonical = canonicalParts.join(', ');
+        const primary = canonicalParts[0];
 
         const confidence = String(a.confidence || '').toLowerCase();
         if (confidence !== 'high' && confidence !== 'medium') return null;
         if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
-        const timing = durationMap[normaliseName(canonical)] || { before: 5, after: 5 };
+        const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
 
         return {
           frameIndex: a.frameIndex,
