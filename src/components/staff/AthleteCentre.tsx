@@ -327,6 +327,7 @@ export const AthleteCentre = () => {
     { value: "comparisons", label: "Comparisons", icon: BarChart3 },
     { value: "video", label: "Video Reports", icon: Film },
     { value: "analysis", label: "Analysis", icon: LineChart },
+    { value: "psychology", label: "Psychology", icon: Brain },
   ];
 
   const handleSelectPlayer = (val: string) => {
