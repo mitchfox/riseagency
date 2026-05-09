@@ -1523,6 +1523,24 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
+                <div className="relative hidden md:block">
+                  <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    value={playerSearchTerm}
+                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                    placeholder="Search players…"
+                    className="h-9 w-56 pl-7 text-sm"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  title="Manage player categories"
+                  onClick={() => setIsCategoriesDialogOpen(true)}
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
                 <AutoMatchPlayersButton onComplete={fetchPlayers} />
                 <SyncPlayerStatsButton onSynced={fetchPlayers} />
                 <Button onClick={() => {
