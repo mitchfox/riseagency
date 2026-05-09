@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Loader2, UserSearch, Pencil, Brain, CheckCircle2 } from "lucide-react";
+import { Loader2, UserSearch, Pencil, Brain, CheckCircle2, Link2 } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -96,6 +97,7 @@ interface Props {
   existingClips?: { start: number; end: number; label: string; action_type: string; action_description?: string }[];
   rejectionHistory?: RejectionFeedback[];
   confirmedExamples?: ConfirmedExample[];
+  onLinkPlayer?: (playerId: string) => Promise<void> | void;
 }
 
 // Persist player AI descriptions across videos
@@ -113,7 +115,7 @@ function loadSavedDescriptions(): Record<string, { description: string; notPlaye
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
 }
 
-export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, videoAnalysisId, existingClips, rejectionHistory, confirmedExamples }: Props) => {
+export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponent, players, selectedPlayerId, videoAnalysisId, existingClips, rejectionHistory, confirmedExamples, onLinkPlayer }: Props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [playerDescription, setPlayerDescription] = useState("");
@@ -124,6 +126,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
+  const [pendingLinkPlayerId, setPendingLinkPlayerId] = useState<string>("");
+  const [linkingPlayer, setLinkingPlayer] = useState(false);
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
@@ -131,6 +135,25 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const [learningSavedCount, setLearningSavedCount] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const handleLinkPlayer = async () => {
+    if (!pendingLinkPlayerId) {
+      toast.error("Pick a player first");
+      return;
+    }
+    setLinkingPlayer(true);
+    try {
+      if (onLinkPlayer) {
+        await onLinkPlayer(pendingLinkPlayerId);
+      }
+      setSelectedPlayerForScan(pendingLinkPlayerId);
+      toast.success("Player linked to this analysis");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to link player");
+    } finally {
+      setLinkingPlayer(false);
+    }
+  };
 
   // Pull a sample of confirmed action examples across the entire database — these
   // act as few-shot training context for Gemini so the AI learns from the full
@@ -308,13 +331,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
   const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
     if (!selectedPlayerForScan) return;
-    const learningRows = rows
+    const learningRows: AiDetectionFeedbackInsert[] = rows
       .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
       .map((row) => ({
         player_id: selectedPlayerForScan,
         video_analysis_id: videoAnalysisId || null,
         action_type: row.expectedActionType || row.detectedActionType || null,
-        feedback_type: row.type === 'missed' ? 'missed_detection' : 'timing_mismatch',
+        feedback_type: (row.type === 'missed' ? 'missed_detection' : 'timing_mismatch') as AiDetectionFeedbackInsert['feedback_type'],
         reason: row.reason || null,
         expected_timestamp: row.expectedTimestamp ?? null,
         detected_timestamp: row.detectedTimestamp ?? null,
@@ -676,9 +699,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Link this video analysis to a player first. The spotter no longer asks you to select or type the player manually.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link.
+                  </p>
+                  {players && players.length > 0 ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Select value={pendingLinkPlayerId} onValueChange={setPendingLinkPlayerId}>
+                        <SelectTrigger className="h-9 w-full sm:w-[280px]">
+                          <SelectValue placeholder="Choose a player to link" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[260px]">
+                          {[...players].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" size="sm" onClick={handleLinkPlayer} disabled={!pendingLinkPlayerId || linkingPlayer} className="gap-1">
+                        {linkingPlayer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+                        Link to analysis
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No players available to link.</p>
+                  )}
+                </div>
               )}
             </div>
 
