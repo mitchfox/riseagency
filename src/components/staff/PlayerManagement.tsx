@@ -208,6 +208,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     // AI Identification
     identification_description: "",
     identification_reference_image_url: "",
+    identification_reference_images: [] as string[],
     not_to_confuse_with: "",
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
