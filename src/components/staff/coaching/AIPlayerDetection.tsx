@@ -485,7 +485,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   };
 
   const startScan = async () => {
-    if (!selectedPlayerForScan || !playerName.trim()) {
+    const usingManual = manualMode && !selectedPlayerForScan;
+    if (usingManual) {
+      if (!manualName.trim() || !manualDescription.trim()) {
+        toast.error("Manual scan needs a name and identification description");
+        return;
+      }
+    } else if (!selectedPlayerForScan || !playerName.trim()) {
       toast.error("Link this analysis to a player first");
       return;
     }
@@ -519,7 +525,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     ];
 
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
-    const existing = readScanState(videoUrl, selectedPlayerForScan, mode);
+    const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
+    const existing = readScanState(videoUrl, scanIdentityKey, mode);
     const allDetected: DetectedAction[] =
       existing && existing.totalFrames === totalFrames ? [...existing.allDetected] : [];
     const startBatchAt =
@@ -541,7 +548,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           // Persist progress and stop the loop until the user resumes (which restarts startScan)
           writeScanState({
             videoUrl,
-            playerId: selectedPlayerForScan,
+            playerId: scanIdentityKey,
             backtestMode,
             totalFrames,
             nextBatchStart: batchStart,
@@ -549,7 +556,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             savedAt: Date.now(),
           }, mode);
           toast.info(`Paused at ${Math.round((batchStart / totalFrames) * 100)}%. Press Resume to continue.`);
-          setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+          setResumeState(readScanState(videoUrl, scanIdentityKey, mode));
           if (hiddenVideo) {
             hiddenVideo.pause();
             hiddenVideo.src = "";
@@ -580,18 +587,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           body: {
             frames,
             videoAnalysisId: videoAnalysisId || null,
-            playerId: selectedPlayerForScan,
+            playerId: usingManual ? null : selectedPlayerForScan,
             playerInfo: {
-              name: playerName,
-              description: [playerDescription, kitDescription].filter(Boolean).join('. ') || undefined,
-              notPlayer: notPlayer || undefined,
-              position: (players?.find(p => p.id === selectedPlayerForScan) as any)?.position || undefined,
+              name: usingManual ? manualName.trim() : playerName,
+              description: usingManual
+                ? manualDescription.trim()
+                : ([playerDescription, kitDescription].filter(Boolean).join('. ') || undefined),
+              notPlayer: usingManual ? (manualNotPlayer.trim() || undefined) : (notPlayer || undefined),
+              position: usingManual ? undefined : (players?.find(p => p.id === selectedPlayerForScan) as any)?.position || undefined,
             },
             videoContext: {
               opponent: opponent || undefined,
             },
-            referenceImageUrl: referenceImageUrl || undefined,
-            teamKitDescription: kitDescription || undefined,
+            referenceImageUrl: usingManual ? (manualReferenceImageUrl.trim() || undefined) : (referenceImageUrl || undefined),
+            teamKitDescription: usingManual ? undefined : (kitDescription || undefined),
             minConfidence: MIN_CONFIDENCE,
             sampleEverySeconds: sampleEvery,
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
@@ -640,7 +649,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         // Persist a checkpoint after every successful batch so a navigation/reload can resume.
         writeScanState({
           videoUrl,
-          playerId: selectedPlayerForScan,
+          playerId: scanIdentityKey,
           backtestMode,
           totalFrames,
           nextBatchStart: batchEnd,
@@ -649,7 +658,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }, mode);
       }
       // Completed cleanly — drop checkpoint
-      clearScanState(videoUrl, selectedPlayerForScan, mode);
+      clearScanState(videoUrl, scanIdentityKey, mode);
 
       const confidenceRank: Record<string, number> = { high: 2, medium: 1 };
       const contactSensitive = /(foul|fouled|penalty|red card|yellow card)/i;
