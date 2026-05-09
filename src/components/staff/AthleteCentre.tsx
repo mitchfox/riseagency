@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { 
   User, Dumbbell, LineChart, Target, Calendar,
   Save, Loader2, ChevronRight, ChevronDown, ClipboardList, BarChart3, Film, Database, Plus, Trash2, GripHorizontal,
-  Zap, FileText, Search, Video, Pencil, Layers
+  Zap, FileText, Search, Video, Pencil, Layers, Brain
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { InjuryLog } from "@/components/portal/InjuryLog";
 import { PlayerFixtures } from "@/components/staff/PlayerFixtures";
+import { PlayerSpqHistory } from "@/components/staff/PlayerSpqHistory";
 import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
@@ -326,6 +327,7 @@ export const AthleteCentre = () => {
     { value: "comparisons", label: "Comparisons", icon: BarChart3 },
     { value: "video", label: "Video Reports", icon: Film },
     { value: "analysis", label: "Analysis", icon: LineChart },
+    { value: "psychology", label: "Psychology", icon: Brain },
   ];
 
   const handleSelectPlayer = (val: string) => {
@@ -591,6 +593,13 @@ export const AthleteCentre = () => {
 
                     <TabsContent value="video" className="mt-0">
                       <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} embedded />
+                    </TabsContent>
+
+                    <TabsContent value="psychology" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Psychology — SPQ Reports</h3>
+                      </div>
+                      {selectedPlayer && <PlayerSpqHistory playerId={selectedPlayer} />}
                     </TabsContent>
 
                     <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">

@@ -231,12 +231,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     (async () => {
       const { data: pdata } = await supabase
         .from('players')
-        .select('identification_description, identification_reference_image_url, not_to_confuse_with')
+        .select('identification_description, identification_reference_image_url, identification_reference_images, not_to_confuse_with')
         .eq('id', selectedPlayerForScan)
         .maybeSingle();
       const identity = pdata as PlayerIdentityRow | null;
       const idDesc = identity?.identification_description;
-      const idImg = identity?.identification_reference_image_url;
+      const idImgs: string[] = Array.isArray((identity as any)?.identification_reference_images)
+        ? (identity as any).identification_reference_images
+        : [];
+      const idImg = idImgs[0] || identity?.identification_reference_image_url;
       const idNot = identity?.not_to_confuse_with;
       const saved = loadSavedDescriptions()[player.name.toLowerCase().trim()];
       setPlayerDescription(idDesc || saved?.description || "");

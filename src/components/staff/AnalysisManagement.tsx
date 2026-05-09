@@ -766,6 +766,24 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         }
       }
 
+      // Keep linked fixture's match_date in sync with the analysis match_date
+      if (dataToSave.match_date !== undefined && (dataToSave.fixture_id || (editingAnalysis as any)?.fixture_id)) {
+        const fixtureId = dataToSave.fixture_id || (editingAnalysis as any)?.fixture_id;
+        try {
+          const { error: fxDateErr } = await supabase
+            .from("fixtures")
+            .update({ match_date: dataToSave.match_date || null })
+            .eq("id", fixtureId);
+          if (fxDateErr) {
+            console.error("Failed to sync fixture match_date:", fxDateErr);
+          } else {
+            toast.success("Linked fixture date updated to match");
+          }
+        } catch (e) {
+          console.error("Failed to sync fixture match_date:", e);
+        }
+      }
+
       if (selectedPerformanceReportId && selectedPerformanceReportId !== "none" && analysisId) {
         const { error: linkError } = await supabase
           .from("player_analysis")

@@ -41,6 +41,7 @@ import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
 import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
 import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
+import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 
 interface Player {
   id: string;
@@ -208,6 +209,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     // AI Identification
     identification_description: "",
     identification_reference_image_url: "",
+    identification_reference_images: [] as string[],
     not_to_confuse_with: "",
   });
   const [tacticalAnalyses, setTacticalAnalyses] = useState<Record<string, any[]>>({});
@@ -837,6 +839,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // AI Identification
       identification_description: (player as any).identification_description || "",
       identification_reference_image_url: (player as any).identification_reference_image_url || "",
+      identification_reference_images: Array.isArray((player as any).identification_reference_images)
+        ? (player as any).identification_reference_images
+        : [],
       not_to_confuse_with: (player as any).not_to_confuse_with || "",
     });
     setIsEditDialogOpen(true);
@@ -1264,6 +1269,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
           identification_description: formData.identification_description || null,
           identification_reference_image_url: formData.identification_reference_image_url || null,
+          identification_reference_images: formData.identification_reference_images && formData.identification_reference_images.length > 0
+            ? formData.identification_reference_images
+            : null,
           not_to_confuse_with: formData.not_to_confuse_with || null,
         } as any)
         .eq("id", editingPlayer.id);
@@ -1538,6 +1546,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     highlightedMatch: null,
                     identification_description: "",
                     identification_reference_image_url: "",
+                    identification_reference_images: [],
                     not_to_confuse_with: "",
                   });
                   setIsAddPlayerDialogOpen(true);
@@ -3850,20 +3859,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="identification_reference_image_url" className="text-sm">Reference Image URL</Label>
-                      <Input
-                        id="identification_reference_image_url"
-                        value={formData.identification_reference_image_url}
-                        onChange={(e) => setFormData({ ...formData, identification_reference_image_url: e.target.value })}
-                        placeholder="https://… a clear still of the player (face/full body)"
+                      <Label className="text-sm">Reference Images</Label>
+                      <PlayerReferenceImagesUploader
+                        playerId={editingPlayer?.id || null}
+                        values={formData.identification_reference_images}
+                        onChange={(urls) => setFormData({ ...formData, identification_reference_images: urls })}
                       />
-                      {formData.identification_reference_image_url && (
-                        <img
-                          src={formData.identification_reference_image_url}
-                          alt="Reference"
-                          className="mt-2 h-24 w-24 object-cover rounded border border-border"
-                        />
-                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="not_to_confuse_with" className="text-sm">Not To Confuse With</Label>
