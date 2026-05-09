@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +37,17 @@ export const PlayerCategoriesDialog = ({ open, onOpenChange, onSaved }: Props) =
 
   const updateRow = (id: string, patch: Partial<PlayerCategory>) => {
     setRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
+  };
+
+  const moveRow = (index: number, direction: -1 | 1) => {
+    setRows(prev => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      // Re-stamp sort_order in steps of 10 so the new order persists on save
+      return next.map((r, i) => ({ ...r, sort_order: (i + 1) * 10 }));
+    });
   };
 
   const addCategory = async () => {
@@ -94,20 +105,21 @@ export const PlayerCategoriesDialog = ({ open, onOpenChange, onSaved }: Props) =
         ) : (
           <div className="space-y-3">
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-              {rows.map(r => (
+              {rows.map((r, index) => (
                 <div key={r.id} className="flex items-center gap-2">
                   <Input
                     value={r.name}
                     onChange={(e) => updateRow(r.id, { name: e.target.value })}
                     className="flex-1"
                   />
-                  <Input
-                    type="number"
-                    value={r.sort_order}
-                    onChange={(e) => updateRow(r.id, { sort_order: Number(e.target.value) || 0 })}
-                    className="w-20"
-                    title="Sort order"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => moveRow(index, -1)} disabled={index === 0} title="Move up">
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => moveRow(index, 1)} disabled={index === rows.length - 1} title="Move down">
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button variant="ghost" size="sm" onClick={() => remove(r)} disabled={r.is_system} title={r.is_system ? "System category" : "Delete"}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
