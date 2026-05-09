@@ -460,6 +460,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
     setLearningSavedCount(0);
+    pauseRef.current = false;
+    cancelledRef.current = false;
+    setPaused(false);
 
     const fullDuration = videoRef.current.duration;
     const clampedStart = 0;
@@ -476,14 +479,40 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       ...globalCorpus,
     ];
 
-    const allDetected: DetectedAction[] = [];
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
+    const existing = readScanState(videoUrl, selectedPlayerForScan, mode);
+    const allDetected: DetectedAction[] =
+      existing && existing.totalFrames === totalFrames ? [...existing.allDetected] : [];
+    const startBatchAt =
+      existing && existing.totalFrames === totalFrames ? Math.max(0, existing.nextBatchStart) : 0;
+    if (startBatchAt > 0) {
+      setScanProgress(Math.round((startBatchAt / totalFrames) * 100));
+      toast.info(`Resuming previous scan at ${Math.round((startBatchAt / totalFrames) * 100)}%`);
+    }
+    setResumeState(null);
 
     let hiddenVideo: HTMLVideoElement | null = null;
     try {
       hiddenVideo = await createHiddenVideo();
       hiddenVideoRef.current = hiddenVideo;
 
-      for (let batchStart = 0; batchStart < totalFrames; batchStart += batchSize) {
+      for (let batchStart = startBatchAt; batchStart < totalFrames; batchStart += batchSize) {
+        if (cancelledRef.current) break;
+        if (pauseRef.current) {
+          // Persist progress and stop the loop until the user resumes (which restarts startScan)
+          writeScanState({
+            videoUrl,
+            playerId: selectedPlayerForScan,
+            backtestMode,
+            totalFrames,
+            nextBatchStart: batchStart,
+            allDetected,
+            savedAt: Date.now(),
+          }, mode);
+          toast.info(`Paused at ${Math.round((batchStart / totalFrames) * 100)}%. Press Resume to continue.`);
+          setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+          return;
+        }
         const batchEnd = Math.min(batchStart + batchSize, totalFrames);
         const frames: { dataUrl: string; timestamp: number; index: number }[] = [];
 
@@ -557,7 +586,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
           allDetected.push(...batchActions);
         }
+
+        // Persist a checkpoint after every successful batch so a navigation/reload can resume.
+        writeScanState({
+          videoUrl,
+          playerId: selectedPlayerForScan,
+          backtestMode,
+          totalFrames,
+          nextBatchStart: batchEnd,
+          allDetected,
+          savedAt: Date.now(),
+        }, mode);
       }
+      // Completed cleanly — drop checkpoint
+      clearScanState(videoUrl, selectedPlayerForScan, mode);
 
       const confidenceRank: Record<string, number> = { high: 2, medium: 1 };
       const contactSensitive = /(foul|fouled|penalty|red card|yellow card)/i;
