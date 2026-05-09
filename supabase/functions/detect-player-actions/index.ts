@@ -318,6 +318,7 @@ For each detected action provide:
     const parsed = JSON.parse(toolCall.function.arguments);
     const rawActions = Array.isArray(parsed?.actions) ? parsed.actions : [];
     const highOnlyKeywords = /(foul|fouled|penalty|red card|yellow card)/i;
+    const isGoalkeeper = /(goalkeeper|^gk\b|keeper)/i.test(`${playerInfo.position || ''} ${playerInfo.description || ''}`);
 
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
@@ -341,21 +342,85 @@ For each detected action provide:
         if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
+        // Structured-evidence gates
+        const ballInv = String(a.ballInvolvement || '').toLowerCase();
+        const primaryActor = a.primaryActor !== false;
+        if (!primaryActor) return null;
+        if (ballInv === 'gk_threat' && !isGoalkeeper) return null;
+        if (ballInv === 'none') return null;
+        if (ballInv === 'direct_off_ball' && !OFF_BALL_ALLOWED.test(canonical)) return null;
+
+        // Generic-prose filter — drop "moving / adjusting / positioning" without a real verb of action
+        const desc = String(a.description || '').trim();
+        if (desc && GENERIC_DESCRIPTION.test(desc) && !a.visualCueMatched) {
+          // allow only for GK threat moments where positioning IS the action
+          if (!(isGoalkeeper && ballInv === 'gk_threat')) return null;
+        }
+
         const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
+        const frameTs = frames[a.frameIndex]?.timestamp ?? 0;
 
         return {
           frameIndex: a.frameIndex,
+          timestamp: frameTs,
           actionType: canonical,
           confidence,
-          description: String(a.description || '').trim() || `${canonical} detected`,
+          description: desc || `${canonical} detected`,
           clipBefore: Number.isFinite(a.clipBefore) ? a.clipBefore : timing.before,
           clipAfter: Number.isFinite(a.clipAfter) ? a.clipAfter : timing.after,
+          ballInvolvement: ballInv || undefined,
+          visualCueMatched: a.visualCueMatched || undefined,
         };
       })
       .filter((a: any) => a !== null);
 
+    // Cross-frame dedupe: merge detections within a 5s window into one comma-separated entry
+    sanitisedActions.sort((x: any, y: any) => x.timestamp - y.timestamp);
+    const merged: any[] = [];
+    const confRank: Record<string, number> = { high: 2, medium: 1 };
+    for (const det of sanitisedActions) {
+      const last = merged[merged.length - 1];
+      if (last && Math.abs(det.timestamp - last.timestamp) <= 5) {
+        // Merge action types
+        const parts = new Set<string>([
+          ...String(last.actionType).split(',').map((s: string) => s.trim()),
+          ...String(det.actionType).split(',').map((s: string) => s.trim()),
+        ]);
+        last.actionType = Array.from(parts).join(', ');
+        // Promote anchor to the higher-confidence detection
+        if ((confRank[det.confidence] || 0) > (confRank[last.confidence] || 0)) {
+          last.frameIndex = det.frameIndex;
+          last.timestamp = det.timestamp;
+          last.confidence = det.confidence;
+          last.description = det.description;
+          last.clipBefore = det.clipBefore;
+          last.clipAfter = det.clipAfter;
+        }
+      } else {
+        merged.push({ ...det });
+      }
+    }
+
+    // Per-minute cap (top 8 by confidence) — guards against floods on a single passage
+    const byMinute: Record<number, any[]> = {};
+    for (const d of merged) {
+      const m = Math.floor((d.timestamp || 0) / 60);
+      (byMinute[m] ||= []).push(d);
+    }
+    const capped: any[] = [];
+    for (const m of Object.keys(byMinute)) {
+      const list = byMinute[Number(m)].sort(
+        (x, y) => (confRank[y.confidence] || 0) - (confRank[x.confidence] || 0)
+      );
+      capped.push(...list.slice(0, 8));
+    }
+    capped.sort((x, y) => x.timestamp - y.timestamp);
+
+    // Strip internal-only fields before returning
+    const finalActions = capped.map(({ timestamp: _t, ballInvolvement: _b, visualCueMatched: _v, ...rest }) => rest);
+
     return new Response(
-      JSON.stringify({ actions: sanitisedActions, durationMap }),
+      JSON.stringify({ actions: finalActions, durationMap }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
