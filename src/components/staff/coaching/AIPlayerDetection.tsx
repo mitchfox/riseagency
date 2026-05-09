@@ -1019,7 +1019,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             )}
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
+              <Button
+                onClick={startScan}
+                disabled={
+                  scanning ||
+                  (!(manualMode && manualName.trim() && manualDescription.trim()) &&
+                    (!selectedPlayerForScan || !playerName.trim()))
+                }
+                className="gap-2"
+              >
                 {scanning ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
