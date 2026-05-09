@@ -15,8 +15,11 @@ interface SportscodeAction {
   category: string | null;
 }
 
-const GENERIC_DESCRIPTION = /^(moves?|moving|adjusts?|adjusting|repositions?|repositioning|positions?|positioning|tracks?|tracking|standing|stands|walks?|jogs?|jogging|prepares?|preparing|watches?|watching|observes?|observing)\b/i;
-const OFF_BALL_ALLOWED = /(press|pressure|mark|tracking back|recovery run|cover|defending cross|defending corner|defending shot|defensive positioning|sweeper|clearance)/i;
+interface ConfirmedExampleInput {
+  timestamp?: number;
+  actionType?: string;
+  description?: string;
+}
 
 async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -29,6 +32,33 @@ async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   return (data as SportscodeAction[]) || [];
 }
 
+async function fetchVideoBlocklist(videoAnalysisId: string | null, playerId: string | null): Promise<{ timestamp: number; actionType: string | null; feedbackType: string }[]> {
+  if (!videoAnalysisId || !playerId) return [];
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const sb = createClient(supabaseUrl, supabaseKey);
+    const { data } = await sb
+      .from('ai_detection_feedback')
+      .select('detected_timestamp, expected_timestamp, action_type, feedback_type')
+      .eq('video_analysis_id', videoAnalysisId)
+      .eq('player_id', playerId)
+      .in('feedback_type', ['not_involved', 'wrong_player', 'wrong_action']);
+    if (!data) return [];
+    return data
+      .map((r: any) => {
+        const ts = r.detected_timestamp ?? r.expected_timestamp;
+        const num = ts == null ? NaN : Number(ts);
+        if (!Number.isFinite(num)) return null;
+        return { timestamp: num, actionType: r.action_type ?? null, feedbackType: r.feedback_type as string };
+      })
+      .filter((x: any): x is { timestamp: number; actionType: string | null; feedbackType: string } => x !== null);
+  } catch (e) {
+    console.error('Blocklist fetch failed', e);
+    return [];
+  }
+}
+
 function normaliseName(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -39,7 +69,7 @@ function filterActionDefinitions(actions: SportscodeAction[], allowedActionTypes
   return actions.filter((a) => allow.has(normaliseName(a.action_name)));
 }
 
-function buildActionReference(actions: SportscodeAction[]): string {
+function buildActionReference(actions: SportscodeAction[], examplesByType: Record<string, string[]>): string {
   if (actions.length === 0) return '';
 
   const grouped: Record<string, SportscodeAction[]> = {};
@@ -60,9 +90,29 @@ function buildActionReference(actions: SportscodeAction[]): string {
       const before = a.default_before_seconds || 5;
       const after = a.default_after_seconds || 5;
       text += `  CLIP TIMING: ${before}s before, ${after}s after the key moment\n`;
+      const exs = examplesByType[normaliseName(a.action_name)] || [];
+      if (exs.length > 0) {
+        text += `  COACH-CONFIRMED EXAMPLES:\n`;
+        for (const ex of exs.slice(0, 5)) text += `    • ${ex}\n`;
+      }
     }
   }
   return text;
+}
+
+function groupExamplesByType(examples: ConfirmedExampleInput[]): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const ex of examples) {
+    if (!ex?.actionType || !ex?.description) continue;
+    // An example may carry comma-separated action types; bucket under each one
+    const parts = String(ex.actionType).split(',').map((p) => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      const key = normaliseName(part);
+      if (!map[key]) map[key] = [];
+      if (map[key].length < 5) map[key].push(String(ex.description).trim());
+    }
+  }
+  return map;
 }
 
 function buildDurationMap(actions: SportscodeAction[]): Record<string, { before: number; after: number }> {
@@ -93,7 +143,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes, rejectionHistory, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence, sampleEverySeconds } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence, sampleEverySeconds, videoAnalysisId, playerId } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -117,94 +167,48 @@ Deno.serve(async (req) => {
     const actionDefs = await fetchActionDefinitions();
     const filteredDefs = filterActionDefinitions(actionDefs, requestedTypes);
     const scopedActionDefs = filteredDefs.length > 0 ? filteredDefs : actionDefs;
-    const actionReference = buildActionReference(scopedActionDefs);
+    const examplesByType = groupExamplesByType(Array.isArray(confirmedExamples) ? confirmedExamples : []);
+    const actionReference = buildActionReference(scopedActionDefs, examplesByType);
     const durationMap = buildDurationMap(scopedActionDefs);
     const canonicalNameMap = buildCanonicalNameMap(scopedActionDefs);
     const allowedNames = Object.values(canonicalNameMap);
 
-    // Build confirmed examples reference
-    let confirmedReference = '';
-    if (Array.isArray(confirmedExamples) && confirmedExamples.length > 0) {
-      confirmedReference = `\n\nCONFIRMED EXAMPLES FROM THIS VIDEO (coach-verified correct detections):
-The coach has already manually identified and confirmed the following actions for this player in this match. Use these as calibration for what correct detections look like:
-${confirmedExamples.map((ex: any) => `- ${ex.actionType} at ${Math.floor(ex.timestamp / 60)}.${String(Math.floor(ex.timestamp % 60)).padStart(2, '0')}${ex.description ? `: ${ex.description}` : ''}`).join('\n')}
+    // Hard blocklist: timestamps the coach has previously rejected for this player on this video.
+    const blocklist = await fetchVideoBlocklist(videoAnalysisId || null, playerId || null);
 
-These examples show the coach's standard for what counts as a valid detection. Match this level of involvement when deciding whether to flag new actions.`;
-    }
-
-    const systemPrompt = `You are an elite professional football match analyst with deep tactical knowledge. You are reviewing video frames sampled every ${sampleEverySeconds || 2} seconds from a competitive match recording, typically a wide-angle broadcast or touchline camera.
+    const systemPrompt = `You are a professional football match analyst reviewing video frames sampled every ${sampleEverySeconds || 2} seconds from a competitive match.
 
 PLAYER TO TRACK: ${playerInfo.name}
 ${playerInfo.description ? `VISUAL IDENTIFICATION: ${playerInfo.description}` : ''}
 ${playerInfo.notPlayer ? `DO NOT CONFUSE WITH: ${playerInfo.notPlayer}` : ''}
+${playerInfo.position ? `POSITION: ${playerInfo.position}` : ''}
 ${videoContext?.opponent ? `OPPONENT: ${videoContext.opponent}` : ''}
 ${teamKitDescription ? `TEAM KIT FOR THIS MATCH: ${teamKitDescription}` : ''}
-${referenceImageUrl ? `REFERENCE IMAGE: A reference still of the target player has been provided as the FIRST image in the message. Use it as your primary visual anchor for who this player is — match face, hair, build, and skin tone against it before flagging any frame.` : ''}
+${referenceImageUrl ? `REFERENCE IMAGE: A reference still of the target player is the FIRST image in the message. Use it as your primary visual anchor — match face, hair, build, and skin tone before flagging any frame.` : ''}
+${actionReference}
 
-UNDERSTANDING THE FOOTAGE:
-- These are static frame captures, not live video. You cannot see motion between frames.
-- The camera angle is usually wide, covering most of the pitch. Players will appear relatively small.
-- Identify the player by their kit colour, shirt number, body shape, skin tone, hair, and position on the pitch as described above.
-- If you cannot confidently identify the target player in a frame, skip that frame entirely. Do not guess.
+YOUR JOB IS EXACTLY TWO STEPS, IN ORDER, FOR EVERY FRAME:
 
-TWO-STAGE IDENTIFICATION (apply mentally before flagging):
-  STAGE 1 — TEAM: For each frame, first determine which players are on the target team based on the kit description above. Ignore players in the opposite kit.
-  STAGE 2 — PLAYER: From the players on the target team, identify the specific target player using the reference image, description, and shirt number. Only then assess whether they are performing an action.
-${actionReference}${confirmedReference}
-${Array.isArray(rejectionHistory) && rejectionHistory.length > 0 ? `
-PREVIOUS REJECTION FEEDBACK FROM COACH:
-The coach has previously corrected AI detections and backtests. Learn from this feedback before reviewing the frames. Missed detection means the coach confirmed that action happened at that time, so be more alert for similar player body shape, pitch location and ball involvement:
-${rejectionHistory.slice(-20).map((r: any) => `- Action "${r.actionType}" rejected: "${r.reason}"`).join('\n')}
+STEP 1 — IS THIS THE PLAYER?
+Identify the target player using the reference image, kit description, shirt number, body shape, hair and skin tone. If you cannot confidently identify this specific player in this frame, SKIP the frame. Same standard for every position, including goalkeepers.
 
-Use this feedback to calibrate your threshold. If feedback says wrong_player, wrong_action or not_involved, be more conservative. If feedback says missed_detection, be more attentive around that action type and visual setup, not more conservative.` : ''}
-${allowedNames.length > 0 ? `
-ALLOWED ACTION TYPES (STRICT):
-- You may ONLY output actionType values from this list:
-${allowedNames.map((n) => `  • ${n}`).join('\n')}
-- If none of these clearly applies, skip the frame.` : ''}
+STEP 2 — IS THIS PLAYER PERFORMING ONE OF THE LISTED ACTIONS?
+Compare what you see this player doing against the action types listed above and their VISUAL CUES. The coach-confirmed examples show real instances of each action — match that bar.
 
-DETECTION RULES:
-1. BALL INVOLVEMENT (outfield): Outfield players should only be flagged for ball-on actions or clearly involved off-ball moments (decisive runs, marking the receiver, pressing the carrier). Standing in shape with no immediate involvement is not a detection.
+- If yes, output the action's exact name from the list.
+- If two distinct actions happen in the same <5s passage (e.g. an interception then a pass), output them as one comma-separated entry: "Interception, Pass".
+- If no listed action clearly applies, SKIP the frame. Do not flag "positioning", "tracking play", "anticipating", "ready for", "monitoring" — those are not actions.
+- Standing in the goal, watching play develop, jogging back into shape, or being visible nearby are NEVER detections, regardless of position.
 
-2. GOALKEEPERS: Goalkeepers are different. They are constantly in the action even without touching the ball. You SHOULD flag a goalkeeper for:
-   - Defending Cross / Defending Corner / Defending Shot whenever a cross, corner or shot is being delivered into their box, even if it is intercepted, blocked or saved by a teammate before they touch it
-   - Defensive Positioning when they actively reposition for a building attacking threat (set piece, shot opportunity, opposition entering the final third). Repeated frames of the same passive stance with no developing threat should still collapse to ONE moment.
-   - Applied Pressure / Sweeper actions when they advance off their line
-   Treat the THREAT of a shot or cross as a valid trigger for goalkeepers — coaches log these moments deliberately.
+OUTPUT RULES:
+- Only output frames where you can name a real action from the list. Empty output is correct when nothing is happening for this player.
+- One passage of play = ONE entry. Do not report the same action across consecutive frames.
+- Fouls / cards: only if contact is clearly visible.
+- visualCueMatched: copy ONE short phrase from that action's VISUAL CUES that you can actually see in this frame. If you cannot, do not flag.
+- confidence: "high" if both player and action are unambiguous; "medium" if the player is identified and a listed action is the most plausible reading of what's happening.${allowedNames.length > 0 ? `
+- ALLOWED ACTION NAMES (output one of these or skip): ${allowedNames.join(', ')}` : ''}
 
-3. DUPLICATE SUPPRESSION: A single passage of play is ONE moment. If multiple consecutive frames show the same passage, report only the key frame. If TWO OR MORE distinct actions happen for this player inside the same short passage (under 5 seconds, e.g. an interception immediately followed by a pass) report a SINGLE entry whose actionType is a comma-separated list of every action that occurred in order, e.g. "Interception, Pass" or "Defending Cross, Clearance".
-
-4. FOULS & CARDS: Only report these if contact is CLEARLY visible in the frame. If uncertain, skip.
-
-5. RECALL OVER PRECISION: It is more important to catch every action a coach would log than to avoid the occasional extra flag. When uncertain whether a goalkeeper moment counts, prefer to flag it at "medium" confidence rather than skip it.
-
-
-
-CONFIDENCE:
-- "high": Player clearly identifiable AND clearly performing the action
-- "medium": Player appears to be the right person and body position, ball path, nearby opponent or immediate receiving/contesting context suggests the action
-
-DO NOT REPORT:
-- Standing still, walking, or general repositioning
-- Being visible in frame but not involved in play
-- Celebrations or non-play moments
-- Anything below "medium" confidence
-
-EVIDENCE FIELDS (mandatory — drives a downstream verifier):
-- ballInvolvement: "on_ball" if the player touches/controls the ball; "direct_off_ball" ONLY for pressing the carrier, marking the receiver, a recovery run, or defending a cross/corner/shot; "gk_threat" ONLY for a goalkeeper facing a developing shot/cross/corner; "none" means do not flag.
-- primaryActor: true ONLY if this player is the primary actor in the passage. If they are merely visible nearby, set false (and the detection will be dropped).
-- visualCueMatched: copy ONE short phrase from the action type's VISUAL CUES that you can actually see in this frame. If you cannot, do not flag.
-
-CLIP DURATION:
-For each action, suggest clipBefore and clipAfter seconds using the action reference defaults. Extend for longer sequences, shorten for quick isolated moments. Default is 5s before and 5s after.
-
-For each detected action provide:
-- frameIndex: the 0-indexed frame number
-- actionType: a short label matching one of the action types from the reference above (e.g. "Pass", "Dribble", "Shot")
-- confidence: "high" or "medium" ONLY (do not report "low")
-- description: one sentence describing what you see the player doing in that frame — this will be shown to the coach as the reason the AI flagged it
-- clipBefore: seconds before the frame to include in the clip
-- clipAfter: seconds after the frame to include in the clip`;
+CLIP DURATION: use the per-action defaults from the reference (clipBefore / clipAfter), extend for longer build-ups, shorten for instantaneous moments. Default 5/5.`;
 
     const imageContent = frames.map((frame: { dataUrl: string; timestamp: number; index: number }) => ([
       {
@@ -241,7 +245,7 @@ For each detected action provide:
               ...imageContent,
               {
                 type: 'text',
-                text: `Review all ${frames.length} frames above. For each frame, determine whether ${playerInfo.name} is the PRIMARY ACTOR performing a meaningful on-ball or direct defensive action. Do NOT report frames where the player is merely visible, jogging, or in the general area of play. Only report "high" and "medium" confidence detections.`,
+                text: `Review all ${frames.length} frames above. For each frame, run the two-step check: (1) is this ${playerInfo.name}? (2) are they performing one of the listed actions right now? Skip the frame if either answer is no. Empty output is correct when nothing is happening.`,
               },
             ],
           },
@@ -269,15 +273,9 @@ For each detected action provide:
                         description: { type: 'string', description: 'Brief description of what the player is doing — shown to the coach as the reason for flagging' },
                         clipBefore: { type: 'number', description: 'Seconds before the frame to include in the clip (default 5)' },
                         clipAfter: { type: 'number', description: 'Seconds after the frame to include in the clip (default 5)' },
-                        ballInvolvement: {
-                          type: 'string',
-                          enum: ['on_ball', 'direct_off_ball', 'gk_threat', 'none'],
-                          description: 'on_ball = player touches/controls the ball; direct_off_ball = pressing carrier, marking the receiver, decisive defensive run; gk_threat = goalkeeper facing a developing shot/cross/corner; none = not involved.',
-                        },
-                        primaryActor: { type: 'boolean', description: 'True only if this player is the primary actor in the passage, not just visible nearby.' },
-                        visualCueMatched: { type: 'string', description: 'One short phrase from the action type\'s VISUAL CUES that you actually see in this frame.' },
+                        visualCueMatched: { type: 'string', description: 'One short phrase from the action type\'s VISUAL CUES that you actually see in this frame. Required — leave empty only if you should not be flagging.' },
                       },
-                      required: ['frameIndex', 'actionType', 'confidence', 'description', 'ballInvolvement', 'primaryActor'],
+                      required: ['frameIndex', 'actionType', 'confidence', 'description', 'visualCueMatched'],
                       additionalProperties: false,
                     },
                   },
@@ -315,7 +313,7 @@ For each detected action provide:
 
     if (!toolCall?.function?.arguments) {
       return new Response(
-        JSON.stringify({ actions: [], durationMap }),
+        JSON.stringify({ actions: [], durationMap, blockedCount: 0, blocklistSize: blocklist.length }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -323,7 +321,6 @@ For each detected action provide:
     const parsed = JSON.parse(toolCall.function.arguments);
     const rawActions = Array.isArray(parsed?.actions) ? parsed.actions : [];
     const highOnlyKeywords = /(foul|fouled|penalty|red card|yellow card)/i;
-    const isGoalkeeper = /(goalkeeper|^gk\b|keeper)/i.test(`${playerInfo.position || ''} ${playerInfo.description || ''}`);
 
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
@@ -347,20 +344,10 @@ For each detected action provide:
         if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
-        // Structured-evidence gates
-        const ballInv = String(a.ballInvolvement || '').toLowerCase();
-        const primaryActor = a.primaryActor !== false;
-        if (!primaryActor) return null;
-        if (ballInv === 'gk_threat' && !isGoalkeeper) return null;
-        if (ballInv === 'none') return null;
-        if (ballInv === 'direct_off_ball' && !OFF_BALL_ALLOWED.test(canonical)) return null;
-
-        // Generic-prose filter — drop "moving / adjusting / positioning" without a real verb of action
+        // Require a non-empty visual cue tying the flag back to the action's own definition.
+        const visualCue = String(a.visualCueMatched || '').trim();
+        if (!visualCue) return null;
         const desc = String(a.description || '').trim();
-        if (desc && GENERIC_DESCRIPTION.test(desc) && !a.visualCueMatched) {
-          // allow only for GK threat moments where positioning IS the action
-          if (!(isGoalkeeper && ballInv === 'gk_threat')) return null;
-        }
 
         const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
         const frameTs = frames[a.frameIndex]?.timestamp ?? 0;
@@ -373,17 +360,39 @@ For each detected action provide:
           description: desc || `${canonical} detected`,
           clipBefore: Number.isFinite(a.clipBefore) ? a.clipBefore : timing.before,
           clipAfter: Number.isFinite(a.clipAfter) ? a.clipAfter : timing.after,
-          ballInvolvement: ballInv || undefined,
-          visualCueMatched: a.visualCueMatched || undefined,
+          visualCueMatched: visualCue,
         };
       })
       .filter((a: any) => a !== null);
 
+    // Hard blocklist: drop any candidate within ±3s of a known false-positive timestamp on this video for this player.
+    const BLOCK_TOL = 3;
+    let blockedCount = 0;
+    const afterBlocklist = sanitisedActions.filter((det: any) => {
+      for (const b of blocklist) {
+        if (Math.abs(det.timestamp - b.timestamp) > BLOCK_TOL) continue;
+        // not_involved / wrong_player block any action at that moment
+        if (b.feedbackType === 'not_involved' || b.feedbackType === 'wrong_player') {
+          blockedCount++;
+          return false;
+        }
+        // wrong_action only blocks the same action type
+        if (b.feedbackType === 'wrong_action' && b.actionType) {
+          const detTypes = String(det.actionType).split(',').map((s: string) => normaliseName(s));
+          if (detTypes.includes(normaliseName(b.actionType))) {
+            blockedCount++;
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+
     // Cross-frame dedupe: merge detections within a 5s window into one comma-separated entry
-    sanitisedActions.sort((x: any, y: any) => x.timestamp - y.timestamp);
+    afterBlocklist.sort((x: any, y: any) => x.timestamp - y.timestamp);
     const merged: any[] = [];
     const confRank: Record<string, number> = { high: 2, medium: 1 };
-    for (const det of sanitisedActions) {
+    for (const det of afterBlocklist) {
       const last = merged[merged.length - 1];
       if (last && Math.abs(det.timestamp - last.timestamp) <= 5) {
         // Merge action types
@@ -406,7 +415,7 @@ For each detected action provide:
       }
     }
 
-    // Per-minute cap (top 8 by confidence) — guards against floods on a single passage
+    // Per-minute cap (top 6 by confidence) — guards against floods on a single passage
     const byMinute: Record<number, any[]> = {};
     for (const d of merged) {
       const m = Math.floor((d.timestamp || 0) / 60);
@@ -417,15 +426,15 @@ For each detected action provide:
       const list = byMinute[Number(m)].sort(
         (x, y) => (confRank[y.confidence] || 0) - (confRank[x.confidence] || 0)
       );
-      capped.push(...list.slice(0, 8));
+      capped.push(...list.slice(0, 6));
     }
     capped.sort((x, y) => x.timestamp - y.timestamp);
 
     // Strip internal-only fields before returning
-    const finalActions = capped.map(({ timestamp: _t, ballInvolvement: _b, visualCueMatched: _v, ...rest }) => rest);
+    const finalActions = capped.map(({ timestamp: _t, visualCueMatched: _v, ...rest }) => rest);
 
     return new Response(
-      JSON.stringify({ actions: finalActions, durationMap }),
+      JSON.stringify({ actions: finalActions, durationMap, blockedCount, blocklistSize: blocklist.length }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
