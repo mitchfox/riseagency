@@ -927,6 +927,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 {globalActionsTotal > 0 && (
                   <Badge variant="outline">{globalActionsTotal.toLocaleString()} total actions loaded</Badge>
                 )}
+                {blocklistSize > 0 && (
+                  <Badge variant="outline">{blocklistSize} past rejection{blocklistSize === 1 ? '' : 's'} on this video</Badge>
+                )}
+                {blockedFromCorrections > 0 && (
+                  <Badge variant="default">Blocked {blockedFromCorrections} from past corrections</Badge>
+                )}
               </div>
             </div>
 
