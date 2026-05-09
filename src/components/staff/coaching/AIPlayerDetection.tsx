@@ -699,9 +699,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Link this video analysis to a player first. The spotter no longer asks you to select or type the player manually.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link.
+                  </p>
+                  {players && players.length > 0 ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Select value={pendingLinkPlayerId} onValueChange={setPendingLinkPlayerId}>
+                        <SelectTrigger className="h-9 w-full sm:w-[280px]">
+                          <SelectValue placeholder="Choose a player to link" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[260px]">
+                          {[...players].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" size="sm" onClick={handleLinkPlayer} disabled={!pendingLinkPlayerId || linkingPlayer} className="gap-1">
+                        {linkingPlayer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+                        Link to analysis
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No players available to link.</p>
+                  )}
+                </div>
               )}
             </div>
 
