@@ -50,6 +50,7 @@ import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
 import { InjuryLog } from "@/components/portal/InjuryLog";
+import { PlayerSpqHistory } from "@/components/staff/PlayerSpqHistory";
 import { PlayerMatchClipper } from "@/components/portal/PlayerMatchClipper";
 import { PortalEmptyState } from "@/components/portal/PortalEmptyState";
 import { SectionDivider } from "@/components/portal/SectionDivider";
