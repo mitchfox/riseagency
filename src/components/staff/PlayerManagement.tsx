@@ -230,6 +230,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const playerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const previousPlayerIdFromUrl = useRef<string | null>(null);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [playerSearchTerm, setPlayerSearchTerm] = useState("");
+  const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
   
   // Performance Report Dialog state
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
