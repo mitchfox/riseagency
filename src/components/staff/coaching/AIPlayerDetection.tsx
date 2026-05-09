@@ -331,13 +331,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
   const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
     if (!selectedPlayerForScan) return;
-    const learningRows = rows
+    const learningRows: AiDetectionFeedbackInsert[] = rows
       .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
       .map((row) => ({
         player_id: selectedPlayerForScan,
         video_analysis_id: videoAnalysisId || null,
         action_type: row.expectedActionType || row.detectedActionType || null,
-        feedback_type: row.type === 'missed' ? 'missed_detection' : 'timing_mismatch',
+        feedback_type: (row.type === 'missed' ? 'missed_detection' : 'timing_mismatch') as AiDetectionFeedbackInsert['feedback_type'],
         reason: row.reason || null,
         expected_timestamp: row.expectedTimestamp ?? null,
         detected_timestamp: row.detectedTimestamp ?? null,
