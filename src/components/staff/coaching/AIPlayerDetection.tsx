@@ -166,10 +166,16 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [linkingPlayer, setLinkingPlayer] = useState(false);
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
+  const [playerActionsTotal, setPlayerActionsTotal] = useState(0);
+  const [globalActionsTotal, setGlobalActionsTotal] = useState(0);
   const [persistedRejections, setPersistedRejections] = useState<RejectionFeedback[]>([]);
   const [backtestMode, setBacktestMode] = useState(false);
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const [learningSavedCount, setLearningSavedCount] = useState(0);
+  const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
+  const pauseRef = useRef(false);
+  const cancelledRef = useRef(false);
+  const [paused, setPaused] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleLinkPlayer = async () => {
@@ -198,21 +204,28 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     let cancelled = false;
     (async () => {
       try {
+        // Use a HEAD count first so we can show the user how much labelled history is feeding the AI.
+        const { count } = await supabase
+          .from('performance_report_actions')
+          .select('id', { count: 'exact', head: true })
+          .not('action_type', 'is', null);
+        if (!cancelled) setGlobalActionsTotal(count || 0);
+
         const { data } = await supabase
           .from('performance_report_actions')
           .select('action_type, action_description, minute')
           .not('action_type', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(400);
+          .limit(1500);
         if (cancelled || !data) return;
 
-        // Spread across action types so the AI sees variety, not 400 of the same.
+        // Spread across action types so the AI sees variety, not 1500 of the same.
         const perType = new Map<string, ConfirmedExample[]>();
         for (const row of data) {
           const type = String(row.action_type);
           if (!perType.has(type)) perType.set(type, []);
           const bucket = perType.get(type)!;
-          if (bucket.length < 8) {
+          if (bucket.length < 12) {
             bucket.push({
               timestamp: row.minute ? Number(row.minute) * 60 : 0,
               actionType: type,
@@ -225,6 +238,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         setGlobalCorpus(flat);
       } catch {
         setGlobalCorpus([]);
+        setGlobalActionsTotal(0);
       }
     })();
     return () => { cancelled = true; };
@@ -299,14 +313,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
       if (!reports || reports.length === 0) {
         setHistoricalConfirmedExamples([]);
+        setPlayerActionsTotal(0);
         return;
       }
 
-      const { data: actions } = await supabase
+      // Pull ALL the player's confirmed actions (not just clipped ones) tagged with action_type
+      // so the AI gets the full per-player labelled history as context.
+      const { data: actions, count } = await supabase
         .from('performance_report_actions')
-        .select('action_type, action_description, minute, video_url')
+        .select('action_type, action_description, minute', { count: 'exact' })
         .in('analysis_id', reports.map(r => r.id))
-        .not('video_url', 'is', null);
+        .not('action_type', 'is', null)
+        .limit(1000);
+
+      setPlayerActionsTotal(count || (actions?.length ?? 0));
 
       if (!actions || actions.length === 0) {
         setHistoricalConfirmedExamples([]);
@@ -323,6 +343,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       );
     } catch {
       setHistoricalConfirmedExamples([]);
+      setPlayerActionsTotal(0);
     }
   };
 
