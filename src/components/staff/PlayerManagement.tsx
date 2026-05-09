@@ -2965,6 +2965,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       </CardContent>
                     </Card>
                   </TabsContent>
+
+                  <TabsContent value="psychology" className="mt-0">
+                    <Card>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-primary" /> Psychology — SPQ Reports
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">All saved SPQs for this player. Run new ones from the Programming → Psychology section.</p>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {selectedPlayerId && <PlayerSpqHistory playerId={selectedPlayerId} variant="inline" />}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
                 </Tabs>
               </TabsContent>
 
