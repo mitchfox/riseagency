@@ -1,75 +1,79 @@
-## Goal
-Cut false positives substantially (currently ~3× real actions) while keeping recall on confirmed clips. Approach: layer cheap filters in front of and behind the AI, instead of just turning the model stricter.
+## You're right — the prompt is the wrong shape
 
-## Why it's currently noisy
-- Single-pass detection: the model decides in one shot from a small batch, with no second look.
-- "Recall over precision" rule encourages flagging anything that *could* be relevant — fine for GK threats, harmful for outfield "in the area of play".
-- No structured evidence requirement — the model can flag with prose like "moves towards opponent" without committing to ball involvement, action mechanic, or contact.
-- Duplicate suppression is described to the model but not enforced after the fact across batch boundaries.
-- Rejection feedback is global; types with chronic FPs (e.g. Defending Cross, Applied Pressure) are not penalised more than well-behaving types.
+The current prompt is full of position-specific rules (especially for goalkeepers) and "ball involvement" gates. That's why GKs flood and outfielders sometimes get under-flagged. The actual task is much simpler and is the same for every position:
+
+> For each frame, is this specific player performing one of the listed actions? If yes, which one?
+
+Two questions. Nothing about ball involvement categories, nothing about "threats", nothing about position-specific carve-outs. The action definitions in the database already say what counts as that action — the model's only job is to match what it sees against those definitions.
 
 ## Plan
 
-### 1. Two-pass detection (recall pass → verifier pass)
-- Keep the current call as the **candidate** pass — same recall-leaning prompt.
-- Add a second **verifier** pass on each candidate: send a tighter window (the candidate frame ±1 sample) to `gemini-2.5-flash` with a strict prompt that must answer:
-  - Is the target player visibly the primary actor? (yes/no + evidence)
-  - For outfield: is there ball involvement OR a direct decisive off-ball action? (yes/no + which)
-  - Does the action match the chosen type's visual cues? (yes/no + which cue)
-  - Final verdict: keep / drop / change-action-type.
-- Drop anything the verifier rejects. Replace `actionType` if it suggests a better one. Keep verifier reasoning in the description so coaches see *why*.
-- Verifier runs on ~the candidate count, not all frames, so cost stays roughly flat.
+### 1. Rewrite the prompt around the actual task
 
-### 2. Structured evidence in the candidate pass
-Extend the tool schema so the model has to commit, not narrate:
-- `ballInvolvement`: `on_ball` | `direct_off_ball` | `gk_threat` | `none`
-- `visualCueMatched`: short string from the action's visual_cues
-- `primaryActor`: boolean
-Server-side rules:
-- Outfield + `none` → drop.
-- `direct_off_ball` is only allowed for the action types that explicitly support it (press, mark receiver, decisive run) — others drop.
-- `gk_threat` only allowed when player is a goalkeeper.
+Strip the prompt back to:
 
-### 3. Per-action-type calibration from the rejection corpus
-- Compute, per action type, the rolling rejection rate (false_positive count / total flags) from `ai_player_detection_corrections` and the latest backtest.
-- For types above a threshold (e.g. >50% FP), require `confidence === "high"` AND verifier "keep". For low-FP types, keep medium allowed.
-- Surface these per-type thresholds in the dialog (e.g. "Defending Cross — strict mode, 73% rejection history").
+- **Step 1 — Player identification.** Use the reference image, kit description and shirt number. If you cannot confidently identify this player in this frame, skip the frame. Same for every position.
+- **Step 2 — Action match.** From the supplied list of action types (with their definitions and visual cues), is this player performing exactly one of them in this frame? If yes, name it. If no, skip.
 
-### 4. Cross-batch dedupe & passage merging (server-side, post-verifier)
-Currently the model is told "one passage = one moment", but batch boundaries break that. Add a deterministic merger:
-- Group surviving detections within a 5s sliding window for the same player.
-- Merge into one comma-separated `actionType` (matches existing rule).
-- Keep the highest-confidence frame as the anchor.
+Remove all of:
+- The goalkeeper carve-outs ("threat is a trigger", "constantly in the action", etc.)
+- The `ballInvolvement` enum and the server-side gate built on it
+- "Recall over precision" — replaced with "only flag what you can name from the list"
+- The generic-prose regex (it was a workaround for the bad prompt)
 
-### 5. Use confirmed examples as a similarity gate, not just calibration
-- For each candidate, embed a tiny "is this similar in nature to the confirmed examples?" check inside the verifier prompt — the verifier has the confirmed list and must say whether the new flag matches that bar.
-- A flag the verifier judges materially less involved than the *least* involved confirmed example is dropped.
+The only structured field the model still has to return is `visualCueMatched`: one short phrase from that action type's `visual_cues` that the model can actually see in the frame. Empty string → drop. This is position-agnostic and forces the model to ground every flag in the action's own definition.
 
-### 6. Backtest reports precision per action type
-- Extend backtest summary to show: per type → matched / missed / false-positive / type-mismatch counts.
-- Add a "tighten this type" action that sets that type to high-only for the next scan automatically.
-- This gives a feedback loop that visibly drives FPs down without you needing to change the global setting.
+### 2. Use the corrections corpus properly — as data, not prose
 
-### 7. Smaller cheap filters (low effort, immediate)
-- Drop any detection where the description is generic ("moves towards", "adjusts position") with no verb of action — regex on the `visualCueMatched` field once (2) lands.
-- Cap detections per minute per player at a sane number (e.g. 8) — the model occasionally floods one passage; keep top by confidence + verifier score.
-- Penalise the same `actionType` flagged 3× in 10s without a confirmed example nearby — almost always a FP loop.
+You already have thousands of confirmed examples and rejections sitting in `ai_player_detection_corrections`. Right now the function takes the last 20, formats them as English bullet points and pastes them into the prompt. That's why "learning records" feels fake — it is.
 
-## Rollout order (so we can measure)
-1. Ship **(2) structured evidence** + **(7) cheap filters** — safest, immediate FP cut, no extra model calls.
-2. Ship **(4) cross-batch dedupe** — pure server logic.
-3. Ship **(1) verifier pass** behind a toggle, default ON. Run a backtest, compare.
-4. Ship **(3) per-type calibration** + **(6) per-type backtest report** — closes the loop.
-5. Ship **(5) similarity gate** last — refinement once the pipeline is stable.
+Two real uses:
 
-## Technical notes
-- All changes localised to `supabase/functions/detect-player-actions/index.ts` and `src/components/staff/coaching/AIPlayerDetection.tsx`. Backtest report extension touches the backtest summary builder in the same component.
-- Verifier uses the same model (`google/gemini-2.5-flash`) — no new secrets, no new providers.
-- No DB migrations required; per-type FP rates are derived on the fly from existing `ai_player_detection_corrections`.
-- Persisted scan state (already in place) carries through unchanged; verifier runs inline with each batch so resume still works.
+**a. Hard blocklist for repeat false positives.** Before returning detections, the function queries `ai_player_detection_corrections` for this video + this player + status `false_positive` and `not_involved`. Any new candidate within ±3s of a known FP timestamp is dropped. This is the change that makes re-running a backtest visibly different from the first run.
+
+**b. Positive examples per action type, drawn from across all videos.** For each action type the player is being scanned for, fetch up to 5 confirmed examples for that action type (any player) and include their `description` text in the prompt under that action type. So when the model considers "Pass", it sees: the database definition + visual cues + 5 real coach-confirmed descriptions of "Pass" looking the way they do. This is the closest honest version of "thousands of examples teaching it".
+
+Cap total prompt growth at a sensible budget so we don't blow context (5 examples × ~25 types = ~125 short lines, fine).
+
+### 3. Surface that the loop is real
+
+In the live counter, alongside "Saved N learning records":
+- "Blocked N candidates from past corrections"
+- "Loaded N example actions" and "Loaded N past rejections for this video"
+
+So you can see at a glance whether the corpus is doing anything.
+
+### 4. Backtest report — per action type
+
+Group the summary by action type so you can see which types are misbehaving:
+```
+Pass            matched 14   missed 1   FP 0
+Defending Cross matched 1    missed 2   FP 41
+Defensive Pos.  matched 0    missed 0   FP 27
+```
+Plus a "block this type for this player" button per row that adds a temporary suppression.
+
+### 5. What gets removed
+
+- All position-specific branches in the prompt
+- The `ballInvolvement` server-side gate
+- The "GK exemption" on the generic-prose filter
+- The 20-record prose rejection list (replaced by the structured uses in step 2)
+
+## Files
+
+- `supabase/functions/detect-player-actions/index.ts` — prompt rewrite, drop the gates, query corrections corpus + confirmed-examples-per-type, hard blocklist filter, return blocklist counts.
+- `src/components/staff/coaching/AIPlayerDetection.tsx` — surface the new counters, per-type backtest summary, "block this type" action.
+
+No DB migrations.
 
 ## Expected outcome
-Based on the symptoms you described (167 FPs, ~50 real), I'd expect:
-- (2)+(7) alone: ~30–40% FP reduction with no recall loss.
-- Adding (1) verifier pass: a further ~40–50% FP reduction, ≤5% recall loss on confirmed clips.
-- (3)+(6) then drives the long-tail problem types (Defending Cross, Applied Pressure) down specifically.
+
+- For the GK backtest you've been running: the noise comes from the prompt encouraging passive flags. Removing that should drop FPs from ~150 to a small number based on actual ball events the GK is involved in.
+- For outfielders: should be unchanged or slightly better, because the prompt is no longer cluttered with GK rules and the per-type confirmed examples now teach it what "your" coaches mean by Pass / Dribble / Press / etc.
+- Re-running a backtest on a video already corrected: visibly fewer FPs every time you correct, because past corrections are now hard blocks rather than prose hints.
+
+## What I am explicitly not doing
+
+- Adding a verifier second pass yet — let's see what the corrected prompt does on its own first. If FPs are still high after this, the verifier becomes worth its cost; right now it would mostly verify the same nonsense.
+- Tightening to "high only" — the per-action-type confirmed examples replace that crude lever.

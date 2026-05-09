@@ -173,6 +173,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const [learningSavedCount, setLearningSavedCount] = useState(0);
   const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
+  const [blockedFromCorrections, setBlockedFromCorrections] = useState(0);
+  const [blocklistSize, setBlocklistSize] = useState(0);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
@@ -489,6 +491,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
     setLearningSavedCount(0);
+    setBlockedFromCorrections(0);
+    setBlocklistSize(0);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
@@ -569,6 +573,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         const { data, error } = await invokeEdgeFunction('detect-player-actions', {
           body: {
             frames,
+            videoAnalysisId: videoAnalysisId || null,
+            playerId: selectedPlayerForScan,
             playerInfo: {
               name: playerName,
               description: [playerDescription, kitDescription].filter(Boolean).join('. ') || undefined,
@@ -582,13 +588,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             teamKitDescription: kitDescription || undefined,
             minConfidence: MIN_CONFIDENCE,
             sampleEverySeconds: sampleEvery,
-            rejectionHistory: (() => {
-              const merged = [
-                ...(rejectionHistory || []),
-                ...persistedRejections,
-              ];
-              return merged.length > 0 ? merged : undefined;
-            })(),
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
@@ -597,6 +596,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           console.error('AI detection error:', error);
           toast.error(`Batch ${Math.floor(batchStart / batchSize) + 1} failed: ${error.message}`);
           continue;
+        }
+
+        if (typeof (data as any)?.blockedCount === 'number') {
+          setBlockedFromCorrections((prev) => prev + (data as any).blockedCount);
+        }
+        if (typeof (data as any)?.blocklistSize === 'number') {
+          setBlocklistSize((data as any).blocklistSize);
         }
 
         if (data?.actions) {
@@ -920,6 +926,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
                 {globalActionsTotal > 0 && (
                   <Badge variant="outline">{globalActionsTotal.toLocaleString()} total actions loaded</Badge>
+                )}
+                {blocklistSize > 0 && (
+                  <Badge variant="outline">{blocklistSize} past rejection{blocklistSize === 1 ? '' : 's'} on this video</Badge>
+                )}
+                {blockedFromCorrections > 0 && (
+                  <Badge variant="default">Blocked {blockedFromCorrections} from past corrections</Badge>
                 )}
               </div>
             </div>
