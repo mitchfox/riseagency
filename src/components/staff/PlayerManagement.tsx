@@ -838,6 +838,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // AI Identification
       identification_description: (player as any).identification_description || "",
       identification_reference_image_url: (player as any).identification_reference_image_url || "",
+      identification_reference_images: Array.isArray((player as any).identification_reference_images)
+        ? (player as any).identification_reference_images
+        : [],
       not_to_confuse_with: (player as any).not_to_confuse_with || "",
     });
     setIsEditDialogOpen(true);
@@ -1539,6 +1542,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     highlightedMatch: null,
                     identification_description: "",
                     identification_reference_image_url: "",
+                    identification_reference_images: [],
                     not_to_confuse_with: "",
                   });
                   setIsAddPlayerDialogOpen(true);
