@@ -249,7 +249,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllTestResults();
     fetchOtherAnalyses();
     fetchAvailableAnalyses();
+    fetchCustomCategories();
   }, []);
+
+  const fetchCustomCategories = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('player_categories')
+        .select('*')
+        .order('sort_order');
+      const slug = (s: string) => String(s || '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      setCustomCategories((data || []).map((r: any) => ({ ...r, key: slug(r.name) })));
+    } catch (err) {
+      console.error('Failed to fetch player categories:', err);
+    }
+  };
 
   // Store pending player/tab from URL to apply once players load
   const [pendingPlayerId, setPendingPlayerId] = useState<string | null>(null);
