@@ -599,7 +599,7 @@ export const AthleteCentre = () => {
                       <div className="flex items-center justify-between mb-3 md:mb-4">
                         <h3 className="text-base md:text-lg font-semibold">Psychology — SPQ Reports</h3>
                       </div>
-                      <PlayerSpqHistory playerId={selectedPlayer} playerName={currentPlayer?.name} />
+                      {selectedPlayer && <PlayerSpqHistory playerId={selectedPlayer} />}
                     </TabsContent>
 
                     <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
