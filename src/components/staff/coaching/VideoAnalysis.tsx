@@ -2303,6 +2303,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 }
               }}
             />
+            {/* Click anywhere on the video frame to toggle play/pause.
+                Sits above the video but leaves the bottom 50px clear so the native
+                controls and the hover-preview strip remain interactive. */}
+            <div
+              className="absolute inset-x-0 top-0 z-20 cursor-pointer"
+              style={{ bottom: '50px' }}
+              onClick={() => {
+                const v = videoRef.current;
+                if (!v) return;
+                if (v.paused) v.play().catch(() => {});
+                else v.pause();
+              }}
+            />
             {/* Hover preview thumbnail strip — sits just above the native controls */}
             <div
               className="absolute left-0 right-0 z-30 cursor-pointer"
