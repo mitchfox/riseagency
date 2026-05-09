@@ -305,6 +305,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       const { data, error } = await supabase
         .from("analyses")
         .select("*")
+        .order("match_date", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
