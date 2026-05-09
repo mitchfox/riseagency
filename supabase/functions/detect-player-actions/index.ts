@@ -21,6 +21,19 @@ interface ConfirmedExampleInput {
   description?: string;
 }
 
+interface LearningContext {
+  negByType: Record<string, string[]>;          // false-positive descriptions per action type
+  confusions: Record<string, string[]>;          // expected → confusing-with notes
+  positivesByType: Record<string, string[]>;     // confirmed examples per action type
+  totalNegatives: number;
+  totalPositives: number;
+  totalConfusions: number;
+}
+
+function normaliseName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -32,35 +45,68 @@ async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   return (data as SportscodeAction[]) || [];
 }
 
-async function fetchVideoBlocklist(videoAnalysisId: string | null, playerId: string | null): Promise<{ timestamp: number; actionType: string | null; feedbackType: string }[]> {
-  if (!videoAnalysisId || !playerId) return [];
+/**
+ * Pull cross-video labelled examples so the AI generalises:
+ *  - confirmed actions (positive examples per action type)
+ *  - not_involved / wrong_player feedback (false-positive descriptions per action type)
+ *  - wrong_action feedback (which action got confused with which)
+ * Same-video records are included — they count as labelled training data, not as
+ * "block this exact timestamp" rules.
+ */
+async function fetchLearningContext(): Promise<LearningContext> {
+  const ctx: LearningContext = {
+    negByType: {}, confusions: {}, positivesByType: {},
+    totalNegatives: 0, totalPositives: 0, totalConfusions: 0,
+  };
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(supabaseUrl, supabaseKey);
     const { data } = await sb
       .from('ai_detection_feedback')
-      .select('detected_timestamp, expected_timestamp, action_type, feedback_type')
-      .eq('video_analysis_id', videoAnalysisId)
-      .eq('player_id', playerId)
-      .in('feedback_type', ['not_involved', 'wrong_player', 'wrong_action']);
-    if (!data) return [];
-    return data
-      .map((r: any) => {
-        const ts = r.detected_timestamp ?? r.expected_timestamp;
-        const num = ts == null ? NaN : Number(ts);
-        if (!Number.isFinite(num)) return null;
-        return { timestamp: num, actionType: r.action_type ?? null, feedbackType: r.feedback_type as string };
-      })
-      .filter((x: any): x is { timestamp: number; actionType: string | null; feedbackType: string } => x !== null);
-  } catch (e) {
-    console.error('Blocklist fetch failed', e);
-    return [];
-  }
-}
+      .select('action_type, feedback_type, reason, feedback_context')
+      .in('feedback_type', ['not_involved', 'wrong_player', 'wrong_action', 'confirmed'])
+      .order('created_at', { ascending: false })
+      .limit(800);
+    if (!data) return ctx;
 
-function normaliseName(value: string): string {
-  return value.trim().toLowerCase();
+    for (const r of data as any[]) {
+      const at = normaliseName(String(r.action_type || ''));
+      if (!at) continue;
+      const fb = r.feedback_type as string;
+      const fc = (r.feedback_context || {}) as Record<string, unknown>;
+      const desc = String(fc.detectedDescription || fc.actionDescription || r.reason || '').trim();
+
+      if (fb === 'confirmed') {
+        if (!desc) continue;
+        if (!ctx.positivesByType[at]) ctx.positivesByType[at] = [];
+        if (ctx.positivesByType[at].length < 6) {
+          ctx.positivesByType[at].push(desc);
+          ctx.totalPositives++;
+        }
+      } else if (fb === 'wrong_action') {
+        const expected = normaliseName(String(fc.expectedAction || at));
+        const detected = String(fc.detectedAction || '').trim();
+        if (!desc) continue;
+        if (!ctx.confusions[expected]) ctx.confusions[expected] = [];
+        if (ctx.confusions[expected].length < 5) {
+          ctx.confusions[expected].push(detected ? `Was called "${detected}" but expected "${expected}": ${desc}` : desc);
+          ctx.totalConfusions++;
+        }
+      } else {
+        // not_involved / wrong_player → false positive pattern
+        if (!desc) continue;
+        if (!ctx.negByType[at]) ctx.negByType[at] = [];
+        if (ctx.negByType[at].length < 5) {
+          ctx.negByType[at].push(desc);
+          ctx.totalNegatives++;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('fetchLearningContext failed', e);
+  }
+  return ctx;
 }
 
 function filterActionDefinitions(actions: SportscodeAction[], allowedActionTypes?: string[]): SportscodeAction[] {
@@ -69,7 +115,11 @@ function filterActionDefinitions(actions: SportscodeAction[], allowedActionTypes
   return actions.filter((a) => allow.has(normaliseName(a.action_name)));
 }
 
-function buildActionReference(actions: SportscodeAction[], examplesByType: Record<string, string[]>): string {
+function buildActionReference(
+  actions: SportscodeAction[],
+  positivesFromClient: Record<string, string[]>,
+  learning: LearningContext,
+): string {
   if (actions.length === 0) return '';
 
   const grouped: Record<string, SportscodeAction[]> = {};
@@ -83,6 +133,7 @@ function buildActionReference(actions: SportscodeAction[], examplesByType: Recor
   for (const [cat, items] of Object.entries(grouped)) {
     text += `\n${cat.toUpperCase()}:\n`;
     for (const a of items) {
+      const key = normaliseName(a.action_name);
       text += `- ${a.action_name}`;
       if (a.description) text += `: ${a.description}`;
       text += '\n';
@@ -90,10 +141,26 @@ function buildActionReference(actions: SportscodeAction[], examplesByType: Recor
       const before = a.default_before_seconds || 5;
       const after = a.default_after_seconds || 5;
       text += `  CLIP TIMING: ${before}s before, ${after}s after the key moment\n`;
-      const exs = examplesByType[normaliseName(a.action_name)] || [];
-      if (exs.length > 0) {
+
+      const confirmed = [
+        ...(positivesFromClient[key] || []),
+        ...(learning.positivesByType[key] || []),
+      ].slice(0, 6);
+      if (confirmed.length > 0) {
         text += `  COACH-CONFIRMED EXAMPLES:\n`;
-        for (const ex of exs.slice(0, 5)) text += `    • ${ex}\n`;
+        for (const ex of confirmed) text += `    • ${ex}\n`;
+      }
+
+      const negatives = learning.negByType[key] || [];
+      if (negatives.length > 0) {
+        text += `  PREVIOUSLY FLAGGED BUT REJECTED (do NOT label these as ${a.action_name} again):\n`;
+        for (const ex of negatives) text += `    • ${ex}\n`;
+      }
+
+      const confusions = learning.confusions[key] || [];
+      if (confusions.length > 0) {
+        text += `  COMMON CONFUSIONS WITH ${a.action_name}:\n`;
+        for (const ex of confusions) text += `    • ${ex}\n`;
       }
     }
   }
@@ -104,12 +171,11 @@ function groupExamplesByType(examples: ConfirmedExampleInput[]): Record<string, 
   const map: Record<string, string[]> = {};
   for (const ex of examples) {
     if (!ex?.actionType || !ex?.description) continue;
-    // An example may carry comma-separated action types; bucket under each one
     const parts = String(ex.actionType).split(',').map((p) => p.trim()).filter(Boolean);
     for (const part of parts) {
       const key = normaliseName(part);
       if (!map[key]) map[key] = [];
-      if (map[key].length < 5) map[key].push(String(ex.description).trim());
+      if (map[key].length < 6) map[key].push(String(ex.description).trim());
     }
   }
   return map;
@@ -134,6 +200,99 @@ function buildCanonicalNameMap(actions: SportscodeAction[]): Record<string, stri
   return map;
 }
 
+// ---------- Roboflow grounding ----------
+
+interface RoboflowDetection {
+  class: string;
+  confidence: number;
+  x: number; y: number; width: number; height: number;
+}
+
+interface FrameGrounding {
+  frameIndex: number;
+  detections: RoboflowDetection[];
+  hasBall: boolean;
+  playerCount: number;
+  available: boolean;
+}
+
+const BALL_CLASSES = /^(football|ball|soccer ?ball)$/i;
+const PLAYER_CLASSES = /^(player|person|footballer)$/i;
+
+const BALL_DEPENDENT_ACTIONS = /(pass|shot|cross|clearance|interception|tackle|header|dribble|carry|first touch|switch|backwards pass|forward pass|lateral pass|lofted|chipped|driven|recovery|block|save|catch|punch|distribution|throw)/i;
+
+function extractRoboflowDetections(workflowJson: unknown): RoboflowDetection[] {
+  const out: RoboflowDetection[] = [];
+  if (!workflowJson || typeof workflowJson !== 'object') return out;
+  const visit = (node: any) => {
+    if (!node) return;
+    if (Array.isArray(node)) { node.forEach(visit); return; }
+    if (typeof node !== 'object') return;
+    if (Array.isArray(node.predictions)) {
+      for (const p of node.predictions) {
+        if (!p || typeof p !== 'object') continue;
+        const cls = String(p.class || p.label || '').trim();
+        if (!cls) continue;
+        out.push({
+          class: cls,
+          confidence: Number(p.confidence ?? p.score ?? 0),
+          x: Number(p.x ?? 0), y: Number(p.y ?? 0),
+          width: Number(p.width ?? 0), height: Number(p.height ?? 0),
+        });
+      }
+    }
+    for (const v of Object.values(node)) visit(v);
+  };
+  visit(workflowJson);
+  return out;
+}
+
+async function callRoboflowWorkflow(base64NoPrefix: string): Promise<RoboflowDetection[] | null> {
+  const apiKey = Deno.env.get('ROBOFLOW_API_KEY');
+  const workspace = Deno.env.get('ROBOFLOW_WORKSPACE');
+  const workflowId = Deno.env.get('ROBOFLOW_WORKFLOW_ID');
+  if (!apiKey || !workspace || !workflowId) return null;
+  try {
+    const res = await fetch(`https://serverless.roboflow.com/infer/workflows/${workspace}/${workflowId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        inputs: { image: { type: 'base64', value: base64NoPrefix } },
+      }),
+    });
+    if (!res.ok) {
+      console.warn('Roboflow workflow non-OK', res.status);
+      return null;
+    }
+    const json = await res.json();
+    return extractRoboflowDetections(json);
+  } catch (e) {
+    console.warn('Roboflow workflow error', e);
+    return null;
+  }
+}
+
+async function groundFramesWithRoboflow(frames: { dataUrl: string; index: number }[]): Promise<FrameGrounding[]> {
+  // If creds missing the first call returns null and we mark all unavailable.
+  const groundings: FrameGrounding[] = await Promise.all(frames.map(async (f) => {
+    const base64 = (f.dataUrl.split(',')[1] || '').trim();
+    const dets = base64 ? await callRoboflowWorkflow(base64) : null;
+    if (!dets) return { frameIndex: f.index, detections: [], hasBall: false, playerCount: 0, available: false };
+    const hasBall = dets.some((d) => BALL_CLASSES.test(d.class) && d.confidence >= 0.3);
+    const playerCount = dets.filter((d) => PLAYER_CLASSES.test(d.class) && d.confidence >= 0.3).length;
+    return { frameIndex: f.index, detections: dets, hasBall, playerCount, available: true };
+  }));
+  return groundings;
+}
+
+function summariseGrounding(g: FrameGrounding): string {
+  if (!g.available) return 'no object grounding available';
+  const ball = g.hasBall ? 'football detected' : 'no football detected';
+  const players = `${g.playerCount} player${g.playerCount === 1 ? '' : 's'} detected`;
+  return `${ball}, ${players}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -143,7 +302,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const { frames, playerInfo, videoContext, allowedActionTypes, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence, sampleEverySeconds, videoAnalysisId, playerId } = await req.json();
+    const { frames, playerInfo, videoContext, allowedActionTypes, confirmedExamples, referenceImageUrl, teamKitDescription, minConfidence, sampleEverySeconds } = await req.json();
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -163,18 +322,23 @@ Deno.serve(async (req) => {
       ? allowedActionTypes.filter((v: unknown): v is string => typeof v === 'string' && v.trim().length > 0)
       : undefined;
 
-    // Fetch action definitions from the coaching database
-    const actionDefs = await fetchActionDefinitions();
+    const [actionDefs, learning] = await Promise.all([
+      fetchActionDefinitions(),
+      fetchLearningContext(),
+    ]);
     const filteredDefs = filterActionDefinitions(actionDefs, requestedTypes);
     const scopedActionDefs = filteredDefs.length > 0 ? filteredDefs : actionDefs;
-    const examplesByType = groupExamplesByType(Array.isArray(confirmedExamples) ? confirmedExamples : []);
-    const actionReference = buildActionReference(scopedActionDefs, examplesByType);
+    const positivesFromClient = groupExamplesByType(Array.isArray(confirmedExamples) ? confirmedExamples : []);
+    const actionReference = buildActionReference(scopedActionDefs, positivesFromClient, learning);
     const durationMap = buildDurationMap(scopedActionDefs);
     const canonicalNameMap = buildCanonicalNameMap(scopedActionDefs);
     const allowedNames = Object.values(canonicalNameMap);
 
-    // Hard blocklist: timestamps the coach has previously rejected for this player on this video.
-    const blocklist = await fetchVideoBlocklist(videoAnalysisId || null, playerId || null);
+    // Run Roboflow object grounding in parallel with model setup. Falls back gracefully if creds missing.
+    const groundings = await groundFramesWithRoboflow(frames as { dataUrl: string; index: number }[]);
+    const groundingByIndex = new Map<number, FrameGrounding>();
+    for (const g of groundings) groundingByIndex.set(g.frameIndex, g);
+    const roboflowAvailable = groundings.some((g) => g.available);
 
     const systemPrompt = `You are a professional football match analyst reviewing video frames sampled every ${sampleEverySeconds || 2} seconds from a competitive match.
 
@@ -187,13 +351,18 @@ ${teamKitDescription ? `TEAM KIT FOR THIS MATCH: ${teamKitDescription}` : ''}
 ${referenceImageUrl ? `REFERENCE IMAGE: A reference still of the target player is the FIRST image in the message. Use it as your primary visual anchor — match face, hair, build, and skin tone before flagging any frame.` : ''}
 ${actionReference}
 
+LEARNING CONTEXT LOADED FROM PRIOR COACH FEEDBACK:
+- Confirmed positive examples per action type (above) — use these as the standard for what a real instance looks like.
+- "PREVIOUSLY FLAGGED BUT REJECTED" lists per action type — these are descriptions the AI previously called this action but coaches rejected. If a frame matches one of these patterns, do NOT flag it again as that action.
+- "COMMON CONFUSIONS" lists — reminders of which actions get mistaken for which.
+
 YOUR JOB IS EXACTLY TWO STEPS, IN ORDER, FOR EVERY FRAME:
 
 STEP 1 — IS THIS THE PLAYER?
 Identify the target player using the reference image, kit description, shirt number, body shape, hair and skin tone. If you cannot confidently identify this specific player in this frame, SKIP the frame. Same standard for every position, including goalkeepers.
 
 STEP 2 — IS THIS PLAYER PERFORMING ONE OF THE LISTED ACTIONS?
-Compare what you see this player doing against the action types listed above and their VISUAL CUES. The coach-confirmed examples show real instances of each action — match that bar.
+Compare what you see this player doing against the action types listed above and their VISUAL CUES. The coach-confirmed examples show real instances. The rejected examples show what NOT to call this action. The object-grounding line for each frame tells you whether a football and other players are even visible — for actions that require contact with the ball, if no football is detected in the frame, do not flag a ball-action.
 
 - If yes, output the action's exact name from the list.
 - If two distinct actions happen in the same <5s passage (e.g. an interception then a pass), output them as one comma-separated entry: "Interception, Pass".
@@ -210,16 +379,20 @@ OUTPUT RULES:
 
 CLIP DURATION: use the per-action defaults from the reference (clipBefore / clipAfter), extend for longer build-ups, shorten for instantaneous moments. Default 5/5.`;
 
-    const imageContent = frames.map((frame: { dataUrl: string; timestamp: number; index: number }) => ([
-      {
-        type: 'text' as const,
-        text: `Frame ${frame.index} (timestamp: ${Math.floor(frame.timestamp)}s / ${Math.floor(frame.timestamp / 60)}:${String(Math.floor(frame.timestamp % 60)).padStart(2, '0')}):`,
-      },
-      {
-        type: 'image_url' as const,
-        image_url: { url: frame.dataUrl },
-      },
-    ])).flat();
+    const imageContent = (frames as { dataUrl: string; timestamp: number; index: number }[]).map((frame) => {
+      const g = groundingByIndex.get(frame.index);
+      const grounding = g ? summariseGrounding(g) : 'no object grounding available';
+      return [
+        {
+          type: 'text' as const,
+          text: `Frame ${frame.index} (timestamp: ${Math.floor(frame.timestamp)}s / ${Math.floor(frame.timestamp / 60)}:${String(Math.floor(frame.timestamp % 60)).padStart(2, '0')}) — object grounding: ${grounding}`,
+        },
+        {
+          type: 'image_url' as const,
+          image_url: { url: frame.dataUrl },
+        },
+      ];
+    }).flat();
 
     const referenceContent: any[] = referenceImageUrl
       ? [
@@ -265,7 +438,7 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
                       type: 'object',
                       properties: {
                         frameIndex: { type: 'number', description: 'The 0-indexed frame number' },
-                       actionType: {
+                        actionType: {
                           type: 'string',
                           description: 'Single action name from the allowed list, OR a comma-separated combination (e.g. "Interception, Pass") when multiple distinct actions occur in the same <5s passage. Each part must match an allowed action name.',
                         },
@@ -293,14 +466,12 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again shortly.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: 'AI credits required. Please top up your workspace.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       const errorText = await response.text();
@@ -311,9 +482,19 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     const result = await response.json();
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
 
+    const meta = {
+      durationMap,
+      examplesLoaded: learning.totalPositives + Object.values(positivesFromClient).reduce((s, a) => s + a.length, 0),
+      negativeExamplesLoaded: learning.totalNegatives,
+      confusionsLoaded: learning.totalConfusions,
+      roboflowGroundedFrames: groundings.filter((g) => g.available).length,
+      roboflowRejected: 0,
+      verifierDropped: 0,
+    };
+
     if (!toolCall?.function?.arguments) {
       return new Response(
-        JSON.stringify({ actions: [], durationMap, blockedCount: 0, blocklistSize: blocklist.length }),
+        JSON.stringify({ actions: [], ...meta }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -325,11 +506,7 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
       .map((a: any) => {
-        // Accept either a single action name or a comma-separated list of allowed names
-        const rawParts = String(a.actionType || '')
-          .split(',')
-          .map((p: string) => p.trim())
-          .filter(Boolean);
+        const rawParts = String(a.actionType || '').split(',').map((p: string) => p.trim()).filter(Boolean);
         const canonicalParts: string[] = [];
         for (const part of rawParts) {
           const c = canonicalNameMap[normaliseName(part)];
@@ -344,7 +521,6 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
         if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
-        // Require a non-empty visual cue tying the flag back to the action's own definition.
         const visualCue = String(a.visualCueMatched || '').trim();
         if (!visualCue) return null;
         const desc = String(a.description || '').trim();
@@ -365,43 +541,34 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       })
       .filter((a: any) => a !== null);
 
-    // Hard blocklist: drop any candidate within ±3s of a known false-positive timestamp on this video for this player.
-    const BLOCK_TOL = 3;
-    let blockedCount = 0;
-    const afterBlocklist = sanitisedActions.filter((det: any) => {
-      for (const b of blocklist) {
-        if (Math.abs(det.timestamp - b.timestamp) > BLOCK_TOL) continue;
-        // not_involved / wrong_player block any action at that moment
-        if (b.feedbackType === 'not_involved' || b.feedbackType === 'wrong_player') {
-          blockedCount++;
-          return false;
-        }
-        // wrong_action only blocks the same action type
-        if (b.feedbackType === 'wrong_action' && b.actionType) {
-          const detTypes = String(det.actionType).split(',').map((s: string) => normaliseName(s));
-          if (detTypes.includes(normaliseName(b.actionType))) {
-            blockedCount++;
-            return false;
-          }
-        }
+    // ROBOFLOW HARD SANITY CHECK — only when grounding was available for that frame.
+    const afterGrounding = sanitisedActions.filter((det: any) => {
+      const g = groundingByIndex.get(det.frameIndex);
+      if (!g || !g.available) return true; // no grounding → trust the model
+      const needsBall = BALL_DEPENDENT_ACTIONS.test(det.actionType);
+      if (needsBall && !g.hasBall) {
+        meta.roboflowRejected++;
+        return false;
+      }
+      if (g.playerCount === 0) {
+        meta.roboflowRejected++;
+        return false;
       }
       return true;
     });
 
-    // Cross-frame dedupe: merge detections within a 5s window into one comma-separated entry
-    afterBlocklist.sort((x: any, y: any) => x.timestamp - y.timestamp);
+    // Cross-frame dedupe within 5s
+    afterGrounding.sort((x: any, y: any) => x.timestamp - y.timestamp);
     const merged: any[] = [];
     const confRank: Record<string, number> = { high: 2, medium: 1 };
-    for (const det of afterBlocklist) {
+    for (const det of afterGrounding) {
       const last = merged[merged.length - 1];
       if (last && Math.abs(det.timestamp - last.timestamp) <= 5) {
-        // Merge action types
         const parts = new Set<string>([
           ...String(last.actionType).split(',').map((s: string) => s.trim()),
           ...String(det.actionType).split(',').map((s: string) => s.trim()),
         ]);
         last.actionType = Array.from(parts).join(', ');
-        // Promote anchor to the higher-confidence detection
         if ((confRank[det.confidence] || 0) > (confRank[last.confidence] || 0)) {
           last.frameIndex = det.frameIndex;
           last.timestamp = det.timestamp;
@@ -415,11 +582,7 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       }
     }
 
-    // VERIFIER PASS — for every surviving candidate, re-ask the model in a tight,
-    // identity-only prompt: "is the player on screen at this exact moment really X,
-    // and are they the one performing this action?". This catches the dominant FP
-    // pattern where the first pass labels a teammate's action as the target player's.
-    let verifierDropped = 0;
+    // VERIFIER PASS — identity check.
     let finalCandidates = merged;
     if (merged.length > 0 && referenceImageUrl) {
       try {
@@ -492,9 +655,8 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
               const verdictMap = new Map<number, boolean>();
               for (const v of verdicts) verdictMap.set(v.candidateId, !!v.confirmed);
               finalCandidates = merged.filter((det: any) => {
-                // If the verifier didn't return a verdict for a candidate, drop it (safer default).
                 const ok = verdictMap.get(det.frameIndex);
-                if (!ok) verifierDropped++;
+                if (!ok) meta.verifierDropped++;
                 return !!ok;
               });
             }
@@ -507,7 +669,7 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       }
     }
 
-    // Per-minute cap (top 6 by confidence) — guards against floods on a single passage
+    // Per-minute cap
     const byMinute: Record<number, any[]> = {};
     for (const d of finalCandidates) {
       const m = Math.floor((d.timestamp || 0) / 60);
@@ -522,11 +684,10 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     }
     capped.sort((x, y) => x.timestamp - y.timestamp);
 
-    // Strip internal-only fields before returning
     const finalActions = capped.map(({ timestamp: _t, visualCueMatched: _v, ...rest }) => rest);
 
     return new Response(
-      JSON.stringify({ actions: finalActions, durationMap, blockedCount, blocklistSize: blocklist.length, verifierDropped }),
+      JSON.stringify({ actions: finalActions, ...meta, roboflowAvailable }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
