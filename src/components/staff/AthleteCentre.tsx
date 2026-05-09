@@ -595,6 +595,13 @@ export const AthleteCentre = () => {
                       <AnalysisVideoReports analyses={analyses} playerId={selectedPlayer} embedded />
                     </TabsContent>
 
+                    <TabsContent value="psychology" className="mt-0 space-y-3 md:space-y-4">
+                      <div className="flex items-center justify-between mb-3 md:mb-4">
+                        <h3 className="text-base md:text-lg font-semibold">Psychology — SPQ Reports</h3>
+                      </div>
+                      <PlayerSpqHistory playerId={selectedPlayer} playerName={currentPlayer?.name} />
+                    </TabsContent>
+
                     <TabsContent value="analysis" className="mt-0 space-y-3 md:space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4">
                         <h3 className="text-base md:text-lg font-semibold">Performance Analysis</h3>
