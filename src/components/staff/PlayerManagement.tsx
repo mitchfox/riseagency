@@ -98,6 +98,22 @@ const formatDateForDb = (dateStr: string): string | null => {
   return null;
 };
 
+const categoryStatusKey = (name: string): string => {
+  const normalised = String(name || '').trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+  const legacyMap: Record<string, string> = {
+    signed: 'represented',
+    represented: 'represented',
+    mandate: 'mandated',
+    mandated: 'mandated',
+    'previously mandated': 'previously_mandated',
+    'fuel for football': 'fuel_for_football',
+    prospect: 'prospect',
+    scouted: 'scouted',
+    other: 'other',
+  };
+  return legacyMap[normalised] || normalised.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+};
+
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -258,8 +274,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         .from('player_categories')
         .select('*')
         .order('sort_order');
-      const slug = (s: string) => String(s || '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      setCustomCategories((data || []).map((r: any) => ({ ...r, key: slug(r.name) })));
+      setCustomCategories((data || []).map((r: any) => ({ ...r, key: categoryStatusKey(r.name) })));
     } catch (err) {
       console.error('Failed to fetch player categories:', err);
     }
@@ -1290,9 +1305,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
           identification_description: formData.identification_description || null,
           identification_reference_image_url: formData.identification_reference_image_url || null,
-          identification_reference_images: formData.identification_reference_images && formData.identification_reference_images.length > 0
-            ? formData.identification_reference_images
-            : null,
+          identification_reference_images: formData.identification_reference_images || [],
           not_to_confuse_with: formData.not_to_confuse_with || null,
         } as any)
         .eq("id", editingPlayer.id);
@@ -1358,19 +1371,31 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
-  // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, prospect, other, scouted
+  const fallbackCategories = [
+    { id: 'represented', name: 'Signed', key: 'represented', sort_order: 10, is_system: true },
+    { id: 'mandated', name: 'Mandate', key: 'mandated', sort_order: 20, is_system: true },
+    { id: 'fuel_for_football', name: 'Fuel For Football', key: 'fuel_for_football', sort_order: 30, is_system: true },
+    { id: 'previously_mandated', name: 'Previously Mandated', key: 'previously_mandated', sort_order: 40, is_system: true },
+    { id: 'scouted', name: 'Scouted', key: 'scouted', sort_order: 50, is_system: true },
+    { id: 'other', name: 'Other', key: 'other', sort_order: 60, is_system: true },
+  ];
+  const categorySections = (customCategories.length > 0 ? customCategories : fallbackCategories)
+    .map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }));
+
+  // Group players directly from the managed Player Categories settings
   const _searchedPlayers = playerSearchTerm.trim()
     ? players.filter(p => (p.name || '').toLowerCase().includes(playerSearchTerm.trim().toLowerCase()))
     : players;
-  const groupedPlayers = {
-    represented: _searchedPlayers.filter(p => p.representation_status === 'represented'),
-    mandated: _searchedPlayers.filter(p => p.representation_status === 'mandated'),
-    previously_mandated: _searchedPlayers.filter(p => p.representation_status === 'previously_mandated'),
-    fuel_for_football: _searchedPlayers.filter(p => p.representation_status === 'fuel_for_football'),
-    prospect: _searchedPlayers.filter(p => p.representation_status === 'prospect'),
-    other: _searchedPlayers.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
-    scouted: _searchedPlayers.filter(p => p.representation_status === 'scouted'),
-  };
+  const groupedPlayers = categorySections.map(category => ({
+    ...category,
+    players: _searchedPlayers.filter(p => (p.representation_status || 'other') === category.key),
+  }));
+  const knownCategoryKeys = new Set(categorySections.map(c => c.key));
+  const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(p.representation_status || 'other'));
+  const visibleCategoryGroups = [
+    ...groupedPlayers,
+    ...(uncategorisedPlayers.length > 0 ? [{ id: 'uncategorised', name: 'Uncategorised', key: 'uncategorised', sort_order: 9999, is_system: false, players: uncategorisedPlayers }] : []),
+  ].filter(group => group.players.length > 0);
 
   // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
@@ -1388,13 +1413,50 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     return <div className="flex items-center justify-center py-8">Loading players...</div>;
   }
 
-  const representedPlayers = groupedPlayers.represented;
-  const mandatedPlayers = groupedPlayers.mandated;
-  const previouslyMandatedPlayers = groupedPlayers.previously_mandated;
-  const fuelForFootballPlayers = groupedPlayers.fuel_for_football;
-  const prospectPlayers = groupedPlayers.prospect;
-  const otherPlayers = groupedPlayers.other;
-  const scoutedPlayers = groupedPlayers.scouted;
+  const renderPlayerCard = (player: Player) => {
+    const playerStats = stats[player.id];
+    return (
+      <Card key={player.id} className="cursor-pointer hover:shadow-lg transition-all" onClick={() => handlePlayerSelect(player.id)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
+              <p className="text-sm text-muted-foreground">{player.position}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                <span>{player.age}y</span>
+                <span>•</span>
+                <span>{player.nationality}</span>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {player.club && (
+            <div className="flex items-center gap-2 text-sm mb-3">
+              {player.club_logo && <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />}
+              <span className="text-muted-foreground truncate">{player.club}</span>
+            </div>
+          )}
+          {playerStats && (
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
+                <div className="text-muted-foreground">Matches</div>
+              </div>
+              <div>
+                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
+                <div className="text-muted-foreground">Minutes</div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="flex h-full gap-4 flex-col md:flex-row">
@@ -1405,137 +1467,53 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <SelectValue placeholder="Select a player" />
           </SelectTrigger>
           <SelectContent>
-            {representedPlayers.length > 0 && (
-              <>
+            {visibleCategoryGroups.map((group) => (
+              <div key={group.key}>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Represented
+                  {group.name}
                 </div>
-                {representedPlayers.map((player) => (
+                {group.players.map((player) => (
                   <SelectItem key={player.id} value={player.id}>
                     {player.name}
                   </SelectItem>
                 ))}
-              </>
-            )}
-            {fuelForFootballPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Fuel for Football
-                </div>
-                {fuelForFootballPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
-            {mandatedPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Mandated
-                </div>
-                {mandatedPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
-            {otherPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Other
-                </div>
-                {otherPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
+              </div>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Desktop Inner Player Sidebar */}
       <div className="hidden md:flex w-20 flex-col gap-2 overflow-y-auto border-r pr-2">
-        {/* Represented Players */}
-        {representedPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
-        ))}
-        
-        {/* Gold border separator */}
-        {representedPlayers.length > 0 && fuelForFootballPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
-        )}
-
-        {/* Fuel for Football Players */}
-        {fuelForFootballPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
-        ))}
-
-        {/* Gold border separator */}
-        {(representedPlayers.length > 0 || fuelForFootballPlayers.length > 0) && mandatedPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
-        )}
-        
-        {/* Other Players */}
-        {otherPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
+        {visibleCategoryGroups.map((group, groupIndex) => (
+          <div key={group.key} className="contents">
+            {groupIndex > 0 && <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />}
+            {group.players.map((player) => (
+              <button
+                key={player.id}
+                ref={(el) => (playerRefs.current[player.id] = el)}
+                onClick={() => handlePlayerSelect(player.id)}
+                className={`relative group transition-all ${
+                  selectedPlayerId === player.id 
+                    ? 'opacity-100 ring-2 ring-primary' 
+                    : 'opacity-40 hover:opacity-70'
+                } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
+                title={`${group.name}: ${player.name}`}
+              >
+                <Avatar className="w-14 h-14">
+                  <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                  <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                </Avatar>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
       {!selectedPlayerId ? (
-          // Preview Cards Grid grouped by representation status
           <div className="space-y-6 px-3 md:px-0">
-            {/* Add Player Button */}
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
@@ -1598,442 +1576,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Button>
               </div>
             </div>
-            
-            {/* Represented Players */}
-            {representedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-base md:text-lg font-semibold mb-3 text-primary">Represented</h3>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2 md:gap-4">
-                  {representedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all overflow-hidden"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <div className="flex flex-col sm:flex-row h-full">
-                          {/* Image Section - Top on mobile, Left on desktop */}
-                          <div className="w-full h-40 sm:w-32 sm:h-auto flex-shrink-0 relative">
-                            <img 
-                              src={player.image_url || undefined} 
-                              alt={player.name}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          </div>
-                          
-                          {/* Content Section - Bottom on mobile, Right on desktop */}
-                          <div className="flex-1 flex flex-col p-3 sm:p-4">
-                            <div className="flex-1 space-y-1">
-                              <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">{player.name}</h3>
-                              <p className="text-xs sm:text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex flex-wrap items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span className="truncate max-w-[8rem] sm:max-w-none">{player.nationality}</span>
-                              </div>
-                              
-                              {player.club && (
-                                <div className="flex items-center gap-2 text-[11px] sm:text-xs">
-                                  {player.club_logo && (
-                                    <img src={player.club_logo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0" />
-                                  )}
-                                  <span className="text-muted-foreground truncate max-w-[9rem] sm:max-w-none">{player.club}</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs pt-2 mt-2 border-t border-border/50">
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
+
+            {visibleCategoryGroups.map((group, index) => {
+              const defaultExpanded = index < 4 && !['other', 'scouted'].includes(group.key);
+              const isCollapsed = collapsedSections[group.key] ?? !defaultExpanded;
+              return (
+                <div key={group.key} className="space-y-4">
+                  {index > 0 && <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />}
+                  <button
+                    className="flex items-center gap-2 text-lg font-semibold text-primary hover:opacity-80 transition-opacity"
+                    onClick={() => toggleSection(group.key)}
+                  >
+                    {isCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                    {group.name} ({group.players.length})
+                  </button>
+                  {!isCollapsed && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                      {group.players.map(renderPlayerCard)}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Mandated Players */}
-            {mandatedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Mandated</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {mandatedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span>{player.nationality}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {player.club && (
-                            <div className="flex items-center gap-2 text-sm mb-3">
-                              {player.club_logo && (
-                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
-                              )}
-                              <span className="text-muted-foreground">{player.club}</span>
-                            </div>
-                          )}
-                          {playerStats && (
-                            <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                <div className="text-muted-foreground">Matches</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                <div className="text-muted-foreground">Minutes</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.mandated.length > 0 && previouslyMandatedPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Previously Mandated Players */}
-            {previouslyMandatedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Previously Mandated</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {previouslyMandatedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span>{player.nationality}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          {playerStats && (
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                <div className="text-muted-foreground">Matches</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                <div className="text-muted-foreground">Minutes</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {(previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0) && fuelForFootballPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Fuel For Football Players - Collapsible */}
-            {fuelForFootballPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('fuel_for_football')}
-                >
-                  {collapsedSections.fuel_for_football ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Fuel For Football ({fuelForFootballPlayers.length})
-                </button>
-                {!collapsedSections.fuel_for_football && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {fuelForFootballPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Prospect Players - Collapsible */}
-            {prospectPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('prospect')}
-                >
-                  {collapsedSections.prospect ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Prospect ({prospectPlayers.length})
-                </button>
-                {!collapsedSections.prospect && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {prospectPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {(fuelForFootballPlayers.length > 0 || previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0 || prospectPlayers.length > 0) && groupedPlayers.other.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Other Players - Collapsible */}
-            {groupedPlayers.other.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('other')}
-                >
-                  {collapsedSections.other ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Other ({groupedPlayers.other.length})
-                </button>
-                {!collapsedSections.other && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {groupedPlayers.other.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.other.length > 0 && scoutedPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Scouted Players - Collapsible */}
-            {scoutedPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('scouted')}
-                >
-                  {collapsedSections.scouted ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Scouted ({scoutedPlayers.length})
-                </button>
-                {!collapsedSections.scouted && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {scoutedPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })}
           </div>
         ) : !selectedPlayer ? (
           // Player selected but not found (loading or invalid)
@@ -3877,25 +3441,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(() => {
-                          const builtIn: { key: string; label: string }[] = [
-                            { key: 'represented', label: 'Represented' },
-                            { key: 'fuel_for_football', label: 'Fuel For Football' },
-                            { key: 'mandated', label: 'Mandated' },
-                            { key: 'previously_mandated', label: 'Previously Mandated' },
-                            { key: 'prospect', label: 'Prospect' },
-                            { key: 'scouted', label: 'Scouted' },
-                            { key: 'other', label: 'Other' },
-                          ];
-                          const builtInKeys = new Set(builtIn.map(b => b.key));
-                          // Map managed categories whose slug isn't already built-in
-                          const extras = customCategories
-                            .filter(c => !builtInKeys.has(c.key))
-                            .map(c => ({ key: c.key, label: c.name }));
-                          return [...builtIn, ...extras].map(opt => (
-                            <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                          ));
-                        })()}
+                        {categorySections.map(opt => (
+                          <SelectItem key={opt.key} value={opt.key}>{opt.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
