@@ -491,6 +491,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
     setLearningSavedCount(0);
+    setBlockedFromCorrections(0);
+    setBlocklistSize(0);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
