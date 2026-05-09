@@ -573,6 +573,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               name: playerName,
               description: [playerDescription, kitDescription].filter(Boolean).join('. ') || undefined,
               notPlayer: notPlayer || undefined,
+              position: (players?.find(p => p.id === selectedPlayerForScan) as any)?.position || undefined,
             },
             videoContext: {
               opponent: opponent || undefined,
