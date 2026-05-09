@@ -274,8 +274,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         .from('player_categories')
         .select('*')
         .order('sort_order');
-      const slug = (s: string) => String(s || '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      setCustomCategories((data || []).map((r: any) => ({ ...r, key: slug(r.name) })));
+      setCustomCategories((data || []).map((r: any) => ({ ...r, key: categoryStatusKey(r.name) })));
     } catch (err) {
       console.error('Failed to fetch player categories:', err);
     }
