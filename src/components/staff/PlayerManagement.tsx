@@ -41,6 +41,8 @@ import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
 import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
 import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
+import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
+import { PlayerSpqHistory } from "./PlayerSpqHistory";
 
 interface Player {
   id: string;
