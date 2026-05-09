@@ -586,11 +586,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           for (const det of dedupedByWindow) {
             let bestIdx = -1;
             let bestDistance = Infinity;
+            let duplicateInsideMatchedClip = false;
 
             expected.forEach((exp, idx) => {
-              if (usedExpected.has(idx)) return;
               const insideWindow = det.timestamp >= exp.start - EDGE_TOL && det.timestamp <= exp.end + EDGE_TOL;
               if (!insideWindow) return;
+              if (usedExpected.has(idx)) {
+                duplicateInsideMatchedClip = true;
+                return;
+              }
               const centre = exp.start + ((exp.end - exp.start) / 2);
               const distance = Math.abs(centre - det.timestamp);
               if (distance < bestDistance) {
@@ -623,6 +627,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   ? `Detected inside the confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}).`
                   : `Found the right clip window, but called it ${det.actionType} instead of ${expectedType}. This has been saved as action-type learning.`,
               });
+            } else if (duplicateInsideMatchedClip) {
+              // Do not count repeat detections from the same confirmed passage as false positives.
+              // They are duplicates of an already matched clip, not extra wrong events.
+              continue;
             } else {
               rows.push({
                 type: 'false_positive',
