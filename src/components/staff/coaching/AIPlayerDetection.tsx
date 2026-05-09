@@ -179,8 +179,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [backtestResults, setBacktestResults] = useState<BacktestRow[] | null>(null);
   const [learningSavedCount, setLearningSavedCount] = useState(0);
   const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
-  const [blockedFromCorrections, setBlockedFromCorrections] = useState(0);
-  const [blocklistSize, setBlocklistSize] = useState(0);
+  const [examplesLoaded, setExamplesLoaded] = useState(0);
+  const [negativePatternsLoaded, setNegativePatternsLoaded] = useState(0);
+  const [confusionsLoaded, setConfusionsLoaded] = useState(0);
+  const [roboflowGrounded, setRoboflowGrounded] = useState(0);
+  const [roboflowRejected, setRoboflowRejected] = useState(0);
   const [verifierDropped, setVerifierDropped] = useState(0);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
@@ -504,8 +507,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setScanning(true);
     setScanProgress(0);
     setLearningSavedCount(0);
-    setBlockedFromCorrections(0);
-    setBlocklistSize(0);
+    setExamplesLoaded(0);
+    setNegativePatternsLoaded(0);
+    setConfusionsLoaded(0);
+    setRoboflowGrounded(0);
+    setRoboflowRejected(0);
     setVerifierDropped(0);
     pauseRef.current = false;
     cancelledRef.current = false;
@@ -615,15 +621,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           continue;
         }
 
-        if (typeof (data as any)?.blockedCount === 'number') {
-          setBlockedFromCorrections((prev) => prev + (data as any).blockedCount);
-        }
-        if (typeof (data as any)?.blocklistSize === 'number') {
-          setBlocklistSize((data as any).blocklistSize);
-        }
-        if (typeof (data as any)?.verifierDropped === 'number') {
-          setVerifierDropped((prev) => prev + (data as any).verifierDropped);
-        }
+        const d = data as any;
+        if (typeof d?.examplesLoaded === 'number') setExamplesLoaded(d.examplesLoaded);
+        if (typeof d?.negativeExamplesLoaded === 'number') setNegativePatternsLoaded(d.negativeExamplesLoaded);
+        if (typeof d?.confusionsLoaded === 'number') setConfusionsLoaded(d.confusionsLoaded);
+        if (typeof d?.roboflowGroundedFrames === 'number') setRoboflowGrounded((prev) => prev + d.roboflowGroundedFrames);
+        if (typeof d?.roboflowRejected === 'number') setRoboflowRejected((prev) => prev + d.roboflowRejected);
+        if (typeof d?.verifierDropped === 'number') setVerifierDropped((prev) => prev + d.verifierDropped);
 
         if (data?.actions) {
           const batchActions: DetectedAction[] = data.actions
@@ -983,11 +987,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 {globalActionsTotal > 0 && (
                   <Badge variant="outline">{globalActionsTotal.toLocaleString()} total actions loaded</Badge>
                 )}
-                {blocklistSize > 0 && (
-                  <Badge variant="outline">{blocklistSize} past rejection{blocklistSize === 1 ? '' : 's'} on this video</Badge>
+                {examplesLoaded > 0 && (
+                  <Badge variant="outline">{examplesLoaded} confirmed examples loaded</Badge>
                 )}
-                {blockedFromCorrections > 0 && (
-                  <Badge variant="default">Blocked {blockedFromCorrections} from past corrections</Badge>
+                {negativePatternsLoaded > 0 && (
+                  <Badge variant="outline">{negativePatternsLoaded} false-positive patterns loaded</Badge>
+                )}
+                {confusionsLoaded > 0 && (
+                  <Badge variant="outline">{confusionsLoaded} action confusions loaded</Badge>
+                )}
+                {roboflowGrounded > 0 && (
+                  <Badge variant="outline">{roboflowGrounded} frames object-grounded (Roboflow)</Badge>
+                )}
+                {roboflowRejected > 0 && (
+                  <Badge variant="default">Roboflow rejected {roboflowRejected} ball-action without ball</Badge>
                 )}
                 {verifierDropped > 0 && (
                   <Badge variant="default">Verifier dropped {verifierDropped} wrong-player flags</Badge>
