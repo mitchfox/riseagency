@@ -2130,6 +2130,17 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 players={players.map(p => ({ id: p.id, name: p.name }))}
                 selectedPlayerId={selectedVideo.player_id}
                 videoAnalysisId={selectedVideo.id}
+                onLinkPlayer={async (playerId) => {
+                  if (!selectedVideo) return;
+                  const { error } = await supabase
+                    .from('video_analyses')
+                    .update({ player_id: playerId })
+                    .eq('id', selectedVideo.id);
+                  if (error) throw new Error(error.message);
+                  const updated = { ...selectedVideo, player_id: playerId };
+                  setSelectedVideo(updated);
+                  setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+                }}
                 existingClips={selectedVideo.clips.map(c => ({ start: c.start, end: c.end, label: c.label, action_type: c.action_type, action_description: c.action_description }))}
                 onClipsAccepted={async (newClips) => {
                   if (!selectedVideo) return;
