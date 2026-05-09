@@ -1094,7 +1094,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                       <Badge variant="secondary">False positives {fp}</Badge>
                       <span className="text-muted-foreground">Recall: {recall}%</span>
                       {learningSavedCount > 0 && (
-                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Saved {learningSavedCount} learning record{learningSavedCount === 1 ? '' : 's'}</span>
+                        <span className="inline-flex items-center gap-1 text-primary"><CheckCircle2 className="h-3.5 w-3.5" /> Saved {learningSavedCount} backtest outcome{learningSavedCount === 1 ? '' : 's'} as cross-video training</span>
                       )}
                     </div>
                   );
