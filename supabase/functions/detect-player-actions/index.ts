@@ -15,6 +15,9 @@ interface SportscodeAction {
   category: string | null;
 }
 
+const GENERIC_DESCRIPTION = /^(moves?|moving|adjusts?|adjusting|repositions?|repositioning|positions?|positioning|tracks?|tracking|standing|stands|walks?|jogs?|jogging|prepares?|preparing|watches?|watching|observes?|observing)\b/i;
+const OFF_BALL_ALLOWED = /(press|pressure|mark|tracking back|recovery run|cover|defending cross|defending corner|defending shot|defensive positioning|sweeper|clearance)/i;
+
 async function fetchActionDefinitions(): Promise<SportscodeAction[]> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
