@@ -3858,20 +3858,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="identification_reference_image_url" className="text-sm">Reference Image URL</Label>
-                      <Input
-                        id="identification_reference_image_url"
-                        value={formData.identification_reference_image_url}
-                        onChange={(e) => setFormData({ ...formData, identification_reference_image_url: e.target.value })}
-                        placeholder="https://… a clear still of the player (face/full body)"
+                      <Label className="text-sm">Reference Images</Label>
+                      <PlayerReferenceImagesUploader
+                        playerId={editingPlayer?.id || null}
+                        values={formData.identification_reference_images}
+                        onChange={(urls) => setFormData({ ...formData, identification_reference_images: urls })}
                       />
-                      {formData.identification_reference_image_url && (
-                        <img
-                          src={formData.identification_reference_image_url}
-                          alt="Reference"
-                          className="mt-2 h-24 w-24 object-cover rounded border border-border"
-                        />
-                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="not_to_confuse_with" className="text-sm">Not To Confuse With</Label>
