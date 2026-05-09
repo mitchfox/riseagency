@@ -177,6 +177,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scanningRef = useRef(false);
+  useEffect(() => { scanningRef.current = scanning; }, [scanning]);
 
   const handleLinkPlayer = async () => {
     if (!pendingLinkPlayerId) {
@@ -204,24 +206,25 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
   }, [selectedPlayerForScan, videoUrl, backtestMode, scanning]);
 
-  // If the user navigates away or hides the tab mid-scan, stop the loop and keep
-  // the checkpoint so a reload or revisit can resume from where we left off.
+  // If the user navigates away or hides the tab mid-scan, ask the loop to pause
+  // gracefully so a reload or revisit can resume from where we left off.
+  // Mount-only — depending on `scanning` would re-run cleanup on every toggle
+  // and immediately cancel the loop we just started.
   useEffect(() => {
     const persistAndStop = () => {
-      if (scanning) {
-        pauseRef.current = true; // loop will write checkpoint at next batch boundary
-      }
+      if (scanningRef.current) pauseRef.current = true;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') persistAndStop();
     };
     window.addEventListener('beforeunload', persistAndStop);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') persistAndStop();
-    });
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.removeEventListener('beforeunload', persistAndStop);
-      // On component unmount cancel cleanly so the loop stops on next batch
-      cancelledRef.current = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      cancelledRef.current = true; // real unmount only
     };
-  }, [scanning]);
+  }, []);
 
   // Pull a sample of confirmed action examples across the entire database — these
   // act as few-shot training context for Gemini so the AI learns from the full
