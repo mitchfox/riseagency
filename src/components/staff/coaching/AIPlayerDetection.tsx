@@ -334,28 +334,38 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
   const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
     if (!selectedPlayerForScan) return;
-    const learningRows: AiDetectionFeedbackInsert[] = rows
-      .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
-      .map((row) => ({
-        player_id: selectedPlayerForScan,
-        video_analysis_id: videoAnalysisId || null,
-        action_type: row.expectedActionType || row.detectedActionType || null,
-        feedback_type: (row.type === 'missed' ? 'missed_detection' : 'timing_mismatch') as AiDetectionFeedbackInsert['feedback_type'],
-        reason: row.reason || null,
-        expected_timestamp: row.expectedTimestamp ?? null,
-        detected_timestamp: row.detectedTimestamp ?? null,
-        feedback_context: {
-          expectedEnd: row.expectedEndTimestamp ?? null,
-          expectedAction: row.expectedActionType || null,
-          detectedAction: row.detectedActionType || null,
-          actionDescription: row.actionDescription || null,
-          detectedDescription: row.description || null,
-          framesSampled: totalFrames,
-          detectionsReturned: detectedCount,
-          sampleEverySeconds: SAMPLE_EVERY_SECONDS,
-          minimumConfidence: MIN_CONFIDENCE,
-        },
-      }));
+    // Save EVERY backtest outcome as learning so the AI improves on its own:
+    //  - missed       → coach-confirmed positive the AI failed to find
+    //  - type_mismatch→ right window, wrong action label
+    //  - matched      → coach-confirmed positive the AI got right (anchor)
+    //  - false_positive→ AI flagged a moment that has no confirmed clip
+    const typeMap: Record<BacktestRow['type'], AiDetectionFeedbackInsert['feedback_type']> = {
+      missed: 'missed_detection',
+      type_mismatch: 'timing_mismatch',
+      matched: 'confirmed',
+      false_positive: 'not_involved',
+    };
+    const learningRows: AiDetectionFeedbackInsert[] = rows.map((row) => ({
+      player_id: selectedPlayerForScan,
+      video_analysis_id: videoAnalysisId || null,
+      action_type: row.expectedActionType || row.detectedActionType || null,
+      feedback_type: typeMap[row.type],
+      reason: row.reason || null,
+      expected_timestamp: row.expectedTimestamp ?? null,
+      detected_timestamp: row.detectedTimestamp ?? null,
+      feedback_context: {
+        backtestOutcome: row.type,
+        expectedEnd: row.expectedEndTimestamp ?? null,
+        expectedAction: row.expectedActionType || null,
+        detectedAction: row.detectedActionType || null,
+        actionDescription: row.actionDescription || null,
+        detectedDescription: row.description || null,
+        framesSampled: totalFrames,
+        detectionsReturned: detectedCount,
+        sampleEverySeconds: SAMPLE_EVERY_SECONDS,
+        minimumConfidence: MIN_CONFIDENCE,
+      },
+    }));
 
     if (learningRows.length === 0) {
       setLearningSavedCount(0);
@@ -503,17 +513,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       });
 
       const sortedByTime = [...qualityFiltered].sort((a, b) => a.timestamp - b.timestamp);
-      const dedupedByWindow: DetectedAction[] = [];
 
+      // If multiple distinct actions happen within the same <5s passage, fold them
+      // into ONE entry whose actionType is a comma-separated list (e.g. "Interception, Pass").
+      // Same action repeated within the window collapses to a single occurrence.
+      const COMBINE_WINDOW = 5;
+      const dedupedByWindow: DetectedAction[] = [];
       for (const action of sortedByTime) {
         const last = dedupedByWindow[dedupedByWindow.length - 1];
-        if (!last || Math.abs(last.timestamp - action.timestamp) >= 6) {
-          dedupedByWindow.push(action);
+        if (!last || Math.abs(last.timestamp - action.timestamp) >= COMBINE_WINDOW) {
+          dedupedByWindow.push({ ...action });
           continue;
         }
-
-        const isBetter = (confidenceRank[action.confidence.toLowerCase()] || 0) > (confidenceRank[last.confidence.toLowerCase()] || 0);
-        if (isBetter) dedupedByWindow[dedupedByWindow.length - 1] = action;
+        const existingTypes = last.actionType.split(',').map(s => s.trim()).filter(Boolean);
+        const incoming = action.actionType.trim();
+        if (!existingTypes.some(t => t.toLowerCase() === incoming.toLowerCase())) {
+          existingTypes.push(incoming);
+          last.actionType = existingTypes.join(', ');
+        }
+        // Keep the higher-confidence rationale and widen the clip window if needed
+        if ((confidenceRank[action.confidence.toLowerCase()] || 0) > (confidenceRank[last.confidence.toLowerCase()] || 0)) {
+          last.confidence = action.confidence;
+          last.description = action.description;
+        }
+        last.clipBefore = Math.max(last.clipBefore ?? 5, action.clipBefore ?? 5);
+        last.clipAfter = Math.max(last.clipAfter ?? 5, action.clipAfter ?? 5);
       }
 
       if (dedupedByWindow.length === 0) {
@@ -552,6 +576,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (backtestMode) {
           const norm = (value?: string | null) => (value || '').toLowerCase().trim();
+          const splitTypes = (value?: string | null) =>
+            (value || '').split(',').map(s => norm(s)).filter(Boolean);
           const EDGE_TOL = 2;
           const expected = (existingClips || []).filter((c) => c.end >= clampedStart && c.start <= clampedEnd);
           const usedExpected = new Set<number>();
@@ -576,7 +602,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             if (bestIdx >= 0) {
               const exp = expected[bestIdx];
               const expectedType = exp.action_type || exp.label;
-              const sameType = norm(expectedType) === norm(det.actionType);
+              const detectedSet = splitTypes(det.actionType);
+              const expectedSet = splitTypes(expectedType);
+              // Right event if any expected sub-type is present in the detected combined types
+              const sameType = expectedSet.length === 0
+                ? norm(expectedType) === norm(det.actionType)
+                : expectedSet.some(t => detectedSet.includes(t));
               usedExpected.add(bestIdx);
               rows.push({
                 type: sameType ? 'matched' : 'type_mismatch',

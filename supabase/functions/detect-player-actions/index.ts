@@ -161,17 +161,19 @@ ${allowedNames.map((n) => `  • ${n}`).join('\n')}
 - If none of these clearly applies, skip the frame.` : ''}
 
 DETECTION RULES:
-1. BALL PROXIMITY: The player must be DIRECTLY interacting with the ball OR clearly about to receive/contest it. Simply being near the ball is not enough.
+1. BALL INVOLVEMENT (outfield): Outfield players should only be flagged for ball-on actions or clearly involved off-ball moments (decisive runs, marking the receiver, pressing the carrier). Standing in shape with no immediate involvement is not a detection.
 
-2. ACTIVE vs PASSIVE: Only flag moments where the player is the PRIMARY ACTOR or the confirmed next receiver/defensive challenger in the immediate action. Do NOT flag:
-   - Standing in position while play happens nearby
-   - Jogging or running without purpose (unless a decisive run creating/exploiting space)
-   - Being in shot but watching play develop elsewhere
-   - General defensive shape-holding without directly pressing
+2. GOALKEEPERS: Goalkeepers are different. They are constantly in the action even without touching the ball. You SHOULD flag a goalkeeper for:
+   - Defending Cross / Defending Corner / Defending Shot whenever a cross, corner or shot is being delivered into their box, even if it is intercepted, blocked or saved by a teammate before they touch it
+   - Defensive Positioning when they actively reposition for a building attacking threat (set piece, shot opportunity, opposition entering the final third). Repeated frames of the same passive stance with no developing threat should still collapse to ONE moment.
+   - Applied Pressure / Sweeper actions when they advance off their line
+   Treat the THREAT of a shot or cross as a valid trigger for goalkeepers — coaches log these moments deliberately.
 
-3. DUPLICATE SUPPRESSION: A single passage of play is ONE action. If you see the player across consecutive frames, report ONLY the key moment.
+3. DUPLICATE SUPPRESSION: A single passage of play is ONE moment. If multiple consecutive frames show the same passage, report only the key frame. If TWO OR MORE distinct actions happen for this player inside the same short passage (under 5 seconds, e.g. an interception immediately followed by a pass) report a SINGLE entry whose actionType is a comma-separated list of every action that occurred in order, e.g. "Interception, Pass" or "Defending Cross, Clearance".
 
 4. FOULS & CARDS: Only report these if contact is CLEARLY visible in the frame. If uncertain, skip.
+
+5. RECALL OVER PRECISION: It is more important to catch every action a coach would log than to avoid the occasional extra flag. When uncertain whether a goalkeeper moment counts, prefer to flag it at "medium" confidence rather than skip it.
 
 
 
@@ -251,10 +253,9 @@ For each detected action provide:
                       type: 'object',
                       properties: {
                         frameIndex: { type: 'number', description: 'The 0-indexed frame number' },
-                        actionType: {
+                       actionType: {
                           type: 'string',
-                          description: 'Type of action from the allowed action list',
-                          enum: allowedNames,
+                          description: 'Single action name from the allowed list, OR a comma-separated combination (e.g. "Interception, Pass") when multiple distinct actions occur in the same <5s passage. Each part must match an allowed action name.',
                         },
                         confidence: { type: 'string', enum: ['high', 'medium'] },
                         description: { type: 'string', description: 'Brief description of what the player is doing — shown to the coach as the reason for flagging' },
@@ -311,15 +312,26 @@ For each detected action provide:
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
       .map((a: any) => {
-        const canonical = canonicalNameMap[normaliseName(String(a.actionType || ''))];
-        if (!canonical) return null;
+        // Accept either a single action name or a comma-separated list of allowed names
+        const rawParts = String(a.actionType || '')
+          .split(',')
+          .map((p: string) => p.trim())
+          .filter(Boolean);
+        const canonicalParts: string[] = [];
+        for (const part of rawParts) {
+          const c = canonicalNameMap[normaliseName(part)];
+          if (c && !canonicalParts.includes(c)) canonicalParts.push(c);
+        }
+        if (canonicalParts.length === 0) return null;
+        const canonical = canonicalParts.join(', ');
+        const primary = canonicalParts[0];
 
         const confidence = String(a.confidence || '').toLowerCase();
         if (confidence !== 'high' && confidence !== 'medium') return null;
         if (minConfidence === 'high' && confidence !== 'high') return null;
         if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
 
-        const timing = durationMap[normaliseName(canonical)] || { before: 5, after: 5 };
+        const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
 
         return {
           frameIndex: a.frameIndex,

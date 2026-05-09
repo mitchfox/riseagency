@@ -305,6 +305,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       const { data, error } = await supabase
         .from("analyses")
         .select("*")
+        .order("match_date", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -2000,7 +2001,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
               )}
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              {new Date(analysis.created_at).toLocaleDateString()}
+              {new Date((analysis as any).match_date || analysis.created_at).toLocaleDateString("en-GB")}
             </p>
             {["draft", "hidden", "clipped"].includes(analysis.visibility_status || "") && analysis.estimated_ready_at && (
               <p className="text-xs text-primary mt-1">

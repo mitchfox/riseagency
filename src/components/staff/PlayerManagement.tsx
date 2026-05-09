@@ -233,6 +233,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [playerSearchTerm, setPlayerSearchTerm] = useState("");
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
+  const [customCategories, setCustomCategories] = useState<{ id: string; name: string; key: string; sort_order: number; is_system: boolean }[]>([]);
   
   // Performance Report Dialog state
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
@@ -248,7 +249,21 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchAllTestResults();
     fetchOtherAnalyses();
     fetchAvailableAnalyses();
+    fetchCustomCategories();
   }, []);
+
+  const fetchCustomCategories = async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('player_categories')
+        .select('*')
+        .order('sort_order');
+      const slug = (s: string) => String(s || '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      setCustomCategories((data || []).map((r: any) => ({ ...r, key: slug(r.name) })));
+    } catch (err) {
+      console.error('Failed to fetch player categories:', err);
+    }
+  };
 
   // Store pending player/tab from URL to apply once players load
   const [pendingPlayerId, setPendingPlayerId] = useState<string | null>(null);
@@ -3862,13 +3877,25 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="represented">Represented</SelectItem>
-                        <SelectItem value="fuel_for_football">Fuel For Football</SelectItem>
-                        <SelectItem value="mandated">Mandated</SelectItem>
-                        <SelectItem value="previously_mandated">Previously Mandated</SelectItem>
-                        <SelectItem value="prospect">Prospect</SelectItem>
-                        <SelectItem value="scouted">Scouted</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {(() => {
+                          const builtIn: { key: string; label: string }[] = [
+                            { key: 'represented', label: 'Represented' },
+                            { key: 'fuel_for_football', label: 'Fuel For Football' },
+                            { key: 'mandated', label: 'Mandated' },
+                            { key: 'previously_mandated', label: 'Previously Mandated' },
+                            { key: 'prospect', label: 'Prospect' },
+                            { key: 'scouted', label: 'Scouted' },
+                            { key: 'other', label: 'Other' },
+                          ];
+                          const builtInKeys = new Set(builtIn.map(b => b.key));
+                          // Map managed categories whose slug isn't already built-in
+                          const extras = customCategories
+                            .filter(c => !builtInKeys.has(c.key))
+                            .map(c => ({ key: c.key, label: c.name }));
+                          return [...builtIn, ...extras].map(opt => (
+                            <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>
@@ -4748,7 +4775,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       <PlayerCategoriesDialog
         open={isCategoriesDialogOpen}
         onOpenChange={setIsCategoriesDialogOpen}
-        onSaved={fetchPlayers}
+        onSaved={() => { fetchCustomCategories(); fetchPlayers(); }}
       />
     </div>
   );
