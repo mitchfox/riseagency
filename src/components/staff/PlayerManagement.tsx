@@ -98,6 +98,22 @@ const formatDateForDb = (dateStr: string): string | null => {
   return null;
 };
 
+const categoryStatusKey = (name: string): string => {
+  const normalised = String(name || '').trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+  const legacyMap: Record<string, string> = {
+    signed: 'represented',
+    represented: 'represented',
+    mandate: 'mandated',
+    mandated: 'mandated',
+    'previously mandated': 'previously_mandated',
+    'fuel for football': 'fuel_for_football',
+    prospect: 'prospect',
+    scouted: 'scouted',
+    other: 'other',
+  };
+  return legacyMap[normalised] || normalised.replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+};
+
 const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
