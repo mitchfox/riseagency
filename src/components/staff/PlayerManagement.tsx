@@ -233,6 +233,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [playerSearchTerm, setPlayerSearchTerm] = useState("");
   const [isCategoriesDialogOpen, setIsCategoriesDialogOpen] = useState(false);
+  const [customCategories, setCustomCategories] = useState<{ id: string; name: string; key: string; sort_order: number; is_system: boolean }[]>([]);
   
   // Performance Report Dialog state
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
