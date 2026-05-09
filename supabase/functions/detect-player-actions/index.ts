@@ -190,6 +190,11 @@ DO NOT REPORT:
 - Celebrations or non-play moments
 - Anything below "medium" confidence
 
+EVIDENCE FIELDS (mandatory — drives a downstream verifier):
+- ballInvolvement: "on_ball" if the player touches/controls the ball; "direct_off_ball" ONLY for pressing the carrier, marking the receiver, a recovery run, or defending a cross/corner/shot; "gk_threat" ONLY for a goalkeeper facing a developing shot/cross/corner; "none" means do not flag.
+- primaryActor: true ONLY if this player is the primary actor in the passage. If they are merely visible nearby, set false (and the detection will be dropped).
+- visualCueMatched: copy ONE short phrase from the action type's VISUAL CUES that you can actually see in this frame. If you cannot, do not flag.
+
 CLIP DURATION:
 For each action, suggest clipBefore and clipAfter seconds using the action reference defaults. Extend for longer sequences, shorten for quick isolated moments. Default is 5s before and 5s after.
 
