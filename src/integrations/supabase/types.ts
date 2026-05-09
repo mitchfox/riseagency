@@ -3105,6 +3105,33 @@ export type Database = {
           },
         ]
       }
+      player_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_system: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_club_submissions: {
         Row: {
           club_name: string
@@ -4114,6 +4141,7 @@ export type Database = {
           club_logo: string | null
           contracts_password: string | null
           created_at: string | null
+          created_by: string | null
           date_of_birth: string | null
           email: string | null
           highlighted_match: Json | null
@@ -4122,6 +4150,7 @@ export type Database = {
           id: string
           identification_description: string | null
           identification_reference_image_url: string | null
+          identification_reference_images: string[]
           image_url: string | null
           league: string | null
           links: Json | null
@@ -4152,6 +4181,7 @@ export type Database = {
           club_logo?: string | null
           contracts_password?: string | null
           created_at?: string | null
+          created_by?: string | null
           date_of_birth?: string | null
           email?: string | null
           highlighted_match?: Json | null
@@ -4160,6 +4190,7 @@ export type Database = {
           id?: string
           identification_description?: string | null
           identification_reference_image_url?: string | null
+          identification_reference_images?: string[]
           image_url?: string | null
           league?: string | null
           links?: Json | null
@@ -4190,6 +4221,7 @@ export type Database = {
           club_logo?: string | null
           contracts_password?: string | null
           created_at?: string | null
+          created_by?: string | null
           date_of_birth?: string | null
           email?: string | null
           highlighted_match?: Json | null
@@ -4198,6 +4230,7 @@ export type Database = {
           id?: string
           identification_description?: string | null
           identification_reference_image_url?: string | null
+          identification_reference_images?: string[]
           image_url?: string | null
           league?: string | null
           links?: Json | null
