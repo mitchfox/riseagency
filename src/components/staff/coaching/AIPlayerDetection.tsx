@@ -513,17 +513,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       });
 
       const sortedByTime = [...qualityFiltered].sort((a, b) => a.timestamp - b.timestamp);
-      const dedupedByWindow: DetectedAction[] = [];
 
+      // If multiple distinct actions happen within the same <5s passage, fold them
+      // into ONE entry whose actionType is a comma-separated list (e.g. "Interception, Pass").
+      // Same action repeated within the window collapses to a single occurrence.
+      const COMBINE_WINDOW = 5;
+      const dedupedByWindow: DetectedAction[] = [];
       for (const action of sortedByTime) {
         const last = dedupedByWindow[dedupedByWindow.length - 1];
-        if (!last || Math.abs(last.timestamp - action.timestamp) >= 6) {
-          dedupedByWindow.push(action);
+        if (!last || Math.abs(last.timestamp - action.timestamp) >= COMBINE_WINDOW) {
+          dedupedByWindow.push({ ...action });
           continue;
         }
-
-        const isBetter = (confidenceRank[action.confidence.toLowerCase()] || 0) > (confidenceRank[last.confidence.toLowerCase()] || 0);
-        if (isBetter) dedupedByWindow[dedupedByWindow.length - 1] = action;
+        const existingTypes = last.actionType.split(',').map(s => s.trim()).filter(Boolean);
+        const incoming = action.actionType.trim();
+        if (!existingTypes.some(t => t.toLowerCase() === incoming.toLowerCase())) {
+          existingTypes.push(incoming);
+          last.actionType = existingTypes.join(', ');
+        }
+        // Keep the higher-confidence rationale and widen the clip window if needed
+        if ((confidenceRank[action.confidence.toLowerCase()] || 0) > (confidenceRank[last.confidence.toLowerCase()] || 0)) {
+          last.confidence = action.confidence;
+          last.description = action.description;
+        }
+        last.clipBefore = Math.max(last.clipBefore ?? 5, action.clipBefore ?? 5);
+        last.clipAfter = Math.max(last.clipAfter ?? 5, action.clipAfter ?? 5);
       }
 
       if (dedupedByWindow.length === 0) {
