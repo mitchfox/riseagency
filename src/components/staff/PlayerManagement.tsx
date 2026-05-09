@@ -3441,25 +3441,9 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(() => {
-                          const builtIn: { key: string; label: string }[] = [
-                            { key: 'represented', label: 'Represented' },
-                            { key: 'fuel_for_football', label: 'Fuel For Football' },
-                            { key: 'mandated', label: 'Mandated' },
-                            { key: 'previously_mandated', label: 'Previously Mandated' },
-                            { key: 'prospect', label: 'Prospect' },
-                            { key: 'scouted', label: 'Scouted' },
-                            { key: 'other', label: 'Other' },
-                          ];
-                          const builtInKeys = new Set(builtIn.map(b => b.key));
-                          // Map managed categories whose slug isn't already built-in
-                          const extras = customCategories
-                            .filter(c => !builtInKeys.has(c.key))
-                            .map(c => ({ key: c.key, label: c.name }));
-                          return [...builtIn, ...extras].map(opt => (
-                            <SelectItem key={opt.key} value={opt.key}>{opt.label}</SelectItem>
-                          ));
-                        })()}
+                        {categorySections.map(opt => (
+                          <SelectItem key={opt.key} value={opt.key}>{opt.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
