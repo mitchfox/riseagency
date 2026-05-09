@@ -576,6 +576,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
         if (backtestMode) {
           const norm = (value?: string | null) => (value || '').toLowerCase().trim();
+          const splitTypes = (value?: string | null) =>
+            (value || '').split(',').map(s => norm(s)).filter(Boolean);
           const EDGE_TOL = 2;
           const expected = (existingClips || []).filter((c) => c.end >= clampedStart && c.start <= clampedEnd);
           const usedExpected = new Set<number>();
@@ -600,7 +602,12 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             if (bestIdx >= 0) {
               const exp = expected[bestIdx];
               const expectedType = exp.action_type || exp.label;
-              const sameType = norm(expectedType) === norm(det.actionType);
+              const detectedSet = splitTypes(det.actionType);
+              const expectedSet = splitTypes(expectedType);
+              // Right event if any expected sub-type is present in the detected combined types
+              const sameType = expectedSet.length === 0
+                ? norm(expectedType) === norm(det.actionType)
+                : expectedSet.some(t => detectedSet.includes(t));
               usedExpected.add(bestIdx);
               rows.push({
                 type: sameType ? 'matched' : 'type_mismatch',
