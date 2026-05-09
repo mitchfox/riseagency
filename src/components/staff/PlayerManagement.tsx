@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link, Settings, Search as SearchIcon } from "lucide-react";
+import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link, Settings, Search as SearchIcon, Brain } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
 import { logActivity } from "@/lib/activityLogger";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
@@ -43,6 +43,7 @@ import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./Play
 import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
 import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
+import { PlayerSpqHistory } from "./PlayerSpqHistory";
 
 interface Player {
   id: string;
@@ -2624,9 +2625,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
               <TabsContent value="programming" className="mt-4 md:mt-0">
                 <Tabs defaultValue="sps" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
                     <TabsTrigger value="sps" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Strength, Power & Speed (SPS)</TabsTrigger>
                     <TabsTrigger value="nutrition" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Nutrition</TabsTrigger>
+                    <TabsTrigger value="psychology" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">
+                      <Brain className="h-3.5 w-3.5 mr-1.5" /> Psychology
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="sps" className="mt-0">
@@ -2958,6 +2962,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                             No programs yet. Click "Manage Programs" to create one.
                           </p>
                         )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="psychology" className="mt-0">
+                    <Card>
+                      <CardHeader className="px-3 md:px-6 py-3 md:py-4">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Brain className="h-4 w-4 text-primary" /> Psychology — SPQ Reports
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">All saved SPQs for this player. Run new ones from the Programming → Psychology section.</p>
+                      </CardHeader>
+                      <CardContent className="px-3 md:px-6 py-4">
+                        {selectedPlayerId && <PlayerSpqHistory playerId={selectedPlayerId} variant="inline" />}
                       </CardContent>
                     </Card>
                   </TabsContent>

@@ -404,6 +404,31 @@ export const PsychologySection = () => {
             </CardContent>
           </Card>
 
+          {/* Prominent Save CTA at the end of the SPQ */}
+          <Card className="border-primary/40 bg-primary/5">
+            <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm">
+                <div className="font-semibold">Finished? Save this SPQ.</div>
+                <div className="text-muted-foreground text-xs">
+                  {playerId && playerId !== "none"
+                    ? "It will appear in this player's Athlete Centre, Player Management and Player Portal Psychology sections."
+                    : "Assign a player above so it appears in their Athlete Centre, Player Management and Player Portal."}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={saveReport} disabled={saving} size="lg" className="gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save to Saved SPQs
+                </Button>
+                {shareUrl && (
+                  <Button variant="outline" size="lg" onClick={() => navigator.clipboard.writeText(shareUrl)} className="gap-2">
+                    <Link2 className="h-4 w-4" />Copy share URL
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Saved reports */}
           <Card>
             <Collapsible open={savedOpen} onOpenChange={setSavedOpen}>
