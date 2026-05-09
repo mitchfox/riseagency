@@ -181,6 +181,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
   const [blockedFromCorrections, setBlockedFromCorrections] = useState(0);
   const [blocklistSize, setBlocklistSize] = useState(0);
+  const [verifierDropped, setVerifierDropped] = useState(0);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
@@ -505,6 +506,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setLearningSavedCount(0);
     setBlockedFromCorrections(0);
     setBlocklistSize(0);
+    setVerifierDropped(0);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
@@ -618,6 +620,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
         if (typeof (data as any)?.blocklistSize === 'number') {
           setBlocklistSize((data as any).blocklistSize);
+        }
+        if (typeof (data as any)?.verifierDropped === 'number') {
+          setVerifierDropped((prev) => prev + (data as any).verifierDropped);
         }
 
         if (data?.actions) {
@@ -983,6 +988,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
                 {blockedFromCorrections > 0 && (
                   <Badge variant="default">Blocked {blockedFromCorrections} from past corrections</Badge>
+                )}
+                {verifierDropped > 0 && (
+                  <Badge variant="default">Verifier dropped {verifierDropped} wrong-player flags</Badge>
                 )}
               </div>
             </div>
