@@ -1091,7 +1091,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       const bioJSON = reconstructBioJSON();
-      
+      const { data: { user: _currentUser } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from("players")
         .insert({
@@ -1110,6 +1111,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
+          created_by: _currentUser?.id || null,
         } as any);
 
       if (error) throw error;
