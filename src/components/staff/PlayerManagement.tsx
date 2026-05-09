@@ -1469,137 +1469,53 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <SelectValue placeholder="Select a player" />
           </SelectTrigger>
           <SelectContent>
-            {representedPlayers.length > 0 && (
-              <>
+            {visibleCategoryGroups.map((group) => (
+              <div key={group.key}>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Represented
+                  {group.name}
                 </div>
-                {representedPlayers.map((player) => (
+                {group.players.map((player) => (
                   <SelectItem key={player.id} value={player.id}>
                     {player.name}
                   </SelectItem>
                 ))}
-              </>
-            )}
-            {fuelForFootballPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Fuel for Football
-                </div>
-                {fuelForFootballPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
-            {mandatedPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Mandated
-                </div>
-                {mandatedPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
-            {otherPlayers.length > 0 && (
-              <>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                  Other
-                </div>
-                {otherPlayers.map((player) => (
-                  <SelectItem key={player.id} value={player.id}>
-                    {player.name}
-                  </SelectItem>
-                ))}
-              </>
-            )}
+              </div>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       {/* Desktop Inner Player Sidebar */}
       <div className="hidden md:flex w-20 flex-col gap-2 overflow-y-auto border-r pr-2">
-        {/* Represented Players */}
-        {representedPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
-        ))}
-        
-        {/* Gold border separator */}
-        {representedPlayers.length > 0 && fuelForFootballPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
-        )}
-
-        {/* Fuel for Football Players */}
-        {fuelForFootballPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
-        ))}
-
-        {/* Gold border separator */}
-        {(representedPlayers.length > 0 || fuelForFootballPlayers.length > 0) && mandatedPlayers.length > 0 && (
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />
-        )}
-        
-        {/* Other Players */}
-        {otherPlayers.map((player) => (
-          <button
-            key={player.id}
-            ref={(el) => (playerRefs.current[player.id] = el)}
-            onClick={() => handlePlayerSelect(player.id)}
-            className={`relative group transition-all ${
-              selectedPlayerId === player.id 
-                ? 'opacity-100 ring-2 ring-primary' 
-                : 'opacity-40 hover:opacity-70'
-            } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
-            title={player.name}
-          >
-            <Avatar className="w-14 h-14">
-              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-              <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-            </Avatar>
-          </button>
+        {visibleCategoryGroups.map((group, groupIndex) => (
+          <div key={group.key} className="contents">
+            {groupIndex > 0 && <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent my-2" />}
+            {group.players.map((player) => (
+              <button
+                key={player.id}
+                ref={(el) => (playerRefs.current[player.id] = el)}
+                onClick={() => handlePlayerSelect(player.id)}
+                className={`relative group transition-all ${
+                  selectedPlayerId === player.id 
+                    ? 'opacity-100 ring-2 ring-primary' 
+                    : 'opacity-40 hover:opacity-70'
+                } ${autoSelectedFromUrl && selectedPlayerId === player.id ? 'animate-pulse' : ''}`}
+                title={`${group.name}: ${player.name}`}
+              >
+                <Avatar className="w-14 h-14">
+                  <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
+                  <AvatarFallback className="text-xs">{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
+                </Avatar>
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
       {!selectedPlayerId ? (
-          // Preview Cards Grid grouped by representation status
           <div className="space-y-6 px-3 md:px-0">
-            {/* Add Player Button */}
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Players</h2>
               <div className="flex items-center gap-2">
@@ -1662,442 +1578,28 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </Button>
               </div>
             </div>
-            
-            {/* Represented Players */}
-            {representedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-base md:text-lg font-semibold mb-3 text-primary">Represented</h3>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2 md:gap-4">
-                  {representedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all overflow-hidden"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <div className="flex flex-col sm:flex-row h-full">
-                          {/* Image Section - Top on mobile, Left on desktop */}
-                          <div className="w-full h-40 sm:w-32 sm:h-auto flex-shrink-0 relative">
-                            <img 
-                              src={player.image_url || undefined} 
-                              alt={player.name}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          </div>
-                          
-                          {/* Content Section - Bottom on mobile, Right on desktop */}
-                          <div className="flex-1 flex flex-col p-3 sm:p-4">
-                            <div className="flex-1 space-y-1">
-                              <h3 className="font-semibold text-sm sm:text-base md:text-lg truncate">{player.name}</h3>
-                              <p className="text-xs sm:text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex flex-wrap items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span className="truncate max-w-[8rem] sm:max-w-none">{player.nationality}</span>
-                              </div>
-                              
-                              {player.club && (
-                                <div className="flex items-center gap-2 text-[11px] sm:text-xs">
-                                  {player.club_logo && (
-                                    <img src={player.club_logo} alt="" className="w-4 h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0" />
-                                  )}
-                                  <span className="text-muted-foreground truncate max-w-[9rem] sm:max-w-none">{player.club}</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs pt-2 mt-2 border-t border-border/50">
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-sm sm:text-base">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground text-[10px] sm:text-xs">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
+
+            {visibleCategoryGroups.map((group, index) => {
+              const defaultExpanded = index < 4 && !['other', 'scouted'].includes(group.key);
+              const isCollapsed = collapsedSections[group.key] ?? !defaultExpanded;
+              return (
+                <div key={group.key} className="space-y-4">
+                  {index > 0 && <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />}
+                  <button
+                    className="flex items-center gap-2 text-lg font-semibold text-primary hover:opacity-80 transition-opacity"
+                    onClick={() => toggleSection(group.key)}
+                  >
+                    {isCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+                    {group.name} ({group.players.length})
+                  </button>
+                  {!isCollapsed && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                      {group.players.map(renderPlayerCard)}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.represented.length > 0 && groupedPlayers.mandated.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Mandated Players */}
-            {mandatedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-base md:text-lg font-semibold mb-4 text-primary">Mandated</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {mandatedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span>{player.nationality}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {player.club && (
-                            <div className="flex items-center gap-2 text-sm mb-3">
-                              {player.club_logo && (
-                                <img src={player.club_logo} alt="" className="w-5 h-5 object-contain" />
-                              )}
-                              <span className="text-muted-foreground">{player.club}</span>
-                            </div>
-                          )}
-                          {playerStats && (
-                            <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                <div className="text-muted-foreground">Matches</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                <div className="text-muted-foreground">Minutes</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.mandated.length > 0 && previouslyMandatedPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Previously Mandated Players */}
-            {previouslyMandatedPlayers.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Previously Mandated</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {previouslyMandatedPlayers.map((player) => {
-                    const playerStats = stats[player.id];
-                    return (
-                      <Card 
-                        key={player.id} 
-                        className="cursor-pointer hover:shadow-lg transition-all"
-                        onClick={() => handlePlayerSelect(player.id)}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="w-16 h-16">
-                              <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                              <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                              <p className="text-sm text-muted-foreground">{player.position}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                <span>{player.age}y</span>
-                                <span>•</span>
-                                <span>{player.nationality}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          {playerStats && (
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                <div className="text-muted-foreground">Matches</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                <div className="text-muted-foreground">Minutes</div>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {(previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0) && fuelForFootballPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Fuel For Football Players - Collapsible */}
-            {fuelForFootballPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('fuel_for_football')}
-                >
-                  {collapsedSections.fuel_for_football ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Fuel For Football ({fuelForFootballPlayers.length})
-                </button>
-                {!collapsedSections.fuel_for_football && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {fuelForFootballPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Prospect Players - Collapsible */}
-            {prospectPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('prospect')}
-                >
-                  {collapsedSections.prospect ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Prospect ({prospectPlayers.length})
-                </button>
-                {!collapsedSections.prospect && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {prospectPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {(fuelForFootballPlayers.length > 0 || previouslyMandatedPlayers.length > 0 || groupedPlayers.mandated.length > 0 || prospectPlayers.length > 0) && groupedPlayers.other.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Other Players - Collapsible */}
-            {groupedPlayers.other.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('other')}
-                >
-                  {collapsedSections.other ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Other ({groupedPlayers.other.length})
-                </button>
-                {!collapsedSections.other && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {groupedPlayers.other.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Gold Border Separator */}
-            {groupedPlayers.other.length > 0 && scoutedPlayers.length > 0 && (
-              <div className="h-1 bg-gradient-to-r from-transparent via-gold to-transparent rounded-full" />
-            )}
-
-            {/* Scouted Players - Collapsible */}
-            {scoutedPlayers.length > 0 && (
-              <div>
-                <button 
-                  className="flex items-center gap-2 text-lg font-semibold mb-4 text-primary hover:opacity-80 transition-opacity"
-                  onClick={() => toggleSection('scouted')}
-                >
-                  {collapsedSections.scouted ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                  Scouted ({scoutedPlayers.length})
-                </button>
-                {!collapsedSections.scouted && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                    {scoutedPlayers.map((player) => {
-                      const playerStats = stats[player.id];
-                      return (
-                        <Card 
-                          key={player.id} 
-                          className="cursor-pointer hover:shadow-lg transition-all"
-                          onClick={() => handlePlayerSelect(player.id)}
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-16 h-16">
-                                <AvatarImage src={player.image_url || undefined} alt={player.name} className="object-cover" />
-                                <AvatarFallback>{(player.name || '').split(' ').filter(n => n).map(n => n[0]).join('') || '??'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate" title={player.name}>{player.name}</h3>
-                                <p className="text-sm text-muted-foreground">{player.position}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                  <span>{player.age}y</span>
-                                  <span>•</span>
-                                  <span>{player.nationality}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            {playerStats && (
-                              <div className="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.matches || 0}</div>
-                                  <div className="text-muted-foreground">Matches</div>
-                                </div>
-                                <div>
-                                  <div className="font-semibold text-lg">{playerStats.minutes || 0}</div>
-                                  <div className="text-muted-foreground">Minutes</div>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+              );
+            })}
           </div>
         ) : !selectedPlayer ? (
           // Player selected but not found (loading or invalid)
