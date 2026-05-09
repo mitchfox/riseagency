@@ -334,28 +334,38 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
   const saveBacktestLearning = async (rows: BacktestRow[], detectedCount: number, totalFrames: number) => {
     if (!selectedPlayerForScan) return;
-    const learningRows: AiDetectionFeedbackInsert[] = rows
-      .filter((row) => row.type === 'missed' || row.type === 'type_mismatch')
-      .map((row) => ({
-        player_id: selectedPlayerForScan,
-        video_analysis_id: videoAnalysisId || null,
-        action_type: row.expectedActionType || row.detectedActionType || null,
-        feedback_type: (row.type === 'missed' ? 'missed_detection' : 'timing_mismatch') as AiDetectionFeedbackInsert['feedback_type'],
-        reason: row.reason || null,
-        expected_timestamp: row.expectedTimestamp ?? null,
-        detected_timestamp: row.detectedTimestamp ?? null,
-        feedback_context: {
-          expectedEnd: row.expectedEndTimestamp ?? null,
-          expectedAction: row.expectedActionType || null,
-          detectedAction: row.detectedActionType || null,
-          actionDescription: row.actionDescription || null,
-          detectedDescription: row.description || null,
-          framesSampled: totalFrames,
-          detectionsReturned: detectedCount,
-          sampleEverySeconds: SAMPLE_EVERY_SECONDS,
-          minimumConfidence: MIN_CONFIDENCE,
-        },
-      }));
+    // Save EVERY backtest outcome as learning so the AI improves on its own:
+    //  - missed       → coach-confirmed positive the AI failed to find
+    //  - type_mismatch→ right window, wrong action label
+    //  - matched      → coach-confirmed positive the AI got right (anchor)
+    //  - false_positive→ AI flagged a moment that has no confirmed clip
+    const typeMap: Record<BacktestRow['type'], AiDetectionFeedbackInsert['feedback_type']> = {
+      missed: 'missed_detection',
+      type_mismatch: 'timing_mismatch',
+      matched: 'confirmed',
+      false_positive: 'not_involved',
+    };
+    const learningRows: AiDetectionFeedbackInsert[] = rows.map((row) => ({
+      player_id: selectedPlayerForScan,
+      video_analysis_id: videoAnalysisId || null,
+      action_type: row.expectedActionType || row.detectedActionType || null,
+      feedback_type: typeMap[row.type],
+      reason: row.reason || null,
+      expected_timestamp: row.expectedTimestamp ?? null,
+      detected_timestamp: row.detectedTimestamp ?? null,
+      feedback_context: {
+        backtestOutcome: row.type,
+        expectedEnd: row.expectedEndTimestamp ?? null,
+        expectedAction: row.expectedActionType || null,
+        detectedAction: row.detectedActionType || null,
+        actionDescription: row.actionDescription || null,
+        detectedDescription: row.description || null,
+        framesSampled: totalFrames,
+        detectionsReturned: detectedCount,
+        sampleEverySeconds: SAMPLE_EVERY_SECONDS,
+        minimumConfidence: MIN_CONFIDENCE,
+      },
+    }));
 
     if (learningRows.length === 0) {
       setLearningSavedCount(0);
