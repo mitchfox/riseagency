@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
@@ -164,6 +165,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [selectedPlayerForScan, setSelectedPlayerForScan] = useState<string>(selectedPlayerId || "");
   const [pendingLinkPlayerId, setPendingLinkPlayerId] = useState<string>("");
   const [linkingPlayer, setLinkingPlayer] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualDescription, setManualDescription] = useState("");
+  const [manualNotPlayer, setManualNotPlayer] = useState("");
+  const [manualReferenceImageUrl, setManualReferenceImageUrl] = useState("");
   const [historicalConfirmedExamples, setHistoricalConfirmedExamples] = useState<ConfirmedExample[]>([]);
   const [globalCorpus, setGlobalCorpus] = useState<ConfirmedExample[]>([]);
   const [playerActionsTotal, setPlayerActionsTotal] = useState(0);
@@ -175,6 +181,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [resumeState, setResumeState] = useState<PersistedScanState | null>(null);
   const [blockedFromCorrections, setBlockedFromCorrections] = useState(0);
   const [blocklistSize, setBlocklistSize] = useState(0);
+  const [verifierDropped, setVerifierDropped] = useState(0);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
@@ -479,7 +486,13 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   };
 
   const startScan = async () => {
-    if (!selectedPlayerForScan || !playerName.trim()) {
+    const usingManual = manualMode && !selectedPlayerForScan;
+    if (usingManual) {
+      if (!manualName.trim() || !manualDescription.trim()) {
+        toast.error("Manual scan needs a name and identification description");
+        return;
+      }
+    } else if (!selectedPlayerForScan || !playerName.trim()) {
       toast.error("Link this analysis to a player first");
       return;
     }
@@ -493,6 +506,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setLearningSavedCount(0);
     setBlockedFromCorrections(0);
     setBlocklistSize(0);
+    setVerifierDropped(0);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
@@ -513,7 +527,8 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     ];
 
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
-    const existing = readScanState(videoUrl, selectedPlayerForScan, mode);
+    const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
+    const existing = readScanState(videoUrl, scanIdentityKey, mode);
     const allDetected: DetectedAction[] =
       existing && existing.totalFrames === totalFrames ? [...existing.allDetected] : [];
     const startBatchAt =
@@ -535,7 +550,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           // Persist progress and stop the loop until the user resumes (which restarts startScan)
           writeScanState({
             videoUrl,
-            playerId: selectedPlayerForScan,
+            playerId: scanIdentityKey,
             backtestMode,
             totalFrames,
             nextBatchStart: batchStart,
@@ -543,7 +558,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             savedAt: Date.now(),
           }, mode);
           toast.info(`Paused at ${Math.round((batchStart / totalFrames) * 100)}%. Press Resume to continue.`);
-          setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+          setResumeState(readScanState(videoUrl, scanIdentityKey, mode));
           if (hiddenVideo) {
             hiddenVideo.pause();
             hiddenVideo.src = "";
@@ -574,18 +589,20 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           body: {
             frames,
             videoAnalysisId: videoAnalysisId || null,
-            playerId: selectedPlayerForScan,
+            playerId: usingManual ? null : selectedPlayerForScan,
             playerInfo: {
-              name: playerName,
-              description: [playerDescription, kitDescription].filter(Boolean).join('. ') || undefined,
-              notPlayer: notPlayer || undefined,
-              position: (players?.find(p => p.id === selectedPlayerForScan) as any)?.position || undefined,
+              name: usingManual ? manualName.trim() : playerName,
+              description: usingManual
+                ? manualDescription.trim()
+                : ([playerDescription, kitDescription].filter(Boolean).join('. ') || undefined),
+              notPlayer: usingManual ? (manualNotPlayer.trim() || undefined) : (notPlayer || undefined),
+              position: usingManual ? undefined : (players?.find(p => p.id === selectedPlayerForScan) as any)?.position || undefined,
             },
             videoContext: {
               opponent: opponent || undefined,
             },
-            referenceImageUrl: referenceImageUrl || undefined,
-            teamKitDescription: kitDescription || undefined,
+            referenceImageUrl: usingManual ? (manualReferenceImageUrl.trim() || undefined) : (referenceImageUrl || undefined),
+            teamKitDescription: usingManual ? undefined : (kitDescription || undefined),
             minConfidence: MIN_CONFIDENCE,
             sampleEverySeconds: sampleEvery,
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
@@ -603,6 +620,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
         if (typeof (data as any)?.blocklistSize === 'number') {
           setBlocklistSize((data as any).blocklistSize);
+        }
+        if (typeof (data as any)?.verifierDropped === 'number') {
+          setVerifierDropped((prev) => prev + (data as any).verifierDropped);
         }
 
         if (data?.actions) {
@@ -634,7 +654,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         // Persist a checkpoint after every successful batch so a navigation/reload can resume.
         writeScanState({
           videoUrl,
-          playerId: selectedPlayerForScan,
+          playerId: scanIdentityKey,
           backtestMode,
           totalFrames,
           nextBatchStart: batchEnd,
@@ -643,7 +663,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }, mode);
       }
       // Completed cleanly — drop checkpoint
-      clearScanState(videoUrl, selectedPlayerForScan, mode);
+      clearScanState(videoUrl, scanIdentityKey, mode);
 
       const confidenceRank: Record<string, number> = { high: 2, medium: 1 };
       const contactSensitive = /(foul|fouled|penalty|red card|yellow card)/i;
@@ -886,27 +906,63 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               ) : (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link.
+                    No player linked to this analysis yet. Pick one below to link them — this will save against the analysis so the rest of the app sees the same link. Or scan an unlisted player without linking.
                   </p>
-                  {players && players.length > 0 ? (
+                  {!manualMode && players && players.length > 0 ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Select value={pendingLinkPlayerId} onValueChange={setPendingLinkPlayerId}>
-                        <SelectTrigger className="h-9 w-full sm:w-[280px]">
-                          <SelectValue placeholder="Choose a player to link" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[260px]">
-                          {[...players].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <PlayerCombobox
+                        players={[...players].sort((a, b) => a.name.localeCompare(b.name)).map(p => ({
+                          id: p.id, name: p.name, position: (p as any).position,
+                        }))}
+                        value={pendingLinkPlayerId || null}
+                        onChange={setPendingLinkPlayerId}
+                        placeholder="Type to search players..."
+                        className="h-9 w-full sm:w-[320px]"
+                        groupedByStatus={false}
+                        showAvatar={false}
+                      />
                       <Button type="button" size="sm" onClick={handleLinkPlayer} disabled={!pendingLinkPlayerId || linkingPlayer} className="gap-1">
                         {linkingPlayer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
                         Link to analysis
                       </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setManualMode(true)}>
+                        Player not in list?
+                      </Button>
                     </div>
-                  ) : (
+                  ) : !manualMode ? (
                     <p className="text-xs text-muted-foreground">No players available to link.</p>
+                  ) : null}
+                  {manualMode && (
+                    <div className="space-y-2 rounded border border-border bg-background/50 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground">Scan an unlisted player</div>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setManualMode(false)}>Back to list</Button>
+                      </div>
+                      <Input
+                        placeholder="Player name (required)"
+                        value={manualName}
+                        onChange={(e) => setManualName(e.target.value)}
+                      />
+                      <Textarea
+                        placeholder="Identification description (required) — shirt number, hair, skin tone, build, boots, anything that uniquely identifies them on screen."
+                        value={manualDescription}
+                        onChange={(e) => setManualDescription(e.target.value)}
+                        className="min-h-[80px]"
+                      />
+                      <Input
+                        placeholder="Do not confuse with — names and brief look of similar teammates"
+                        value={manualNotPlayer}
+                        onChange={(e) => setManualNotPlayer(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Reference image URL (optional but strongly recommended)"
+                        value={manualReferenceImageUrl}
+                        onChange={(e) => setManualReferenceImageUrl(e.target.value)}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Manual scans are not stored against any player record. Past corrections cannot be applied because there is no player to learn against.
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -932,6 +988,9 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 )}
                 {blockedFromCorrections > 0 && (
                   <Badge variant="default">Blocked {blockedFromCorrections} from past corrections</Badge>
+                )}
+                {verifierDropped > 0 && (
+                  <Badge variant="default">Verifier dropped {verifierDropped} wrong-player flags</Badge>
                 )}
               </div>
             </div>
@@ -968,7 +1027,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             )}
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
+              <Button
+                onClick={startScan}
+                disabled={
+                  scanning ||
+                  (!(manualMode && manualName.trim() && manualDescription.trim()) &&
+                    (!selectedPlayerForScan || !playerName.trim()))
+                }
+                className="gap-2"
+              >
                 {scanning ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

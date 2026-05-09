@@ -415,9 +415,101 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       }
     }
 
+    // VERIFIER PASS — for every surviving candidate, re-ask the model in a tight,
+    // identity-only prompt: "is the player on screen at this exact moment really X,
+    // and are they the one performing this action?". This catches the dominant FP
+    // pattern where the first pass labels a teammate's action as the target player's.
+    let verifierDropped = 0;
+    let finalCandidates = merged;
+    if (merged.length > 0 && referenceImageUrl) {
+      try {
+        const verifierFrames = merged
+          .map((det: any) => {
+            const f = frames[det.frameIndex];
+            if (!f) return null;
+            return { dataUrl: f.dataUrl, candidateId: det.frameIndex, actionType: det.actionType, timestamp: det.timestamp };
+          })
+          .filter((x: any) => x);
+
+        if (verifierFrames.length > 0) {
+          const vSystem = `You are verifying player-action detections. The first image is a REFERENCE STILL of ${playerInfo.name}. Use face, hair, skin tone, build and shirt number from that still as your anchor.${playerInfo.description ? `\nIDENTITY NOTES: ${playerInfo.description}` : ''}${playerInfo.notPlayer ? `\nDO NOT CONFUSE WITH: ${playerInfo.notPlayer}` : ''}\n\nFor each candidate frame, decide YES or NO:\n- YES only if you can clearly see ${playerInfo.name} on screen AND they are the one actively performing the labelled action.\n- NO if the player on the ball is a teammate, an opponent, or you cannot identify ${playerInfo.name} in the frame at all.\n- NO if ${playerInfo.name} is in the frame but standing/jogging/watching while a different player performs the action.\n\nDefault to NO when uncertain. Being on the same team or in the same shot is not enough.`;
+
+          const vContent: any[] = [
+            { type: 'text', text: `REFERENCE — ${playerInfo.name}` },
+            { type: 'image_url', image_url: { url: referenceImageUrl } },
+          ];
+          for (const v of verifierFrames) {
+            vContent.push({ type: 'text', text: `Candidate ${v.candidateId} — labelled "${v.actionType}" at ${Math.floor(v.timestamp)}s. Is ${playerInfo.name} the one performing this action?` });
+            vContent.push({ type: 'image_url', image_url: { url: v.dataUrl } });
+          }
+
+          const vRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: 'system', content: vSystem },
+                { role: 'user', content: vContent },
+              ],
+              tools: [{
+                type: 'function',
+                function: {
+                  name: 'report_verification',
+                  description: 'Confirm or reject each candidate detection',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      verdicts: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            candidateId: { type: 'number' },
+                            confirmed: { type: 'boolean' },
+                            reason: { type: 'string' },
+                          },
+                          required: ['candidateId', 'confirmed'],
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    required: ['verdicts'],
+                    additionalProperties: false,
+                  },
+                },
+              }],
+              tool_choice: { type: 'function', function: { name: 'report_verification' } },
+            }),
+          });
+
+          if (vRes.ok) {
+            const vJson = await vRes.json();
+            const vCall = vJson.choices?.[0]?.message?.tool_calls?.[0];
+            if (vCall?.function?.arguments) {
+              const vParsed = JSON.parse(vCall.function.arguments);
+              const verdicts: { candidateId: number; confirmed: boolean }[] = Array.isArray(vParsed?.verdicts) ? vParsed.verdicts : [];
+              const verdictMap = new Map<number, boolean>();
+              for (const v of verdicts) verdictMap.set(v.candidateId, !!v.confirmed);
+              finalCandidates = merged.filter((det: any) => {
+                // If the verifier didn't return a verdict for a candidate, drop it (safer default).
+                const ok = verdictMap.get(det.frameIndex);
+                if (!ok) verifierDropped++;
+                return !!ok;
+              });
+            }
+          } else {
+            console.warn('Verifier pass failed, keeping first-pass detections', vRes.status);
+          }
+        }
+      } catch (vErr) {
+        console.warn('Verifier pass error, keeping first-pass detections', vErr);
+      }
+    }
+
     // Per-minute cap (top 6 by confidence) — guards against floods on a single passage
     const byMinute: Record<number, any[]> = {};
-    for (const d of merged) {
+    for (const d of finalCandidates) {
       const m = Math.floor((d.timestamp || 0) / 60);
       (byMinute[m] ||= []).push(d);
     }
@@ -434,7 +526,7 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     const finalActions = capped.map(({ timestamp: _t, visualCueMatched: _v, ...rest }) => rest);
 
     return new Response(
-      JSON.stringify({ actions: finalActions, durationMap, blockedCount, blocklistSize: blocklist.length }),
+      JSON.stringify({ actions: finalActions, durationMap, blockedCount, blocklistSize: blocklist.length, verifierDropped }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
