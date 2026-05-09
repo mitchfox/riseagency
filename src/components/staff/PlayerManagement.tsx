@@ -1343,14 +1343,17 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
   // Group players by representation status in order: represented, mandated, previously_mandated, fuel_for_football, prospect, other, scouted
+  const _searchedPlayers = playerSearchTerm.trim()
+    ? players.filter(p => (p.name || '').toLowerCase().includes(playerSearchTerm.trim().toLowerCase()))
+    : players;
   const groupedPlayers = {
-    represented: players.filter(p => p.representation_status === 'represented'),
-    mandated: players.filter(p => p.representation_status === 'mandated'),
-    previously_mandated: players.filter(p => p.representation_status === 'previously_mandated'),
-    fuel_for_football: players.filter(p => p.representation_status === 'fuel_for_football'),
-    prospect: players.filter(p => p.representation_status === 'prospect'),
-    other: players.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
-    scouted: players.filter(p => p.representation_status === 'scouted'),
+    represented: _searchedPlayers.filter(p => p.representation_status === 'represented'),
+    mandated: _searchedPlayers.filter(p => p.representation_status === 'mandated'),
+    previously_mandated: _searchedPlayers.filter(p => p.representation_status === 'previously_mandated'),
+    fuel_for_football: _searchedPlayers.filter(p => p.representation_status === 'fuel_for_football'),
+    prospect: _searchedPlayers.filter(p => p.representation_status === 'prospect'),
+    other: _searchedPlayers.filter(p => (p.representation_status === 'other' || !p.representation_status) && p.representation_status !== 'scouted' && p.representation_status !== 'prospect'),
+    scouted: _searchedPlayers.filter(p => p.representation_status === 'scouted'),
   };
 
   // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
