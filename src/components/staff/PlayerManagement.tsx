@@ -4775,7 +4775,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       <PlayerCategoriesDialog
         open={isCategoriesDialogOpen}
         onOpenChange={setIsCategoriesDialogOpen}
-        onSaved={fetchPlayers}
+        onSaved={() => { fetchCustomCategories(); fetchPlayers(); }}
       />
     </div>
   );
