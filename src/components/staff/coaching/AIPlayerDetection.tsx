@@ -197,6 +197,32 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     }
   };
 
+  // Detect unfinished scans for the current player+video so we can offer Resume.
+  useEffect(() => {
+    if (!selectedPlayerForScan || !videoUrl) { setResumeState(null); return; }
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
+    setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+  }, [selectedPlayerForScan, videoUrl, backtestMode, scanning]);
+
+  // If the user navigates away or hides the tab mid-scan, stop the loop and keep
+  // the checkpoint so a reload or revisit can resume from where we left off.
+  useEffect(() => {
+    const persistAndStop = () => {
+      if (scanning) {
+        pauseRef.current = true; // loop will write checkpoint at next batch boundary
+      }
+    };
+    window.addEventListener('beforeunload', persistAndStop);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') persistAndStop();
+    });
+    return () => {
+      window.removeEventListener('beforeunload', persistAndStop);
+      // On component unmount cancel cleanly so the loop stops on next batch
+      cancelledRef.current = true;
+    };
+  }, [scanning]);
+
   // Pull a sample of confirmed action examples across the entire database — these
   // act as few-shot training context for Gemini so the AI learns from the full
   // RISE labelled-action corpus, not just this player's history.
