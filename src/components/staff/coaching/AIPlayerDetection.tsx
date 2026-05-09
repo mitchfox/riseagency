@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { toast } from "sonner";
-import { Loader2, UserSearch, Pencil, Brain, CheckCircle2, Link2 } from "lucide-react";
+import { Loader2, UserSearch, Pencil, Brain, CheckCircle2, Link2, PlayCircle, PauseCircle, RotateCcw } from "lucide-react";
 
 interface DetectedAction {
   frameIndex: number;
@@ -104,6 +104,42 @@ interface Props {
 const STORAGE_KEY = "ai_player_descriptions";
 const SAMPLE_EVERY_SECONDS = 2;
 const MIN_CONFIDENCE: 'medium' | 'high' = 'medium';
+const SCAN_STATE_PREFIX = "ai_action_spotter_scan_state::";
+
+interface PersistedScanState {
+  videoUrl: string;
+  playerId: string;
+  backtestMode: boolean;
+  totalFrames: number;
+  nextBatchStart: number; // index of next frame batch to process
+  allDetected: DetectedAction[];
+  savedAt: number;
+}
+
+function scanStateKey(videoUrl: string, playerId: string, mode: 'scan' | 'backtest') {
+  return `${SCAN_STATE_PREFIX}${mode}::${playerId}::${videoUrl}`;
+}
+function readScanState(videoUrl: string, playerId: string, mode: 'scan' | 'backtest'): PersistedScanState | null {
+  try {
+    const raw = localStorage.getItem(scanStateKey(videoUrl, playerId, mode));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedScanState;
+    // Expire after 7 days
+    if (Date.now() - parsed.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(scanStateKey(videoUrl, playerId, mode));
+      return null;
+    }
+    return parsed;
+  } catch { return null; }
+}
+function writeScanState(state: PersistedScanState, mode: 'scan' | 'backtest') {
+  try {
+    localStorage.setItem(scanStateKey(state.videoUrl, state.playerId, mode), JSON.stringify(state));
+  } catch { /* quota — ignore */ }
+}
+function clearScanState(videoUrl: string, playerId: string, mode: 'scan' | 'backtest') {
+  try { localStorage.removeItem(scanStateKey(videoUrl, playerId, mode)); } catch { /* ignore */ }
+}
 
 const feedbackClient = supabase as unknown as {
   from: (table: 'ai_detection_feedback') => {
