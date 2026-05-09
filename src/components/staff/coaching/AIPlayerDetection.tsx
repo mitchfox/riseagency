@@ -899,10 +899,35 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                 <Brain className="h-4 w-4 text-primary" />
                 Full video scan · sample every 2 seconds · Medium+ confidence · learning context loaded in the background
               </div>
-              {persistedRejections.length > 0 && (
-                <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
-              )}
+              <div className="flex items-center gap-1 flex-wrap">
+                {persistedRejections.length > 0 && (
+                  <Badge variant="outline">{persistedRejections.length} stored corrections loaded</Badge>
+                )}
+                {playerActionsTotal > 0 && (
+                  <Badge variant="outline">{playerActionsTotal} player actions loaded</Badge>
+                )}
+                {globalActionsTotal > 0 && (
+                  <Badge variant="outline">{globalActionsTotal.toLocaleString()} total actions loaded</Badge>
+                )}
+              </div>
             </div>
+
+            {resumeState && !scanning && (
+              <div className="rounded border border-primary/40 bg-primary/5 p-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-sm text-foreground flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 text-primary" />
+                  Previous {resumeState.backtestMode ? 'backtest' : 'scan'} paused at {Math.round((resumeState.nextBatchStart / Math.max(1, resumeState.totalFrames)) * 100)}% with {resumeState.allDetected.length} detection{resumeState.allDetected.length === 1 ? '' : 's'} held.
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="default" className="gap-1" onClick={() => { setBacktestMode(resumeState.backtestMode); startScan(); }}>
+                    <PlayCircle className="h-3.5 w-3.5" /> Resume
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { clearScanState(videoUrl, selectedPlayerForScan, resumeState.backtestMode ? 'backtest' : 'scan'); setResumeState(null); }}>
+                    Discard
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {existingClips && existingClips.length > 0 && (
               <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer p-3 rounded border border-border bg-muted/30">
@@ -918,19 +943,26 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               </label>
             )}
 
-            <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
-              {scanning ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Scanning... {scanProgress}%
-                </>
-              ) : (
-                <>
-                  <UserSearch className="h-4 w-4" />
-                  {backtestMode ? 'Run Backtest' : 'Start Full Scan'}
-                </>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={startScan} disabled={scanning || !selectedPlayerForScan || !playerName.trim()} className="gap-2">
+                {scanning ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Scanning... {scanProgress}%
+                  </>
+                ) : (
+                  <>
+                    <UserSearch className="h-4 w-4" />
+                    {backtestMode ? 'Run Backtest' : 'Start Full Scan'}
+                  </>
+                )}
+              </Button>
+              {scanning && (
+                <Button variant="outline" className="gap-1" onClick={() => { pauseRef.current = true; setPaused(true); }} disabled={paused}>
+                  <PauseCircle className="h-4 w-4" /> {paused ? 'Pausing…' : 'Pause'}
+                </Button>
               )}
-            </Button>
+            </div>
 
             {scanning && (
               <div className="w-full bg-muted rounded-full h-2">
