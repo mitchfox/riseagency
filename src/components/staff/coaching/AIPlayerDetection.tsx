@@ -537,6 +537,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           }, mode);
           toast.info(`Paused at ${Math.round((batchStart / totalFrames) * 100)}%. Press Resume to continue.`);
           setResumeState(readScanState(videoUrl, selectedPlayerForScan, mode));
+          if (hiddenVideo) {
+            hiddenVideo.pause();
+            hiddenVideo.src = "";
+            hiddenVideo.remove();
+            hiddenVideoRef.current = null;
+          }
+          setScanning(false);
+          setPaused(false);
           return;
         }
         const batchEnd = Math.min(batchStart + batchSize, totalFrames);
