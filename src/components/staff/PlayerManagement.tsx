@@ -2625,9 +2625,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
               <TabsContent value="programming" className="mt-4 md:mt-0">
                 <Tabs defaultValue="sps" className="w-full">
-                  <TabsList className="flex flex-col md:grid md:grid-cols-2 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
+                  <TabsList className="flex flex-col md:grid md:grid-cols-3 w-full gap-2 bg-muted/20 rounded-lg p-2 mb-[60px] md:mb-4">
                     <TabsTrigger value="sps" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Strength, Power & Speed (SPS)</TabsTrigger>
                     <TabsTrigger value="nutrition" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">Nutrition</TabsTrigger>
+                    <TabsTrigger value="psychology" className="w-full justify-center px-3 py-2.5 text-xs md:text-sm">
+                      <Brain className="h-3.5 w-3.5 mr-1.5" /> Psychology
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="sps" className="mt-0">
