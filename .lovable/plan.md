@@ -1,84 +1,73 @@
-You are right. Backtest should test whether the general detection logic works, not create video-specific rules. I will remove the idea of same-video suppression as the main learning mechanism and make the system learn from patterns across all labelled examples.
+Five separate fixes. Grouped so you can approve in one go.
 
-Plan:
+## 1. Video analysis freezing on long videos near the end
 
-1. Replace “learning as timestamp memory” with cross-video pattern learning
-- Stop treating a repeat backtest on the same video as the primary learning signal.
-- Keep saving backtest rows, but use them as labelled examples of situations:
-  - confirmed action examples
-  - wrong action examples
-  - not involved examples
-  - wrong player examples
-- Feed those examples back into future scans by action type and outcome, across videos, not just by video timestamp.
+Cause: heavy work runs on the main thread (frame extraction, base64 encoding, repeated full-video seeking). On larger videos the tab stalls, the iframe shows the "wait/exit page" prompt and never recovers.
 
-2. Build a real action-type decision stage
-- First pass becomes object and scene extraction, not final action labelling.
-- Second stage classifies the candidate against the action definitions and historical examples.
-- For each action type, the model receives:
-  - definition
-  - visual cues
-  - confirmed examples
-  - common false-positive examples
-  - common wrong-action confusions
-- This should teach “this looks like Applied Pressure but was actually Overlapping Run” as a reusable distinction, not just block one timestamp.
+Fix:
+- Stop blocking the main thread during scans. Move frame sampling into chunked async passes with `await new Promise(r => setTimeout(r, 0))` between frames so the UI stays responsive.
+- Cap frame size (downscale to ~640px wide before base64) to reduce memory.
+- Cap concurrent frames in flight.
+- Convert the single long edge function call into a job pattern: insert a `video_analysis_jobs` row, kick off the work with `EdgeRuntime.waitUntil`, return the job id immediately, then poll the row from the client. No more 60s+ hanging requests killing the page.
+- Add a hard client-side abort (AbortController) bound to the scan, so closing the panel cancels everything cleanly.
 
-3. Stop Gemini inventing actions from loose frame descriptions
-- The prompt will no longer ask Gemini to freely spot actions from raw frames alone.
-- It must answer against a grounded candidate:
-  - target player visible or not
-  - ball visible or not
-  - nearby players or not
-  - relative movement or not
-  - action type candidate
-- If the required objects or movement cues are not present, reject.
+New table `video_analysis_jobs` (id, status, progress, result jsonb, error, created_at, updated_at) with RLS for authenticated staff.
 
-4. Add Roboflow object grounding before Gemini
-- Implement the Roboflow workflow call server-side in the existing backend function, not in frontend code and not using Python.
-- Use Roboflow to detect objects/classes such as Player, Football and shirt-number/object cues where available.
-- Pass Roboflow detections into the AI prompt as structured evidence for each frame.
-- Gemini then judges action type using object positions and frame context, instead of hallucinating from a single image.
+## 2. Speed/clip buttons unclickable because video click toggles play
 
-Technical equivalent of your Roboflow snippet:
-- Use `ROBOFLOW_API_KEY` as a backend secret.
-- Add backend config for:
-  - `ROBOFLOW_WORKSPACE`
-  - `ROBOFLOW_WORKFLOW_ID`
-- Call:
-  - `https://serverless.roboflow.com/{workspace}/workflows/{workflow_id}` or the correct serverless workflow endpoint supported by Roboflow
-- Send the frame image and parameters:
-  - `classes: "Player, Football, 3"`
-  - cache workflow definition where supported
-- Return bounding boxes/classes/confidence into the detection pipeline.
+In `VideoAnalysis.tsx` the click-to-pause handler is on the video container and swallows clicks on the overlay buttons.
 
-5. Use Roboflow results as a hard sanity check
-- If Roboflow sees no football and the action requires ball interaction, reject.
-- If Roboflow sees no plausible player object for the target player, reject.
-- If the claimed action depends on contact, pressure, tackle, pass or clearance, require the relevant player and ball/player proximity evidence.
-- This reduces cases like “Pass” where there is clearly no pass happening.
+Fix: stop propagation on the overlay control buttons (speed selector, clip buttons, scrub controls) so clicks on them never reach the play/pause handler. Click anywhere else on the video still toggles play/pause.
 
-6. Make backtest measure general logic only
-- Backtest continues to compare against confirmed clips and action types.
-- It will not add video-specific suppression as a success path.
-- It will report whether the general classifier improves after learning records are added.
-- The UI will clearly distinguish:
-  - examples loaded from all history
-  - false-positive patterns loaded
-  - Roboflow-grounded frames
-  - backtest outcomes saved for future runs
+## 3. Rise Action Spotter player search dropdown hidden behind popup
 
-7. Keep same-video records only as normal training data
-- Same-video feedback can still be saved, because it is a labelled example.
-- It will not be used as “block this exact timestamp”.
-- It will be used only as a positive or negative example when future clips look similar.
+The PlayerCombobox popover is rendering below the Action Spotter dialog because the dialog has a higher z-index / different stacking context.
 
-Files to update after approval:
-- `supabase/functions/detect-player-actions/index.ts`
-- `src/components/staff/coaching/AIPlayerDetection.tsx`
-- possibly `supabase/functions/process-video-frames/index.ts` if we reuse the existing Roboflow path
+Fix: render the combobox popover in a portal at the dialog layer, and bump its z-index above the dialog (`z-[60]` or matching). Verified by opening the dropdown inside the spotter dialog.
 
-Secrets needed:
-- `ROBOFLOW_API_KEY`
-- `ROBOFLOW_WORKSPACE`
-- `ROBOFLOW_WORKFLOW_ID`
+## 4. Action Spotter accuracy (Save / Pass etc. being missed or mislabelled)
 
-If any are missing, I will request them through the backend secret flow before implementing the Roboflow call. No API key will be put in the code.
+Current model is over-indexing on "Clearance" and "Defensive Positioning" because the prompt lets it free-label. The historical examples are loaded but not used as a hard shortlist.
+
+Fix to `detect-player-actions/index.ts`:
+- For each frame candidate, **constrain the answer to a shortlist** of the action types the player actually has confirmed examples of in feedback history (e.g. for a GK: Save, Defending Cross, Defending Corner, Defending Shot, Long-Range Pass, Rolled Pass, Recovery, Defensive Positioning, Goal Conceded, Pass, Throw, Punch, Claim, Clearance). The model returns one of these or "none".
+- Block "Defensive Positioning" unless no other action fits and the player is clearly stationary — it is currently the dominant false positive.
+- Add explicit per-position priors: if player is GK, ball trajectory toward goal + arms/dive cue → Save, not Clearance. Hands on ball → Claim/Punch/Throw, not Clearance.
+- For combo labels (e.g. "Defending Cross, Punch") match if the primary type matches the expected primary type, instead of requiring exact string equality. This kills most "type mismatch" noise.
+- Lower the confidence threshold for Save/Pass specifically so obvious ones aren't dropped.
+- Reuse the cross-video learning records as **few-shot examples in the shortlist prompt**, not just as text rules.
+
+This is logic + prompt, no schema changes.
+
+## 5. Business Plan section on dashboard
+
+Add a new section after Vision Board on the staff dashboard.
+- Sidebar/expanded entry `businessplan` placed directly after `visionboard` in `Staff.tsx`.
+- New component `BusinessPlanSection.tsx` with the 8 headed sections from your brief:
+  1. Executive Summary
+  2. Description of the Business
+  3. Markets
+  4. SWOT Analysis (4 sub-fields: Strengths, Weaknesses, Opportunities, Threats)
+  5. Management Team and Personnel
+  6. Products or Services Offered
+  7. Marketing
+  8. Financial Plan
+- Each section is a long-form textarea with blur-to-save (matches existing data-entry standards).
+- **Password gate**: section content is hidden until user enters `Jolon`. Password check happens client-side against a constant; once unlocked it stays unlocked for the session only (sessionStorage flag, cleared on reload). Same lightweight pattern used on contracts.
+- Storage: single row in new `business_plan` table (singleton, id fixed), columns for each of the 8 fields as text. RLS: only authenticated staff can select/update.
+
+Wide-screen layout (full width inside the staff section), dark theme, Rise Gold accents, UK English copy throughout.
+
+## Files
+
+Edit:
+- `src/components/staff/coaching/VideoAnalysis.tsx` (button click propagation, scan abort, chunked frame work)
+- `src/components/staff/coaching/AIPlayerDetection.tsx` (combobox portal/z-index, job-based polling, abort)
+- `supabase/functions/detect-player-actions/index.ts` (job pattern, shortlist prompt, position priors, combo matching, per-action thresholds)
+- `src/pages/Staff.tsx` (new `businessplan` section after `visionboard`)
+
+Create:
+- `src/components/staff/BusinessPlanSection.tsx`
+- migration: `video_analysis_jobs` table + RLS, `business_plan` table + RLS
+
+No secrets needed (Roboflow keys already configured).
