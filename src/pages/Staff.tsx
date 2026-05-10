@@ -1739,6 +1739,7 @@ const Staff = () => {
                     </div>
                   )}
                   {expandedSection === 'visionboard' && <VisionBoardSection />}
+                  {expandedSection === 'businessplan' && <BusinessPlanSection />}
                   {expandedSection === 'docs' && <DocsSection />}
                   {expandedSection === 'sheets' && <SheetsSection />}
                   {expandedSection === 'designstudio' && <DesignProjects />}
