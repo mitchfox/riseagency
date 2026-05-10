@@ -701,6 +701,57 @@ export type Database = {
         }
         Relationships: []
       }
+      business_plan: {
+        Row: {
+          business_description: string | null
+          created_at: string
+          executive_summary: string | null
+          financial_plan: string | null
+          id: string
+          management_personnel: string | null
+          marketing: string | null
+          markets: string | null
+          products_services: string | null
+          swot_opportunities: string | null
+          swot_strengths: string | null
+          swot_threats: string | null
+          swot_weaknesses: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_description?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          financial_plan?: string | null
+          id?: string
+          management_personnel?: string | null
+          marketing?: string | null
+          markets?: string | null
+          products_services?: string | null
+          swot_opportunities?: string | null
+          swot_strengths?: string | null
+          swot_threats?: string | null
+          swot_weaknesses?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_description?: string | null
+          created_at?: string
+          executive_summary?: string | null
+          financial_plan?: string | null
+          id?: string
+          management_personnel?: string | null
+          marketing?: string | null
+          markets?: string | null
+          products_services?: string | null
+          swot_opportunities?: string | null
+          swot_strengths?: string | null
+          swot_threats?: string | null
+          swot_weaknesses?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       case_study_messages: {
         Row: {
           case_study_id: string
@@ -6496,6 +6547,42 @@ export type Database = {
           total_parts?: number | null
           updated_at?: string
           video_url?: string
+        }
+        Relationships: []
+      }
+      video_analysis_jobs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json | null
+          progress: number
+          result: Json | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          progress?: number
+          result?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          progress?: number
+          result?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
