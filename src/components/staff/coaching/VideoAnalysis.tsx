@@ -2432,13 +2432,17 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 </div>
               );
             })()}
-            {/* Clip button overlay */}
-            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2 items-center">
+            {/* Clip button overlay — sits above the click-to-pause overlay */}
+            <div
+              className="absolute bottom-14 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2 items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-0.5 bg-black/70 backdrop-blur-sm rounded-lg px-1.5 py-1 shadow-lg">
                 {SPEED_STEPS.map(s => (
                   <button
                     key={s}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setPlaybackSpeed(s);
                       applySpeed(s);
                     }}
@@ -2452,7 +2456,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   </button>
                 ))}
               </div>
-              <Button onClick={handleInstantClip} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
+              <Button onClick={(e) => { e.stopPropagation(); handleInstantClip(); }} size="sm" className="gap-1.5 shadow-lg bg-primary/90 backdrop-blur-sm">
                 <Scissors className="h-4 w-4" /> Clip (±5s)
               </Button>
             </div>
