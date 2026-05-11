@@ -531,6 +531,15 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       ...historicalConfirmedExamples,
       ...globalCorpus,
     ];
+    const playerShortlist = Array.from(new Set([
+      ...(confirmedExamples || []),
+      ...historicalConfirmedExamples,
+      ...(existingClips || []).map((clip) => ({ actionType: clip.action_type || clip.label })),
+    ]
+      .flatMap((ex) => String(ex.actionType || '').split(','))
+      .map((type) => type.trim())
+      .filter(Boolean)
+    ));
 
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
     const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
@@ -611,6 +620,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             teamKitDescription: usingManual ? undefined : (kitDescription || undefined),
             minConfidence: MIN_CONFIDENCE,
             sampleEverySeconds: sampleEvery,
+            allowedActionTypes: playerShortlist.length > 0 ? playerShortlist : undefined,
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
