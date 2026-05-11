@@ -16,6 +16,7 @@ interface ProspectPlayer {
   image_url: string | null;
   club: string | null;
   nationality: string | null;
+  has_representation_offer?: boolean | null;
 }
 
 const RiseWithUs = () => {
@@ -35,8 +36,8 @@ const RiseWithUs = () => {
         // Fetch all prospects for the picker
         const { data } = await supabase
           .from("players")
-          .select("id, name, position, image_url, club, nationality")
-          .eq("representation_status", "prospect")
+          .select("id, name, position, image_url, club, nationality, has_representation_offer, representation_status")
+          .or("has_representation_offer.eq.true,representation_status.eq.prospect")
           .order("name");
         setProspects(data || []);
         setLoading(false);
@@ -47,8 +48,8 @@ const RiseWithUs = () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality")
-        .eq("representation_status", "prospect")
+        .select("id, name, position, image_url, club, nationality, has_representation_offer, representation_status")
+        .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
 
