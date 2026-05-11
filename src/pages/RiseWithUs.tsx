@@ -21,6 +21,7 @@ interface ProspectPlayer {
   image_url: string | null;
   club: string | null;
   nationality: string | null;
+  portal_language?: string | null;
 }
 interface OfferSettings {
   hidden_sections: string[];
@@ -384,7 +385,7 @@ const RiseWithUs = () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, has_representation_offer, representation_status")
+        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status")
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
