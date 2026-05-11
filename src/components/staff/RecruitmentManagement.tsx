@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale, UserRoundCheck } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,7 +17,6 @@ import { PlayerOutreach } from "./PlayerOutreach";
 import MessagePathways from "./MessagePathways";
 import { RecruitmentRulesTab } from "./RecruitmentRulesTab";
 import { ProspectBoard } from "./ProspectBoard";
-import { RepresentationOffers } from "./RepresentationOffers";
 
 interface MarketingTemplate {
   id: string;
