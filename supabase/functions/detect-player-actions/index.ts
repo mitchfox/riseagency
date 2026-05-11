@@ -515,9 +515,23 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       verifierDropped: 0,
     };
 
+    const frameProcessReport: FrameProcessReport[] = (frames as { timestamp: number; index: number }[]).map((frame) => {
+      const g = groundingByIndex.get(frame.index);
+      return {
+        frameIndex: frame.index,
+        timestamp: frame.timestamp,
+        grounding: g ? summariseGrounding(g) : 'no object grounding available',
+        roboflowEndpoint: g?.endpoint,
+        rawModelActions: [],
+        acceptedActions: [],
+        rejectedReasons: g?.available === false && g.error ? [g.error] : [],
+      };
+    });
+    const reportByFrame = new Map(frameProcessReport.map((item) => [item.frameIndex, item]));
+
     if (!toolCall?.function?.arguments) {
       return new Response(
-        JSON.stringify({ actions: [], ...meta }),
+        JSON.stringify({ actions: [], ...meta, frameProcessReport }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -525,27 +539,37 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     const parsed = JSON.parse(toolCall.function.arguments);
     const rawActions = Array.isArray(parsed?.actions) ? parsed.actions : [];
     const highOnlyKeywords = /(foul|fouled|penalty|red card|yellow card)/i;
+    for (const a of rawActions) {
+      const idx = Number(a?.frameIndex);
+      const report = reportByFrame.get(idx);
+      if (report) report.rawModelActions.push(`${String(a?.actionType || 'unknown')} (${String(a?.confidence || 'unknown')}) — ${String(a?.description || 'no reason supplied')}`);
+    }
 
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
       .map((a: any) => {
+        const report = reportByFrame.get(Number(a.frameIndex));
+        const reject = (reason: string) => {
+          report?.rejectedReasons.push(reason);
+          return null;
+        };
         const rawParts = String(a.actionType || '').split(',').map((p: string) => p.trim()).filter(Boolean);
         const canonicalParts: string[] = [];
         for (const part of rawParts) {
           const c = canonicalNameMap[normaliseName(part)];
           if (c && !canonicalParts.includes(c)) canonicalParts.push(c);
         }
-        if (canonicalParts.length === 0) return null;
+        if (canonicalParts.length === 0) return reject(`Dropped because "${String(a.actionType || '')}" is not in the allowed action shortlist.`);
         const canonical = canonicalParts.join(', ');
         const primary = canonicalParts[0];
 
         const confidence = String(a.confidence || '').toLowerCase();
-        if (confidence !== 'high' && confidence !== 'medium') return null;
-        if (minConfidence === 'high' && confidence !== 'high') return null;
-        if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
+        if (confidence !== 'high' && confidence !== 'medium') return reject(`Dropped ${canonical} because confidence was "${confidence || 'blank'}".`);
+        if (minConfidence === 'high' && confidence !== 'high') return reject(`Dropped ${canonical} because the scan required high confidence.`);
+        if (highOnlyKeywords.test(canonical) && confidence !== 'high') return reject(`Dropped ${canonical} because contact/card actions must be high confidence.`);
 
         const visualCue = String(a.visualCueMatched || '').trim();
-        if (!visualCue) return null;
+        if (!visualCue) return reject(`Dropped ${canonical} because no visible cue from the action definition was supplied.`);
         const desc = String(a.description || '').trim();
 
         const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
