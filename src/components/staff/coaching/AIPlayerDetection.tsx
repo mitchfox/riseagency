@@ -537,6 +537,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setRoboflowGrounded(0);
     setRoboflowRejected(0);
     setVerifierDropped(0);
+    setScanProcessReport(null);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
@@ -564,6 +565,17 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       .map((type) => type.trim())
       .filter(Boolean)
     ));
+    const processReport: ScanProcessReport = {
+      startedAt: new Date().toISOString(),
+      mode,
+      totalFrames,
+      batches: Math.ceil(totalFrames / batchSize),
+      sampleEverySeconds: sampleEvery,
+      playerName: usingManual ? manualName.trim() : playerName,
+      allowedActionTypes: playerShortlist,
+      frames: [],
+      summary: [],
+    };
 
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
     const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
