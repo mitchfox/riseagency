@@ -419,13 +419,31 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       const vid = document.createElement("video");
       vid.src = videoUrl;
       vid.crossOrigin = "anonymous";
-      vid.preload = "metadata";
+      vid.preload = "auto";
+      vid.muted = true;
+      vid.playsInline = true;
       vid.style.display = "none";
       document.body.appendChild(vid);
-      vid.onloadedmetadata = () => resolve(vid);
-      vid.onerror = () => reject(new Error("Failed to load video for scanning"));
+      const timeout = window.setTimeout(() => reject(new Error("Video took too long to prepare for scanning")), 12000);
+      vid.onloadedmetadata = () => { window.clearTimeout(timeout); resolve(vid); };
+      vid.onerror = () => { window.clearTimeout(timeout); reject(new Error("Failed to load video for scanning")); };
     });
   }, [videoUrl]);
+
+  const stopActiveScan = useCallback(() => {
+    pauseRef.current = true;
+    cancelledRef.current = true;
+    const hidden = hiddenVideoRef.current;
+    if (hidden) {
+      hidden.pause();
+      hidden.removeAttribute('src');
+      hidden.load();
+      hidden.remove();
+      hiddenVideoRef.current = null;
+    }
+    setScanning(false);
+    setPaused(false);
+  }, []);
 
   const extractFrame = useCallback((video: HTMLVideoElement, time: number): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -439,16 +457,33 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       if (!ctx) return reject("No canvas context");
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const targetTime = duration > 0 ? Math.min(Math.max(0, time), Math.max(0, duration - 0.08)) : Math.max(0, time);
-      const timeout = window.setTimeout(() => {
+      let settled = false;
+      const cleanup = () => {
+        window.clearTimeout(timeout);
         video.removeEventListener("seeked", onSeeked);
+      };
+      const timeout = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
         reject(new Error(`Frame seek timed out at ${Math.floor(targetTime / 60)}.${String(Math.floor(targetTime % 60)).padStart(2, '0')}`));
       }, 6000);
 
       const onSeeked = () => {
-        window.clearTimeout(timeout);
-        video.removeEventListener("seeked", onSeeked);
+        if (settled) return;
+        settled = true;
+        cleanup();
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.58));
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Frame could not be encoded'));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error('Frame could not be read'));
+          reader.readAsDataURL(blob);
+        }, "image/jpeg", 0.5);
       };
 
       video.addEventListener("seeked", onSeeked);
