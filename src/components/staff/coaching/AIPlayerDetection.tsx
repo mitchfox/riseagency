@@ -757,6 +757,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       });
 
       const sortedByTime = [...qualityFiltered].sort((a, b) => a.timestamp - b.timestamp);
+      processReport.finishedAt = new Date().toISOString();
+      processReport.summary = [
+        `Sampled ${totalFrames} frames every ${sampleEvery}s in ${processReport.batches} batches.`,
+        `Roboflow grounded ${roboflowGrounded + processReport.frames.filter(f => f.roboflowEndpoint).length} frame checks where available; object-grounding rejections are listed per frame.`,
+        `AI returned ${allDetected.length} raw accepted candidates before final client filtering and ${qualityFiltered.length} after confidence filtering.`,
+        playerShortlist.length > 0 ? `Action shortlist was constrained to: ${playerShortlist.join(', ')}.` : 'No player-specific action shortlist was available, so the full action definition list was used.',
+      ];
+      setScanProcessReport({ ...processReport, frames: [...processReport.frames] });
 
       // If multiple distinct actions happen within the same <5s passage, fold them
       // into ONE entry whose actionType is a comma-separated list (e.g. "Interception, Pass").
@@ -889,13 +897,23 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
           expected.forEach((exp, idx) => {
             if (usedExpected.has(idx)) return;
+            const nearbyFrames = processReport.frames
+              .filter((frame) => frame.timestamp >= exp.start - EDGE_TOL && frame.timestamp <= exp.end + EDGE_TOL)
+              .slice(0, 5);
+            const diagnostic = nearbyFrames.length > 0
+              ? nearbyFrames.map((frame) => {
+                  const rejected = frame.rejectedReasons.length > 0 ? frame.rejectedReasons.join(' ') : 'No accepted action was returned for this sampled frame.';
+                  const raw = frame.rawModelActions.length > 0 ? ` Raw model read: ${frame.rawModelActions.join(' | ')}.` : '';
+                  return `${formatTime(frame.timestamp)}: ${frame.grounding}. ${rejected}${raw}`;
+                }).join(' ')
+              : `No sampled frame fell inside this exact clip window. The nearest scan cadence is every ${sampleEvery}s, so the clip may sit between sampled frames.`;
             rows.push({
               type: 'missed',
               expectedActionType: exp.action_type || exp.label,
               expectedTimestamp: exp.start,
               expectedEndTimestamp: exp.end,
               actionDescription: exp.action_description,
-              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). This has been saved as a missed positive example for the next run.`,
+              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). ${diagnostic} This has been saved as a missed positive example for future scans.`,
             });
           });
 
