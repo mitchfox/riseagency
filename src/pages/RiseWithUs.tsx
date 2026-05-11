@@ -21,6 +21,11 @@ interface ProspectPlayer {
   has_representation_offer?: boolean | null;
 }
 
+interface OfferSettings {
+  hidden_sections: string[];
+  section_images: Record<string, string>;
+}
+
 const TYRESE_PORTAL = "/players/tyrese-omotoye";
 
 // Each section card mirrors the Realise Potential expandable layout: number,
@@ -158,6 +163,7 @@ const buildSections = (firstName: string): SectionCard[] => [
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -186,6 +192,17 @@ const RiseWithUs = () => {
         setNotFound(true);
       } else {
         setPlayer(data);
+        const { data: sData } = await (supabase as any)
+          .from("player_offer_settings")
+          .select("hidden_sections, section_images")
+          .eq("player_id", data.id)
+          .maybeSingle();
+        if (sData) {
+          setSettings({
+            hidden_sections: (sData.hidden_sections || []) as string[],
+            section_images: (sData.section_images || {}) as Record<string, string>,
+          });
+        }
       }
       setLoading(false);
     };
@@ -196,7 +213,7 @@ const RiseWithUs = () => {
   if (notFound || !player) return <NotFound />;
 
   const firstName = player.name.split(" ")[0];
-  const sections = buildSections(firstName);
+  const sections = buildSections(firstName).filter((s) => !settings.hidden_sections.includes(s.id));
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -276,6 +293,7 @@ const RiseWithUs = () => {
             {sections.map((section, index) => {
               const isOpen = expandedId === section.id;
               const Icon = section.icon;
+              const customImage = settings.section_images[section.id];
               return (
                 <motion.div
                   key={section.id}
@@ -294,6 +312,12 @@ const RiseWithUs = () => {
                         : "border-border/50 hover:border-primary/40"
                     }`}
                   >
+                    {customImage && (
+                      <div className="relative -mx-5 sm:-mx-6 -mt-5 sm:-mt-6 mb-4 h-32 sm:h-36 overflow-hidden rounded-t-xl">
+                        <img src={customImage} alt={section.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                      </div>
+                    )}
                     <div className="absolute top-4 right-4 text-5xl sm:text-6xl font-bebas text-primary/15 leading-none pointer-events-none">
                       {section.number}
                     </div>

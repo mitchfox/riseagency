@@ -21,6 +21,7 @@ import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { Switch } from '@/components/ui/switch';
 import { PlayerNotesBoard } from './PlayerNotesBoard';
+import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -207,6 +208,7 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
 
 export const PlayerDatabase = () => {
   const [players, setPlayers] = useState<PlayerData[]>([]);
+  const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
@@ -401,6 +403,9 @@ export const PlayerDatabase = () => {
 
   const filteredAndSortedPlayers = useMemo(() => {
     let result = players.filter(player => {
+      if (isScoped) {
+        if (!allowedIds || !allowedIds.has(player.id)) return false;
+      }
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (!player.player_name.toLowerCase().includes(query) && !player.current_club?.toLowerCase().includes(query) && !player.position?.toLowerCase().includes(query)) return false;
@@ -448,7 +453,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection]);
+  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;

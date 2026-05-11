@@ -2491,6 +2491,125 @@ export type Database = {
         }
         Relationships: []
       }
+      messaging_script_nodes: {
+        Row: {
+          branch_label: string | null
+          content: string | null
+          created_at: string
+          id: string
+          kind: string
+          optional: boolean
+          parent_node_id: string | null
+          script_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          branch_label?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          optional?: boolean
+          parent_node_id?: string | null
+          script_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_label?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          optional?: boolean
+          parent_node_id?: string | null
+          script_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messaging_script_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "messaging_script_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messaging_script_nodes_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "messaging_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messaging_script_objections: {
+        Row: {
+          created_at: string
+          id: string
+          objection: string
+          response: string | null
+          script_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          objection: string
+          response?: string | null
+          script_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          objection?: string
+          response?: string | null
+          script_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messaging_script_objections_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "messaging_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messaging_scripts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       network_club_profiles: {
         Row: {
           club_name: string
@@ -3669,6 +3788,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_offer_settings: {
+        Row: {
+          created_at: string
+          hidden_sections: string[]
+          id: string
+          player_id: string
+          section_images: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_sections?: string[]
+          id?: string
+          player_id: string
+          section_images?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hidden_sections?: string[]
+          id?: string
+          player_id?: string
+          section_images?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       player_other_analysis: {
         Row: {
@@ -6113,6 +6259,30 @@ export type Database = {
           id?: string
           role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_player_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          role_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          role_key?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          role_key?: string
+          user_id?: string
         }
         Relationships: []
       }
