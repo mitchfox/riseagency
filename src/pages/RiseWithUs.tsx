@@ -196,6 +196,7 @@ const RiseWithUs = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden pb-28">
+      <RepresentationAudio />
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
         <title>Rise With Us - RISE Football Agency</title>
