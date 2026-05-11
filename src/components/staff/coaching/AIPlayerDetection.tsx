@@ -1171,6 +1171,41 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
               </div>
             )}
 
+            {scanProcessReport && (
+              <div className="rounded border border-border bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Scan process report</div>
+                    <div className="text-sm text-foreground">
+                      {scanProcessReport.playerName} · {scanProcessReport.mode === 'backtest' ? 'Backtest' : 'Scan'} · {scanProcessReport.frames.length}/{scanProcessReport.totalFrames} frames reported
+                    </div>
+                  </div>
+                  <Badge variant="outline">Every batch explained</Badge>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 text-xs">
+                  {scanProcessReport.summary.map((line, idx) => (
+                    <div key={idx} className="rounded border border-border bg-background/50 p-2 text-muted-foreground">{line}</div>
+                  ))}
+                </div>
+                <div className="max-h-64 overflow-y-auto rounded border border-border divide-y divide-border text-xs">
+                  {scanProcessReport.frames.map((frame) => (
+                    <div key={`${frame.frameIndex}-${frame.timestamp}`} className="p-2 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">Frame {frame.frameIndex} · {formatTime(frame.timestamp)}</span>
+                        <span className="text-muted-foreground">{frame.grounding}</span>
+                      </div>
+                      {frame.rawModelActions.length > 0 && <div className="text-muted-foreground">Model read: {frame.rawModelActions.join(' | ')}</div>}
+                      {frame.acceptedActions.length > 0 && <div className="text-primary">Accepted: {frame.acceptedActions.join(' | ')}</div>}
+                      {frame.rejectedReasons.length > 0 && <div className="text-destructive">Rejected: {frame.rejectedReasons.join(' | ')}</div>}
+                      {frame.rawModelActions.length === 0 && frame.acceptedActions.length === 0 && frame.rejectedReasons.length === 0 && (
+                        <div className="text-muted-foreground">Model skipped this sampled frame.</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {backtestResults && (
               <div className="mt-3 space-y-2">
                 {(() => {
