@@ -77,7 +77,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NetworkAnalytics, computeContactStrength, strengthColor, strengthBg } from './NetworkAnalytics';
 import { NetworkDuplicateDetector } from './NetworkDuplicateDetector';
 import { NetworkActivityTimeline } from './NetworkActivityTimeline';
-import { RepresentationOffers } from './RepresentationOffers';
 
 interface Contact {
   id: string;
