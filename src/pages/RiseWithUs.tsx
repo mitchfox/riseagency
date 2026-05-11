@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
+import { RepresentationAudio } from "@/components/RepresentationAudio";
 
 interface ProspectPlayer {
   id: string;
@@ -27,6 +28,7 @@ interface OfferSettings {
 }
 
 const TYRESE_PORTAL = "/players/tyrese-omotoye";
+const TYRESE_PORTAL_EMBED = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1";
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
 
 type SectionCard = {
