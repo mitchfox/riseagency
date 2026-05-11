@@ -787,6 +787,9 @@ const Dashboard = () => {
       if (urlParams.get("hide_invoices") === "1") {
         try { sessionStorage.setItem("portal_hide_invoices", "1"); } catch {}
       }
+      if (urlParams.get("hide_logout") === "1") {
+        try { sessionStorage.setItem("portal_hide_logout", "1"); } catch {}
+      }
       if (langParam) {
         try {
           localStorage.setItem("portal_language_hint", langParam);
