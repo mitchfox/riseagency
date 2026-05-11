@@ -445,6 +445,11 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setPaused(false);
   }, []);
 
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    if (!open && scanningRef.current) stopActiveScan();
+    setDialogOpen(open);
+  }, [stopActiveScan]);
+
   const extractFrame = useCallback((video: HTMLVideoElement, time: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = canvasRef.current || document.createElement("canvas");
@@ -598,7 +603,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const sampleEvery = SAMPLE_EVERY_SECONDS;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
-    const batchSize = 6;
+    const batchSize = 3;
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
 
     const mergedConfirmedExamples = [
@@ -986,7 +991,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
       <canvas ref={canvasRef} className="hidden" width={640} height={360} />
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bebas uppercase tracking-wider text-primary">
