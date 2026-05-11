@@ -136,10 +136,11 @@ const RiseWithUs = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [stage, setStage] = useState<1 | 2 | 3 | 4>(1);
+  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   const aboutRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLDivElement>(null);
 
   const isPickerMode = !slug;
@@ -179,10 +180,10 @@ const RiseWithUs = () => {
     })();
   }, [slug, isPickerMode]);
 
-  const advance = (to: 2 | 3 | 4) => {
+  const advance = (to: 2 | 3 | 4 | 5) => {
     setStage((s) => (to > s ? to : s));
     setTimeout(() => {
-      const ref = to === 2 ? aboutRef : to === 3 ? detailsRef : nextRef;
+      const ref = to === 2 ? aboutRef : to === 3 ? detailsRef : to === 4 ? portalRef : nextRef;
       ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   };
