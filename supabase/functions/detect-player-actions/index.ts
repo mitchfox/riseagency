@@ -595,10 +595,12 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       const needsBall = BALL_DEPENDENT_ACTIONS.test(det.actionType);
       if (needsBall && !g.hasBall) {
         meta.roboflowRejected++;
+        reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Roboflow rejected ${det.actionType}: football was not detected in this sampled frame.`);
         return false;
       }
       if (g.playerCount === 0) {
         meta.roboflowRejected++;
+        reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Roboflow rejected ${det.actionType}: no player was detected in this sampled frame.`);
         return false;
       }
       return true;
@@ -703,7 +705,10 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
               for (const v of verdicts) verdictMap.set(v.candidateId, !!v.confirmed);
               finalCandidates = merged.filter((det: any) => {
                 const ok = verdictMap.get(det.frameIndex);
-                if (!ok) meta.verifierDropped++;
+                if (!ok) {
+                  meta.verifierDropped++;
+                  reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Verifier rejected ${det.actionType}: target player was not confidently the player performing it.`);
+                }
                 return !!ok;
               });
             }
@@ -732,9 +737,12 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     capped.sort((x, y) => x.timestamp - y.timestamp);
 
     const finalActions = capped.map(({ timestamp: _t, visualCueMatched: _v, ...rest }) => rest);
+    for (const det of capped) {
+      reportByFrame.get(det.frameIndex)?.acceptedActions.push(`${det.actionType} (${det.confidence}) — ${det.description}`);
+    }
 
     return new Response(
-      JSON.stringify({ actions: finalActions, ...meta, roboflowAvailable }),
+      JSON.stringify({ actions: finalActions, ...meta, roboflowAvailable, frameProcessReport }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
