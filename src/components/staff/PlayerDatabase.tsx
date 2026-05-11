@@ -20,6 +20,10 @@ import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { Switch } from '@/components/ui/switch';
+import { PlayerNotesBoard } from './PlayerNotesBoard';
+
+const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
+  name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
 interface PlayerData {
   id: string;
