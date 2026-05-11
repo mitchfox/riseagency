@@ -99,6 +99,7 @@ import { StrengthPowerSpeedSection } from "@/components/staff/programming/Streng
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { PsychologySection } from "@/components/staff/programming/PsychologySection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
+import { ScriptsAndCaseStudies } from "@/components/staff/ScriptsAndCaseStudies";
 import { RepresentationOffers } from "@/components/staff/RepresentationOffers";
 import { TransferReports } from "@/components/staff/TransferReports";
 import { PortalManagement } from "@/components/staff/PortalManagement";
@@ -1785,7 +1786,7 @@ const Staff = () => {
                   {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
-                  {expandedSection === 'casestudies' && <MessagingCaseStudies />}
+                  {expandedSection === 'casestudies' && <ScriptsAndCaseStudies />}
                   {expandedSection === 'representationoffers' && <RepresentationOffers />}
                   {expandedSection === 'transferreports' && <TransferReports />}
                   {expandedSection === 'interactionhistory' && <InteractionHistory />}
