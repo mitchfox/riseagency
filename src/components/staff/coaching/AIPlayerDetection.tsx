@@ -76,6 +76,29 @@ interface EdgeActionResult {
   clipAfter?: number;
 }
 
+interface ScanProcessFrame {
+  frameIndex: number;
+  timestamp: number;
+  grounding: string;
+  roboflowEndpoint?: string;
+  rawModelActions: string[];
+  acceptedActions: string[];
+  rejectedReasons: string[];
+}
+
+interface ScanProcessReport {
+  startedAt: string;
+  finishedAt?: string;
+  mode: 'scan' | 'backtest';
+  totalFrames: number;
+  batches: number;
+  sampleEverySeconds: number;
+  playerName: string;
+  allowedActionTypes: string[];
+  frames: ScanProcessFrame[];
+  summary: string[];
+}
+
 interface AiDetectionFeedbackInsert {
   player_id: string;
   video_analysis_id?: string | null;
@@ -185,6 +208,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [roboflowGrounded, setRoboflowGrounded] = useState(0);
   const [roboflowRejected, setRoboflowRejected] = useState(0);
   const [verifierDropped, setVerifierDropped] = useState(0);
+  const [scanProcessReport, setScanProcessReport] = useState<ScanProcessReport | null>(null);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
