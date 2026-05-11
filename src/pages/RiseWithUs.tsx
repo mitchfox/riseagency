@@ -452,6 +452,7 @@ const RiseWithUs = () => {
 
   const firstName = player.name.split(" ")[0];
   const visibleCards = CARDS.filter((c) => !settings.hidden_sections.includes(c.key));
+  const extraImages = Object.values(settings.section_images).filter(Boolean) as string[];
   const lang = player.portal_language || "en";
   const tx = (key: string, fallback: string) => repTr[key] || fallback;
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
@@ -489,6 +490,7 @@ const RiseWithUs = () => {
           <IntroCinematic
             firstName={firstName}
             lang={lang}
+            extraImages={extraImages}
             onDone={() => setIntroDone(true)}
           />
         )}
