@@ -72,6 +72,7 @@ import PressReleasesManagement from "@/components/staff/PressReleasesManagement"
 import { PublicContentManagement } from "@/components/staff/PublicContentManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
+import { PlayerBirthdayDialog } from "@/components/staff/PlayerBirthdayDialog";
 import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
 import { Meetings } from "@/components/staff/coaching/Meetings";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
