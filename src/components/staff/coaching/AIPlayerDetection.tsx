@@ -441,7 +441,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       const targetTime = duration > 0 ? Math.min(Math.max(0, time), Math.max(0, duration - 0.08)) : Math.max(0, time);
       const timeout = window.setTimeout(() => {
         video.removeEventListener("seeked", onSeeked);
-        reject(new Error(`Frame seek timed out at ${formatTime(targetTime)}`));
+        reject(new Error(`Frame seek timed out at ${Math.floor(targetTime / 60)}.${String(Math.floor(targetTime % 60)).padStart(2, '0')}`));
       }, 6000);
 
       const onSeeked = () => {
