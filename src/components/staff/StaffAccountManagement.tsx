@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2 } from "lucide-react";
+import { UserPlus, Trash2, Users } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RolePermissionsEditor } from "./RolePermissionsEditor";
+import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
 
 interface AvailableRole {
   role_key: string;
@@ -47,6 +48,7 @@ export const StaffAccountManagement = () => {
   const [savingPhone, setSavingPhone] = useState(false);
   const [editingName, setEditingName] = useState<{ userId: string; name: string } | null>(null);
   const [savingName, setSavingName] = useState(false);
+  const [assignmentUserId, setAssignmentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAdminRole();
@@ -493,6 +495,11 @@ export const StaffAccountManagement = () => {
                     >
                       {resettingPassword === account.profiles?.email ? "Resetting..." : "Reset Password"}
                     </Button>
+                    {account.role === 'stats_updater' && (
+                      <Button variant="outline" size="sm" onClick={() => setAssignmentUserId(account.user_id)} className="w-full sm:w-auto">
+                        <Users className="h-4 w-4 mr-1" /> Players
+                      </Button>
+                    )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -661,6 +668,10 @@ export const StaffAccountManagement = () => {
           </form>
         </CardContent>
       </Card>
+
+      {assignmentUserId && (
+        <StatsUpdaterAssignments userId={assignmentUserId} open={!!assignmentUserId} onOpenChange={(o) => !o && setAssignmentUserId(null)} />
+      )}
     </div>
   );
 };
