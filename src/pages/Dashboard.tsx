@@ -782,6 +782,11 @@ const Dashboard = () => {
       // we strip the URL params below, and so it wins over the demo
       // player's stored portal_language.
       const langParam = urlParams.get("lang");
+      // Optional flag to hide the Key Documents (invoices) tab when the
+      // portal is embedded inside the prospect "Rise With Us" offer page.
+      if (urlParams.get("hide_invoices") === "1") {
+        try { sessionStorage.setItem("portal_hide_invoices", "1"); } catch {}
+      }
       if (langParam) {
         try {
           localStorage.setItem("portal_language_hint", langParam);
