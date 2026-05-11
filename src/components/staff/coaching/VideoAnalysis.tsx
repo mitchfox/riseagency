@@ -226,6 +226,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [stopEightXSim]);
 
+  const stopVideoControlEvent = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
+  };
+
   // Clean up 8x simulation on video change or unmount
   useEffect(() => {
     stopEightXSim();
@@ -2102,6 +2106,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             ref={playerShellRef}
             className="relative w-full bg-black rounded-lg overflow-hidden group/player"
             onWheel={(e) => {
+              if ((e.target as HTMLElement).closest('[data-video-control="true"]')) return;
               e.preventDefault();
               const video = videoRef.current;
               if (!video) return;
@@ -2128,7 +2133,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               type="button"
               size="sm"
               variant="secondary"
-              onClick={togglePlayerFullscreen}
+              data-video-control="true"
+              onPointerDown={stopVideoControlEvent}
+              onMouseDown={stopVideoControlEvent}
+              onTouchStart={stopVideoControlEvent}
+              onClick={(e) => { e.stopPropagation(); togglePlayerFullscreen(); }}
               className="absolute top-3 right-3 z-40 h-8 gap-1.5"
             >
               {isPlayerFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -2141,7 +2150,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               crossOrigin="anonymous"
               controls
               controlsList="nodownload nofullscreen"
-              preload="metadata"
+              preload="auto"
               className="w-full aspect-video object-fill"
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
@@ -2256,7 +2265,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             })()}
             {/* Clip button overlay — sits above the click-to-pause overlay */}
             <div
+              data-video-control="true"
               className="absolute bottom-14 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/player:opacity-100 transition-opacity flex gap-2 items-center"
+              onPointerDown={stopVideoControlEvent}
+              onMouseDown={stopVideoControlEvent}
+              onTouchStart={stopVideoControlEvent}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-0.5 bg-black/70 backdrop-blur-sm rounded-lg px-1.5 py-1 shadow-lg">
