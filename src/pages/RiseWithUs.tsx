@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Target, Gauge, Users, Sparkles, FileText, PoundSterling, HelpCircle,
-  ArrowRight, MessageCircle, ChevronDown, ChevronUp, X,
+  ArrowRight, MessageCircle, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
