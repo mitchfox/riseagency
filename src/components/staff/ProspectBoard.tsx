@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, Image as ImageIcon, X, Eye, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
@@ -41,6 +41,9 @@ interface Prospect {
   last_contact_date: string | null;
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
+  player_email?: string | null;
+  has_representation_offer?: boolean | null;
+  player_representation_status?: string | null;
   date_of_birth: string | null;
   probability_weight: number | null;
   projected_revenue: number | null;
@@ -102,6 +105,7 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
 
   const initials = prospect.name.split(" ").map(n => n[0]).join("").slice(0, 2);
   const priorityColor = getPriorityColor(prospect.priority);
+  const offerSlug = prospect.name.toLowerCase().trim().replace(/\s+/g, '-');
 
   return (
     <div
@@ -197,6 +201,34 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
             )}
           </div>
           <div className="flex items-center gap-1">
+            {prospect.player_email && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`${window.location.origin}/portal?staff_login=${encodeURIComponent(prospect.player_email || '')}`, '_blank');
+                }}
+                title="Open portal"
+              >
+                <Eye className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            )}
+            {(prospect.has_representation_offer || prospect.player_representation_status === 'prospect') && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`${window.location.origin}/risewithus/${offerSlug}`, '_blank');
+                }}
+                title="Open representation offer"
+              >
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            )}
             {isAdmin && (
               <>
                 <Button
@@ -567,7 +599,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     // Fetch ALL players from the full database, not just prospects
     const { data } = await supabase
       .from("players")
-      .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, representation_status")
+      .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer")
       .order("name");
     if (data) setDbPlayers(data);
   };
@@ -583,8 +615,8 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
       const { data: playersData, error: plError } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth")
-        .eq("representation_status", "prospect");
+        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer")
+        .or("representation_status.eq.prospect,has_representation_offer.eq.true");
 
       if (plError) throw plError;
 
@@ -599,6 +631,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           current_club: p.current_club || linkedPlayer?.club || null,
           nationality: p.nationality || linkedPlayer?.nationality || null,
           club_logo_url: linkedPlayer?.club_logo || null,
+          player_email: linkedPlayer?.email || null,
+          has_representation_offer: Boolean(linkedPlayer?.has_representation_offer),
+          player_representation_status: linkedPlayer?.representation_status || null,
           _source: 'prospects' as const,
         } as Prospect;
       });
@@ -641,6 +676,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             last_contact_date: null,
             priority: 'medium' as const,
             linked_player_id: p.id,
+            player_email: p.email || null,
+            has_representation_offer: Boolean((p as any).has_representation_offer),
+            player_representation_status: (p as any).representation_status || null,
             date_of_birth: p.date_of_birth,
             probability_weight: 0,
             projected_revenue: 0,
