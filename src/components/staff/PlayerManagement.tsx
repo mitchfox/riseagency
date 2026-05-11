@@ -1548,6 +1548,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     age: 18,
                     nationality: "",
                     representation_status: "other",
+                    has_representation_offer: false,
                     visible_on_stars_page: false,
                     portal_language: "en",
                     image_url: "",
@@ -1689,7 +1690,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         </Button>
                       </>
                     ) : null}
-                    {selectedPlayer?.representation_status === 'prospect' && (
+                    {(selectedPlayer?.has_representation_offer || selectedPlayer?.representation_status === 'prospect') && (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -3438,7 +3439,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
                     <Select
                       value={formData.representation_status}
-                      onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
+                      onValueChange={(value) => setFormData({ ...formData, representation_status: value, has_representation_offer: value === 'prospect' ? true : formData.has_representation_offer })}
                     >
                       <SelectTrigger className="h-10 sm:h-11">
                         <SelectValue placeholder="Select status" />
@@ -3449,6 +3450,17 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <input
+                      type="checkbox"
+                      id="has_representation_offer"
+                      checked={formData.has_representation_offer}
+                      onChange={(e) => setFormData({ ...formData, has_representation_offer: e.target.checked })}
+                      className="h-5 w-5 sm:h-4 sm:w-4"
+                    />
+                    <Label htmlFor="has_representation_offer" className="text-sm cursor-pointer">Representation Offer Page</Label>
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">
