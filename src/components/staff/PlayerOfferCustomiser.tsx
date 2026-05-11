@@ -84,12 +84,12 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-5xl p-4 sm:p-6">
         <DialogHeader><DialogTitle>Customise offer for {playerName}</DialogTitle></DialogHeader>
         {loading ? (
           <div className="flex items-center justify-center py-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
         ) : (
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-1">
             {OFFER_SECTIONS.map((s) => {
               const visible = !hidden.has(s.id);
               return (

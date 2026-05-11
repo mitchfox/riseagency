@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
+import { RepresentationAudio } from "@/components/RepresentationAudio";
 
 interface ProspectPlayer {
   id: string;
@@ -27,6 +28,7 @@ interface OfferSettings {
 }
 
 const TYRESE_PORTAL = "/players/tyrese-omotoye";
+const TYRESE_PORTAL_EMBED = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1";
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
 
 type SectionCard = {
@@ -134,10 +136,11 @@ const RiseWithUs = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [stage, setStage] = useState<1 | 2 | 3 | 4>(1);
+  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   const aboutRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLDivElement>(null);
 
   const isPickerMode = !slug;
@@ -177,10 +180,10 @@ const RiseWithUs = () => {
     })();
   }, [slug, isPickerMode]);
 
-  const advance = (to: 2 | 3 | 4) => {
+  const advance = (to: 2 | 3 | 4 | 5) => {
     setStage((s) => (to > s ? to : s));
     setTimeout(() => {
-      const ref = to === 2 ? aboutRef : to === 3 ? detailsRef : nextRef;
+      const ref = to === 2 ? aboutRef : to === 3 ? detailsRef : to === 4 ? portalRef : nextRef;
       ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   };
@@ -193,6 +196,7 @@ const RiseWithUs = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden pb-28">
+      <RepresentationAudio />
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
         <title>Rise With Us - RISE Football Agency</title>
@@ -409,10 +413,8 @@ const RiseWithUs = () => {
               </div>
 
               <div className="text-center mt-12">
-                <Button asChild size="lg" variant="outline" className="font-bebas uppercase tracking-wider">
-                  <a href={TYRESE_PORTAL} target="_blank" rel="noopener noreferrer">
-                    <Eye className="mr-2 h-4 w-4" /> What the portal looks like
-                  </a>
+                <Button onClick={() => advance(4)} size="lg" variant="outline" className="font-bebas uppercase tracking-wider">
+                  <Eye className="mr-2 h-4 w-4" /> What the portal looks like
                 </Button>
               </div>
             </div>
@@ -420,9 +422,44 @@ const RiseWithUs = () => {
         )}
       </AnimatePresence>
 
-      {/* Stage 4: The Next Step */}
+      {/* Stage 4: Live portal preview (embedded) */}
       <AnimatePresence>
         {stage >= 4 && (
+          <motion.section
+            ref={portalRef}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="py-10 sm:py-16 px-2 sm:px-4 bg-background"
+          >
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-6 sm:mb-10 space-y-3 px-2">
+                <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
+                  Inside the portal
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
+                  This is what yours would look like
+                </h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
+                  A live look inside Tyrese's portal. Have a scroll, then take the next step.
+                </p>
+              </div>
+              <div className="relative mx-auto w-full max-w-6xl rounded-xl overflow-hidden border border-border/60 shadow-[0_30px_80px_-30px_hsl(var(--primary)/0.4)] bg-card">
+                <iframe
+                  src={TYRESE_PORTAL_EMBED}
+                  title="Live portal preview"
+                  className="block w-full h-[70vh] sm:h-[80vh] bg-background"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Stage 5: The Next Step */}
+      <AnimatePresence>
+        {stage >= 5 && (
           <motion.section
             ref={nextRef}
             initial={{ opacity: 0, y: 30 }}
@@ -460,7 +497,7 @@ const RiseWithUs = () => {
       </footer>
 
       {/* Persistent floating "THE NEXT STEP" button */}
-      {stage >= 2 && stage < 4 && (
+      {stage >= 2 && stage < 5 && (
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -468,7 +505,7 @@ const RiseWithUs = () => {
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <Button
-            onClick={() => advance(4)}
+            onClick={() => advance(stage < 3 ? 3 : stage < 4 ? 4 : 5)}
             size="lg"
             className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
           >

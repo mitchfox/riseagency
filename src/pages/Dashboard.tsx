@@ -782,6 +782,11 @@ const Dashboard = () => {
       // we strip the URL params below, and so it wins over the demo
       // player's stored portal_language.
       const langParam = urlParams.get("lang");
+      // Optional flag to hide the Key Documents (invoices) tab when the
+      // portal is embedded inside the prospect "Rise With Us" offer page.
+      if (urlParams.get("hide_invoices") === "1") {
+        try { sessionStorage.setItem("portal_hide_invoices", "1"); } catch {}
+      }
       if (langParam) {
         try {
           localStorage.setItem("portal_language_hint", langParam);
@@ -1981,7 +1986,7 @@ const Dashboard = () => {
                       { tab: "highlights", label: t(playerData?.portal_language, "highlights"), icon: <Play className="h-6 w-6 sm:h-7 sm:w-7" /> },
                       { tab: "transfer-hub", label: t(playerData?.portal_language, "transfer_hub"), icon: <RefreshCw className="h-6 w-6 sm:h-7 sm:w-7" /> },
                       { tab: "profile", label: t(playerData?.portal_language, "view_profile"), icon: <Eye className="h-6 w-6 sm:h-7 sm:w-7" /> },
-                    ].map((item) => (
+                     ].filter((item) => !(item.tab === "invoices" && (typeof window !== "undefined" && sessionStorage.getItem("portal_hide_invoices") === "1"))).map((item) => (
                       <DropdownMenuItem
                         key={item.tab}
                         onClick={(e) => {
