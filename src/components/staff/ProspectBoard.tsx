@@ -43,6 +43,7 @@ interface Prospect {
   linked_player_id: string | null;
   player_email?: string | null;
   has_representation_offer?: boolean | null;
+  player_representation_status?: string | null;
   date_of_birth: string | null;
   probability_weight: number | null;
   projected_revenue: number | null;
@@ -214,7 +215,7 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
                 <Eye className="h-3 w-3 text-muted-foreground" />
               </Button>
             )}
-            {(prospect.has_representation_offer || prospect.stage || prospect.linked_player_id) && (
+            {(prospect.has_representation_offer || prospect.player_representation_status === 'prospect') && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -598,7 +599,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     // Fetch ALL players from the full database, not just prospects
     const { data } = await supabase
       .from("players")
-      .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, representation_status")
+      .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer")
       .order("name");
     if (data) setDbPlayers(data);
   };
@@ -614,8 +615,8 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
       const { data: playersData, error: plError } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth")
-        .eq("representation_status", "prospect");
+        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer")
+        .or("representation_status.eq.prospect,has_representation_offer.eq.true");
 
       if (plError) throw plError;
 
@@ -630,6 +631,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           current_club: p.current_club || linkedPlayer?.club || null,
           nationality: p.nationality || linkedPlayer?.nationality || null,
           club_logo_url: linkedPlayer?.club_logo || null,
+          player_email: linkedPlayer?.email || null,
+          has_representation_offer: Boolean(linkedPlayer?.has_representation_offer),
+          player_representation_status: linkedPlayer?.representation_status || null,
           _source: 'prospects' as const,
         } as Prospect;
       });
@@ -672,6 +676,9 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             last_contact_date: null,
             priority: 'medium' as const,
             linked_player_id: p.id,
+            player_email: p.email || null,
+            has_representation_offer: Boolean((p as any).has_representation_offer),
+            player_representation_status: (p as any).representation_status || null,
             date_of_birth: p.date_of_birth,
             probability_weight: 0,
             projected_revenue: 0,
