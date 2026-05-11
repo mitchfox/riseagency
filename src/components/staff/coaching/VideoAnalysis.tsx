@@ -288,67 +288,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   }, []);
 
   useEffect(() => {
-    const lookaheadVideo = lookaheadRef.current;
-    if (!lookaheadVideo || !selectedVideo?.video_url) return;
-
-    // Reset preload state
-    if (preloadIntervalRef.current) {
-      clearInterval(preloadIntervalRef.current);
-      preloadIntervalRef.current = null;
-    }
-    preloadPhaseRef.current = 0;
-
-    lookaheadVideo.src = selectedVideo.video_url;
-    lookaheadVideo.preload = "auto";
-    lookaheadVideo.load();
-
-    // Reset Range pre-warmer state for the new video
-    preloadFileSizeRef.current = null;
-    preloadCompletedToRef.current = 0;
-    preloadInFlightRef.current = false;
-
-    // Hover preview source — needs auto preload so frame data is decodable
-    const preview = previewRef.current;
-    if (preview) {
-      preview.src = selectedVideo.video_url;
-      preview.preload = "auto";
-      preview.load();
-    }
-  }, [selectedVideo?.id, selectedVideo?.video_url]);
-
-  // Draw the preview frame onto the canvas whenever the preview video seeks.
-  // Wait for readyState >= HAVE_CURRENT_DATA (2) before drawing to avoid
-  // capturing a black frame before the decoder has data for that timestamp.
-  useEffect(() => {
-    const preview = previewRef.current;
-    const canvas = previewCanvasRef.current;
-    if (!preview || !canvas) return;
-
-    const draw = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      try {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
-      } catch {}
-    };
-
-    const onSeeked = () => {
-      if (preview.readyState >= 2) {
-        draw();
-      } else {
-        preview.addEventListener("loadeddata", draw, { once: true });
-      }
-    };
-
-    preview.addEventListener("seeked", onSeeked);
-    return () => {
-      preview.removeEventListener("seeked", onSeeked);
-      preview.removeEventListener("loadeddata", draw);
-    };
-  }, [selectedVideo?.id]);
-
-  useEffect(() => {
     const handleFullscreenChange = () => {
       const shell = playerShellRef.current;
       const playerVideo = videoRef.current;
@@ -370,8 +309,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   useEffect(() => {
     return () => {
       if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
-      if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-      if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
     };
   }, []);
 
