@@ -5165,6 +5165,7 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
+      )}
       
       {/* Performance Report Dialog */}
       <PerformanceReportDialog
