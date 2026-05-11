@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale, UserRoundCheck } from "lucide-react";
+import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,7 +17,6 @@ import { PlayerOutreach } from "./PlayerOutreach";
 import MessagePathways from "./MessagePathways";
 import { RecruitmentRulesTab } from "./RecruitmentRulesTab";
 import { ProspectBoard } from "./ProspectBoard";
-import { RepresentationOffers } from "./RepresentationOffers";
 
 interface MarketingTemplate {
   id: string;
@@ -261,11 +260,6 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             <span className="hidden sm:inline">Player Outreach</span>
             <span className="sm:hidden">Outreach</span>
           </TabsTrigger>
-          <TabsTrigger value="offers" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
-            <UserRoundCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Representation Offers</span>
-            <span className="sm:hidden">Offers</span>
-          </TabsTrigger>
           <TabsTrigger value="templates" className="flex-1 text-xs sm:text-sm px-1 sm:px-2 py-2.5">
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Message Templates</span>
@@ -289,10 +283,6 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
 
         <TabsContent value="outreach" className="space-y-4">
           <PlayerOutreach isAdmin={isAdmin} />
-        </TabsContent>
-
-        <TabsContent value="offers" className="space-y-4">
-          <RepresentationOffers />
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
