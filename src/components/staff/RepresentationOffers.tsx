@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Copy, ExternalLink, Loader2, Search, UserRoundCheck } from "lucide-react";
+import { Copy, ExternalLink, Loader2, Search, UserRoundCheck, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 
 type OfferPlayer = {
   id: string;
@@ -25,6 +26,7 @@ export const RepresentationOffers = () => {
   const [players, setPlayers] = useState<OfferPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [customising, setCustomising] = useState<OfferPlayer | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -86,11 +88,20 @@ export const RepresentationOffers = () => {
                 <div className="flex gap-2">
                   <Button size="sm" className="flex-1" onClick={() => openOffer(player)}><ExternalLink className="mr-2 h-4 w-4" />View</Button>
                   <Button size="sm" variant="outline" onClick={() => copyOffer(player)}><Copy className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="outline" onClick={() => setCustomising(player)}><Settings2 className="h-4 w-4" /></Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+      {customising && (
+        <PlayerOfferCustomiser
+          playerId={customising.id}
+          playerName={customising.name}
+          open={!!customising}
+          onOpenChange={(o) => !o && setCustomising(null)}
+        />
       )}
     </div>
   );
