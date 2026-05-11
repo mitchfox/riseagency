@@ -4,14 +4,14 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Star, TrendingUp, Users, Shield, BarChart3, Dumbbell, Video, BookOpen,
-  ChevronDown, ChevronUp, ExternalLink, Zap, Eye, Brain, Target,
-  ArrowRight, MessageCircle,
+  Search, Target, Gauge, Users, Sparkles, FileText, PoundSterling, HelpCircle,
+  ArrowRight, MessageCircle, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 
 interface ProspectPlayer {
   id: string;
@@ -21,136 +21,259 @@ interface ProspectPlayer {
   club: string | null;
   nationality: string | null;
 }
-
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
 }
 
-const TYRESE_PORTAL = "/players/tyrese-omotoye";
 const TYRESE_PORTAL_EMBED = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1";
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
 
-type SectionCard = {
-  id: string;
-  number: string;
-  title: string;
-  subtitle: string;
-  icon: typeof Star;
-  summary: string;
-  detail: string[];
-  link?: { label: string; href: string };
+type GroupKey = "who" | "how" | "terms";
+type CardKey =
+  | "scouting" | "expectations"
+  | "performance" | "network" | "brand" | "negotiation"
+  | "fees" | "agreement" | "faqs";
+
+const GROUP_LABELS: Record<GroupKey, string> = {
+  who: "Who We Select",
+  how: "How We Work",
+  terms: "What Are The Terms",
 };
 
-const buildSections = (firstName: string): SectionCard[] => [
-  { id: "performance", number: "01", title: "Performance Analysis", subtitle: "Every match, broken down", icon: BarChart3,
-    summary: "Every match broken down with expert tactical insight, key moments and areas to grow.",
-    detail: [
-      "Action-by-action review of every game with timestamped video.",
-      "R90 scoring so you know exactly how your minutes compare to elite benchmarks.",
-      "Position-specific feedback from a Premier League performance team.",
-    ],
-    link: { label: "See a real performance report", href: TYRESE_PORTAL } },
-  { id: "development", number: "02", title: "Development Tracking", subtitle: "Numbers that show you the path", icon: TrendingUp,
-    summary: "Monitor your progress with benchmarks, R90 scores and detailed statistics over time.",
-    detail: [
-      "Live dashboards built around the metrics that decide your career.",
-      "Form windows so coaches and clubs can see momentum at a glance.",
-      "Honest visibility on where you sit versus the next level.",
-    ],
-    link: { label: "Open the live data dashboard", href: TYRESE_PORTAL } },
-  { id: "physical", number: "03", title: "Physical Programming", subtitle: "Built around your body and position", icon: Dumbbell,
-    summary: "Strength, power and speed programmes built specifically for you. Nutrition guidance included.",
-    detail: [
-      "Weekly periodised programmes that match your match calendar.",
-      "Movement, mobility and injury prevention layered alongside strength work.",
-      "Nutrition strategy aligned to fixtures, travel and recovery.",
+interface CardDef {
+  key: CardKey;
+  group: GroupKey;
+  title: string;
+  subtitle: string;
+  icon: typeof Search;
+  bullets: string[];
+}
+
+const CARDS: CardDef[] = [
+  { key: "scouting", group: "who", title: "Scouting", subtitle: "How We Assess Star Potential", icon: Search,
+    bullets: [
+      "Position-specific profiling against elite benchmarks.",
+      "Multi-match observation, never a one-off snapshot.",
+      "Will, skill and potential weighted equally.",
+      "Cross-checked against our Premier League performance team.",
     ] },
-  { id: "video", number: "04", title: "Video Analysis", subtitle: "Your game on screen", icon: Video,
-    summary: "Professional clip editing and analysis. Highlight reels, tactical breakdowns, improvement sequences.",
-    detail: [
-      "Match clips cut and tagged within hours of full time.",
-      "Highlight reels ready to share with clubs and scouts.",
-      "Tactical sequences explained so the lessons stick.",
-    ],
-    link: { label: "Watch real analysis on Tyrese's portal", href: TYRESE_PORTAL } },
-  { id: "network", number: "05", title: "Network & Exposure", subtitle: "Opening the right doors", icon: Users,
-    summary: "Connections across European football. Clubs, scouts, coaches and decision-makers who need to know about you.",
-    detail: [
-      "Active outreach to clubs that fit your profile, not blanket emails.",
+  { key: "expectations", group: "who", title: "Expectations", subtitle: "Standards on and off the pitch", icon: Target,
+    bullets: [
+      "Train and live like a professional from day one.",
+      "Be coachable, on time and accountable.",
+      "Look after your body, your sleep and your nutrition.",
+      "Treat every minute on the pitch as a chance to build.",
+    ] },
+  { key: "performance", group: "how", title: "Performance", subtitle: "How We Ensure On-Pitch Success", icon: Gauge,
+    bullets: [
+      "Action-by-action analysis of every match.",
+      "R90 scoring against Premier League standards.",
+      "Strength, power and speed programmes built around your position.",
+      "Nutrition, technique and psychology support layered in.",
+    ] },
+  { key: "network", group: "how", title: "Club Network", subtitle: "Introductions with proper context", icon: Users,
+    bullets: [
+      "Active outreach to clubs that genuinely fit your profile.",
       "Trusted relationships across multiple leagues and federations.",
       "Strategic timing of conversations to maximise your value.",
+      "Reports and clips delivered the way scouts want them.",
     ] },
-  { id: "career", number: "06", title: "Career Management", subtitle: "Long-term thinking", icon: Shield,
-    summary: "Contract guidance, club negotiations and strategic career planning. We protect your interests.",
-    detail: [
-      "Step-by-step contract reviews in plain language.",
+  { key: "brand", group: "how", title: "Brand", subtitle: "A sharper public-facing profile", icon: Sparkles,
+    bullets: [
+      "Highlight reels and content built around your real game.",
+      "Your own personal portal as a single source of truth.",
+      "Coordinated messaging across the channels that matter.",
+      "Always honest, never overhyped.",
+    ] },
+  { key: "negotiation", group: "how", title: "Negotiation", subtitle: "Short and long-term deal strategy", icon: FileText,
+    bullets: [
+      "Plain-language contract reviews.",
       "Negotiation handled by people who understand the market.",
       "Multi-year planning so each move builds on the last.",
+      "Your interests protected at every stage.",
     ] },
-  { id: "education", number: "07", title: "Education & Mentoring", subtitle: "Off-pitch development", icon: BookOpen,
-    summary: "Coaching resources, mental performance support and professional guidance.",
-    detail: [
-      "Mental performance frameworks used by top professionals.",
-      "Coaching content tailored to your level and goals.",
-      "Mentoring from people who have been at the top of the game.",
+  { key: "fees", group: "terms", title: "Fees", subtitle: "Clear from the start", icon: PoundSterling,
+    bullets: [
+      "Standard FA-compliant agency fees on contracts and transfers.",
+      "Aligned to your career progression, not hidden line items.",
+      "Everything written down and discussed before anything is signed.",
+      "Independent legal advice always welcomed.",
     ] },
-  { id: "portal", number: "08", title: "Your Personal Portal", subtitle: `Built for ${firstName || "you"}`, icon: Star,
-    summary: "Your own dedicated portal with all your analysis, programmes, stats and development materials.",
-    detail: [
-      "One login. Every report, every clip, every plan.",
-      "Mobile-first so it travels with you.",
-      "A complete picture of your development, kept private to you and your team.",
-    ],
-    link: { label: "See a live portal example", href: TYRESE_PORTAL } },
+  { key: "agreement", group: "terms", title: "Agreement", subtitle: "What the relationship covers", icon: FileText,
+    bullets: [
+      "Clear scope of representation and services.",
+      "Defined term length with proper exit terms.",
+      "Parental involvement throughout for under-18s.",
+      "Agreement reviewed with you line by line.",
+    ] },
+  { key: "faqs", group: "terms", title: "FAQs", subtitle: "Quick answers before you reach out", icon: HelpCircle,
+    bullets: [
+      "How does the process actually start?",
+      "What is the day-to-day support like?",
+      "How do clubs hear about me?",
+      "What happens if it isn't working?",
+    ] },
 ];
 
-// Match week journey cards from Realise Potential (representation cards)
-const journeyCards = [
-  { number: "01", title: "Pre-Match Preparation", subtitle: "Setting the foundation",
-    description: "Tactical briefings, opposition analysis and individual focus points so you arrive ready to perform.",
-    items: ["Opposition profiling", "Individual focus points", "Mental preparation"],
-    icon: Zap },
-  { number: "02", title: "Match Day Performance", subtitle: "Executing under pressure",
-    description: "Live tracking and contextual support so every minute on the pitch counts.",
-    items: ["Live performance tracking", "In-game decisions", "Maximum output"],
-    icon: Target },
-  { number: "03", title: "Post-Match Analysis", subtitle: "Learning from every game",
-    description: "Honest review of the actions that mattered, with footage and data to back it up.",
-    items: ["Action-by-action review", "Statistical breakdown", "Improvement areas"],
-    icon: BarChart3 },
-  { number: "04", title: "Visibility & Exposure", subtitle: "Getting you seen",
-    description: "Clips, reports and direct conversations with the right clubs at the right time.",
-    items: ["Highlight reels", "Scout-ready reports", "Targeted outreach"],
-    icon: Eye },
-  { number: "05", title: "Continuous Development", subtitle: "Always raising the bar",
-    description: "Programming, mentoring and a long-term plan that turns potential into a professional career.",
-    items: ["Personalised programming", "Career planning", "Mentor support"],
-    icon: Brain },
-];
+const GROUPS: GroupKey[] = ["who", "how", "terms"];
 
+/* ============== INTRO ============== */
+const IntroCinematic = ({
+  firstName, playerImage, extraImages, onDone,
+}: { firstName: string; playerImage: string | null; extraImages: string[]; onDone: () => void }) => {
+  const [phase, setPhase] = useState(0);
+  // 0: invitation chip, 1: stood-out line, 2: differentiate line, 3: image collage + RISE WITH US, 4: done
+  useEffect(() => {
+    const timings = [1800, 3800, 4200, 3800];
+    if (phase >= timings.length) { onDone(); return; }
+    const t = setTimeout(() => setPhase((p) => p + 1), timings[phase]);
+    return () => clearTimeout(t);
+  }, [phase, onDone]);
+
+  const skip = () => onDone();
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-black"
+      onClick={skip}
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      role="presentation"
+    >
+      {/* gold ambience */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(circle at 50% 50%, hsl(var(--gold) / 0.18), transparent 60%)" }}
+        animate={{ opacity: [0.4, 0.9, 0.5] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Image layers (player photo + uploads) gently visible underneath text */}
+      <div className="absolute inset-0">
+        {playerImage && (
+          <motion.img
+            src={playerImage}
+            alt={firstName}
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ scale: 1.15, opacity: 0 }}
+            animate={{ scale: 1, opacity: phase === 3 ? 0.55 : 0.22 }}
+            transition={{ duration: 2.4, ease: "easeOut" }}
+          />
+        )}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(0,0,0,0.75)_75%,rgba(0,0,0,0.95)_100%)]" />
+      </div>
+
+      {/* Phase 3 image collage from uploads */}
+      {phase === 3 && extraImages.length > 0 && (
+        <div className="pointer-events-none absolute inset-0 z-[5]">
+          {extraImages.slice(0, 4).map((src, i) => {
+            const positions = [
+              { top: "8%",  left: "6%"  },
+              { top: "10%", right: "6%" },
+              { bottom: "12%", left: "8%" },
+              { bottom: "10%", right: "10%" },
+            ][i];
+            return (
+              <motion.img
+                key={src + i}
+                src={src}
+                alt=""
+                className="absolute h-28 w-28 sm:h-40 sm:w-40 object-cover rounded-xl border border-primary/40 shadow-[0_0_40px_-10px_hsl(var(--gold)/0.6)]"
+                style={positions as React.CSSProperties}
+                initial={{ opacity: 0, scale: 0.8, rotate: i % 2 ? -6 : 6 }}
+                animate={{ opacity: 0.85, scale: 1, rotate: i % 2 ? -3 : 3 }}
+                transition={{ duration: 1.2, delay: i * 0.25, ease: [0.22, 1, 0.36, 1] }}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Text reveal */}
+      <div className="relative z-10 max-w-2xl px-6 text-center">
+        <AnimatePresence mode="wait">
+          {phase === 0 && (
+            <motion.div key="p0"
+              initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <p className="font-bebas text-base sm:text-lg uppercase tracking-[0.3em] text-primary">
+                An invitation to
+              </p>
+              <p className="mt-3 font-bebas text-4xl sm:text-6xl uppercase tracking-wider text-foreground">
+                {firstName}
+              </p>
+            </motion.div>
+          )}
+          {phase === 1 && (
+            <motion.p key="p1"
+              initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.9 }}
+              className="text-lg sm:text-2xl md:text-3xl font-semibold leading-snug text-foreground"
+            >
+              As part of our extensive scouting efforts, we are pleased to say that you
+              stood out with the capability to become a star,{" "}
+              <span className="text-primary">{firstName}</span>.
+            </motion.p>
+          )}
+          {phase === 2 && (
+            <motion.p key="p2"
+              initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.9 }}
+              className="text-base sm:text-xl md:text-2xl leading-relaxed text-foreground/95"
+            >
+              We differentiate players by their will, skill and potential, to find those
+              who will use our English Premier League Performance Team to the fullest
+              effect to realise their potential on the pitch and in life.
+            </motion.p>
+          )}
+          {phase === 3 && (
+            <motion.div key="p3"
+              initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col items-center gap-4"
+            >
+              <img src={riseLogoWhite} alt="RISE" className="h-14 sm:h-20 w-auto" />
+              <p className="font-bebas text-3xl sm:text-5xl md:text-6xl uppercase tracking-[0.18em] text-foreground">
+                Rise With Us
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); skip(); }}
+        className="absolute bottom-4 right-4 z-20 rounded-full border border-border/50 px-3 py-1 text-[10px] font-bebas uppercase tracking-[0.24em] text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+      >
+        Skip
+      </button>
+    </motion.div>
+  );
+};
+
+/* ============== MAIN ============== */
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
   const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [stage, setStage] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [introDone, setIntroDone] = useState(false);
+  const [activeCard, setActiveCard] = useState<CardKey | null>(null);
+  const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
 
-  const aboutRef = useRef<HTMLDivElement>(null);
-  const detailsRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLDivElement>(null);
 
   const isPickerMode = !slug;
 
   useEffect(() => {
-    if (isPickerMode) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
+    if (isPickerMode) { setNotFound(true); setLoading(false); return; }
     (async () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
@@ -159,10 +282,8 @@ const RiseWithUs = () => {
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
-
-      if (error || !data) {
-        setNotFound(true);
-      } else {
+      if (error || !data) { setNotFound(true); }
+      else {
         setPlayer(data);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
@@ -180,338 +301,238 @@ const RiseWithUs = () => {
     })();
   }, [slug, isPickerMode]);
 
-  const advance = (to: 2 | 3 | 4 | 5) => {
-    setStage((s) => (to > s ? to : s));
-    setTimeout(() => {
-      const ref = to === 2 ? aboutRef : to === 3 ? detailsRef : to === 4 ? portalRef : nextRef;
-      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
-  };
-
   if (loading) return <RiseBrandedLoader />;
   if (notFound || !player) return <NotFound />;
 
   const firstName = player.name.split(" ")[0];
-  const sections = buildSections(firstName).filter((s) => !settings.hidden_sections.includes(s.id));
+  const extraImages = Object.values(settings.section_images).filter(Boolean);
+  const visibleCards = CARDS.filter((c) => !settings.hidden_sections.includes(c.key));
+
+  const goPortal = () => {
+    setStage("portal");
+    setTimeout(() => portalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
+  const goNext = () => {
+    setStage("next");
+    setTimeout(() => nextRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
+
+  const activeCardDef = activeCard ? CARDS.find((c) => c.key === activeCard) ?? null : null;
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden pb-28">
-      <RepresentationAudio />
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
         <title>Rise With Us - RISE Football Agency</title>
       </Helmet>
 
-      {/* Stage 1: The Offer */}
-      <section className="relative pt-16 sm:pt-24 pb-16 px-4 overflow-hidden min-h-[90vh] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/15 via-background to-background" />
-        <div className="relative z-10 max-w-3xl mx-auto text-center w-full">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-6">
-            <span className="inline-block text-xs sm:text-sm font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-5 py-1.5">
-              An invitation to {firstName}
-            </span>
-
-            {player.image_url && (
-              <div className="relative mx-auto w-40 h-40 sm:w-52 sm:h-52 rounded-full overflow-hidden border-2 border-primary/40 shadow-[0_0_60px_-10px_hsl(var(--primary)/0.5)]">
-                <img src={player.image_url} alt={player.name} className="w-full h-full object-cover object-top" />
-              </div>
-            )}
-
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bebas uppercase tracking-wider text-foreground leading-none">
-              Rise With Us
-            </h1>
-
-            <p className="text-base sm:text-lg md:text-xl text-foreground/90 max-w-2xl mx-auto leading-relaxed">
-              As part of our extensive scouting efforts, we are pleased to say that
-              you stood out with the capability to become a star,{" "}
-              <span className="text-primary font-semibold">{firstName}</span>.
-            </p>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              We differentiate players by their will, skill and potential, to find
-              those who will use our English Premier League Performance Team to the
-              fullest effect to realise their potential on the pitch and in life.
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs sm:text-sm text-muted-foreground">
-              {player.position && <span className="px-3 py-1 rounded-full border border-border/50 bg-muted/40">{player.position}</span>}
-              {player.club && <span className="px-3 py-1 rounded-full border border-border/50 bg-muted/40">{player.club}</span>}
-              {player.nationality && <span className="px-3 py-1 rounded-full border border-border/50 bg-muted/40">{player.nationality}</span>}
-            </div>
-
-            <div className="pt-6">
-              <Button onClick={() => advance(2)} size="lg" className="font-bebas uppercase tracking-wider">
-                Learn more about us <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stage 2: About us — journey cards */}
       <AnimatePresence>
-        {stage >= 2 && (
-          <motion.section
-            ref={aboutRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="py-14 sm:py-20 px-4"
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-10 sm:mb-14 space-y-3">
-                <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
-                  Who we are
-                </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                  How we work, week in week out
-                </h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-                  Every week we run the same loop with our players. Preparation, performance, analysis, exposure and development.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {journeyCards.map((c, i) => {
-                  const Icon = c.icon;
-                  return (
-                    <motion.div
-                      key={c.number}
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`group relative ${i === 4 ? "md:col-span-2 lg:col-span-1" : ""}`}
-                    >
-                      <div className="h-full p-7 border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-500 hover:bg-primary/5 rounded-xl">
-                        <div className="absolute top-5 right-5 text-6xl font-bebas text-primary/10 group-hover:text-primary/20 transition-colors leading-none">
-                          {c.number}
-                        </div>
-                        <Icon className="w-7 h-7 text-primary mb-5 opacity-80 group-hover:opacity-100 transition-opacity" />
-                        <h3 className="text-2xl font-bebas uppercase tracking-wider text-foreground">{c.title}</h3>
-                        <p className="text-xs text-primary font-medium uppercase tracking-wider mb-3">{c.subtitle}</p>
-                        <p className="text-muted-foreground text-sm leading-relaxed mb-3">{c.description}</p>
-                        <ul className="space-y-1.5">
-                          {c.items.map((it, k) => (
-                            <li key={k} className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span className="w-1 h-1 bg-primary rounded-full" />
-                              {it}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <div className="text-center mt-10">
-                <Button onClick={() => advance(3)} size="lg" className="font-bebas uppercase tracking-wider">
-                  What you get <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </motion.section>
+        {!introDone && (
+          <IntroCinematic
+            firstName={firstName}
+            playerImage={player.image_url}
+            extraImages={extraImages}
+            onDone={() => setIntroDone(true)}
+          />
         )}
       </AnimatePresence>
 
-      {/* Stage 3: What you get — detailed sections */}
-      <AnimatePresence>
-        {stage >= 3 && (
-          <motion.section
-            ref={detailsRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="py-14 sm:py-20 px-4 bg-muted/20"
-          >
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-10 sm:mb-14 space-y-3">
-                <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
-                  What you get
-                </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                  Everything in your corner
-                </h2>
-              </div>
+      {introDone && (
+        <>
+          <RepresentationAudio />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {sections.map((section, index) => {
-                  const isOpen = expandedId === section.id;
-                  const Icon = section.icon;
-                  const customImage = settings.section_images[section.id];
-                  return (
-                    <motion.div
-                      key={section.id}
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.04 }}
-                      className="relative"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setExpandedId(isOpen ? null : section.id)}
-                        className={`group w-full text-left h-full p-5 sm:p-6 border bg-card/60 backdrop-blur-sm rounded-xl transition-all duration-300 hover:bg-primary/5 ${
-                          isOpen ? "border-primary/60 bg-primary/5 shadow-[0_0_40px_-15px_hsl(var(--primary)/0.6)]" : "border-border/50 hover:border-primary/40"
-                        }`}
+          {/* ============ STAGE: HUB (representation cards) ============ */}
+          <section className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-44 md:px-8 md:pt-8 lg:px-16">
+            <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
+              <header className="relative pb-6 text-center md:pb-10">
+                <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
+                  <img src={riseLogoWhite} alt="RISE" className="h-14 md:h-20 w-auto" />
+                  <div className="relative flex w-full items-center gap-2 md:gap-4">
+                    <span className="h-px flex-1 bg-primary/45" />
+                    <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.1em] text-foreground sm:text-3xl md:text-4xl md:tracking-[0.12em] lg:text-5xl lg:tracking-[0.14em]">
+                      Rise With Us, {firstName}
+                    </h1>
+                    <span className="h-px flex-1 bg-primary/45" />
+                  </div>
+                  <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                    <p className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]">
+                      RISE Football Agency is built on a deep understanding of performance and how it shapes
+                      decisions at every level of the game. We represent and work directly with players and clubs
+                      through an established international network, underpinned by an unrivalled background in
+                      developing Premier League level talent.
+                    </p>
+                  </div>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
+              </header>
+
+              {GROUPS.map((g) => {
+                const cards = visibleCards.filter((c) => c.group === g);
+                if (cards.length === 0) return null;
+                return (
+                  <div key={g} className="scroll-mt-[88px]">
+                    <div className="my-6 flex items-center gap-3 md:my-8">
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+                        {GROUP_LABELS[g]}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:gap-5">
+                      {cards.map((card, index) => {
+                        const Icon = card.icon;
+                        return (
+                          <motion.button
+                            key={card.key}
+                            type="button"
+                            initial={{ opacity: 0, y: 18 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.03, y: -3 }}
+                            whileTap={{ scale: 0.97 }}
+                            transition={{ delay: index * 0.04, duration: 0.42 }}
+                            onClick={() => setActiveCard(card.key)}
+                            className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-3 text-center md:p-5"
+                            style={{ backgroundColor: "hsl(0 0% 4%)" }}
+                          >
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.08),transparent_60%)]" />
+                            <div className="relative flex min-h-[140px] flex-col items-center justify-center gap-3 md:min-h-[200px] md:gap-4 lg:min-h-[220px]">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-14 md:w-14">
+                                <Icon className="h-5 w-5 text-primary md:h-6 md:w-6" />
+                              </div>
+                              <div>
+                                <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">
+                                  {card.title}
+                                </p>
+                                <p className="mx-auto mt-1.5 max-w-[9.5rem] text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">
+                                  {card.subtitle}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Card detail overlay */}
+          <AnimatePresence>
+            {activeCardDef && (
+              <motion.div
+                className="fixed inset-0 z-50 overflow-y-auto bg-black/95 backdrop-blur-md"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="mx-auto flex min-h-[100dvh] w-full max-w-3xl flex-col px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-12 md:px-8">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCard(null)}
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary hover:bg-primary/10"
+                  >
+                    <X className="h-3 w-3" /> Close
+                  </button>
+                  <div className="mt-6 flex flex-col items-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/35 bg-primary/10">
+                      <activeCardDef.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h2 className="font-bebas text-3xl uppercase tracking-[0.12em] text-foreground md:text-5xl">
+                      {activeCardDef.title}
+                    </h2>
+                    <p className="text-xs uppercase tracking-[0.24em] text-primary md:text-sm">
+                      {activeCardDef.subtitle}
+                    </p>
+                  </div>
+                  <ul className="mt-8 space-y-3">
+                    {activeCardDef.bullets.map((b, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex gap-3 rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base"
                       >
-                        {customImage && (
-                          <div className="relative -mx-5 sm:-mx-6 -mt-5 sm:-mt-6 mb-4 h-32 sm:h-36 overflow-hidden rounded-t-xl">
-                            <img src={customImage} alt={section.title} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
-                          </div>
-                        )}
-                        <div className="absolute top-4 right-4 text-5xl sm:text-6xl font-bebas text-primary/15 leading-none pointer-events-none">
-                          {section.number}
-                        </div>
-                        <div className="text-primary mb-4"><Icon className="w-7 h-7 sm:w-8 sm:h-8" /></div>
-                        <h3 className="text-xl sm:text-2xl font-bebas uppercase tracking-wider text-foreground">{section.title}</h3>
-                        <p className="text-xs sm:text-sm text-primary uppercase tracking-wider mb-3">{section.subtitle}</p>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{section.summary}</p>
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{b}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                        <div className="flex items-center gap-1.5 mt-4 text-xs uppercase tracking-wider text-primary/80">
-                          {isOpen ? (<>Hide details <ChevronUp className="w-3.5 h-3.5" /></>) : (<>See more <ChevronDown className="w-3.5 h-3.5" /></>)}
-                        </div>
+          {/* ============ STAGE: PORTAL (full screen) ============ */}
+          {stage !== "hub" && (
+            <section ref={portalRef} className="relative w-full" style={{ height: "100dvh" }}>
+              <iframe
+                src={TYRESE_PORTAL_EMBED}
+                title="Live portal preview"
+                className="absolute inset-0 h-full w-full border-0 bg-background"
+              />
+              {stage === "portal" && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+                >
+                  <Button
+                    onClick={goNext}
+                    size="lg"
+                    className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.7)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
+                  >
+                    The next step <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </section>
+          )}
 
-                        <AnimatePresence initial={false}>
-                          {isOpen && (
-                            <motion.div
-                              key="detail"
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.25 }}
-                              className="overflow-hidden"
-                            >
-                              <ul className="space-y-2 pt-4 border-t border-border/40 mt-4">
-                                {section.detail.map((d, i) => (
-                                  <li key={i} className="flex gap-2 text-sm text-foreground/90 leading-relaxed">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                    <span>{d}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                              {section.link && (
-                                <a
-                                  href={section.link.href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-primary hover:text-primary/80"
-                                >
-                                  {section.link.label}
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <div className="text-center mt-12">
-                <Button onClick={() => advance(4)} size="lg" variant="outline" className="font-bebas uppercase tracking-wider">
-                  <Eye className="mr-2 h-4 w-4" /> What the portal looks like
-                </Button>
-              </div>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
-
-      {/* Stage 4: Live portal preview (embedded) */}
-      <AnimatePresence>
-        {stage >= 4 && (
-          <motion.section
-            ref={portalRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="py-10 sm:py-16 px-2 sm:px-4 bg-background"
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-6 sm:mb-10 space-y-3 px-2">
+          {/* ============ STAGE: FINAL ============ */}
+          {stage === "next" && (
+            <section ref={nextRef} className="relative min-h-[100dvh] flex items-center px-4 py-16 bg-gradient-to-b from-background to-primary/10">
+              <div className="max-w-2xl mx-auto text-center space-y-6">
                 <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
-                  Inside the portal
+                  The next step
                 </span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                  This is what yours would look like
+                  Over to you, {firstName}
                 </h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-                  A live look inside Tyrese's portal. Have a scroll, then take the next step.
+                <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
+                  We'd love to hear what you think and any questions you have.
                 </p>
+                <div className="pt-4">
+                  <Button asChild size="lg" className="font-bebas uppercase tracking-wider bg-[#25D366] hover:bg-[#1fb858] text-white">
+                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="mr-2 h-5 w-5" /> Message us on WhatsApp
+                    </a>
+                  </Button>
+                </div>
               </div>
-              <div className="relative mx-auto w-full max-w-6xl rounded-xl overflow-hidden border border-border/60 shadow-[0_30px_80px_-30px_hsl(var(--primary)/0.4)] bg-card">
-                <iframe
-                  src={TYRESE_PORTAL_EMBED}
-                  title="Live portal preview"
-                  className="block w-full h-[70vh] sm:h-[80vh] bg-background"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+            </section>
+          )}
 
-      {/* Stage 5: The Next Step */}
-      <AnimatePresence>
-        {stage >= 5 && (
-          <motion.section
-            ref={nextRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="py-16 sm:py-24 px-4 bg-gradient-to-b from-background to-primary/10"
-          >
-            <div className="max-w-2xl mx-auto text-center space-y-6">
-              <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
-                The next step
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                Over to you, {firstName}
-              </h2>
-              <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
-                We'd love to hear what you think and any questions you have.
-              </p>
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                Send us a quick message on WhatsApp. No pressure, no pitch, just a real conversation about your future.
-              </p>
-              <div className="pt-4">
-                <Button asChild size="lg" className="font-bebas uppercase tracking-wider bg-[#25D366] hover:bg-[#1fb858] text-white">
-                  <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="mr-2 h-5 w-5" /> Message us on WhatsApp
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+          {/* Persistent THE NEXT STEP button while on hub */}
+          {stage === "hub" && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="fixed left-0 right-0 bottom-4 sm:bottom-6 z-40 flex justify-center px-4 pointer-events-none"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              <Button
+                onClick={goPortal}
+                size="lg"
+                className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
+              >
+                The next step <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
 
-      <footer className="py-8 px-4 text-center">
-        <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
-      </footer>
-
-      {/* Persistent floating "THE NEXT STEP" button */}
-      {stage >= 2 && stage < 5 && (
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed left-0 right-0 bottom-4 sm:bottom-6 z-40 flex justify-center px-4 pointer-events-none"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
-          <Button
-            onClick={() => advance(stage < 3 ? 3 : stage < 4 ? 4 : 5)}
-            size="lg"
-            className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
-          >
-            The next step <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </motion.div>
+          <footer className="py-8 px-4 text-center">
+            <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
+          </footer>
+        </>
       )}
     </div>
   );
