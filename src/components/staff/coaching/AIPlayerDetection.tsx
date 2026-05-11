@@ -927,7 +927,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         } else {
           onClipsAccepted(clips);
           toast.success(`${clips.length} potential actions added`);
-          setDialogOpen(false);
         }
       }
     } catch (err: unknown) {
