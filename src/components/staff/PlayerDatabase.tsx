@@ -403,6 +403,9 @@ export const PlayerDatabase = () => {
 
   const filteredAndSortedPlayers = useMemo(() => {
     let result = players.filter(player => {
+      if (isScoped) {
+        if (!allowedIds || !allowedIds.has(player.id)) return false;
+      }
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (!player.player_name.toLowerCase().includes(query) && !player.current_club?.toLowerCase().includes(query) && !player.position?.toLowerCase().includes(query)) return false;
