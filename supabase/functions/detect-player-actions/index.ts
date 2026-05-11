@@ -214,6 +214,18 @@ interface FrameGrounding {
   hasBall: boolean;
   playerCount: number;
   available: boolean;
+  endpoint?: string;
+  error?: string;
+}
+
+interface FrameProcessReport {
+  frameIndex: number;
+  timestamp: number;
+  grounding: string;
+  roboflowEndpoint?: string;
+  rawModelActions: string[];
+  acceptedActions: string[];
+  rejectedReasons: string[];
 }
 
 const BALL_CLASSES = /^(football|ball|soccer ?ball)$/i;
@@ -247,26 +259,36 @@ function extractRoboflowDetections(workflowJson: unknown): RoboflowDetection[] {
   return out;
 }
 
-async function callRoboflowWorkflow(base64NoPrefix: string): Promise<RoboflowDetection[] | null> {
+async function callRoboflowWorkflow(base64NoPrefix: string): Promise<{ detections: RoboflowDetection[]; endpoint: string } | null> {
   const apiKey = Deno.env.get('ROBOFLOW_API_KEY');
   const workspace = Deno.env.get('ROBOFLOW_WORKSPACE');
   const workflowId = Deno.env.get('ROBOFLOW_WORKFLOW_ID');
   if (!apiKey || !workspace || !workflowId) return null;
+  const payloads = [
+    {
+      endpoint: `https://serverless.roboflow.com/infer/workflows/${workspace}/${workflowId}`,
+      body: { api_key: apiKey, inputs: { image: { type: 'base64', value: base64NoPrefix } }, parameters: { classes: 'Player, Football, 3' }, use_cache: true },
+    },
+    {
+      endpoint: `https://serverless.roboflow.com/${workspace}/workflows/${workflowId}`,
+      body: { api_key: apiKey, images: { image: { type: 'base64', value: base64NoPrefix } }, parameters: { classes: 'Player, Football, 3' }, use_cache: true },
+    },
+  ];
   try {
-    const res = await fetch(`https://serverless.roboflow.com/infer/workflows/${workspace}/${workflowId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        inputs: { image: { type: 'base64', value: base64NoPrefix } },
-      }),
-    });
-    if (!res.ok) {
-      console.warn('Roboflow workflow non-OK', res.status);
-      return null;
+    for (const attempt of payloads) {
+      const res = await fetch(attempt.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attempt.body),
+      });
+      if (!res.ok) {
+        console.warn('Roboflow workflow non-OK', res.status, attempt.endpoint);
+        continue;
+      }
+      const json = await res.json();
+      return { detections: extractRoboflowDetections(json), endpoint: attempt.endpoint };
     }
-    const json = await res.json();
-    return extractRoboflowDetections(json);
+    return null;
   } catch (e) {
     console.warn('Roboflow workflow error', e);
     return null;
@@ -277,11 +299,12 @@ async function groundFramesWithRoboflow(frames: { dataUrl: string; index: number
   // If creds missing the first call returns null and we mark all unavailable.
   const groundings: FrameGrounding[] = await Promise.all(frames.map(async (f) => {
     const base64 = (f.dataUrl.split(',')[1] || '').trim();
-    const dets = base64 ? await callRoboflowWorkflow(base64) : null;
-    if (!dets) return { frameIndex: f.index, detections: [], hasBall: false, playerCount: 0, available: false };
+    const result = base64 ? await callRoboflowWorkflow(base64) : null;
+    if (!result) return { frameIndex: f.index, detections: [], hasBall: false, playerCount: 0, available: false, error: 'Roboflow workflow did not return usable detections' };
+    const dets = result.detections;
     const hasBall = dets.some((d) => BALL_CLASSES.test(d.class) && d.confidence >= 0.3);
     const playerCount = dets.filter((d) => PLAYER_CLASSES.test(d.class) && d.confidence >= 0.3).length;
-    return { frameIndex: f.index, detections: dets, hasBall, playerCount, available: true };
+    return { frameIndex: f.index, detections: dets, hasBall, playerCount, available: true, endpoint: result.endpoint };
   }));
   return groundings;
 }
