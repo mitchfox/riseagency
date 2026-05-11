@@ -58,6 +58,7 @@ interface Player {
   visible_on_stars_page: boolean;
   highlights: any;
   representation_status: string;
+  has_representation_offer?: boolean | null;
   club: string | null;
   club_logo: string | null;
   league: string | null;
@@ -172,6 +173,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     age: 0,
     nationality: "",
     representation_status: "",
+    has_representation_offer: false,
     visible_on_stars_page: false,
     portal_language: "en",
     image_url: "",
@@ -833,6 +835,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       age: player.age,
       nationality: player.nationality,
       representation_status: player.representation_status || "",
+      has_representation_offer: Boolean((player as any).has_representation_offer || player.representation_status === 'prospect'),
       visible_on_stars_page: player.visible_on_stars_page || false,
       portal_language: player.portal_language || "en",
       image_url: player.image_url || "",
