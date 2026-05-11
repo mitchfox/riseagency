@@ -2141,10 +2141,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               crossOrigin="anonymous"
               controls
               controlsList="nodownload nofullscreen"
-              preload="auto"
+              preload="metadata"
               className="w-full aspect-video object-fill"
-              onPlay={startFullPreload}
-              onLoadedMetadata={startFullPreload}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
@@ -2183,13 +2181,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (!duration) return;
                 const time = ratio * duration;
                 setHoverPreview({ x, time });
-                if (hoverSeekTimerRef.current) clearTimeout(hoverSeekTimerRef.current);
-                hoverSeekTimerRef.current = setTimeout(() => {
-                  const preview = previewRef.current;
-                  if (preview && Math.abs(preview.currentTime - time) > 0.25) {
-                    try { preview.currentTime = time; } catch {}
-                  }
-                }, 30);
               }}
               onMouseLeave={() => setHoverPreview(null)}
               onClick={(e) => {
@@ -2208,13 +2199,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   width: '160px',
                 }}
               >
-                <canvas
-                  ref={previewCanvasRef}
-                  width={160}
-                  height={90}
-                  className="block w-[160px] h-[90px] bg-black"
-                />
-                <div className="text-[10px] text-white text-center py-0.5 font-mono">
+                <div className="flex h-16 items-center justify-center text-xs text-white/80">
+                  Preview disabled for stability
+                </div>
+                <div className="text-[10px] text-white text-center py-0.5 font-mono border-t border-white/10">
                   {(() => {
                     const t = hoverPreview.time;
                     const m = Math.floor(t / 60);
@@ -2224,27 +2212,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 </div>
               </div>
             )}
-            {/* Hidden preview video used to render hover thumbnails */}
-            <video
-              ref={previewRef}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              aria-hidden="true"
-              className="absolute h-px w-px opacity-0 pointer-events-none"
-            />
-            {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
-            <video
-              ref={lookaheadRef}
-              src={selectedVideo.video_url}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              aria-hidden="true"
-              className="absolute h-px w-px opacity-0 pointer-events-none"
-            />
             {/* Video stays visible but paused — no separate freeze frame image needed */}
             {/* Annotation canvas overlay during freeze */}
             {overlayFreezeActive && (() => {
