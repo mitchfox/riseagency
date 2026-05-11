@@ -208,11 +208,23 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       video.playbackRate = 4;
       eightXLastRef.current = performance.now();
       const tick = () => {
+        if (!videoRef.current || video.paused || video.ended) {
+          stopEightXSim();
+          return;
+        }
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        if (duration > 0 && video.currentTime >= duration - 0.08) {
+          video.currentTime = Math.max(0, duration - 0.05);
+          stopEightXSim();
+          return;
+        }
         const now = performance.now();
         const elapsed = (now - eightXLastRef.current) / 1000;
         eightXLastRef.current = now;
         // Native 4x already advances 4s per real second; nudge an extra 4s worth
-        video.currentTime += elapsed * 4;
+        video.currentTime = duration > 0
+          ? Math.min(duration - 0.05, video.currentTime + elapsed * 4)
+          : video.currentTime + elapsed * 4;
         eightXRafRef.current = requestAnimationFrame(tick);
       };
       eightXRafRef.current = requestAnimationFrame(tick);
