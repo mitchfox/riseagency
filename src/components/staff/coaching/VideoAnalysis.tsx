@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, type SyntheticEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as tus from 'tus-js-client';
 import { needsHybridUpload, splitAndUpload, type SplitUploadProgress } from "@/lib/videoSplitUpload";
@@ -226,7 +226,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [stopEightXSim]);
 
-  const stopVideoControlEvent = (event: React.SyntheticEvent) => {
+  const stopVideoControlEvent = (event: SyntheticEvent) => {
     event.stopPropagation();
   };
 
