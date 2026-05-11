@@ -2127,7 +2127,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 videoUrl={selectedVideo.video_url}
                 videoRef={videoRef as React.RefObject<HTMLVideoElement>}
                 opponent={selectedVideo.opponent}
-                players={players.map(p => ({ id: p.id, name: p.name }))}
+                players={players.map(p => ({ id: p.id, name: p.name, position: p.position || undefined }))}
                 selectedPlayerId={selectedVideo.player_id}
                 videoAnalysisId={selectedVideo.id}
                 onLinkPlayer={async (playerId) => {
