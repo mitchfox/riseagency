@@ -1378,6 +1378,8 @@ const Staff = () => {
         </div>
       </header>
 
+      <PlayerBirthdayDialog />
+
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 relative">
         {/* Quick Search Command Dialog */}
