@@ -27,7 +27,9 @@ interface OfferSettings {
   section_images: Record<string, string>;
 }
 
-const TYRESE_PORTAL_EMBED = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1";
+const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1";
+const tyresePortalEmbed = (lang: string) =>
+  `${TYRESE_PORTAL_EMBED_BASE}&lang=${encodeURIComponent(lang || "en")}`;
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
 const HOMEPAGE_URL = "https://www.risefootballagency.com";
 
@@ -369,6 +371,11 @@ const RiseWithUs = () => {
   const portalRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLDivElement>(null);
 
+  // Representation key translations fetched from the shared translations
+  // table. Cards/group labels/mission bio use these so we stay in sync
+  // with the public representation page.
+  const [repTr, setRepTr] = useState<Record<string, string>>({});
+
   const isPickerMode = !slug;
 
   useEffect(() => {
@@ -395,6 +402,19 @@ const RiseWithUs = () => {
             section_images: (sData.section_images || {}) as Record<string, string>,
           });
         }
+        const lang = data.portal_language || "en";
+        if (lang !== "en") {
+          const { data: tData } = await (supabase as any)
+            .from("translations")
+            .select("key, value")
+            .eq("language", lang)
+            .like("key", "representation.%");
+          if (tData) {
+            const map: Record<string, string> = {};
+            (tData as Array<{ key: string; value: string }>).forEach((r) => { map[r.key] = r.value; });
+            setRepTr(map);
+          }
+        }
       }
       setLoading(false);
     })();
@@ -404,17 +424,29 @@ const RiseWithUs = () => {
   if (notFound || !player) return <NotFound />;
 
   const firstName = player.name.split(" ")[0];
-  const extraImages = Object.values(settings.section_images).filter(Boolean);
   const visibleCards = CARDS.filter((c) => !settings.hidden_sections.includes(c.key));
+  const lang = player.portal_language || "en";
+  const tx = (key: string, fallback: string) => repTr[key] || fallback;
+  const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
+  const groupLabel = (g: GroupKey) =>
+    tx(`representation.${g === "who" ? "who_we_select" : g === "how" ? "how_we_work" : "what_are_the_terms"}`, GROUP_LABELS[g]);
+  const cardKeyMap: Record<CardKey, string> = {
+    scouting: "scouting", expectations: "expectations",
+    performance: "performance", network: "club_network", brand: "brand", negotiation: "negotiation",
+    fees: "fees", agreement: "agreement", faqs: "faqs",
+  };
+  const cardTitle = (c: CardDef) => tx(`representation.${cardKeyMap[c.key]}`, c.title);
+  const cardSubtitle = (c: CardDef) => tx(`representation.${cardKeyMap[c.key]}_subtitle`, c.subtitle);
 
   const goPortal = () => {
     setStage("portal");
-    setTimeout(() => portalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const goNext = () => {
     setStage("next");
-    setTimeout(() => nextRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const goHub = () => { setStage("hub"); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const activeCardDef = activeCard ? CARDS.find((c) => c.key === activeCard) ?? null : null;
 
@@ -429,8 +461,7 @@ const RiseWithUs = () => {
         {!introDone && (
           <IntroCinematic
             firstName={firstName}
-            playerImage={player.image_url}
-            extraImages={extraImages}
+            lang={lang}
             onDone={() => setIntroDone(true)}
           />
         )}
@@ -441,6 +472,7 @@ const RiseWithUs = () => {
           <RepresentationAudio />
 
           {/* ============ STAGE: HUB (representation cards) ============ */}
+          {stage === "hub" && (
           <section className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-44 md:px-8 md:pt-8 lg:px-16">
             <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
               <header className="relative pb-6 text-center md:pb-10">
@@ -449,16 +481,13 @@ const RiseWithUs = () => {
                   <div className="relative flex w-full items-center gap-2 md:gap-4">
                     <span className="h-px flex-1 bg-primary/45" />
                     <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.1em] text-foreground sm:text-3xl md:text-4xl md:tracking-[0.12em] lg:text-5xl lg:tracking-[0.14em]">
-                      Rise With Us, {firstName}
+                      {ot("rise_with_us_heading", "Rise With Us")}, {firstName}
                     </h1>
                     <span className="h-px flex-1 bg-primary/45" />
                   </div>
                   <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]">
-                      RISE Football Agency is built on a deep understanding of performance and how it shapes
-                      decisions at every level of the game. We represent and work directly with players and clubs
-                      through an established international network, underpinned by an unrivalled background in
-                      developing Premier League level talent.
+                      {tx(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
                     </p>
                   </div>
                 </div>
@@ -473,7 +502,7 @@ const RiseWithUs = () => {
                     <div className="my-6 flex items-center gap-3 md:my-8">
                       <div className="h-[1px] flex-1 bg-primary/40" />
                       <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
-                        {GROUP_LABELS[g]}
+                        {groupLabel(g)}
                       </span>
                       <div className="h-[1px] flex-1 bg-primary/40" />
                     </div>
@@ -500,10 +529,10 @@ const RiseWithUs = () => {
                               </div>
                               <div>
                                 <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">
-                                  {card.title}
+                                  {cardTitle(card)}
                                 </p>
                                 <p className="mx-auto mt-1.5 max-w-[9.5rem] text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:max-w-[11.5rem] md:text-xs">
-                                  {card.subtitle}
+                                  {cardSubtitle(card)}
                                 </p>
                               </div>
                             </div>
@@ -516,6 +545,7 @@ const RiseWithUs = () => {
               })}
             </div>
           </section>
+          )}
 
           {/* Card detail overlay */}
           <AnimatePresence>
@@ -538,10 +568,10 @@ const RiseWithUs = () => {
                       <activeCardDef.icon className="h-6 w-6 text-primary" />
                     </div>
                     <h2 className="font-bebas text-3xl uppercase tracking-[0.12em] text-foreground md:text-5xl">
-                      {activeCardDef.title}
+                      {cardTitle(activeCardDef)}
                     </h2>
                     <p className="text-xs uppercase tracking-[0.24em] text-primary md:text-sm">
-                      {activeCardDef.subtitle}
+                      {cardSubtitle(activeCardDef)}
                     </p>
                   </div>
                   <ul className="mt-8 space-y-3">
@@ -553,7 +583,7 @@ const RiseWithUs = () => {
                         className="flex gap-3 rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base"
                       >
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        <span>{b}</span>
+                        <span>{tx(`representation.${cardKeyMap[activeCardDef.key]}_p${i + 1}`, b)}</span>
                       </motion.li>
                     ))}
                   </ul>
@@ -562,49 +592,107 @@ const RiseWithUs = () => {
             )}
           </AnimatePresence>
 
-          {/* ============ STAGE: PORTAL (full screen) ============ */}
-          {stage !== "hub" && (
-            <section ref={portalRef} className="relative w-full" style={{ height: "100dvh" }}>
-              <iframe
-                src={TYRESE_PORTAL_EMBED}
-                title="Live portal preview"
-                className="absolute inset-0 h-full w-full border-0 bg-background"
-              />
-              {stage === "portal" && (
-                <div
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          {/* ============ STAGE: PORTAL ============ */}
+          {stage === "portal" && (
+            <section ref={portalRef} className="relative w-full bg-background" style={{ minHeight: "100dvh" }}>
+              <div
+                className="relative mx-auto"
+                style={{
+                  paddingTop: "max(1rem, env(safe-area-inset-top))",
+                  paddingBottom: "calc(max(1rem, env(safe-area-inset-bottom)) + 5.5rem)",
+                  paddingLeft: "max(0.5rem, env(safe-area-inset-left))",
+                  paddingRight: "max(0.5rem, env(safe-area-inset-right))",
+                }}
+              >
+                <iframe
+                  src={tyresePortalEmbed(lang)}
+                  title="Live portal preview"
+                  className="block w-full rounded-xl border border-border/40 bg-background shadow-[0_30px_80px_-30px_hsl(var(--primary)/0.4)]"
+                  style={{ height: "calc(100dvh - 7rem)" }}
+                />
+              </div>
+              <div
+                className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              >
+                <Button
+                  onClick={goNext}
+                  size="lg"
+                  className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.7)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
                 >
-                  <Button
-                    onClick={goNext}
-                    size="lg"
-                    className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.7)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
-                  >
-                    The next step <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                  {ot("the_next_step", "The Next Step")} <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </section>
           )}
 
           {/* ============ STAGE: FINAL ============ */}
           {stage === "next" && (
-            <section ref={nextRef} className="relative min-h-[100dvh] flex items-center px-4 py-16 bg-gradient-to-b from-background to-primary/10">
-              <div className="max-w-2xl mx-auto text-center space-y-6">
-                <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
-                  The next step
-                </span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
-                  Over to you, {firstName}
-                </h2>
-                <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
-                  We'd love to hear what you think and any questions you have.
-                </p>
-                <div className="pt-4">
-                  <Button asChild size="lg" className="font-bebas uppercase tracking-wider bg-[#25D366] hover:bg-[#1fb858] text-white">
-                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                      <MessageCircle className="mr-2 h-5 w-5" /> Message us on WhatsApp
-                    </a>
-                  </Button>
+            <section ref={nextRef} className="relative min-h-[100dvh] flex flex-col items-center justify-between px-4 py-12 bg-gradient-to-b from-background to-primary/10">
+              <div className="flex-1 flex items-center w-full">
+                <div className="max-w-2xl mx-auto text-center space-y-7">
+                  {/* Collaboration emblem: RISE white logo + X + circular player image */}
+                  <div className="flex items-center justify-center gap-4 sm:gap-6">
+                    <img src={riseLogoWhite} alt="RISE" className="h-10 sm:h-14 w-auto" />
+                    <X className="h-5 w-5 sm:h-7 sm:w-7 text-foreground/85" strokeWidth={2.5} />
+                    {player.image_url ? (
+                      <img
+                        src={player.image_url}
+                        alt={player.name}
+                        className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover object-top border-2 border-primary/60 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.6)]"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full border-2 border-primary/60 bg-muted/40" />
+                    )}
+                  </div>
+
+                  <span className="inline-block text-xs font-bebas uppercase tracking-[0.3em] text-primary border border-primary/30 px-4 py-1.5">
+                    {ot("the_next_step", "The Next Step")}
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bebas uppercase tracking-wider">
+                    {ot("over_to_you", "Over to you")}, {firstName}
+                  </h2>
+                  <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
+                    {ot("wed_love_to_hear", "We'd love to hear what you think and any questions you have.")}
+                  </p>
+                  <div className="pt-2">
+                    <Button asChild size="lg" className="font-bebas uppercase tracking-wider bg-[#25D366] hover:bg-[#1fb858] text-white">
+                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Back-navigation slider: only on final */}
+              <div className="w-full max-w-md mx-auto pt-10">
+                <div className="grid grid-cols-2 gap-2 rounded-full border border-border/60 bg-card/40 backdrop-blur p-1">
+                  <button
+                    type="button"
+                    onClick={goHub}
+                    className="rounded-full px-3 py-2 font-bebas text-xs uppercase tracking-[0.2em] text-foreground/80 hover:bg-primary/10 hover:text-foreground"
+                  >
+                    {ot("back_to_info", "Back to Info")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goPortal}
+                    className="rounded-full px-3 py-2 font-bebas text-xs uppercase tracking-[0.2em] text-foreground/80 hover:bg-primary/10 hover:text-foreground"
+                  >
+                    {ot("back_to_portal", "Back to Portal")}
+                  </button>
+                </div>
+
+                {/* Homepage link at very bottom */}
+                <div className="pt-6 text-center">
+                  <a
+                    href={HOMEPAGE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bebas uppercase tracking-[0.28em] text-muted-foreground hover:text-primary"
+                  >
+                    {ot("visit_homepage", "Visit our homepage")} → risefootballagency.com
+                  </a>
                 </div>
               </div>
             </section>
@@ -623,14 +711,16 @@ const RiseWithUs = () => {
                 size="lg"
                 className="pointer-events-auto font-bebas uppercase tracking-[0.2em] shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] bg-primary text-primary-foreground hover:bg-primary/90 px-8"
               >
-                The next step <ArrowRight className="ml-2 h-4 w-4" />
+                {ot("explore_player_portal", "Explore Our Player Portal")} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </motion.div>
           )}
 
-          <footer className="py-8 px-4 text-center">
-            <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
-          </footer>
+          {stage === "hub" && (
+            <footer className="py-8 px-4 text-center">
+              <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
+            </footer>
+          )}
         </>
       )}
     </div>
