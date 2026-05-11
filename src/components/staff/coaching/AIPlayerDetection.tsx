@@ -563,7 +563,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const sampleEvery = SAMPLE_EVERY_SECONDS;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
-    const batchSize = 15;
+    const batchSize = 6;
     const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
 
     const mergedConfirmedExamples = [
@@ -642,10 +642,18 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i - batchStart });
-          } catch {
-            // Skip frames that fail
+          } catch (frameErr) {
+            processReport.frames.push({
+              frameIndex: i,
+              timestamp: time,
+              grounding: 'frame extraction failed before object grounding',
+              rawModelActions: [],
+              acceptedActions: [],
+              rejectedReasons: [frameErr instanceof Error ? frameErr.message : 'Frame could not be extracted'],
+            });
           }
           setScanProgress(Math.round(((i + 1) / totalFrames) * 100));
+          await new Promise((resolve) => window.setTimeout(resolve, 0));
         }
 
         if (frames.length === 0) continue;
@@ -682,6 +690,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
 
         const d = data as any;
+        if (Array.isArray(d?.frameProcessReport)) {
+          processReport.frames.push(...d.frameProcessReport.map((item: ScanProcessFrame) => ({
+            ...item,
+            frameIndex: batchStart + Number(item.frameIndex || 0),
+            timestamp: Number.isFinite(item.timestamp) ? item.timestamp : clampedStart + ((batchStart + Number(item.frameIndex || 0)) * sampleEvery),
+          })));
+          setScanProcessReport({ ...processReport, frames: [...processReport.frames] });
+        }
         if (typeof d?.examplesLoaded === 'number') setExamplesLoaded(d.examplesLoaded);
         if (typeof d?.negativeExamplesLoaded === 'number') setNegativePatternsLoaded(d.negativeExamplesLoaded);
         if (typeof d?.confusionsLoaded === 'number') setConfusionsLoaded(d.confusionsLoaded);
@@ -725,6 +741,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           allDetected,
           savedAt: Date.now(),
         }, mode);
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
       }
       // Completed cleanly — drop checkpoint
       clearScanState(videoUrl, scanIdentityKey, mode);
