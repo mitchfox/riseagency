@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, Image as ImageIcon, X, Eye, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
@@ -41,6 +41,8 @@ interface Prospect {
   last_contact_date: string | null;
   priority: 'low' | 'medium' | 'high' | null;
   linked_player_id: string | null;
+  player_email?: string | null;
+  has_representation_offer?: boolean | null;
   date_of_birth: string | null;
   probability_weight: number | null;
   projected_revenue: number | null;
@@ -102,6 +104,7 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
 
   const initials = prospect.name.split(" ").map(n => n[0]).join("").slice(0, 2);
   const priorityColor = getPriorityColor(prospect.priority);
+  const offerSlug = prospect.name.toLowerCase().trim().replace(/\s+/g, '-');
 
   return (
     <div
@@ -197,6 +200,34 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
             )}
           </div>
           <div className="flex items-center gap-1">
+            {prospect.player_email && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`${window.location.origin}/portal?staff_login=${encodeURIComponent(prospect.player_email || '')}`, '_blank');
+                }}
+                title="Open portal"
+              >
+                <Eye className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            )}
+            {(prospect.has_representation_offer || prospect.stage || prospect.linked_player_id) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`${window.location.origin}/risewithus/${offerSlug}`, '_blank');
+                }}
+                title="Open representation offer"
+              >
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            )}
             {isAdmin && (
               <>
                 <Button
