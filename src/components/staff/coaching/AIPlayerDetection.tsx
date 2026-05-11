@@ -76,6 +76,29 @@ interface EdgeActionResult {
   clipAfter?: number;
 }
 
+interface ScanProcessFrame {
+  frameIndex: number;
+  timestamp: number;
+  grounding: string;
+  roboflowEndpoint?: string;
+  rawModelActions: string[];
+  acceptedActions: string[];
+  rejectedReasons: string[];
+}
+
+interface ScanProcessReport {
+  startedAt: string;
+  finishedAt?: string;
+  mode: 'scan' | 'backtest';
+  totalFrames: number;
+  batches: number;
+  sampleEverySeconds: number;
+  playerName: string;
+  allowedActionTypes: string[];
+  frames: ScanProcessFrame[];
+  summary: string[];
+}
+
 interface AiDetectionFeedbackInsert {
   player_id: string;
   video_analysis_id?: string | null;
@@ -185,6 +208,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const [roboflowGrounded, setRoboflowGrounded] = useState(0);
   const [roboflowRejected, setRoboflowRejected] = useState(0);
   const [verifierDropped, setVerifierDropped] = useState(0);
+  const [scanProcessReport, setScanProcessReport] = useState<ScanProcessReport | null>(null);
   const pauseRef = useRef(false);
   const cancelledRef = useRef(false);
   const [paused, setPaused] = useState(false);
@@ -395,10 +419,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       const vid = document.createElement("video");
       vid.src = videoUrl;
       vid.crossOrigin = "anonymous";
-      vid.preload = "auto";
+      vid.preload = "metadata";
       vid.style.display = "none";
       document.body.appendChild(vid);
-      vid.oncanplay = () => resolve(vid);
+      vid.onloadedmetadata = () => resolve(vid);
       vid.onerror = () => reject(new Error("Failed to load video for scanning"));
     });
   }, [videoUrl]);
@@ -406,19 +430,33 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const extractFrame = useCallback((video: HTMLVideoElement, time: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = canvasRef.current || document.createElement("canvas");
-      canvas.width = 640;
-      canvas.height = 360;
+      const sourceWidth = video.videoWidth || 1280;
+      const sourceHeight = video.videoHeight || 720;
+      const width = Math.min(640, sourceWidth);
+      canvas.width = width;
+      canvas.height = Math.max(1, Math.round(width * (sourceHeight / Math.max(1, sourceWidth))));
       const ctx = canvas.getContext("2d");
       if (!ctx) return reject("No canvas context");
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      const targetTime = duration > 0 ? Math.min(Math.max(0, time), Math.max(0, duration - 0.08)) : Math.max(0, time);
+      const timeout = window.setTimeout(() => {
+        video.removeEventListener("seeked", onSeeked);
+        reject(new Error(`Frame seek timed out at ${Math.floor(targetTime / 60)}.${String(Math.floor(targetTime % 60)).padStart(2, '0')}`));
+      }, 6000);
 
       const onSeeked = () => {
+        window.clearTimeout(timeout);
         video.removeEventListener("seeked", onSeeked);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.6));
+        resolve(canvas.toDataURL("image/jpeg", 0.58));
       };
 
       video.addEventListener("seeked", onSeeked);
-      video.currentTime = time;
+      if (Math.abs(video.currentTime - targetTime) < 0.03 && video.readyState >= 2) {
+        onSeeked();
+      } else {
+        video.currentTime = targetTime;
+      }
     });
   }, []);
 
@@ -513,6 +551,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     setRoboflowGrounded(0);
     setRoboflowRejected(0);
     setVerifierDropped(0);
+    setScanProcessReport(null);
     pauseRef.current = false;
     cancelledRef.current = false;
     setPaused(false);
@@ -524,15 +563,35 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const sampleEvery = SAMPLE_EVERY_SECONDS;
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
-    const batchSize = 15;
+    const batchSize = 6;
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
 
     const mergedConfirmedExamples = [
       ...(confirmedExamples || []),
       ...historicalConfirmedExamples,
       ...globalCorpus,
     ];
+    const playerShortlist = Array.from(new Set([
+      ...(confirmedExamples || []),
+      ...historicalConfirmedExamples,
+      ...(existingClips || []).map((clip) => ({ actionType: clip.action_type || clip.label })),
+    ]
+      .flatMap((ex) => String(ex.actionType || '').split(','))
+      .map((type) => type.trim())
+      .filter(Boolean)
+    ));
+    const processReport: ScanProcessReport = {
+      startedAt: new Date().toISOString(),
+      mode,
+      totalFrames,
+      batches: Math.ceil(totalFrames / batchSize),
+      sampleEverySeconds: sampleEvery,
+      playerName: usingManual ? manualName.trim() : playerName,
+      allowedActionTypes: playerShortlist,
+      frames: [],
+      summary: [],
+    };
 
-    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
     const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
     const existing = readScanState(videoUrl, scanIdentityKey, mode);
     const allDetected: DetectedAction[] =
@@ -583,10 +642,18 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           try {
             const dataUrl = await extractFrame(hiddenVideo, time);
             frames.push({ dataUrl, timestamp: time, index: i - batchStart });
-          } catch {
-            // Skip frames that fail
+          } catch (frameErr) {
+            processReport.frames.push({
+              frameIndex: i,
+              timestamp: time,
+              grounding: 'frame extraction failed before object grounding',
+              rawModelActions: [],
+              acceptedActions: [],
+              rejectedReasons: [frameErr instanceof Error ? frameErr.message : 'Frame could not be extracted'],
+            });
           }
           setScanProgress(Math.round(((i + 1) / totalFrames) * 100));
+          await new Promise((resolve) => window.setTimeout(resolve, 0));
         }
 
         if (frames.length === 0) continue;
@@ -611,6 +678,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             teamKitDescription: usingManual ? undefined : (kitDescription || undefined),
             minConfidence: MIN_CONFIDENCE,
             sampleEverySeconds: sampleEvery,
+            allowedActionTypes: playerShortlist.length > 0 ? playerShortlist : undefined,
             confirmedExamples: mergedConfirmedExamples.length > 0 ? mergedConfirmedExamples : undefined,
           },
         });
@@ -622,6 +690,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         }
 
         const d = data as any;
+        if (Array.isArray(d?.frameProcessReport)) {
+          processReport.frames.push(...d.frameProcessReport.map((item: ScanProcessFrame) => ({
+            ...item,
+            frameIndex: batchStart + Number(item.frameIndex || 0),
+            timestamp: Number.isFinite(item.timestamp) ? item.timestamp : clampedStart + ((batchStart + Number(item.frameIndex || 0)) * sampleEvery),
+          })));
+          setScanProcessReport({ ...processReport, frames: [...processReport.frames] });
+        }
         if (typeof d?.examplesLoaded === 'number') setExamplesLoaded(d.examplesLoaded);
         if (typeof d?.negativeExamplesLoaded === 'number') setNegativePatternsLoaded(d.negativeExamplesLoaded);
         if (typeof d?.confusionsLoaded === 'number') setConfusionsLoaded(d.confusionsLoaded);
@@ -665,6 +741,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
           allDetected,
           savedAt: Date.now(),
         }, mode);
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
       }
       // Completed cleanly — drop checkpoint
       clearScanState(videoUrl, scanIdentityKey, mode);
@@ -680,6 +757,14 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       });
 
       const sortedByTime = [...qualityFiltered].sort((a, b) => a.timestamp - b.timestamp);
+      processReport.finishedAt = new Date().toISOString();
+      processReport.summary = [
+        `Sampled ${totalFrames} frames every ${sampleEvery}s in ${processReport.batches} batches.`,
+        `Roboflow grounded ${roboflowGrounded + processReport.frames.filter(f => f.roboflowEndpoint).length} frame checks where available; object-grounding rejections are listed per frame.`,
+        `AI returned ${allDetected.length} raw accepted candidates before final client filtering and ${qualityFiltered.length} after confidence filtering.`,
+        playerShortlist.length > 0 ? `Action shortlist was constrained to: ${playerShortlist.join(', ')}.` : 'No player-specific action shortlist was available, so the full action definition list was used.',
+      ];
+      setScanProcessReport({ ...processReport, frames: [...processReport.frames] });
 
       // If multiple distinct actions happen within the same <5s passage, fold them
       // into ONE entry whose actionType is a comma-separated list (e.g. "Interception, Pass").
@@ -716,7 +801,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             expectedTimestamp: clip.start,
             expectedEndTimestamp: clip.end,
             actionDescription: clip.action_description,
-            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}, so this has been saved as a missed positive example for the next run.`,
+            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}. ${processReport.frames.filter((frame) => frame.timestamp >= clip.start - 2 && frame.timestamp <= clip.end + 2).map((frame) => `${formatTime(frame.timestamp)}: ${frame.grounding}; ${frame.rejectedReasons.join(' ') || 'model skipped it'}`).join(' ') || 'No sampled frame landed inside the clip window.'} This has been saved as a missed positive example for future scans.`,
           }));
           setBacktestResults(rows);
           await saveBacktestLearning(rows, 0, totalFrames);
@@ -812,13 +897,23 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
 
           expected.forEach((exp, idx) => {
             if (usedExpected.has(idx)) return;
+            const nearbyFrames = processReport.frames
+              .filter((frame) => frame.timestamp >= exp.start - EDGE_TOL && frame.timestamp <= exp.end + EDGE_TOL)
+              .slice(0, 5);
+            const diagnostic = nearbyFrames.length > 0
+              ? nearbyFrames.map((frame) => {
+                  const rejected = frame.rejectedReasons.length > 0 ? frame.rejectedReasons.join(' ') : 'No accepted action was returned for this sampled frame.';
+                  const raw = frame.rawModelActions.length > 0 ? ` Raw model read: ${frame.rawModelActions.join(' | ')}.` : '';
+                  return `${formatTime(frame.timestamp)}: ${frame.grounding}. ${rejected}${raw}`;
+                }).join(' ')
+              : `No sampled frame fell inside this exact clip window. The nearest scan cadence is every ${sampleEvery}s, so the clip may sit between sampled frames.`;
             rows.push({
               type: 'missed',
               expectedActionType: exp.action_type || exp.label,
               expectedTimestamp: exp.start,
               expectedEndTimestamp: exp.end,
               actionDescription: exp.action_description,
-              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). This has been saved as a missed positive example for the next run.`,
+              reason: `No AI detection landed inside this confirmed clip window (${formatTime(exp.start)}-${formatTime(exp.end)}). ${diagnostic} This has been saved as a missed positive example for future scans.`,
             });
           });
 
@@ -832,7 +927,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
         } else {
           onClipsAccepted(clips);
           toast.success(`${clips.length} potential actions added`);
-          setDialogOpen(false);
         }
       }
     } catch (err: unknown) {
@@ -1074,6 +1168,41 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
                   className="bg-primary h-2 rounded-full transition-all duration-300"
                   style={{ width: `${scanProgress}%` }}
                 />
+              </div>
+            )}
+
+            {scanProcessReport && (
+              <div className="rounded border border-border bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Scan process report</div>
+                    <div className="text-sm text-foreground">
+                      {scanProcessReport.playerName} · {scanProcessReport.mode === 'backtest' ? 'Backtest' : 'Scan'} · {scanProcessReport.frames.length}/{scanProcessReport.totalFrames} frames reported
+                    </div>
+                  </div>
+                  <Badge variant="outline">Every batch explained</Badge>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 text-xs">
+                  {scanProcessReport.summary.map((line, idx) => (
+                    <div key={idx} className="rounded border border-border bg-background/50 p-2 text-muted-foreground">{line}</div>
+                  ))}
+                </div>
+                <div className="max-h-64 overflow-y-auto rounded border border-border divide-y divide-border text-xs">
+                  {scanProcessReport.frames.map((frame) => (
+                    <div key={`${frame.frameIndex}-${frame.timestamp}`} className="p-2 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">Frame {frame.frameIndex} · {formatTime(frame.timestamp)}</span>
+                        <span className="text-muted-foreground">{frame.grounding}</span>
+                      </div>
+                      {frame.rawModelActions.length > 0 && <div className="text-muted-foreground">Model read: {frame.rawModelActions.join(' | ')}</div>}
+                      {frame.acceptedActions.length > 0 && <div className="text-primary">Accepted: {frame.acceptedActions.join(' | ')}</div>}
+                      {frame.rejectedReasons.length > 0 && <div className="text-destructive">Rejected: {frame.rejectedReasons.join(' | ')}</div>}
+                      {frame.rawModelActions.length === 0 && frame.acceptedActions.length === 0 && frame.rejectedReasons.length === 0 && (
+                        <div className="text-muted-foreground">Model skipped this sampled frame.</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

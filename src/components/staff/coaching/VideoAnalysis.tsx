@@ -100,7 +100,7 @@ const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
-  const [players, setPlayers] = useState<{ id: string; name: string; representation_status?: string | null; image_url?: string | null }[]>([]);
+  const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -208,11 +208,23 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       video.playbackRate = 4;
       eightXLastRef.current = performance.now();
       const tick = () => {
+        if (!videoRef.current || video.paused || video.ended) {
+          stopEightXSim();
+          return;
+        }
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        if (duration > 0 && video.currentTime >= duration - 0.08) {
+          video.currentTime = Math.max(0, duration - 0.05);
+          stopEightXSim();
+          return;
+        }
         const now = performance.now();
         const elapsed = (now - eightXLastRef.current) / 1000;
         eightXLastRef.current = now;
         // Native 4x already advances 4s per real second; nudge an extra 4s worth
-        video.currentTime += elapsed * 4;
+        video.currentTime = duration > 0
+          ? Math.min(duration - 0.05, video.currentTime + elapsed * 4)
+          : video.currentTime + elapsed * 4;
         eightXRafRef.current = requestAnimationFrame(tick);
       };
       eightXRafRef.current = requestAnimationFrame(tick);
@@ -556,7 +568,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   const fetchPlayers = async () => {
-    const { data } = await supabase.from("players").select("id, name, representation_status, image_url").order("name");
+    const { data } = await supabase.from("players").select("id, name, position, representation_status, image_url").order("name");
     if (data) setPlayers(sortPlayersByRepresentation(data));
   };
 
@@ -2127,7 +2139,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 videoUrl={selectedVideo.video_url}
                 videoRef={videoRef as React.RefObject<HTMLVideoElement>}
                 opponent={selectedVideo.opponent}
-                players={players.map(p => ({ id: p.id, name: p.name }))}
+                players={players.map(p => ({ id: p.id, name: p.name, position: p.position || undefined }))}
                 selectedPlayerId={selectedVideo.player_id}
                 videoAnalysisId={selectedVideo.id}
                 onLinkPlayer={async (playerId) => {

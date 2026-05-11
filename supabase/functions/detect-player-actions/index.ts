@@ -214,6 +214,18 @@ interface FrameGrounding {
   hasBall: boolean;
   playerCount: number;
   available: boolean;
+  endpoint?: string;
+  error?: string;
+}
+
+interface FrameProcessReport {
+  frameIndex: number;
+  timestamp: number;
+  grounding: string;
+  roboflowEndpoint?: string;
+  rawModelActions: string[];
+  acceptedActions: string[];
+  rejectedReasons: string[];
 }
 
 const BALL_CLASSES = /^(football|ball|soccer ?ball)$/i;
@@ -247,26 +259,36 @@ function extractRoboflowDetections(workflowJson: unknown): RoboflowDetection[] {
   return out;
 }
 
-async function callRoboflowWorkflow(base64NoPrefix: string): Promise<RoboflowDetection[] | null> {
+async function callRoboflowWorkflow(base64NoPrefix: string): Promise<{ detections: RoboflowDetection[]; endpoint: string } | null> {
   const apiKey = Deno.env.get('ROBOFLOW_API_KEY');
   const workspace = Deno.env.get('ROBOFLOW_WORKSPACE');
   const workflowId = Deno.env.get('ROBOFLOW_WORKFLOW_ID');
   if (!apiKey || !workspace || !workflowId) return null;
+  const payloads = [
+    {
+      endpoint: `https://serverless.roboflow.com/infer/workflows/${workspace}/${workflowId}`,
+      body: { api_key: apiKey, inputs: { image: { type: 'base64', value: base64NoPrefix } }, parameters: { classes: 'Player, Football, 3' }, use_cache: true },
+    },
+    {
+      endpoint: `https://serverless.roboflow.com/${workspace}/workflows/${workflowId}`,
+      body: { api_key: apiKey, images: { image: { type: 'base64', value: base64NoPrefix } }, parameters: { classes: 'Player, Football, 3' }, use_cache: true },
+    },
+  ];
   try {
-    const res = await fetch(`https://serverless.roboflow.com/infer/workflows/${workspace}/${workflowId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        inputs: { image: { type: 'base64', value: base64NoPrefix } },
-      }),
-    });
-    if (!res.ok) {
-      console.warn('Roboflow workflow non-OK', res.status);
-      return null;
+    for (const attempt of payloads) {
+      const res = await fetch(attempt.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attempt.body),
+      });
+      if (!res.ok) {
+        console.warn('Roboflow workflow non-OK', res.status, attempt.endpoint);
+        continue;
+      }
+      const json = await res.json();
+      return { detections: extractRoboflowDetections(json), endpoint: attempt.endpoint };
     }
-    const json = await res.json();
-    return extractRoboflowDetections(json);
+    return null;
   } catch (e) {
     console.warn('Roboflow workflow error', e);
     return null;
@@ -277,11 +299,12 @@ async function groundFramesWithRoboflow(frames: { dataUrl: string; index: number
   // If creds missing the first call returns null and we mark all unavailable.
   const groundings: FrameGrounding[] = await Promise.all(frames.map(async (f) => {
     const base64 = (f.dataUrl.split(',')[1] || '').trim();
-    const dets = base64 ? await callRoboflowWorkflow(base64) : null;
-    if (!dets) return { frameIndex: f.index, detections: [], hasBall: false, playerCount: 0, available: false };
+    const result = base64 ? await callRoboflowWorkflow(base64) : null;
+    if (!result) return { frameIndex: f.index, detections: [], hasBall: false, playerCount: 0, available: false, error: 'Roboflow workflow did not return usable detections' };
+    const dets = result.detections;
     const hasBall = dets.some((d) => BALL_CLASSES.test(d.class) && d.confidence >= 0.3);
     const playerCount = dets.filter((d) => PLAYER_CLASSES.test(d.class) && d.confidence >= 0.3).length;
-    return { frameIndex: f.index, detections: dets, hasBall, playerCount, available: true };
+    return { frameIndex: f.index, detections: dets, hasBall, playerCount, available: true, endpoint: result.endpoint };
   }));
   return groundings;
 }
@@ -368,6 +391,9 @@ Compare what you see this player doing against the action types listed above and
 - If two distinct actions happen in the same <5s passage (e.g. an interception then a pass), output them as one comma-separated entry: "Interception, Pass".
 - If no listed action clearly applies, SKIP the frame. Do not flag "positioning", "tracking play", "anticipating", "ready for", "monitoring" — those are not actions.
 - Standing in the goal, watching play develop, jogging back into shape, or being visible nearby are NEVER detections, regardless of position.
+- Goalkeeper priority: if the tracked player is a GK and the ball is travelling towards goal with a dive, reach, block or parry cue, classify it as Save when Save is in the allowed list. Do not downgrade that to Clearance or Defensive Positioning.
+- Distribution priority: if the GK or defender clearly kicks, throws or rolls the ball to restart/build play, prefer the listed pass/distribution action over Clearance unless the cue is an emergency defensive removal under pressure.
+- Defensive Positioning is allowed only when that exact action is in the allowed list and no contact/distribution/save/claim/punch action fits. It must never be the default label for simply being visible.
 
 OUTPUT RULES:
 - Only output frames where you can name a real action from the list. Empty output is correct when nothing is happening for this player.
@@ -492,9 +518,23 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       verifierDropped: 0,
     };
 
+    const frameProcessReport: FrameProcessReport[] = (frames as { timestamp: number; index: number }[]).map((frame) => {
+      const g = groundingByIndex.get(frame.index);
+      return {
+        frameIndex: frame.index,
+        timestamp: frame.timestamp,
+        grounding: g ? summariseGrounding(g) : 'no object grounding available',
+        roboflowEndpoint: g?.endpoint,
+        rawModelActions: [],
+        acceptedActions: [],
+        rejectedReasons: g?.available === false && g.error ? [g.error] : [],
+      };
+    });
+    const reportByFrame = new Map(frameProcessReport.map((item) => [item.frameIndex, item]));
+
     if (!toolCall?.function?.arguments) {
       return new Response(
-        JSON.stringify({ actions: [], ...meta }),
+        JSON.stringify({ actions: [], ...meta, frameProcessReport }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -502,27 +542,37 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     const parsed = JSON.parse(toolCall.function.arguments);
     const rawActions = Array.isArray(parsed?.actions) ? parsed.actions : [];
     const highOnlyKeywords = /(foul|fouled|penalty|red card|yellow card)/i;
+    for (const a of rawActions) {
+      const idx = Number(a?.frameIndex);
+      const report = reportByFrame.get(idx);
+      if (report) report.rawModelActions.push(`${String(a?.actionType || 'unknown')} (${String(a?.confidence || 'unknown')}) — ${String(a?.description || 'no reason supplied')}`);
+    }
 
     const sanitisedActions = rawActions
       .filter((a: any) => Number.isInteger(a?.frameIndex) && a.frameIndex >= 0 && a.frameIndex < frames.length)
       .map((a: any) => {
+        const report = reportByFrame.get(Number(a.frameIndex));
+        const reject = (reason: string) => {
+          report?.rejectedReasons.push(reason);
+          return null;
+        };
         const rawParts = String(a.actionType || '').split(',').map((p: string) => p.trim()).filter(Boolean);
         const canonicalParts: string[] = [];
         for (const part of rawParts) {
           const c = canonicalNameMap[normaliseName(part)];
           if (c && !canonicalParts.includes(c)) canonicalParts.push(c);
         }
-        if (canonicalParts.length === 0) return null;
+        if (canonicalParts.length === 0) return reject(`Dropped because "${String(a.actionType || '')}" is not in the allowed action shortlist.`);
         const canonical = canonicalParts.join(', ');
         const primary = canonicalParts[0];
 
         const confidence = String(a.confidence || '').toLowerCase();
-        if (confidence !== 'high' && confidence !== 'medium') return null;
-        if (minConfidence === 'high' && confidence !== 'high') return null;
-        if (highOnlyKeywords.test(canonical) && confidence !== 'high') return null;
+        if (confidence !== 'high' && confidence !== 'medium') return reject(`Dropped ${canonical} because confidence was "${confidence || 'blank'}".`);
+        if (minConfidence === 'high' && confidence !== 'high') return reject(`Dropped ${canonical} because the scan required high confidence.`);
+        if (highOnlyKeywords.test(canonical) && confidence !== 'high') return reject(`Dropped ${canonical} because contact/card actions must be high confidence.`);
 
         const visualCue = String(a.visualCueMatched || '').trim();
-        if (!visualCue) return null;
+        if (!visualCue) return reject(`Dropped ${canonical} because no visible cue from the action definition was supplied.`);
         const desc = String(a.description || '').trim();
 
         const timing = durationMap[normaliseName(primary)] || { before: 5, after: 5 };
@@ -548,10 +598,12 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
       const needsBall = BALL_DEPENDENT_ACTIONS.test(det.actionType);
       if (needsBall && !g.hasBall) {
         meta.roboflowRejected++;
+        reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Roboflow rejected ${det.actionType}: football was not detected in this sampled frame.`);
         return false;
       }
       if (g.playerCount === 0) {
         meta.roboflowRejected++;
+        reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Roboflow rejected ${det.actionType}: no player was detected in this sampled frame.`);
         return false;
       }
       return true;
@@ -656,7 +708,10 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
               for (const v of verdicts) verdictMap.set(v.candidateId, !!v.confirmed);
               finalCandidates = merged.filter((det: any) => {
                 const ok = verdictMap.get(det.frameIndex);
-                if (!ok) meta.verifierDropped++;
+                if (!ok) {
+                  meta.verifierDropped++;
+                  reportByFrame.get(det.frameIndex)?.rejectedReasons.push(`Verifier rejected ${det.actionType}: target player was not confidently the player performing it.`);
+                }
                 return !!ok;
               });
             }
@@ -685,9 +740,12 @@ CLIP DURATION: use the per-action defaults from the reference (clipBefore / clip
     capped.sort((x, y) => x.timestamp - y.timestamp);
 
     const finalActions = capped.map(({ timestamp: _t, visualCueMatched: _v, ...rest }) => rest);
+    for (const det of capped) {
+      reportByFrame.get(det.frameIndex)?.acceptedActions.push(`${det.actionType} (${det.confidence}) — ${det.description}`);
+    }
 
     return new Response(
-      JSON.stringify({ actions: finalActions, ...meta, roboflowAvailable }),
+      JSON.stringify({ actions: finalActions, ...meta, roboflowAvailable, frameProcessReport }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
