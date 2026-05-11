@@ -60,6 +60,7 @@ import {
   Clock,
   Lock,
   Star,
+  UserRoundCheck,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -76,6 +77,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NetworkAnalytics, computeContactStrength, strengthColor, strengthBg } from './NetworkAnalytics';
 import { NetworkDuplicateDetector } from './NetworkDuplicateDetector';
 import { NetworkActivityTimeline } from './NetworkActivityTimeline';
+import { RepresentationOffers } from './RepresentationOffers';
 
 interface Contact {
   id: string;
