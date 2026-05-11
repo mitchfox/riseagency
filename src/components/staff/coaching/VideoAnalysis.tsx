@@ -100,7 +100,7 @@ const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
-  const [players, setPlayers] = useState<{ id: string; name: string; representation_status?: string | null; image_url?: string | null }[]>([]);
+  const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -556,7 +556,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   };
 
   const fetchPlayers = async () => {
-    const { data } = await supabase.from("players").select("id, name, representation_status, image_url").order("name");
+    const { data } = await supabase.from("players").select("id, name, position, representation_status, image_url").order("name");
     if (data) setPlayers(sortPlayersByRepresentation(data));
   };
 
