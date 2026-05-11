@@ -259,8 +259,8 @@ const MISSION_BIO_FALLBACK =
 
 /* ============== INTRO ============== */
 const IntroCinematic = ({
-  firstName, lang, onDone,
-}: { firstName: string; lang: string; onDone: () => void }) => {
+  firstName, lang, extraImages, onDone,
+}: { firstName: string; lang: string; extraImages: string[]; onDone: () => void }) => {
   const [phase, setPhase] = useState(0);
   // 0: invitation chip, 1: stood-out line, 2: differentiate line, 3: RISE WITH US
   const totalPhases = 4;
@@ -293,6 +293,32 @@ const IntroCinematic = ({
         animate={{ opacity: [0.4, 0.9, 0.5] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
+
+      {/* Uploaded images appear at phase 3 only, floated as a creative collage */}
+      {phase === 3 && extraImages.length > 0 && (
+        <div className="pointer-events-none absolute inset-0 z-[5]">
+          {extraImages.slice(0, 4).map((src, i) => {
+            const positions = [
+              { top: "8%",  left: "6%"  },
+              { top: "10%", right: "6%" },
+              { bottom: "12%", left: "8%" },
+              { bottom: "10%", right: "10%" },
+            ][i];
+            return (
+              <motion.img
+                key={src + i}
+                src={src}
+                alt=""
+                className="absolute h-24 w-24 sm:h-36 sm:w-36 object-cover rounded-xl border border-primary/40 shadow-[0_0_40px_-10px_hsl(var(--gold)/0.6)]"
+                style={positions as React.CSSProperties}
+                initial={{ opacity: 0, scale: 0.8, rotate: i % 2 ? -6 : 6 }}
+                animate={{ opacity: 0.85, scale: 1, rotate: i % 2 ? -3 : 3 }}
+                transition={{ duration: 1.1, delay: i * 0.18, ease: [0.22, 1, 0.36, 1] }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Text reveal */}
       <div className="relative z-10 max-w-2xl px-6 text-center">
