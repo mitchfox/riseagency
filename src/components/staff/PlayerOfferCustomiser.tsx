@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,6 +19,21 @@ export const OFFER_SECTIONS = [
   { id: "portal", label: "Your Personal Portal" },
 ];
 
+const PORTAL_LANGUAGES = [
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" },
+  { code: "no", label: "Norsk", flag: "🇳🇴" },
+];
+
 interface Props {
   playerId: string;
   playerName: string;
@@ -28,6 +44,7 @@ interface Props {
 export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange }: Props) => {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [images, setImages] = useState<Record<string, string>>({});
+  const [language, setLanguage] = useState<string>("en");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -39,6 +56,9 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
       setImages((data?.section_images || {}) as Record<string, string>);
+      const { data: pData } = await (supabase as any)
+        .from("players").select("portal_language").eq("id", playerId).maybeSingle();
+      setLanguage(pData?.portal_language || "en");
       setLoading(false);
     })();
   }, [open, playerId]);
@@ -77,6 +97,9 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       .from("player_offer_settings")
       .upsert(payload, { onConflict: "player_id" });
     if (error) { toast.error("Failed to save"); setSaving(false); return; }
+    const { error: lErr } = await (supabase as any)
+      .from("players").update({ portal_language: language }).eq("id", playerId);
+    if (lErr) { toast.error("Failed to save language"); setSaving(false); return; }
     toast.success("Offer page updated");
     setSaving(false);
     onOpenChange(false);
@@ -89,6 +112,21 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
         {loading ? (
           <div className="flex items-center justify-center py-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
         ) : (
+        <>
+          <div className="rounded-lg border p-3 space-y-2">
+            <Label className="font-medium">Offer page language</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PORTAL_LANGUAGES.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    <span className="flex items-center gap-2"><span>{l.flag}</span><span>{l.label}</span></span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Sets the language for both the offer page and the embedded portal preview.</p>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-1">
             {OFFER_SECTIONS.map((s) => {
               const visible = !hidden.has(s.id);
@@ -141,6 +179,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               );
             })}
           </div>
+        </>
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

@@ -787,6 +787,9 @@ const Dashboard = () => {
       if (urlParams.get("hide_invoices") === "1") {
         try { sessionStorage.setItem("portal_hide_invoices", "1"); } catch {}
       }
+      if (urlParams.get("hide_logout") === "1") {
+        try { sessionStorage.setItem("portal_hide_logout", "1"); } catch {}
+      }
       if (langParam) {
         try {
           localStorage.setItem("portal_language_hint", langParam);
@@ -5119,6 +5122,7 @@ const Dashboard = () => {
       </Dialog>
 
       {/* Logout Section */}
+      {!(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_logout") === "1") && (
       <div className="container mx-auto px-4 pb-8 mb-20 md:mb-0">
         <div className="border-t border-border my-6" />
         <div className="flex justify-center items-center gap-4">
@@ -5161,6 +5165,7 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
+      )}
       
       {/* Performance Report Dialog */}
       <PerformanceReportDialog
