@@ -20,6 +20,10 @@ import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { Switch } from '@/components/ui/switch';
+import { PlayerNotesBoard } from './PlayerNotesBoard';
+
+const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
+  name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
 interface PlayerData {
   id: string;
@@ -890,6 +894,14 @@ export const PlayerDatabase = () => {
                 )}
                 <div><span className="text-muted-foreground text-xs">Reports</span><p className="font-medium">{selectedPlayer.report_count}</p></div>
                 {selectedPlayer.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{selectedPlayer.notes}</p></div>}
+              </div>
+              <div className="pt-2 border-t border-border/40">
+                <PlayerNotesBoard
+                  playerKey={buildPlayerKey(selectedPlayer.player_name, selectedPlayer.date_of_birth)}
+                  playerName={selectedPlayer.player_name}
+                  source={selectedPlayer.source}
+                  sourceId={selectedPlayer.id}
+                />
               </div>
             </div>
           )}

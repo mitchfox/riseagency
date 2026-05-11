@@ -3234,6 +3234,48 @@ export type Database = {
           },
         ]
       }
+      player_database_notes: {
+        Row: {
+          color: string
+          content: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          player_key: string
+          player_name: string | null
+          source: string | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          player_key: string
+          player_name?: string | null
+          source?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          player_key?: string
+          player_name?: string | null
+          source?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_fixtures: {
         Row: {
           created_at: string

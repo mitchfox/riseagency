@@ -599,7 +599,20 @@ export const StaffNotificationsDropdown = ({ userId }: StaffNotificationsDropdow
                               className={`flex items-start gap-3 p-2.5 cursor-pointer rounded-md transition-colors ${
                                 !isRead ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"
                               }`}
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => {
+                                markAsRead(notification.id);
+                                if (
+                                  notification.event_type === "player_birthday" ||
+                                  notification.event_type === "player_turning_18"
+                                ) {
+                                  window.dispatchEvent(
+                                    new CustomEvent("openPlayerBirthday", {
+                                      detail: notification.event_data || {},
+                                    })
+                                  );
+                                  setOpen(false);
+                                }
+                              }}
                             >
                               <div className="flex-1 min-w-0">
                                 <p className={`text-sm ${!isRead ? "font-medium" : ""}`}>
