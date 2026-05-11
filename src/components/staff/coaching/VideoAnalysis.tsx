@@ -106,14 +106,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [showUpload, setShowUpload] = useState(false);
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const lookaheadRef = useRef<HTMLVideoElement>(null);
-  const previewRef = useRef<HTMLVideoElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const lookaheadPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const preloadPhaseRef = useRef<number>(0);
-  const preloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [hoverPreview, setHoverPreview] = useState<{ x: number; time: number } | null>(null);
-  const hoverSeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -279,93 +272,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   }, [selectedVideo?.player_id]);
 
-  // Range-based pre-warmer — pulls the next ~5 minutes of bytes into the
-  // browser HTTP cache so the main video gets cache hits when it actually
-  // needs them. Far more reliable than a hidden video element which the
-  // browser will throttle/garbage-collect.
-  const preloadFileSizeRef = useRef<number | null>(null);
-  const preloadInFlightRef = useRef<boolean>(false);
-  const preloadCompletedToRef = useRef<number>(0); // bytes already fetched from start
-
-  const startFullPreload = useCallback(() => {
-    const mainVideo = videoRef.current;
-    if (!mainVideo || !selectedVideo?.video_url) return;
-    if (preloadIntervalRef.current) return;
-
-    const url = selectedVideo.video_url;
-    const LOOKAHEAD_SECONDS = 300; // 5 minutes
-    const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunks
-
-    // Discover total bytes once
-    const ensureSize = async () => {
-      if (preloadFileSizeRef.current != null) return preloadFileSizeRef.current;
-      try {
-        const head = await fetch(url, { method: 'HEAD' });
-        const len = parseInt(head.headers.get('content-length') || '0', 10);
-        if (Number.isFinite(len) && len > 0) {
-          preloadFileSizeRef.current = len;
-          return len;
-        }
-      } catch {}
-      return null;
-    };
-
-    preloadIntervalRef.current = setInterval(async () => {
-      const main = videoRef.current;
-      if (!main) return;
-      const duration = main.duration;
-      if (!Number.isFinite(duration) || duration <= 0) return;
-
-      const fileSize = await ensureSize();
-      if (!fileSize) return;
-
-      // bytes-per-second approximation
-      const bps = fileSize / duration;
-      const playheadByte = Math.floor(main.currentTime * bps);
-      const targetByte = Math.min(
-        fileSize - 1,
-        Math.floor((main.currentTime + LOOKAHEAD_SECONDS) * bps),
-      );
-
-      // If user seeked backwards, reset the watermark to playhead
-      if (preloadCompletedToRef.current < playheadByte) {
-        preloadCompletedToRef.current = playheadByte;
-      }
-
-      // Whole file warmed
-      if (preloadCompletedToRef.current >= fileSize - 1) {
-        if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
-        preloadIntervalRef.current = null;
-        return;
-      }
-
-      if (preloadInFlightRef.current) return;
-      if (preloadCompletedToRef.current >= targetByte) return;
-
-      const start = preloadCompletedToRef.current;
-      const end = Math.min(targetByte, start + CHUNK_SIZE - 1);
-      preloadInFlightRef.current = true;
-      try {
-        const res = await fetch(url, { headers: { Range: `bytes=${start}-${end}` } });
-        // Drain the body to ensure it actually lands in cache
-        if (res.body) {
-          const reader = res.body.getReader();
-          while (true) {
-            const { done } = await reader.read();
-            if (done) break;
-          }
-        } else {
-          await res.arrayBuffer();
-        }
-        preloadCompletedToRef.current = end + 1;
-      } catch {
-        // network hiccup — retry on next tick
-      } finally {
-        preloadInFlightRef.current = false;
-      }
-    }, 250);
-  }, [selectedVideo?.video_url]);
-
   const togglePlayerFullscreen = useCallback(async () => {
     const shell = playerShellRef.current;
     if (!shell) return;
@@ -380,67 +286,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       // Ignore fullscreen API failures
     }
   }, []);
-
-  useEffect(() => {
-    const lookaheadVideo = lookaheadRef.current;
-    if (!lookaheadVideo || !selectedVideo?.video_url) return;
-
-    // Reset preload state
-    if (preloadIntervalRef.current) {
-      clearInterval(preloadIntervalRef.current);
-      preloadIntervalRef.current = null;
-    }
-    preloadPhaseRef.current = 0;
-
-    lookaheadVideo.src = selectedVideo.video_url;
-    lookaheadVideo.preload = "auto";
-    lookaheadVideo.load();
-
-    // Reset Range pre-warmer state for the new video
-    preloadFileSizeRef.current = null;
-    preloadCompletedToRef.current = 0;
-    preloadInFlightRef.current = false;
-
-    // Hover preview source — needs auto preload so frame data is decodable
-    const preview = previewRef.current;
-    if (preview) {
-      preview.src = selectedVideo.video_url;
-      preview.preload = "auto";
-      preview.load();
-    }
-  }, [selectedVideo?.id, selectedVideo?.video_url]);
-
-  // Draw the preview frame onto the canvas whenever the preview video seeks.
-  // Wait for readyState >= HAVE_CURRENT_DATA (2) before drawing to avoid
-  // capturing a black frame before the decoder has data for that timestamp.
-  useEffect(() => {
-    const preview = previewRef.current;
-    const canvas = previewCanvasRef.current;
-    if (!preview || !canvas) return;
-
-    const draw = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      try {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
-      } catch {}
-    };
-
-    const onSeeked = () => {
-      if (preview.readyState >= 2) {
-        draw();
-      } else {
-        preview.addEventListener("loadeddata", draw, { once: true });
-      }
-    };
-
-    preview.addEventListener("seeked", onSeeked);
-    return () => {
-      preview.removeEventListener("seeked", onSeeked);
-      preview.removeEventListener("loadeddata", draw);
-    };
-  }, [selectedVideo?.id]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -464,8 +309,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   useEffect(() => {
     return () => {
       if (clipSavedTimerRef.current) clearTimeout(clipSavedTimerRef.current);
-      if (lookaheadPauseTimerRef.current) clearTimeout(lookaheadPauseTimerRef.current);
-      if (preloadIntervalRef.current) clearInterval(preloadIntervalRef.current);
     };
   }, []);
 
@@ -2298,10 +2141,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               crossOrigin="anonymous"
               controls
               controlsList="nodownload nofullscreen"
-              preload="auto"
+              preload="metadata"
               className="w-full aspect-video object-fill"
-              onPlay={startFullPreload}
-              onLoadedMetadata={startFullPreload}
               onKeyDown={(e) => {
                 // Prevent native video controls from intercepting our hotkeys in fullscreen
                 const key = e.key;
@@ -2340,13 +2181,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 if (!duration) return;
                 const time = ratio * duration;
                 setHoverPreview({ x, time });
-                if (hoverSeekTimerRef.current) clearTimeout(hoverSeekTimerRef.current);
-                hoverSeekTimerRef.current = setTimeout(() => {
-                  const preview = previewRef.current;
-                  if (preview && Math.abs(preview.currentTime - time) > 0.25) {
-                    try { preview.currentTime = time; } catch {}
-                  }
-                }, 30);
               }}
               onMouseLeave={() => setHoverPreview(null)}
               onClick={(e) => {
@@ -2365,13 +2199,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   width: '160px',
                 }}
               >
-                <canvas
-                  ref={previewCanvasRef}
-                  width={160}
-                  height={90}
-                  className="block w-[160px] h-[90px] bg-black"
-                />
-                <div className="text-[10px] text-white text-center py-0.5 font-mono">
+                <div className="flex h-16 items-center justify-center text-xs text-white/80">
+                  Preview disabled for stability
+                </div>
+                <div className="text-[10px] text-white text-center py-0.5 font-mono border-t border-white/10">
                   {(() => {
                     const t = hoverPreview.time;
                     const m = Math.floor(t / 60);
@@ -2381,27 +2212,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 </div>
               </div>
             )}
-            {/* Hidden preview video used to render hover thumbnails */}
-            <video
-              ref={previewRef}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              aria-hidden="true"
-              className="absolute h-px w-px opacity-0 pointer-events-none"
-            />
-            {/* Hidden lookahead video that progressively seeks through the entire file to force full buffering */}
-            <video
-              ref={lookaheadRef}
-              src={selectedVideo.video_url}
-              preload="auto"
-              crossOrigin="anonymous"
-              muted
-              playsInline
-              aria-hidden="true"
-              className="absolute h-px w-px opacity-0 pointer-events-none"
-            />
             {/* Video stays visible but paused — no separate freeze frame image needed */}
             {/* Annotation canvas overlay during freeze */}
             {overlayFreezeActive && (() => {

@@ -58,6 +58,7 @@ interface Player {
   visible_on_stars_page: boolean;
   highlights: any;
   representation_status: string;
+  has_representation_offer?: boolean | null;
   club: string | null;
   club_logo: string | null;
   league: string | null;
@@ -172,6 +173,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     age: 0,
     nationality: "",
     representation_status: "",
+    has_representation_offer: false,
     visible_on_stars_page: false,
     portal_language: "en",
     image_url: "",
@@ -833,6 +835,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       age: player.age,
       nationality: player.nationality,
       representation_status: player.representation_status || "",
+      has_representation_offer: Boolean((player as any).has_representation_offer || player.representation_status === 'prospect'),
       visible_on_stars_page: player.visible_on_stars_page || false,
       portal_language: player.portal_language || "en",
       image_url: player.image_url || "",
@@ -1142,6 +1145,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           image_url: finalImageUrl || null,
           hover_image_url: finalHoverImageUrl || null,
           representation_status: formData.representation_status || 'other',
+          has_representation_offer: formData.has_representation_offer,
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
           date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
@@ -1298,6 +1302,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           image_url: finalImageUrl || null,
           hover_image_url: finalHoverImageUrl || null,
           representation_status: formData.representation_status || null,
+          has_representation_offer: formData.has_representation_offer,
           visible_on_stars_page: formData.visible_on_stars_page,
           links: formData.links.length > 0 ? formData.links : null,
           highlighted_match: formData.highlightedMatch || null,
@@ -1545,6 +1550,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     age: 18,
                     nationality: "",
                     representation_status: "other",
+                    has_representation_offer: false,
                     visible_on_stars_page: false,
                     portal_language: "en",
                     image_url: "",
@@ -1686,7 +1692,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         </Button>
                       </>
                     ) : null}
-                    {selectedPlayer?.representation_status === 'prospect' && (
+                    {(selectedPlayer?.has_representation_offer || selectedPlayer?.representation_status === 'prospect') && (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -3435,7 +3441,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
                     <Select
                       value={formData.representation_status}
-                      onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
+                      onValueChange={(value) => setFormData({ ...formData, representation_status: value, has_representation_offer: value === 'prospect' ? true : formData.has_representation_offer })}
                     >
                       <SelectTrigger className="h-10 sm:h-11">
                         <SelectValue placeholder="Select status" />
@@ -3446,6 +3452,17 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <input
+                      type="checkbox"
+                      id="has_representation_offer"
+                      checked={formData.has_representation_offer}
+                      onChange={(e) => setFormData({ ...formData, has_representation_offer: e.target.checked })}
+                      className="h-5 w-5 sm:h-4 sm:w-4"
+                    />
+                    <Label htmlFor="has_representation_offer" className="text-sm cursor-pointer">Representation Offer Page</Label>
                   </div>
 
                   <div className="flex items-center gap-3 pt-2">

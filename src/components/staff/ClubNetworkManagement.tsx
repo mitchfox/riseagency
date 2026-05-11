@@ -60,6 +60,7 @@ import {
   Clock,
   Lock,
   Star,
+  UserRoundCheck,
 } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { openExternalUrl, openMailto } from '@/utils/openExternalUrl';
@@ -76,6 +77,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NetworkAnalytics, computeContactStrength, strengthColor, strengthBg } from './NetworkAnalytics';
 import { NetworkDuplicateDetector } from './NetworkDuplicateDetector';
 import { NetworkActivityTimeline } from './NetworkActivityTimeline';
+import { RepresentationOffers } from './RepresentationOffers';
 
 interface Contact {
   id: string;
@@ -2973,11 +2975,11 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-2 backdrop-blur-2xl" style={softPanelStyle}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_44%)] opacity-80" />
-            <TabsList className={`relative z-[1] grid gap-2 bg-transparent p-0 ${isMobile ? 'grid-cols-3 min-w-0' : 'min-w-[36rem] grid-cols-5 sm:min-w-0'}`}>
+            <TabsList className={`relative z-[1] grid gap-2 bg-transparent p-0 ${isMobile ? 'grid-cols-3 min-w-0' : 'min-w-[42rem] grid-cols-6 sm:min-w-0'}`}>
               <TabsTrigger value="contacts" className="rounded-[1.25rem] border border-border/50 bg-background/30 px-3 py-2.5 text-xs sm:text-sm font-medium data-[state=active]:border-primary/35 data-[state=active]:bg-primary/12 data-[state=active]:text-primary"><User className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />Contacts</TabsTrigger>
-              {(['analytics', 'duplicates', ...(isMobile ? [] : ['templates', 'pathways'])] as const).map((tab) => {
-                const icons = { analytics: BarChart3, duplicates: AlertTriangle, templates: FileText, pathways: Link2 };
-                const labels = { analytics: 'Analytics', duplicates: 'Dupes', templates: 'Templates', pathways: 'Pathways' };
+              {(['offers', 'analytics', 'duplicates', ...(isMobile ? [] : ['templates', 'pathways'])] as const).map((tab) => {
+                const icons = { offers: UserRoundCheck, analytics: BarChart3, duplicates: AlertTriangle, templates: FileText, pathways: Link2 };
+                const labels = { offers: 'Offers', analytics: 'Analytics', duplicates: 'Dupes', templates: 'Templates', pathways: 'Pathways' };
                 const TabIcon = icons[tab];
                 return (
                   <TabsTrigger
@@ -3027,6 +3029,12 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
 
             <TabsContent value="duplicates" className="mt-6">
               <NetworkDuplicateDetector contacts={contacts} onRefresh={async () => { await refreshNetwork(true); }} />
+            </TabsContent>
+
+            <TabsContent value="offers" className="mt-6">
+              <NetworkTabPanel title="Representation Offers" description="View and manage player offer pages from Network." icon={UserRoundCheck}>
+                <RepresentationOffers />
+              </NetworkTabPanel>
             </TabsContent>
 
             <TabsContent value="templates" className="mt-6">

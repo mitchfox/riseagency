@@ -4195,6 +4195,7 @@ export type Database = {
           created_by: string | null
           date_of_birth: string | null
           email: string | null
+          has_representation_offer: boolean
           highlighted_match: Json | null
           highlights: Json | null
           hover_image_url: string | null
@@ -4235,6 +4236,7 @@ export type Database = {
           created_by?: string | null
           date_of_birth?: string | null
           email?: string | null
+          has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
           hover_image_url?: string | null
@@ -4275,6 +4277,7 @@ export type Database = {
           created_by?: string | null
           date_of_birth?: string | null
           email?: string | null
+          has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
           hover_image_url?: string | null
@@ -6923,6 +6926,7 @@ export type Database = {
         | "analyst"
         | "network_collaborator"
         | "member"
+        | "stats_updater"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -7058,6 +7062,7 @@ export const Constants = {
         "analyst",
         "network_collaborator",
         "member",
+        "stats_updater",
       ],
     },
   },
