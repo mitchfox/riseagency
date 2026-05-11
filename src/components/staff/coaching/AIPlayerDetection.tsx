@@ -419,10 +419,10 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       const vid = document.createElement("video");
       vid.src = videoUrl;
       vid.crossOrigin = "anonymous";
-      vid.preload = "auto";
+      vid.preload = "metadata";
       vid.style.display = "none";
       document.body.appendChild(vid);
-      vid.oncanplay = () => resolve(vid);
+      vid.onloadedmetadata = () => resolve(vid);
       vid.onerror = () => reject(new Error("Failed to load video for scanning"));
     });
   }, [videoUrl]);
@@ -430,19 +430,33 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
   const extractFrame = useCallback((video: HTMLVideoElement, time: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       const canvas = canvasRef.current || document.createElement("canvas");
-      canvas.width = 640;
-      canvas.height = 360;
+      const sourceWidth = video.videoWidth || 1280;
+      const sourceHeight = video.videoHeight || 720;
+      const width = Math.min(640, sourceWidth);
+      canvas.width = width;
+      canvas.height = Math.max(1, Math.round(width * (sourceHeight / Math.max(1, sourceWidth))));
       const ctx = canvas.getContext("2d");
       if (!ctx) return reject("No canvas context");
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      const targetTime = duration > 0 ? Math.min(Math.max(0, time), Math.max(0, duration - 0.08)) : Math.max(0, time);
+      const timeout = window.setTimeout(() => {
+        video.removeEventListener("seeked", onSeeked);
+        reject(new Error(`Frame seek timed out at ${formatTime(targetTime)}`));
+      }, 6000);
 
       const onSeeked = () => {
+        window.clearTimeout(timeout);
         video.removeEventListener("seeked", onSeeked);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.6));
+        resolve(canvas.toDataURL("image/jpeg", 0.58));
       };
 
       video.addEventListener("seeked", onSeeked);
-      video.currentTime = time;
+      if (Math.abs(video.currentTime - targetTime) < 0.03 && video.readyState >= 2) {
+        onSeeked();
+      } else {
+        video.currentTime = targetTime;
+      }
     });
   }, []);
 
