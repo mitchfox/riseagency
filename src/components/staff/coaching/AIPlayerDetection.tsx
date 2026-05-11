@@ -550,6 +550,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
     const segmentDuration = Math.max(0, clampedEnd - clampedStart);
     const totalFrames = Math.max(1, Math.floor(segmentDuration / sampleEvery) + 1);
     const batchSize = 15;
+    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
 
     const mergedConfirmedExamples = [
       ...(confirmedExamples || []),
@@ -577,7 +578,6 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
       summary: [],
     };
 
-    const mode: 'scan' | 'backtest' = backtestMode ? 'backtest' : 'scan';
     const scanIdentityKey = usingManual ? `manual::${manualName.trim().toLowerCase()}` : selectedPlayerForScan;
     const existing = readScanState(videoUrl, scanIdentityKey, mode);
     const allDetected: DetectedAction[] =
