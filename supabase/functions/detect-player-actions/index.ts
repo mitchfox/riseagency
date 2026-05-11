@@ -391,6 +391,9 @@ Compare what you see this player doing against the action types listed above and
 - If two distinct actions happen in the same <5s passage (e.g. an interception then a pass), output them as one comma-separated entry: "Interception, Pass".
 - If no listed action clearly applies, SKIP the frame. Do not flag "positioning", "tracking play", "anticipating", "ready for", "monitoring" — those are not actions.
 - Standing in the goal, watching play develop, jogging back into shape, or being visible nearby are NEVER detections, regardless of position.
+- Goalkeeper priority: if the tracked player is a GK and the ball is travelling towards goal with a dive, reach, block or parry cue, classify it as Save when Save is in the allowed list. Do not downgrade that to Clearance or Defensive Positioning.
+- Distribution priority: if the GK or defender clearly kicks, throws or rolls the ball to restart/build play, prefer the listed pass/distribution action over Clearance unless the cue is an emergency defensive removal under pressure.
+- Defensive Positioning is allowed only when that exact action is in the allowed list and no contact/distribution/save/claim/punch action fits. It must never be the default label for simply being visible.
 
 OUTPUT RULES:
 - Only output frames where you can name a real action from the list. Empty output is correct when nothing is happening for this player.
