@@ -801,7 +801,7 @@ export const AIPlayerDetection = ({ videoUrl, videoRef, onClipsAccepted, opponen
             expectedTimestamp: clip.start,
             expectedEndTimestamp: clip.end,
             actionDescription: clip.action_description,
-            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}, so this has been saved as a missed positive example for the next run.`,
+            reason: `No AI detections came back from the scan. The known clip is ${clip.action_type || clip.label} from ${formatTime(clip.start)} to ${formatTime(clip.end)}. ${processReport.frames.filter((frame) => frame.timestamp >= clip.start - 2 && frame.timestamp <= clip.end + 2).map((frame) => `${formatTime(frame.timestamp)}: ${frame.grounding}; ${frame.rejectedReasons.join(' ') || 'model skipped it'}`).join(' ') || 'No sampled frame landed inside the clip window.'} This has been saved as a missed positive example for future scans.`,
           }));
           setBacktestResults(rows);
           await saveBacktestLearning(rows, 0, totalFrames);
