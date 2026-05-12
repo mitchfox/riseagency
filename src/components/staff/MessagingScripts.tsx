@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Copy, Edit, Trash2, ChevronDown, MessageSquare, GitBranch, ListTree, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Copy, Edit, Trash2, ChevronDown, MessageSquare, GitBranch, ListTree, AlertTriangle, Loader2, Workflow, List as ListIcon } from "lucide-react";
 import { toast } from "sonner";
+import { MessagingScriptsFlow, type FlowNode } from "./MessagingScriptsFlow";
 
 type Script = { id: string; title: string; description: string | null; sort_order: number };
 type Node = {
@@ -36,6 +37,7 @@ export const MessagingScripts = () => {
   const [editingScript, setEditingScript] = useState<Partial<Script> | null>(null);
   const [editingNode, setEditingNode] = useState<(Partial<Node> & { script_id: string }) | null>(null);
   const [editingObjection, setEditingObjection] = useState<(Partial<Objection> & { script_id: string }) | null>(null);
+  const [view, setView] = useState<"list" | "flow">("flow");
 
   const fetchScripts = async () => {
     const { data } = await (supabase as any).from("messaging_scripts").select("*").order("sort_order").order("created_at");
@@ -199,6 +201,22 @@ export const MessagingScripts = () => {
           ))}
           {scripts.length === 0 && <span className="text-sm text-muted-foreground">No scripts yet.</span>}
         </div>
+        <div className="inline-flex rounded-md border bg-muted/30 p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("flow")}
+            className={`px-2.5 py-1 text-xs rounded-sm inline-flex items-center gap-1 ${view === "flow" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            <Workflow className="h-3.5 w-3.5" />Flow
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("list")}
+            className={`px-2.5 py-1 text-xs rounded-sm inline-flex items-center gap-1 ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            <ListIcon className="h-3.5 w-3.5" />List
+          </button>
+        </div>
         <Button size="sm" onClick={() => setEditingScript({ title: "", description: "", sort_order: scripts.length })}>
           <Plus className="h-4 w-4 mr-1" /> New Script
         </Button>
@@ -219,14 +237,40 @@ export const MessagingScripts = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              {rootNodes.map((n) => renderNode(n))}
-              <Button size="sm" variant="outline" onClick={() => setEditingNode({
-                script_id: selected.id, parent_node_id: null, kind: "step", sort_order: rootNodes.length,
-              })}>
-                <Plus className="h-4 w-4 mr-1" /> Add first step
-              </Button>
-            </div>
+            {view === "flow" ? (
+              <div className="space-y-2">
+                <MessagingScriptsFlow
+                  nodes={nodes as FlowNode[]}
+                  onEdit={(n) => setEditingNode(n as any)}
+                  onDelete={deleteNode}
+                  onCopy={copyText}
+                  onAddRoot={() => setEditingNode({ script_id: selected.id, parent_node_id: null, kind: "step", sort_order: rootNodes.length })}
+                  onAddChild={(parent, kind) => setEditingNode({
+                    script_id: parent.script_id,
+                    parent_node_id: parent.id,
+                    kind,
+                    sort_order: childrenOf(parent.id).length,
+                    branch_label: kind === "choice_group" ? "Pick one" : kind === "option" ? `Option ${childrenOf(parent.id).length + 1}` : null,
+                  })}
+                />
+                {nodes.length > 0 && (
+                  <Button size="sm" variant="outline" onClick={() => setEditingNode({
+                    script_id: selected.id, parent_node_id: null, kind: "step", sort_order: rootNodes.length,
+                  })}>
+                    <Plus className="h-4 w-4 mr-1" /> Add root step
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {rootNodes.map((n) => renderNode(n))}
+                <Button size="sm" variant="outline" onClick={() => setEditingNode({
+                  script_id: selected.id, parent_node_id: null, kind: "step", sort_order: rootNodes.length,
+                })}>
+                  <Plus className="h-4 w-4 mr-1" /> Add first step
+                </Button>
+              </div>
+            )}
 
             <Collapsible>
               <CollapsibleTrigger asChild>

@@ -24,6 +24,7 @@ import blackMarble from "@/assets/black-marble.png";
 import whiteMarble from "@/assets/white-marble.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { et } from "@/lib/exampleViewerTranslations";
+import { getExampleLanguage } from "@/lib/exampleLanguages";
 
 interface Analysis {
   id: string;
@@ -59,6 +60,9 @@ interface Analysis {
   video_url: string | null;
   visibility_status?: "draft" | "hidden" | "live" | null;
   estimated_ready_at?: string | null;
+  is_example?: boolean | null;
+  example_banner?: string | null;
+  example_language?: string | null;
 }
 
 // Brand colors - Rise Agency tokens (gold/black theme)
@@ -1003,6 +1007,33 @@ const AnalysisViewer = () => {
           backgroundColor: 'hsl(0 0% 15%)'
         }}
       >
+        {/* Example banner + language flag overlay (only when tagged as example) */}
+        {analysis.is_example && (analysis.example_banner || analysis.example_language) && (
+          <>
+            {analysis.example_banner && (
+              <div className="sticky top-0 z-40 w-full bg-primary text-black px-5 py-3 text-sm leading-relaxed font-medium shadow-md">
+                {analysis.example_banner}
+              </div>
+            )}
+            {analysis.example_language && (() => {
+              const lng = getExampleLanguage(analysis.example_language);
+              if (!lng) return null;
+              return (
+                <div
+                  className="absolute right-3 z-50 flex items-center gap-1.5 rounded-full bg-black/70 backdrop-blur px-3 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/10"
+                  style={{ top: analysis.example_banner ? 56 : 12 }}
+                  title={`This example is shown in ${lng.label}`}
+                >
+                  <span className="text-base leading-none">{lng.flag}</span>
+                  <span className="uppercase tracking-wider">{lng.code}</span>
+                </div>
+              );
+            })()}
+            {/* Pad the rest of the report so it does not sit underneath the overlay */}
+            <div aria-hidden style={{ height: analysis.example_banner ? 0 : 16 }} />
+          </>
+        )}
+
 
         {/* Video Button */}
         {analysis.video_url && (
