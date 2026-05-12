@@ -252,6 +252,8 @@ export type Database = {
           concept: string | null
           created_at: string
           estimated_ready_at: string | null
+          example_banner: string | null
+          example_language: string | null
           explanation: string | null
           fixture_id: string | null
           home_score: number | null
@@ -297,6 +299,8 @@ export type Database = {
           concept?: string | null
           created_at?: string
           estimated_ready_at?: string | null
+          example_banner?: string | null
+          example_language?: string | null
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
@@ -342,6 +346,8 @@ export type Database = {
           concept?: string | null
           created_at?: string
           estimated_ready_at?: string | null
+          example_banner?: string | null
+          example_language?: string | null
           explanation?: string | null
           fixture_id?: string | null
           home_score?: number | null
