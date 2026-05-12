@@ -474,8 +474,10 @@ export const RecruitmentPhilosophyHub = () => {
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Useful non-football conversation areas
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Explore these naturally over time rather than forcing them.
+        <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
+          In every case it is better to naturally pick these up from what they post or are tagged in
+          rather than asking. Show common ground first, then let questions build off the reply. Asking
+          a stack of these cold reads as an interview.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CONVERSATION_AREAS.map((a) => {
