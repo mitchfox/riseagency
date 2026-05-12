@@ -127,57 +127,66 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
             </Select>
             <p className="text-xs text-muted-foreground">Sets the language for both the offer page and the embedded portal preview.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto pr-1">
-            {OFFER_SECTIONS.map((s) => {
-              const visible = !hidden.has(s.id);
-              return (
-                <div key={s.id} className="rounded-lg border p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-medium">{s.label}</Label>
+          <div className="rounded-lg border p-3 space-y-3">
+            <div>
+              <Label className="font-medium">Intro cinematic images</Label>
+              <p className="text-xs text-muted-foreground">These appear in the opening cinematic collage on the offer page (not on the later cards). Upload up to 6 personal or aspirational images.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Object.entries(images).map(([key, url]) => (
+                <div key={key} className="relative">
+                  <img src={url} alt="Intro" className="h-32 w-full object-cover rounded border" />
+                  <button
+                    type="button"
+                    onClick={() => setImages((prev) => { const n = { ...prev }; delete n[key]; return n; })}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 border hover:bg-background"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              {Object.keys(images).length < 6 && (
+                <label className="flex items-center justify-center gap-2 h-32 w-full rounded border border-dashed cursor-pointer hover:bg-muted/40 transition">
+                  {uploadingId === "intro" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      <span className="text-sm text-muted-foreground">Add image</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadImage(`intro-${Date.now()}`, f);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border p-3 space-y-2">
+            <Label className="font-medium">Sections to show on the offer page</Label>
+            <p className="text-xs text-muted-foreground">Toggle which areas of representation this player sees in their personalised offer.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto pr-1">
+              {OFFER_SECTIONS.map((s) => {
+                const visible = !hidden.has(s.id);
+                return (
+                  <div key={s.id} className="flex items-center justify-between rounded border p-2">
+                    <Label className="font-medium text-sm">{s.label}</Label>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{visible ? "Visible" : "Hidden"}</span>
                       <Switch checked={visible} onCheckedChange={() => toggle(s.id)} />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Section image (optional)</Label>
-                    {images[s.id] ? (
-                      <div className="relative">
-                        <img src={images[s.id]} alt={s.label} className="h-32 w-full object-cover rounded border" />
-                        <button
-                          type="button"
-                          onClick={() => setImages((prev) => { const n = { ...prev }; delete n[s.id]; return n; })}
-                          className="absolute top-2 right-2 p-1 rounded-full bg-background/80 border hover:bg-background"
-                          aria-label="Remove image"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="flex items-center justify-center gap-2 h-24 w-full rounded border border-dashed cursor-pointer hover:bg-muted/40 transition">
-                        {uploadingId === s.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            <span className="text-sm text-muted-foreground">Upload image</span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) uploadImage(s.id, f);
-                          }}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </>
         )}
