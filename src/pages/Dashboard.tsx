@@ -790,6 +790,9 @@ const Dashboard = () => {
       if (urlParams.get("hide_logout") === "1") {
         try { sessionStorage.setItem("portal_hide_logout", "1"); } catch {}
       }
+      if (urlParams.get("hide_music") === "1") {
+        try { sessionStorage.setItem("portal_hide_music", "1"); } catch {}
+      }
       if (langParam) {
         try {
           localStorage.setItem("portal_language_hint", langParam);
@@ -1883,7 +1886,9 @@ const Dashboard = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Music controls between notifications and coach availability */}
-            <PortalMusicControls />
+            {!(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_music") === "1") && (
+              <PortalMusicControls />
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -5177,7 +5182,10 @@ const Dashboard = () => {
       {/* Portal Music Player */}
       <PortalMusicPlayer
         tracks={(portalSettings?.music_tracks as any[] || []).map((t: any) => ({ url: t.url || '', name: t.name || 'Track' }))}
-        enabled={portalSettings?.show_music_player === true}
+        enabled={
+          portalSettings?.show_music_player === true &&
+          !(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_music") === "1")
+        }
       />
 
       {/* Mobile Bottom Navigation */}

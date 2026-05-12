@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
@@ -20,7 +20,7 @@ import {
   type PerformanceSub,
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
-import riseLogoWhite from "@/assets/RISEWhite.png";
+import riseLogoWhite from "@/assets/RISEWhiteHQ.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
 interface ProspectPlayer {
@@ -37,7 +37,7 @@ interface OfferSettings {
   section_images: Record<string, string>;
 }
 
-const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1";
+const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
 const tyresePortalEmbed = (lang: string) =>
   `${TYRESE_PORTAL_EMBED_BASE}&lang=${encodeURIComponent(lang || "en")}`;
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
@@ -368,7 +368,6 @@ const IntroCinematic = ({
 /* ============== MAIN ============== */
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { t } = useLanguage();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
   const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
   const [loading, setLoading] = useState(true);
@@ -380,6 +379,12 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
 
   const isPickerMode = !slug;
+
+  // Translator scoped to THIS player's portal_language so each prospect's
+  // offer page renders in their language regardless of the visitor's
+  // current site language preference.
+  const playerLang = player?.portal_language || "en";
+  const { t } = usePlayerLanguageTranslations(playerLang);
 
   useEffect(() => {
     if (isPickerMode) { setNotFound(true); setLoading(false); return; }
