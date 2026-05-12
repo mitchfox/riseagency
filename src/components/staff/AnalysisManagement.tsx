@@ -713,7 +713,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
         'kit_primary_color', 'kit_secondary_color', 'kit_number_color', 'kit_collar_color',
         'kit_stripe_style', 'match_image_url', 'home_team_bg_color',
         'away_team_bg_color', 'video_url', 'player_name', 'visibility_status', 'estimated_ready_at',
-        'category', 'is_example'
+        'category', 'is_example', 'example_banner', 'example_language'
       ];
 
       const dataToSave: Record<string, any> = {
