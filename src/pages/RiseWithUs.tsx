@@ -380,7 +380,7 @@ const IntroCinematic = ({
 /* ============== MAIN ============== */
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { t, switchLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
   const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
   const [loading, setLoading] = useState(true);
@@ -417,15 +417,15 @@ const RiseWithUs = () => {
             section_images: (sData.section_images || {}) as Record<string, string>,
           });
         }
-        // Switch the global site language to the player's chosen language so
-        // the entire offer page (including imported representation cards)
-        // renders in their language via the shared translations table.
-        const lang = (data.portal_language || "en") as Lang;
-        if (lang) switchLanguage(lang as any);
+        // NOTE: We do NOT call switchLanguage here — it would redirect to a
+        // different language subdomain on production and break the offer
+        // URL. Imported representation card content uses the current site
+        // language; offer-specific strings use the player's portal_language
+        // via the offerDict above.
       }
       setLoading(false);
     })();
-  }, [slug, isPickerMode, switchLanguage]);
+  }, [slug, isPickerMode]);
 
   // Determine ageGroup from DOB (default over18 if unknown).
   const ageGroup: Exclude<AgeGroup, null> = useMemo(() => {
