@@ -24,6 +24,7 @@ import blackMarble from "@/assets/black-marble.png";
 import whiteMarble from "@/assets/white-marble.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { et } from "@/lib/exampleViewerTranslations";
+import { getExampleLanguage } from "@/lib/exampleLanguages";
 
 interface Analysis {
   id: string;
@@ -59,6 +60,9 @@ interface Analysis {
   video_url: string | null;
   visibility_status?: "draft" | "hidden" | "live" | null;
   estimated_ready_at?: string | null;
+  is_example?: boolean | null;
+  example_banner?: string | null;
+  example_language?: string | null;
 }
 
 // Brand colors - Rise Agency tokens (gold/black theme)
