@@ -1748,6 +1748,61 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
         {/* Match Details (Pre-Match and Post-Match only) - collapsed by default */}
         {!isConcept && (
+          <>
+            {formData.is_example && (
+              <Collapsible defaultOpen={false} className="border border-primary/40 rounded-lg bg-primary/5">
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                      <Star className="w-3.5 h-3.5 fill-current" /> Example Details
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-primary" />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4 space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="example_banner" className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Context banner (shown above the analysis)
+                    </Label>
+                    <Textarea
+                      id="example_banner"
+                      value={formData.example_banner || ""}
+                      onChange={(e) => setFormData({ ...formData, example_banner: e.target.value })}
+                      placeholder="e.g. This is an example performance report shown to prospective players to demonstrate the depth of analysis they will receive each week."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="example_language" className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Language (shown as a flag in the top corner)
+                    </Label>
+                    <Select
+                      value={formData.example_language || "none"}
+                      onValueChange={(v) => setFormData({ ...formData, example_language: v === "none" ? null : v })}
+                    >
+                      <SelectTrigger id="example_language">
+                        <SelectValue placeholder="No flag" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No flag</SelectItem>
+                        {EXAMPLE_LANGUAGE_OPTIONS.map((l) => (
+                          <SelectItem key={l.code} value={l.code}>
+                            <span className="mr-2">{l.flag}</span>
+                            {l.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    When either field is set, the public analysis pads down slightly to make room for the banner and flag overlay.
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           <AnalysisMatchDetails
             formData={formData}
             setFormData={setFormData}
@@ -1767,6 +1822,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
             setTaggedPlayerIds={setTaggedPlayerIds}
             defaultPlayerId={defaultPlayerId}
           />
+          </>
         )}
 
         {/* Scheme Section (Pre-Match only) - collapsed by default */}
