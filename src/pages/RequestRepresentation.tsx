@@ -25,7 +25,7 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/da
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 
-type AgeGroup = null | "under18" | "over18";
+export type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
 
 const POSITION_OPTIONS: PlayerPosition[] = [
@@ -51,12 +51,12 @@ const POSITION_TO_SCOUTING: Record<PlayerPosition, ScoutingPosition> = {
 /** sessionStorage flag — when present, the cinematic pulse + intro are
  *  skipped so a language reload drops you straight into the page. */
 const INTRO_SEEN_KEY = "rep_intro_seen_v1";
-type GroupKey = "who" | "how" | "terms";
-type CardKey =
+export type GroupKey = "who" | "how" | "terms";
+export type CardKey =
   | "scouting" | "expectations"
   | "performance" | "network" | "brand" | "negotiation"
   | "fees" | "agreement" | "faqs";
-type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
+export type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
 const WHATSAPP_URL = "https://wa.me/447508342901";
 
@@ -102,8 +102,8 @@ const toCompactSkillSlug = (value: string): string =>
 const toLegacySkillSlug = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/^_+|_+$/g, "");
 
-const MISSION_BIO_KEY = "representation.mission_bio";
-const MISSION_BIO_FALLBACK =
+export const MISSION_BIO_KEY = "representation.mission_bio";
+export const MISSION_BIO_FALLBACK =
   "RISE Football Agency is built on a deep understanding of performance and how it shapes decisions at every level of the game. We represent and work directly with players and clubs through an established international network, underpinned by an unrivalled background in developing Premier League level talent. With scouting coverage across Europe informing recruitment and placement through evidence, standards and proven pathways, our stars must share our work ethic, mindset and attention to detail to performance.";
 
 interface CardMeta {
@@ -114,7 +114,7 @@ interface CardMeta {
   group: GroupKey;
 }
 
-const CARD_META: CardMeta[] = [
+export const CARD_META: CardMeta[] = [
   // Who We Select
   { key: "scouting",     title: "Scouting",      icon: Search,        subtitle: "How We Assess Star Potential",     group: "who" },
   { key: "expectations", title: "Expectations",  icon: Target,        subtitle: "Standards on and off the pitch",    group: "who" },
@@ -129,13 +129,13 @@ const CARD_META: CardMeta[] = [
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
 ];
 
-const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
+export const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
   who:   { key: "representation.who_we_select",      fallback: "Who We Select" },
   how:   { key: "representation.how_we_work",        fallback: "How We Work" },
   terms: { key: "representation.what_are_the_terms", fallback: "What Are The Terms" },
 };
 
-const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   scouting:     { key: "representation.scouting",     fallback: "Scouting" },
   expectations: { key: "representation.expectations", fallback: "Expectations" },
   performance:  { key: "representation.performance",  fallback: "Performance" },
@@ -147,7 +147,7 @@ const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
 };
 
-const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
+export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   scouting:     { key: "representation.scouting_subtitle",     fallback: "How We Assess Star Potential" },
   expectations: { key: "representation.expectations_subtitle", fallback: "Standards on and off the pitch" },
   performance:  { key: "representation.performance_subtitle",  fallback: "How We Ensure On-Pitch Success" },
@@ -159,7 +159,7 @@ const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
 };
 
-const formatCardSubtitle = (key: CardKey, text: string) => {
+export const formatCardSubtitle = (key: CardKey, text: string) => {
   if (key === "fees" && text.toLowerCase().trim() === "clear from the start") {
     return "Clear from\nthe start";
   }
@@ -172,7 +172,7 @@ const scrollToTop = () => {
   document.body.scrollTop = 0;
 };
 
-const GROUPS: GroupKey[] = ["who", "how", "terms"];
+export const GROUPS: GroupKey[] = ["who", "how", "terms"];
 
 /** Three-letter language label shown next to the map selector flag. */
 const LANG_ABBR: Record<string, string> = {
@@ -183,11 +183,11 @@ const LANG_ABBR: Record<string, string> = {
 /** Solid-black plate (with a faint gold edge wash) used for hub/detail
  *  sections. Marble texture is reserved for the title plate only so the
  *  rest of the page reads as a clean dark surface. */
-const solidBlackSectionStyle: React.CSSProperties = {
+export const solidBlackSectionStyle: React.CSSProperties = {
   backgroundColor: "hsl(0 0% 4%)",
 };
 
-const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
+export const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string }>> = {
   under18: [
     { q: "representation.faq_u18_q1", a: "representation.faq_u18_a1" },
     { q: "representation.faq_u18_q2", a: "representation.faq_u18_a2" },
@@ -206,7 +206,7 @@ const FAQS_BY_AGE: Record<Exclude<AgeGroup, null>, Array<{ q: string; a: string 
   ],
 };
 
-const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
+export const getCardContent = (ageGroup: Exclude<AgeGroup, null>) => ({
   scouting: {
     eyebrow: "representation.scouting_eyebrow",
     points: [
@@ -312,7 +312,7 @@ interface PerfSubMeta {
 
 /** All copy here is referenced by translation key so the i18n backfill
  *  picks it up for every supported language. */
-const PERFORMANCE_SUBS: PerfSubMeta[] = [
+export const PERFORMANCE_SUBS: PerfSubMeta[] = [
   { key: "analysis",   title: "representation.perf_analysis_title",   icon: Gauge,    blurb: "representation.perf_analysis_blurb", detail: [
     "representation.perf_analysis_d1", "representation.perf_analysis_d2", "representation.perf_analysis_d3", "representation.perf_analysis_d4",
   ]},
@@ -343,7 +343,7 @@ const DOMAIN_META: Record<string, { icon: typeof Activity; chip: string }> = {
   Tactical:  { icon: Crosshair, chip: "border-green-500/30 bg-green-500/10 text-green-300" },
 };
 
-const SectionDivider = ({ label }: { label?: string }) => (
+export const SectionDivider = ({ label }: { label?: string }) => (
   <div className="my-6 flex items-center gap-3 md:my-8">
     <div className="h-[1px] flex-1 bg-primary/40" />
     {label ? (
@@ -1421,7 +1421,7 @@ const DetailView = ({
   );
 };
 
-const BackPill = ({ onClick, label }: { onClick: () => void; label: string }) => (
+export const BackPill = ({ onClick, label }: { onClick: () => void; label: string }) => (
   <button
     onClick={onClick}
     className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:mb-6"
@@ -1430,7 +1430,7 @@ const BackPill = ({ onClick, label }: { onClick: () => void; label: string }) =>
   </button>
 );
 
-const TitlePlate = ({
+export const TitlePlate = ({
   icon: Icon, title, eyebrow,
 }: { icon: typeof Gauge; title: string; eyebrow?: string }) => (
   <div className="relative overflow-hidden rounded-[1.6rem] border border-border/60 p-6 md:p-8" style={solidBlackSectionStyle}>
