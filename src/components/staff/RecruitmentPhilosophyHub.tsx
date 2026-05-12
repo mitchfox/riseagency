@@ -360,12 +360,19 @@ const CONVERSATION_AREAS: { id: string; icon: React.ComponentType<{ className?: 
   },
 ];
 
-const PillarCard = ({ pillar }: { pillar: Pillar }) => {
-  const [open, setOpen] = useState(false);
+const PillarCard = ({
+  pillar,
+  open,
+  onOpenChange,
+}: {
+  pillar: Pillar;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) => {
   const Icon = pillar.icon;
   return (
     <Card className="overflow-hidden border-border/60">
-      <Collapsible open={open} onOpenChange={setOpen}>
+      <Collapsible open={open} onOpenChange={onOpenChange}>
         <CollapsibleTrigger asChild>
           <button
             type="button"
@@ -423,7 +430,13 @@ const PillarCard = ({ pillar }: { pillar: Pillar }) => {
 };
 
 export const RecruitmentPhilosophyHub = () => {
-  const [expanded, setExpanded] = useState(false);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const allOpen = PILLARS.every((p) => openMap[p.id]);
+  const toggleAll = () => {
+    const next: Record<string, boolean> = {};
+    if (!allOpen) PILLARS.forEach((p) => (next[p.id] = true));
+    setOpenMap(next);
+  };
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-background p-5 sm:p-6">
@@ -441,21 +454,19 @@ export const RecruitmentPhilosophyHub = () => {
 
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Pillars</h3>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setExpanded((v) => !v);
-            // crude toggle: dispatch global click on each card via key bump
-          }}
-        >
-          {expanded ? "Collapse all" : "Expand all"}
+        <Button size="sm" variant="ghost" onClick={toggleAll}>
+          {allOpen ? "Collapse all" : "Expand all"}
         </Button>
       </div>
 
-      <div className="grid gap-3" key={expanded ? "open" : "closed"}>
+      <div className="grid gap-3">
         {PILLARS.map((p) => (
-          <PillarCard key={p.id} pillar={expanded ? { ...p } : p} />
+          <PillarCard
+            key={p.id}
+            pillar={p}
+            open={!!openMap[p.id]}
+            onOpenChange={(v) => setOpenMap((m) => ({ ...m, [p.id]: v }))}
+          />
         ))}
       </div>
 
