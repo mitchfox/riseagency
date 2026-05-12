@@ -1886,7 +1886,9 @@ const Dashboard = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Music controls between notifications and coach availability */}
-            <PortalMusicControls />
+            {!(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_music") === "1") && (
+              <PortalMusicControls />
+            )}
             <Button
               variant="outline"
               size="sm"
