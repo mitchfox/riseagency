@@ -5182,7 +5182,10 @@ const Dashboard = () => {
       {/* Portal Music Player */}
       <PortalMusicPlayer
         tracks={(portalSettings?.music_tracks as any[] || []).map((t: any) => ({ url: t.url || '', name: t.name || 'Track' }))}
-        enabled={portalSettings?.show_music_player === true}
+        enabled={
+          portalSettings?.show_music_player === true &&
+          !(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_music") === "1")
+        }
       />
 
       {/* Mobile Bottom Navigation */}
