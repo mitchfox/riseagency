@@ -35,6 +35,7 @@ import { AnalysisQuickLink } from "./analysis/AnalysisQuickLink";
 import { FFFPackageHeader } from "./FFFPackageHeader";
 import { ActionReportsList } from "./analysis/ActionReportsList";
 import { ReportLanguageSelector } from "./ReportLanguageSelector";
+import { EXAMPLE_LANGUAGE_OPTIONS } from "@/lib/exampleLanguages";
 
 type AnalysisType = "pre-match" | "post-match" | "concept";
 
