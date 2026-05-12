@@ -283,19 +283,8 @@ const IntroCinematic = ({
         </div>
       )}
 
-      {/* Phase 1 & 2: optional player headshot floats softly behind text on phase 1 */}
-      {phase === 1 && playerImage && (
-        <motion.img
-          src={playerImage}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute h-72 w-72 sm:h-96 sm:w-96 rounded-full object-cover object-top opacity-25 blur-[2px]"
-          style={{ filter: "grayscale(0.2) contrast(1.05)" }}
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 0.28, scale: 1 }}
-          transition={{ duration: 1.0 }}
-        />
-      )}
+      {/* Player image is intentionally NOT rendered in the intro cinematic.
+          The intro must show only the smudged marble + RISE logo. */}
 
       {/* Text reveal */}
       <div className="relative z-10 max-w-xl px-6 text-center">
