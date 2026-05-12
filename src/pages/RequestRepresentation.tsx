@@ -996,7 +996,7 @@ interface DetailViewProps {
   onBack: () => void;
 }
 
-const DetailView = ({
+export const DetailView = ({
   activeCard, cardContent, ageGroup,
   scoutingPosition, setScoutingPosition,
   performanceSub, setPerformanceSub,
