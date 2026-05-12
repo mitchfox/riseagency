@@ -31,7 +31,6 @@ interface ProspectPlayer {
   club: string | null;
   nationality: string | null;
   portal_language?: string | null;
-  dob?: string | null;
 }
 interface OfferSettings {
   hidden_sections: string[];
@@ -399,7 +398,7 @@ const RiseWithUs = () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, portal_language, dob, has_representation_offer, representation_status")
+        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status")
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
@@ -427,17 +426,9 @@ const RiseWithUs = () => {
     })();
   }, [slug, isPickerMode]);
 
-  // Determine ageGroup from DOB (default over18 if unknown).
-  const ageGroup: Exclude<AgeGroup, null> = useMemo(() => {
-    if (!player?.dob) return "over18";
-    const d = new Date(player.dob);
-    if (Number.isNaN(d.getTime())) return "over18";
-    const now = new Date();
-    let age = now.getFullYear() - d.getFullYear();
-    const m = now.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-    return age < 18 ? "under18" : "over18";
-  }, [player?.dob]);
+  // ageGroup defaults to over18 (most prospects). Card content uses this
+  // to switch the under18/over18 specific copy in fees/agreement/expectations.
+  const ageGroup: Exclude<AgeGroup, null> = "over18";
 
   const cardContent = useMemo(() => getCardContent(ageGroup), [ageGroup]);
 
