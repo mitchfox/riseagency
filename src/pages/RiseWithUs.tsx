@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
@@ -368,7 +368,6 @@ const IntroCinematic = ({
 /* ============== MAIN ============== */
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { t } = useLanguage();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
   const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
   const [loading, setLoading] = useState(true);
@@ -380,6 +379,12 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
 
   const isPickerMode = !slug;
+
+  // Translator scoped to THIS player's portal_language so each prospect's
+  // offer page renders in their language regardless of the visitor's
+  // current site language preference.
+  const playerLang = player?.portal_language || "en";
+  const { t } = usePlayerLanguageTranslations(playerLang);
 
   useEffect(() => {
     if (isPickerMode) { setNotFound(true); setLoading(false); return; }
