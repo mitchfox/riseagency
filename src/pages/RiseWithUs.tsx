@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,7 @@ import {
   type PerformanceSub,
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
-import riseLogoWhite from "@/assets/RISEWhite.png";
+import riseLogoWhite from "@/assets/RISEWhiteHQ.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
 interface ProspectPlayer {
@@ -37,7 +37,7 @@ interface OfferSettings {
   section_images: Record<string, string>;
 }
 
-const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1";
+const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
 const tyresePortalEmbed = (lang: string) =>
   `${TYRESE_PORTAL_EMBED_BASE}&lang=${encodeURIComponent(lang || "en")}`;
 const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
