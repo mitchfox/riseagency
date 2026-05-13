@@ -1,0 +1,31 @@
+# RISE Football Agency
+
+> Elite football representation. We scout across Europe and guide Premier League players through their development.
+
+RISE Football Agency represents professional and emerging footballers, working with players, clubs, scouts, coaches, and agents across the European game.
+
+## Pages
+
+- [Home](/): Agency overview and featured stars.
+- [Stars](/stars): Players represented by RISE.
+- [News](/news): Player news and agency updates.
+- [About](/about): Who we are and how we work.
+- [Contact](/contact): Get in touch.
+- [Between The Lines](/between-the-lines): Long-form features and insight.
+- [Player Journey](/player-journey): How we develop players.
+- [Realise Potential](/realise-potential): Our development philosophy.
+
+## For Partners
+
+- [Clubs](/clubs): Working with clubs.
+- [Coaches](/coaches): Resources for coaches.
+- [Scouts](/scouts): Resources for scouts.
+- [Agents](/agents): Working with other agents.
+- [Players](/players): Information for players.
+- [Business](/business): Commercial partnerships.
+- [Media](/media): Press and media enquiries.
+
+## Optional
+
+- [Privacy Policy](/privacy-policy)
+- [Terms of Service](/terms-of-service)
