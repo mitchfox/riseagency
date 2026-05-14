@@ -199,7 +199,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
       supabase.from('profiles').select('id, email, full_name'),
       supabase.from('marketing_schedule_items').select('id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at, last_completed_at, completion_log'),
       supabase.from('staff_activity_log').select('user_id, created_at, action').gte('created_at', yearStart2),
-      supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
+      supabase.from('fixtures').select('id, home_team, away_team, match_date, match_time, competition, player_fixtures(player_id, players(name, club, representation_status))').gte('match_date', todayIso).lte('match_date', inSevenDaysIso).order('match_date'),
       // Only true 'represented' players surface in the My Tasks fixture list.
       // 'mandated' status (e.g. Loris Mettler) is intentionally excluded.
       supabase.from('players').select('name, club').eq('representation_status', 'represented'),
@@ -260,6 +260,16 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
     };
     const filteredFixtures = (fixturesData || [])
       .map((f: any) => {
+        // Prefer authoritative player_fixtures link — avoids club-name
+        // collisions (e.g. multiple players with club "Without Club").
+        const links: any[] = Array.isArray(f.player_fixtures) ? f.player_fixtures : [];
+        const linkedRepresented = links
+          .map(l => l.players)
+          .filter((p: any) => p && p.representation_status === 'represented');
+        if (linkedRepresented.length > 0) {
+          const p = linkedRepresented[0];
+          return { ...f, player_name: p.name, player_club: p.club || '' };
+        }
         const home = matchClub(f.home_team);
         const away = matchClub(f.away_team);
         const player = home || away;
