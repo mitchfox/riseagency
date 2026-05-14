@@ -548,6 +548,48 @@ export const CreatePerformanceReportDialog = ({
     }
   }, [inline, open, analysisId, playerId]);
 
+  // Realtime: when clips are exported into this report from elsewhere
+  // (e.g. Video Analysis "Export to Report"), append them to local state
+  // immediately without losing in-progress edits.
+  useEffect(() => {
+    if (!analysisId) return;
+    const channel = supabase
+      .channel(`report-actions-${analysisId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'performance_report_actions', filter: `analysis_id=eq.${analysisId}` },
+        (payload) => {
+          const row: any = payload.new;
+          if (!row) return;
+          setActions((prev) => {
+            if (prev.some((a) => a.id === row.id)) return prev;
+            const mapped = {
+              id: row.id,
+              action_number: row.action_number,
+              minute: formatMinuteForInput(row.minute),
+              action_score: row.action_score !== null && row.action_score !== undefined ? String(row.action_score) : "",
+              action_type: row.action_type || "",
+              action_description: row.action_description || "",
+              notes: row.notes || "",
+              video_url: row.video_url || null,
+              clip_start: row.clip_start ?? null,
+              clip_end: row.clip_end ?? null,
+              recorded_stat: stripShotMapFromRecordedStat(row.recorded_stat as any),
+              zone: row.zone || null,
+              zone_details: row.zone_details || null,
+              shot_map: extractShotMapFromRecordedStat(row.recorded_stat as any),
+              is_first_half: row.is_first_half ?? false,
+            } as PerformanceAction;
+            return sortActionsChronologically([...prev, mapped]);
+          });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [analysisId]);
+
   // Auto-calculate per90 statistics
   useEffect(() => {
     const minutes = parseFloat(minutesPlayed);
