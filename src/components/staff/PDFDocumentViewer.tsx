@@ -81,13 +81,13 @@ export const PDFDocumentViewer = ({
     return false;
   });
   
-  const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
+  const unfilledFields = editableFields.filter(f => !mergedFieldValues[f.id]);
 
   // Get unique pages that have fields
   const pagesWithFields = [...new Set(fields.map(f => f.page_number))].sort((a, b) => a - b);
   const pagesWithUnfilledFields = [...new Set(unfilledFields.map(f => f.page_number))].sort((a, b) => a - b);
   const currentPageEditableFields = editableFields.filter(f => f.page_number === currentPage);
-  const currentPageUnfilled = currentPageEditableFields.filter(f => !fieldValues[f.id]);
+  const currentPageUnfilled = currentPageEditableFields.filter(f => !mergedFieldValues[f.id]);
 
   // Auto-fill date fields when entering sign mode (run once when fields load)
   useEffect(() => {
@@ -97,7 +97,7 @@ export const PDFDocumentViewer = ({
     const today = new Date().toISOString().split('T')[0];
     const dateFieldsToFill = fields.filter(f => {
       const isEditable = mode === 'owner-sign' ? f.signer_party === 'owner' : f.signer_party === 'counterparty';
-      return f.field_type === 'date' && isEditable && !fieldValues[f.id];
+      return f.field_type === 'date' && isEditable && !mergedFieldValues[f.id];
     });
     
     dateFieldsToFill.forEach(field => {
