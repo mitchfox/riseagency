@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock, Printer } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
-import { downloadSignedContractPDF, exportSignedContractPDF } from "@/lib/pdfExport";
+import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, AuditLogData } from "@/lib/pdfExport";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface SignatureContract {
@@ -36,6 +36,7 @@ const SignContract = () => {
   const [pdfError, setPdfError] = useState(false);
   const [intentConsent, setIntentConsent] = useState(false);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
+  const [auditData, setAuditData] = useState<AuditLogData | null>(null);
   
   // Password protection state
   const [requiresPassword, setRequiresPassword] = useState(false);
@@ -311,6 +312,17 @@ const SignContract = () => {
       if (error) throw error;
       if ((resp as any)?.error) throw new Error((resp as any).error);
       setSignedPdfUrl((resp as any)?.signed_pdf_url ?? null);
+      setAuditData({
+        contract_title: contract.title,
+        contract_id: contract.id,
+        document_hash: (resp as any)?.document_hash ?? null,
+        signer_name: signerInfo.name,
+        signer_email: signerInfo.email,
+        signed_at: new Date().toISOString(),
+        intent_consent_at: new Date().toISOString(),
+        ip_address: null, // recorded server-side
+        user_agent: navigator.userAgent,
+      });
 
       // Send notification about contract being signed
       try {
