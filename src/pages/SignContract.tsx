@@ -554,6 +554,28 @@ const SignContract = () => {
               <p className="text-xs text-orange-600 mt-1">
                 Fill in orange fields to complete your signature
               </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadBlank(false)}
+                  disabled={exporting}
+                  className="h-8"
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Save a copy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  disabled={exporting}
+                  className="h-8"
+                >
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />
+                  Print to sign by hand
+                </Button>
+              </div>
             </div>
             
             {/* Signer info and submit - stacks on mobile */}
