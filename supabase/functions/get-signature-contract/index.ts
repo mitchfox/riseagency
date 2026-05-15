@@ -19,6 +19,19 @@ const slugify = (title: string) =>
     .replace(/-+/g, "-")
     .trim();
 
+function pathFromSignatureContractsUrl(url: string): string | null {
+  const markers = [
+    "/storage/v1/object/public/signature-contracts/",
+    "/storage/v1/object/sign/signature-contracts/",
+    "/signature-contracts/",
+  ];
+  for (const marker of markers) {
+    const i = url.indexOf(marker);
+    if (i !== -1) return decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -60,6 +73,16 @@ Deno.serve(async (req) => {
       }
       if (Array.isArray(snap?.fields)) {
         fields = snap.fields;
+      }
+    } else if (contract?.file_url) {
+      const sourcePath = pathFromSignatureContractsUrl(contract.file_url);
+      if (sourcePath) {
+        const { data: signed } = await supabase.storage
+          .from("signature-contracts")
+          .createSignedUrl(sourcePath, 60 * 60 * 24);
+        if (signed?.signedUrl) {
+          contract.file_url = signed.signedUrl;
+        }
       }
     }
 
