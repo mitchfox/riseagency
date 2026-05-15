@@ -68,13 +68,18 @@ const SignContract = () => {
     let cancelled = false;
     const resolve = async () => {
       if (!contract?.file_url) return;
+      if (contract.file_url.includes('/storage/v1/object/sign/signature-contracts/')) {
+        setResolvedFileUrl(contract.file_url);
+        setPdfError(false);
+        return;
+      }
       const marker = '/signature-contracts/';
       const idx = contract.file_url.indexOf(marker);
       if (idx === -1) {
         if (!cancelled) setResolvedFileUrl(contract.file_url);
         return;
       }
-      const path = contract.file_url.slice(idx + marker.length).split('?')[0];
+      const path = decodeURIComponent(contract.file_url.slice(idx + marker.length).split('?')[0]);
       try {
         const { data, error } = await supabase.storage
           .from('signature-contracts')
@@ -125,7 +130,7 @@ const SignContract = () => {
 
       setContract(contractData as SignatureContract);
 
-      let fieldsData: any[] | null = snapshotFields;
+      let fieldsData: any[] | null = Array.isArray(snapshotFields) && snapshotFields.length > 0 ? snapshotFields : null;
       if (!fieldsData) {
         const { data, error: fieldsError } = await supabase
           .from('signature_fields')
