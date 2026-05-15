@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
-import { downloadSignedContractPDF } from "@/lib/pdfExport";
+import { downloadSignedContractPDF, exportSignedContractPDF } from "@/lib/pdfExport";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SignatureContract {
   id: string;
@@ -33,6 +34,8 @@ const SignContract = () => {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
   const [pdfError, setPdfError] = useState(false);
+  const [intentConsent, setIntentConsent] = useState(false);
+  const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
   
   // Password protection state
   const [requiresPassword, setRequiresPassword] = useState(false);
@@ -70,6 +73,7 @@ const SignContract = () => {
       }
 
       const contractData = (resp as any)?.contract ?? null;
+      const snapshotFields = (resp as any)?.fields ?? null;
 
       if (!contractData) {
         console.log('No contract found for token');
@@ -85,15 +89,17 @@ const SignContract = () => {
 
       setContract(contractData as SignatureContract);
 
-      const { data: fieldsData, error: fieldsError } = await supabase
-        .from('signature_fields')
-        .select('*')
-        .eq('contract_id', contractData.id)
-        .order('display_order', { ascending: true });
-
-      if (fieldsError) {
-        console.error('Error fetching fields:', fieldsError);
-      } else {
+      let fieldsData: any[] | null = snapshotFields;
+      if (!fieldsData) {
+        const { data, error: fieldsError } = await supabase
+          .from('signature_fields')
+          .select('*')
+          .eq('contract_id', contractData.id)
+          .order('display_order', { ascending: true });
+        if (fieldsError) console.error('Error fetching fields:', fieldsError);
+        fieldsData = data || [];
+      }
+      {
         const typedFields: FieldPosition[] = (fieldsData || []).map((f: any) => ({
           id: f.id,
           field_type: f.field_type,
@@ -106,8 +112,7 @@ const SignContract = () => {
           signer_party: f.signer_party || 'counterparty',
         }));
         setFields(typedFields);
-        
-        // Pre-fill owner field values (shown as read-only)
+
         if (contractData.owner_field_values && typeof contractData.owner_field_values === 'object') {
           setFieldValues(contractData.owner_field_values as Record<string, string>);
         }
@@ -248,6 +253,11 @@ const SignContract = () => {
       return;
     }
 
+    if (!intentConsent) {
+      toast.error('Please confirm your intent to sign electronically');
+      return;
+    }
+
     // Check all counterparty fields are filled
     const counterpartyFields = fields.filter(f => f.signer_party === 'counterparty');
     for (const field of counterpartyFields) {
@@ -260,23 +270,47 @@ const SignContract = () => {
     setSubmitting(true);
 
     try {
-      // Store counterparty field values by field ID (not label) for accurate PDF export
       const counterpartyValues: Record<string, string> = {};
       counterpartyFields.forEach(f => {
         counterpartyValues[f.id] = fieldValues[f.id] || '';
       });
 
-      const { error } = await supabase
-        .from('signature_submissions')
-        .insert([{
-          contract_id: contract.id,
-          signer_name: signerInfo.name,
-          signer_email: signerInfo.email,
-          field_values: counterpartyValues,
-          user_agent: navigator.userAgent,
-        }]);
+      // Generate the immutable signed PDF client-side from the locked PDF +
+      // all field values (owner snapshot + counterparty entries) so every
+      // submission has a byte-stable signed copy.
+      const fieldData = fields.map(f => ({
+        ...f,
+        value: fieldValues[f.id] || undefined,
+      }));
+      let signedPdfBase64: string | null = null;
+      try {
+        const blob = await exportSignedContractPDF(contract.file_url, fieldData);
+        const buf = await blob.arrayBuffer();
+        let bin = '';
+        const u8 = new Uint8Array(buf);
+        for (let i = 0; i < u8.length; i++) bin += String.fromCharCode(u8[i]);
+        signedPdfBase64 = btoa(bin);
+      } catch (e) {
+        console.warn('Could not generate signed PDF client-side, submitting without:', e);
+      }
 
+      const { data: resp, error } = await supabase.functions.invoke(
+        'record-signature-submission',
+        {
+          body: {
+            contract_id: contract.id,
+            signer_name: signerInfo.name,
+            signer_email: signerInfo.email,
+            field_values: counterpartyValues,
+            intent_consent: true,
+            signed_pdf_base64: signedPdfBase64,
+            user_agent: navigator.userAgent,
+          },
+        },
+      );
       if (error) throw error;
+      if ((resp as any)?.error) throw new Error((resp as any).error);
+      setSignedPdfUrl((resp as any)?.signed_pdf_url ?? null);
 
       // Send notification about contract being signed
       try {
@@ -335,6 +369,17 @@ const SignContract = () => {
     
     setExporting(true);
     try {
+      // Prefer the immutable server-stored copy if available
+      if (signedPdfUrl) {
+        const { data, error } = await supabase.storage
+          .from('signature-contracts')
+          .createSignedUrl(signedPdfUrl, 60 * 10);
+        if (!error && data?.signedUrl) {
+          window.open(data.signedUrl, '_blank');
+          toast.success('Signed PDF ready');
+          return;
+        }
+      }
       const fieldData = fields.map(f => ({
         ...f,
         value: fieldValues[f.id] || undefined,
