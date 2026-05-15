@@ -527,7 +527,7 @@ const SignContract = () => {
               onClick={async () => {
                 if (!contract) return;
                 const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || undefined }));
-                await printSignedContractPDF(contract.file_url, fieldData, auditData ?? undefined);
+                await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, auditData ?? undefined);
               }}
               disabled={exporting}
               size="lg"
@@ -633,10 +633,10 @@ const SignContract = () => {
                       onCheckedChange={(v) => setIntentConsent(Boolean(v))}
                       className="mt-0.5"
                     />
-                    <span>I am signing this document.</span>
+                    <span>Signing Electronically</span>
                   </label>
                   <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
-                    Details
+                    More Options
                     <ChevronDown className={`h-3 w-3 transition-transform ${legalOpen ? 'rotate-180' : ''}`} />
                   </CollapsibleTrigger>
                 </div>
