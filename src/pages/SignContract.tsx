@@ -680,6 +680,19 @@ const SignContract = () => {
                   </>
                 )}
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleDownloadBlank(true)}
+                disabled={exporting}
+                className="w-full h-10"
+              >
+                {exporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Download PDF
+              </Button>
             </div>
           </div>
         </div>
