@@ -689,10 +689,15 @@ const SignContract = () => {
                 Open PDF in New Tab
               </Button>
             </div>
+          ) : !resolvedFileUrl ? (
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">Loading document…</p>
+            </div>
           ) : (
             <div className="h-full" style={{ minHeight: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 180px)' }}>
               <PDFDocumentViewer
-                fileUrl={contract.file_url}
+                fileUrl={resolvedFileUrl}
                 fields={fields}
                 mode="sign"
                 fieldValues={fieldValues}
