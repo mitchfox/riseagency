@@ -52,6 +52,12 @@ interface SignatureSubmission {
   signer_email: string;
   field_values: Record<string, string>;
   signed_at: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  intent_consent_at?: string | null;
+  document_hash?: string | null;
+  signed_pdf_url?: string | null;
+  signed_pdf_hash?: string | null;
 }
 
 interface SavedSignature {
@@ -344,6 +350,20 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   };
 
   const handleStatusChange = async (contractId: string, status: string) => {
+    if (status === 'active') {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        await supabase.functions.invoke('lock-signature-contract', {
+          body: { contract_id: contractId },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+      } catch (e) {
+        console.error('Failed to lock contract:', e);
+        toast.error('Failed to lock contract version. Status not changed.');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('signature_contracts')
       .update({ status })
@@ -1381,6 +1401,31 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   <p className="text-xs text-muted-foreground mb-3">
                     Signed: {new Date(sub.signed_at).toLocaleString()}
                   </p>
+                  <div className="text-[11px] text-muted-foreground space-y-0.5 mb-3 border-l-2 border-muted pl-2">
+                    <div>IP: {sub.ip_address || '—'}</div>
+                    <div>Intent confirmed: {sub.intent_consent_at ? new Date(sub.intent_consent_at).toLocaleString() : '—'}</div>
+                    <div>Document hash: <span className="font-mono break-all">{sub.document_hash || '—'}</span></div>
+                    <div>Signed PDF hash: <span className="font-mono break-all">{sub.signed_pdf_hash || '—'}</span></div>
+                    <div className="line-clamp-2">User agent: {sub.user_agent || '—'}</div>
+                    {sub.signed_pdf_url && (
+                      <button
+                        type="button"
+                        className="text-primary underline mt-1"
+                        onClick={async () => {
+                          const { data, error } = await supabase.storage
+                            .from('signature-contracts')
+                            .createSignedUrl(sub.signed_pdf_url!, 60 * 10);
+                          if (error || !data?.signedUrl) {
+                            toast.error('Could not load signed PDF');
+                            return;
+                          }
+                          window.open(data.signedUrl, '_blank');
+                        }}
+                      >
+                        Download immutable signed PDF
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     {Object.entries(sub.field_values).map(([key, value]) => (
                       <div key={key} className="text-sm">

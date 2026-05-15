@@ -5669,9 +5669,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          document_hash: string | null
           file_name: string
           file_url: string
           id: string
+          locked_at: string | null
+          locked_fields_snapshot: Json | null
+          locked_file_url: string | null
           owner_field_values: Json | null
           owner_signed_at: string | null
           share_token: string
@@ -5685,9 +5689,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          document_hash?: string | null
           file_name: string
           file_url: string
           id?: string
+          locked_at?: string | null
+          locked_fields_snapshot?: Json | null
+          locked_file_url?: string | null
           owner_field_values?: Json | null
           owner_signed_at?: string | null
           share_token?: string
@@ -5701,9 +5709,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          document_hash?: string | null
           file_name?: string
           file_url?: string
           id?: string
+          locked_at?: string | null
+          locked_fields_snapshot?: Json | null
+          locked_file_url?: string | null
           owner_field_values?: Json | null
           owner_signed_at?: string | null
           share_token?: string
@@ -5774,10 +5786,14 @@ export type Database = {
         Row: {
           contract_id: string
           created_at: string
+          document_hash: string | null
           field_values: Json
           id: string
+          intent_consent_at: string | null
           ip_address: string | null
           signed_at: string
+          signed_pdf_hash: string | null
+          signed_pdf_url: string | null
           signer_email: string
           signer_name: string
           user_agent: string | null
@@ -5785,10 +5801,14 @@ export type Database = {
         Insert: {
           contract_id: string
           created_at?: string
+          document_hash?: string | null
           field_values?: Json
           id?: string
+          intent_consent_at?: string | null
           ip_address?: string | null
           signed_at?: string
+          signed_pdf_hash?: string | null
+          signed_pdf_url?: string | null
           signer_email: string
           signer_name: string
           user_agent?: string | null
@@ -5796,10 +5816,14 @@ export type Database = {
         Update: {
           contract_id?: string
           created_at?: string
+          document_hash?: string | null
           field_values?: Json
           id?: string
+          intent_consent_at?: string | null
           ip_address?: string | null
           signed_at?: string
+          signed_pdf_hash?: string | null
+          signed_pdf_url?: string | null
           signer_email?: string
           signer_name?: string
           user_agent?: string | null
