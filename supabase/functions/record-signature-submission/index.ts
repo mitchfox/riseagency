@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.1";
-import { lockContract } from "../lock-signature-contract/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +24,60 @@ function base64ToBytes(b64: string): Uint8Array {
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
+}
+
+function pathFromPublicUrl(url: string): string | null {
+  const marker = "/storage/v1/object/public/signature-contracts/";
+  const i = url.indexOf(marker);
+  if (i === -1) return null;
+  return url.slice(i + marker.length);
+}
+
+async function lockContract(contractId: string) {
+  const { data: contract, error } = await supabase
+    .from("signature_contracts")
+    .select("*")
+    .eq("id", contractId)
+    .single();
+  if (error || !contract) throw error ?? new Error("Contract not found");
+  if (contract.locked_at) return { already: true };
+  const sourcePath = pathFromPublicUrl(contract.file_url);
+  let bytes: Uint8Array;
+  if (sourcePath) {
+    const { data: dl, error: dlErr } = await supabase.storage
+      .from("signature-contracts").download(sourcePath);
+    if (dlErr || !dl) throw dlErr ?? new Error("Failed to download source PDF");
+    bytes = new Uint8Array(await dl.arrayBuffer());
+  } else {
+    const res = await fetch(contract.file_url);
+    if (!res.ok) throw new Error("Failed to fetch source PDF");
+    bytes = new Uint8Array(await res.arrayBuffer());
+  }
+  const hash = await sha256Hex(bytes);
+  const lockedPath = `locked/${contractId}.pdf`;
+  const { error: upErr } = await supabase.storage
+    .from("signature-contracts")
+    .upload(lockedPath, bytes, { contentType: "application/pdf", upsert: true });
+  if (upErr) throw upErr;
+  const { data: fields } = await supabase
+    .from("signature_fields").select("*").eq("contract_id", contractId)
+    .order("display_order", { ascending: true });
+  const snapshot = {
+    fields: fields ?? [],
+    owner_field_values: contract.owner_field_values ?? {},
+    file_name: contract.file_name,
+  };
+  const { error: updErr } = await supabase
+    .from("signature_contracts")
+    .update({
+      locked_at: new Date().toISOString(),
+      document_hash: hash,
+      locked_file_url: lockedPath,
+      locked_fields_snapshot: snapshot,
+    })
+    .eq("id", contractId);
+  if (updErr) throw updErr;
+  return { already: false, hash };
 }
 
 Deno.serve(async (req) => {
