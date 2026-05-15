@@ -85,6 +85,14 @@ Deno.serve(async (req) => {
         }
       }
     }
+    if (contract && !fields) {
+      const { data: liveFields } = await supabase
+        .from("signature_fields")
+        .select("*")
+        .eq("contract_id", contract.id)
+        .order("display_order", { ascending: true });
+      fields = liveFields ?? [];
+    }
 
     return new Response(JSON.stringify({ contract, fields }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
