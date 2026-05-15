@@ -10,6 +10,8 @@ import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle,
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, AuditLogData } from "@/lib/pdfExport";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface SignatureContract {
   id: string;
@@ -34,7 +36,9 @@ const SignContract = () => {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
   const [pdfError, setPdfError] = useState(false);
-  const [intentConsent, setIntentConsent] = useState(false);
+  const [intentConsent, setIntentConsent] = useState(true);
+  const [legalOpen, setLegalOpen] = useState(false);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | null>(null);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditLogData | null>(null);
   
@@ -58,6 +62,37 @@ const SignContract = () => {
       fetchContract();
     }
   }, [token]);
+
+  // Resolve a signed URL for the private signature-contracts bucket so the PDF loads
+  useEffect(() => {
+    let cancelled = false;
+    const resolve = async () => {
+      if (!contract?.file_url) return;
+      const marker = '/signature-contracts/';
+      const idx = contract.file_url.indexOf(marker);
+      if (idx === -1) {
+        if (!cancelled) setResolvedFileUrl(contract.file_url);
+        return;
+      }
+      const path = contract.file_url.slice(idx + marker.length).split('?')[0];
+      try {
+        const { data, error } = await supabase.storage
+          .from('signature-contracts')
+          .createSignedUrl(path, 60 * 60);
+        if (cancelled) return;
+        if (error || !data?.signedUrl) {
+          setResolvedFileUrl(contract.file_url);
+        } else {
+          setResolvedFileUrl(data.signedUrl);
+          setPdfError(false);
+        }
+      } catch {
+        if (!cancelled) setResolvedFileUrl(contract.file_url);
+      }
+    };
+    resolve();
+    return () => { cancelled = true; };
+  }, [contract?.file_url]);
 
   const fetchContract = async () => {
     try {
@@ -565,16 +600,6 @@ const SignContract = () => {
                   <Download className="h-3.5 w-3.5 mr-1.5" />
                   Save a copy
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                  disabled={exporting}
-                  className="h-8"
-                >
-                  <Printer className="h-3.5 w-3.5 mr-1.5" />
-                  Print to sign by hand
-                </Button>
               </div>
             </div>
             
@@ -595,16 +620,42 @@ const SignContract = () => {
                   className="text-sm h-9"
                 />
               </div>
-              <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug cursor-pointer">
-                <Checkbox
-                  checked={intentConsent}
-                  onCheckedChange={(v) => setIntentConsent(Boolean(v))}
-                  className="mt-0.5"
-                />
-                <span>
-                  I intend to sign this document electronically and agree my electronic signature is legally binding under the UK Electronic Communications Act 2000.
-                </span>
-              </label>
+              <Collapsible open={legalOpen} onOpenChange={setLegalOpen}>
+                <div className="flex items-center gap-2 text-xs">
+                  <label className="flex items-start gap-2 text-muted-foreground leading-snug cursor-pointer flex-1">
+                    <Checkbox
+                      checked={intentConsent}
+                      onCheckedChange={(v) => setIntentConsent(Boolean(v))}
+                      className="mt-0.5"
+                    />
+                    <span>I am signing this document.</span>
+                  </label>
+                  <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
+                    Details
+                    <ChevronDown className={`h-3 w-3 transition-transform ${legalOpen ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="mt-2 p-3 rounded-md border bg-muted/30 text-xs text-muted-foreground space-y-3">
+                  <p>
+                    By ticking the box you confirm your intent to sign this document electronically.
+                    Your electronic signature is legally binding under the UK Electronic Communications Act 2000.
+                    A full audit log (timestamp, IP address and document hash) is appended to the signed PDF.
+                  </p>
+                  <p>
+                    Prefer to sign by hand? Print the document, sign it, and send it back manually.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrint}
+                    disabled={exporting}
+                    className="h-8"
+                  >
+                    <Printer className="h-3.5 w-3.5 mr-1.5" />
+                    Print to sign by hand
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
               <Button onClick={handleSubmit} disabled={submitting} className="w-full h-10">
                 {submitting ? (
                   <>
@@ -633,15 +684,20 @@ const SignContract = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Your device may not support inline PDF viewing.
               </p>
-              <Button onClick={() => window.open(contract.file_url, '_blank')} className="gap-2">
+              <Button onClick={() => window.open(resolvedFileUrl || contract.file_url, '_blank')} className="gap-2">
                 <ExternalLink className="h-4 w-4" />
                 Open PDF in New Tab
               </Button>
             </div>
+          ) : !resolvedFileUrl ? (
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">Loading document…</p>
+            </div>
           ) : (
             <div className="h-full" style={{ minHeight: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 180px)' }}>
               <PDFDocumentViewer
-                fileUrl={contract.file_url}
+                fileUrl={resolvedFileUrl}
                 fields={fields}
                 mode="sign"
                 fieldValues={fieldValues}
