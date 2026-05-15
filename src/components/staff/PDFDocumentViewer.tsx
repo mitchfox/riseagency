@@ -584,11 +584,11 @@ export const PDFDocumentViewer = ({
                               onClick={(e) => e.stopPropagation()}
                               onMouseDown={(e) => e.stopPropagation()}
                               onFocus={(e) => e.stopPropagation()}
-                              className="flex-1 h-full bg-white text-sm text-black border rounded px-2 focus:ring-2 focus:ring-primary"
+                              className="flex-1 h-full bg-white text-base text-center text-black border rounded px-2 focus:ring-2 focus:ring-primary"
                             />
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
+                          <div className="w-full h-full bg-gray-100 text-base text-black border rounded px-2 flex items-center justify-center">
                             {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
