@@ -1135,13 +1135,18 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden p-4">
-            {selectedContract && (
+            {selectedContract && resolvedFileUrl ? (
               <PDFDocumentViewer
-                fileUrl={resolvedFileUrl || selectedContract.file_url}
+                fileUrl={resolvedFileUrl}
                 fields={fields}
                 onFieldsChange={setFields}
                 mode="edit"
               />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Loading document...
+              </div>
             )}
           </div>
 
@@ -1185,9 +1190,9 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           </DialogHeader>
           
           <div className="flex-1 overflow-hidden p-4">
-            {selectedContract && (
+            {selectedContract && resolvedFileUrl ? (
               <PDFDocumentViewer
-                fileUrl={resolvedFileUrl || selectedContract.file_url}
+                fileUrl={resolvedFileUrl}
                 fields={fields}
                 mode="owner-sign"
                 fieldValues={ownerFieldValues}
@@ -1195,6 +1200,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                 onSignatureStart={handleSignatureStart}
                 signerPartyFilter="owner"
               />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Loading document...
+              </div>
             )}
           </div>
 

@@ -59,6 +59,15 @@ export const PDFDocumentViewer = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
+  // Reset load state whenever the source URL changes so a previous error
+  // doesn't stick when the caller swaps in a freshly resolved (e.g. signed) URL.
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setNumPages(0);
+    setCurrentPage(1);
+  }, [fileUrl]);
+
   // Get editable fields for navigation in sign modes
   const editableFields = fields.filter(f => {
     if (mode === 'owner-sign') return f.signer_party === 'owner';
