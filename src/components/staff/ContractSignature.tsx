@@ -1401,6 +1401,31 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   <p className="text-xs text-muted-foreground mb-3">
                     Signed: {new Date(sub.signed_at).toLocaleString()}
                   </p>
+                  <div className="text-[11px] text-muted-foreground space-y-0.5 mb-3 border-l-2 border-muted pl-2">
+                    <div>IP: {sub.ip_address || '—'}</div>
+                    <div>Intent confirmed: {sub.intent_consent_at ? new Date(sub.intent_consent_at).toLocaleString() : '—'}</div>
+                    <div>Document hash: <span className="font-mono break-all">{sub.document_hash || '—'}</span></div>
+                    <div>Signed PDF hash: <span className="font-mono break-all">{sub.signed_pdf_hash || '—'}</span></div>
+                    <div className="line-clamp-2">User agent: {sub.user_agent || '—'}</div>
+                    {sub.signed_pdf_url && (
+                      <button
+                        type="button"
+                        className="text-primary underline mt-1"
+                        onClick={async () => {
+                          const { data, error } = await supabase.storage
+                            .from('signature-contracts')
+                            .createSignedUrl(sub.signed_pdf_url!, 60 * 10);
+                          if (error || !data?.signedUrl) {
+                            toast.error('Could not load signed PDF');
+                            return;
+                          }
+                          window.open(data.signedUrl, '_blank');
+                        }}
+                      >
+                        Download immutable signed PDF
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     {Object.entries(sub.field_values).map(([key, value]) => (
                       <div key={key} className="text-sm">
