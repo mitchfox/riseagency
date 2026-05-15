@@ -684,7 +684,7 @@ const SignContract = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 Your device may not support inline PDF viewing.
               </p>
-              <Button onClick={() => window.open(contract.file_url, '_blank')} className="gap-2">
+              <Button onClick={() => window.open(resolvedFileUrl || contract.file_url, '_blank')} className="gap-2">
                 <ExternalLink className="h-4 w-4" />
                 Open PDF in New Tab
               </Button>
