@@ -10,6 +10,8 @@ import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle,
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
 import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, AuditLogData } from "@/lib/pdfExport";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface SignatureContract {
   id: string;
@@ -34,7 +36,9 @@ const SignContract = () => {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [signerInfo, setSignerInfo] = useState({ name: '', email: '' });
   const [pdfError, setPdfError] = useState(false);
-  const [intentConsent, setIntentConsent] = useState(false);
+  const [intentConsent, setIntentConsent] = useState(true);
+  const [legalOpen, setLegalOpen] = useState(false);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | null>(null);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditLogData | null>(null);
   
@@ -58,6 +62,37 @@ const SignContract = () => {
       fetchContract();
     }
   }, [token]);
+
+  // Resolve a signed URL for the private signature-contracts bucket so the PDF loads
+  useEffect(() => {
+    let cancelled = false;
+    const resolve = async () => {
+      if (!contract?.file_url) return;
+      const marker = '/signature-contracts/';
+      const idx = contract.file_url.indexOf(marker);
+      if (idx === -1) {
+        if (!cancelled) setResolvedFileUrl(contract.file_url);
+        return;
+      }
+      const path = contract.file_url.slice(idx + marker.length).split('?')[0];
+      try {
+        const { data, error } = await supabase.storage
+          .from('signature-contracts')
+          .createSignedUrl(path, 60 * 60);
+        if (cancelled) return;
+        if (error || !data?.signedUrl) {
+          setResolvedFileUrl(contract.file_url);
+        } else {
+          setResolvedFileUrl(data.signedUrl);
+          setPdfError(false);
+        }
+      } catch {
+        if (!cancelled) setResolvedFileUrl(contract.file_url);
+      }
+    };
+    resolve();
+    return () => { cancelled = true; };
+  }, [contract?.file_url]);
 
   const fetchContract = async () => {
     try {
