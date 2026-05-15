@@ -19,6 +19,7 @@ export interface FieldPosition {
   width: number; // percentage
   height: number; // percentage
   signer_party: 'owner' | 'counterparty'; // who signs this field
+  value?: string;
 }
 
 interface PDFDocumentViewerProps {
@@ -56,6 +57,11 @@ export const PDFDocumentViewer = ({
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [addingFieldType, setAddingFieldType] = useState<'text' | 'date' | 'signature' | null>(null);
   const [addingFieldParty, setAddingFieldParty] = useState<'owner' | 'counterparty'>('owner');
+  const mergedFieldValues = fields.reduce<Record<string, string>>((acc, field) => {
+    const value = fieldValues[field.id] ?? field.value;
+    if (typeof value === 'string' && value.length > 0) acc[field.id] = value;
+    return acc;
+  }, {});
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -75,13 +81,13 @@ export const PDFDocumentViewer = ({
     return false;
   });
   
-  const unfilledFields = editableFields.filter(f => !fieldValues[f.id]);
+  const unfilledFields = editableFields.filter(f => !mergedFieldValues[f.id]);
 
   // Get unique pages that have fields
   const pagesWithFields = [...new Set(fields.map(f => f.page_number))].sort((a, b) => a - b);
   const pagesWithUnfilledFields = [...new Set(unfilledFields.map(f => f.page_number))].sort((a, b) => a - b);
   const currentPageEditableFields = editableFields.filter(f => f.page_number === currentPage);
-  const currentPageUnfilled = currentPageEditableFields.filter(f => !fieldValues[f.id]);
+  const currentPageUnfilled = currentPageEditableFields.filter(f => !mergedFieldValues[f.id]);
 
   // Auto-fill date fields when entering sign mode (run once when fields load)
   useEffect(() => {
@@ -91,7 +97,7 @@ export const PDFDocumentViewer = ({
     const today = new Date().toISOString().split('T')[0];
     const dateFieldsToFill = fields.filter(f => {
       const isEditable = mode === 'owner-sign' ? f.signer_party === 'owner' : f.signer_party === 'counterparty';
-      return f.field_type === 'date' && isEditable && !fieldValues[f.id];
+      return f.field_type === 'date' && isEditable && !mergedFieldValues[f.id];
     });
     
     dateFieldsToFill.forEach(field => {
@@ -554,7 +560,7 @@ export const PDFDocumentViewer = ({
                         editable ? (
                           <input
                             type="text"
-                            value={fieldValues[field.id] || ''}
+                              value={mergedFieldValues[field.id] || ''}
                             onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -564,7 +570,7 @@ export const PDFDocumentViewer = ({
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
-                            {fieldValues[field.id] || field.label}
+                            {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
                       )}
@@ -573,7 +579,7 @@ export const PDFDocumentViewer = ({
                           <div className="w-full h-full flex items-center gap-1">
                             <input
                               type="date"
-                              value={fieldValues[field.id] || new Date().toISOString().split('T')[0]}
+                              value={mergedFieldValues[field.id] || new Date().toISOString().split('T')[0]}
                               onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
                               onClick={(e) => e.stopPropagation()}
                               onMouseDown={(e) => e.stopPropagation()}
@@ -583,14 +589,14 @@ export const PDFDocumentViewer = ({
                           </div>
                         ) : (
                           <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
-                            {fieldValues[field.id] || field.label}
+                            {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
                       )}
                       {field.field_type === 'signature' && (
-                        fieldValues[field.id] ? (
+                        mergedFieldValues[field.id] ? (
                           <img 
-                            src={fieldValues[field.id]} 
+                            src={mergedFieldValues[field.id]} 
                             alt="Signature" 
                             className="w-full h-full object-contain bg-white rounded"
                           />

@@ -68,13 +68,18 @@ const SignContract = () => {
     let cancelled = false;
     const resolve = async () => {
       if (!contract?.file_url) return;
+      if (contract.file_url.includes('/storage/v1/object/sign/signature-contracts/')) {
+        setResolvedFileUrl(contract.file_url);
+        setPdfError(false);
+        return;
+      }
       const marker = '/signature-contracts/';
       const idx = contract.file_url.indexOf(marker);
       if (idx === -1) {
         if (!cancelled) setResolvedFileUrl(contract.file_url);
         return;
       }
-      const path = contract.file_url.slice(idx + marker.length).split('?')[0];
+      const path = decodeURIComponent(contract.file_url.slice(idx + marker.length).split('?')[0]);
       try {
         const { data, error } = await supabase.storage
           .from('signature-contracts')
@@ -125,7 +130,7 @@ const SignContract = () => {
 
       setContract(contractData as SignatureContract);
 
-      let fieldsData: any[] | null = snapshotFields;
+      let fieldsData: any[] | null = Array.isArray(snapshotFields) && snapshotFields.length > 0 ? snapshotFields : null;
       if (!fieldsData) {
         const { data, error: fieldsError } = await supabase
           .from('signature_fields')
@@ -146,12 +151,18 @@ const SignContract = () => {
           width: f.width,
           height: f.height,
           signer_party: f.signer_party || 'counterparty',
+          value: typeof f.value === 'string' ? f.value : undefined,
         }));
         setFields(typedFields);
 
+        const initialValues: Record<string, string> = {};
+        typedFields.forEach((field) => {
+          if (field.value) initialValues[field.id] = field.value;
+        });
         if (contractData.owner_field_values && typeof contractData.owner_field_values === 'object') {
-          setFieldValues(contractData.owner_field_values as Record<string, string>);
+          Object.assign(initialValues, contractData.owner_field_values as Record<string, string>);
         }
+        setFieldValues(initialValues);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -316,11 +327,11 @@ const SignContract = () => {
       // submission has a byte-stable signed copy.
       const fieldData = fields.map(f => ({
         ...f,
-        value: fieldValues[f.id] || undefined,
+        value: fieldValues[f.id] || f.value || undefined,
       }));
       let signedPdfBase64: string | null = null;
       try {
-        const blob = await exportSignedContractPDF(contract.file_url, fieldData);
+        const blob = await exportSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
         const buf = await blob.arrayBuffer();
         let bin = '';
         const u8 = new Uint8Array(buf);
@@ -429,11 +440,11 @@ const SignContract = () => {
       }
       const fieldData = fields.map(f => ({
         ...f,
-        value: fieldValues[f.id] || undefined,
+        value: fieldValues[f.id] || f.value || undefined,
       }));
 
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
-      await downloadSignedContractPDF(contract.file_url, fieldData, filename, auditData ?? undefined);
+      await downloadSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, filename, auditData ?? undefined);
       
       toast.success('PDF exported successfully');
     } catch (error: any) {
@@ -452,11 +463,11 @@ const SignContract = () => {
         ...f,
         value: withFilledOnly ? (fieldValues[f.id] || undefined) : (
           // Owner-prefilled values still get exported; counterparty fields stay blank
-          f.signer_party === 'owner' ? fieldValues[f.id] : undefined
+          f.signer_party === 'owner' ? (fieldValues[f.id] || f.value || undefined) : undefined
         ),
       }));
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
+      await downloadSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, filename);
       toast.success('PDF downloaded');
     } catch (e) {
       console.error(e);
@@ -472,9 +483,9 @@ const SignContract = () => {
     try {
       const fieldData = fields.map(f => ({
         ...f,
-        value: f.signer_party === 'owner' ? fieldValues[f.id] : undefined,
+        value: f.signer_party === 'owner' ? (fieldValues[f.id] || f.value || undefined) : undefined,
       }));
-      await printSignedContractPDF(contract.file_url, fieldData);
+      await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
     } catch (e) {
       console.error(e);
       toast.error('Failed to open print view');
@@ -521,8 +532,8 @@ const SignContract = () => {
             <Button
               onClick={async () => {
                 if (!contract) return;
-                const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || undefined }));
-                await printSignedContractPDF(contract.file_url, fieldData, auditData ?? undefined);
+                const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || f.value || undefined }));
+                await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, auditData ?? undefined);
               }}
               disabled={exporting}
               size="lg"
@@ -628,10 +639,10 @@ const SignContract = () => {
                       onCheckedChange={(v) => setIntentConsent(Boolean(v))}
                       className="mt-0.5"
                     />
-                    <span>I am signing this document.</span>
+                    <span>Signing Electronically</span>
                   </label>
                   <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
-                    Details
+                    More Options
                     <ChevronDown className={`h-3 w-3 transition-transform ${legalOpen ? 'rotate-180' : ''}`} />
                   </CollapsibleTrigger>
                 </div>
