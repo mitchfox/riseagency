@@ -600,16 +600,6 @@ const SignContract = () => {
                   <Download className="h-3.5 w-3.5 mr-1.5" />
                   Save a copy
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                  disabled={exporting}
-                  className="h-8"
-                >
-                  <Printer className="h-3.5 w-3.5 mr-1.5" />
-                  Print to sign by hand
-                </Button>
               </div>
             </div>
             
@@ -630,16 +620,42 @@ const SignContract = () => {
                   className="text-sm h-9"
                 />
               </div>
-              <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug cursor-pointer">
-                <Checkbox
-                  checked={intentConsent}
-                  onCheckedChange={(v) => setIntentConsent(Boolean(v))}
-                  className="mt-0.5"
-                />
-                <span>
-                  I intend to sign this document electronically and agree my electronic signature is legally binding under the UK Electronic Communications Act 2000.
-                </span>
-              </label>
+              <Collapsible open={legalOpen} onOpenChange={setLegalOpen}>
+                <div className="flex items-center gap-2 text-xs">
+                  <label className="flex items-start gap-2 text-muted-foreground leading-snug cursor-pointer flex-1">
+                    <Checkbox
+                      checked={intentConsent}
+                      onCheckedChange={(v) => setIntentConsent(Boolean(v))}
+                      className="mt-0.5"
+                    />
+                    <span>I am signing this document.</span>
+                  </label>
+                  <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
+                    Details
+                    <ChevronDown className={`h-3 w-3 transition-transform ${legalOpen ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="mt-2 p-3 rounded-md border bg-muted/30 text-xs text-muted-foreground space-y-3">
+                  <p>
+                    By ticking the box you confirm your intent to sign this document electronically.
+                    Your electronic signature is legally binding under the UK Electronic Communications Act 2000.
+                    A full audit log (timestamp, IP address and document hash) is appended to the signed PDF.
+                  </p>
+                  <p>
+                    Prefer to sign by hand? Print the document, sign it, and send it back manually.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrint}
+                    disabled={exporting}
+                    className="h-8"
+                  >
+                    <Printer className="h-3.5 w-3.5 mr-1.5" />
+                    Print to sign by hand
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
               <Button onClick={handleSubmit} disabled={submitting} className="w-full h-10">
                 {submitting ? (
                   <>
