@@ -166,14 +166,25 @@ export async function exportSignedContractPDF(
           console.error('Error adding signature image:', e);
         }
       } else if (field.value) {
-        // Draw text or date - calculate appropriate font size based on field height
-        const fontSize = Math.min(height * 0.6, 14); // Scale font to field, max 14pt
+        // Scale font to fit field height AND width so values fill the box
+        const value = String(field.value);
+        const padding = 6;
+        const maxByHeight = height * 0.75;
+        const maxByWidth = value.length > 0
+          ? (width - padding * 2) / (value.length * 0.5)
+          : maxByHeight;
+        const fontSize = Math.max(8, Math.min(maxByHeight, maxByWidth, 24));
         jspdf.setFontSize(fontSize);
         jspdf.setTextColor(0, 0, 0);
-        
-        // Position text vertically centered within the field
+
         const textY = y + (height + fontSize * 0.35) / 2;
-        jspdf.text(field.value, x + 4, textY);
+        if (field.field_type === 'date') {
+          // Horizontally centre date values
+          const textWidth = jspdf.getTextWidth(value);
+          jspdf.text(value, x + (width - textWidth) / 2, textY);
+        } else {
+          jspdf.text(value, x + padding, textY);
+        }
       }
     }
 

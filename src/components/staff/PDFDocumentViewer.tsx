@@ -588,7 +588,7 @@ export const PDFDocumentViewer = ({
                             />
                           </div>
                         ) : (
-                          <div className="w-full h-full bg-gray-100 text-base text-black border rounded px-2 flex items-center justify-center">
+                          <div className="w-full h-full bg-gray-100 text-base text-black border rounded px-2 flex items-center justify-center whitespace-nowrap overflow-hidden">
                             {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
