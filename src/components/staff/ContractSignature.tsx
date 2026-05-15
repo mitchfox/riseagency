@@ -78,6 +78,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   const [showOwnerSignDialog, setShowOwnerSignDialog] = useState(false);
   const [showSubmissionsDialog, setShowSubmissionsDialog] = useState(false);
   const [selectedContract, setSelectedContract] = useState<SignatureContract | null>(null);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | null>(null);
   const [fields, setFields] = useState<FieldPosition[]>([]);
   const [allContractFields, setAllContractFields] = useState<Record<string, FieldPosition[]>>({});
   const [submissions, setSubmissions] = useState<SignatureSubmission[]>([]);
@@ -473,14 +474,35 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     toast.success('Link copied to clipboard');
   };
 
+  // Resolve a possibly-private signature-contracts URL to a usable signed URL
+  const resolveContractFileUrl = async (fileUrl: string): Promise<string> => {
+    if (!fileUrl) return fileUrl;
+    const marker = '/signature-contracts/';
+    const idx = fileUrl.indexOf(marker);
+    if (idx === -1) return fileUrl;
+    const path = decodeURIComponent(fileUrl.substring(idx + marker.length).split('?')[0]);
+    const { data, error } = await supabase.storage
+      .from('signature-contracts')
+      .createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) {
+      console.error('Failed to sign contract URL', error);
+      return fileUrl;
+    }
+    return data.signedUrl;
+  };
+
   const openEditorDialog = (contract: SignatureContract) => {
     setSelectedContract(contract);
+    setResolvedFileUrl(null);
+    resolveContractFileUrl(contract.file_url).then(setResolvedFileUrl);
     fetchFields(contract.id);
     setShowEditorDialog(true);
   };
 
   const openOwnerSignDialog = async (contract: SignatureContract) => {
     setSelectedContract(contract);
+    setResolvedFileUrl(null);
+    resolveContractFileUrl(contract.file_url).then(setResolvedFileUrl);
     await fetchFields(contract.id);
     // Load existing owner values if any
     setOwnerFieldValues(contract.owner_field_values || {});
@@ -1100,6 +1122,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         if (!open) {
           setShowEditorDialog(false);
           setSelectedContract(null);
+          setResolvedFileUrl(null);
           setFields([]);
         }
       }}>
@@ -1114,7 +1137,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           <div className="flex-1 overflow-hidden p-4">
             {selectedContract && (
               <PDFDocumentViewer
-                fileUrl={selectedContract.file_url}
+                fileUrl={resolvedFileUrl || selectedContract.file_url}
                 fields={fields}
                 onFieldsChange={setFields}
                 mode="edit"
@@ -1148,6 +1171,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         if (!open) {
           setShowOwnerSignDialog(false);
           setSelectedContract(null);
+          setResolvedFileUrl(null);
           setFields([]);
           setOwnerFieldValues({});
         }
@@ -1163,7 +1187,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           <div className="flex-1 overflow-hidden p-4">
             {selectedContract && (
               <PDFDocumentViewer
-                fileUrl={selectedContract.file_url}
+                fileUrl={resolvedFileUrl || selectedContract.file_url}
                 fields={fields}
                 mode="owner-sign"
                 fieldValues={ownerFieldValues}
