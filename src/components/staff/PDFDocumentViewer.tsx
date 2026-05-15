@@ -19,6 +19,7 @@ export interface FieldPosition {
   width: number; // percentage
   height: number; // percentage
   signer_party: 'owner' | 'counterparty'; // who signs this field
+  value?: string;
 }
 
 interface PDFDocumentViewerProps {
@@ -56,6 +57,11 @@ export const PDFDocumentViewer = ({
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [addingFieldType, setAddingFieldType] = useState<'text' | 'date' | 'signature' | null>(null);
   const [addingFieldParty, setAddingFieldParty] = useState<'owner' | 'counterparty'>('owner');
+  const mergedFieldValues = fields.reduce<Record<string, string>>((acc, field) => {
+    const value = fieldValues[field.id] ?? field.value;
+    if (typeof value === 'string' && value.length > 0) acc[field.id] = value;
+    return acc;
+  }, {});
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
