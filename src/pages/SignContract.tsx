@@ -463,7 +463,7 @@ const SignContract = () => {
         ...f,
         value: withFilledOnly ? (fieldValues[f.id] || undefined) : (
           // Owner-prefilled values still get exported; counterparty fields stay blank
-          f.signer_party === 'owner' ? fieldValues[f.id] : undefined
+          f.signer_party === 'owner' ? (fieldValues[f.id] || f.value || undefined) : undefined
         ),
       }));
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
@@ -483,7 +483,7 @@ const SignContract = () => {
     try {
       const fieldData = fields.map(f => ({
         ...f,
-        value: f.signer_party === 'owner' ? fieldValues[f.id] : undefined,
+        value: f.signer_party === 'owner' ? (fieldValues[f.id] || f.value || undefined) : undefined,
       }));
       await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
     } catch (e) {
@@ -532,7 +532,7 @@ const SignContract = () => {
             <Button
               onClick={async () => {
                 if (!contract) return;
-                const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || undefined }));
+                const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || f.value || undefined }));
                 await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, auditData ?? undefined);
               }}
               disabled={exporting}
