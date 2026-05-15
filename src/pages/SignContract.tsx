@@ -151,12 +151,18 @@ const SignContract = () => {
           width: f.width,
           height: f.height,
           signer_party: f.signer_party || 'counterparty',
+          value: typeof f.value === 'string' ? f.value : undefined,
         }));
         setFields(typedFields);
 
+        const initialValues: Record<string, string> = {};
+        typedFields.forEach((field) => {
+          if (field.value) initialValues[field.id] = field.value;
+        });
         if (contractData.owner_field_values && typeof contractData.owner_field_values === 'object') {
-          setFieldValues(contractData.owner_field_values as Record<string, string>);
+          Object.assign(initialValues, contractData.owner_field_values as Record<string, string>);
         }
+        setFieldValues(initialValues);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -321,7 +327,7 @@ const SignContract = () => {
       // submission has a byte-stable signed copy.
       const fieldData = fields.map(f => ({
         ...f,
-        value: fieldValues[f.id] || undefined,
+        value: fieldValues[f.id] || f.value || undefined,
       }));
       let signedPdfBase64: string | null = null;
       try {
@@ -434,7 +440,7 @@ const SignContract = () => {
       }
       const fieldData = fields.map(f => ({
         ...f,
-        value: fieldValues[f.id] || undefined,
+        value: fieldValues[f.id] || f.value || undefined,
       }));
 
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
