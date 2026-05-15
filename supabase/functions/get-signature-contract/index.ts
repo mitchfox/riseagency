@@ -43,6 +43,22 @@ Deno.serve(async (req) => {
 
     const contract = (data || []).find((c: any) => slugify(c.title || "") === decoded) || null;
 
+    // If contract is locked, expose the locked file via a short-lived signed URL
+    // and the locked snapshot of fields/owner values, so signers see the exact
+    // version that was sent.
+    if (contract && contract.locked_at && contract.locked_file_url) {
+      const { data: signed } = await supabase.storage
+        .from("signature-contracts")
+        .createSignedUrl(contract.locked_file_url, 60 * 60 * 24);
+      if (signed?.signedUrl) {
+        contract.file_url = signed.signedUrl;
+      }
+      const snap: any = contract.locked_fields_snapshot;
+      if (snap?.owner_field_values) {
+        contract.owner_field_values = snap.owner_field_values;
+      }
+    }
+
     return new Response(JSON.stringify({ contract }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
