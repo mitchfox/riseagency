@@ -331,7 +331,23 @@ const SignContract = () => {
       }));
       let signedPdfBase64: string | null = null;
       try {
-        const blob = await exportSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
+        const preAudit: AuditLogData = {
+          contract_title: contract.title,
+          contract_id: contract.id,
+          document_hash: null,
+          signer_name: signerInfo.name,
+          signer_email: signerInfo.email,
+          signed_at: new Date().toISOString(),
+          intent_consent_at: new Date().toISOString(),
+          ip_address: null,
+          user_agent: navigator.userAgent,
+        };
+        const blob = await exportSignedContractPDF(
+          resolvedFileUrl || contract.file_url,
+          fieldData,
+          undefined,
+          preAudit,
+        );
         const buf = await blob.arrayBuffer();
         let bin = '';
         const u8 = new Uint8Array(buf);
