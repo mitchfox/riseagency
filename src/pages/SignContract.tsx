@@ -512,6 +512,16 @@ const SignContract = () => {
                   className="text-sm h-9"
                 />
               </div>
+              <label className="flex items-start gap-2 text-xs text-muted-foreground leading-snug cursor-pointer">
+                <Checkbox
+                  checked={intentConsent}
+                  onCheckedChange={(v) => setIntentConsent(Boolean(v))}
+                  className="mt-0.5"
+                />
+                <span>
+                  I intend to sign this document electronically and agree my electronic signature is legally binding under the UK Electronic Communications Act 2000.
+                </span>
+              </label>
               <Button onClick={handleSubmit} disabled={submitting} className="w-full h-10">
                 {submitting ? (
                   <>
