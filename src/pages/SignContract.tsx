@@ -325,7 +325,7 @@ const SignContract = () => {
       }));
       let signedPdfBase64: string | null = null;
       try {
-        const blob = await exportSignedContractPDF(contract.file_url, fieldData);
+        const blob = await exportSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
         const buf = await blob.arrayBuffer();
         let bin = '';
         const u8 = new Uint8Array(buf);
@@ -438,7 +438,7 @@ const SignContract = () => {
       }));
 
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
-      await downloadSignedContractPDF(contract.file_url, fieldData, filename, auditData ?? undefined);
+      await downloadSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, filename, auditData ?? undefined);
       
       toast.success('PDF exported successfully');
     } catch (error: any) {
@@ -461,7 +461,7 @@ const SignContract = () => {
         ),
       }));
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
+      await downloadSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData, filename);
       toast.success('PDF downloaded');
     } catch (e) {
       console.error(e);
@@ -479,7 +479,7 @@ const SignContract = () => {
         ...f,
         value: f.signer_party === 'owner' ? fieldValues[f.id] : undefined,
       }));
-      await printSignedContractPDF(contract.file_url, fieldData);
+      await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
     } catch (e) {
       console.error(e);
       toast.error('Failed to open print view');
