@@ -13,13 +13,97 @@ interface FieldData {
   value?: string;
 }
 
+export interface AuditLogData {
+  contract_title?: string;
+  contract_id?: string;
+  document_hash?: string | null;
+  signer_name?: string;
+  signer_email?: string;
+  signed_at?: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  intent_consent_at?: string | null;
+}
+
+function appendAuditPage(jspdf: jsPDF, pageWidth: number, pageHeight: number, audit: AuditLogData) {
+  jspdf.addPage([pageWidth, pageHeight], pageWidth > pageHeight ? 'landscape' : 'portrait');
+  const margin = 48;
+  let y = margin;
+
+  jspdf.setFontSize(18);
+  jspdf.setTextColor(0, 0, 0);
+  jspdf.text('Electronic Signature Audit Log', margin, y);
+  y += 24;
+
+  jspdf.setFontSize(10);
+  jspdf.setTextColor(80, 80, 80);
+  jspdf.text(
+    'This page is automatically generated as evidence that the document was signed electronically',
+    margin, y,
+  );
+  y += 12;
+  jspdf.text(
+    'under the UK Electronic Communications Act 2000 and the eIDAS Regulation.',
+    margin, y,
+  );
+  y += 24;
+
+  jspdf.setDrawColor(200, 200, 200);
+  jspdf.line(margin, y, pageWidth - margin, y);
+  y += 18;
+
+  const rows: Array<[string, string]> = [
+    ['Document', audit.contract_title || '—'],
+    ['Document ID', audit.contract_id || '—'],
+    ['Document hash (SHA-256)', audit.document_hash || '—'],
+    ['Signer name', audit.signer_name || '—'],
+    ['Signer email', audit.signer_email || '—'],
+    ['Signed at', audit.signed_at ? new Date(audit.signed_at).toUTCString() : '—'],
+    ['Intent to sign confirmed', audit.intent_consent_at ? new Date(audit.intent_consent_at).toUTCString() : '—'],
+    ['IP address', audit.ip_address || '—'],
+    ['Device / user agent', audit.user_agent || '—'],
+  ];
+
+  jspdf.setFontSize(11);
+  const labelWidth = 170;
+  const valueWidth = pageWidth - margin * 2 - labelWidth - 8;
+
+  for (const [label, value] of rows) {
+    jspdf.setTextColor(110, 110, 110);
+    jspdf.text(label, margin, y);
+    jspdf.setTextColor(0, 0, 0);
+    const wrapped = jspdf.splitTextToSize(String(value), valueWidth);
+    jspdf.text(wrapped, margin + labelWidth, y);
+    y += Math.max(16, wrapped.length * 14);
+    if (y > pageHeight - margin - 60) break;
+  }
+
+  y = Math.max(y + 12, pageHeight - margin - 40);
+  jspdf.setDrawColor(200, 200, 200);
+  jspdf.line(margin, y, pageWidth - margin, y);
+  y += 14;
+  jspdf.setFontSize(9);
+  jspdf.setTextColor(120, 120, 120);
+  jspdf.text(
+    'The signer confirmed their intent to sign electronically. The document hash matches the locked',
+    margin, y,
+  );
+  y += 11;
+  jspdf.text(
+    'version sent for signature. Any change to the underlying document would alter this hash.',
+    margin, y,
+  );
+}
+
 /**
  * Export a signed contract as a PDF with all field values overlaid
+ * Optionally appends an audit log page at the end.
  */
 export async function exportSignedContractPDF(
   pdfUrl: string,
   fields: FieldData[],
-  filename: string = 'signed-contract.pdf'
+  filename: string = 'signed-contract.pdf',
+  audit?: AuditLogData,
 ): Promise<Blob> {
   // Load the original PDF
   const loadingTask = pdfjs.getDocument(pdfUrl);
@@ -97,6 +181,10 @@ export async function exportSignedContractPDF(
     canvas.remove();
   }
 
+  if (audit) {
+    appendAuditPage(jspdf, viewport.width, viewport.height, audit);
+  }
+
   // Return as blob
   return jspdf.output('blob');
 }
@@ -107,9 +195,10 @@ export async function exportSignedContractPDF(
 export async function downloadSignedContractPDF(
   pdfUrl: string,
   fields: FieldData[],
-  filename: string = 'signed-contract.pdf'
+  filename: string = 'signed-contract.pdf',
+  audit?: AuditLogData,
 ): Promise<void> {
-  const blob = await exportSignedContractPDF(pdfUrl, fields, filename);
+  const blob = await exportSignedContractPDF(pdfUrl, fields, filename, audit);
   
   // Create download link
   const url = URL.createObjectURL(blob);
@@ -120,4 +209,23 @@ export async function downloadSignedContractPDF(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Open the PDF blob in a new tab and trigger the browser's print dialog
+ */
+export async function printSignedContractPDF(
+  pdfUrl: string,
+  fields: FieldData[],
+  audit?: AuditLogData,
+): Promise<void> {
+  const blob = await exportSignedContractPDF(pdfUrl, fields, 'contract.pdf', audit);
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) {
+    win.addEventListener('load', () => {
+      try { win.focus(); win.print(); } catch {}
+    });
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

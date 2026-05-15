@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock, Printer } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
-import { downloadSignedContractPDF, exportSignedContractPDF } from "@/lib/pdfExport";
+import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, AuditLogData } from "@/lib/pdfExport";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface SignatureContract {
@@ -36,6 +36,7 @@ const SignContract = () => {
   const [pdfError, setPdfError] = useState(false);
   const [intentConsent, setIntentConsent] = useState(false);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
+  const [auditData, setAuditData] = useState<AuditLogData | null>(null);
   
   // Password protection state
   const [requiresPassword, setRequiresPassword] = useState(false);
@@ -311,6 +312,17 @@ const SignContract = () => {
       if (error) throw error;
       if ((resp as any)?.error) throw new Error((resp as any).error);
       setSignedPdfUrl((resp as any)?.signed_pdf_url ?? null);
+      setAuditData({
+        contract_title: contract.title,
+        contract_id: contract.id,
+        document_hash: (resp as any)?.document_hash ?? null,
+        signer_name: signerInfo.name,
+        signer_email: signerInfo.email,
+        signed_at: new Date().toISOString(),
+        intent_consent_at: new Date().toISOString(),
+        ip_address: null, // recorded server-side
+        user_agent: navigator.userAgent,
+      });
 
       // Send notification about contract being signed
       try {
@@ -386,12 +398,51 @@ const SignContract = () => {
       }));
 
       const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_signed.pdf`;
-      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
+      await downloadSignedContractPDF(contract.file_url, fieldData, filename, auditData ?? undefined);
       
       toast.success('PDF exported successfully');
     } catch (error: any) {
       console.error('Export error:', error);
       toast.error('Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDownloadBlank = async (withFilledOnly: boolean) => {
+    if (!contract) return;
+    setExporting(true);
+    try {
+      const fieldData = fields.map(f => ({
+        ...f,
+        value: withFilledOnly ? (fieldValues[f.id] || undefined) : (
+          // Owner-prefilled values still get exported; counterparty fields stay blank
+          f.signer_party === 'owner' ? fieldValues[f.id] : undefined
+        ),
+      }));
+      const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      await downloadSignedContractPDF(contract.file_url, fieldData, filename);
+      toast.success('PDF downloaded');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to download PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!contract) return;
+    setExporting(true);
+    try {
+      const fieldData = fields.map(f => ({
+        ...f,
+        value: f.signer_party === 'owner' ? fieldValues[f.id] : undefined,
+      }));
+      await printSignedContractPDF(contract.file_url, fieldData);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to open print view');
     } finally {
       setExporting(false);
     }
@@ -421,21 +472,31 @@ const SignContract = () => {
           <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-green-500 mb-4" />
           <h1 className="text-xl sm:text-2xl font-bold mb-2">Contract Signed!</h1>
           <p className="text-sm sm:text-base text-muted-foreground mb-6">
-            Thank you for signing. Your submission has been recorded.
+            Thank you for signing. Your submission has been recorded with a full audit log appended to the PDF.
           </p>
-          <Button onClick={handleExportPDF} disabled={exporting} size="lg" className="w-full sm:w-auto">
-            {exporting ? (
-              <>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Button onClick={handleExportPDF} disabled={exporting} size="lg">
+              {exporting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
+              ) : (
                 <Download className="h-4 w-4 mr-2" />
-                Download Signed PDF
-              </>
-            )}
-          </Button>
+              )}
+              Download Signed PDF
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!contract) return;
+                const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || undefined }));
+                await printSignedContractPDF(contract.file_url, fieldData, auditData ?? undefined);
+              }}
+              disabled={exporting}
+              size="lg"
+              variant="outline"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -493,6 +554,28 @@ const SignContract = () => {
               <p className="text-xs text-orange-600 mt-1">
                 Fill in orange fields to complete your signature
               </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadBlank(false)}
+                  disabled={exporting}
+                  className="h-8"
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Save a copy
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  disabled={exporting}
+                  className="h-8"
+                >
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />
+                  Print to sign by hand
+                </Button>
+              </div>
             </div>
             
             {/* Signer info and submit - stacks on mobile */}
