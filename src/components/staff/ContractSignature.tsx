@@ -52,6 +52,12 @@ interface SignatureSubmission {
   signer_email: string;
   field_values: Record<string, string>;
   signed_at: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  intent_consent_at?: string | null;
+  document_hash?: string | null;
+  signed_pdf_url?: string | null;
+  signed_pdf_hash?: string | null;
 }
 
 interface SavedSignature {
@@ -344,6 +350,20 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
   };
 
   const handleStatusChange = async (contractId: string, status: string) => {
+    if (status === 'active') {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        await supabase.functions.invoke('lock-signature-contract', {
+          body: { contract_id: contractId },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+      } catch (e) {
+        console.error('Failed to lock contract:', e);
+        toast.error('Failed to lock contract version. Status not changed.');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('signature_contracts')
       .update({ status })
