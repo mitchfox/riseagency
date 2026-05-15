@@ -1122,6 +1122,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         if (!open) {
           setShowEditorDialog(false);
           setSelectedContract(null);
+          setResolvedFileUrl(null);
           setFields([]);
         }
       }}>
@@ -1136,7 +1137,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           <div className="flex-1 overflow-hidden p-4">
             {selectedContract && (
               <PDFDocumentViewer
-                fileUrl={selectedContract.file_url}
+                fileUrl={resolvedFileUrl || selectedContract.file_url}
                 fields={fields}
                 onFieldsChange={setFields}
                 mode="edit"
@@ -1170,6 +1171,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
         if (!open) {
           setShowOwnerSignDialog(false);
           setSelectedContract(null);
+          setResolvedFileUrl(null);
           setFields([]);
           setOwnerFieldValues({});
         }
@@ -1185,7 +1187,7 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
           <div className="flex-1 overflow-hidden p-4">
             {selectedContract && (
               <PDFDocumentViewer
-                fileUrl={selectedContract.file_url}
+                fileUrl={resolvedFileUrl || selectedContract.file_url}
                 fields={fields}
                 mode="owner-sign"
                 fieldValues={ownerFieldValues}
