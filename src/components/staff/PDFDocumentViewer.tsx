@@ -560,7 +560,7 @@ export const PDFDocumentViewer = ({
                         editable ? (
                           <input
                             type="text"
-                            value={fieldValues[field.id] || ''}
+                              value={mergedFieldValues[field.id] || ''}
                             onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -570,7 +570,7 @@ export const PDFDocumentViewer = ({
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
-                            {fieldValues[field.id] || field.label}
+                            {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
                       )}
@@ -579,7 +579,7 @@ export const PDFDocumentViewer = ({
                           <div className="w-full h-full flex items-center gap-1">
                             <input
                               type="date"
-                              value={fieldValues[field.id] || new Date().toISOString().split('T')[0]}
+                              value={mergedFieldValues[field.id] || new Date().toISOString().split('T')[0]}
                               onChange={(e) => onFieldValueChange?.(field.id, e.target.value)}
                               onClick={(e) => e.stopPropagation()}
                               onMouseDown={(e) => e.stopPropagation()}
@@ -589,14 +589,14 @@ export const PDFDocumentViewer = ({
                           </div>
                         ) : (
                           <div className="w-full h-full bg-gray-100 text-sm text-black border rounded px-2 flex items-center">
-                            {fieldValues[field.id] || field.label}
+                            {mergedFieldValues[field.id] || field.label}
                           </div>
                         )
                       )}
                       {field.field_type === 'signature' && (
-                        fieldValues[field.id] ? (
+                        mergedFieldValues[field.id] ? (
                           <img 
-                            src={fieldValues[field.id]} 
+                            src={mergedFieldValues[field.id]} 
                             alt="Signature" 
                             className="w-full h-full object-contain bg-white rounded"
                           />
