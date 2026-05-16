@@ -106,6 +106,7 @@ interface PerformanceAction {
   recorded_stat?: RecordedStat | RecordedStat[] | null;
   zone?: number | null;
   zone_details?: ZonePoint[] | null;
+  is_first_half?: boolean;
 }
 
 interface R90Rating {
