@@ -209,7 +209,9 @@ const HighlightsPortal = () => {
       toast.error("No playable clips");
       return;
     }
-    setReelClips(list);
+    const safeIdx = Math.max(0, Math.min(startIdx, list.length - 1));
+    const rotated = [...list.slice(safeIdx), ...list.slice(0, safeIdx)];
+    setReelClips(rotated);
     setReelTitle(title);
     setReelIndex(startIdx);
   };
