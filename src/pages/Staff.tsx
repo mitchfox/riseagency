@@ -46,6 +46,7 @@ import { ScheduleManager } from "@/components/staff/marketing/ScheduleManager";
 import { ContentCreator, SalesDeck } from "@/components/staff/marketing";
 import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
 import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
+import { HighlightMakersManagement } from "@/components/staff/HighlightMakersManagement";
 
 import { PlayerDatabaseManagement } from "@/components/staff/PlayerDatabaseManagement";
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
@@ -189,7 +190,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'businessplan' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'businessplan' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -895,6 +896,7 @@ const Staff = () => {
           { id: 'streams', title: 'Streams', icon: Tv },
           { id: 'videocompressor', title: 'Video Compressor', icon: Film },
           { id: 'highlightcompiler', title: 'Highlight Compiler', icon: Film },
+          { id: 'highlightmakers', title: 'Highlights Makers', icon: Film },
           { id: 'musicstudio', title: 'Music Studio', icon: Music },
         ],
       },
@@ -1770,6 +1772,7 @@ const Staff = () => {
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
+                  {expandedSection === 'highlightmakers' && <HighlightMakersManagement isAdmin={canManageSection('highlightmakers')} />}
                   {expandedSection === 'datasetbuilder' && <DatasetBuilder />}
                   {expandedSection === 'musicstudio' && <MusicStudio />}
                   {expandedSection === 'salesdeck' && <SalesDeck />}

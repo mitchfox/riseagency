@@ -1907,6 +1907,82 @@ export type Database = {
         }
         Relationships: []
       }
+      highlight_maker_players: {
+        Row: {
+          created_at: string
+          highlight_maker_id: string
+          id: string
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          highlight_maker_id: string
+          id?: string
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          highlight_maker_id?: string
+          id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "highlight_maker_players_highlight_maker_id_fkey"
+            columns: ["highlight_maker_id"]
+            isOneToOne: false
+            referencedRelation: "highlight_makers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "highlight_maker_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "highlight_maker_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      highlight_makers: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          last_login_at: string | null
+          password: string
+          status: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          last_login_at?: string | null
+          password: string
+          status?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          last_login_at?: string | null
+          password?: string
+          status?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       highlight_projects: {
         Row: {
           clips: Json | null
