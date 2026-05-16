@@ -121,7 +121,6 @@ const HighlightsPortal = () => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [reelClips, setReelClips] = useState<{ id: string; title: string; videoUrl: string; actionScore?: number | null }[] | null>(null);
   const [reelTitle, setReelTitle] = useState("");
-  const [reelIndex, setReelIndex] = useState(0);
   const [expandedPlaylists, setExpandedPlaylists] = useState<Set<string>>(new Set());
   const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
 
@@ -213,7 +212,6 @@ const HighlightsPortal = () => {
     const rotated = [...list.slice(safeIdx), ...list.slice(0, safeIdx)];
     setReelClips(rotated);
     setReelTitle(title);
-    setReelIndex(startIdx);
   };
 
   const togglePlaylist = (id: string) =>
