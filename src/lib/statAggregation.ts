@@ -1,11 +1,12 @@
 /**
  * Centralised fixture-stat aggregation rules.
  *
- * Both raw count stats and percentage stats now exclude rows where the
- * metric key is missing entirely (i.e. the fixture wasn't coded for that
- * metric at all). An explicit value of 0 IS counted — only true absence
- * is excluded. This avoids dragging averages down to 0 for goalkeeper
- * metrics like clean sheets when older fixtures predate the metric set.
+ * Raw count stats: blank/missing values are treated as 0 across the
+ * selected fixture window — a missing entry means the action did not
+ * occur in that fixture. Percentage stats: blank/missing values are
+ * excluded from the average — a blank percentage typically means there
+ * were no attempts in that fixture and therefore no rate to average.
+ * Explicit 0 always counts.
  *
  * This single source of truth is used across portal, comparisons,
  * transfer reports and performance report views for both outfield and GK.
@@ -70,16 +71,18 @@ export const computeStatAverage = (
 ): number | null => {
   if (analyses.length === 0) return null;
 
-  // Both raw and percentage averages now use only rows that actually have a
-  // value for this metric. Explicit 0 still counts; only missing keys are
-  // excluded. This prevents older fixtures (which never tracked the metric)
-  // from dragging the average to zero.
-  const vals = analyses
-    .map(a => getStatValue(a, metricKey))
-    .filter((v): v is number => v != null && !isNaN(v));
+  const raw = analyses.map(a => getStatValue(a, metricKey));
+  const present = raw.filter((v): v is number => v != null && !isNaN(v));
 
-  if (vals.length === 0) return null;
-  return vals.reduce((s, v) => s + v, 0) / vals.length;
+  if (isPercentageMetric(metricKey)) {
+    // Percentages: exclude blanks (no attempts → no rate to include).
+    if (present.length === 0) return null;
+    return present.reduce((s, v) => s + v, 0) / present.length;
+  }
+
+  // Raw / count stats: blanks count as 0 across the full window.
+  if (present.length === 0) return null;
+  return present.reduce((s, v) => s + v, 0) / analyses.length;
 };
 
 /**
