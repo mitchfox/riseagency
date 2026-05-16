@@ -52,7 +52,10 @@ const formatMinuteForInput = (minute: number | null): string => {
   return `${minPart}.${secPart.toString().padStart(2, '0')}`;
 };
 
-// Sort actions chronologically by game time; actions without a minute keep their current position
+// Sort actions chronologically by game time.
+// Actions without a minute keep their current position. In the 45.00–51.00
+// overlap window, an action explicitly flagged `is_first_half` always sorts
+// before any second-half action regardless of raw minute value.
 const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAction[] => {
   // Separate actions with and without minutes
   const withMinute: { action: PerformanceAction; originalIndex: number; seconds: number }[] = [];
@@ -67,13 +70,19 @@ const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAc
     }
   });
   
-  // Sort by time; for actions at 45-51 mins, is_first_half=true sorts before second-half actions
+  // Bucket into halves first, then sort by seconds within each half.
+  // The 45.00–51.00 window is ambiguous — H1 toggle decides which half
+  // it belongs to. Below 45.00 is always H1, at/above 51.00 is always H2.
+  const halfBucket = (secs: number, isFirstHalf: boolean | null | undefined): number => {
+    if (secs < 45 * 60) return 0;
+    if (secs >= 51 * 60) return 1;
+    return isFirstHalf ? 0 : 1;
+  };
   withMinute.sort((a, b) => {
-    if (a.seconds !== b.seconds) return a.seconds - b.seconds;
-    // Same time: first-half actions come before second-half
-    const aFirst = a.action.is_first_half ? 0 : 1;
-    const bFirst = b.action.is_first_half ? 0 : 1;
-    return aFirst - bFirst;
+    const aHalf = halfBucket(a.seconds, a.action.is_first_half);
+    const bHalf = halfBucket(b.seconds, b.action.is_first_half);
+    if (aHalf !== bHalf) return aHalf - bHalf;
+    return a.seconds - b.seconds;
   });
   
   // Rebuild: place sorted actions with minutes in their slots, keep empty-minute actions in place

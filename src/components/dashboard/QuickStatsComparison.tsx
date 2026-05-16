@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { AnimatePresence, motion } from "framer-motion";
 import { ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
+import { computeStatAverage } from "@/lib/statAggregation";
 
 interface QuickStatsComparisonProps {
   playerId: string;
@@ -18,15 +19,6 @@ interface QuickStatsComparisonProps {
 const surname = (name: string) => {
   const parts = name.trim().split(" ");
   return parts.length > 1 ? parts[parts.length - 1] : parts[0];
-};
-
-/** Unified stat lookup — fixture_stats first, then striker_stats fallback */
-const getStatValue = (analysis: any, key: string): number | null => {
-  const fs = analysis.fixture_stats as Record<string, any> | null;
-  const ss = analysis.striker_stats as Record<string, any> | null;
-  if (fs?.[key] != null) return Number(fs[key]);
-  if (ss?.[key] != null) return Number(ss[key]);
-  return null;
 };
 
 /** Pick a random subset of metrics that have data for both player and benchmark */
@@ -65,14 +57,9 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
     const shuffledBenchmarks = [...benchmarks].sort(() => Math.random() - 0.5);
 
     for (const metric of shuffledMetrics) {
-      // Calculate player average for this metric across recent analyses
-      const playerVals = recentAnalyses
-        .map(a => getStatValue(a, metric.key))
-        .filter((v): v is number => v !== null);
-
-      if (playerVals.length === 0) continue;
-
-      const playerAvg = playerVals.reduce((a, b) => a + b, 0) / playerVals.length;
+      // Use centralised rule: raw blanks count as 0, percentages exclude blanks.
+      const playerAvg = computeStatAverage(recentAnalyses, metric.key);
+      if (playerAvg == null) continue;
 
       for (const benchmark of shuffledBenchmarks) {
         const metrics = (benchmark.metrics || {}) as Record<string, number>;

@@ -106,6 +106,7 @@ interface PerformanceAction {
   recorded_stat?: RecordedStat | RecordedStat[] | null;
   zone?: number | null;
   zone_details?: ZonePoint[] | null;
+  is_first_half?: boolean;
 }
 
 interface R90Rating {
@@ -995,7 +996,27 @@ export const ActionTypeEditor = ({
               {mobileBottomView === 'details' && selectedActionIndex !== null && activeAction ? (
                 <div className="p-3 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><label className="text-[10px] text-muted-foreground">Minute</label><Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs" /></div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Minute</label>
+                      <div className="flex items-center gap-1">
+                        <Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs flex-1" />
+                        {(() => {
+                          const mins = parseFloat(activeAction.minute);
+                          if (isNaN(mins) || mins < 45 || mins > 51) return null;
+                          return (
+                            <Button
+                              size="sm"
+                              variant={activeAction.is_first_half ? "default" : "outline"}
+                              className="h-8 px-2 text-[10px] font-bold"
+                              onClick={() => updateAction(selectedActionIndex, "is_first_half", !activeAction.is_first_half)}
+                              title={activeAction.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                            >
+                              H1
+                            </Button>
+                          );
+                        })()}
+                      </div>
+                    </div>
                     <div><label className="text-[10px] text-muted-foreground">Score</label><ScoreDropdown value={activeAction.action_score} onChange={(val) => { applyQuickScore(selectedActionIndex, val); }} className="w-full" inputClassName="h-8 text-xs border-[hsl(43,49%,61%)]/50" /></div>
                   </div>
                   <div><label className="text-[10px] text-muted-foreground">Description</label><DescriptionBlurInput value={activeAction.action_description} onCommit={(val) => updateAction(selectedActionIndex, "action_description", val)} placeholder="Description" className="h-8 text-xs" suggestions={getDescriptionsForType(activeAction.action_type || "")} /></div>
@@ -1418,6 +1439,21 @@ export const ActionTypeEditor = ({
                           className="h-7 text-xs"
                         />
                       </div>
+                      {(() => {
+                        const mins = parseFloat(activeAction.minute);
+                        if (isNaN(mins) || mins < 45 || mins > 51) return null;
+                        return (
+                          <Button
+                            size="sm"
+                            variant={activeAction.is_first_half ? "default" : "outline"}
+                            className="h-7 px-2 text-[10px] font-bold"
+                            onClick={() => updateAction(selectedActionIndex, "is_first_half", !activeAction.is_first_half)}
+                            title={activeAction.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                          >
+                            H1
+                          </Button>
+                        );
+                      })()}
                       <ScoreDropdown
                         value={activeAction.action_score}
                         onChange={(val) => updateAction(selectedActionIndex, "action_score", val)}
