@@ -1439,6 +1439,21 @@ export const ActionTypeEditor = ({
                           className="h-7 text-xs"
                         />
                       </div>
+                      {(() => {
+                        const mins = parseFloat(activeAction.minute);
+                        if (isNaN(mins) || mins < 45 || mins > 51) return null;
+                        return (
+                          <Button
+                            size="sm"
+                            variant={activeAction.is_first_half ? "default" : "outline"}
+                            className="h-7 px-2 text-[10px] font-bold"
+                            onClick={() => updateAction(selectedActionIndex, "is_first_half", !activeAction.is_first_half)}
+                            title={activeAction.is_first_half ? "Marked as first half" : "Mark as first half action"}
+                          >
+                            H1
+                          </Button>
+                        );
+                      })()}
                       <ScoreDropdown
                         value={activeAction.action_score}
                         onChange={(val) => updateAction(selectedActionIndex, "action_score", val)}
