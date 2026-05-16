@@ -1,29 +1,26 @@
-## Problem
+## Plan
 
-The `signature-contracts` storage bucket is private, so the saved `file_url` (a public URL) returns 404. We added a signed-URL resolver, but the editor dialog still shows "Failed to load PDF":
+### 1. Make the First Half toggle actually control ordering
+- Replace the local action-sorting logic in the performance report editor with the shared chronological sorter so edit mode and published/shared report views use the same rules.
+- Extend the action type editor data model to include `is_first_half` so the toggle state is not lost when actions are edited in that modal.
+- Add the H1 toggle beside the minute input inside the action type editor, not only on the main action list, so it works wherever the action is being edited.
+- Fix sorting so any action marked first half sorts before second-half actions in the 45.00 to 51.00 overlap window, even if its raw time is numerically higher than an early second-half time.
+- Keep the `action_number` renumbering after sorting so every displayed list, clip list, flow chart and shared report follows the corrected order.
 
-1. Dialog opens. `selectedContract.file_url` (public URL) is passed to `PDFDocumentViewer` immediately.
-2. `react-pdf` tries to load it → 404 → `onDocumentLoadError` sets `error = "Failed to load PDF…"`.
-3. `resolveContractFileUrl` resolves the signed URL ~1s later. The `fileUrl` prop changes and `react-pdf` succeeds in the background, but the `error` state in `PDFDocumentViewer` is never cleared, so the error screen stays on.
+### 2. Treat blank raw stats as 0, but keep blank percentages excluded
+- Update the central stat aggregation helper so:
+  - percentage metrics still exclude blank/null values
+  - non-percentage/raw metrics count blank/null as 0 across the selected fixture window
+  - explicit `0` remains valid everywhere
+- Make `getStatValue` return the right value based on metric type so tables and averages stop dropping blank raw stats.
+- Update inline comments to match the intended rule, as the current comment says raw blanks are 0 but the code currently excludes them.
 
-Network log confirms this: the public-URL request returns 404, the signed-URL request immediately after returns 200 with a valid PDF.
+### 3. Apply the same stat rule to comparison views
+- Update portal comparison charts, radar, percentile views and transfer report comparisons so missing comparison-player raw metrics are treated as 0, while missing percentage metrics stay excluded.
+- Update the quick stats comparison card to use the central stat aggregation rules instead of its own local lookup.
+- Keep percentage display and percentage averaging unchanged where no attempts were recorded.
 
-## Fix
-
-Two small, complementary changes — both in `src/components/staff/ContractSignature.tsx` and `src/components/staff/PDFDocumentViewer.tsx`.
-
-1. **Do not pass an unusable URL to the viewer.** In `ContractSignature.tsx`, only render `PDFDocumentViewer` once `resolvedFileUrl` is set. While it is `null`, show a small loading state ("Loading document…" with a spinner) inside the same dialog body. Apply this to both the editor dialog and the owner-sign dialog.
-2. **Reset error/loading state when the URL prop changes.** In `PDFDocumentViewer.tsx`, add a `useEffect` keyed on `fileUrl` that clears `error`, sets `loading = true`, and resets `numPages`/`currentPage` defensively. This guards against any future caller swapping `fileUrl` mid-flight.
-
-No backend or schema changes. No bucket visibility change (keeping it private is correct for signed contracts).
-
-## Verification
-
-- Open a draft contract that previously failed → editor now waits for the signed URL, then renders the PDF and lets fields be placed.
-- Open the owner-sign dialog on the same contract → same outcome.
-- Switching between two different contracts in succession → the viewer no longer carries over the previous error state.
-
-## Files
-
-- `src/components/staff/ContractSignature.tsx` — gate viewer render on `resolvedFileUrl`, add inline loading placeholder.
-- `src/components/staff/PDFDocumentViewer.tsx` — `useEffect` to reset `error`, `loading`, `numPages` when `fileUrl` changes.
+### 4. Verify the affected flows
+- Run targeted checks for the sorting helper and stat aggregation helper.
+- Confirm the code paths that fetch `is_first_half` also pass it into every chronological display that relies on shared sorting.
+- Confirm no database migration is needed because the `is_first_half` column already exists.
