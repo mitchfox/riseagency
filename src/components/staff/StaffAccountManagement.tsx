@@ -126,6 +126,28 @@ export const StaffAccountManagement = () => {
     setCreating(true);
 
     try {
+      // Highlights Maker: username-only account stored in highlight_makers table.
+      // No auth user, no email, no password.
+      if (newAccount.role === "highlights_maker") {
+        const uname = newAccount.email.trim();
+        if (!uname) {
+          toast.error("Username is required");
+          return;
+        }
+        const displayName = newAccount.fullName.trim() || uname;
+        const { error } = await supabase.from("highlight_makers").insert({
+          username: uname,
+          display_name: displayName,
+          password: "",
+          status: "active",
+        });
+        if (error) throw error;
+        toast.success("Highlights Maker created. Manage players in Tools → Highlights Makers.");
+        setCreatedAccount(null);
+        setNewAccount({ email: "", password: "", role: "staff", fullName: "", phoneNumber: "" });
+        return;
+      }
+
       // Get admin user ID from staff session
       const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
       if (!adminUserId) {
@@ -600,7 +622,9 @@ export const StaffAccountManagement = () => {
           <form onSubmit={handleCreateAccount} className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="staff-email">Email or username *</Label>
+                <Label htmlFor="staff-email">
+                  {newAccount.role === 'highlights_maker' ? 'Username *' : 'Email or username *'}
+                </Label>
                 <Input
                   id="staff-email"
                   type="text"
@@ -608,13 +632,17 @@ export const StaffAccountManagement = () => {
                   onChange={(e) =>
                     setNewAccount({ ...newAccount, email: e.target.value })
                   }
-                  placeholder="staff@example.com or username"
+                  placeholder={newAccount.role === 'highlights_maker'
+                    ? 'e.g. ronnie92 (letters/numbers, no @)'
+                    : 'staff@example.com or username'}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="staff-name">Full Name</Label>
+                <Label htmlFor="staff-name">
+                  {newAccount.role === 'highlights_maker' ? 'Display name' : 'Full Name'}
+                </Label>
                 <Input
                   id="staff-name"
                   type="text"
@@ -626,6 +654,7 @@ export const StaffAccountManagement = () => {
                 />
               </div>
 
+              {newAccount.role !== 'highlights_maker' && (
               <div className="space-y-2">
                 <Label htmlFor="staff-password">
                   Password {newAccount.role === 'stats_updater'
@@ -646,6 +675,7 @@ export const StaffAccountManagement = () => {
                   required={newAccount.role !== 'stats_updater'}
                 />
               </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="staff-role">Role *</Label>
@@ -664,6 +694,9 @@ export const StaffAccountManagement = () => {
                         {r.role_label}{r.description ? ` (${r.description})` : ''}
                       </SelectItem>
                     ))}
+                    <SelectItem value="highlights_maker">
+                      Highlights Maker (username only, no password — external clip editors)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -675,11 +708,16 @@ export const StaffAccountManagement = () => {
                 {availableRoles.map((r) => (
                   <li key={r.role_key}>• <strong>{r.role_label}:</strong> {r.description || 'Custom role'}</li>
                 ))}
+                <li>• <strong>Highlights Maker:</strong> External clip editor. Signs in at /highlights-login with just a username. Assign players in Tools → Highlights Makers.</li>
               </ul>
             </div>
 
             <Button type="submit" disabled={creating} className="w-full">
-              {creating ? "Creating Account..." : "Create Account"}
+              {creating
+                ? "Creating Account..."
+                : newAccount.role === 'highlights_maker'
+                  ? "Create Highlights Maker"
+                  : "Create Account"}
             </Button>
           </form>
         </CardContent>

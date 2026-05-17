@@ -12,7 +12,6 @@ const HighlightsLogin = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
 
   useEffect(() => {
@@ -31,7 +30,7 @@ const HighlightsLogin = () => {
       const u = username.trim();
       const { data, error } = await supabase.functions.invoke(
         "highlight-maker-login-check",
-        { body: { username: u, password: password || undefined } },
+        { body: { username: u } },
       );
       if (error) throw error;
       const maker = (data as any)?.maker;
@@ -76,16 +75,6 @@ const HighlightsLogin = () => {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
             />
           </div>
           <div className="flex items-center gap-2">
