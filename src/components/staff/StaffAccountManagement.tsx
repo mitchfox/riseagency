@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RolePermissionsEditor } from "./RolePermissionsEditor";
 import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
+import { HighlightMakersManagement } from "./HighlightMakersManagement";
 
 interface AvailableRole {
   role_key: string;
@@ -726,6 +727,13 @@ export const StaffAccountManagement = () => {
       {assignmentUserId && (
         <StatsUpdaterAssignments userId={assignmentUserId} open={!!assignmentUserId} onOpenChange={(o) => !o && setAssignmentUserId(null)} />
       )}
+
+      {/* Highlights Makers (username-only external clip editors) */}
+      <Card>
+        <CardContent className="pt-6">
+          <HighlightMakersManagement isAdmin={isAdmin} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
