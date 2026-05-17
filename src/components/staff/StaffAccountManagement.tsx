@@ -126,6 +126,28 @@ export const StaffAccountManagement = () => {
     setCreating(true);
 
     try {
+      // Highlights Maker: username-only account stored in highlight_makers table.
+      // No auth user, no email, no password.
+      if (newAccount.role === "highlights_maker") {
+        const uname = newAccount.email.trim();
+        if (!uname) {
+          toast.error("Username is required");
+          return;
+        }
+        const displayName = newAccount.fullName.trim() || uname;
+        const { error } = await supabase.from("highlight_makers").insert({
+          username: uname,
+          display_name: displayName,
+          password: "",
+          status: "active",
+        });
+        if (error) throw error;
+        toast.success("Highlights Maker created. Manage players in Tools → Highlights Makers.");
+        setCreatedAccount(null);
+        setNewAccount({ email: "", password: "", role: "staff", fullName: "", phoneNumber: "" });
+        return;
+      }
+
       // Get admin user ID from staff session
       const adminUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
       if (!adminUserId) {
