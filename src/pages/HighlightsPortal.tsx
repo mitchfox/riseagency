@@ -345,12 +345,13 @@ const HighlightsPortal = () => {
             <TabsList>
               <TabsTrigger value="playlists">Playlists</TabsTrigger>
               <TabsTrigger value="reports">Performance reports</TabsTrigger>
+              <TabsTrigger value="videoreports">Video reports</TabsTrigger>
             </TabsList>
 
             <TabsContent value="playlists" className="mt-4 space-y-3">
               {playerPlaylists.length === 0 ? (
                 <Card className="p-8 text-center text-muted-foreground">
-                  No playlists for this player yet.
+                  No favourited playlists for this player yet. Ask staff to star playlists that should appear here.
                 </Card>
               ) : (
                 playerPlaylists.map((pl) => {
@@ -363,6 +364,7 @@ const HighlightsPortal = () => {
                           onClick={() => togglePlaylist(pl.id)}
                         >
                           {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          <Star className="w-4 h-4 fill-[#C6A332] text-[#C6A332]" />
                           <span className="font-semibold">{pl.name}</span>
                           <Badge variant="secondary">{pl.clips.length}</Badge>
                         </button>
@@ -370,7 +372,7 @@ const HighlightsPortal = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openReel(pl.clips, pl.name, 0)}
+                            onClick={() => openPlaylistReel(pl.clips, pl.name, 0)}
                             disabled={pl.clips.length === 0}
                           >
                             <Play className="w-4 h-4 mr-1" /> Play all
@@ -399,7 +401,7 @@ const HighlightsPortal = () => {
                             >
                               <button
                                 className="flex items-center gap-3 flex-1 text-left min-w-0"
-                                onClick={() => openReel(pl.clips, pl.name, idx)}
+                                onClick={() => openPlaylistReel(pl.clips, pl.name, idx)}
                               >
                                 <span className="text-xs text-muted-foreground w-6 text-right">
                                   {idx + 1}
@@ -437,124 +439,100 @@ const HighlightsPortal = () => {
                 playerReports.map(({ analysis, grouped, total }) => {
                   const isOpen = expandedReports.has(analysis.id);
                   const dateLabel = analysis.analysis_date
-                    ? format(new Date(analysis.analysis_date), "d MMM yyyy")
+                    ? format(new Date(analysis.analysis_date), "d MMMM yyyy")
                     : "";
-                  const allClips = Object.values(grouped).flat().map((a) => ({
-                    id: a.id,
+                  const allActs = Object.values(grouped).flat();
+                  const allUrls = allActs.map((a) => ({
                     name: `${a.action_type || "Action"} - ${a.action_description || `#${a.action_number}`}`,
                     videoUrl: a.video_url!,
-                    actionScore: a.action_score,
                   }));
+                  const title = `${selectedPlayer.name} vs ${analysis.opponent || "Unknown"} - ${dateLabel}`;
                   return (
                     <Card key={analysis.id} className="overflow-hidden">
-                      <div className="flex items-center justify-between p-3 gap-2">
-                        <button
-                          className="flex items-center gap-2 flex-1 text-left min-w-0"
-                          onClick={() => toggleReport(analysis.id)}
-                        >
-                          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                          <div className="min-w-0">
-                            <div className="font-semibold truncate">
-                              {dateLabel}
-                              {analysis.opponent ? ` • ${analysis.opponent}` : ""}
-                              {analysis.result ? ` • ${analysis.result}` : ""}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {total} positive action clip{total === 1 ? "" : "s"}
-                              {analysis.r90_score != null ? ` • R90 ${analysis.r90_score}` : ""}
-                            </div>
+                      <button
+                        type="button"
+                        className="w-full text-left p-4 flex items-center gap-4 hover:bg-muted/20 transition-colors"
+                        onClick={() => toggleReport(analysis.id)}
+                      >
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-md bg-black/40 flex items-center justify-center shrink-0 overflow-hidden border border-border">
+                          {analysis.club_logo_url ? (
+                            <img
+                              src={analysis.club_logo_url}
+                              alt={analysis.opponent || "Opponent"}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <Film className="w-8 h-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base md:text-lg font-semibold truncate">
+                            vs {analysis.opponent || "Unknown"}
+                            {analysis.result ? ` (${analysis.result})` : ""}
                           </div>
-                        </button>
-                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {dateLabel}
+                            {analysis.r90_score != null ? ` • R90 ${analysis.r90_score}` : ""}
+                            {` • ${total} positive action${total === 1 ? "" : "s"}`}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openReel(allClips, `${selectedPlayer.name} - ${dateLabel}`, 0)}
+                            onClick={() => openActionReel(allActs, title, 0)}
                           >
                             <Play className="w-4 h-4 mr-1" /> Play all
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => downloadZip(allClips, `${selectedPlayer.name} - ${dateLabel} - Report`)}
+                            onClick={() => downloadZip(allUrls, `${title} - Report`)}
                           >
                             <FolderDown className="w-4 h-4 mr-1" /> ZIP
                           </Button>
+                          {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                         </div>
-                      </div>
+                      </button>
                       {isOpen && (
-                        <div className="border-t border-border p-3 space-y-4">
-                          {Object.entries(grouped).map(([cat, acts]) => {
-                            const catClips = acts.map((a) => ({
-                              id: a.id,
-                              name: a.action_description || `Action #${a.action_number}`,
-                              videoUrl: a.video_url!,
-                              actionScore: a.action_score,
-                            }));
+                        <div className="border-t border-border p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {allActs.map((a) => {
+                            const idx = allActs.indexOf(a);
                             return (
-                              <div key={cat}>
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold">{cat}</span>
-                                    <Badge variant="secondary">{acts.length}</Badge>
+                              <button
+                                key={a.id}
+                                type="button"
+                                onClick={() => openActionReel(allActs, title, idx)}
+                                className={`${getActionScoreBg(a.action_score)} text-white text-left p-3 rounded-md hover:opacity-90 transition-opacity flex items-center gap-3 group relative`}
+                              >
+                                <div className="text-lg font-mono font-bold w-14 shrink-0 text-center bg-black/30 rounded py-1">
+                                  {a.action_score != null ? a.action_score.toFixed(2) : "—"}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-semibold truncate">
+                                    {a.action_type || "Action"}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => openReel(catClips, `${cat} - ${dateLabel}`, 0)}
-                                    >
-                                      <Play className="w-4 h-4 mr-1" /> Play
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() =>
-                                        downloadZip(
-                                          catClips,
-                                          `${selectedPlayer.name} - ${dateLabel} - ${cat}`,
-                                        )
-                                      }
-                                    >
-                                      <FolderDown className="w-4 h-4" />
-                                    </Button>
+                                  <div className="text-xs opacity-90 truncate">
+                                    {a.action_description || `#${a.action_number}`}
                                   </div>
                                 </div>
-                                <div className="divide-y divide-border rounded-md border border-border">
-                                  {acts.map((a, idx) => (
-                                    <div
-                                      key={a.id}
-                                      className="flex items-center justify-between gap-2 p-2 hover:bg-muted/30"
-                                    >
-                                      <button
-                                        className="flex items-center gap-3 flex-1 text-left min-w-0"
-                                        onClick={() => openReel(catClips, `${cat} - ${dateLabel}`, idx)}
-                                      >
-                                        <span className="text-xs font-mono text-muted-foreground w-12 shrink-0">
-                                          {a.action_score != null ? a.action_score.toFixed(2) : "—"}
-                                        </span>
-                                        <span className="truncate text-sm">
-                                          {a.action_description || `Action #${a.action_number}`}
-                                        </span>
-                                      </button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          downloadOne(
-                                            a.video_url!,
-                                            `${sanitize(
-                                              `${selectedPlayer.name} - ${dateLabel} - ${cat} - ${a.action_description || a.action_number}`,
-                                            )}.mp4`,
-                                          )
-                                        }
-                                      >
-                                        <Download className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                                <Play className="w-5 h-5 opacity-70 group-hover:opacity-100 shrink-0" />
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadOne(
+                                      a.video_url!,
+                                      `${sanitize(`${title} - ${a.action_type} - ${a.action_description || a.action_number}`)}.mp4`,
+                                    );
+                                  }}
+                                  className="absolute top-1 right-1 p-1 rounded hover:bg-black/30"
+                                  title="Download clip"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </span>
+                              </button>
                             );
                           })}
                         </div>
@@ -564,18 +542,32 @@ const HighlightsPortal = () => {
                 })
               )}
             </TabsContent>
+
+            <TabsContent value="videoreports" className="mt-4">
+              <AnalysisVideoReports
+                analyses={analyses
+                  .filter((a) => a.player_id === selectedPlayerId)
+                  .map((a) => ({
+                    id: a.id,
+                    analysis_date: a.analysis_date,
+                    opponent: a.opponent,
+                    result: a.result,
+                    minutes_played: a.minutes_played,
+                  }))}
+                playerId={selectedPlayerId!}
+                embedded
+              />
+            </TabsContent>
           </Tabs>
         )}
       </main>
 
-      {reelClips && (
-        <HighlightReelPlayer
-          clips={reelClips}
-          projectName={reelTitle}
-          isOpen={true}
-          onClose={() => setReelClips(null)}
-        />
-      )}
+      <ClippedActionsPlayer
+        open={actionPlayerOpen}
+        onOpenChange={(o) => { setActionPlayerOpen(o); if (!o) setActionClips(null); }}
+        clips={actionClips || []}
+        title={actionPlayerTitle}
+      />
     </div>
   );
 };
