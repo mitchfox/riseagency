@@ -61,13 +61,14 @@ Deno.serve(async (req) => {
         .in("id", playerIds),
       supabase
         .from("playlists")
-        .select("id, player_id, name, clips, created_at, updated_at")
+        .select("id, player_id, name, clips, created_at, updated_at, is_favourite")
         .in("player_id", playerIds)
+        .eq("is_favourite", true)
         .order("created_at", { ascending: false }),
       supabase
         .from("player_analysis")
         .select(
-          "id, player_id, analysis_date, opponent, result, r90_score, minutes_played, fixture_id",
+          "id, player_id, analysis_date, opponent, result, r90_score, minutes_played, fixture_id, club_logo_url",
         )
         .in("player_id", playerIds)
         .order("analysis_date", { ascending: false }),
