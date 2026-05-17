@@ -4583,6 +4583,7 @@ export type Database = {
           clips: Json
           created_at: string
           id: string
+          is_favourite: boolean
           name: string
           player_id: string
           updated_at: string
@@ -4591,6 +4592,7 @@ export type Database = {
           clips?: Json
           created_at?: string
           id?: string
+          is_favourite?: boolean
           name: string
           player_id: string
           updated_at?: string
@@ -4599,6 +4601,7 @@ export type Database = {
           clips?: Json
           created_at?: string
           id?: string
+          is_favourite?: boolean
           name?: string
           player_id?: string
           updated_at?: string

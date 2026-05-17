@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { PlaylistPlayer } from "./PlaylistPlayer";
@@ -20,6 +20,7 @@ interface Playlist {
   id: string;
   name: string;
   clips: Clip[];
+  is_favourite?: boolean;
 }
 
 interface PlaylistContentProps {
@@ -404,6 +405,24 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                     <span className="text-sm text-muted-foreground">({playlist.clips.length} clips)</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const next = !playlist.is_favourite;
+                        const { error } = await supabase
+                          .from('playlists')
+                          .update({ is_favourite: next })
+                          .eq('id', playlist.id);
+                        if (error) { toast.error('Failed to update favourite'); return; }
+                        setPlaylists(prev => prev.map(p => p.id === playlist.id ? { ...p, is_favourite: next } : p));
+                        toast.success(next ? 'Marked as favourite — visible to highlights makers' : 'Removed from favourites');
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      title={playlist.is_favourite ? 'Unmark favourite' : 'Mark favourite (show on Highlights Portal)'}
+                    >
+                      <Star className={`w-4 h-4 ${playlist.is_favourite ? 'fill-[#C6A332] text-[#C6A332]' : 'text-muted-foreground'}`} />
+                    </Button>
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { PlaylistPlayer } from "./PlaylistPlayer";
 import { ClipNameEditor } from "./ClipNameEditor";
@@ -23,6 +23,7 @@ interface Playlist {
   id: string;
   name: string;
   clips: Clip[];
+  is_favourite?: boolean;
 }
 
 interface PlaylistManagerProps {
@@ -726,6 +727,25 @@ export const PlaylistManager = ({ playerData, availableClips, onClose }: Playlis
                       <span className="text-xs md:text-sm text-muted-foreground px-2 py-0.5 bg-muted rounded">
                         {playlist.clips?.length || 0}
                       </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const next = !playlist.is_favourite;
+                          const { error } = await supabase
+                            .from('playlists')
+                            .update({ is_favourite: next })
+                            .eq('id', playlist.id);
+                          if (error) { toast.error('Failed to update favourite'); return; }
+                          setPlaylists(prev => prev.map(p => p.id === playlist.id ? { ...p, is_favourite: next } : p));
+                          toast.success(next ? 'Marked as favourite — visible to highlights makers' : 'Removed from favourites');
+                        }}
+                        className="h-7 w-7 p-0"
+                        title={playlist.is_favourite ? 'Unmark favourite' : 'Mark favourite (show on Highlights Portal)'}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${playlist.is_favourite ? 'fill-[#C6A332] text-[#C6A332]' : 'text-muted-foreground'}`} />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
