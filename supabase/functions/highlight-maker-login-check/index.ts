@@ -39,19 +39,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Password check (case-sensitive)
-    if (typeof password === "string") {
-      if (data.password !== password) {
+    // Password is optional. Only enforce if the maker has a stored password.
+    if (data.password && data.password.length > 0) {
+      if (typeof password !== "string" || data.password !== password) {
         return new Response(JSON.stringify({ found: false, reason: "password" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // record login
-      await supabase
-        .from("highlight_makers")
-        .update({ last_login_at: new Date().toISOString() })
-        .eq("id", data.id);
     }
+
+    await supabase
+      .from("highlight_makers")
+      .update({ last_login_at: new Date().toISOString() })
+      .eq("id", data.id);
 
     return new Response(
       JSON.stringify({
