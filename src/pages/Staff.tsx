@@ -708,8 +708,10 @@ const Staff = () => {
 
     try {
       // Use Supabase Auth with email and password
+      const idRaw = email.trim().toLowerCase();
+      const emailForAuth = idRaw.includes("@") ? idRaw : `${idRaw}@rise.local`;
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: emailForAuth,
         password,
       });
 
