@@ -140,3 +140,9 @@ verify_jwt = false
 
 [functions.get-signature-contract]
 verify_jwt = false
+
+[functions.highlight-maker-login-check]
+verify_jwt = false
+
+[functions.highlight-maker-data]
+verify_jwt = false
