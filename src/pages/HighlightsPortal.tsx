@@ -6,12 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown,
+  Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { PageLoading } from "@/components/LoadingSpinner";
-import { HighlightReelPlayer } from "@/components/staff/HighlightReelPlayer";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { sortActionsByMinute } from "@/lib/actionSorting";
 import { format } from "date-fns";
 
@@ -42,6 +43,7 @@ interface AnalysisRow {
   result: string | null;
   r90_score: number | null;
   minutes_played: number | null;
+  club_logo_url?: string | null;
 }
 interface ActionRow {
   id: string;
@@ -58,6 +60,18 @@ interface ActionRow {
 }
 
 const sanitize = (s: string) => s.replace(/[^a-z0-9._\- ]/gi, "_").slice(0, 80);
+
+const getActionScoreBg = (score: number | null | undefined): string => {
+  if (score == null) return 'bg-muted';
+  if (score >= 0.15) return 'bg-green-800';
+  if (score >= 0.10) return 'bg-green-600';
+  if (score >= 0.05) return 'bg-green-500';
+  if (score > 0) return 'bg-lime-500';
+  if (score === 0) return 'bg-yellow-500';
+  if (score > -0.05) return 'bg-orange-500';
+  if (score > -0.10) return 'bg-red-500';
+  return 'bg-red-700';
+};
 
 const downloadOne = async (url: string, filename: string) => {
   try {
