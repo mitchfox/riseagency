@@ -600,15 +600,15 @@ export const StaffAccountManagement = () => {
           <form onSubmit={handleCreateAccount} className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="staff-email">Email Address *</Label>
+                <Label htmlFor="staff-email">Email or username *</Label>
                 <Input
                   id="staff-email"
-                  type="email"
+                  type="text"
                   value={newAccount.email}
                   onChange={(e) =>
                     setNewAccount({ ...newAccount, email: e.target.value })
                   }
-                  placeholder="staff@example.com"
+                  placeholder="staff@example.com or username"
                   required
                 />
               </div>
@@ -627,7 +627,11 @@ export const StaffAccountManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="staff-password">Password *</Label>
+                <Label htmlFor="staff-password">
+                  Password {newAccount.role === 'stats_updater'
+                    ? <span className="text-muted-foreground font-normal">(optional)</span>
+                    : '*'}
+                </Label>
                 <Input
                   id="staff-password"
                   type="password"
@@ -635,9 +639,11 @@ export const StaffAccountManagement = () => {
                   onChange={(e) =>
                     setNewAccount({ ...newAccount, password: e.target.value })
                   }
-                  placeholder="Minimum 8 characters"
-                  minLength={8}
-                  required
+                  placeholder={newAccount.role === 'stats_updater'
+                    ? 'Leave blank — not required for stats updaters'
+                    : 'Minimum 8 characters'}
+                  minLength={newAccount.role === 'stats_updater' ? 0 : 8}
+                  required={newAccount.role !== 'stats_updater'}
                 />
               </div>
 
