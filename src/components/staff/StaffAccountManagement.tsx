@@ -133,6 +133,16 @@ export const StaffAccountManagement = () => {
         return;
       }
 
+      // Allow username or email — if no '@', synthesise a local-only email so
+      // Supabase Auth accepts it. The user logs in with the same identifier.
+      const rawId = newAccount.email.trim();
+      const emailForAuth = rawId.includes("@") ? rawId.toLowerCase() : `${rawId.toLowerCase()}@rise.local`;
+
+      // Password is optional for limited roles (e.g. stats_updater). Auto-generate
+      // when blank so we can still create the auth account.
+      const passwordToUse = newAccount.password
+        || `rise-${Math.random().toString(36).slice(2, 10)}`;
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-account`,
         {
@@ -141,8 +151,8 @@ export const StaffAccountManagement = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: newAccount.email,
-            password: newAccount.password,
+            email: emailForAuth,
+            password: passwordToUse,
             role: newAccount.role,
             full_name: newAccount.fullName,
             admin_user_id: adminUserId,
@@ -165,7 +175,7 @@ export const StaffAccountManagement = () => {
         const roleLabel = availableRoles.find(r => r.role_key === newAccount.role)?.role_label || newAccount.role;
         toast.success(`${roleLabel} account created successfully`);
         // Store created account details to display (only for new accounts)
-        setCreatedAccount({ ...newAccount });
+        setCreatedAccount({ ...newAccount, email: emailForAuth, password: passwordToUse });
       }
       
       // Refresh the accounts list
