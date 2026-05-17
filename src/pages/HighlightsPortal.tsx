@@ -133,8 +133,9 @@ const HighlightsPortal = () => {
   const [analyses, setAnalyses] = useState<AnalysisRow[]>([]);
   const [actions, setActions] = useState<ActionRow[]>([]);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [reelClips, setReelClips] = useState<{ id: string; title: string; videoUrl: string; actionScore?: number | null }[] | null>(null);
-  const [reelTitle, setReelTitle] = useState("");
+  const [actionClips, setActionClips] = useState<any[] | null>(null);
+  const [actionPlayerOpen, setActionPlayerOpen] = useState(false);
+  const [actionPlayerTitle, setActionPlayerTitle] = useState("");
   const [expandedPlaylists, setExpandedPlaylists] = useState<Set<string>>(new Set());
   const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
 
@@ -205,8 +206,8 @@ const HighlightsPortal = () => {
       .filter((r) => r.total > 0);
   }, [analyses, actions, selectedPlayerId]);
 
-  const openReel = (
-    clips: { id?: string | null; name: string; videoUrl: string; actionScore?: number | null }[],
+  const openPlaylistReel = (
+    clips: { id?: string; name: string; videoUrl: string }[],
     title: string,
     startIdx = 0,
   ) => {
@@ -214,18 +215,38 @@ const HighlightsPortal = () => {
       .filter((c) => !!c.videoUrl)
       .map((c, i) => ({
         id: c.id ?? `c-${i}`,
-        title: c.name,
-        videoUrl: c.videoUrl,
-        actionScore: c.actionScore ?? null,
+        action_number: i + 1,
+        action_type: 'Playlist',
+        action_description: c.name,
+        video_url: c.videoUrl,
+        minute: 0,
       }));
-    if (list.length === 0) {
-      toast.error("No playable clips");
-      return;
-    }
+    if (list.length === 0) { toast.error("No playable clips"); return; }
     const safeIdx = Math.max(0, Math.min(startIdx, list.length - 1));
     const rotated = [...list.slice(safeIdx), ...list.slice(0, safeIdx)];
-    setReelClips(rotated);
-    setReelTitle(title);
+    setActionClips(rotated);
+    setActionPlayerTitle(title);
+    setActionPlayerOpen(true);
+  };
+
+  const openActionReel = (acts: ActionRow[], title: string, startIdx = 0) => {
+    const list = acts
+      .filter((a) => !!a.video_url)
+      .map((a) => ({
+        id: a.id,
+        action_number: a.action_number,
+        action_type: a.action_type || 'Action',
+        action_description: a.action_description || `Action #${a.action_number}`,
+        video_url: a.video_url!,
+        minute: typeof a.minute === 'number' ? a.minute : Number(a.minute) || 0,
+        notes: a.notes,
+      }));
+    if (list.length === 0) { toast.error("No playable clips"); return; }
+    const safeIdx = Math.max(0, Math.min(startIdx, list.length - 1));
+    const rotated = [...list.slice(safeIdx), ...list.slice(0, safeIdx)];
+    setActionClips(rotated);
+    setActionPlayerTitle(title);
+    setActionPlayerOpen(true);
   };
 
   const togglePlaylist = (id: string) =>
