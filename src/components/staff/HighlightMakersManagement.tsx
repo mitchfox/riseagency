@@ -165,7 +165,6 @@ const MakerDialog = ({
   maker, onClose, onSaved,
 }: { maker?: Maker; onClose: () => void; onSaved: () => void }) => {
   const [username, setUsername] = useState(maker?.username || "");
-  const [password, setPassword] = useState(maker?.password || "");
   const [displayName, setDisplayName] = useState(maker?.display_name || "");
   const [saving, setSaving] = useState(false);
 
@@ -179,14 +178,14 @@ const MakerDialog = ({
       if (maker) {
         const { error } = await supabase.from("highlight_makers").update({
           username: username.trim(),
-          password: password.trim() || "",
+          password: "",
           display_name: displayName.trim(),
         }).eq("id", maker.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("highlight_makers").insert({
           username: username.trim(),
-          password: password.trim() || "",
+          password: "",
           display_name: displayName.trim(),
         });
         if (error) throw error;
@@ -206,7 +205,7 @@ const MakerDialog = ({
         <DialogHeader>
           <DialogTitle>{maker ? "Edit maker" : "Add Highlights Maker"}</DialogTitle>
           <DialogDescription>
-            Username can be anything you like (letters, numbers, symbols). Password is optional — leave blank for username-only login.
+            Username can be anything you like (letters, numbers, symbols). No password needed.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -217,10 +216,6 @@ const MakerDialog = ({
           <div className="space-y-2">
             <Label>Username</Label>
             <Input value={username} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Password <span className="text-muted-foreground text-xs">(optional)</span></Label>
-            <Input value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
