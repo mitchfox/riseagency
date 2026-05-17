@@ -170,8 +170,8 @@ const MakerDialog = ({
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    if (!username.trim() || !password.trim() || !displayName.trim()) {
-      toast.error("Fill in all fields");
+    if (!username.trim() || !displayName.trim()) {
+      toast.error("Username and display name are required");
       return;
     }
     setSaving(true);
@@ -179,14 +179,14 @@ const MakerDialog = ({
       if (maker) {
         const { error } = await supabase.from("highlight_makers").update({
           username: username.trim(),
-          password: password.trim(),
+          password: password.trim() || "",
           display_name: displayName.trim(),
         }).eq("id", maker.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("highlight_makers").insert({
           username: username.trim(),
-          password: password.trim(),
+          password: password.trim() || "",
           display_name: displayName.trim(),
         });
         if (error) throw error;
@@ -206,7 +206,7 @@ const MakerDialog = ({
         <DialogHeader>
           <DialogTitle>{maker ? "Edit maker" : "Add Highlights Maker"}</DialogTitle>
           <DialogDescription>
-            Username and password can be anything you like. Letters, numbers and symbols are all fine.
+            Username can be anything you like (letters, numbers, symbols). Password is optional — leave blank for username-only login.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -219,7 +219,7 @@ const MakerDialog = ({
             <Input value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Password</Label>
+            <Label>Password <span className="text-muted-foreground text-xs">(optional)</span></Label>
             <Input value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
