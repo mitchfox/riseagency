@@ -124,6 +124,26 @@ Deno.serve(async (req) => {
       resolved_file_url: await resolveContractUrl(supabase, c.completed_pdf_url || c.locked_file_url || c.file_url),
     })));
 
+    const linkedAnalysisIds = [...new Set((playerAnalyses.data || []).map((row: any) => row.analysis_writer_id).filter(Boolean))];
+    const linkedAnalyses = linkedAnalysisIds.length > 0
+      ? await supabase
+          .from("analyses")
+          .select("id, title, analysis_type, match_date, home_team, away_team, home_score, away_score, category, fixture_id")
+          .in("id", linkedAnalysisIds)
+      : { data: [] };
+    const linkedMatchAnalyses = (linkedAnalyses.data || [])
+      .filter((a: any) => a.category !== "training" && (a.analysis_type === "pre-match" || a.analysis_type === "post-match"))
+      .map((analysis: any) => {
+        const report = (playerAnalyses.data || []).find((row: any) => row.analysis_writer_id === analysis.id);
+        return { player_id: report?.player_id, created_at: report?.updated_at || analysis.match_date, analyses: analysis };
+      })
+      .filter((row: any) => row.player_id);
+
+    const taggedMatchAnalyses = (analysisTags.data || []).filter((row: any) => {
+      const a = row.analyses;
+      return a && a.category !== "training" && (a.analysis_type === "pre-match" || a.analysis_type === "post-match");
+    });
+
     return new Response(JSON.stringify({
       user: { ...user, is_admin: (user as any).is_admin === true },
       activity: activity.data || [],
@@ -147,10 +167,7 @@ Deno.serve(async (req) => {
       taskNotifications: taskNotifications.data || [],
       clubContacts: clubContacts.data || [],
       playerAnalyses: playerAnalyses.data || [],
-      matchAnalyses: (analysisTags.data || []).filter((row: any) => {
-        const a = row.analyses;
-        return a && a.category !== "training" && (a.analysis_type === "pre-match" || a.analysis_type === "post-match");
-      }),
+      matchAnalyses: [...linkedMatchAnalyses, ...taggedMatchAnalyses],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
