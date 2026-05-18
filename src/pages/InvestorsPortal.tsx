@@ -12,12 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
+  Building2, Users, Film, PlayCircle, X, Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -35,7 +37,8 @@ type SectionId =
   | "prospects" | "playerdatabase"
   | "contracts"
   | "spending" | "commission" | "invoices"
-  | "tasks" | "activity";
+  | "tasks" | "activity"
+  | "outreach" | "clubnetwork";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -81,6 +84,30 @@ interface ProspectRow {
   linked_player_id: string | null;
 }
 interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; }
+interface SpendingRowExt extends SpendingRow { is_personal?: boolean | null; bank_transaction_id?: string | null }
+interface ClubContactRow {
+  id: string; name: string; club_name: string | null; position: string | null;
+  country: string | null; city: string | null; image_url: string | null;
+  is_favourite: boolean; contact_strength: number | null; tags: string[] | null;
+  last_contacted_at: string | null; updated_at: string;
+}
+interface PlayerAnalysisRow {
+  id: string; player_id: string; analysis_date: string; opponent: string | null;
+  result: string | null; r90_score: number | null; minutes_played: number | null;
+  pdf_url: string | null; video_url: string | null; visibility_status: string;
+  category: string; club_logo_url: string | null; updated_at: string;
+}
+interface VideoAnalysisRow {
+  id: string; title: string; player_id: string | null; match_date: string | null;
+  opponent: string | null; source: string; updated_at: string; clips: any[] | null;
+  video_url: string | null;
+}
+interface BankConnectionRow { id: string; bank_name: string | null; account_label: string | null; last_synced_at: string | null; status: string; created_at: string }
+interface BankTxnRow {
+  id: string; connection_id: string; provider_transaction_id: string | null;
+  txn_date: string; description: string | null; merchant: string | null;
+  category: string | null; amount_gbp: number; status: string; raw?: any;
+}
 interface InvoiceRow {
   id: string; player_id: string; invoice_number: string; invoice_date: string; due_date: string;
   amount: number; currency: string; status: string; amount_paid: number | null;
@@ -121,6 +148,10 @@ const CATEGORIES: CategoryDef[] = [
   { id: "pipe", title: "Pipeline", icon: Network, sections: [
     { id: "prospects", title: "Prospect Board", icon: Target },
     { id: "playerdatabase", title: "Player Database", icon: Network },
+    { id: "outreach", title: "Player Outreach", icon: Users },
+  ]},
+  { id: "net", title: "Network", icon: Building2, sections: [
+    { id: "clubnetwork", title: "Club Network", icon: Building2 },
   ]},
   { id: "legal", title: "Legal", icon: FileSignature, sections: [
     { id: "contracts", title: "Contracts", icon: FileSignature },
