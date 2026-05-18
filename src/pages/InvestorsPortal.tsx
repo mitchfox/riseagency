@@ -1251,22 +1251,35 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
   return (
     <SectionShell icon={Film} title="Player Feed">
       <div className="space-y-2">
-        {visibleFixtures.map((fixture) => (
-          <Card key={fixture.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+        {visibleFixtures.map((fixture) => {
+          const hasClipped = fixture.reports.some(r => r.visibility_status === "clipped");
+          const hasLive = fixture.reports.some(r => r.visibility_status === "live");
+          const stripColour = hasClipped ? "hsl(43, 96%, 56%)" : hasLive ? "hsl(var(--primary))" : "hsl(var(--border))";
+          const clubLogo = fixture.reports.find(r => r.club_logo_url)?.club_logo_url || null;
+          return (
+          <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-4 hover:border-primary/40 transition-colors overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: stripColour }} />
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{fixture.title}</h3>
-                  {fixture.reports.map(r => <Badge key={r.id} variant="outline" className={`text-[10px] ${r.visibility_status === "clipped" ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>{r.visibility_status === "clipped" ? "Clipped" : "Live"}</Badge>)}
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">{fixture.subtitle || "Fixture"}</div>
-                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {fixture.players.slice(0, 4).map(p => (
-                    <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/35 px-2 py-1 text-[11px] text-muted-foreground">
-                      <Avatar className="h-4 w-4"><AvatarImage src={p.image_url || undefined} /><AvatarFallback className="text-[8px]">{p.name[0]}</AvatarFallback></Avatar>
-                      {p.name}
-                    </span>
-                  ))}
+              <div className="min-w-0 flex-1 flex items-start gap-3">
+                {clubLogo ? (
+                  <img src={clubLogo} alt="" className="h-10 w-10 object-contain shrink-0 mt-0.5" loading="lazy" />
+                ) : (
+                  <div className="h-10 w-10 rounded bg-muted/40 shrink-0 mt-0.5" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{fixture.title}</h3>
+                    {fixture.reports.map(r => <Badge key={r.id} variant="outline" className={`text-[10px] ${r.visibility_status === "clipped" ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>{r.visibility_status === "clipped" ? "Clipped" : "Live"}</Badge>)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{fixture.subtitle || "Fixture"}</div>
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    {fixture.players.slice(0, 4).map(p => (
+                      <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/35 px-2 py-1 text-[11px] text-muted-foreground">
+                        <Avatar className="h-4 w-4"><AvatarImage src={p.image_url || undefined} /><AvatarFallback className="text-[8px]">{p.name[0]}</AvatarFallback></Avatar>
+                        {p.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -1285,7 +1298,8 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
               </div>
             </div>
           </Card>
-        ))}
+          );
+        })}
         {fixtures.length > 5 && <Button variant="outline" className="w-full h-9" onClick={() => setExpanded(v => !v)}>{expanded ? "Show less" : `See more (${fixtures.length - 5})`}</Button>}
       </div>
 
