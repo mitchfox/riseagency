@@ -1081,6 +1081,7 @@ const InvestorsPortal = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
+  const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
   const [openTabs, setOpenTabs] = useState<SectionId[]>(() => {
     try { return JSON.parse(localStorage.getItem("investor_open_tabs") || "[]"); } catch { return []; }
   });
