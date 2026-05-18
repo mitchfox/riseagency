@@ -588,6 +588,42 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
   );
 };
 
+const InvestorNotificationsDropdown = ({ notifications }: { notifications: NotificationRow[] }) => {
+  const recent = [...notifications].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 20);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative" title="Notifications">
+          <Bell className="h-4 w-4" />
+          {recent.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="border-b border-border px-3 py-2">
+          <p className="text-sm font-semibold">Notifications</p>
+          <p className="text-xs text-muted-foreground">Latest staff activity and task updates</p>
+        </div>
+        <div className="max-h-96 overflow-y-auto scrollbar-thin divide-y divide-border/40">
+          {recent.length === 0 ? (
+            <div className="p-4 text-sm text-muted-foreground">No recent notifications.</div>
+          ) : recent.map((n) => (
+            <div key={n.id} className="p-3 hover:bg-muted/30 transition-colors">
+              <div className="flex items-start gap-2">
+                <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-snug text-foreground">{n.title || n.event_type.replace(/_/g, " ")}</p>
+                  {n.body && <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{n.body}</p>}
+                  <p className="text-[10px] text-muted-foreground mt-1">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
   const [category, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
