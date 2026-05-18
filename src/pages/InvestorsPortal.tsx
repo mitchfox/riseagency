@@ -1447,6 +1447,8 @@ const InvestorsPortal = () => {
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const initialisedSessionRef = useRef(false);
+  const refreshSeqRef = useRef(0);
+  const refreshInFlightRef = useRef(false);
 
   useEffect(() => { initialisedSessionRef.current = false; setUnlocked(false); }, [user?.id]);
 
@@ -1475,9 +1477,13 @@ const InvestorsPortal = () => {
 
   const refresh = async () => {
     if (!token) return;
+    if (refreshInFlightRef.current) return; // collapse duplicate concurrent calls
+    const seq = ++refreshSeqRef.current;
+    refreshInFlightRef.current = true;
     setLoading(true);
     try {
       const { data: d, error } = await supabase.functions.invoke("investor-data", { body: { token } });
+      if (seq !== refreshSeqRef.current) return; // a newer refresh has started, drop this result
       if (error) throw error;
       if ((d as any)?.error) throw new Error((d as any).error);
       const dd = d as any;
@@ -1502,8 +1508,11 @@ const InvestorsPortal = () => {
         matchAnalyses: dd.matchAnalyses || [],
       });
     } catch (e: any) {
-      toast.error(e.message || "Failed to load");
-    } finally { setLoading(false); }
+      if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
+    } finally {
+      refreshInFlightRef.current = false;
+      if (seq === refreshSeqRef.current) setLoading(false);
+    }
   };
   useEffect(() => { if (token) refresh(); }, [token]);
 
