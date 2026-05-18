@@ -505,18 +505,36 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
 }) => {
   const [limit, setLimit] = useState(80);
   const profileMap = new Map(profiles.map(p => [p.id, p]));
+  const emailMap = new Map(profiles.filter(p => p.email).map(p => [p.email!.toLowerCase(), p]));
+  const resolveName = (email?: string | null, userId?: string | null, fallback?: string | null) => {
+    if (userId) {
+      const p = profileMap.get(userId);
+      if (p?.full_name) return p.full_name;
+    }
+    if (email) {
+      const p = emailMap.get(email.toLowerCase());
+      if (p?.full_name) return p.full_name;
+    }
+    if (fallback && fallback.includes("@")) {
+      const local = fallback.split("@")[0];
+      const p = emailMap.get(fallback.toLowerCase());
+      if (p?.full_name) return p.full_name;
+      return local.replace(/[._-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    }
+    return fallback || "Staff";
+  };
 
   const items: FeedItem[] = useMemo(() => {
     const list: FeedItem[] = [];
     rows.forEach(e => {
       list.push({
         id: `a-${e.id}`, ts: e.created_at, kind: "system",
-        actor: e.user_email || "system", action: e.action, subject: e.entity_name || e.entity_type, entity_type: e.entity_type,
+        actor: resolveName(e.user_email, null, e.user_email), action: e.action, subject: e.entity_name || e.entity_type, entity_type: e.entity_type,
       });
     });
     taskNotifications.forEach(n => {
       const data = n.event_data || {};
-      const actorName = data.user_name || (data.user_id ? (profileMap.get(data.user_id)?.full_name || profileMap.get(data.user_id)?.email || "Staff") : "Staff");
+      const actorName = resolveName(data.user_email, data.user_id, data.user_name);
       const subject = data.task_title || data.title || n.title || n.body || "";
       const action = n.event_type.replace(/^task_/, "").replace(/_/g, " ");
       list.push({ id: `t-${n.id}`, ts: n.created_at, kind: "task", actor: actorName, action, subject, entity_type: "task" });
@@ -525,13 +543,13 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
   }, [rows, taskNotifications, profiles]);
 
   const shown = items.slice(0, limit);
-  const tone: Record<string, string> = {
-    created: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
-    updated: "border-blue-500/40 text-blue-300 bg-blue-500/10",
-    deleted: "border-red-500/40 text-red-300 bg-red-500/10",
-    completed: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
-    assigned: "border-primary/40 text-primary bg-primary/5",
-    reminder: "border-amber-500/40 text-amber-300 bg-amber-500/10",
+  const verbTone: Record<string, string> = {
+    created: "text-emerald-400",
+    updated: "text-blue-400",
+    deleted: "text-red-400",
+    completed: "text-emerald-400",
+    assigned: "text-primary",
+    reminder: "text-amber-400",
   };
 
   return (
@@ -539,20 +557,26 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
       {shown.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No activity logged.</div>
       ) : (
-        <div className="space-y-1.5">
-          {shown.map(e => (
-            <div key={e.id} className="flex items-start gap-3 px-3 py-2 rounded border border-border/40 bg-card/40 hover:border-primary/30 transition-colors">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium truncate">{e.actor}</span>
-                  <Badge variant="outline" className={`text-[10px] ${tone[e.action.split(" ")[0]] || "border-border text-muted-foreground"}`}>{e.action}</Badge>
-                  {e.entity_type && <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{e.entity_type}</Badge>}
-                  {e.subject && <span className="text-xs text-muted-foreground truncate">{e.subject}</span>}
+        <div className="divide-y divide-border/40">
+          {shown.map(e => {
+            const verb = e.action.split(" ")[0];
+            const verbCls = verbTone[verb] || "text-foreground";
+            return (
+              <div key={e.id} className="flex items-start gap-3 px-2 py-3 hover:bg-muted/20 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground leading-snug">
+                    <span className="font-semibold">{e.actor}</span>
+                    <span className={`font-medium ${verbCls}`}> {e.action}</span>
+                    {e.subject && <span className="text-foreground/80"> — {e.subject}</span>}
+                  </p>
+                  {e.entity_type && (
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-0.5">{e.entity_type}</p>
+                  )}
                 </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap pt-0.5">{formatDistanceToNow(new Date(e.ts), { addSuffix: true })}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(e.ts), { addSuffix: true })}</span>
-            </div>
-          ))}
+            );
+          })}
           {limit < items.length && (
             <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setLimit(l => l + 80)}>Load more</Button>
           )}
