@@ -54,7 +54,7 @@ interface Player {
   player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'club_logo' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url';
+type EditableField = 'position' | 'age' | 'club' | 'club_logo' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url' | 'contract_end_date' | 'expected_commission_annual' | 'current_salary_annual';
 
 interface FieldEdit {
   [playerId: string]: string | number;
