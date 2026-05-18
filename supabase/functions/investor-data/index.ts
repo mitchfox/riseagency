@@ -9,7 +9,7 @@ async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
   const { data } = await supabase
     .from("investor_sessions")
-    .select("user_id, expires_at, investor_users(id, username, display_name, status)")
+    .select("user_id, expires_at, investor_users(id, username, display_name, status, is_admin)")
     .eq("token", token)
     .maybeSingle();
   if (!data) return null;
