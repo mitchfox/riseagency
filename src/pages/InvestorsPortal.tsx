@@ -216,7 +216,7 @@ const InvestorsPortal = () => {
 
   if (authLoading) return <div className="min-h-screen bg-black" />;
 
-  if (!user) return <LoginGate onSignIn={handleSignIn} muted={muted} setMuted={setMuted} />;
+  if (!user) return <LoginGate onSignIn={handleSignIn} />;
 
   return (
     <div className="min-h-screen bg-[#070707] text-white">
