@@ -1426,7 +1426,7 @@ const InvestorsPortal = () => {
     isAdmin: boolean;
     clubContacts: ClubContactRow[];
     playerAnalyses: PlayerAnalysisRow[];
-    videoAnalyses: VideoAnalysisRow[];
+    matchAnalyses: any[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -1483,7 +1483,7 @@ const InvestorsPortal = () => {
         isAdmin: !!dd.user?.is_admin,
         clubContacts: dd.clubContacts || [],
         playerAnalyses: dd.playerAnalyses || [],
-        videoAnalyses: dd.videoAnalyses || [],
+        matchAnalyses: dd.matchAnalyses || [],
       });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
@@ -1806,7 +1806,7 @@ const InvestorsPortal = () => {
                   />
                 )}
                 <div key={active}>
-                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} videoAnalyses={data.videoAnalyses || []} setActive={(section) => {
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} matchAnalyses={data.matchAnalyses || []} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
                   }} />}
@@ -1833,7 +1833,7 @@ const InvestorsPortal = () => {
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
-                  {active === "clubnetwork" && <ClubNetworkView rows={data.clubContacts} />}
+                  {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
                 </div>
               </>
             ) : expandedCategory ? (
