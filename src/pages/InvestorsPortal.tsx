@@ -1305,18 +1305,6 @@ const InvestorsPortal = () => {
               </div>
             );
           })}
-
-          {/* Show "Back" inside sidebar when category is expanded */}
-          {expandedCategory && (
-            <button
-              onClick={() => { setExpandedCategory(null); setActive(null); }}
-              className="w-full mt-2 rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-muted/40 text-muted-foreground"
-              title="Back to all categories"
-            >
-              <ArrowLeft className="w-4 h-4 mb-0.5" />
-              <span className="text-[6px] uppercase tracking-tight">Back</span>
-            </button>
-          )}
         </aside>
 
         {/* Collapse toggle */}
@@ -1340,9 +1328,6 @@ const InvestorsPortal = () => {
                 </button>
                 <ChevronLeft className="h-3.5 w-3.5 rotate-180 text-muted-foreground/50" />
                 <span className="text-foreground font-medium">{activeSectionDef.title}</span>
-                <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => { setActive("overview"); setExpandedCategory("dash"); }}>
-                  <ArrowLeft className="w-3 h-3 mr-1" /> Dashboard
-                </Button>
               </div>
             )}
 
