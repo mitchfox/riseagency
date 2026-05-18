@@ -1239,34 +1239,53 @@ const InvestorsPortal = () => {
           {!headerCollapsed && (
             <>
               <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4" style={{ maxWidth: "calc(50% - 60px)" }}>
-                {(openTabs.length ? openTabs : active ? [active] : []).slice(0, isMobile ? 2 : 3).map((tabId) => {
-                  const section = allSections.find(s => s.id === tabId);
-                  if (!section) return null;
-                  const TabIcon = section.icon;
-                  const isActive = active === tabId;
+                {(() => {
+                  const displayTabs = openTabs.length ? openTabs : (active ? [active] : []);
+                  const MAX_VISIBLE = isMobile ? 2 : 3;
+                  const visible = displayTabs.slice(0, MAX_VISIBLE);
+                  const overflow = displayTabs.slice(MAX_VISIBLE);
                   return (
-                    <button
-                      key={tabId}
-                      onClick={() => handleSectionClick(tabId, section.categoryId)}
-                      className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 ${
-                        isActive
-                          ? "border-primary text-primary bg-primary/10"
-                          : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                      {!isMobile && <span className="truncate max-w-[90px]">{section.title}</span>}
-                      {openTabs.length >= 2 && (
-                        <span
-                          className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                    <>
+                      {visible.map((tabId) => {
+                        const section = allSections.find(s => s.id === tabId);
+                        if (!section) return null;
+                        const TabIcon = section.icon;
+                        const isActive = active === tabId;
+                        return (
+                          <button
+                            key={tabId}
+                            onClick={() => handleSectionClick(tabId, section.categoryId)}
+                            className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 ${
+                              isActive
+                                ? "border-primary text-primary bg-primary/10"
+                                : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
+                            }`}
+                          >
+                            <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                            {!isMobile && <span className="truncate max-w-[90px]">{section.title}</span>}
+                            {openTabs.length >= 2 && (
+                              <span
+                                className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                              >
+                                ×
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {overflow.length > 0 && (
+                        <button
+                          onClick={() => setTabOverflowOpen(true)}
+                          className="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
+                          title={`${overflow.length} more open tabs`}
                         >
-                          ×
-                        </span>
+                          +{overflow.length}
+                        </button>
                       )}
-                    </button>
+                    </>
                   );
-                })}
+                })()}
                 <button
                   className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
                   onClick={() => setSectionPickerOpen(true)}
@@ -1313,6 +1332,10 @@ const InvestorsPortal = () => {
 
       <Dialog open={sectionPickerOpen} onOpenChange={setSectionPickerOpen}>
         <DialogContent className="overflow-hidden p-0 shadow-lg max-w-5xl w-[92vw] h-[80vh]">
+          <VisuallyHidden>
+            <DialogTitle>Open a section</DialogTitle>
+            <DialogDescription>Pick a section to open in a new tab.</DialogDescription>
+          </VisuallyHidden>
           <SectionGridPicker
             categories={CATEGORIES}
             onSelect={(sectionId, categoryId) => {
@@ -1320,6 +1343,37 @@ const InvestorsPortal = () => {
               setSectionPickerOpen(false);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tabOverflowOpen} onOpenChange={setTabOverflowOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Open tabs</DialogTitle>
+            <DialogDescription>Switch to or close any open tab.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 max-h-80 overflow-y-auto">
+            {openTabs.map((tId) => {
+              const s = allSections.find(x => x.id === tId);
+              if (!s) return null;
+              const TIcon = s.icon;
+              const isActive = active === tId;
+              return (
+                <div key={tId} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isActive ? "bg-primary/10 text-primary" : "hover:bg-muted/50"}`}>
+                  <TIcon className="w-4 h-4 shrink-0" />
+                  <button
+                    className="text-sm flex-1 truncate text-left"
+                    onClick={() => { handleSectionClick(tId, s.categoryId); setTabOverflowOpen(false); }}
+                  >
+                    {s.title}
+                  </button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeTab(tId)}>
+                    <span className="text-xs">×</span>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
 
