@@ -19,7 +19,7 @@ import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
-  Building2, Users, Film, PlayCircle, X, Star,
+  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -1716,7 +1716,7 @@ const InvestorsPortal = () => {
                   {active === "prospects" && <Prospects rows={data.prospects} />}
                   {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
                   {active === "contracts" && <ContractsView rows={data.contracts} />}
-                  {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
+                  {active === "spending" && <Spending rows={data.spending} write={writeOp} token={token} onRefresh={refresh} />}
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
