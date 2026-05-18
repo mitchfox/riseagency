@@ -301,8 +301,8 @@ const SectionShell = ({ icon, title, children, action }: { icon: any; title: str
 // ---------- Sections ----------
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
   <Card className="bg-card/60 border-border/60 p-5">
-    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70 mb-2 font-bbh">{label}</div>
-    <div className="text-3xl font-bbh tracking-wide">{value}</div>
+    <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">{label}</div>
+    <div className="text-2xl font-semibold tracking-tight text-foreground">{value}</div>
     {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
   </Card>
 );
