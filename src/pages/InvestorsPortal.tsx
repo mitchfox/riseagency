@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
-  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Star, Eye, Calendar, Target,
+  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
+  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -30,7 +31,7 @@ type SectionId =
   | "represented" | "mandated" | "previously"
   | "prospects" | "playerdatabase"
   | "contracts"
-  | "spending" | "commission"
+  | "spending" | "commission" | "invoices"
   | "tasks" | "activity";
 
 interface PlayerRow {
@@ -46,6 +47,7 @@ interface ContractRow {
   id: string; title: string; description: string | null; status: string | null;
   created_at: string; updated_at: string; owner_signed_at: string | null; locked_at: string | null;
   file_url: string | null; locked_file_url: string | null; completed_pdf_url: string | null;
+  resolved_file_url: string | null;
 }
 interface TaskRow {
   id: string; title: string; description: string | null; category: string | null;
@@ -53,23 +55,46 @@ interface TaskRow {
   updated_at: string; last_completed_at: string | null; assigned_to: string[] | null;
   image_url: string | null; display_order: number | null;
   is_recurring: boolean | null; recurrence_label: string | null;
+  completion_log?: string[] | null;
 }
 interface StaffActivityRow {
   id: string; user_email: string | null; action: string; entity_type: string;
   entity_id: string | null; entity_name: string | null; details: any; created_at: string;
 }
+interface NotificationRow {
+  id: string; event_type: string; title: string | null; body: string | null;
+  event_data: any; created_at: string;
+}
+interface ProfileRow { id: string; email: string | null; full_name: string | null }
 interface ProspectRow {
   id: string; name: string; stage: string | null; position: string | null;
   nationality: string | null; date_of_birth: string | null; age: number | null;
+  age_group: 'A' | 'B' | 'C' | 'D' | null;
   current_club: string | null; profile_image_url: string | null;
   probability_weight: number | null; projected_revenue: number | null;
   revenue_currency: string | null; notes: string | null; last_contact_date: string | null;
+  priority: 'low' | 'medium' | 'high' | null;
   updated_at: string;
+  linked_player_id: string | null;
 }
 interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; }
+interface InvoiceRow {
+  id: string; player_id: string; invoice_number: string; invoice_date: string; due_date: string;
+  amount: number; currency: string; status: string; amount_paid: number | null;
+  billing_month: string | null; description: string | null;
+}
+interface DbPlayer {
+  id: string; player_name: string; position: string | null; age: number | null;
+  current_club: string | null; nationality: string | null; date_of_birth: string | null;
+  source: 'scouting' | 'youth_outreach' | 'pro_outreach';
+  profile_image_url?: string | null; club_logo_url?: string | null;
+  report_count: number;
+}
 
 const gbp = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(Number(n));
+const ccy = (n: number | null | undefined, c: string = "GBP") =>
+  n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: c, maximumFractionDigits: 0 }).format(Number(n));
 
 const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
 
@@ -100,6 +125,7 @@ const CATEGORIES: CategoryDef[] = [
   { id: "fin", title: "Financial", icon: Wallet, sections: [
     { id: "spending", title: "Spending", icon: Wallet },
     { id: "commission", title: "Commission", icon: TrendingUp },
+    { id: "invoices", title: "Invoices", icon: FileText },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "My Tasks", icon: CheckSquare },
@@ -161,7 +187,7 @@ const LoginGate = ({ onSignIn }: { onSignIn: (u: string, p: string) => Promise<v
   );
 };
 
-// ---------- Player card (matches staff PlayerList aesthetic) ----------
+// ---------- Player card with inline editable commission ----------
 const ContractBadge = ({ end }: { end: string | null }) => {
   if (!end) return <span className="text-xs text-muted-foreground">No contract end</span>;
   const months = differenceInMonths(new Date(end), new Date());
@@ -173,8 +199,23 @@ const ContractBadge = ({ end }: { end: string | null }) => {
   </span>;
 };
 
-const PlayerCard = ({ p }: { p: PlayerRow }) => {
+const PlayerCard = ({ p, editable, onSave, paidByPlayer }: {
+  p: PlayerRow; editable?: boolean; onSave?: (val: number | null) => Promise<void>;
+  paidByPlayer?: number;
+}) => {
   const flag = p.nationality ? getCountryFlagUrl(p.nationality) : null;
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState<string>(p.expected_commission_annual?.toString() ?? "");
+  useEffect(() => { setVal(p.expected_commission_annual?.toString() ?? ""); }, [p.expected_commission_annual]);
+
+  const commit = async () => {
+    if (!onSave) return;
+    const n = val.trim() === "" ? null : Number(val);
+    if (n != null && Number.isNaN(n)) { toast.error("Invalid number"); return; }
+    await onSave(n);
+    setEdit(false);
+  };
+
   return (
     <Card className="bg-card/60 border-border/60 hover:border-primary/50 transition-colors overflow-hidden">
       <div className="flex items-center gap-4 p-4">
@@ -199,36 +240,33 @@ const PlayerCard = ({ p }: { p: PlayerRow }) => {
             </>)}
           </div>
         </div>
-        <div className="text-right space-y-1 shrink-0">
+        <div className="text-right space-y-1 shrink-0 min-w-[140px]">
           <ContractBadge end={p.contract_end_date} />
-          <div className="text-sm font-bbh text-primary">{gbp(p.expected_commission_annual)}<span className="text-[10px] text-muted-foreground"> /yr</span></div>
-        </div>
-      </div>
-    </Card>
-  );
-};
-
-const ProspectCard = ({ p }: { p: ProspectRow }) => {
-  const flag = p.nationality ? getCountryFlagUrl(p.nationality) : null;
-  return (
-    <Card className="bg-card/60 border-border/60 p-3">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10 border border-primary/20">
-          <AvatarImage src={p.profile_image_url || undefined} alt={p.name} />
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bbh">{p.name?.[0] || "?"}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="font-bbh uppercase text-sm truncate">{p.name}</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-            {flag && <img src={flag} alt="" className="w-3 h-2 object-cover rounded-sm" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
-            <span>{p.position || "—"}</span>
-            {p.age && <span>• {p.age}</span>}
-            {p.current_club && <span className="truncate"> • {p.current_club}</span>}
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          {p.projected_revenue && <div className="text-xs font-bbh text-primary">{gbp(p.projected_revenue)}</div>}
-          {p.probability_weight != null && <div className="text-[10px] text-muted-foreground">{p.probability_weight}%</div>}
+          {edit && editable ? (
+            <div className="flex items-center gap-1 justify-end">
+              <Input
+                type="number" value={val} onChange={e => setVal(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEdit(false); setVal(p.expected_commission_annual?.toString() ?? ""); } }}
+                onBlur={commit}
+                className="h-7 w-24 text-right text-sm font-bbh" autoFocus
+                placeholder="0"
+              />
+              <Button size="icon" variant="ghost" className="h-6 w-6 text-primary" onClick={commit}><Check className="w-3 h-3" /></Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => editable && setEdit(true)}
+              className={`text-sm font-bbh text-primary block ml-auto ${editable ? "hover:bg-primary/10 px-1.5 rounded transition-colors" : ""}`}
+              title={editable ? "Click to edit annual commission forecast" : undefined}
+            >
+              {gbp(p.expected_commission_annual)}<span className="text-[10px] text-muted-foreground"> /yr</span>
+              {editable && <Pencil className="inline w-2.5 h-2.5 ml-1 opacity-60" />}
+            </button>
+          )}
+          {paidByPlayer != null && paidByPlayer > 0 && (
+            <div className="text-[10px] text-emerald-400">{gbp(paidByPlayer)} paid</div>
+          )}
         </div>
       </div>
     </Card>
@@ -266,7 +304,11 @@ const Stat = ({ label, value, sub }: { label: string; value: string; sub?: strin
   </Card>
 );
 
-const Roster = ({ players, status }: { players: PlayerRow[]; status: string }) => {
+const Roster = ({ players, status, editable, onSaveCommission, invoiceTotalsByPlayer }: {
+  players: PlayerRow[]; status: string; editable: boolean;
+  onSaveCommission: (id: string, val: number | null) => Promise<void>;
+  invoiceTotalsByPlayer: Record<string, number>;
+}) => {
   const rows = players.filter(p => p.representation_status === status);
   const label = status === "represented" ? "Represented" : status === "mandated" ? "Mandated" : "Previously Mandated";
   return (
@@ -274,7 +316,10 @@ const Roster = ({ players, status }: { players: PlayerRow[]; status: string }) =
       {rows.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No {label.toLowerCase()} players.</div>
       ) : (
-        <div className="space-y-2">{rows.map(p => <PlayerCard key={p.id} p={p} />)}</div>
+        <div className="space-y-2">{rows.map(p => (
+          <PlayerCard key={p.id} p={p} editable={editable} paidByPlayer={invoiceTotalsByPlayer[p.id] || 0}
+            onSave={(v) => onSaveCommission(p.id, v)} />
+        ))}</div>
       )}
     </SectionShell>
   );
@@ -283,7 +328,9 @@ const Roster = ({ players, status }: { players: PlayerRow[]; status: string }) =
 const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = rows.find(r => r.id === selectedId) || rows[0] || null;
-  const url = selected ? (selected.completed_pdf_url || selected.locked_file_url || selected.file_url) : null;
+  const url = selected?.resolved_file_url || null;
+  const [loadError, setLoadError] = useState(false);
+  useEffect(() => { setLoadError(false); }, [selected?.id]);
   return (
     <SectionShell icon={FileSignature} title={`Contracts (${rows.length})`}>
       {rows.length === 0 ? (
@@ -318,10 +365,26 @@ const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
               <>
                 <div className="px-4 py-2 border-b border-border/60 flex items-center justify-between bg-card/50">
                   <div className="font-bbh uppercase text-sm truncate">{selected.title}</div>
-                  {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Open in new tab</a>}
+                  <div className="flex items-center gap-2">
+                    {url && (
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        <ExternalLink className="w-3 h-3" /> Open
+                      </a>
+                    )}
+                  </div>
                 </div>
-                {url ? (
-                  <iframe src={url} className="flex-1 w-full bg-white" title={selected.title} />
+                {url && !loadError ? (
+                  <object data={url} type="application/pdf" className="flex-1 w-full bg-white">
+                    <iframe src={url} className="w-full h-full border-0 bg-white" title={selected.title} onError={() => setLoadError(true)} />
+                  </object>
+                ) : url ? (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-6">
+                    <FileSignature className="w-10 h-10 text-muted-foreground" />
+                    <div className="text-sm text-muted-foreground">Your browser cannot preview this PDF inline.</div>
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" className="bg-primary text-primary-foreground"><ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open PDF</Button>
+                    </a>
+                  </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">No PDF available for this contract yet.</div>
                 )}
@@ -336,16 +399,21 @@ const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
   );
 };
 
-const TasksView = ({ rows }: { rows: TaskRow[] }) => {
-  // Mirror My Tasks: group by priority, then by category. Exclude completed.
+// ---------- Tasks (live view styled like staff My Tasks) ----------
+const TasksView = ({ rows, profiles }: { rows: TaskRow[]; profiles: ProfileRow[] }) => {
+  const [activeMember, setActiveMember] = useState<string | "all">("all");
   const live = rows.filter(t => !t.completed);
+  const profileMap = new Map(profiles.map(p => [p.id, p]));
+  const allMembers = Array.from(new Set(live.flatMap(t => t.assigned_to || []))).map(id => profileMap.get(id)).filter(Boolean) as ProfileRow[];
+
+  const filtered = activeMember === "all" ? live : live.filter(t => t.assigned_to?.includes(activeMember));
+
   const priorities = ["urgent", "high", "medium", "low"];
   const byPriority = priorities.map(pr => ({
     priority: pr,
-    tasks: live.filter(t => (t.priority || "medium").toLowerCase() === pr).sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)),
+    tasks: filtered.filter(t => (t.priority || "medium").toLowerCase() === pr).sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)),
   })).filter(g => g.tasks.length > 0);
-  // anything else
-  const other = live.filter(t => !priorities.includes((t.priority || "medium").toLowerCase()));
+  const other = filtered.filter(t => !priorities.includes((t.priority || "medium").toLowerCase()));
   if (other.length > 0) byPriority.push({ priority: "other", tasks: other });
 
   const toneFor = (pr: string) =>
@@ -354,9 +422,41 @@ const TasksView = ({ rows }: { rows: TaskRow[] }) => {
     : pr === "medium" ? "border-primary/40 text-primary bg-primary/5"
     : "border-border text-muted-foreground bg-muted/20";
 
+  // Weekly completion count per member for leaderboard mini
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7);
+  const memberWeekCount = (id: string) => rows.reduce((s, t) => {
+    if (!t.assigned_to?.includes(id)) return s;
+    return s + ((t.completion_log || []) as string[]).filter(d => new Date(d) >= weekStart).length;
+  }, 0);
+
   return (
     <SectionShell icon={CheckSquare} title="My Tasks — Live View">
-      {live.length === 0 ? (
+      {/* Staff slider */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-thin">
+        <button
+          onClick={() => setActiveMember("all")}
+          className={`shrink-0 px-3 py-1.5 rounded-xl border-2 text-xs font-medium transition-all ${
+            activeMember === "all" ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-card/30 text-muted-foreground hover:border-border"
+          }`}
+        >All ({live.length})</button>
+        {allMembers.map(m => {
+          const memberTasks = live.filter(t => t.assigned_to?.includes(m.id)).length;
+          const isActive = activeMember === m.id;
+          const week = memberWeekCount(m.id);
+          return (
+            <button key={m.id} onClick={() => setActiveMember(m.id)}
+              className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-xs font-medium transition-all ${
+                isActive ? "border-primary bg-primary/10 text-primary" : "border-border/50 bg-card/30 text-muted-foreground hover:border-border"
+              }`}>
+              <span>{(m.full_name || m.email?.split("@")[0] || "?")}</span>
+              <span className="text-[10px] opacity-60">{memberTasks}</span>
+              {week > 0 && <span className="text-[9px] text-emerald-400">+{week}wk</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No active tasks.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -381,6 +481,11 @@ const TasksView = ({ rows }: { rows: TaskRow[] }) => {
                       </span>
                     )}
                     {t.is_recurring && <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">{t.recurrence_label || "Recurring"}</Badge>}
+                    {(t.assigned_to || []).slice(0, 3).map(uid => {
+                      const m = profileMap.get(uid);
+                      if (!m) return null;
+                      return <Badge key={uid} variant="outline" className="text-[9px] border-border text-muted-foreground">{m.full_name || m.email?.split("@")[0]}</Badge>;
+                    })}
                   </div>
                 </Card>
               ))}
@@ -392,14 +497,43 @@ const TasksView = ({ rows }: { rows: TaskRow[] }) => {
   );
 };
 
-const ActivityFeed = ({ rows }: { rows: StaffActivityRow[] }) => {
+// ---------- Activity feed — merges staff activity + task events ----------
+interface FeedItem { id: string; ts: string; kind: "task" | "system"; actor: string; action: string; subject: string; entity_type?: string }
+
+const ActivityFeed = ({ rows, taskNotifications, profiles }: {
+  rows: StaffActivityRow[]; taskNotifications: NotificationRow[]; profiles: ProfileRow[];
+}) => {
   const [limit, setLimit] = useState(80);
-  const shown = rows.slice(0, limit);
+  const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+  const items: FeedItem[] = useMemo(() => {
+    const list: FeedItem[] = [];
+    rows.forEach(e => {
+      list.push({
+        id: `a-${e.id}`, ts: e.created_at, kind: "system",
+        actor: e.user_email || "system", action: e.action, subject: e.entity_name || e.entity_type, entity_type: e.entity_type,
+      });
+    });
+    taskNotifications.forEach(n => {
+      const data = n.event_data || {};
+      const actorName = data.user_name || (data.user_id ? (profileMap.get(data.user_id)?.full_name || profileMap.get(data.user_id)?.email || "Staff") : "Staff");
+      const subject = data.task_title || data.title || n.title || n.body || "";
+      const action = n.event_type.replace(/^task_/, "").replace(/_/g, " ");
+      list.push({ id: `t-${n.id}`, ts: n.created_at, kind: "task", actor: actorName, action, subject, entity_type: "task" });
+    });
+    return list.sort((a, b) => +new Date(b.ts) - +new Date(a.ts));
+  }, [rows, taskNotifications, profiles]);
+
+  const shown = items.slice(0, limit);
   const tone: Record<string, string> = {
     created: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
     updated: "border-blue-500/40 text-blue-300 bg-blue-500/10",
     deleted: "border-red-500/40 text-red-300 bg-red-500/10",
+    completed: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
+    assigned: "border-primary/40 text-primary bg-primary/5",
+    reminder: "border-amber-500/40 text-amber-300 bg-amber-500/10",
   };
+
   return (
     <SectionShell icon={Activity} title="Activity Feed">
       {shown.length === 0 ? (
@@ -410,16 +544,16 @@ const ActivityFeed = ({ rows }: { rows: StaffActivityRow[] }) => {
             <div key={e.id} className="flex items-start gap-3 px-3 py-2 rounded border border-border/40 bg-card/40 hover:border-primary/30 transition-colors">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium truncate">{e.user_email || "system"}</span>
-                  <Badge variant="outline" className={`text-[10px] ${tone[e.action] || "border-border text-muted-foreground"}`}>{e.action}</Badge>
-                  <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{e.entity_type}</Badge>
-                  {e.entity_name && <span className="text-xs text-muted-foreground truncate">{e.entity_name}</span>}
+                  <span className="font-medium truncate">{e.actor}</span>
+                  <Badge variant="outline" className={`text-[10px] ${tone[e.action.split(" ")[0]] || "border-border text-muted-foreground"}`}>{e.action}</Badge>
+                  {e.entity_type && <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{e.entity_type}</Badge>}
+                  {e.subject && <span className="text-xs text-muted-foreground truncate">{e.subject}</span>}
                 </div>
               </div>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</span>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(e.ts), { addSuffix: true })}</span>
             </div>
           ))}
-          {limit < rows.length && (
+          {limit < items.length && (
             <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setLimit(l => l + 80)}>Load more</Button>
           )}
         </div>
@@ -566,102 +700,333 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
   );
 };
 
-const CommissionForecast = ({ players }: { players: PlayerRow[] }) => {
+// ---------- Commission Forecast linked to invoices ----------
+const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
+  players: PlayerRow[]; invoices: InvoiceRow[]; editable: boolean;
+  onSaveCommission: (id: string, val: number | null) => Promise<void>;
+}) => {
   const live = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
-  const total = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
-  const withSalary = live.filter(p => p.current_salary_annual);
-  const totalSalary = withSalary.reduce((s, p) => s + Number(p.current_salary_annual || 0), 0);
+  const forecast = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+
+  // Invoice totals
+  const invoicedTotal = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
+  const paidTotal = invoices.reduce((s, i) => s + Number(i.amount_paid || 0), 0);
+  const outstanding = invoicedTotal - paidTotal;
+  const last12Cutoff = new Date(); last12Cutoff.setFullYear(last12Cutoff.getFullYear() - 1);
+  const last12Paid = invoices.filter(i => new Date(i.invoice_date) >= last12Cutoff).reduce((s, i) => s + Number(i.amount_paid || 0), 0);
+
+  const paidByPlayer: Record<string, number> = {};
+  invoices.forEach(i => { paidByPlayer[i.player_id] = (paidByPlayer[i.player_id] || 0) + Number(i.amount_paid || 0); });
+
   const sorted = [...live].sort((a, b) => Number(b.expected_commission_annual || 0) - Number(a.expected_commission_annual || 0));
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Stat label="Annual Commission" value={gbp(total)} sub={`${live.length} live players`} />
-        <Stat label="Aggregate Player Salaries" value={gbp(totalSalary)} sub={`${withSalary.length} with disclosed wages`} />
-        <Stat label="12-Month Projection" value={gbp(total)} sub="Based on current contracts" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat label="Real Revenue (12mo)" value={gbp(last12Paid)} sub={`From ${invoices.length} invoices`} />
+        <Stat label="Invoiced (All)" value={gbp(invoicedTotal)} sub={`${gbp(paidTotal)} paid`} />
+        <Stat label="Outstanding" value={gbp(outstanding)} sub="Awaiting payment" />
+        <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players`} />
       </div>
-      <SectionShell icon={TrendingUp} title="Commission Breakdown By Player">
+      <SectionShell icon={TrendingUp} title="Commission Forecast — Editable per player" action={
+        editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click figure to edit</Badge> : undefined
+      }>
         {sorted.length === 0 ? (
-          <div className="text-sm text-muted-foreground text-center py-8">No commission data yet. Staff can set this in Players → List Order / edit.</div>
+          <div className="text-sm text-muted-foreground text-center py-8">No commission data yet.</div>
         ) : (
-          <div className="space-y-2">{sorted.map(p => <PlayerCard key={p.id} p={p} />)}</div>
+          <div className="space-y-2">{sorted.map(p => (
+            <PlayerCard key={p.id} p={p} editable={editable} paidByPlayer={paidByPlayer[p.id] || 0} onSave={(v) => onSaveCommission(p.id, v)} />
+          ))}</div>
         )}
       </SectionShell>
     </div>
   );
 };
 
+// ---------- Invoices section ----------
+const InvoicesView = ({ rows, players }: { rows: InvoiceRow[]; players: PlayerRow[] }) => {
+  const playerMap = new Map(players.map(p => [p.id, p]));
+  const sorted = [...rows].sort((a, b) => +new Date(b.invoice_date) - +new Date(a.invoice_date));
+  const totalPaid = rows.reduce((s, i) => s + Number(i.amount_paid || 0), 0);
+  const totalOwed = rows.reduce((s, i) => s + Number(i.amount || 0), 0) - totalPaid;
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Stat label="Invoices" value={String(rows.length)} />
+        <Stat label="Paid (all currencies converted gross)" value={gbp(totalPaid)} />
+        <Stat label="Outstanding" value={gbp(totalOwed)} />
+      </div>
+      <SectionShell icon={FileText} title={`Invoices (${rows.length})`}>
+        <div className="rounded border border-border/40 overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
+            <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
+              <tr>
+                <th className="text-left px-3 py-2">Date</th>
+                <th className="text-left px-3 py-2">Number</th>
+                <th className="text-left px-3 py-2">Player</th>
+                <th className="text-left px-3 py-2">Status</th>
+                <th className="text-right px-3 py-2">Amount</th>
+                <th className="text-right px-3 py-2">Paid</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {sorted.length === 0 ? (
+                <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No invoices.</td></tr>
+              ) : sorted.map(i => {
+                const player = playerMap.get(i.player_id);
+                const outstanding = Number(i.amount) - Number(i.amount_paid || 0);
+                const statusTone = i.status === "paid" ? "border-emerald-500/40 text-emerald-300 bg-emerald-500/10"
+                  : i.status === "overdue" ? "border-red-500/40 text-red-300 bg-red-500/10"
+                  : "border-amber-500/40 text-amber-300 bg-amber-500/10";
+                return (
+                  <tr key={i.id} className="hover:bg-muted/20">
+                    <td className="px-3 py-2 text-muted-foreground">{format(new Date(i.invoice_date), "d MMM yyyy")}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{i.invoice_number}</td>
+                    <td className="px-3 py-2 truncate">{player?.name || "—"}</td>
+                    <td className="px-3 py-2"><Badge variant="outline" className={`text-[10px] ${statusTone} capitalize`}>{i.status}</Badge></td>
+                    <td className="px-3 py-2 text-right">{ccy(i.amount, i.currency)}</td>
+                    <td className="px-3 py-2 text-right">
+                      <span className="text-emerald-400">{ccy(i.amount_paid || 0, i.currency)}</span>
+                      {outstanding > 0 && <span className="text-[10px] text-muted-foreground block">{ccy(outstanding, i.currency)} due</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionShell>
+    </div>
+  );
+};
+
+// ---------- Prospect Board (staff-style cards with priority colours) ----------
+const PRIORITY_COLOR = { high: "hsl(0,70%,50%)", medium: "hsl(43,49%,61%)", low: "hsl(140,50%,50%)", null: "hsl(0,0%,40%)" } as any;
+const AGE_GROUP_LABEL = { A: "First Team", B: "U21", C: "U18", D: "U16" } as const;
+const STAGE_ORDER = ["scouted", "connected", "rapport_building", "rising", "rise"];
+const STAGE_LABEL: Record<string, string> = {
+  scouted: "SCOUTED", connected: "CONNECTED", rapport_building: "RAPPORT BUILDING", rising: "RISING", rise: "RISE",
+};
+
+const ProspectColumn = ({ stage, items }: { stage: string; items: ProspectRow[] }) => (
+  <div className="bg-card/40 border border-border/40 rounded-xl overflow-hidden">
+    <div className="px-3 py-2 border-b border-border/40 bg-gradient-to-r from-primary/10 to-transparent">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bbh tracking-widest text-primary">{STAGE_LABEL[stage] || stage.toUpperCase()}</span>
+        <span className="text-[10px] text-muted-foreground">{items.length}</span>
+      </div>
+    </div>
+    <div className="p-2 space-y-2 max-h-[70vh] overflow-y-auto">
+      {items.map(p => {
+        const color = PRIORITY_COLOR[p.priority || "null"];
+        const initials = p.name.split(" ").map(n => n[0]).join("").slice(0, 2);
+        return (
+          <div key={p.id} className="relative rounded-xl overflow-hidden border-2 transition-all hover:scale-[1.02] hover:shadow-xl"
+               style={{ borderColor: color }}>
+            <div className="relative p-3 min-h-[140px] flex flex-col justify-between"
+                 style={{ background: "linear-gradient(145deg, hsl(0,0%,14%) 0%, hsl(0,0%,8%) 100%)" }}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  {p.position && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{p.position}</span>
+                  )}
+                </div>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} title={p.priority || "no priority"} />
+              </div>
+              <div className="flex items-center gap-3 my-1">
+                <Avatar className="h-14 w-14 border-2 shrink-0 rounded-lg" style={{ borderColor: `${color}66` }}>
+                  <AvatarImage src={p.profile_image_url || ""} alt={p.name} className="object-cover object-top" />
+                  <AvatarFallback className="text-xs font-bold rounded-lg" style={{ background: `${color}22`, color }}>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-sm truncate" style={{ color: "hsl(43,49%,75%)" }}>{p.name}</div>
+                  {p.current_club && <div className="text-[10px] text-muted-foreground truncate">{p.current_club}</div>}
+                  {p.nationality && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <img src={getCountryFlagUrl(p.nationality)} alt="" className="w-4 h-3 object-cover rounded-sm" loading="lazy" />
+                      <span className="text-[10px] text-muted-foreground truncate">{p.nationality}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                <div className="flex items-center gap-2">
+                  {p.age_group && (
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-bebas tracking-wider"
+                           style={{ color: "hsl(43,49%,61%)", borderColor: "hsl(43,49%,61% / 0.3)" }}>
+                      {AGE_GROUP_LABEL[p.age_group]}
+                    </Badge>
+                  )}
+                  {typeof p.age === "number" && p.age > 0 && (
+                    <span className="text-[10px] text-muted-foreground">Age {p.age}</span>
+                  )}
+                </div>
+                {p.projected_revenue != null && Number(p.projected_revenue) > 0 && (
+                  <span className="text-[10px] font-bbh text-primary">{ccy(Number(p.projected_revenue), p.revenue_currency || "GBP")}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {items.length === 0 && <div className="text-xs text-muted-foreground text-center py-4">No prospects.</div>}
+    </div>
+  </div>
+);
+
 const Prospects = ({ rows }: { rows: ProspectRow[] }) => {
-  const stages = Array.from(new Set(rows.map(r => r.stage || "Unknown")));
+  const byStage = STAGE_ORDER.map(stage => ({ stage, items: rows.filter(r => (r.stage || "scouted") === stage) }));
   return (
     <SectionShell icon={Target} title={`Prospect Board (${rows.length})`}>
-      {rows.length === 0 ? (
-        <div className="text-sm text-muted-foreground text-center py-8">No prospects.</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stages.map(s => {
-            const list = rows.filter(r => (r.stage || "Unknown") === s);
-            return (
-              <div key={s} className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border border-primary/40 text-primary bg-primary/5">{s}</span>
-                  <span className="text-xs text-muted-foreground">{list.length}</span>
-                </div>
-                {list.map(p => <ProspectCard key={p.id} p={p} />)}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+        {byStage.map(({ stage, items }) => <ProspectColumn key={stage} stage={stage} items={items} />)}
+      </div>
     </SectionShell>
   );
 };
 
-const PlayerDatabase = ({ players }: { players: PlayerRow[] }) => {
+// ---------- Full Player Database (scouting + outreach) ----------
+const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; youth: any[]; pro: any[] }) => {
   const [q, setQ] = useState("");
-  const filtered = players.filter(p => !q ||
-    p.name.toLowerCase().includes(q.toLowerCase()) ||
-    (p.position || "").toLowerCase().includes(q.toLowerCase()) ||
-    (p.club || "").toLowerCase().includes(q.toLowerCase()) ||
-    (p.nationality || "").toLowerCase().includes(q.toLowerCase())
-  );
+  const [src, setSrc] = useState<string>("all");
+
+  const combined: DbPlayer[] = useMemo(() => {
+    const map = new Map<string, DbPlayer>();
+    scouting.forEach((r: any) => {
+      const key = `${(r.player_name || "").trim().toLowerCase()}::${r.date_of_birth || ""}`;
+      const existing = map.get(key);
+      if (existing) { existing.report_count++; return; }
+      map.set(key, {
+        id: r.id, player_name: r.player_name, position: r.position, age: r.age,
+        current_club: r.current_club, nationality: r.nationality, date_of_birth: r.date_of_birth,
+        source: "scouting", profile_image_url: r.profile_image_url, club_logo_url: r.club_logo_url,
+        report_count: 1,
+      });
+    });
+    youth.forEach((r: any) => {
+      const key = `${(r.player_name || "").trim().toLowerCase()}::${r.date_of_birth || ""}`;
+      if (map.has(key)) return;
+      map.set(key, {
+        id: r.id, player_name: r.player_name, position: r.position, age: r.age,
+        current_club: r.current_club, nationality: r.nationality, date_of_birth: r.date_of_birth,
+        source: "youth_outreach", profile_image_url: r.profile_image_url || null, club_logo_url: null,
+        report_count: 0,
+      });
+    });
+    pro.forEach((r: any) => {
+      const key = `${(r.player_name || "").trim().toLowerCase()}::${r.date_of_birth || ""}`;
+      if (map.has(key)) return;
+      map.set(key, {
+        id: r.id, player_name: r.player_name, position: r.position, age: r.age,
+        current_club: r.current_club, nationality: r.nationality, date_of_birth: r.date_of_birth,
+        source: "pro_outreach", profile_image_url: r.profile_image_url || null, club_logo_url: null,
+        report_count: 0,
+      });
+    });
+    return Array.from(map.values());
+  }, [scouting, youth, pro]);
+
+  const filtered = combined.filter(p => {
+    if (src !== "all" && p.source !== src) return false;
+    if (!q) return true;
+    const Q = q.toLowerCase();
+    return (p.player_name || "").toLowerCase().includes(Q) ||
+      (p.current_club || "").toLowerCase().includes(Q) ||
+      (p.nationality || "").toLowerCase().includes(Q) ||
+      (p.position || "").toLowerCase().includes(Q);
+  }).sort((a, b) => (a.player_name || "").localeCompare(b.player_name || ""));
+
   return (
-    <SectionShell icon={Network} title={`Player Database (${filtered.length})`} action={
+    <SectionShell icon={Network} title={`Player Database (${filtered.length} of ${combined.length})`} action={
       <div className="flex items-center gap-2">
-        <Search className="w-4 h-4 text-muted-foreground" />
+        <Select value={src} onValueChange={setSrc}>
+          <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sources</SelectItem>
+            <SelectItem value="scouting">Scouting</SelectItem>
+            <SelectItem value="youth_outreach">Youth Outreach</SelectItem>
+            <SelectItem value="pro_outreach">Pro Outreach</SelectItem>
+          </SelectContent>
+        </Select>
         <Input placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} className="h-8 w-48" />
       </div>
     }>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {filtered.map(p => <PlayerCard key={p.id} p={p} />)}
+      <div className="rounded border border-border/40 overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
+          <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
+            <tr>
+              <th className="text-left px-3 py-2 w-12"></th>
+              <th className="text-left px-3 py-2">Name</th>
+              <th className="text-left px-3 py-2">Nationality</th>
+              <th className="text-left px-3 py-2">Position</th>
+              <th className="text-left px-3 py-2">Age</th>
+              <th className="text-left px-3 py-2">Club</th>
+              <th className="text-left px-3 py-2">Source</th>
+              <th className="text-right px-3 py-2">Reports</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/40">
+            {filtered.slice(0, 500).map(p => (
+              <tr key={`${p.source}-${p.id}`} className="hover:bg-muted/20">
+                <td className="px-3 py-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={p.profile_image_url || undefined} className="object-cover" />
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{(p.player_name || "?")[0]}</AvatarFallback>
+                  </Avatar>
+                </td>
+                <td className="px-3 py-2 font-medium">{p.player_name}</td>
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-1.5">
+                    {p.nationality && <img src={getCountryFlagUrl(p.nationality)} alt="" className="w-4 h-3 rounded-sm" />}
+                    <span className="text-xs text-muted-foreground">{p.nationality || "—"}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2 text-xs">{p.position || "—"}</td>
+                <td className="px-3 py-2 text-xs">{p.age ?? "—"}</td>
+                <td className="px-3 py-2 text-xs truncate max-w-[200px]">{p.current_club || "—"}</td>
+                <td className="px-3 py-2">
+                  <Badge variant="outline" className="text-[9px] capitalize">{p.source.replace("_", " ")}</Badge>
+                </td>
+                <td className="px-3 py-2 text-right text-xs">{p.report_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length > 500 && (
+          <div className="text-[10px] text-muted-foreground px-3 py-2 text-center">Showing first 500 of {filtered.length}. Refine search to narrow.</div>
+        )}
       </div>
     </SectionShell>
   );
 };
 
-const Overview = ({ players, contracts, tasks, staffActivity, spending, prospects, setActive }: {
+const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, setActive }: {
   players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
-  spending: SpendingRow[]; prospects: ProspectRow[]; setActive: (s: SectionId) => void;
+  taskNotifications: NotificationRow[]; spending: SpendingRow[]; prospects: ProspectRow[]; invoices: InvoiceRow[];
+  profiles: ProfileRow[]; setActive: (s: SectionId) => void;
 }) => {
   const represented = players.filter(p => p.representation_status === "represented").length;
   const mandated = players.filter(p => p.representation_status === "mandated").length;
   const commission = players
     .filter(p => p.representation_status === "represented" || p.representation_status === "mandated")
     .reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const last12Cutoff = new Date(); last12Cutoff.setFullYear(last12Cutoff.getFullYear() - 1);
+  const realRevenue = invoices.filter(i => new Date(i.invoice_date) >= last12Cutoff).reduce((s, i) => s + Number(i.amount_paid || 0), 0);
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthlySpend = spending.filter(s => s.spend_date.startsWith(thisMonth)).reduce((s, r) => s + Number(r.amount_gbp), 0);
   const activeTasks = tasks.filter(t => !t.completed).length;
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <button onClick={() => setActive("commission")} className="text-left"><Stat label="Annual Commission" value={gbp(commission)} sub={`${represented + mandated} live players`} /></button>
-        <button onClick={() => setActive("represented")} className="text-left"><Stat label="Represented" value={String(represented)} sub="Active mandates" /></button>
+        <button onClick={() => setActive("commission")} className="text-left"><Stat label="Real Revenue (12mo)" value={gbp(realRevenue)} sub={`Forecast: ${gbp(commission)}/yr`} /></button>
+        <button onClick={() => setActive("represented")} className="text-left"><Stat label="Represented" value={String(represented)} sub={`${mandated} mandated`} /></button>
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <button onClick={() => setActive("tasks")} className="text-left">
           <SectionShell icon={CheckSquare} title={`Live Tasks (${activeTasks})`}>
-            <div className="text-sm text-muted-foreground">Click to view all staff tasks currently in progress.</div>
+            <div className="text-sm text-muted-foreground">Click to view the live My Tasks board with staff slider and recent completions.</div>
           </SectionShell>
         </button>
         <button onClick={() => setActive("contracts")} className="text-left">
@@ -670,27 +1035,31 @@ const Overview = ({ players, contracts, tasks, staffActivity, spending, prospect
           </SectionShell>
         </button>
       </div>
-      <SectionShell icon={Activity} title="Recent Activity">
-        <div className="space-y-1.5">
-          {staffActivity.slice(0, 8).map(e => (
-            <div key={e.id} className="flex items-center gap-3 text-sm">
-              <span className="text-xs text-muted-foreground w-28 shrink-0">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</span>
-              <Badge variant="outline" className="text-[10px]">{e.action}</Badge>
-              <span className="text-muted-foreground truncate">{e.entity_type}</span>
-              <span className="truncate flex-1">{e.entity_name || "—"}</span>
-            </div>
-          ))}
-          {staffActivity.length === 0 && <div className="text-sm text-muted-foreground text-center py-4">No activity yet.</div>}
-        </div>
-      </SectionShell>
+      <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
   );
 };
 
+// ---------- Category grid (when category open, no section selected) ----------
+const CategoryGrid = ({ category, onSelect }: { category: CategoryDef; onSelect: (s: SectionId) => void }) => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    {category.sections.map(s => {
+      const Icon = s.icon;
+      return (
+        <button key={s.id} onClick={() => onSelect(s.id)}
+          className="group rounded-xl border border-border/60 bg-card/40 hover:border-primary/60 hover:bg-primary/5 p-5 transition-all text-left">
+          <Icon className="w-6 h-6 text-primary mb-2" />
+          <div className="font-bbh uppercase tracking-wide text-sm">{s.title}</div>
+        </button>
+      );
+    })}
+  </div>
+);
+
 // ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
-  const [active, setActive] = useState<SectionId>("overview");
+  const [active, setActive] = useState<SectionId | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -699,12 +1068,14 @@ const InvestorsPortal = () => {
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
     staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
     overviewSections: OverviewSectionData[]; overviewCards: OverviewCardData[];
+    invoices: InvoiceRow[]; taskNotifications: NotificationRow[];
+    scoutingReports: any[]; outreachYouth: any[]; outreachPro: any[];
+    profiles: ProfileRow[];
     isAdmin: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
-  // Auto-lock on every load/refresh
   useEffect(() => { setUnlocked(false); }, [user?.id]);
 
   useEffect(() => {
@@ -716,6 +1087,11 @@ const InvestorsPortal = () => {
   }, []);
 
   useEffect(() => { if (isMobile) setSidebarCollapsed(true); }, [isMobile]);
+
+  // Default landing: overview
+  useEffect(() => {
+    if (token && active === null) { setActive("overview"); setExpandedCategory("dash"); }
+  }, [token, active]);
 
   const refresh = async () => {
     if (!token) return;
@@ -734,6 +1110,12 @@ const InvestorsPortal = () => {
           metrics: Array.isArray(c.metrics) ? c.metrics : [],
           tags: Array.isArray(c.tags) ? c.tags : [],
         })),
+        invoices: dd.invoices || [],
+        taskNotifications: dd.taskNotifications || [],
+        scoutingReports: dd.scoutingReports || [],
+        outreachYouth: dd.outreachYouth || [],
+        outreachPro: dd.outreachPro || [],
+        profiles: dd.profiles || [],
         isAdmin: !!dd.user?.is_admin,
       });
     } catch (e: any) {
@@ -752,6 +1134,18 @@ const InvestorsPortal = () => {
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
+  const saveCommission = async (player_id: string, expected_commission_annual: number | null) => {
+    try {
+      const { data: r, error } = await supabase.functions.invoke("investor-write", {
+        body: { token, action: "updatePlayerCommission", payload: { player_id, expected_commission_annual } },
+      });
+      if (error) throw error;
+      if ((r as any)?.error) throw new Error((r as any).error);
+      toast.success("Commission updated");
+      await refresh();
+    } catch (e: any) { toast.error(e.message || "Save failed"); }
+  };
+
   const handleSignIn = async (u: string, p: string) => { await signIn(u, p); playChime(); };
 
   if (authLoading) return <div className="min-h-screen bg-background" />;
@@ -761,13 +1155,24 @@ const InvestorsPortal = () => {
     setActive(sid); setExpandedCategory(catId);
   };
 
+  const canEdit = unlocked && !!data?.isAdmin;
+
+  const activeCategory = CATEGORIES.find(c => c.sections.some(s => s.id === active));
+  const activeSectionDef = activeCategory?.sections.find(s => s.id === active);
+
+  const invoiceTotalsByPlayer = useMemo(() => {
+    const m: Record<string, number> = {};
+    (data?.invoices || []).forEach(i => { m[i.player_id] = (m[i.player_id] || 0) + Number(i.amount_paid || 0); });
+    return m;
+  }, [data?.invoices]);
+
   return (
     <div className="min-h-screen text-foreground relative">
       {/* Black marble background */}
       <div className="fixed inset-0 pointer-events-none -z-10"
         style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.25 }} />
 
-      {/* Header — mirrors staff */}
+      {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? "h-10" : ""}`}>
         <div className={`flex items-center ${headerCollapsed ? "h-10" : "h-16"} px-4 relative`}>
           <div
@@ -779,7 +1184,24 @@ const InvestorsPortal = () => {
           </div>
           {!headerCollapsed && (
             <>
+              {/* Left: active tab pill */}
+              <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4" style={{ maxWidth: "calc(50% - 60px)" }}>
+                {active && activeSectionDef && (() => {
+                  const TabIcon = activeSectionDef.icon;
+                  return (
+                    <button onClick={() => setActive(active)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border-2 border-primary text-primary bg-primary/10 shrink-0">
+                      <TabIcon className="w-3.5 h-3.5" />
+                      <span className="truncate max-w-[120px]">{activeSectionDef.title}</span>
+                    </button>
+                  );
+                })()}
+              </div>
+              {/* Right */}
               <div className="ml-auto flex items-center gap-2">
+                <Button variant="ghost" size="icon" title="Refresh" onClick={refresh} className="h-9 w-9">
+                  <Activity className="h-4 w-4" />
+                </Button>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full border border-border">
@@ -800,7 +1222,7 @@ const InvestorsPortal = () => {
 
       {/* Layout */}
       <div className="flex h-screen overflow-hidden">
-        {/* Sidebar — mirrors staff vertical icon nav */}
+        {/* Sidebar */}
         <aside className={`fixed ${headerCollapsed ? "top-10" : isMobile ? "top-14" : "top-16"} left-0 bottom-0 border-r border-border bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
           sidebarCollapsed ? "w-0 border-0 opacity-0 pointer-events-none" : isMobile ? "w-14" : "w-14 md:w-24"
         }`}>
@@ -815,8 +1237,19 @@ const InvestorsPortal = () => {
               <div key={cat.id} className="w-full">
                 <button
                   onClick={() => {
-                    if (single) { handleSectionClick(cat.sections[0].id, cat.id); }
-                    else setExpandedCategory(isExpanded ? null : cat.id);
+                    if (single) {
+                      // Toggle single-section categories
+                      if (active === cat.sections[0].id) { setActive(null); setExpandedCategory(null); }
+                      else handleSectionClick(cat.sections[0].id, cat.id);
+                    } else {
+                      // Multi-section: clicking an expanded category collapses it AND clears active section so user returns to dashboard
+                      if (isExpanded) {
+                        setExpandedCategory(null);
+                        setActive(null);
+                      } else {
+                        setExpandedCategory(cat.id);
+                      }
+                    }
                   }}
                   className={`group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
                     hasActive || isExpanded ? "bg-gradient-to-br from-primary/80 to-primary shadow-lg" : ""
@@ -837,7 +1270,10 @@ const InvestorsPortal = () => {
                         const isActive = active === s.id;
                         return (
                           <motion.div key={s.id} variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
-                            <button onClick={() => handleSectionClick(s.id, cat.id)}
+                            <button onClick={() => {
+                              // toggle off if clicking active section
+                              if (isActive) { setActive(null); } else { handleSectionClick(s.id, cat.id); }
+                            }}
                               className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
                                 isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10"
                               }`}>
@@ -858,6 +1294,18 @@ const InvestorsPortal = () => {
               </div>
             );
           })}
+
+          {/* Show "Back" inside sidebar when category is expanded */}
+          {expandedCategory && (
+            <button
+              onClick={() => { setExpandedCategory(null); setActive(null); }}
+              className="w-full mt-2 rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-muted/40 text-muted-foreground"
+              title="Back to all categories"
+            >
+              <ArrowLeft className="w-4 h-4 mb-0.5" />
+              <span className="text-[6px] uppercase tracking-tight">Back</span>
+            </button>
+          )}
         </aside>
 
         {/* Collapse toggle */}
@@ -871,11 +1319,42 @@ const InvestorsPortal = () => {
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
         } ${isMobile ? "pb-[70px]" : ""}`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
+            {/* Breadcrumb / back button */}
+            {active && activeCategory && activeSectionDef && (
+              <div className="flex items-center gap-2 text-sm mb-4">
+                <button onClick={() => { setActive(null); setExpandedCategory(activeCategory.id); }}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+                  <activeCategory.icon className="h-4 w-4" />
+                  <span className="font-medium">{activeCategory.title}</span>
+                </button>
+                <ChevronLeft className="h-3.5 w-3.5 rotate-180 text-muted-foreground/50" />
+                <span className="text-foreground font-medium">{activeSectionDef.title}</span>
+                <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => { setActive("overview"); setExpandedCategory("dash"); }}>
+                  <ArrowLeft className="w-3 h-3 mr-1" /> Dashboard
+                </Button>
+              </div>
+            )}
+
             {loading && !data ? (
               <div className="text-muted-foreground text-center py-12">Loading...</div>
-            ) : !data ? null : (
+            ) : !data ? null : !active && expandedCategory ? (
+              // Category picker page
+              (() => {
+                const cat = CATEGORIES.find(c => c.id === expandedCategory);
+                if (!cat) return null;
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <cat.icon className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-bbh uppercase tracking-wide">{cat.title}</h2>
+                    </div>
+                    <CategoryGrid category={cat} onSelect={(s) => handleSectionClick(s, cat.id)} />
+                  </div>
+                );
+              })()
+            ) : (
               <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} spending={data.spending} prospects={data.prospects} setActive={setActive} />}
+                {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={setActive} />}
                 {active === "investment" && (
                   <SectionShell icon={Sparkles} title="Investment Overview" action={
                     data.isAdmin ? (
@@ -884,32 +1363,27 @@ const InvestorsPortal = () => {
                       </span>
                     ) : undefined
                   }>
-                    <InvestmentOverview
-                      sections={data.overviewSections}
-                      cards={data.overviewCards}
-                      unlocked={unlocked && data.isAdmin}
-                      token={token}
-                      onRefresh={refresh}
-                    />
+                    <InvestmentOverview sections={data.overviewSections} cards={data.overviewCards} unlocked={canEdit} token={token} onRefresh={refresh} />
                   </SectionShell>
                 )}
-                {active === "represented" && <Roster players={data.players} status="represented" />}
-                {active === "mandated" && <Roster players={data.players} status="mandated" />}
-                {active === "previously" && <Roster players={data.players} status="previously_mandated" />}
+                {active === "represented" && <Roster players={data.players} status="represented" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
+                {active === "mandated" && <Roster players={data.players} status="mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
+                {active === "previously" && <Roster players={data.players} status="previously_mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
                 {active === "prospects" && <Prospects rows={data.prospects} />}
-                {active === "playerdatabase" && <PlayerDatabase players={data.players} />}
+                {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
                 {active === "contracts" && <ContractsView rows={data.contracts} />}
                 {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
-                {active === "commission" && <CommissionForecast players={data.players} />}
-                {active === "tasks" && <TasksView rows={data.tasks} />}
-                {active === "activity" && <ActivityFeed rows={data.staffActivity} />}
+                {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
+                {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
+                {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
+                {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
               </motion.div>
             )}
           </div>
         </main>
       </div>
 
-      {/* Hidden lock toggle (admin only) — bottom right, semi-hidden */}
+      {/* Hidden lock toggle (admin only) */}
       {data?.isAdmin && (
         <button
           onClick={() => setUnlocked(u => !u)}
@@ -919,7 +1393,7 @@ const InvestorsPortal = () => {
           {unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
         </button>
       )}
-      {unlocked && data?.isAdmin && (
+      {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
       )}
     </div>
