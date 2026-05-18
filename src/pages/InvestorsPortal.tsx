@@ -1417,9 +1417,6 @@ const InvestorsPortal = () => {
                   onClick={() => {
                     if (isSingleSection) {
                       handleSectionClick(cat.sections[0].id, cat.id);
-                    } else if (hasActive && isExpanded) {
-                      setActive(null);
-                      setExpandedCategory(cat.id);
                     } else {
                       setExpandedCategory(isExpanded ? null : cat.id);
                     }
@@ -1434,21 +1431,14 @@ const InvestorsPortal = () => {
                   </span>
                 </button>
 
-                <AnimatePresence>
-                  {isExpanded && !isSingleSection && (
-                    <motion.div
-                      className="w-full space-y-1 mt-2 pb-16"
-                      initial="hidden"
-                      animate="show"
-                      exit="hidden"
-                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                    >
-                      {cat.sections.map(s => {
+                {isExpanded && !isSingleSection && (
+                  <div className="w-full space-y-1 mt-2 pb-16">
+                    {cat.sections.map(s => {
                         const SIcon = s.icon;
                         const isActive = active === s.id;
                         return (
-                          <motion.div key={s.id} variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
-                            <button
+                          <button
+                            key={s.id}
                               onClick={() => handleSectionClick(s.id, cat.id)}
                               className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
                                 isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10"
@@ -1458,13 +1448,11 @@ const InvestorsPortal = () => {
                               <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`}>
                                 {s.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
                               </span>
-                            </button>
-                          </motion.div>
+                          </button>
                         );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    })}
+                  </div>
+                )}
 
                 {idx < CATEGORIES.length - 1 && (
                   <div className="w-full px-2 py-2"><div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" /></div>
