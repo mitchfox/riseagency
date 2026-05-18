@@ -284,7 +284,7 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
     <div className="relative px-5 py-3 flex items-center justify-between bg-card/60 backdrop-blur-sm">
       <div className="flex items-center gap-2.5">
         <Icon className="w-4 h-4 text-primary" />
-        <h2 className="font-bbh uppercase tracking-wide text-sm">{title}</h2>
+          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
       </div>
       {action}
     </div>
