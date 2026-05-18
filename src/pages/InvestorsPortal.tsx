@@ -305,37 +305,199 @@ const SectionHeader = ({ title, action }: { title: string; action?: React.ReactN
   </div>
 );
 
-const OverviewSection = ({ data }: { data: any }) => {
+const OverviewSection = ({ data, setActive }: { data: any; setActive: (s: SectionId) => void }) => {
   const now = new Date();
   const thisMonth = now.toISOString().slice(0, 7);
   const monthlySpend = (data.spending as SpendingRow[])
     .filter((s) => s.spend_date.startsWith(thisMonth))
     .reduce((sum, s) => sum + Number(s.amount_gbp), 0);
-  const activePlayers = (data.pipeline as PipelineRow[]).filter((p) => p.status === "active" || p.status === "mandate").length;
-  const activeMandates = (data.pipeline as PipelineRow[]).filter((p) => p.status === "mandate").length;
+  const players = (data.players as PlayerRow[]) || [];
+  const represented = players.filter((p) => p.representation_status === "represented").length;
+  const mandated = players.filter((p) => p.representation_status === "mandated").length;
+  const tasks = (data.tasks as TaskRow[]) || [];
+  const tasksDone = tasks.filter((t) => t.completed).length;
+  const taskPct = tasks.length ? Math.round((tasksDone / tasks.length) * 100) : 0;
+  const contracts = (data.contracts as ContractRow[]) || [];
+  const contractsSigned = contracts.filter((c) => !!c.owner_signed_at || !!c.locked_at).length;
   const recentActivity = (data.activity as ActivityRow[]).slice(0, 5);
 
   return (
     <div>
       <SectionHeader title="Overview" />
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Stat label="This month" value={gbp(monthlySpend)} sub="Total spend" />
-        <Stat label="Active players" value={String(activePlayers)} />
-        <Stat label="Mandates" value={String(activeMandates)} />
-        <Stat label="Pipeline" value={String(data.pipeline.length)} sub="Total tracked" />
+        <Stat label="Represented" value={String(represented)} sub="Active players" />
+        <Stat label="Mandated" value={String(mandated)} sub="Live mandates" />
+        <Stat label="Tasks" value={`${taskPct}%`} sub={`${tasksDone} of ${tasks.length} completed`} />
       </div>
-      <Card className="bg-white/[0.03] border-white/5 p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-4">Recent activity</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <button onClick={() => setActive("roster")} className="text-left">
+          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
+            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><UserCheck className="w-4 h-4" />Roster</div>
+            <div className="text-2xl font-bbh mt-2">{players.length}</div>
+            <div className="text-xs text-foreground/50 mt-1">Players linked from staff system</div>
+          </Card>
+        </button>
+        <button onClick={() => setActive("contracts")} className="text-left">
+          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
+            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><FileSignature className="w-4 h-4" />Contracts</div>
+            <div className="text-2xl font-bbh mt-2">{contractsSigned} / {contracts.length}</div>
+            <div className="text-xs text-foreground/50 mt-1">Signed or locked</div>
+          </Card>
+        </button>
+        <button onClick={() => setActive("tasks")} className="text-left">
+          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
+            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><CheckSquare className="w-4 h-4" />Task Completion</div>
+            <div className="text-2xl font-bbh mt-2">{tasksDone} / {tasks.length}</div>
+            <div className="text-xs text-foreground/50 mt-1">Across all categories</div>
+          </Card>
+        </button>
+      </div>
+      <Card className="bg-card/60 border-primary/15 p-6">
+        <h2 className="text-sm font-bbh uppercase tracking-wider text-primary mb-4">Recent activity</h2>
         {recentActivity.length === 0 ? (
-          <p className="text-sm text-white/40">No activity logged yet.</p>
+          <p className="text-sm text-foreground/40">No activity logged yet.</p>
         ) : (
           <div className="space-y-3">
             {recentActivity.map((a) => (
               <div key={a.id} className="flex items-start gap-4 text-sm">
-                <div className="text-white/40 w-24 shrink-0">{format(new Date(a.occurred_at), "d MMM HH:mm")}</div>
-                <Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332]">{a.category}</Badge>
-                <div className="text-white/70 flex-1">{a.description}</div>
-                <div className="text-white/40 text-xs">{a.person}</div>
+                <div className="text-foreground/40 w-24 shrink-0">{format(new Date(a.occurred_at), "d MMM HH:mm")}</div>
+                <Badge variant="outline" className="border-primary/40 text-primary">{a.category}</Badge>
+                <div className="text-foreground/70 flex-1">{a.description}</div>
+                <div className="text-foreground/40 text-xs">{a.person}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+const ageFromDob = (dob: string | null) => {
+  if (!dob) return null;
+  const d = new Date(dob);
+  const diff = Date.now() - d.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+};
+
+const InvestmentSection = () => (
+  <div>
+    <SectionHeader title="Investment Overview" />
+    <p className="text-sm text-foreground/55 mb-6 max-w-2xl">
+      A guided walkthrough of how RISE operates, how capital is deployed, and how returns are structured. Tap any card to expand.
+    </p>
+    <InvestmentOverview />
+  </div>
+);
+
+const RosterSection = ({ rows }: { rows: PlayerRow[] }) => {
+  const groups: Array<{ key: string; label: string }> = [
+    { key: "represented", label: "Represented" },
+    { key: "mandated", label: "Mandated" },
+    { key: "previously_mandated", label: "Previously Mandated" },
+  ];
+  return (
+    <div>
+      <SectionHeader title="Roster" />
+      <p className="text-sm text-foreground/55 mb-6">Live data from the staff system. Represented, mandated and previously mandated players.</p>
+      {groups.map((g) => {
+        const players = rows.filter((p) => p.representation_status === g.key);
+        if (!players.length) return null;
+        return (
+          <div key={g.key} className="mb-8">
+            <div className="flex items-center gap-3 mb-3">
+              <h2 className="font-bbh uppercase tracking-wide text-primary text-sm">{g.label}</h2>
+              <div className="h-px flex-1 bg-primary/15" />
+              <span className="text-xs text-foreground/40">{players.length}</span>
+            </div>
+            <Card className="bg-card/60 border-primary/15 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-primary/5 text-primary/70 text-[10px] uppercase tracking-wider font-bbh">
+                  <tr>
+                    <th className="px-5 py-3 text-left">Name</th>
+                    <th className="px-5 py-3 text-left">Position</th>
+                    <th className="px-5 py-3 text-left">Nationality</th>
+                    <th className="px-5 py-3 text-left">Age</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/10">
+                  {players.map((p) => (
+                    <tr key={p.id} className="hover:bg-primary/5">
+                      <td className="px-5 py-3 font-medium">{p.name}</td>
+                      <td className="px-5 py-3 text-foreground/60">{p.position || "—"}</td>
+                      <td className="px-5 py-3 text-foreground/60">{p.nationality || "—"}</td>
+                      <td className="px-5 py-3 text-foreground/60">{ageFromDob(p.date_of_birth) ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </div>
+        );
+      })}
+      {rows.length === 0 && <Card className="bg-card/60 border-primary/15 p-8 text-center text-foreground/40">No players linked yet.</Card>}
+    </div>
+  );
+};
+
+const ContractsSection = ({ rows }: { rows: ContractRow[] }) => {
+  return (
+    <div>
+      <SectionHeader title="Contracts" />
+      <p className="text-sm text-foreground/55 mb-6">Signature contracts from the staff system. Status reflects whether a contract has been signed or locked.</p>
+      <Card className="bg-card/60 border-primary/15 overflow-hidden">
+        {rows.length === 0 ? (
+          <div className="p-8 text-center text-foreground/40">No contracts yet.</div>
+        ) : (
+          <div className="divide-y divide-primary/10">
+            {rows.map((c) => {
+              const signed = !!c.owner_signed_at || !!c.locked_at;
+              return (
+                <div key={c.id} className="flex items-center gap-4 px-5 py-3 text-sm">
+                  <FileSignature className="w-4 h-4 text-primary/70" />
+                  <div className="flex-1 truncate">
+                    <div className="font-medium">{c.title || "Untitled contract"}</div>
+                    <div className="text-xs text-foreground/40">Updated {format(new Date(c.updated_at), "d MMM yyyy")}</div>
+                  </div>
+                  <Badge variant="outline" className={signed ? "border-primary/60 text-primary" : "border-foreground/20 text-foreground/50"}>
+                    {signed ? "Signed / Locked" : c.status || "Draft"}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+const TasksSection = ({ rows }: { rows: TaskRow[] }) => {
+  const done = rows.filter((t) => t.completed);
+  const open = rows.filter((t) => !t.completed);
+  const pct = rows.length ? Math.round((done.length / rows.length) * 100) : 0;
+  return (
+    <div>
+      <SectionHeader title="Task Completion" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Stat label="Completion" value={`${pct}%`} sub={`${done.length} of ${rows.length}`} />
+        <Stat label="Completed" value={String(done.length)} />
+        <Stat label="Outstanding" value={String(open.length)} />
+      </div>
+      <Card className="bg-card/60 border-primary/15 overflow-hidden">
+        {rows.length === 0 ? (
+          <div className="p-8 text-center text-foreground/40">No tasks yet.</div>
+        ) : (
+          <div className="divide-y divide-primary/10 max-h-[60vh] overflow-y-auto">
+            {rows.slice(0, 200).map((t) => (
+              <div key={t.id} className="flex items-center gap-4 px-5 py-3 text-sm">
+                <CheckSquare className={`w-4 h-4 ${t.completed ? "text-primary" : "text-foreground/30"}`} />
+                <div className="flex-1 truncate">
+                  <div className={t.completed ? "line-through text-foreground/50" : "text-foreground/80"}>{t.title}</div>
+                  {t.category && <div className="text-xs text-foreground/40">{t.category}</div>}
+                </div>
+                {t.deadline && <div className="text-xs text-foreground/40">{format(new Date(t.deadline), "d MMM")}</div>}
               </div>
             ))}
           </div>
