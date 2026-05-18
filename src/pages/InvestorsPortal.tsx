@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInvestorSession } from "@/hooks/useInvestorSession";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,15 @@ import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
-  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check, Menu, HelpCircle,
+  ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
+import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
@@ -587,6 +588,42 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
   );
 };
 
+const InvestorNotificationsDropdown = ({ notifications }: { notifications: NotificationRow[] }) => {
+  const recent = [...notifications].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 20);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative" title="Notifications">
+          <Bell className="h-4 w-4" />
+          {recent.length > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="border-b border-border px-3 py-2">
+          <p className="text-sm font-semibold">Notifications</p>
+          <p className="text-xs text-muted-foreground">Latest staff activity and task updates</p>
+        </div>
+        <div className="max-h-96 overflow-y-auto scrollbar-thin divide-y divide-border/40">
+          {recent.length === 0 ? (
+            <div className="p-4 text-sm text-muted-foreground">No recent notifications.</div>
+          ) : recent.map((n) => (
+            <div key={n.id} className="p-3 hover:bg-muted/30 transition-colors">
+              <div className="flex items-start gap-2">
+                <Activity className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-snug text-foreground">{n.title || n.event_type.replace(/_/g, " ")}</p>
+                  {n.body && <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{n.body}</p>}
+                  <p className="text-[10px] text-muted-foreground mt-1">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
   const [category, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -1053,22 +1090,6 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   );
 };
 
-// ---------- Category grid (when category open, no section selected) ----------
-const CategoryGrid = ({ category, onSelect }: { category: CategoryDef; onSelect: (s: SectionId) => void }) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-    {category.sections.map(s => {
-      const Icon = s.icon;
-      return (
-        <button key={s.id} onClick={() => onSelect(s.id)}
-          className="group rounded-xl border border-border/60 bg-card/40 hover:border-primary/60 hover:bg-primary/5 p-5 transition-all text-left">
-          <Icon className="w-6 h-6 text-primary mb-2" />
-          <div className="font-bbh uppercase tracking-wide text-sm">{s.title}</div>
-        </button>
-      );
-    })}
-  </div>
-);
-
 // ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
@@ -1076,7 +1097,10 @@ const InvestorsPortal = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
+  const [openTabs, setOpenTabs] = useState<SectionId[]>(() => {
+    try { return JSON.parse(localStorage.getItem("investor_open_tabs") || "[]"); } catch { return []; }
+  });
   const isMobile = useIsMobile();
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
@@ -1089,8 +1113,9 @@ const InvestorsPortal = () => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  const initialisedSessionRef = useRef(false);
 
-  useEffect(() => { setUnlocked(false); }, [user?.id]);
+  useEffect(() => { initialisedSessionRef.current = false; setUnlocked(false); }, [user?.id]);
 
   useEffect(() => {
     document.title = "RISE Investor Portal";
@@ -1102,10 +1127,18 @@ const InvestorsPortal = () => {
 
   useEffect(() => { if (isMobile) setSidebarCollapsed(true); }, [isMobile]);
 
-  // Default landing: overview
+  // Default landing: overview, but only once so staff-style category back navigation can leave the active section.
   useEffect(() => {
-    if (token && active === null) { setActive("overview"); setExpandedCategory("dash"); }
-  }, [token, active]);
+    if (!token || initialisedSessionRef.current) return;
+    initialisedSessionRef.current = true;
+    setActive(prev => prev ?? "overview");
+    setExpandedCategory(prev => prev ?? "dash");
+    setOpenTabs(prev => {
+      const next: SectionId[] = prev.includes("overview") ? prev : (["overview", ...prev].slice(0, 12) as SectionId[]);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      return next;
+    });
+  }, [token]);
 
   const refresh = async () => {
     if (!token) return;
@@ -1165,6 +1198,7 @@ const InvestorsPortal = () => {
 
   const activeCategory = CATEGORIES.find(c => c.sections.some(s => s.id === active));
   const activeSectionDef = activeCategory?.sections.find(s => s.id === active);
+  const allSections = CATEGORIES.flatMap(c => c.sections.map(s => ({ ...s, categoryId: c.id })));
 
   const invoiceTotalsByPlayer = useMemo(() => {
     const m: Record<string, number> = {};
@@ -1172,12 +1206,34 @@ const InvestorsPortal = () => {
     return m;
   }, [data?.invoices]);
 
+  const handleSectionClick = (sid: SectionId, catId: string) => {
+    playChime();
+    setActive(sid);
+    setExpandedCategory(catId);
+    setOpenTabs(prev => {
+      const next = prev.includes(sid) ? prev : [...prev, sid].slice(-12);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const removeTab = (sid: SectionId) => {
+    setOpenTabs(prev => {
+      const next = prev.filter(t => t !== sid);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      if (active === sid) {
+        const fallback = next[next.length - 1] || "overview";
+        const parent = CATEGORIES.find(c => c.sections.some(s => s.id === fallback));
+        setActive(fallback);
+        setExpandedCategory(parent?.id || null);
+      }
+      return next;
+    });
+  };
+
   if (authLoading) return <div className="min-h-screen bg-background" />;
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
-
-  const handleSectionClick = (sid: SectionId, catId: string) => {
-    setActive(sid); setExpandedCategory(catId);
-  };
 
   return (
     <div className="min-h-screen text-foreground relative">
@@ -1190,31 +1246,69 @@ const InvestorsPortal = () => {
         <div className={`flex items-center ${headerCollapsed ? "h-10" : "h-16"} px-4 relative`}>
           <div
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
-            onClick={() => setHeaderCollapsed(p => !p)}
+            onClick={() => setHeaderCollapsed(prev => !prev)}
             title={headerCollapsed ? "Show header" : "Hide header"}
           >
             <img src="/RISEWhite.png" alt="RISE" className={`${headerCollapsed ? "h-6" : "h-9"} w-auto transition-all duration-200`} />
           </div>
+
           {!headerCollapsed && (
             <>
-              {/* Left: active tab pill */}
               <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4" style={{ maxWidth: "calc(50% - 60px)" }}>
-                {active && activeSectionDef && (() => {
-                  const TabIcon = activeSectionDef.icon;
+                {(openTabs.length ? openTabs : active ? [active] : []).slice(0, isMobile ? 2 : 3).map((tabId) => {
+                  const section = allSections.find(s => s.id === tabId);
+                  if (!section) return null;
+                  const TabIcon = section.icon;
+                  const isActive = active === tabId;
                   return (
-                    <button onClick={() => setActive(active)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border-2 border-primary text-primary bg-primary/10 shrink-0">
-                      <TabIcon className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[120px]">{activeSectionDef.title}</span>
+                    <button
+                      key={tabId}
+                      onClick={() => handleSectionClick(tabId, section.categoryId)}
+                      className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 ${
+                        isActive
+                          ? "border-primary text-primary bg-primary/10"
+                          : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                      {!isMobile && <span className="truncate max-w-[90px]">{section.title}</span>}
+                      {openTabs.length >= 2 && (
+                        <span
+                          className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                        >
+                          ×
+                        </span>
+                      )}
                     </button>
                   );
-                })()}
+                })}
+                <button
+                  className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
+                  onClick={() => setSectionPickerOpen(true)}
+                  title="Open new tab"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
               </div>
-              {/* Right */}
-              <div className="ml-auto flex items-center gap-2">
-                <Button variant="ghost" size="icon" title="Refresh" onClick={refresh} className="h-9 w-9">
-                  <Activity className="h-4 w-4" />
+
+              <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <Button variant="ghost" size="icon" title="Refresh" onClick={refresh}>
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
+                {data && <InvestorNotificationsDropdown notifications={data.taskNotifications} />}
+                {data?.isAdmin && (
+                  <Button
+                    variant={unlocked ? "default" : "outline"}
+                    size="sm"
+                    className="h-9 shrink-0"
+                    onClick={() => setUnlocked(u => !u)}
+                    title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
+                  >
+                    {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
+                    <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
+                  </Button>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full border border-border">
@@ -1233,39 +1327,67 @@ const InvestorsPortal = () => {
         </div>
       </header>
 
+      <Dialog open={sectionPickerOpen} onOpenChange={setSectionPickerOpen}>
+        <DialogContent className="overflow-hidden p-0 shadow-lg max-w-5xl w-[92vw] h-[80vh]">
+          <SectionGridPicker
+            categories={CATEGORIES}
+            onSelect={(sectionId, categoryId) => {
+              handleSectionClick(sectionId as SectionId, categoryId);
+              setSectionPickerOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Layout */}
       <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar Collapse Toggle Button */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className={`fixed ${isMobile ? "top-16" : "top-20"} left-2 z-20 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg hover:bg-background transition-all duration-300 ${
+            sidebarCollapsed ? "opacity-50 hover:opacity-100" : ""
+          }`}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+
+        {/* Left Sidebar */}
         <aside className={`fixed ${headerCollapsed ? "top-10" : isMobile ? "top-14" : "top-16"} left-0 bottom-0 border-r border-border bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
           sidebarCollapsed ? "w-0 border-0 opacity-0 pointer-events-none" : isMobile ? "w-14" : "w-14 md:w-24"
         }`}>
+          <button
+            onClick={() => setSectionPickerOpen(true)}
+            className="group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20"
+            title="Search sections"
+          >
+            <div className="p-1.5 md:p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
+              <Search className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+            </div>
+          </button>
+
           {CATEGORIES.map((cat, idx) => {
             const CatIcon = cat.icon;
             const isExpanded = expandedCategory === cat.id;
             const hasActive = cat.sections.some(s => s.id === active);
-            const single = cat.sections.length === 1;
+            const isSingleSection = cat.sections.length === 1;
             const shouldShow = !expandedCategory || expandedCategory === cat.id;
             if (!shouldShow) return null;
             return (
               <div key={cat.id} className="w-full">
                 <button
                   onClick={() => {
-                    if (single) {
-                      // Toggle single-section categories
-                      if (active === cat.sections[0].id) { setActive(null); setExpandedCategory(null); }
-                      else handleSectionClick(cat.sections[0].id, cat.id);
+                    if (isSingleSection) {
+                      handleSectionClick(cat.sections[0].id, cat.id);
+                    } else if (hasActive && isExpanded) {
+                      setActive(null);
+                      setExpandedCategory(cat.id);
                     } else {
-                      // Multi-section: clicking an expanded category collapses it AND clears active section so user returns to dashboard
-                      if (isExpanded) {
-                        setExpandedCategory(null);
-                        setActive(null);
-                      } else {
-                        setExpandedCategory(cat.id);
-                      }
+                      setExpandedCategory(isExpanded ? null : cat.id);
                     }
                   }}
-                  className={`group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
-                    hasActive || isExpanded ? "bg-gradient-to-br from-primary/80 to-primary shadow-lg" : ""
+                  className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
+                    hasActive || isExpanded ? "bg-gradient-to-br from-primary via-primary to-primary shadow-lg" : ""
                   }`}
                 >
                   <CatIcon className={`w-5 h-5 md:w-6 md:h-6 mb-0.5 md:mb-1 ${hasActive || isExpanded ? "text-primary-foreground" : ""}`} />
@@ -1273,23 +1395,27 @@ const InvestorsPortal = () => {
                     {cat.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
                   </span>
                 </button>
+
                 <AnimatePresence>
-                  {isExpanded && !single && (
-                    <motion.div className="w-full space-y-1 mt-2 pb-4"
-                      initial="hidden" animate="show" exit="hidden"
-                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}>
+                  {isExpanded && !isSingleSection && (
+                    <motion.div
+                      className="w-full space-y-1 mt-2 pb-16"
+                      initial="hidden"
+                      animate="show"
+                      exit="hidden"
+                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+                    >
                       {cat.sections.map(s => {
                         const SIcon = s.icon;
                         const isActive = active === s.id;
                         return (
                           <motion.div key={s.id} variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
-                            <button onClick={() => {
-                              // toggle off if clicking active section
-                              if (isActive) { setActive(null); } else { handleSectionClick(s.id, cat.id); }
-                            }}
+                            <button
+                              onClick={() => handleSectionClick(s.id, cat.id)}
                               className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
                                 isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10"
-                              }`}>
+                              }`}
+                            >
                               <SIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? "text-primary-foreground" : ""}`} />
                               <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`}>
                                 {s.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
@@ -1301,6 +1427,7 @@ const InvestorsPortal = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
                 {idx < CATEGORIES.length - 1 && (
                   <div className="w-full px-2 py-2"><div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" /></div>
                 )}
@@ -1309,140 +1436,81 @@ const InvestorsPortal = () => {
           })}
         </aside>
 
-        {/* Collapse toggle */}
-        <button onClick={() => setSidebarCollapsed(c => !c)}
-          className={`fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 text-primary px-1 py-3 rounded-r ${sidebarCollapsed ? "" : isMobile ? "ml-14" : "ml-14 md:ml-24"}`}>
-          {sidebarCollapsed ? "›" : "‹"}
-        </button>
-
-        {/* Main */}
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
+        {/* Main Content Area */}
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
-        } pb-[80px]`}>
+        } ${isMobile ? "pb-[70px]" : ""}`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
-            {/* Breadcrumb / back button */}
-            {active && activeCategory && activeSectionDef && (
-              <div className="flex items-center gap-2 text-sm mb-4">
-                <button onClick={() => { setActive(null); setExpandedCategory(activeCategory.id); }}
-                  className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-                  <activeCategory.icon className="h-4 w-4" />
-                  <span className="font-medium">{activeCategory.title}</span>
-                </button>
-                <ChevronLeft className="h-3.5 w-3.5 rotate-180 text-muted-foreground/50" />
-                <span className="text-foreground font-medium">{activeSectionDef.title}</span>
-              </div>
-            )}
-
             {loading && !data ? (
               <div className="text-muted-foreground text-center py-12">Loading...</div>
-            ) : !data ? null : !active && expandedCategory ? (
-              // Category picker page
+            ) : !data ? null : active ? (
+              <>
+                {activeCategory && activeSectionDef && (
+                  <StaffBreadcrumb
+                    categoryTitle={activeCategory.title}
+                    categoryIcon={activeCategory.icon}
+                    sectionTitle={activeSectionDef.title}
+                    onCategoryClick={() => {
+                      setExpandedCategory(activeCategory.id);
+                      setActive(null);
+                    }}
+                  />
+                )}
+                <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={(section) => {
+                    const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
+                    handleSectionClick(section, parent?.id || "dash");
+                  }} />}
+                  {active === "investment" && (
+                    <SectionShell icon={Sparkles} title="Investment Overview" action={
+                      data.isAdmin ? (
+                        <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                          {unlocked ? "Edit mode" : "Read-only"}
+                        </span>
+                      ) : undefined
+                    }>
+                      <InvestmentOverview sections={data.overviewSections} cards={data.overviewCards} unlocked={canEdit} token={token} onRefresh={refresh} />
+                    </SectionShell>
+                  )}
+                  {active === "represented" && <Roster players={data.players} status="represented" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
+                  {active === "mandated" && <Roster players={data.players} status="mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
+                  {active === "previously" && <Roster players={data.players} status="previously_mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
+                  {active === "prospects" && <Prospects rows={data.prospects} />}
+                  {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
+                  {active === "contracts" && <ContractsView rows={data.contracts} />}
+                  {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
+                  {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
+                  {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
+                  {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
+                  {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
+                </motion.div>
+              </>
+            ) : expandedCategory ? (
               (() => {
                 const cat = CATEGORIES.find(c => c.id === expandedCategory);
                 if (!cat) return null;
+                const CatIcon = cat.icon;
                 return (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <cat.icon className="h-5 w-5 text-primary" />
-                      <h2 className="text-lg font-bbh uppercase tracking-wide">{cat.title}</h2>
+                  <>
+                    <div className="flex items-center gap-2 mb-4">
+                      <CatIcon className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-semibold">{cat.title}</h2>
                     </div>
-                    <CategoryGrid category={cat} onSelect={(s) => handleSectionClick(s, cat.id)} />
-                  </div>
+                    <SectionGridPicker
+                      categories={[cat]}
+                      onSelect={(sectionId, categoryId) => handleSectionClick(sectionId as SectionId, categoryId)}
+                    />
+                  </>
                 );
               })()
             ) : (
-              <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={setActive} />}
-                {active === "investment" && (
-                  <SectionShell icon={Sparkles} title="Investment Overview" action={
-                    data.isAdmin ? (
-                      <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
-                        {unlocked ? "Edit mode" : "Read-only"}
-                      </span>
-                    ) : undefined
-                  }>
-                    <InvestmentOverview sections={data.overviewSections} cards={data.overviewCards} unlocked={canEdit} token={token} onRefresh={refresh} />
-                  </SectionShell>
-                )}
-                {active === "represented" && <Roster players={data.players} status="represented" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
-                {active === "mandated" && <Roster players={data.players} status="mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
-                {active === "previously" && <Roster players={data.players} status="previously_mandated" editable={canEdit} onSaveCommission={saveCommission} invoiceTotalsByPlayer={invoiceTotalsByPlayer} />}
-                {active === "prospects" && <Prospects rows={data.prospects} />}
-                {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
-                {active === "contracts" && <ContractsView rows={data.contracts} />}
-                {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
-                {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
-                {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
-                {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
-                {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
-              </motion.div>
+              <SectionGridPicker
+                categories={CATEGORIES}
+                onSelect={(sectionId, categoryId) => handleSectionClick(sectionId as SectionId, categoryId)}
+              />
             )}
           </div>
         </main>
-      </div>
-
-      {/* Footer bar (mirrors staff) */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="container mx-auto px-3 md:px-4 py-3">
-          <div className="flex items-center justify-between gap-2 md:gap-4">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-4 overflow-y-auto scrollbar-thin">
-                <div className="space-y-6">
-                  {CATEGORIES.map(cat => (
-                    <div key={cat.id} className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">{cat.title}</h3>
-                      <div className="space-y-1">
-                        {cat.sections.map(s => {
-                          const Icon = s.icon;
-                          return (
-                            <Button key={s.id} variant={active === s.id ? "default" : "ghost"} className="w-full justify-start text-sm h-10"
-                              onClick={() => { setActive(s.id); setExpandedCategory(cat.id); }}>
-                              <Icon className="w-4 h-4 mr-2 shrink-0" />
-                              <span className="truncate">{s.title}</span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search sections..." value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    const q = searchQuery.toLowerCase();
-                    for (const cat of CATEGORIES) {
-                      const hit = cat.sections.find(s => s.title.toLowerCase().includes(q));
-                      if (hit) { setActive(hit.id); setExpandedCategory(cat.id); setSearchQuery(""); break; }
-                    }
-                  }
-                }}
-                className="pl-9" />
-            </div>
-            {data?.isAdmin && (
-              <Button variant={unlocked ? "default" : "outline"} size="sm" className="shrink-0"
-                onClick={() => setUnlocked(u => !u)}
-                title={unlocked ? "Lock edit mode" : "Unlock edit mode"}>
-                {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
-                <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
-              </Button>
-            )}
-            <Button onClick={signOut} variant="outline" size="sm" className="shrink-0">
-              <LogOut className="h-4 w-4 md:mr-1" />
-              <span className="hidden md:inline">Logout</span>
-            </Button>
-          </div>
-        </div>
       </div>
       {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
