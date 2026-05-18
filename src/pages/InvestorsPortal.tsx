@@ -7,51 +7,112 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
-  LayoutDashboard, Activity, Wallet, Users, Briefcase, NotebookPen,
-  LogOut, Plus, Trash2, Sparkles, FileSignature, CheckSquare, UserCheck,
+  LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
+  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Star, Eye, Calendar, Target,
 } from "lucide-react";
-import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  LineChart, Line, Legend,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
+import blackMarble from "@/assets/black-marble-bg.png";
+import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
-type SectionId = "overview" | "investment" | "roster" | "contracts" | "tasks" | "activity" | "spending" | "pipeline" | "deals" | "notes";
+type SectionId =
+  | "overview" | "investment"
+  | "represented" | "mandated" | "previously"
+  | "prospects" | "playerdatabase"
+  | "contracts"
+  | "spending" | "commission"
+  | "tasks" | "activity";
 
-interface ActivityRow { id: string; occurred_at: string; person: string; category: string; description: string; source: string; }
-interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; source: string; }
-interface PipelineRow { id: string; name: string; age_group: string | null; country: string | null; status: string; notes: string | null; expected_value_gbp: number | null; }
-interface DealRow { id: string; title: string; stage: string; counterparty: string | null; timeline_notes: any[]; value_gbp: number | null; updated_at: string; }
-interface NoteRow { id: string; title: string; body: string; kind: string; created_at: string; }
-interface PlayerRow { id: string; name: string; representation_status: string | null; position: string | null; nationality: string | null; date_of_birth: string | null; visible_on_stars_page: boolean | null; }
-interface ContractRow { id: string; title: string; status: string | null; created_at: string; updated_at: string; owner_signed_at: string | null; locked_at: string | null; }
-interface TaskRow { id: string; title: string; category: string | null; priority: string | null; completed: boolean; deadline: string | null; created_at: string; last_completed_at: string | null; }
-
-const ACTIVITY_CATEGORIES = ["outreach", "analysis", "admin", "travel", "deal", "communication"];
-const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
-const PIPELINE_STATUS = ["lead", "contact", "mandate", "active", "deal_in_progress"];
-const DEAL_STAGES = ["initial", "negotiation", "agreement", "closed", "lost"];
-const NOTE_KINDS = ["founder", "reflection", "decision"];
+interface PlayerRow {
+  id: string; name: string; representation_status: string | null; position: string | null;
+  nationality: string | null; date_of_birth: string | null; image_url: string | null;
+  hover_image_url: string | null; club: string | null; club_logo: string | null; league: string | null;
+  age: number | null;
+  contract_start_date: string | null; contract_end_date: string | null;
+  current_salary_annual: number | null; expected_commission_annual: number | null;
+  commission_notes: string | null;
+}
+interface ContractRow {
+  id: string; title: string; description: string | null; status: string | null;
+  created_at: string; updated_at: string; owner_signed_at: string | null; locked_at: string | null;
+  file_url: string | null; locked_file_url: string | null; completed_pdf_url: string | null;
+}
+interface TaskRow {
+  id: string; title: string; description: string | null; category: string | null;
+  priority: string | null; completed: boolean; deadline: string | null; created_at: string;
+  updated_at: string; last_completed_at: string | null; assigned_to: string[] | null;
+  image_url: string | null; display_order: number | null;
+  is_recurring: boolean | null; recurrence_label: string | null;
+}
+interface StaffActivityRow {
+  id: string; user_email: string | null; action: string; entity_type: string;
+  entity_id: string | null; entity_name: string | null; details: any; created_at: string;
+}
+interface ProspectRow {
+  id: string; name: string; stage: string | null; position: string | null;
+  nationality: string | null; date_of_birth: string | null; age: number | null;
+  current_club: string | null; profile_image_url: string | null;
+  probability_weight: number | null; projected_revenue: number | null;
+  revenue_currency: string | null; notes: string | null; last_contact_date: string | null;
+  updated_at: string;
+}
+interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; }
 
 const gbp = (n: number | null | undefined) =>
-  n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(n);
+  n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(Number(n));
+
+const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
+
+interface CategoryDef {
+  id: string;
+  title: string;
+  icon: any;
+  sections: { id: SectionId; title: string; icon: any }[];
+}
+
+const CATEGORIES: CategoryDef[] = [
+  { id: "dash", title: "Dashboard", icon: LayoutDashboard, sections: [
+    { id: "overview", title: "Overview", icon: LayoutDashboard },
+    { id: "investment", title: "Investment", icon: Sparkles },
+  ]},
+  { id: "roster", title: "Roster", icon: UserCheck, sections: [
+    { id: "represented", title: "Represented", icon: UserCheck },
+    { id: "mandated", title: "Mandated", icon: UserCheck },
+    { id: "previously", title: "Prev. Mandated", icon: UserCheck },
+  ]},
+  { id: "pipe", title: "Pipeline", icon: Network, sections: [
+    { id: "prospects", title: "Prospect Board", icon: Target },
+    { id: "playerdatabase", title: "Player Database", icon: Network },
+  ]},
+  { id: "legal", title: "Legal", icon: FileSignature, sections: [
+    { id: "contracts", title: "Contracts", icon: FileSignature },
+  ]},
+  { id: "fin", title: "Financial", icon: Wallet, sections: [
+    { id: "spending", title: "Spending", icon: Wallet },
+    { id: "commission", title: "Commission", icon: TrendingUp },
+  ]},
+  { id: "act", title: "Activity", icon: Activity, sections: [
+    { id: "tasks", title: "My Tasks", icon: CheckSquare },
+    { id: "activity", title: "Activity Feed", icon: Activity },
+  ]},
+];
 
 function playChime() {
   try {
     const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return;
     const ctx = new Ctx();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
     o.type = "sine";
     o.frequency.setValueAtTime(880, ctx.currentTime);
@@ -63,50 +124,35 @@ function playChime() {
   } catch { /* noop */ }
 }
 
-const LoginGate = ({ onSignIn }: {
-  onSignIn: (u: string, p: string) => Promise<void>;
-}) => {
-  const [u, setU] = useState("");
-  const [p, setP] = useState("");
-  const [busy, setBusy] = useState(false);
-
+const LoginGate = ({ onSignIn }: { onSignIn: (u: string, p: string) => Promise<void>; }) => {
+  const [u, setU] = useState(""); const [p, setP] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
+    e.preventDefault(); setBusy(true);
     try { await onSignIn(u.trim(), p); } catch (err: any) { toast.error(err.message || "Login failed"); }
     finally { setBusy(false); }
   };
-
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center p-6">
-      <div className="absolute inset-0 opacity-60"><ShaderAnimation /></div>
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black/90 pointer-events-none" />
-      <motion.div
-        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md"
-      >
-        <Card className="border-white/10 bg-black/70 backdrop-blur-xl p-8 shadow-2xl flex flex-col items-center text-center">
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-background">
+      <div className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background pointer-events-none" />
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-md">
+        <Card className="border-primary/20 bg-card/80 backdrop-blur-xl p-8 shadow-2xl flex flex-col items-center text-center">
           <img src="/RISEWhite.png" alt="RISE" className="h-12 w-auto object-contain mb-4" />
-          <h1 className="text-2xl font-semibold text-white">Investor Portal</h1>
-          <p className="text-sm text-white/60 mt-2 mb-6">Restricted access. Authentication required.</p>
+          <h1 className="text-2xl font-bbh uppercase tracking-wide">Investor Portal</h1>
+          <p className="text-sm text-muted-foreground mt-2 mb-6">Restricted access. Authentication required.</p>
           <form onSubmit={submit} className="space-y-4 w-full">
             <div className="space-y-1.5 text-left">
-              <Label htmlFor="iu" className="text-white/80">Username</Label>
-              <Input id="iu" value={u} onChange={(e) => setU(e.target.value)} autoComplete="username" required
-                className="bg-white/5 border-white/10 text-white text-center" />
+              <Label htmlFor="iu">Username</Label>
+              <Input id="iu" value={u} onChange={(e) => setU(e.target.value)} autoComplete="username" required className="text-center" />
             </div>
             <div className="space-y-1.5 text-left">
-              <Label htmlFor="ip" className="text-white/80">Password</Label>
-              <Input id="ip" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" required
-                className="bg-white/5 border-white/10 text-white text-center" />
+              <Label htmlFor="ip">Password</Label>
+              <Input id="ip" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" required className="text-center" />
             </div>
-            <Button
-              type="submit"
-              disabled={busy}
-              style={{ backgroundColor: "#C6A332", color: "#000" }}
-              className="w-full hover:opacity-90 font-semibold"
-            >
-              {busy ? "Authenticating..." : "Enter portal"}
+            <Button type="submit" disabled={busy} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bbh uppercase tracking-wider">
+              {busy ? "Authenticating..." : "Enter Portal"}
             </Button>
           </form>
         </Card>
@@ -115,74 +161,537 @@ const LoginGate = ({ onSignIn }: {
   );
 };
 
-const Sidebar = ({ active, setActive, onSignOut, displayName }: {
-  active: SectionId; setActive: (s: SectionId) => void; onSignOut: () => void; displayName: string;
-}) => {
-  const items: Array<{ id: SectionId; label: string; icon: any }> = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "investment", label: "Investment", icon: Sparkles },
-    { id: "roster", label: "Roster", icon: UserCheck },
-    { id: "contracts", label: "Contracts", icon: FileSignature },
-    { id: "tasks", label: "Tasks", icon: CheckSquare },
-    { id: "activity", label: "Activity Log", icon: Activity },
-    { id: "spending", label: "Spending", icon: Wallet },
-    { id: "pipeline", label: "Player Pipeline", icon: Users },
-    { id: "deals", label: "Deals", icon: Briefcase },
-    { id: "notes", label: "System Notes", icon: NotebookPen },
-  ];
+// ---------- Player card (matches staff PlayerList aesthetic) ----------
+const ContractBadge = ({ end }: { end: string | null }) => {
+  if (!end) return <span className="text-xs text-muted-foreground">No contract end</span>;
+  const months = differenceInMonths(new Date(end), new Date());
+  const tone = months < 6 ? "text-red-400 border-red-500/40 bg-red-500/10"
+    : months < 12 ? "text-amber-400 border-amber-500/40 bg-amber-500/10"
+    : "text-emerald-400 border-emerald-500/40 bg-emerald-500/10";
+  return <span className={`text-[10px] uppercase tracking-wider font-bbh px-2 py-0.5 rounded border ${tone}`}>
+    Exp {format(new Date(end), "MMM yyyy")}
+  </span>;
+};
+
+const PlayerCard = ({ p }: { p: PlayerRow }) => {
+  const flag = p.nationality ? getCountryFlagUrl(p.nationality) : null;
   return (
-    <aside
-      className="w-60 shrink-0 border-r border-primary/10 flex flex-col relative"
-      style={{
-        backgroundImage: "url(/black-marble-bg.png), linear-gradient(180deg, #0a0a0a, #050505)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="absolute inset-0 bg-black/55 pointer-events-none" />
-      <div className="relative p-6 border-b border-primary/10 flex flex-col items-center text-center">
-        <img src="/RISEWhite.png" alt="RISE" className="h-8 w-auto object-contain mb-2" />
-        <div className="text-[10px] uppercase tracking-[0.35em] text-primary font-bbh">Investor Portal</div>
+    <Card className="bg-card/60 border-border/60 hover:border-primary/50 transition-colors overflow-hidden">
+      <div className="flex items-center gap-4 p-4">
+        <Avatar className="h-14 w-14 border-2 border-primary/30">
+          <AvatarImage src={p.image_url || undefined} alt={p.name} className="object-cover" />
+          <AvatarFallback className="bg-primary/10 text-primary font-bbh">{p.name?.[0] || "?"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bbh uppercase tracking-wide text-base truncate">{p.name}</h3>
+            {p.position && <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">{p.position}</Badge>}
+          </div>
+          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+            {flag && <img src={flag} alt={p.nationality || ""} className="w-4 h-3 object-cover rounded-sm" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+            <span>{p.nationality || "—"}</span>
+            <span>•</span>
+            <span>{p.age ?? "—"} yrs</span>
+            {p.club && (<>
+              <span>•</span>
+              {p.club_logo && <img src={p.club_logo} alt={p.club} className="w-4 h-4 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+              <span className="truncate max-w-[160px]">{p.club}</span>
+            </>)}
+          </div>
+        </div>
+        <div className="text-right space-y-1 shrink-0">
+          <ContractBadge end={p.contract_end_date} />
+          <div className="text-sm font-bbh text-primary">{gbp(p.expected_commission_annual)}<span className="text-[10px] text-muted-foreground"> /yr</span></div>
+        </div>
       </div>
-      <nav className="relative flex-1 p-3 space-y-1">
-        {items.map((it) => {
-          const Icon = it.icon;
-          const isActive = active === it.id;
-          return (
-            <button key={it.id} onClick={() => setActive(it.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors font-bbh tracking-wide uppercase ${
-                isActive ? "bg-primary/15 text-primary border-l-2 border-primary" : "text-foreground/55 hover:bg-white/5 hover:text-foreground border-l-2 border-transparent"
-              }`}>
-              <Icon className="w-4 h-4" />{it.label}
-            </button>
-          );
-        })}
-      </nav>
-      <div className="relative p-3 border-t border-primary/10">
-        <div className="text-xs text-foreground/40 px-3 mb-2 truncate">{displayName}</div>
-        <Button variant="ghost" size="sm" className="w-full justify-start text-foreground/60 hover:text-foreground" onClick={onSignOut}>
-          <LogOut className="w-4 h-4 mr-2" /> Sign out
-        </Button>
-      </div>
-    </aside>
+    </Card>
   );
 };
 
-const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
-  <Card className="bg-card/60 border-primary/15 p-5 relative overflow-hidden">
-    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70 mb-2 font-bbh">{label}</div>
-    <div className="text-3xl font-bbh tracking-wide text-foreground">{value}</div>
-    {sub && <div className="text-xs text-foreground/40 mt-1">{sub}</div>}
+const ProspectCard = ({ p }: { p: ProspectRow }) => {
+  const flag = p.nationality ? getCountryFlagUrl(p.nationality) : null;
+  return (
+    <Card className="bg-card/60 border-border/60 p-3">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10 border border-primary/20">
+          <AvatarImage src={p.profile_image_url || undefined} alt={p.name} />
+          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bbh">{p.name?.[0] || "?"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="font-bbh uppercase text-sm truncate">{p.name}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+            {flag && <img src={flag} alt="" className="w-3 h-2 object-cover rounded-sm" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+            <span>{p.position || "—"}</span>
+            {p.age && <span>• {p.age}</span>}
+            {p.current_club && <span className="truncate"> • {p.current_club}</span>}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          {p.projected_revenue && <div className="text-xs font-bbh text-primary">{gbp(p.projected_revenue)}</div>}
+          {p.probability_weight != null && <div className="text-[10px] text-muted-foreground">{p.probability_weight}%</div>}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ---------- Marble card header ----------
+const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string; action?: React.ReactNode }) => (
+  <div className="relative overflow-hidden rounded-t-lg border-b border-border/60">
+    <div className="absolute inset-0 opacity-30 pointer-events-none"
+      style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center", mixBlendMode: "overlay" }} />
+    <div className="relative px-5 py-3 flex items-center justify-between bg-card/60 backdrop-blur-sm">
+      <div className="flex items-center gap-2.5">
+        <Icon className="w-4 h-4 text-primary" />
+        <h2 className="font-bbh uppercase tracking-wide text-sm">{title}</h2>
+      </div>
+      {action}
+    </div>
+  </div>
+);
+
+const SectionShell = ({ icon, title, children, action }: { icon: any; title: string; children: React.ReactNode; action?: React.ReactNode }) => (
+  <Card className="bg-card/40 border-border/60 overflow-hidden">
+    <MarbleHeader icon={icon} title={title} action={action} />
+    <div className="p-5">{children}</div>
   </Card>
 );
 
+// ---------- Sections ----------
+const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
+  <Card className="bg-card/60 border-border/60 p-5">
+    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70 mb-2 font-bbh">{label}</div>
+    <div className="text-3xl font-bbh tracking-wide">{value}</div>
+    {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+  </Card>
+);
+
+const Roster = ({ players, status }: { players: PlayerRow[]; status: string }) => {
+  const rows = players.filter(p => p.representation_status === status);
+  const label = status === "represented" ? "Represented" : status === "mandated" ? "Mandated" : "Previously Mandated";
+  return (
+    <SectionShell icon={UserCheck} title={`${label} (${rows.length})`}>
+      {rows.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No {label.toLowerCase()} players.</div>
+      ) : (
+        <div className="space-y-2">{rows.map(p => <PlayerCard key={p.id} p={p} />)}</div>
+      )}
+    </SectionShell>
+  );
+};
+
+const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
+  const [open, setOpen] = useState<ContractRow | null>(null);
+  return (
+    <SectionShell icon={FileSignature} title={`Contracts (${rows.length})`}>
+      {rows.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No contracts yet.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {rows.map(c => {
+            const signed = !!c.owner_signed_at || !!c.locked_at;
+            const url = c.completed_pdf_url || c.locked_file_url || c.file_url;
+            return (
+              <Card key={c.id} className="bg-card/60 border-border/60 p-4">
+                <div className="flex items-start gap-3">
+                  <FileSignature className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bbh uppercase text-sm truncate">{c.title || "Untitled"}</div>
+                    {c.description && <div className="text-xs text-muted-foreground line-clamp-2 mt-1">{c.description}</div>}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline" className={signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}>
+                        {c.locked_at ? <><Lock className="w-3 h-3 mr-1" />Locked</> : signed ? "Signed" : c.status || "Draft"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">Updated {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+                    </div>
+                  </div>
+                  {url && (
+                    <Button size="sm" variant="ghost" className="text-primary" onClick={() => setOpen(c)}>
+                      <Eye className="w-4 h-4 mr-1" />View
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent className="max-w-5xl h-[90vh] p-0 bg-background">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="font-bbh uppercase">{open?.title}</DialogTitle>
+          </DialogHeader>
+          {open && (
+            <iframe src={(open.completed_pdf_url || open.locked_file_url || open.file_url) || ""} className="w-full flex-1 bg-white" title={open.title} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </SectionShell>
+  );
+};
+
+const TasksView = ({ rows }: { rows: TaskRow[] }) => {
+  // Mirror My Tasks: group by priority, then by category. Exclude completed.
+  const live = rows.filter(t => !t.completed);
+  const priorities = ["urgent", "high", "medium", "low"];
+  const byPriority = priorities.map(pr => ({
+    priority: pr,
+    tasks: live.filter(t => (t.priority || "medium").toLowerCase() === pr).sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)),
+  })).filter(g => g.tasks.length > 0);
+  // anything else
+  const other = live.filter(t => !priorities.includes((t.priority || "medium").toLowerCase()));
+  if (other.length > 0) byPriority.push({ priority: "other", tasks: other });
+
+  const toneFor = (pr: string) =>
+    pr === "urgent" ? "border-red-500/60 text-red-300 bg-red-500/10"
+    : pr === "high" ? "border-amber-500/60 text-amber-300 bg-amber-500/10"
+    : pr === "medium" ? "border-primary/40 text-primary bg-primary/5"
+    : "border-border text-muted-foreground bg-muted/20";
+
+  return (
+    <SectionShell icon={CheckSquare} title="My Tasks — Live View">
+      {live.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No active tasks.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {byPriority.map(g => (
+            <div key={g.priority} className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${toneFor(g.priority)}`}>
+                  {g.priority}
+                </span>
+                <span className="text-xs text-muted-foreground">{g.tasks.length}</span>
+              </div>
+              {g.tasks.map(t => (
+                <Card key={t.id} className="bg-card/60 border-border/60 p-3">
+                  {t.image_url && <img src={t.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" />}
+                  <div className="text-sm font-medium leading-snug">{t.title}</div>
+                  {t.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.description}</div>}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {t.category && <Badge variant="outline" className="text-[9px] uppercase">{t.category}</Badge>}
+                    {t.deadline && (
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />{format(new Date(t.deadline), "d MMM")}
+                      </span>
+                    )}
+                    {t.is_recurring && <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">{t.recurrence_label || "Recurring"}</Badge>}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
+const ActivityFeed = ({ rows }: { rows: StaffActivityRow[] }) => {
+  const [limit, setLimit] = useState(80);
+  const shown = rows.slice(0, limit);
+  const tone: Record<string, string> = {
+    created: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
+    updated: "border-blue-500/40 text-blue-300 bg-blue-500/10",
+    deleted: "border-red-500/40 text-red-300 bg-red-500/10",
+  };
+  return (
+    <SectionShell icon={Activity} title="Activity Feed">
+      {shown.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No activity logged.</div>
+      ) : (
+        <div className="space-y-1.5">
+          {shown.map(e => (
+            <div key={e.id} className="flex items-start gap-3 px-3 py-2 rounded border border-border/40 bg-card/40 hover:border-primary/30 transition-colors">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-medium truncate">{e.user_email || "system"}</span>
+                  <Badge variant="outline" className={`text-[10px] ${tone[e.action] || "border-border text-muted-foreground"}`}>{e.action}</Badge>
+                  <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{e.entity_type}</Badge>
+                  {e.entity_name && <span className="text-xs text-muted-foreground truncate">{e.entity_name}</span>}
+                </div>
+              </div>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</span>
+            </div>
+          ))}
+          {limit < rows.length && (
+            <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setLimit(l => l + 80)}>Load more</Button>
+          )}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
+const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
+  const [category, setCategoryFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [spend_date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [cat, setCat] = useState("tools");
+  const [vendor, setVendor] = useState("");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const filtered = useMemo(() => rows.filter(r =>
+    (category === "all" || r.category === category) &&
+    (!search || (r.vendor || "").toLowerCase().includes(search.toLowerCase()) || (r.notes || "").toLowerCase().includes(search.toLowerCase()))
+  ), [rows, category, search]);
+
+  const byCategory = useMemo(() => {
+    const m: Record<string, number> = {};
+    filtered.forEach(r => { m[r.category] = (m[r.category] || 0) + Number(r.amount_gbp); });
+    return Object.entries(m).map(([category, amount]) => ({ category, amount }));
+  }, [filtered]);
+  const byMonth = useMemo(() => {
+    const m: Record<string, number> = {};
+    filtered.forEach(r => { const k = r.spend_date.slice(0, 7); m[k] = (m[k] || 0) + Number(r.amount_gbp); });
+    return Object.entries(m).sort(([a], [b]) => a.localeCompare(b)).map(([month, total]) => ({ month, total }));
+  }, [filtered]);
+  const total = filtered.reduce((s, r) => s + Number(r.amount_gbp), 0);
+  const cats = Array.from(new Set(rows.map(r => r.category)));
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat label="Filtered Total" value={gbp(total)} />
+        <Stat label="Entries" value={String(filtered.length)} />
+        <Stat label="Categories" value={String(byCategory.length)} />
+        <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
+      </div>
+      <SectionShell icon={Wallet} title="Spending Tracker" action={
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>Add expense</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Date</Label><Input type="date" value={spend_date} onChange={(e) => setDate(e.target.value)} /></div>
+                <div><Label>Category</Label>
+                  <Select value={cat} onValueChange={setCat}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div><Label>Vendor</Label><Input value={vendor} onChange={(e) => setVendor(e.target.value)} /></div>
+              <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+              <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+              <Button className="bg-primary text-primary-foreground" onClick={async () => {
+                if (!amount) return;
+                await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes } });
+                setVendor(""); setAmount(""); setNotes(""); setAddOpen(false);
+              }}>Save</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      }>
+        <div className="flex flex-wrap gap-2 mb-4">
+          <Select value={category} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input placeholder="Search vendor or notes..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 min-w-[200px]" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <Card className="bg-card/60 border-border/60 p-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-bbh">By category</div>
+            <div style={{ width: "100%", height: 200 }}>
+              <ResponsiveContainer>
+                <BarChart data={byCategory}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+          <Card className="bg-card/60 border-border/60 p-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-bbh">Monthly trend</div>
+            <div style={{ width: "100%", height: 200 }}>
+              <ResponsiveContainer>
+                <LineChart data={byMonth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+        <div className="rounded border border-border/40 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
+              <tr>
+                <th className="text-left px-3 py-2">Date</th>
+                <th className="text-left px-3 py-2">Category</th>
+                <th className="text-left px-3 py-2">Vendor</th>
+                <th className="text-left px-3 py-2">Notes</th>
+                <th className="text-right px-3 py-2">Amount</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No matching expenses.</td></tr>
+              ) : filtered.map(r => (
+                <tr key={r.id} className="hover:bg-muted/20">
+                  <td className="px-3 py-2 text-muted-foreground">{format(new Date(r.spend_date), "d MMM yyyy")}</td>
+                  <td className="px-3 py-2"><Badge variant="outline" className="border-primary/40 text-primary capitalize">{r.category}</Badge></td>
+                  <td className="px-3 py-2">{r.vendor || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
+                  <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
+                  <td className="px-3 py-2"><Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionShell>
+    </div>
+  );
+};
+
+const CommissionForecast = ({ players }: { players: PlayerRow[] }) => {
+  const live = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
+  const total = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const withSalary = live.filter(p => p.current_salary_annual);
+  const totalSalary = withSalary.reduce((s, p) => s + Number(p.current_salary_annual || 0), 0);
+  const sorted = [...live].sort((a, b) => Number(b.expected_commission_annual || 0) - Number(a.expected_commission_annual || 0));
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Stat label="Annual Commission" value={gbp(total)} sub={`${live.length} live players`} />
+        <Stat label="Aggregate Player Salaries" value={gbp(totalSalary)} sub={`${withSalary.length} with disclosed wages`} />
+        <Stat label="12-Month Projection" value={gbp(total)} sub="Based on current contracts" />
+      </div>
+      <SectionShell icon={TrendingUp} title="Commission Breakdown By Player">
+        {sorted.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-8">No commission data yet. Staff can set this in Players → List Order / edit.</div>
+        ) : (
+          <div className="space-y-2">{sorted.map(p => <PlayerCard key={p.id} p={p} />)}</div>
+        )}
+      </SectionShell>
+    </div>
+  );
+};
+
+const Prospects = ({ rows }: { rows: ProspectRow[] }) => {
+  const stages = Array.from(new Set(rows.map(r => r.stage || "Unknown")));
+  return (
+    <SectionShell icon={Target} title={`Prospect Board (${rows.length})`}>
+      {rows.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No prospects.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {stages.map(s => {
+            const list = rows.filter(r => (r.stage || "Unknown") === s);
+            return (
+              <div key={s} className="space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border border-primary/40 text-primary bg-primary/5">{s}</span>
+                  <span className="text-xs text-muted-foreground">{list.length}</span>
+                </div>
+                {list.map(p => <ProspectCard key={p.id} p={p} />)}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
+const PlayerDatabase = ({ players }: { players: PlayerRow[] }) => {
+  const [q, setQ] = useState("");
+  const filtered = players.filter(p => !q ||
+    p.name.toLowerCase().includes(q.toLowerCase()) ||
+    (p.position || "").toLowerCase().includes(q.toLowerCase()) ||
+    (p.club || "").toLowerCase().includes(q.toLowerCase()) ||
+    (p.nationality || "").toLowerCase().includes(q.toLowerCase())
+  );
+  return (
+    <SectionShell icon={Network} title={`Player Database (${filtered.length})`} action={
+      <div className="flex items-center gap-2">
+        <Search className="w-4 h-4 text-muted-foreground" />
+        <Input placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} className="h-8 w-48" />
+      </div>
+    }>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {filtered.map(p => <PlayerCard key={p.id} p={p} />)}
+      </div>
+    </SectionShell>
+  );
+};
+
+const Overview = ({ players, contracts, tasks, staffActivity, spending, prospects, setActive }: {
+  players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
+  spending: SpendingRow[]; prospects: ProspectRow[]; setActive: (s: SectionId) => void;
+}) => {
+  const represented = players.filter(p => p.representation_status === "represented").length;
+  const mandated = players.filter(p => p.representation_status === "mandated").length;
+  const commission = players
+    .filter(p => p.representation_status === "represented" || p.representation_status === "mandated")
+    .reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthlySpend = spending.filter(s => s.spend_date.startsWith(thisMonth)).reduce((s, r) => s + Number(r.amount_gbp), 0);
+  const activeTasks = tasks.filter(t => !t.completed).length;
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <button onClick={() => setActive("commission")} className="text-left"><Stat label="Annual Commission" value={gbp(commission)} sub={`${represented + mandated} live players`} /></button>
+        <button onClick={() => setActive("represented")} className="text-left"><Stat label="Represented" value={String(represented)} sub="Active mandates" /></button>
+        <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
+        <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <button onClick={() => setActive("tasks")} className="text-left">
+          <SectionShell icon={CheckSquare} title={`Live Tasks (${activeTasks})`}>
+            <div className="text-sm text-muted-foreground">Click to view all staff tasks currently in progress.</div>
+          </SectionShell>
+        </button>
+        <button onClick={() => setActive("contracts")} className="text-left">
+          <SectionShell icon={FileSignature} title={`Contracts (${contracts.length})`}>
+            <div className="text-sm text-muted-foreground">{contracts.filter(c => c.locked_at).length} locked • {contracts.filter(c => c.owner_signed_at && !c.locked_at).length} signed • {contracts.filter(c => !c.owner_signed_at && !c.locked_at).length} draft</div>
+          </SectionShell>
+        </button>
+      </div>
+      <SectionShell icon={Activity} title="Recent Activity">
+        <div className="space-y-1.5">
+          {staffActivity.slice(0, 8).map(e => (
+            <div key={e.id} className="flex items-center gap-3 text-sm">
+              <span className="text-xs text-muted-foreground w-28 shrink-0">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</span>
+              <Badge variant="outline" className="text-[10px]">{e.action}</Badge>
+              <span className="text-muted-foreground truncate">{e.entity_type}</span>
+              <span className="truncate flex-1">{e.entity_name || "—"}</span>
+            </div>
+          ))}
+          {staffActivity.length === 0 && <div className="text-sm text-muted-foreground text-center py-4">No activity yet.</div>}
+        </div>
+      </SectionShell>
+    </div>
+  );
+};
+
+// ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
-  const [transitioning, setTransitioning] = useState(false);
   const [active, setActive] = useState<SectionId>("overview");
+  const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const isMobile = useIsMobile();
   const [data, setData] = useState<{
-    activity: ActivityRow[]; spending: SpendingRow[]; pipeline: PipelineRow[]; deals: DealRow[]; notes: NoteRow[];
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
+    staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -194,6 +703,8 @@ const InvestorsPortal = () => {
     return () => { document.head.removeChild(meta); };
   }, []);
 
+  useEffect(() => { if (isMobile) setSidebarCollapsed(true); }, [isMobile]);
+
   const refresh = async () => {
     if (!token) return;
     setLoading(true);
@@ -203,684 +714,165 @@ const InvestorsPortal = () => {
       if ((d as any)?.error) throw new Error((d as any).error);
       const dd = d as any;
       setData({
-        activity: dd.activity, spending: dd.spending, pipeline: dd.pipeline, deals: dd.deals, notes: dd.notes,
         players: dd.players || [], contracts: dd.contracts || [], tasks: dd.tasks || [],
+        staffActivity: dd.staffActivity || [], prospects: dd.prospects || [], spending: dd.spending || [],
       });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
     } finally { setLoading(false); }
   };
-
   useEffect(() => { if (token) refresh(); }, [token]);
 
-  const handleSignIn = async (u: string, p: string) => {
-    await signIn(u, p);
-    playChime();
-    setTransitioning(true);
-    setTimeout(() => setTransitioning(false), 1400);
-  };
-
-  const writeOp = async (op: "insert" | "update" | "delete", table: string, payload: any) => {
+  const writeOp = async (op: string, table: string, payload: any) => {
     try {
-      const { data: r, error } = await supabase.functions.invoke("investor-write", {
-        body: { token, op, table, ...payload },
-      });
+      const { data: r, error } = await supabase.functions.invoke("investor-write", { body: { token, op, table, ...payload } });
       if (error) throw error;
       if ((r as any)?.error) throw new Error((r as any).error);
       await refresh();
       toast.success("Saved");
-    } catch (e: any) {
-      toast.error(e.message || "Save failed");
-    }
+    } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
-  if (authLoading) return <div className="min-h-screen bg-black" />;
+  const handleSignIn = async (u: string, p: string) => { await signIn(u, p); playChime(); };
 
+  if (authLoading) return <div className="min-h-screen bg-background" />;
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
 
+  const handleSectionClick = (sid: SectionId, catId: string) => {
+    setActive(sid); setExpandedCategory(catId);
+  };
+
   return (
-    <div
-      className="min-h-screen text-foreground"
-      style={{
-        backgroundImage: "url(/black-marble-bg.png)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }}
-    >
-      <div className="fixed inset-0 bg-black/75 pointer-events-none" />
-      <AnimatePresence>
-        {transitioning && (
-          <motion.div
-            initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }}
-            className="fixed inset-0 z-50 bg-black"
+    <div className="min-h-screen text-foreground relative">
+      {/* Black marble background */}
+      <div className="fixed inset-0 pointer-events-none -z-10"
+        style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.25 }} />
+
+      {/* Header — mirrors staff */}
+      <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? "h-10" : ""}`}>
+        <div className={`flex items-center ${headerCollapsed ? "h-10" : "h-16"} px-4 relative`}>
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
+            onClick={() => setHeaderCollapsed(p => !p)}
+            title={headerCollapsed ? "Show header" : "Hide header"}
           >
-            <div className="absolute inset-0 opacity-80"><ShaderAnimation /></div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="relative flex h-screen overflow-hidden">
-        <Sidebar active={active} setActive={setActive} onSignOut={signOut} displayName={user.display_name} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-8 py-8 font-agrandir">
-            <motion.div key={active} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              {!data ? (
-                <div className="text-foreground/40">{loading ? "Loading..." : "No data"}</div>
-              ) : active === "overview" ? (
-                <OverviewSection data={data} setActive={setActive} />
-              ) : active === "investment" ? (
-                <InvestmentSection />
-              ) : active === "roster" ? (
-                <RosterSection rows={data.players} />
-              ) : active === "contracts" ? (
-                <ContractsSection rows={data.contracts} />
-              ) : active === "tasks" ? (
-                <TasksSection rows={data.tasks} />
-              ) : active === "activity" ? (
-                <ActivitySection rows={data.activity} write={writeOp} />
-              ) : active === "spending" ? (
-                <SpendingSection rows={data.spending} write={writeOp} />
-              ) : active === "pipeline" ? (
-                <PipelineSection rows={data.pipeline} write={writeOp} />
-              ) : active === "deals" ? (
-                <DealsSection rows={data.deals} write={writeOp} />
-              ) : (
-                <NotesSection rows={data.notes} write={writeOp} />
-              )}
-            </motion.div>
+            <img src="/RISEWhite.png" alt="RISE" className={`${headerCollapsed ? "h-6" : "h-9"} w-auto transition-all duration-200`} />
+          </div>
+          {!headerCollapsed && (
+            <>
+              <div className="ml-auto flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full border border-border">
+                      <span className="text-xs font-bbh uppercase">{(user.display_name || user.username || "I")[0]}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-48 p-1">
+                    <button onClick={signOut} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
+                      <LogOut className="w-4 h-4" />Sign out
+                    </button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Layout */}
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar — mirrors staff vertical icon nav */}
+        <aside className={`fixed ${headerCollapsed ? "top-10" : isMobile ? "top-14" : "top-16"} left-0 bottom-0 border-r border-border bg-muted/30 backdrop-blur-sm flex flex-col items-start py-4 pb-20 gap-2 overflow-y-auto scrollbar-thin z-10 transition-all duration-300 ${
+          sidebarCollapsed ? "w-0 border-0 opacity-0 pointer-events-none" : isMobile ? "w-14" : "w-14 md:w-24"
+        }`}>
+          {CATEGORIES.map((cat, idx) => {
+            const CatIcon = cat.icon;
+            const isExpanded = expandedCategory === cat.id;
+            const hasActive = cat.sections.some(s => s.id === active);
+            const single = cat.sections.length === 1;
+            const shouldShow = !expandedCategory || expandedCategory === cat.id;
+            if (!shouldShow) return null;
+            return (
+              <div key={cat.id} className="w-full">
+                <button
+                  onClick={() => {
+                    if (single) { handleSectionClick(cat.sections[0].id, cat.id); }
+                    else setExpandedCategory(isExpanded ? null : cat.id);
+                  }}
+                  className={`group w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
+                    hasActive || isExpanded ? "bg-gradient-to-br from-primary/80 to-primary shadow-lg" : ""
+                  }`}
+                >
+                  <CatIcon className={`w-5 h-5 md:w-6 md:h-6 mb-0.5 md:mb-1 ${hasActive || isExpanded ? "text-primary-foreground" : ""}`} />
+                  <span className={`text-[6px] sm:text-[7px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${hasActive || isExpanded ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                    {cat.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {isExpanded && !single && (
+                    <motion.div className="w-full space-y-1 mt-2 pb-4"
+                      initial="hidden" animate="show" exit="hidden"
+                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}>
+                      {cat.sections.map(s => {
+                        const SIcon = s.icon;
+                        const isActive = active === s.id;
+                        return (
+                          <motion.div key={s.id} variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
+                            <button onClick={() => handleSectionClick(s.id, cat.id)}
+                              className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
+                                isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10"
+                              }`}>
+                              <SIcon className={`w-4 h-4 md:w-5 md:h-5 mb-0.5 md:mb-1 ${isActive ? "text-primary-foreground" : ""}`} />
+                              <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                                {s.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
+                              </span>
+                            </button>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {idx < CATEGORIES.length - 1 && (
+                  <div className="w-full px-2 py-2"><div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" /></div>
+                )}
+              </div>
+            );
+          })}
+        </aside>
+
+        {/* Collapse toggle */}
+        <button onClick={() => setSidebarCollapsed(c => !c)}
+          className={`fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 text-primary px-1 py-3 rounded-r ${sidebarCollapsed ? "" : isMobile ? "ml-14" : "ml-14 md:ml-24"}`}>
+          {sidebarCollapsed ? "›" : "‹"}
+        </button>
+
+        {/* Main */}
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
+          sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
+        } ${isMobile ? "pb-[70px]" : ""}`}>
+          <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
+            {loading && !data ? (
+              <div className="text-muted-foreground text-center py-12">Loading...</div>
+            ) : !data ? null : (
+              <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} spending={data.spending} prospects={data.prospects} setActive={setActive} />}
+                {active === "investment" && <SectionShell icon={Sparkles} title="Investment Overview"><InvestmentOverview /></SectionShell>}
+                {active === "represented" && <Roster players={data.players} status="represented" />}
+                {active === "mandated" && <Roster players={data.players} status="mandated" />}
+                {active === "previously" && <Roster players={data.players} status="previously_mandated" />}
+                {active === "prospects" && <Prospects rows={data.prospects} />}
+                {active === "playerdatabase" && <PlayerDatabase players={data.players} />}
+                {active === "contracts" && <ContractsView rows={data.contracts} />}
+                {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
+                {active === "commission" && <CommissionForecast players={data.players} />}
+                {active === "tasks" && <TasksView rows={data.tasks} />}
+                {active === "activity" && <ActivityFeed rows={data.staffActivity} />}
+              </motion.div>
+            )}
           </div>
         </main>
       </div>
-    </div>
-  );
-};
-
-const SectionHeader = ({ title, action }: { title: string; action?: React.ReactNode }) => (
-  <div className="flex items-end justify-between mb-6 pb-4 border-b border-primary/15">
-    <div>
-      <div className="text-[10px] uppercase tracking-[0.35em] text-primary font-bbh">RISE</div>
-      <h1 className="text-3xl font-bbh tracking-wide mt-1 uppercase">{title}</h1>
-    </div>
-    {action}
-  </div>
-);
-
-const OverviewSection = ({ data, setActive }: { data: any; setActive: (s: SectionId) => void }) => {
-  const now = new Date();
-  const thisMonth = now.toISOString().slice(0, 7);
-  const monthlySpend = (data.spending as SpendingRow[])
-    .filter((s) => s.spend_date.startsWith(thisMonth))
-    .reduce((sum, s) => sum + Number(s.amount_gbp), 0);
-  const players = (data.players as PlayerRow[]) || [];
-  const represented = players.filter((p) => p.representation_status === "represented").length;
-  const mandated = players.filter((p) => p.representation_status === "mandated").length;
-  const tasks = (data.tasks as TaskRow[]) || [];
-  const tasksDone = tasks.filter((t) => t.completed).length;
-  const taskPct = tasks.length ? Math.round((tasksDone / tasks.length) * 100) : 0;
-  const contracts = (data.contracts as ContractRow[]) || [];
-  const contractsSigned = contracts.filter((c) => !!c.owner_signed_at || !!c.locked_at).length;
-  const recentActivity = (data.activity as ActivityRow[]).slice(0, 5);
-
-  return (
-    <div>
-      <SectionHeader title="Overview" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Stat label="This month" value={gbp(monthlySpend)} sub="Total spend" />
-        <Stat label="Represented" value={String(represented)} sub="Active players" />
-        <Stat label="Mandated" value={String(mandated)} sub="Live mandates" />
-        <Stat label="Tasks" value={`${taskPct}%`} sub={`${tasksDone} of ${tasks.length} completed`} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <button onClick={() => setActive("roster")} className="text-left">
-          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
-            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><UserCheck className="w-4 h-4" />Roster</div>
-            <div className="text-2xl font-bbh mt-2">{players.length}</div>
-            <div className="text-xs text-foreground/50 mt-1">Players linked from staff system</div>
-          </Card>
-        </button>
-        <button onClick={() => setActive("contracts")} className="text-left">
-          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
-            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><FileSignature className="w-4 h-4" />Contracts</div>
-            <div className="text-2xl font-bbh mt-2">{contractsSigned} / {contracts.length}</div>
-            <div className="text-xs text-foreground/50 mt-1">Signed or locked</div>
-          </Card>
-        </button>
-        <button onClick={() => setActive("tasks")} className="text-left">
-          <Card className="bg-card/60 border-primary/15 p-5 hover:border-primary/40 transition-colors h-full">
-            <div className="flex items-center gap-2 text-primary font-bbh uppercase tracking-wide text-sm"><CheckSquare className="w-4 h-4" />Task Completion</div>
-            <div className="text-2xl font-bbh mt-2">{tasksDone} / {tasks.length}</div>
-            <div className="text-xs text-foreground/50 mt-1">Across all categories</div>
-          </Card>
-        </button>
-      </div>
-      <Card className="bg-card/60 border-primary/15 p-6">
-        <h2 className="text-sm font-bbh uppercase tracking-wider text-primary mb-4">Recent activity</h2>
-        {recentActivity.length === 0 ? (
-          <p className="text-sm text-foreground/40">No activity logged yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {recentActivity.map((a) => (
-              <div key={a.id} className="flex items-start gap-4 text-sm">
-                <div className="text-foreground/40 w-24 shrink-0">{format(new Date(a.occurred_at), "d MMM HH:mm")}</div>
-                <Badge variant="outline" className="border-primary/40 text-primary">{a.category}</Badge>
-                <div className="text-foreground/70 flex-1">{a.description}</div>
-                <div className="text-foreground/40 text-xs">{a.person}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const ageFromDob = (dob: string | null) => {
-  if (!dob) return null;
-  const d = new Date(dob);
-  const diff = Date.now() - d.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
-};
-
-const InvestmentSection = () => (
-  <div>
-    <SectionHeader title="Investment Overview" />
-    <p className="text-sm text-foreground/55 mb-6 max-w-2xl">
-      A guided walkthrough of how RISE operates, how capital is deployed, and how returns are structured. Tap any card to expand.
-    </p>
-    <InvestmentOverview />
-  </div>
-);
-
-const RosterSection = ({ rows }: { rows: PlayerRow[] }) => {
-  const groups: Array<{ key: string; label: string }> = [
-    { key: "represented", label: "Represented" },
-    { key: "mandated", label: "Mandated" },
-    { key: "previously_mandated", label: "Previously Mandated" },
-  ];
-  return (
-    <div>
-      <SectionHeader title="Roster" />
-      <p className="text-sm text-foreground/55 mb-6">Live data from the staff system. Represented, mandated and previously mandated players.</p>
-      {groups.map((g) => {
-        const players = rows.filter((p) => p.representation_status === g.key);
-        if (!players.length) return null;
-        return (
-          <div key={g.key} className="mb-8">
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="font-bbh uppercase tracking-wide text-primary text-sm">{g.label}</h2>
-              <div className="h-px flex-1 bg-primary/15" />
-              <span className="text-xs text-foreground/40">{players.length}</span>
-            </div>
-            <Card className="bg-card/60 border-primary/15 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-primary/5 text-primary/70 text-[10px] uppercase tracking-wider font-bbh">
-                  <tr>
-                    <th className="px-5 py-3 text-left">Name</th>
-                    <th className="px-5 py-3 text-left">Position</th>
-                    <th className="px-5 py-3 text-left">Nationality</th>
-                    <th className="px-5 py-3 text-left">Age</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-primary/10">
-                  {players.map((p) => (
-                    <tr key={p.id} className="hover:bg-primary/5">
-                      <td className="px-5 py-3 font-medium">{p.name}</td>
-                      <td className="px-5 py-3 text-foreground/60">{p.position || "—"}</td>
-                      <td className="px-5 py-3 text-foreground/60">{p.nationality || "—"}</td>
-                      <td className="px-5 py-3 text-foreground/60">{ageFromDob(p.date_of_birth) ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-        );
-      })}
-      {rows.length === 0 && <Card className="bg-card/60 border-primary/15 p-8 text-center text-foreground/40">No players linked yet.</Card>}
-    </div>
-  );
-};
-
-const ContractsSection = ({ rows }: { rows: ContractRow[] }) => {
-  return (
-    <div>
-      <SectionHeader title="Contracts" />
-      <p className="text-sm text-foreground/55 mb-6">Signature contracts from the staff system. Status reflects whether a contract has been signed or locked.</p>
-      <Card className="bg-card/60 border-primary/15 overflow-hidden">
-        {rows.length === 0 ? (
-          <div className="p-8 text-center text-foreground/40">No contracts yet.</div>
-        ) : (
-          <div className="divide-y divide-primary/10">
-            {rows.map((c) => {
-              const signed = !!c.owner_signed_at || !!c.locked_at;
-              return (
-                <div key={c.id} className="flex items-center gap-4 px-5 py-3 text-sm">
-                  <FileSignature className="w-4 h-4 text-primary/70" />
-                  <div className="flex-1 truncate">
-                    <div className="font-medium">{c.title || "Untitled contract"}</div>
-                    <div className="text-xs text-foreground/40">Updated {format(new Date(c.updated_at), "d MMM yyyy")}</div>
-                  </div>
-                  <Badge variant="outline" className={signed ? "border-primary/60 text-primary" : "border-foreground/20 text-foreground/50"}>
-                    {signed ? "Signed / Locked" : c.status || "Draft"}
-                  </Badge>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const TasksSection = ({ rows }: { rows: TaskRow[] }) => {
-  const done = rows.filter((t) => t.completed);
-  const open = rows.filter((t) => !t.completed);
-  const pct = rows.length ? Math.round((done.length / rows.length) * 100) : 0;
-  return (
-    <div>
-      <SectionHeader title="Task Completion" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Stat label="Completion" value={`${pct}%`} sub={`${done.length} of ${rows.length}`} />
-        <Stat label="Completed" value={String(done.length)} />
-        <Stat label="Outstanding" value={String(open.length)} />
-      </div>
-      <Card className="bg-card/60 border-primary/15 overflow-hidden">
-        {rows.length === 0 ? (
-          <div className="p-8 text-center text-foreground/40">No tasks yet.</div>
-        ) : (
-          <div className="divide-y divide-primary/10 max-h-[60vh] overflow-y-auto">
-            {rows.slice(0, 200).map((t) => (
-              <div key={t.id} className="flex items-center gap-4 px-5 py-3 text-sm">
-                <CheckSquare className={`w-4 h-4 ${t.completed ? "text-primary" : "text-foreground/30"}`} />
-                <div className="flex-1 truncate">
-                  <div className={t.completed ? "line-through text-foreground/50" : "text-foreground/80"}>{t.title}</div>
-                  {t.category && <div className="text-xs text-foreground/40">{t.category}</div>}
-                </div>
-                {t.deadline && <div className="text-xs text-foreground/40">{format(new Date(t.deadline), "d MMM")}</div>}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const AddDialog = ({ trigger, title, children }: { trigger: React.ReactNode; title: string; children: (close: () => void) => React.ReactNode }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-2xl">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        {children(() => setOpen(false))}
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const ActivitySection = ({ rows, write }: { rows: ActivityRow[]; write: any }) => {
-  const [person, setPerson] = useState("");
-  const [category, setCategory] = useState("outreach");
-  const [description, setDescription] = useState("");
-
-  return (
-    <div>
-      <SectionHeader title="Activity Log" action={
-        <AddDialog title="Log activity" trigger={
-          <Button className="bg-[#C6A332] hover:bg-[#b09028] text-black"><Plus className="w-4 h-4 mr-1" /> Log</Button>
-        }>{(close) => (
-          <div className="space-y-3">
-            <div><Label>Person</Label><Input value={person} onChange={(e) => setPerson(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                <SelectContent>{ACTIVITY_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <Button className="bg-[#C6A332] text-black" onClick={async () => {
-              if (!person || !description) return;
-              await write("insert", "investor_activity_log", { row: { person, category, description, occurred_at: new Date().toISOString() } });
-              setPerson(""); setDescription(""); close();
-            }}>Save</Button>
-          </div>
-        )}</AddDialog>
-      } />
-      <Card className="bg-white/[0.03] border-white/5">
-        {rows.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No activity logged yet.</div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {rows.map((a) => (
-              <div key={a.id} className="flex items-center gap-4 px-5 py-3 text-sm">
-                <div className="text-white/40 w-28 shrink-0">{format(new Date(a.occurred_at), "d MMM yyyy HH:mm")}</div>
-                <Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{a.category}</Badge>
-                <div className="text-white/80 flex-1">{a.description}</div>
-                <div className="text-white/40 w-32 text-right truncate">{a.person}</div>
-                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_activity_log", { id: a.id })}>
-                  <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const SpendingSection = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
-  const [spend_date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [category, setCategory] = useState("tools");
-  const [vendor, setVendor] = useState("");
-  const [amount, setAmount] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const byCategory = useMemo(() => {
-    const m: Record<string, number> = {};
-    rows.forEach((r) => { m[r.category] = (m[r.category] || 0) + Number(r.amount_gbp); });
-    return Object.entries(m).map(([category, amount]) => ({ category, amount }));
-  }, [rows]);
-
-  const byMonth = useMemo(() => {
-    const m: Record<string, number> = {};
-    rows.forEach((r) => {
-      const k = r.spend_date.slice(0, 7);
-      m[k] = (m[k] || 0) + Number(r.amount_gbp);
-    });
-    return Object.entries(m).sort(([a], [b]) => a.localeCompare(b)).map(([month, total]) => ({ month, total }));
-  }, [rows]);
-
-  const total = rows.reduce((s, r) => s + Number(r.amount_gbp), 0);
-
-  return (
-    <div>
-      <SectionHeader title="Spending Tracker" action={
-        <AddDialog title="Add expense" trigger={
-          <Button className="bg-[#C6A332] hover:bg-[#b09028] text-black"><Plus className="w-4 h-4 mr-1" /> Add</Button>
-        }>{(close) => (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Date</Label><Input type="date" value={spend_date} onChange={(e) => setDate(e.target.value)} className="bg-white/5 border-white/10" /></div>
-              <div><Label>Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                  <SelectContent>{SPENDING_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div><Label>Vendor</Label><Input value={vendor} onChange={(e) => setVendor(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <Button className="bg-[#C6A332] text-black" onClick={async () => {
-              if (!amount) return;
-              await write("insert", "investor_spending", { row: { spend_date, category, vendor, amount_gbp: Number(amount), notes } });
-              setVendor(""); setAmount(""); setNotes(""); close();
-            }}>Save</Button>
-          </div>
-        )}</AddDialog>
-      } />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Stat label="Total" value={gbp(total)} />
-        <Stat label="Entries" value={String(rows.length)} />
-        <Stat label="Categories" value={String(byCategory.length)} />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="bg-white/[0.03] border-white/5 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-4">By category</h3>
-          <div style={{ width: "100%", height: 240 }}>
-            <ResponsiveContainer>
-              <BarChart data={byCategory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                <XAxis dataKey="category" stroke="#ffffff60" />
-                <YAxis stroke="#ffffff60" />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #ffffff20" }} />
-                <Bar dataKey="amount" fill="#C6A332" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-        <Card className="bg-white/[0.03] border-white/5 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-4">Monthly trend</h3>
-          <div style={{ width: "100%", height: 240 }}>
-            <ResponsiveContainer>
-              <LineChart data={byMonth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                <XAxis dataKey="month" stroke="#ffffff60" />
-                <YAxis stroke="#ffffff60" />
-                <Tooltip contentStyle={{ background: "#111", border: "1px solid #ffffff20" }} />
-                <Line type="monotone" dataKey="total" stroke="#C6A332" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-      <Card className="bg-white/[0.03] border-white/5">
-        {rows.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No expenses recorded.</div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {rows.map((r) => (
-              <div key={r.id} className="flex items-center gap-4 px-5 py-3 text-sm">
-                <div className="text-white/40 w-24 shrink-0">{format(new Date(r.spend_date), "d MMM yyyy")}</div>
-                <Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{r.category}</Badge>
-                <div className="text-white/80 flex-1 truncate">{r.vendor || "—"}{r.notes ? <span className="text-white/40"> • {r.notes}</span> : null}</div>
-                <div className="text-white font-medium w-24 text-right">{gbp(Number(r.amount_gbp))}</div>
-                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}>
-                  <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const PipelineSection = ({ rows, write }: { rows: PipelineRow[]; write: any }) => {
-  const [name, setName] = useState("");
-  const [age_group, setAge] = useState("");
-  const [country, setCountry] = useState("");
-  const [status, setStatus] = useState("lead");
-  const [notes, setNotes] = useState("");
-  const [val, setVal] = useState("");
-
-  return (
-    <div>
-      <SectionHeader title="Player Pipeline" action={
-        <AddDialog title="Add player" trigger={
-          <Button className="bg-[#C6A332] hover:bg-[#b09028] text-black"><Plus className="w-4 h-4 mr-1" /> Add</Button>
-        }>{(close) => (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} className="bg-white/5 border-white/10" /></div>
-              <div><Label>Age group</Label><Input value={age_group} onChange={(e) => setAge(e.target.value)} className="bg-white/5 border-white/10" placeholder="e.g. U18" /></div>
-              <div><Label>Country/region</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} className="bg-white/5 border-white/10" /></div>
-              <div><Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                  <SelectContent>{PIPELINE_STATUS.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div><Label>Expected value (GBP, optional)</Label><Input type="number" value={val} onChange={(e) => setVal(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <Button className="bg-[#C6A332] text-black" onClick={async () => {
-              if (!name) return;
-              await write("insert", "investor_pipeline", { row: {
-                name, age_group: age_group || null, country: country || null, status, notes: notes || null,
-                expected_value_gbp: val ? Number(val) : null,
-              } });
-              setName(""); setAge(""); setCountry(""); setStatus("lead"); setNotes(""); setVal(""); close();
-            }}>Save</Button>
-          </div>
-        )}</AddDialog>
-      } />
-      <Card className="bg-white/[0.03] border-white/5 overflow-hidden">
-        {rows.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No players in pipeline.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-white/[0.03] text-white/50 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3 text-left">Name</th>
-                <th className="px-5 py-3 text-left">Age</th>
-                <th className="px-5 py-3 text-left">Country</th>
-                <th className="px-5 py-3 text-left">Status</th>
-                <th className="px-5 py-3 text-right">Expected</th>
-                <th className="px-5 py-3 text-left">Notes</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {rows.map((p) => (
-                <tr key={p.id} className="hover:bg-white/[0.02]">
-                  <td className="px-5 py-3 font-medium">{p.name}</td>
-                  <td className="px-5 py-3 text-white/60">{p.age_group || "—"}</td>
-                  <td className="px-5 py-3 text-white/60">{p.country || "—"}</td>
-                  <td className="px-5 py-3"><Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{p.status.replace(/_/g, " ")}</Badge></td>
-                  <td className="px-5 py-3 text-right text-white/80">{gbp(p.expected_value_gbp)}</td>
-                  <td className="px-5 py-3 text-white/50 max-w-xs truncate">{p.notes || "—"}</td>
-                  <td className="px-5 py-3"><Button size="icon" variant="ghost" onClick={() => write("delete", "investor_pipeline", { id: p.id })}>
-                    <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                  </Button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-    </div>
-  );
-};
-
-const DealsSection = ({ rows, write }: { rows: DealRow[]; write: any }) => {
-  const [title, setTitle] = useState("");
-  const [stage, setStage] = useState("initial");
-  const [counterparty, setCp] = useState("");
-  const [value, setValue] = useState("");
-  const [note, setNote] = useState("");
-
-  return (
-    <div>
-      <SectionHeader title="Deals & Opportunities" action={
-        <AddDialog title="Add deal" trigger={
-          <Button className="bg-[#C6A332] hover:bg-[#b09028] text-black"><Plus className="w-4 h-4 mr-1" /> Add</Button>
-        }>{(close) => (
-          <div className="space-y-3">
-            <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Stage</Label>
-                <Select value={stage} onValueChange={setStage}>
-                  <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                  <SelectContent>{DEAL_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div><Label>Counterparty</Label><Input value={counterparty} onChange={(e) => setCp(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            </div>
-            <div><Label>Value (GBP)</Label><Input type="number" value={value} onChange={(e) => setValue(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>First note</Label><Textarea value={note} onChange={(e) => setNote(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <Button className="bg-[#C6A332] text-black" onClick={async () => {
-              if (!title) return;
-              const timeline = note ? [{ at: new Date().toISOString(), note }] : [];
-              await write("insert", "investor_deals", { row: { title, stage, counterparty: counterparty || null, value_gbp: value ? Number(value) : null, timeline_notes: timeline } });
-              setTitle(""); setCp(""); setValue(""); setNote(""); close();
-            }}>Save</Button>
-          </div>
-        )}</AddDialog>
-      } />
-      {rows.length === 0 ? (
-        <Card className="bg-white/[0.03] border-white/5 p-8 text-center text-white/40">No deals in progress.</Card>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((d) => (
-            <Card key={d.id} className="bg-white/[0.03] border-white/5 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold">{d.title}</h3>
-                    <Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{d.stage}</Badge>
-                  </div>
-                  <div className="text-sm text-white/50 mt-1">
-                    {d.counterparty || "—"}{d.value_gbp ? ` • ${gbp(Number(d.value_gbp))}` : ""}
-                  </div>
-                  {Array.isArray(d.timeline_notes) && d.timeline_notes.length > 0 && (
-                    <ul className="mt-3 space-y-1 text-sm text-white/70">
-                      {d.timeline_notes.map((t: any, i: number) => (
-                        <li key={i}>
-                          <span className="text-white/40">{t.at ? format(new Date(t.at), "d MMM") : ""} · </span>
-                          {t.note}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_deals", { id: d.id })}>
-                  <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const NotesSection = ({ rows, write }: { rows: NoteRow[]; write: any }) => {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [kind, setKind] = useState("founder");
-
-  return (
-    <div>
-      <SectionHeader title="System Notes & Strategy" action={
-        <AddDialog title="Add note" trigger={
-          <Button className="bg-[#C6A332] hover:bg-[#b09028] text-black"><Plus className="w-4 h-4 mr-1" /> Add</Button>
-        }>{(close) => (
-          <div className="space-y-3">
-            <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <div><Label>Type</Label>
-              <Select value={kind} onValueChange={setKind}>
-                <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                <SelectContent>{NOTE_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>Body</Label><Textarea rows={8} value={body} onChange={(e) => setBody(e.target.value)} className="bg-white/5 border-white/10" /></div>
-            <Button className="bg-[#C6A332] text-black" onClick={async () => {
-              if (!title || !body) return;
-              await write("insert", "investor_notes", { row: { title, body, kind } });
-              setTitle(""); setBody(""); setKind("founder"); close();
-            }}>Save</Button>
-          </div>
-        )}</AddDialog>
-      } />
-      {rows.length === 0 ? (
-        <Card className="bg-white/[0.03] border-white/5 p-8 text-center text-white/40">No notes yet.</Card>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((n) => (
-            <Card key={n.id} className="bg-white/[0.03] border-white/5 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-base font-semibold">{n.title}</h3>
-                    <Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{n.kind}</Badge>
-                    <span className="text-xs text-white/40">{format(new Date(n.created_at), "d MMM yyyy")}</span>
-                  </div>
-                  <p className="mt-2 text-sm text-white/70 whitespace-pre-wrap">{n.body}</p>
-                </div>
-                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_notes", { id: n.id })}>
-                  <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

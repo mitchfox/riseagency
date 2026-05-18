@@ -54,7 +54,7 @@ interface Player {
   player_list_order: number | null;
 }
 
-type EditableField = 'position' | 'age' | 'club' | 'club_logo' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url';
+type EditableField = 'position' | 'age' | 'club' | 'club_logo' | 'league' | 'email' | 'representation_status' | 'bio' | 'star_order' | 'player_list_order' | 'image_url' | 'hover_image_url' | 'contract_end_date' | 'expected_commission_annual' | 'current_salary_annual';
 
 interface FieldEdit {
   [playerId: string]: string | number;
@@ -263,7 +263,11 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
       player_list_order: 'List Order',
       image_url: 'Main Image',
       hover_image_url: 'Hover Image'
-    };
+      ,
+      contract_end_date: 'Contract End',
+      expected_commission_annual: 'Expected Commission (£/yr)',
+      current_salary_annual: 'Current Salary (£/yr)',
+    } as Record<EditableField, string>;
     return labels[field];
   };
 
@@ -438,6 +442,9 @@ export const PlayerList = ({ isAdmin }: { isAdmin: boolean }) => {
                 <SelectItem value="player_list_order">List Order</SelectItem>
                 <SelectItem value="image_url">Main Image</SelectItem>
                 <SelectItem value="hover_image_url">Hover Image</SelectItem>
+                <SelectItem value="contract_end_date">Contract End</SelectItem>
+                <SelectItem value="expected_commission_annual">Expected Commission (£/yr)</SelectItem>
+                <SelectItem value="current_salary_annual">Current Salary (£/yr)</SelectItem>
               </SelectContent>
             </Select>
           </div>
