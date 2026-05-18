@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
@@ -328,73 +329,55 @@ const Roster = ({ players, status, editable, onSaveCommission, invoiceTotalsByPl
 };
 
 const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = rows.find(r => r.id === selectedId) || rows[0] || null;
-  const url = selected?.resolved_file_url || null;
-  const [loadError, setLoadError] = useState(false);
-  useEffect(() => { setLoadError(false); }, [selected?.id]);
   return (
     <SectionShell icon={FileSignature} title={`Contracts (${rows.length})`}>
       {rows.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No contracts yet.</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
-          <div className="space-y-2 lg:max-h-[80vh] lg:overflow-y-auto pr-1">
-            {rows.map(c => {
-              const signed = !!c.owner_signed_at || !!c.locked_at;
-              const isSelected = selected?.id === c.id;
-              return (
-                <button key={c.id} onClick={() => setSelectedId(c.id)}
-                  className={`w-full text-left p-3 rounded border transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border/60 bg-card/60 hover:border-primary/40"}`}>
-                  <div className="flex items-start gap-2">
-                    <FileSignature className={`w-4 h-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bbh uppercase text-sm truncate">{c.title || "Untitled"}</div>
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <Badge variant="outline" className={`text-[9px] ${signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}>
-                          {c.locked_at ? <><Lock className="w-2.5 h-2.5 mr-0.5" />Locked</> : signed ? "Signed" : c.status || "Draft"}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
-                      </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {rows.map(c => {
+            const signed = !!c.owner_signed_at || !!c.locked_at;
+            const url = c.resolved_file_url || null;
+            return (
+              <Card key={c.id} className="bg-card/60 border-border/60 hover:border-primary/40 transition-colors p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded bg-primary/10 text-primary shrink-0">
+                    <FileSignature className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground truncate">{c.title || "Untitled contract"}</div>
+                    {c.description && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{c.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <Badge variant="outline" className={`text-[10px] ${signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}>
+                        {c.locked_at ? <><Lock className="w-2.5 h-2.5 mr-0.5" />Locked</> : signed ? "Signed" : (c.status || "Draft")}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">Updated {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      {url ? (
+                        <>
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="outline" className="h-8">
+                              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open
+                            </Button>
+                          </a>
+                          <a href={url} download>
+                            <Button size="sm" variant="ghost" className="h-8">
+                              <FileText className="w-3.5 h-3.5 mr-1.5" />Download
+                            </Button>
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No file attached yet.</span>
+                      )}
                     </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="rounded border border-border/60 bg-background overflow-hidden flex flex-col min-h-[60vh] lg:min-h-[80vh]">
-            {selected ? (
-              <>
-                <div className="px-4 py-2 border-b border-border/60 flex items-center justify-between bg-card/50">
-                  <div className="font-bbh uppercase text-sm truncate">{selected.title}</div>
-                  <div className="flex items-center gap-2">
-                    {url && (
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" /> Open
-                      </a>
-                    )}
-                  </div>
                 </div>
-                {url && !loadError ? (
-                  <object data={url} type="application/pdf" className="flex-1 w-full bg-white">
-                    <iframe src={url} className="w-full h-full border-0 bg-white" title={selected.title} onError={() => setLoadError(true)} />
-                  </object>
-                ) : url ? (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-6">
-                    <FileSignature className="w-10 h-10 text-muted-foreground" />
-                    <div className="text-sm text-muted-foreground">Your browser cannot preview this PDF inline.</div>
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="bg-primary text-primary-foreground"><ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open PDF</Button>
-                    </a>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">No PDF available for this contract yet.</div>
-                )}
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Select a contract to preview.</div>
-            )}
-          </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </SectionShell>
