@@ -401,29 +401,54 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
   const handleTimestampOverride = async () => {
     if (!selectedVideo || !videoRef.current || !overrideMinute) return;
     const currentVideoTime = videoRef.current.currentTime;
-    const targetMatchSeconds = parseFloat(overrideMinute) * 60;
+    const targetMatchSeconds = parseMatchTimeInputToSeconds(overrideMinute);
+    if (targetMatchSeconds === null) {
+      toast.error("Enter match time as mm.ss");
+      return;
+    }
 
     if (syncHalf === "2nd") {
-      const updated = {
-        ...selectedVideo,
-        second_half_offset: targetMatchSeconds - currentVideoTime,
-        second_half_video_time: currentVideoTime,
-      };
-      setSelectedVideo(updated);
-      setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
-      setShowTimestampOverride(false);
-      setOverrideMinute("");
-      toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+      const secondHalfOffset = targetMatchSeconds - currentVideoTime;
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        if (clip.start < currentVideoTime) return clip;
+        const newMinute = formatClipMinuteFromSeconds(clip.start + secondHalfOffset);
+        return { ...clip, label: `Clip ${newMinute}` };
+      });
+      try {
+        await callFunction({
+          action: 'updateOffset',
+          playerEmail,
+          videoId: selectedVideo.id,
+          second_half_offset: secondHalfOffset,
+          second_half_video_time: currentVideoTime,
+          clips: adjustedClips,
+        });
+        const updated = { ...selectedVideo, second_half_offset: secondHalfOffset, second_half_video_time: currentVideoTime, clips: adjustedClips };
+        setSelectedVideo(updated);
+        setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+        setShowTimestampOverride(false);
+        setOverrideMinute("");
+        toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+      } catch (err) {
+        toast.error('Failed to sync');
+      }
     } else {
       const newOffset = targetMatchSeconds - currentVideoTime;
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        const isSecondHalf = selectedVideo.second_half_video_time !== null && clip.start >= selectedVideo.second_half_video_time;
+        if (isSecondHalf) return clip;
+        const newMinute = formatClipMinuteFromSeconds(clip.start + newOffset);
+        return { ...clip, label: `Clip ${newMinute}` };
+      });
       try {
         await callFunction({
           action: 'updateOffset',
           playerEmail,
           videoId: selectedVideo.id,
           match_minute_offset: newOffset,
+          clips: adjustedClips,
         });
-        const updated = { ...selectedVideo, match_minute_offset: newOffset };
+        const updated = { ...selectedVideo, match_minute_offset: newOffset, clips: adjustedClips };
         setSelectedVideo(updated);
         setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
         setShowTimestampOverride(false);
