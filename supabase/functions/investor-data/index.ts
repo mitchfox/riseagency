@@ -19,6 +19,26 @@ async function getSessionUser(supabase: any, token: string) {
   return u;
 }
 
+// Resolve a private signature-contracts URL/path into a 24h signed URL
+async function resolveContractUrl(supabase: any, raw: string | null): Promise<string | null> {
+  if (!raw) return null;
+  const marker = "/signature-contracts/";
+  let path: string | null = null;
+  if (raw.includes(marker)) {
+    const idx = raw.indexOf(marker) + marker.length;
+    let p = raw.slice(idx).split("?")[0];
+    if (p.startsWith("sign/")) p = p.slice(5);
+    if (p.startsWith("public/")) p = p.slice(7);
+    path = decodeURIComponent(p);
+  } else if (!raw.startsWith("http")) {
+    path = raw;
+  }
+  if (!path) return raw; // already an external URL
+  const { data, error } = await supabase.storage.from("signature-contracts").createSignedUrl(path, 60 * 60 * 24);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -34,7 +54,8 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards] = await Promise.all([
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -48,16 +69,31 @@ Deno.serve(async (req) => {
         .select("id, title, description, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, completed_pdf_url")
         .order("updated_at", { ascending: false }).limit(200),
       supabase.from("staff_tasks")
-        .select("id, title, description, category, priority, completed, deadline, created_at, updated_at, last_completed_at, assigned_to, image_url, display_order, is_recurring, recurrence_label")
+        .select("id, title, description, category, priority, completed, deadline, created_at, updated_at, last_completed_at, assigned_to, image_url, display_order, is_recurring, recurrence_label, completion_log")
         .order("updated_at", { ascending: false }).limit(500),
       supabase.from("staff_activity_log")
         .select("id, user_email, action, entity_type, entity_id, entity_name, details, created_at")
         .order("created_at", { ascending: false }).limit(800),
       supabase.from("prospects")
-        .select("id, name, stage, position, nationality, date_of_birth, age, current_club, profile_image_url, probability_weight, projected_revenue, revenue_currency, notes, last_contact_date, updated_at")
+        .select("id, name, stage, position, nationality, date_of_birth, age, age_group, current_club, profile_image_url, probability_weight, projected_revenue, revenue_currency, priority, notes, last_contact_date, updated_at, linked_player_id")
         .order("updated_at", { ascending: false }).limit(500),
       supabase.from("investor_overview_sections").select("*").order("display_order", { ascending: true }),
       supabase.from("investor_overview_cards").select("*").order("display_order", { ascending: true }),
+      supabase.from("invoices")
+        .select("id, player_id, invoice_number, invoice_date, due_date, amount, currency, status, amount_paid, billing_month, description")
+        .order("invoice_date", { ascending: false }).limit(2000),
+      supabase.from("scouting_reports").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("marketing_schedule_items")
+        .select("id, post_type, day_of_week, scheduled_time, owner_id, status, platform_format, image_url, updated_at, last_completed_at, completion_log")
+        .limit(500),
+      supabase.from("profiles").select("id, email, full_name").limit(200),
+      supabase.from("staff_notification_events")
+        .select("id, event_type, title, body, event_data, created_at")
+        .in("event_type", ["task_completed", "task_assigned", "task_reminder", "schedule_item_completed", "contract_signed", "contract_event", "player_created", "player_updated"])
+        .gte("created_at", sevenDaysAgo)
+        .order("created_at", { ascending: false }).limit(400),
     ]);
 
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
@@ -69,6 +105,12 @@ Deno.serve(async (req) => {
       return true;
     }).slice(0, 200);
 
+    // Sign contract URLs server-side so the iframe can actually load private PDFs
+    const contractsResolved = await Promise.all((contracts.data || []).map(async (c: any) => ({
+      ...c,
+      resolved_file_url: await resolveContractUrl(supabase, c.completed_pdf_url || c.locked_file_url || c.file_url),
+    })));
+
     return new Response(JSON.stringify({
       user: { ...user, is_admin: (user as any).is_admin === true },
       activity: activity.data || [],
@@ -77,12 +119,19 @@ Deno.serve(async (req) => {
       deals: deals.data || [],
       notes: notes.data || [],
       players: players.data || [],
-      contracts: contracts.data || [],
+      contracts: contractsResolved,
       tasks: tasks.data || [],
       staffActivity: dedupActivity,
       prospects: prospects.data || [],
       overviewSections: overviewSections.data || [],
       overviewCards: overviewCards.data || [],
+      invoices: invoices.data || [],
+      scoutingReports: scouting.data || [],
+      outreachYouth: outreachYouth.data || [],
+      outreachPro: outreachPro.data || [],
+      marketingSchedule: marketingSchedule.data || [],
+      profiles: profiles.data || [],
+      taskNotifications: taskNotifications.data || [],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
