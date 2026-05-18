@@ -1668,6 +1668,19 @@ const InvestorsPortal = () => {
       {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
       )}
+      {data?.isAdmin && (
+        <button
+          onClick={() => setUnlocked(u => !u)}
+          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
+          className={`fixed bottom-3 right-3 z-[55] h-8 w-8 rounded-full flex items-center justify-center border backdrop-blur-md transition-opacity ${
+            unlocked
+              ? "bg-primary/20 border-primary/50 text-primary opacity-90 hover:opacity-100"
+              : "bg-background/40 border-border/40 text-muted-foreground opacity-30 hover:opacity-90"
+          }`}
+        >
+          {unlocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+        </button>
+      )}
     </div>
   );
 };
