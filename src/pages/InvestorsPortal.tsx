@@ -2085,6 +2085,8 @@ const InvestorsPortal = () => {
                   {active === "spending" && <Spending rows={data.spending} write={writeOp} token={token} onRefresh={refresh} />}
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
+                  {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} players={data.players} />}
+                  {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
