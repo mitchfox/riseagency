@@ -2144,6 +2144,117 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_bank_connections: {
+        Row: {
+          access_token: string | null
+          account_label: string | null
+          bank_name: string | null
+          created_at: string
+          id: string
+          investor_user_id: string
+          last_synced_at: string | null
+          provider: string
+          refresh_token: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_label?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          investor_user_id: string
+          last_synced_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          account_label?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          investor_user_id?: string
+          last_synced_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_bank_transactions: {
+        Row: {
+          amount_gbp: number
+          category: string | null
+          connection_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          description: string | null
+          id: string
+          merchant: string | null
+          provider_transaction_id: string | null
+          raw: Json | null
+          spending_id: string | null
+          status: string
+          txn_date: string
+        }
+        Insert: {
+          amount_gbp: number
+          category?: string | null
+          connection_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          id?: string
+          merchant?: string | null
+          provider_transaction_id?: string | null
+          raw?: Json | null
+          spending_id?: string | null
+          status?: string
+          txn_date: string
+        }
+        Update: {
+          amount_gbp?: number
+          category?: string | null
+          connection_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          id?: string
+          merchant?: string | null
+          provider_transaction_id?: string | null
+          raw?: Json | null
+          spending_id?: string | null
+          status?: string
+          txn_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_bank_transactions_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "investor_bank_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investor_bank_transactions_spending_id_fkey"
+            columns: ["spending_id"]
+            isOneToOne: false
+            referencedRelation: "investor_spending"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investor_deals: {
         Row: {
           counterparty: string | null
@@ -2346,9 +2457,11 @@ export type Database = {
       investor_spending: {
         Row: {
           amount_gbp: number
+          bank_transaction_id: string | null
           category: string
           created_at: string
           id: string
+          is_personal: boolean
           notes: string | null
           source: string
           spend_date: string
@@ -2356,9 +2469,11 @@ export type Database = {
         }
         Insert: {
           amount_gbp: number
+          bank_transaction_id?: string | null
           category: string
           created_at?: string
           id?: string
+          is_personal?: boolean
           notes?: string | null
           source?: string
           spend_date: string
@@ -2366,9 +2481,11 @@ export type Database = {
         }
         Update: {
           amount_gbp?: number
+          bank_transaction_id?: string | null
           category?: string
           created_at?: string
           id?: string
+          is_personal?: boolean
           notes?: string | null
           source?: string
           spend_date?: string
