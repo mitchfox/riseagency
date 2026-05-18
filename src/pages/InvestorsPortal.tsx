@@ -19,7 +19,7 @@ import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
-  Building2, Users, Film, PlayCircle, X, Star,
+  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -638,7 +638,7 @@ const InvestorNotificationsDropdown = ({ notifications }: { notifications: Notif
   );
 };
 
-const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
+const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; write: any; token: string | null; onRefresh: () => Promise<void> }) => {
   const [category, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -647,11 +647,20 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
   const [vendor, setVendor] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [scope, setScope] = useState<"business" | "personal">("business");
+  const [isPersonalNew, setIsPersonalNew] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [bankBusy, setBankBusy] = useState(false);
 
-  const filtered = useMemo(() => rows.filter(r =>
+  const scoped = useMemo(
+    () => rows.filter(r => (scope === "personal" ? !!r.is_personal : !r.is_personal)),
+    [rows, scope]
+  );
+
+  const filtered = useMemo(() => scoped.filter(r =>
     (category === "all" || r.category === category) &&
     (!search || (r.vendor || "").toLowerCase().includes(search.toLowerCase()) || (r.notes || "").toLowerCase().includes(search.toLowerCase()))
-  ), [rows, category, search]);
+  ), [scoped, category, search]);
 
   const byCategory = useMemo(() => {
     const m: Record<string, number> = {};
@@ -664,17 +673,59 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
     return Object.entries(m).sort(([a], [b]) => a.localeCompare(b)).map(([month, total]) => ({ month, total }));
   }, [filtered]);
   const total = filtered.reduce((s, r) => s + Number(r.amount_gbp), 0);
-  const cats = Array.from(new Set(rows.map(r => r.category)));
+  const cats = Array.from(new Set(scoped.map(r => r.category)));
+  const businessTotal = rows.filter(r => !r.is_personal).reduce((s, r) => s + Number(r.amount_gbp), 0);
+  const personalTotal = rows.filter(r => !!r.is_personal).reduce((s, r) => s + Number(r.amount_gbp), 0);
+
+  const callBank = async (action: string, body?: any) => {
+    setBankBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("truelayer-bank", {
+        body: { action, token, ...(body || {}) },
+      });
+      if (error) throw error;
+      return data;
+    } finally { setBankBusy(false); }
+  };
+
+  const linkBank = async () => {
+    try {
+      const res = await callBank("link");
+      if (res?.url) window.location.href = res.url;
+      else toast.error("Could not start bank connection");
+    } catch (e: any) { toast.error(e.message || "TrueLayer link failed"); }
+  };
+  const syncBank = async () => {
+    try {
+      await callBank("sync");
+      toast.success("Bank synced");
+      await onRefresh();
+    } catch (e: any) { toast.error(e.message || "Sync failed"); }
+  };
 
   return (
     <div className="space-y-4">
+      <Tabs value={scope} onValueChange={(v) => setScope(v as any)}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            <TabsTrigger value="business">Business ({gbp(businessTotal)})</TabsTrigger>
+            <TabsTrigger value="personal">Personal ({gbp(personalTotal)})</TabsTrigger>
+          </TabsList>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setConnectOpen(true)}>
+              <Building2 className="w-3.5 h-3.5 mr-1" />Bank accounts
+            </Button>
+          </div>
+        </div>
+      </Tabs>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Filtered Total" value={gbp(total)} />
+        <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
         <Stat label="Entries" value={String(filtered.length)} />
         <Stat label="Categories" value={String(byCategory.length)} />
         <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
       </div>
-      <SectionShell icon={Wallet} title="Spending Tracker" action={
+      <SectionShell icon={Wallet} title={`Spending Tracker — ${scope === "personal" ? "Personal" : "Business"}`} action={
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add</Button>
@@ -694,10 +745,14 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
               <div><Label>Vendor</Label><Input value={vendor} onChange={(e) => setVendor(e.target.value)} /></div>
               <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
               <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" checked={isPersonalNew} onChange={e => setIsPersonalNew(e.target.checked)} />
+                Mark as personal spending
+              </label>
               <Button className="bg-primary text-primary-foreground" onClick={async () => {
                 if (!amount) return;
-                await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes } });
-                setVendor(""); setAmount(""); setNotes(""); setAddOpen(false);
+                await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes, is_personal: isPersonalNew } });
+                setVendor(""); setAmount(""); setNotes(""); setIsPersonalNew(false); setAddOpen(false);
               }}>Save</Button>
             </div>
           </DialogContent>
@@ -765,13 +820,45 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
                   <td className="px-3 py-2">{r.vendor || "—"}</td>
                   <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
                   <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
-                  <td className="px-3 py-2"><Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button></td>
+                  <td className="px-3 py-2 flex items-center justify-end gap-1">
+                    <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
+                      onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
+                      {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </SectionShell>
+
+      <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Connect bank accounts</DialogTitle>
+            <DialogDescription>
+              Link UK high-street banks (Barclays, NatWest, HSBC etc.) via Open Banking. Transactions sync into the
+              spending tracker for you to approve or reject.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={linkBank} disabled={bankBusy} className="bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-1" />Connect a bank account
+              </Button>
+              <Button variant="outline" onClick={syncBank} disabled={bankBusy}>
+                <RefreshCw className="w-4 h-4 mr-1" />Sync transactions
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Once linked, new transactions appear here for review. Approving a transaction moves it into Spending under
+              the selected scope.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -1076,10 +1163,10 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
   );
 };
 
-const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, setActive }: {
+const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, videoAnalyses, setActive }: {
   players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
   taskNotifications: NotificationRow[]; spending: SpendingRow[]; prospects: ProspectRow[]; invoices: InvoiceRow[];
-  profiles: ProfileRow[]; setActive: (s: SectionId) => void;
+  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; videoAnalyses: VideoAnalysisRow[]; setActive: (s: SectionId) => void;
 }) => {
   const represented = players.filter(p => p.representation_status === "represented").length;
   const mandated = players.filter(p => p.representation_status === "mandated").length;
@@ -1091,6 +1178,18 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthlySpend = spending.filter(s => s.spend_date.startsWith(thisMonth)).reduce((s, r) => s + Number(r.amount_gbp), 0);
   const activeTasks = tasks.filter(t => !t.completed).length;
+  const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  const reports = useMemo(() => {
+    return (playerAnalyses || [])
+      .filter(r => r.visibility_status === "live" || r.visibility_status === "clipped")
+      .sort((a, b) => +new Date(b.analysis_date || b.updated_at) - +new Date(a.analysis_date || a.updated_at))
+      .slice(0, 12);
+  }, [playerAnalyses]);
+  const videos = useMemo(() => {
+    return (videoAnalyses || [])
+      .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
+      .slice(0, 12);
+  }, [videoAnalyses]);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1099,8 +1198,127 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
+      <PlayerFeed reports={reports} videos={videos} playerById={playerById} />
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
+  );
+};
+
+// ---------- Player Feed: live/clipped performance reports + pre/post match analysis ----------
+const PlayerFeed = ({ reports, videos, playerById }: {
+  reports: PlayerAnalysisRow[]; videos: VideoAnalysisRow[]; playerById: Map<string, PlayerRow>;
+}) => {
+  const [tab, setTab] = useState<"reports" | "videos">("reports");
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
+  if (reports.length === 0 && videos.length === 0) return null;
+  return (
+    <SectionShell icon={Film} title="Player Feed" action={
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+        <TabsList className="h-8">
+          <TabsTrigger value="reports" className="text-xs h-7">Performance Reports ({reports.length})</TabsTrigger>
+          <TabsTrigger value="videos" className="text-xs h-7">Match Analysis ({videos.length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+    }>
+      {tab === "reports" ? (
+        reports.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6">No live or clipped reports yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {reports.map(r => {
+              const p = playerById.get(r.player_id);
+              const isClipped = r.visibility_status === "clipped";
+              return (
+                <Card key={r.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarImage src={p?.image_url || undefined} className="object-cover" />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">{(p?.name || "?")[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="font-semibold text-sm truncate">{p?.name || "Unknown"}</div>
+                        <Badge variant="outline" className={`text-[9px] ${isClipped ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>
+                          {isClipped ? "Clipped" : "Live"}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {r.opponent ? `vs ${r.opponent}` : ""}{r.result ? ` · ${r.result}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {format(new Date(r.analysis_date || r.updated_at), "d MMM yyyy")}
+                        {r.minutes_played != null && ` · ${r.minutes_played}'`}
+                        {!isClipped && r.r90_score != null && ` · R90 ${Number(r.r90_score).toFixed(2)}`}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        {r.pdf_url && (
+                          <a href={r.pdf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                            <FileText className="w-3 h-3" />Open report
+                          </a>
+                        )}
+                        {r.video_url && (
+                          <button onClick={() => setActiveVideo({ url: r.video_url!, title: `${p?.name || "Player"} — ${r.opponent || ""}` })}
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                            <PlayCircle className="w-3 h-3" />Watch clips
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        videos.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6">No match analysis videos yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {videos.map(v => {
+              const p = v.player_id ? playerById.get(v.player_id) : null;
+              const clipCount = Array.isArray(v.clips) ? v.clips.length : 0;
+              return (
+                <Card key={v.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                      <Film className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-sm truncate">{v.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {p?.name || "Squad"}{v.opponent ? ` · vs ${v.opponent}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {v.match_date ? format(new Date(v.match_date), "d MMM yyyy") : format(new Date(v.updated_at), "d MMM yyyy")}
+                        {clipCount > 0 && ` · ${clipCount} clips`}
+                      </div>
+                      {v.video_url && (
+                        <button onClick={() => setActiveVideo({ url: v.video_url!, title: v.title })}
+                          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline mt-2">
+                          <PlayCircle className="w-3 h-3" />Watch
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      <Dialog open={!!activeVideo} onOpenChange={(o) => { if (!o) setActiveVideo(null); }}>
+        <DialogContent className="max-w-5xl w-[92vw] p-0 overflow-hidden bg-black">
+          <DialogHeader className="px-4 py-2 border-b border-border/40">
+            <DialogTitle className="text-sm">{activeVideo?.title}</DialogTitle>
+          </DialogHeader>
+          {activeVideo && (
+            <video src={activeVideo.url} controls autoPlay className="w-full max-h-[75vh] bg-black" />
+          )}
+        </DialogContent>
+      </Dialog>
+    </SectionShell>
   );
 };
 
@@ -1437,18 +1655,6 @@ const InvestorsPortal = () => {
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 {data && <InvestorNotificationsDropdown notifications={data.taskNotifications} />}
-                {data?.isAdmin && (
-                  <Button
-                    variant={unlocked ? "default" : "outline"}
-                    size="sm"
-                    className="h-9 shrink-0"
-                    onClick={() => setUnlocked(u => !u)}
-                    title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
-                  >
-                    {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
-                    <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
-                  </Button>
-                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full border border-border">
@@ -1620,7 +1826,7 @@ const InvestorsPortal = () => {
                   />
                 )}
                 <div key={active}>
-                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={(section) => {
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} videoAnalyses={data.videoAnalyses || []} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
                   }} />}
@@ -1641,7 +1847,7 @@ const InvestorsPortal = () => {
                   {active === "prospects" && <Prospects rows={data.prospects} />}
                   {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
                   {active === "contracts" && <ContractsView rows={data.contracts} />}
-                  {active === "spending" && <Spending rows={data.spending} write={writeOp} />}
+                  {active === "spending" && <Spending rows={data.spending} write={writeOp} token={token} onRefresh={refresh} />}
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
@@ -1679,6 +1885,19 @@ const InvestorsPortal = () => {
       </div>
       {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
+      )}
+      {data?.isAdmin && (
+        <button
+          onClick={() => setUnlocked(u => !u)}
+          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
+          className={`fixed bottom-3 right-3 z-[55] h-8 w-8 rounded-full flex items-center justify-center border backdrop-blur-md transition-opacity ${
+            unlocked
+              ? "bg-primary/20 border-primary/50 text-primary opacity-90 hover:opacity-100"
+              : "bg-background/40 border-border/40 text-muted-foreground opacity-30 hover:opacity-90"
+          }`}
+        >
+          {unlocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+        </button>
       )}
     </div>
   );
