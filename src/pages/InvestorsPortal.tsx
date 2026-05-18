@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   LayoutDashboard, Activity, Wallet, Users, Briefcase, NotebookPen,
-  LogOut, Plus, Trash2,
+  LogOut, Plus, Trash2, Sparkles, FileSignature, CheckSquare, UserCheck,
 } from "lucide-react";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,14 +23,18 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line, Legend,
 } from "recharts";
+import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
 
-type SectionId = "overview" | "activity" | "spending" | "pipeline" | "deals" | "notes";
+type SectionId = "overview" | "investment" | "roster" | "contracts" | "tasks" | "activity" | "spending" | "pipeline" | "deals" | "notes";
 
 interface ActivityRow { id: string; occurred_at: string; person: string; category: string; description: string; source: string; }
 interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; source: string; }
 interface PipelineRow { id: string; name: string; age_group: string | null; country: string | null; status: string; notes: string | null; expected_value_gbp: number | null; }
 interface DealRow { id: string; title: string; stage: string; counterparty: string | null; timeline_notes: any[]; value_gbp: number | null; updated_at: string; }
 interface NoteRow { id: string; title: string; body: string; kind: string; created_at: string; }
+interface PlayerRow { id: string; name: string; representation_status: string | null; position: string | null; nationality: string | null; date_of_birth: string | null; visible_on_stars_page: boolean | null; }
+interface ContractRow { id: string; title: string; status: string | null; created_at: string; updated_at: string; owner_signed_at: string | null; locked_at: string | null; }
+interface TaskRow { id: string; title: string; category: string | null; priority: string | null; completed: boolean; deadline: string | null; created_at: string; last_completed_at: string | null; }
 
 const ACTIVITY_CATEGORIES = ["outreach", "analysis", "admin", "travel", "deal", "communication"];
 const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
