@@ -13,6 +13,7 @@ Disallow: /login
 Disallow: /import-program
 Disallow: /replace-program
 Disallow: /scout-portal
+Disallow: /investors-portal
 
 User-agent: Bingbot
 Allow: /
@@ -23,6 +24,7 @@ Disallow: /staff
 Disallow: /staff/*
 Disallow: /portal
 Disallow: /login
+Disallow: /investors-portal
 
 User-agent: Twitterbot
 Allow: /
@@ -30,6 +32,7 @@ Allow: /stars/
 Allow: /news/
 Disallow: /player-list
 Disallow: /staff
+Disallow: /investors-portal
 
 User-agent: facebookexternalhit
 Allow: /
@@ -37,6 +40,7 @@ Allow: /stars/
 Allow: /news/
 Disallow: /player-list
 Disallow: /staff
+Disallow: /investors-portal
 
 User-agent: *
 Allow: /
@@ -53,6 +57,7 @@ Disallow: /replace-program
 Disallow: /scout-portal
 Disallow: /pdf-viewer
 Disallow: /analysis/
+Disallow: /investors-portal
 
 # Sitemaps
 Sitemap: https://risefootballagency.com/sitemap.xml

@@ -511,7 +511,7 @@ const PipelineSection = ({ rows, write }: { rows: PipelineRow[]; write: any }) =
               <div><Label>Status</Label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                  <SelectContent>{PIPELINE_STATUS.map((s) => <SelectItem key={s} value={s}>{s.replaceAll("_", " ")}</SelectItem>)}</SelectContent>
+                  <SelectContent>{PIPELINE_STATUS.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
@@ -550,7 +550,7 @@ const PipelineSection = ({ rows, write }: { rows: PipelineRow[]; write: any }) =
                   <td className="px-5 py-3 font-medium">{p.name}</td>
                   <td className="px-5 py-3 text-white/60">{p.age_group || "—"}</td>
                   <td className="px-5 py-3 text-white/60">{p.country || "—"}</td>
-                  <td className="px-5 py-3"><Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{p.status.replaceAll("_", " ")}</Badge></td>
+                  <td className="px-5 py-3"><Badge variant="outline" className="border-[#C6A332]/40 text-[#C6A332] capitalize">{p.status.replace(/_/g, " ")}</Badge></td>
                   <td className="px-5 py-3 text-right text-white/80">{gbp(p.expected_value_gbp)}</td>
                   <td className="px-5 py-3 text-white/50 max-w-xs truncate">{p.notes || "—"}</td>
                   <td className="px-5 py-3"><Button size="icon" variant="ghost" onClick={() => write("delete", "investor_pipeline", { id: p.id })}>

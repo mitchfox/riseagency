@@ -214,7 +214,7 @@ const Staff = () => {
       return categoryList.map((category) => ({ ...category, locked: false }));
     }
 
-    return categoryList
+    const filtered = categoryList
       .map((category) => {
         const visibleSections = category.sections.filter((section: any) => section.isGroupLabel || canView(section.id));
 
@@ -236,6 +236,29 @@ const Staff = () => {
         };
       })
       .filter((category) => category.sections.some((section: any) => !section.isGroupLabel));
+
+    // Flat list (no headers) when a role has 7 or fewer visible sections total
+    const FLAT_SIDEBAR_THRESHOLD = 7;
+    const totalVisible = filtered.reduce(
+      (sum, c) => sum + c.sections.filter((s: any) => !s.isGroupLabel).length,
+      0,
+    );
+    if (totalVisible > 0 && totalVisible <= FLAT_SIDEBAR_THRESHOLD) {
+      const flatSections = filtered.flatMap((c) =>
+        c.sections.filter((s: any) => !s.isGroupLabel),
+      );
+      return [
+        {
+          ...(filtered[0] || {}),
+          id: 'flat',
+          name: '',
+          locked: false,
+          sections: flatSections,
+        },
+      ];
+    }
+
+    return filtered;
   };
   
   // Check for app updates on load (force check on every staff portal load)

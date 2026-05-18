@@ -7,6 +7,7 @@ import { Film, ListVideo } from "lucide-react";
 import { downloadVideo } from "@/lib/videoDownload";
 import { toTitleCase } from "@/lib/titleCase";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { canonicalSplit, canonicalActionType } from "@/lib/actionTypeNormaliser";
 
 interface Analysis {
   id: string;
@@ -83,10 +84,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
   const actionTypes = useMemo(() => {
     const typeCounts: Record<string, number> = {};
     allActions.forEach(a => {
-      if (!a.action_type) return;
-      const parts = a.action_type.includes(',')
-        ? a.action_type.split(',').map(t => t.trim()).filter(Boolean)
-        : [a.action_type];
+      const parts = canonicalSplit(a.action_type);
       parts.forEach(t => { typeCounts[t] = (typeCounts[t] || 0) + 1; });
     });
     return Object.keys(typeCounts).sort((a, b) => {
@@ -127,10 +125,8 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
 
   const actionMatchesTypes = (action: ActionClip, types: string[]) => {
     if (types.length === 0) return true;
-    const actionTypes = action.action_type.includes(',')
-      ? action.action_type.split(',').map(t => t.trim()).filter(Boolean)
-      : [action.action_type];
-    return actionTypes.some(t => types.includes(t));
+    const canonical = canonicalSplit(action.action_type);
+    return canonical.some(t => types.includes(t));
   };
 
   const generateCompilation = () => {

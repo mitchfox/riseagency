@@ -77,6 +77,7 @@ const SharedSpqReport = lazy(() => import("./pages/SharedSpqReport"));
 const SpqPublicTest = lazy(() => import("./pages/SpqPublicTest"));
 const HighlightsLogin = lazy(() => import("./pages/HighlightsLogin"));
 const HighlightsPortal = lazy(() => import("./pages/HighlightsPortal"));
+const InvestorsPortal = lazy(() => import("./pages/InvestorsPortal"));
 const FluidCursor = lazy(() => import("./components/FluidCursor"));
 
 const queryClient = new QueryClient();
@@ -195,6 +196,7 @@ const App = () => {
                       <Route path="/diagnostics" element={<Diagnostics />} />
                       <Route path="/highlights-login" element={<HighlightsLogin />} />
                       <Route path="/highlights" element={<HighlightsPortal />} />
+                      <Route path="/investors-portal" element={<InvestorsPortal />} />
                       <Route path="/error" element={<NotFound />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
