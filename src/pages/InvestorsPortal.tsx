@@ -28,6 +28,8 @@ import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
+import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
+import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
@@ -92,15 +94,20 @@ interface ClubContactRow {
   last_contacted_at: string | null; updated_at: string;
 }
 interface PlayerAnalysisRow {
-  id: string; player_id: string; analysis_date: string; opponent: string | null;
+  id: string; player_id: string; fixture_id?: string | null; analysis_writer_id?: string | null;
+  analysis_date: string; opponent: string | null;
   result: string | null; r90_score: number | null; minutes_played: number | null;
   pdf_url: string | null; video_url: string | null; visibility_status: string;
   category: string; club_logo_url: string | null; updated_at: string;
 }
-interface VideoAnalysisRow {
-  id: string; title: string; player_id: string | null; match_date: string | null;
-  opponent: string | null; source: string; updated_at: string; clips: any[] | null;
-  video_url: string | null;
+interface MatchAnalysisLink {
+  id: string; title: string | null; analysis_type: "pre-match" | "post-match" | string | null;
+  match_date: string | null; home_team: string | null; away_team: string | null;
+}
+interface FixtureFeedItem {
+  id: string; sort_date: string; match_date: string | null; title: string; subtitle: string;
+  players: { id: string; name: string; image_url: string | null }[];
+  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[];
 }
 interface BankConnectionRow { id: string; bank_name: string | null; account_label: string | null; last_synced_at: string | null; status: string; created_at: string }
 interface BankTxnRow {
@@ -1163,10 +1170,10 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
   );
 };
 
-const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, videoAnalyses, setActive }: {
+const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, matchAnalyses, setActive }: {
   players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
   taskNotifications: NotificationRow[]; spending: SpendingRow[]; prospects: ProspectRow[]; invoices: InvoiceRow[];
-  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; videoAnalyses: VideoAnalysisRow[]; setActive: (s: SectionId) => void;
+  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; matchAnalyses: any[]; setActive: (s: SectionId) => void;
 }) => {
   const represented = players.filter(p => p.representation_status === "represented").length;
   const mandated = players.filter(p => p.representation_status === "mandated").length;
@@ -1179,17 +1186,7 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   const monthlySpend = spending.filter(s => s.spend_date.startsWith(thisMonth)).reduce((s, r) => s + Number(r.amount_gbp), 0);
   const activeTasks = tasks.filter(t => !t.completed).length;
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
-  const reports = useMemo(() => {
-    return (playerAnalyses || [])
-      .filter(r => r.visibility_status === "live" || r.visibility_status === "clipped")
-      .sort((a, b) => +new Date(b.analysis_date || b.updated_at) - +new Date(a.analysis_date || a.updated_at))
-      .slice(0, 12);
-  }, [playerAnalyses]);
-  const videos = useMemo(() => {
-    return (videoAnalyses || [])
-      .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
-      .slice(0, 12);
-  }, [videoAnalyses]);
+  const fixtures = useMemo(() => buildFixtureFeed(playerAnalyses || [], matchAnalyses || [], playerById), [playerAnalyses, matchAnalyses, playerById]);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1198,115 +1195,97 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
-      <PlayerFeed reports={reports} videos={videos} playerById={playerById} />
+      <PlayerFeed fixtures={fixtures} />
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
   );
 };
 
-// ---------- Player Feed: live/clipped performance reports + pre/post match analysis ----------
-const PlayerFeed = ({ reports, videos, playerById }: {
-  reports: PlayerAnalysisRow[]; videos: VideoAnalysisRow[]; playerById: Map<string, PlayerRow>;
-}) => {
-  const [tab, setTab] = useState<"reports" | "videos">("reports");
+const normaliseFixtureKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
+
+const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playerById: Map<string, PlayerRow>): FixtureFeedItem[] => {
+  const map = new Map<string, FixtureFeedItem>();
+  const ensure = (key: string, date: string | null, title: string, subtitle: string) => {
+    const existing = map.get(key);
+    if (existing) return existing;
+    const item: FixtureFeedItem = { id: key, sort_date: date || new Date(0).toISOString(), match_date: date, title, subtitle, players: [], reports: [], pre_match: [], post_match: [] };
+    map.set(key, item);
+    return item;
+  };
+
+  reports.filter(r => r.visibility_status === "live" || r.visibility_status === "clipped").forEach((report) => {
+    const player = playerById.get(report.player_id);
+    const date = report.analysis_date || report.updated_at;
+    const key = report.fixture_id || `report:${normaliseFixtureKey(date)}:${normaliseFixtureKey(report.opponent)}:${report.player_id}`;
+    const item = ensure(key, date, report.opponent ? `vs ${report.opponent}` : "Fixture", [report.result, date ? format(new Date(date), "d MMM yyyy") : null].filter(Boolean).join(" · "));
+    item.reports.push(report);
+    if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
+  });
+
+  taggedRows.forEach((row: any) => {
+    const a = row.analyses;
+    if (!a || (a.analysis_type !== "pre-match" && a.analysis_type !== "post-match")) return;
+    const player = playerById.get(row.player_id);
+    const title = [a.home_team, a.away_team].filter(Boolean).join(" vs ") || a.title || "Fixture";
+    const key = a.fixture_id || `analysis:${normaliseFixtureKey(a.match_date)}:${normaliseFixtureKey(a.home_team)}:${normaliseFixtureKey(a.away_team)}`;
+    const item = ensure(key, a.match_date || row.created_at, title, a.match_date ? format(new Date(a.match_date), "d MMM yyyy") : "Match analysis");
+    const link: MatchAnalysisLink = { id: a.id, title: a.title, analysis_type: a.analysis_type, match_date: a.match_date, home_team: a.home_team, away_team: a.away_team };
+    const target = a.analysis_type === "pre-match" ? item.pre_match : item.post_match;
+    if (!target.some(existing => existing.id === link.id)) target.push(link);
+    if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
+  });
+
+  return [...map.values()].sort((a, b) => +new Date(b.sort_date) - +new Date(a.sort_date));
+};
+
+// ---------- Player Feed: fixture rows with report, clips, pre-match and post-match ----------
+const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
   const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
-  if (reports.length === 0 && videos.length === 0) return null;
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const visibleFixtures = expanded ? fixtures : fixtures.slice(0, 5);
+  if (fixtures.length === 0) return null;
   return (
-    <SectionShell icon={Film} title="Player Feed" action={
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-        <TabsList className="h-8">
-          <TabsTrigger value="reports" className="text-xs h-7">Performance Reports ({reports.length})</TabsTrigger>
-          <TabsTrigger value="videos" className="text-xs h-7">Match Analysis ({videos.length})</TabsTrigger>
-        </TabsList>
-      </Tabs>
-    }>
-      {tab === "reports" ? (
-        reports.length === 0 ? (
-          <div className="text-sm text-muted-foreground text-center py-6">No live or clipped reports yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {reports.map(r => {
-              const p = playerById.get(r.player_id);
-              const isClipped = r.visibility_status === "clipped";
-              return (
-                <Card key={r.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10 border border-border">
-                      <AvatarImage src={p?.image_url || undefined} className="object-cover" />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">{(p?.name || "?")[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <div className="font-semibold text-sm truncate">{p?.name || "Unknown"}</div>
-                        <Badge variant="outline" className={`text-[9px] ${isClipped ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>
-                          {isClipped ? "Clipped" : "Live"}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {r.opponent ? `vs ${r.opponent}` : ""}{r.result ? ` · ${r.result}` : ""}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {format(new Date(r.analysis_date || r.updated_at), "d MMM yyyy")}
-                        {r.minutes_played != null && ` · ${r.minutes_played}'`}
-                        {!isClipped && r.r90_score != null && ` · R90 ${Number(r.r90_score).toFixed(2)}`}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        {r.pdf_url && (
-                          <a href={r.pdf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
-                            <FileText className="w-3 h-3" />Open report
-                          </a>
-                        )}
-                        {r.video_url && (
-                          <button onClick={() => setActiveVideo({ url: r.video_url!, title: `${p?.name || "Player"} — ${r.opponent || ""}` })}
-                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
-                            <PlayCircle className="w-3 h-3" />Watch clips
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )
-      ) : (
-        videos.length === 0 ? (
-          <div className="text-sm text-muted-foreground text-center py-6">No match analysis videos yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {videos.map(v => {
-              const p = v.player_id ? playerById.get(v.player_id) : null;
-              const clipCount = Array.isArray(v.clips) ? v.clips.length : 0;
-              return (
-                <Card key={v.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                      <Film className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-sm truncate">{v.title}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {p?.name || "Squad"}{v.opponent ? ` · vs ${v.opponent}` : ""}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {v.match_date ? format(new Date(v.match_date), "d MMM yyyy") : format(new Date(v.updated_at), "d MMM yyyy")}
-                        {clipCount > 0 && ` · ${clipCount} clips`}
-                      </div>
-                      {v.video_url && (
-                        <button onClick={() => setActiveVideo({ url: v.video_url!, title: v.title })}
-                          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline mt-2">
-                          <PlayCircle className="w-3 h-3" />Watch
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )
-      )}
+    <SectionShell icon={Film} title="Player Feed">
+      <div className="space-y-2">
+        {visibleFixtures.map((fixture) => (
+          <Card key={fixture.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{fixture.title}</h3>
+                  {fixture.reports.map(r => <Badge key={r.id} variant="outline" className={`text-[10px] ${r.visibility_status === "clipped" ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>{r.visibility_status === "clipped" ? "Clipped" : "Live"}</Badge>)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">{fixture.subtitle || "Fixture"}</div>
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {fixture.players.slice(0, 4).map(p => (
+                    <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/35 px-2 py-1 text-[11px] text-muted-foreground">
+                      <Avatar className="h-4 w-4"><AvatarImage src={p.image_url || undefined} /><AvatarFallback className="text-[8px]">{p.name[0]}</AvatarFallback></Avatar>
+                      {p.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                {fixture.reports.map(report => (
+                  <Button key={`open-${report.id}`} size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setSelectedReportId(report.id); setReportOpen(true); }}>
+                    <FileText className="w-3 h-3 mr-1" />See report
+                  </Button>
+                ))}
+                {fixture.reports.map(report => (
+                  <Button key={`watch-${report.id}`} size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setSelectedReportId(report.id); setReportOpen(true); }}>
+                    <PlayCircle className="w-3 h-3 mr-1" />Watch
+                  </Button>
+                ))}
+                {fixture.pre_match.map(a => <Button key={a.id} size="sm" variant="outline" className="h-8 text-xs" onClick={() => window.open(`/analysis/${a.id}`, "_blank")}><FileText className="w-3 h-3 mr-1" />Pre-match</Button>)}
+                {fixture.post_match.map(a => <Button key={a.id} size="sm" variant="outline" className="h-8 text-xs" onClick={() => window.open(`/analysis/${a.id}`, "_blank")}><FileText className="w-3 h-3 mr-1" />Post-match</Button>)}
+              </div>
+            </div>
+          </Card>
+        ))}
+        {fixtures.length > 5 && <Button variant="outline" className="w-full h-9" onClick={() => setExpanded(v => !v)}>{expanded ? "Show less" : `See more (${fixtures.length - 5})`}</Button>}
+      </div>
 
       <Dialog open={!!activeVideo} onOpenChange={(o) => { if (!o) setActiveVideo(null); }}>
         <DialogContent className="max-w-5xl w-[92vw] p-0 overflow-hidden bg-black">
@@ -1318,6 +1297,7 @@ const PlayerFeed = ({ reports, videos, playerById }: {
           )}
         </DialogContent>
       </Dialog>
+      <PerformanceReportDialog open={reportOpen} onOpenChange={setReportOpen} analysisId={selectedReportId} isPortalView={false} />
     </SectionShell>
   );
 };
@@ -1446,7 +1426,7 @@ const InvestorsPortal = () => {
     isAdmin: boolean;
     clubContacts: ClubContactRow[];
     playerAnalyses: PlayerAnalysisRow[];
-    videoAnalyses: VideoAnalysisRow[];
+    matchAnalyses: any[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -1503,7 +1483,7 @@ const InvestorsPortal = () => {
         isAdmin: !!dd.user?.is_admin,
         clubContacts: dd.clubContacts || [],
         playerAnalyses: dd.playerAnalyses || [],
-        videoAnalyses: dd.videoAnalyses || [],
+        matchAnalyses: dd.matchAnalyses || [],
       });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
@@ -1826,7 +1806,7 @@ const InvestorsPortal = () => {
                   />
                 )}
                 <div key={active}>
-                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} videoAnalyses={data.videoAnalyses || []} setActive={(section) => {
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} matchAnalyses={data.matchAnalyses || []} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
                   }} />}
@@ -1853,7 +1833,7 @@ const InvestorsPortal = () => {
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
-                  {active === "clubnetwork" && <ClubNetworkView rows={data.clubContacts} />}
+                  {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
                 </div>
               </>
             ) : expandedCategory ? (
