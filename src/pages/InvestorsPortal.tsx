@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInvestorSession } from "@/hooks/useInvestorSession";
 import { Button } from "@/components/ui/button";
@@ -1113,8 +1113,9 @@ const InvestorsPortal = () => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  const initialisedSessionRef = useRef(false);
 
-  useEffect(() => { setUnlocked(false); }, [user?.id]);
+  useEffect(() => { initialisedSessionRef.current = false; setUnlocked(false); }, [user?.id]);
 
   useEffect(() => {
     document.title = "RISE Investor Portal";
@@ -1126,10 +1127,18 @@ const InvestorsPortal = () => {
 
   useEffect(() => { if (isMobile) setSidebarCollapsed(true); }, [isMobile]);
 
-  // Default landing: overview
+  // Default landing: overview, but only once so staff-style category back navigation can leave the active section.
   useEffect(() => {
-    if (token && active === null) { setActive("overview"); setExpandedCategory("dash"); }
-  }, [token, active]);
+    if (!token || initialisedSessionRef.current) return;
+    initialisedSessionRef.current = true;
+    setActive(prev => prev ?? "overview");
+    setExpandedCategory(prev => prev ?? "dash");
+    setOpenTabs(prev => {
+      const next = prev.includes("overview") ? prev : ["overview", ...prev].slice(0, 12);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      return next;
+    });
+  }, [token]);
 
   const refresh = async () => {
     if (!token) return;
