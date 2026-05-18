@@ -275,12 +275,13 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
     const currentTime = videoRef.current.currentTime;
     const clipStart = Math.max(0, currentTime - 5);
     const clipEnd = Math.min(videoRef.current.duration || currentTime + 5, currentTime + 5);
+    const clipMinute = formatClipMinuteFromSeconds(clipStart + getEffectiveOffset(clipStart));
 
     const newClip: Clip = {
       id: crypto.randomUUID(),
       start: clipStart,
       end: clipEnd,
-      label: `Clip at ${fmtMatchTime(currentTime, selectedVideo.match_minute_offset)}`,
+      label: `Clip ${clipMinute}`,
       created_at: new Date().toISOString(),
     };
 
