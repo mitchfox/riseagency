@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   LayoutDashboard, Activity, Wallet, Users, Briefcase, NotebookPen,
-  LogOut, Plus, Trash2, Volume2, VolumeX,
+  LogOut, Plus, Trash2,
 } from "lucide-react";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,8 +41,7 @@ const NOTE_KINDS = ["founder", "reflection", "decision"];
 const gbp = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(n);
 
-function playChime(muted: boolean) {
-  if (muted) return;
+function playChime() {
   try {
     const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
     if (!Ctx) return;
@@ -60,8 +59,8 @@ function playChime(muted: boolean) {
   } catch { /* noop */ }
 }
 
-const LoginGate = ({ onSignIn, muted, setMuted }: {
-  onSignIn: (u: string, p: string) => Promise<void>; muted: boolean; setMuted: (v: boolean) => void;
+const LoginGate = ({ onSignIn }: {
+  onSignIn: (u: string, p: string) => Promise<void>;
 }) => {
   const [u, setU] = useState("");
   const [p, setP] = useState("");
@@ -82,34 +81,30 @@ const LoginGate = ({ onSignIn, muted, setMuted }: {
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-md"
       >
-        <Card className="border-white/10 bg-black/70 backdrop-blur-xl p-8 shadow-2xl">
-          <div className="mb-6">
-            <div className="text-xs uppercase tracking-[0.3em] text-[#C6A332] mb-2">RISE</div>
-            <h1 className="text-2xl font-semibold text-white">Investor Portal</h1>
-            <p className="text-sm text-white/60 mt-2">Restricted access. Authentication required.</p>
-          </div>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-1.5">
+        <Card className="border-white/10 bg-black/70 backdrop-blur-xl p-8 shadow-2xl flex flex-col items-center text-center">
+          <img src="/RISEWhite.png" alt="RISE" className="h-12 w-auto object-contain mb-4" />
+          <h1 className="text-2xl font-semibold text-white">Investor Portal</h1>
+          <p className="text-sm text-white/60 mt-2 mb-6">Restricted access. Authentication required.</p>
+          <form onSubmit={submit} className="space-y-4 w-full">
+            <div className="space-y-1.5 text-left">
               <Label htmlFor="iu" className="text-white/80">Username</Label>
               <Input id="iu" value={u} onChange={(e) => setU(e.target.value)} autoComplete="username" required
-                className="bg-white/5 border-white/10 text-white" />
+                className="bg-white/5 border-white/10 text-white text-center" />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-left">
               <Label htmlFor="ip" className="text-white/80">Password</Label>
               <Input id="ip" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" required
-                className="bg-white/5 border-white/10 text-white" />
+                className="bg-white/5 border-white/10 text-white text-center" />
             </div>
-            <Button type="submit" disabled={busy} className="w-full bg-[#C6A332] hover:bg-[#b09028] text-black font-semibold">
+            <Button
+              type="submit"
+              disabled={busy}
+              style={{ backgroundColor: "#C6A332", color: "#000" }}
+              className="w-full hover:opacity-90 font-semibold"
+            >
               {busy ? "Authenticating..." : "Enter portal"}
             </Button>
           </form>
-          <button
-            type="button" onClick={() => setMuted(!muted)}
-            className="mt-4 text-xs text-white/40 hover:text-white/70 flex items-center gap-1.5"
-          >
-            {muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-            Sound {muted ? "off" : "on"}
-          </button>
         </Card>
       </motion.div>
     </div>
@@ -167,7 +162,6 @@ const Stat = ({ label, value, sub }: { label: string; value: string; sub?: strin
 
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
-  const [muted, setMuted] = useState(() => localStorage.getItem("investor_muted") === "1");
   const [transitioning, setTransitioning] = useState(false);
   const [active, setActive] = useState<SectionId>("overview");
   const [data, setData] = useState<{
@@ -182,8 +176,6 @@ const InvestorsPortal = () => {
     document.head.appendChild(meta);
     return () => { document.head.removeChild(meta); };
   }, []);
-
-  useEffect(() => { localStorage.setItem("investor_muted", muted ? "1" : "0"); }, [muted]);
 
   const refresh = async () => {
     if (!token) return;
@@ -203,7 +195,7 @@ const InvestorsPortal = () => {
 
   const handleSignIn = async (u: string, p: string) => {
     await signIn(u, p);
-    playChime(muted);
+    playChime();
     setTransitioning(true);
     setTimeout(() => setTransitioning(false), 1400);
   };
