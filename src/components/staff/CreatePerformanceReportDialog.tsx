@@ -1992,15 +1992,27 @@ export const CreatePerformanceReportDialog = ({
               />
             </div>
             {selectedFixtureId && (
-              <div className="mt-2">
-                <Label htmlFor="fixture-date" className="text-xs">Match Date</Label>
-                <Input
-                  id="fixture-date"
-                  type="date"
-                  value={fixtures.find(f => f.id === selectedFixtureId)?.match_date || ""}
-                  onChange={(e) => handleFixtureDateChange(e.target.value)}
-                  className="h-8 text-sm"
-                />
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="fixture-date" className="text-xs">Match Date</Label>
+                  <Input
+                    id="fixture-date"
+                    type="date"
+                    value={fixtures.find(f => f.id === selectedFixtureId)?.match_date || ""}
+                    onChange={(e) => handleFixtureDateChange(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fixture-time" className="text-xs">Kick-off Time</Label>
+                  <Input
+                    id="fixture-time"
+                    type="time"
+                    value={fixtures.find(f => f.id === selectedFixtureId)?.match_time || ""}
+                    onChange={(e) => handleFixtureTimeChange(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             )}
           </div>
