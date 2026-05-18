@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, videoAnalyses] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -99,14 +99,14 @@ Deno.serve(async (req) => {
         .select("id, name, club_name, position, country, city, image_url, is_favourite, contact_strength, tags, last_contacted_at, updated_at")
         .order("contact_strength", { ascending: false }).limit(500),
       supabase.from("player_analysis")
-        .select("id, player_id, analysis_date, opponent, result, r90_score, minutes_played, pdf_url, video_url, visibility_status, category, club_logo_url, updated_at")
+        .select("id, player_id, fixture_id, analysis_writer_id, analysis_date, opponent, result, r90_score, minutes_played, pdf_url, video_url, visibility_status, category, club_logo_url, updated_at")
         .in("visibility_status", ["live", "clipped"])
         .gte("analysis_date", ninetyDaysAgo.slice(0, 10))
         .order("analysis_date", { ascending: false }).limit(120),
-      supabase.from("video_analyses")
-        .select("id, title, player_id, match_date, opponent, source, updated_at, clips, video_url")
-        .gte("updated_at", ninetyDaysAgo)
-        .order("updated_at", { ascending: false }).limit(80),
+      supabase.from("analysis_player_tags")
+        .select("player_id, created_at, analyses(id, title, analysis_type, match_date, home_team, away_team, home_score, away_score, category, fixture_id)")
+        .gte("created_at", ninetyDaysAgo)
+        .order("created_at", { ascending: false }).limit(300),
     ]);
 
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
@@ -147,7 +147,10 @@ Deno.serve(async (req) => {
       taskNotifications: taskNotifications.data || [],
       clubContacts: clubContacts.data || [],
       playerAnalyses: playerAnalyses.data || [],
-      videoAnalyses: videoAnalyses.data || [],
+      matchAnalyses: (analysisTags.data || []).filter((row: any) => {
+        const a = row.analyses;
+        return a && a.category !== "training" && (a.analysis_type === "pre-match" || a.analysis_type === "post-match");
+      }),
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
