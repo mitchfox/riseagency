@@ -28,6 +28,8 @@ import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
+import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
+import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
@@ -92,15 +94,20 @@ interface ClubContactRow {
   last_contacted_at: string | null; updated_at: string;
 }
 interface PlayerAnalysisRow {
-  id: string; player_id: string; analysis_date: string; opponent: string | null;
+  id: string; player_id: string; fixture_id?: string | null; analysis_writer_id?: string | null;
+  analysis_date: string; opponent: string | null;
   result: string | null; r90_score: number | null; minutes_played: number | null;
   pdf_url: string | null; video_url: string | null; visibility_status: string;
   category: string; club_logo_url: string | null; updated_at: string;
 }
-interface VideoAnalysisRow {
-  id: string; title: string; player_id: string | null; match_date: string | null;
-  opponent: string | null; source: string; updated_at: string; clips: any[] | null;
-  video_url: string | null;
+interface MatchAnalysisLink {
+  id: string; title: string | null; analysis_type: "pre-match" | "post-match" | string | null;
+  match_date: string | null; home_team: string | null; away_team: string | null;
+}
+interface FixtureFeedItem {
+  id: string; sort_date: string; match_date: string | null; title: string; subtitle: string;
+  players: { id: string; name: string; image_url: string | null }[];
+  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[];
 }
 interface BankConnectionRow { id: string; bank_name: string | null; account_label: string | null; last_synced_at: string | null; status: string; created_at: string }
 interface BankTxnRow {
