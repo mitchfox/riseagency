@@ -1134,7 +1134,7 @@ const InvestorsPortal = () => {
     setActive(prev => prev ?? "overview");
     setExpandedCategory(prev => prev ?? "dash");
     setOpenTabs(prev => {
-      const next = prev.includes("overview") ? prev : ["overview", ...prev].slice(0, 12);
+      const next: SectionId[] = prev.includes("overview") ? prev : (["overview", ...prev].slice(0, 12) as SectionId[]);
       localStorage.setItem("investor_open_tabs", JSON.stringify(next));
       return next;
     });
