@@ -38,7 +38,7 @@ type SectionId =
   | "represented" | "mandated" | "previously"
   | "prospects" | "playerdatabase"
   | "contracts"
-  | "spending" | "commission" | "invoices"
+  | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
   | "outreach" | "clubnetwork";
 
@@ -167,6 +167,8 @@ const CATEGORIES: CategoryDef[] = [
     { id: "spending", title: "Spending", icon: Wallet },
     { id: "commission", title: "Commission", icon: TrendingUp },
     { id: "invoices", title: "Invoices", icon: FileText },
+    { id: "forecast", title: "Forecast", icon: TrendingUp },
+    { id: "salaryCap", title: "Salary Cap", icon: Target },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "My Tasks", icon: CheckSquare },
