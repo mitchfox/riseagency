@@ -15,13 +15,13 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
-  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Star, Eye, Calendar, Target,
+  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Star, Eye, Calendar, Target,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
-import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
+import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
