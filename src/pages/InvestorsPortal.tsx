@@ -692,8 +692,14 @@ const InvestorsPortal = () => {
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
     staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
+    overviewSections: OverviewSectionData[]; overviewCards: OverviewCardData[];
+    isAdmin: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+
+  // Auto-lock on every load/refresh
+  useEffect(() => { setUnlocked(false); }, [user?.id]);
 
   useEffect(() => {
     document.title = "RISE Investor Portal";
@@ -716,6 +722,13 @@ const InvestorsPortal = () => {
       setData({
         players: dd.players || [], contracts: dd.contracts || [], tasks: dd.tasks || [],
         staffActivity: dd.staffActivity || [], prospects: dd.prospects || [], spending: dd.spending || [],
+        overviewSections: dd.overviewSections || [],
+        overviewCards: (dd.overviewCards || []).map((c: any) => ({
+          ...c,
+          metrics: Array.isArray(c.metrics) ? c.metrics : [],
+          tags: Array.isArray(c.tags) ? c.tags : [],
+        })),
+        isAdmin: !!dd.user?.is_admin,
       });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
