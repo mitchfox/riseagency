@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInvestorSession } from "@/hooks/useInvestorSession";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,15 @@ import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
-  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check, Menu, HelpCircle,
+  ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
+import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
