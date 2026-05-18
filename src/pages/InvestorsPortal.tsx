@@ -1488,9 +1488,8 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
     <SectionShell icon={Film} title="Player Feed">
       <div className="space-y-2">
         {visibleFixtures.map((fixture) => {
-          const hasClipped = fixture.reports.some(r => r.visibility_status === "clipped");
           const hasLive = fixture.reports.some(r => r.visibility_status === "live");
-          const stripColour = hasClipped ? "hsl(43, 96%, 56%)" : hasLive ? "hsl(var(--primary))" : "hsl(var(--border))";
+          const stripColour = fixture.colour || (hasLive ? "hsl(var(--primary))" : "hsl(var(--border))");
           const clubLogo = fixture.reports.find(r => r.club_logo_url)?.club_logo_url || null;
           return (
           <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-4 hover:border-primary/40 transition-colors overflow-hidden">
