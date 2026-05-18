@@ -16,8 +16,9 @@ import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
-  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check,
+  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check, Menu, HelpCircle,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -1075,6 +1076,7 @@ const InvestorsPortal = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
@@ -1316,7 +1318,7 @@ const InvestorsPortal = () => {
         {/* Main */}
         <main className={`flex-1 overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
-        } ${isMobile ? "pb-[70px]" : ""}`}>
+        } pb-[80px]`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
             {/* Breadcrumb / back button */}
             {active && activeCategory && activeSectionDef && (
@@ -1379,16 +1381,69 @@ const InvestorsPortal = () => {
         </main>
       </div>
 
-      {/* Hidden lock toggle (admin only) */}
-      {data?.isAdmin && (
-        <button
-          onClick={() => setUnlocked(u => !u)}
-          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
-          className={`fixed bottom-3 right-3 z-50 p-2 rounded-full border border-border/40 bg-background/60 backdrop-blur transition-opacity ${unlocked ? "opacity-90 border-primary text-primary" : "opacity-20 hover:opacity-100"}`}
-        >
-          {unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-        </button>
-      )}
+      {/* Footer bar (mirrors staff) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="container mx-auto px-3 md:px-4 py-3">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-4 overflow-y-auto scrollbar-thin">
+                <div className="space-y-6">
+                  {CATEGORIES.map(cat => (
+                    <div key={cat.id} className="space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">{cat.title}</h3>
+                      <div className="space-y-1">
+                        {cat.sections.map(s => {
+                          const Icon = s.icon;
+                          return (
+                            <Button key={s.id} variant={active === s.id ? "default" : "ghost"} className="w-full justify-start text-sm h-10"
+                              onClick={() => { setActive(s.id); setExpandedCategory(cat.id); }}>
+                              <Icon className="w-4 h-4 mr-2 shrink-0" />
+                              <span className="truncate">{s.title}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search sections..." value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase();
+                    for (const cat of CATEGORIES) {
+                      const hit = cat.sections.find(s => s.title.toLowerCase().includes(q));
+                      if (hit) { setActive(hit.id); setExpandedCategory(cat.id); setSearchQuery(""); break; }
+                    }
+                  }
+                }}
+                className="pl-9" />
+            </div>
+            {data?.isAdmin && (
+              <Button variant={unlocked ? "default" : "outline"} size="sm" className="shrink-0"
+                onClick={() => setUnlocked(u => !u)}
+                title={unlocked ? "Lock edit mode" : "Unlock edit mode"}>
+                {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
+                <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
+              </Button>
+            )}
+            <Button onClick={signOut} variant="outline" size="sm" className="shrink-0">
+              <LogOut className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
+        </div>
+      </div>
       {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
       )}
