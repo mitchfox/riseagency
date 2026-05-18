@@ -1379,6 +1379,9 @@ const InvestorsPortal = () => {
                   onClick={() => {
                     if (isSingleSection) {
                       handleSectionClick(cat.sections[0].id, cat.id);
+                    } else if (hasActive && isExpanded) {
+                      setActive(null);
+                      setExpandedCategory(cat.id);
                     } else {
                       setExpandedCategory(isExpanded ? null : cat.id);
                     }
