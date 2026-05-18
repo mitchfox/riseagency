@@ -1104,6 +1104,107 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   );
 };
 
+// ---------- Outreach (read-only view of youth + pro outreach) ----------
+const OutreachView = ({ youth, pro }: { youth: any[]; pro: any[] }) => {
+  const [tab, setTab] = useState<"youth" | "pro">("youth");
+  const rows = tab === "youth" ? youth : pro;
+  return (
+    <SectionShell icon={Users} title={`Player Outreach (${youth.length + pro.length})`}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="youth">Youth ({youth.length})</TabsTrigger>
+          <TabsTrigger value="pro">Pro ({pro.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value={tab}>
+          <div className="rounded border border-border/40 overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-muted/30 text-xs text-muted-foreground">
+                <tr>
+                  <th className="text-left px-3 py-2">Name</th>
+                  <th className="text-left px-3 py-2">Position</th>
+                  <th className="text-left px-3 py-2">Age</th>
+                  <th className="text-left px-3 py-2">Nationality</th>
+                  <th className="text-left px-3 py-2">Club</th>
+                  <th className="text-left px-3 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {rows.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No outreach entries.</td></tr>
+                ) : rows.slice(0, 300).map((r: any) => (
+                  <tr key={r.id} className="hover:bg-muted/20">
+                    <td className="px-3 py-2 font-medium">{r.player_name || r.name || "—"}</td>
+                    <td className="px-3 py-2 text-xs">{r.position || "—"}</td>
+                    <td className="px-3 py-2 text-xs">{r.age ?? "—"}</td>
+                    <td className="px-3 py-2 text-xs">{r.nationality || "—"}</td>
+                    <td className="px-3 py-2 text-xs truncate max-w-[200px]">{r.current_club || r.club || "—"}</td>
+                    <td className="px-3 py-2 text-xs">
+                      <Badge variant="outline" className="text-[10px]">{r.status || r.stage || "Active"}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </SectionShell>
+  );
+};
+
+// ---------- Club Network (read-only) ----------
+const ClubNetworkView = ({ rows }: { rows: ClubContactRow[] }) => {
+  const [q, setQ] = useState("");
+  const filtered = rows.filter(r => {
+    if (!q) return true;
+    const Q = q.toLowerCase();
+    return (r.name || "").toLowerCase().includes(Q) ||
+      (r.club_name || "").toLowerCase().includes(Q) ||
+      (r.country || "").toLowerCase().includes(Q) ||
+      (r.position || "").toLowerCase().includes(Q);
+  });
+  return (
+    <SectionShell icon={Building2} title={`Club Network (${filtered.length})`} action={
+      <Input placeholder="Search contacts..." value={q} onChange={e => setQ(e.target.value)} className="h-8 w-56" />
+    }>
+      {filtered.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No contacts.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.slice(0, 300).map(c => (
+            <Card key={c.id} className="bg-card/60 border-border/60 p-3">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-12 w-12 border border-border">
+                  <AvatarImage src={c.image_url || undefined} className="object-cover" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">{(c.name || "?")[0]}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="font-semibold text-sm truncate">{c.name}</div>
+                    {c.is_favourite && <Star className="w-3 h-3 text-primary fill-primary" />}
+                  </div>
+                  {c.position && <div className="text-xs text-muted-foreground truncate">{c.position}</div>}
+                  {c.club_name && <div className="text-xs text-foreground/80 truncate">{c.club_name}</div>}
+                  <div className="text-[10px] text-muted-foreground mt-1 truncate">
+                    {[c.city, c.country].filter(Boolean).join(", ") || "—"}
+                  </div>
+                  {c.tags && c.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {c.tags.slice(0, 3).map(t => (
+                        <span key={t} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border/40">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
 // ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
