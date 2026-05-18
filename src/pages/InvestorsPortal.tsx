@@ -1492,8 +1492,8 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
           const stripColour = fixture.colour || (hasLive ? "hsl(var(--primary))" : "hsl(var(--border))");
           const clubLogo = fixture.reports.find(r => r.club_logo_url)?.club_logo_url || null;
           return (
-          <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-4 hover:border-primary/40 transition-colors overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: stripColour }} />
+          <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-5 hover:border-primary/40 transition-colors overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-2" style={{ backgroundColor: stripColour }} />
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1 flex items-start gap-3">
                 {clubLogo ? (
