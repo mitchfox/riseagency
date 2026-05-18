@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
@@ -227,7 +228,7 @@ const PlayerCard = ({ p, editable, onSave, paidByPlayer }: {
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bbh uppercase tracking-wide text-base truncate">{p.name}</h3>
+            <h3 className="font-semibold text-base truncate text-foreground">{p.name}</h3>
             {p.position && <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">{p.position}</Badge>}
           </div>
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
@@ -283,7 +284,7 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
     <div className="relative px-5 py-3 flex items-center justify-between bg-card/60 backdrop-blur-sm">
       <div className="flex items-center gap-2.5">
         <Icon className="w-4 h-4 text-primary" />
-        <h2 className="font-bbh uppercase tracking-wide text-sm">{title}</h2>
+          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
       </div>
       {action}
     </div>
@@ -300,8 +301,8 @@ const SectionShell = ({ icon, title, children, action }: { icon: any; title: str
 // ---------- Sections ----------
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
   <Card className="bg-card/60 border-border/60 p-5">
-    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70 mb-2 font-bbh">{label}</div>
-    <div className="text-3xl font-bbh tracking-wide">{value}</div>
+    <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 font-medium">{label}</div>
+    <div className="text-2xl font-semibold tracking-tight text-foreground">{value}</div>
     {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
   </Card>
 );
@@ -328,73 +329,55 @@ const Roster = ({ players, status, editable, onSaveCommission, invoiceTotalsByPl
 };
 
 const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = rows.find(r => r.id === selectedId) || rows[0] || null;
-  const url = selected?.resolved_file_url || null;
-  const [loadError, setLoadError] = useState(false);
-  useEffect(() => { setLoadError(false); }, [selected?.id]);
   return (
     <SectionShell icon={FileSignature} title={`Contracts (${rows.length})`}>
       {rows.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No contracts yet.</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
-          <div className="space-y-2 lg:max-h-[80vh] lg:overflow-y-auto pr-1">
-            {rows.map(c => {
-              const signed = !!c.owner_signed_at || !!c.locked_at;
-              const isSelected = selected?.id === c.id;
-              return (
-                <button key={c.id} onClick={() => setSelectedId(c.id)}
-                  className={`w-full text-left p-3 rounded border transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border/60 bg-card/60 hover:border-primary/40"}`}>
-                  <div className="flex items-start gap-2">
-                    <FileSignature className={`w-4 h-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bbh uppercase text-sm truncate">{c.title || "Untitled"}</div>
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <Badge variant="outline" className={`text-[9px] ${signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}>
-                          {c.locked_at ? <><Lock className="w-2.5 h-2.5 mr-0.5" />Locked</> : signed ? "Signed" : c.status || "Draft"}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
-                      </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {rows.map(c => {
+            const signed = !!c.owner_signed_at || !!c.locked_at;
+            const url = c.resolved_file_url || null;
+            return (
+              <Card key={c.id} className="bg-card/60 border-border/60 hover:border-primary/40 transition-colors p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded bg-primary/10 text-primary shrink-0">
+                    <FileSignature className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground truncate">{c.title || "Untitled contract"}</div>
+                    {c.description && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{c.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <Badge variant="outline" className={`text-[10px] ${signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}>
+                        {c.locked_at ? <><Lock className="w-2.5 h-2.5 mr-0.5" />Locked</> : signed ? "Signed" : (c.status || "Draft")}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">Updated {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      {url ? (
+                        <>
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="outline" className="h-8">
+                              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open
+                            </Button>
+                          </a>
+                          <a href={url} download>
+                            <Button size="sm" variant="ghost" className="h-8">
+                              <FileText className="w-3.5 h-3.5 mr-1.5" />Download
+                            </Button>
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No file attached yet.</span>
+                      )}
                     </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="rounded border border-border/60 bg-background overflow-hidden flex flex-col min-h-[60vh] lg:min-h-[80vh]">
-            {selected ? (
-              <>
-                <div className="px-4 py-2 border-b border-border/60 flex items-center justify-between bg-card/50">
-                  <div className="font-bbh uppercase text-sm truncate">{selected.title}</div>
-                  <div className="flex items-center gap-2">
-                    {url && (
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" /> Open
-                      </a>
-                    )}
-                  </div>
                 </div>
-                {url && !loadError ? (
-                  <object data={url} type="application/pdf" className="flex-1 w-full bg-white">
-                    <iframe src={url} className="w-full h-full border-0 bg-white" title={selected.title} onError={() => setLoadError(true)} />
-                  </object>
-                ) : url ? (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-6">
-                    <FileSignature className="w-10 h-10 text-muted-foreground" />
-                    <div className="text-sm text-muted-foreground">Your browser cannot preview this PDF inline.</div>
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="bg-primary text-primary-foreground"><ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open PDF</Button>
-                    </a>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">No PDF available for this contract yet.</div>
-                )}
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Select a contract to preview.</div>
-            )}
-          </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </SectionShell>
@@ -1098,6 +1081,7 @@ const InvestorsPortal = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
+  const [tabOverflowOpen, setTabOverflowOpen] = useState(false);
   const [openTabs, setOpenTabs] = useState<SectionId[]>(() => {
     try { return JSON.parse(localStorage.getItem("investor_open_tabs") || "[]"); } catch { return []; }
   });
@@ -1207,7 +1191,6 @@ const InvestorsPortal = () => {
   }, [data?.invoices]);
 
   const handleSectionClick = (sid: SectionId, catId: string) => {
-    playChime();
     setActive(sid);
     setExpandedCategory(catId);
     setOpenTabs(prev => {
@@ -1215,7 +1198,7 @@ const InvestorsPortal = () => {
       localStorage.setItem("investor_open_tabs", JSON.stringify(next));
       return next;
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0 });
   };
 
   const removeTab = (sid: SectionId) => {
@@ -1255,34 +1238,53 @@ const InvestorsPortal = () => {
           {!headerCollapsed && (
             <>
               <div className="flex items-center gap-1.5 overflow-hidden min-w-0 mr-4" style={{ maxWidth: "calc(50% - 60px)" }}>
-                {(openTabs.length ? openTabs : active ? [active] : []).slice(0, isMobile ? 2 : 3).map((tabId) => {
-                  const section = allSections.find(s => s.id === tabId);
-                  if (!section) return null;
-                  const TabIcon = section.icon;
-                  const isActive = active === tabId;
+                {(() => {
+                  const displayTabs = openTabs.length ? openTabs : (active ? [active] : []);
+                  const MAX_VISIBLE = isMobile ? 2 : 3;
+                  const visible = displayTabs.slice(0, MAX_VISIBLE);
+                  const overflow = displayTabs.slice(MAX_VISIBLE);
                   return (
-                    <button
-                      key={tabId}
-                      onClick={() => handleSectionClick(tabId, section.categoryId)}
-                      className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 ${
-                        isActive
-                          ? "border-primary text-primary bg-primary/10"
-                          : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                      {!isMobile && <span className="truncate max-w-[90px]">{section.title}</span>}
-                      {openTabs.length >= 2 && (
-                        <span
-                          className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                    <>
+                      {visible.map((tabId) => {
+                        const section = allSections.find(s => s.id === tabId);
+                        if (!section) return null;
+                        const TabIcon = section.icon;
+                        const isActive = active === tabId;
+                        return (
+                          <button
+                            key={tabId}
+                            onClick={() => handleSectionClick(tabId, section.categoryId)}
+                            className={`group/tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all shrink-0 rounded-full border-2 ${
+                              isActive
+                                ? "border-primary text-primary bg-primary/10"
+                                : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
+                            }`}
+                          >
+                            <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                            {!isMobile && <span className="truncate max-w-[90px]">{section.title}</span>}
+                            {openTabs.length >= 2 && (
+                              <span
+                                className="ml-0.5 hidden group-hover/tab:inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); removeTab(tabId); }}
+                              >
+                                ×
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {overflow.length > 0 && (
+                        <button
+                          onClick={() => setTabOverflowOpen(true)}
+                          className="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-full border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
+                          title={`${overflow.length} more open tabs`}
                         >
-                          ×
-                        </span>
+                          +{overflow.length}
+                        </button>
                       )}
-                    </button>
+                    </>
                   );
-                })}
+                })()}
                 <button
                   className="flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border/50 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40 shrink-0 transition-colors"
                   onClick={() => setSectionPickerOpen(true)}
@@ -1329,6 +1331,10 @@ const InvestorsPortal = () => {
 
       <Dialog open={sectionPickerOpen} onOpenChange={setSectionPickerOpen}>
         <DialogContent className="overflow-hidden p-0 shadow-lg max-w-5xl w-[92vw] h-[80vh]">
+          <VisuallyHidden>
+            <DialogTitle>Open a section</DialogTitle>
+            <DialogDescription>Pick a section to open in a new tab.</DialogDescription>
+          </VisuallyHidden>
           <SectionGridPicker
             categories={CATEGORIES}
             onSelect={(sectionId, categoryId) => {
@@ -1336,6 +1342,37 @@ const InvestorsPortal = () => {
               setSectionPickerOpen(false);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tabOverflowOpen} onOpenChange={setTabOverflowOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Open tabs</DialogTitle>
+            <DialogDescription>Switch to or close any open tab.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 max-h-80 overflow-y-auto">
+            {openTabs.map((tId) => {
+              const s = allSections.find(x => x.id === tId);
+              if (!s) return null;
+              const TIcon = s.icon;
+              const isActive = active === tId;
+              return (
+                <div key={tId} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isActive ? "bg-primary/10 text-primary" : "hover:bg-muted/50"}`}>
+                  <TIcon className="w-4 h-4 shrink-0" />
+                  <button
+                    className="text-sm flex-1 truncate text-left"
+                    onClick={() => { handleSectionClick(tId, s.categoryId); setTabOverflowOpen(false); }}
+                  >
+                    {s.title}
+                  </button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeTab(tId)}>
+                    <span className="text-xs">×</span>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1379,9 +1416,6 @@ const InvestorsPortal = () => {
                   onClick={() => {
                     if (isSingleSection) {
                       handleSectionClick(cat.sections[0].id, cat.id);
-                    } else if (hasActive && isExpanded) {
-                      setActive(null);
-                      setExpandedCategory(cat.id);
                     } else {
                       setExpandedCategory(isExpanded ? null : cat.id);
                     }
@@ -1396,21 +1430,14 @@ const InvestorsPortal = () => {
                   </span>
                 </button>
 
-                <AnimatePresence>
-                  {isExpanded && !isSingleSection && (
-                    <motion.div
-                      className="w-full space-y-1 mt-2 pb-16"
-                      initial="hidden"
-                      animate="show"
-                      exit="hidden"
-                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                    >
-                      {cat.sections.map(s => {
+                {isExpanded && !isSingleSection && (
+                  <div className="w-full space-y-1 mt-2 pb-16">
+                    {cat.sections.map(s => {
                         const SIcon = s.icon;
                         const isActive = active === s.id;
                         return (
-                          <motion.div key={s.id} variants={{ hidden: { x: -10, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
-                            <button
+                          <button
+                            key={s.id}
                               onClick={() => handleSectionClick(s.id, cat.id)}
                               className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-1.5 md:py-2 px-1 transition-all ${
                                 isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10"
@@ -1420,13 +1447,11 @@ const InvestorsPortal = () => {
                               <span className={`text-[5px] sm:text-[6px] leading-tight text-center px-0.5 font-medium uppercase tracking-tight ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`}>
                                 {s.title.split(" ").map((w, i) => <span key={i} className="block">{w}</span>)}
                               </span>
-                            </button>
-                          </motion.div>
+                          </button>
                         );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    })}
+                  </div>
+                )}
 
                 {idx < CATEGORIES.length - 1 && (
                   <div className="w-full px-2 py-2"><div className="h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" /></div>
@@ -1456,7 +1481,7 @@ const InvestorsPortal = () => {
                     }}
                   />
                 )}
-                <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                <div key={active}>
                   {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
@@ -1483,7 +1508,7 @@ const InvestorsPortal = () => {
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
-                </motion.div>
+                </div>
               </>
             ) : expandedCategory ? (
               (() => {
