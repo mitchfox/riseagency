@@ -120,6 +120,10 @@ const Sidebar = ({ active, setActive, onSignOut, displayName }: {
 }) => {
   const items: Array<{ id: SectionId; label: string; icon: any }> = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "investment", label: "Investment", icon: Sparkles },
+    { id: "roster", label: "Roster", icon: UserCheck },
+    { id: "contracts", label: "Contracts", icon: FileSignature },
+    { id: "tasks", label: "Tasks", icon: CheckSquare },
     { id: "activity", label: "Activity Log", icon: Activity },
     { id: "spending", label: "Spending", icon: Wallet },
     { id: "pipeline", label: "Player Pipeline", icon: Users },
@@ -127,28 +131,36 @@ const Sidebar = ({ active, setActive, onSignOut, displayName }: {
     { id: "notes", label: "System Notes", icon: NotebookPen },
   ];
   return (
-    <aside className="w-60 shrink-0 border-r border-white/5 bg-black/40 flex flex-col">
-      <div className="p-6 border-b border-white/5">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">RISE</div>
-        <div className="text-sm font-semibold text-white mt-1">Investor Portal</div>
+    <aside
+      className="w-60 shrink-0 border-r border-primary/10 flex flex-col relative"
+      style={{
+        backgroundImage: "url(/black-marble-bg.png), linear-gradient(180deg, #0a0a0a, #050505)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/55 pointer-events-none" />
+      <div className="relative p-6 border-b border-primary/10 flex flex-col items-center text-center">
+        <img src="/RISEWhite.png" alt="RISE" className="h-8 w-auto object-contain mb-2" />
+        <div className="text-[10px] uppercase tracking-[0.35em] text-primary font-bbh">Investor Portal</div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="relative flex-1 p-3 space-y-1">
         {items.map((it) => {
           const Icon = it.icon;
           const isActive = active === it.id;
           return (
             <button key={it.id} onClick={() => setActive(it.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                isActive ? "bg-[#C6A332]/15 text-[#C6A332]" : "text-white/60 hover:bg-white/5 hover:text-white"
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors font-bbh tracking-wide uppercase ${
+                isActive ? "bg-primary/15 text-primary border-l-2 border-primary" : "text-foreground/55 hover:bg-white/5 hover:text-foreground border-l-2 border-transparent"
               }`}>
               <Icon className="w-4 h-4" />{it.label}
             </button>
           );
         })}
       </nav>
-      <div className="p-3 border-t border-white/5">
-        <div className="text-xs text-white/40 px-3 mb-2 truncate">{displayName}</div>
-        <Button variant="ghost" size="sm" className="w-full justify-start text-white/60 hover:text-white" onClick={onSignOut}>
+      <div className="relative p-3 border-t border-primary/10">
+        <div className="text-xs text-foreground/40 px-3 mb-2 truncate">{displayName}</div>
+        <Button variant="ghost" size="sm" className="w-full justify-start text-foreground/60 hover:text-foreground" onClick={onSignOut}>
           <LogOut className="w-4 h-4 mr-2" /> Sign out
         </Button>
       </div>
@@ -157,10 +169,10 @@ const Sidebar = ({ active, setActive, onSignOut, displayName }: {
 };
 
 const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
-  <Card className="bg-white/[0.03] border-white/5 p-5">
-    <div className="text-xs uppercase tracking-wider text-white/40 mb-2">{label}</div>
-    <div className="text-2xl font-semibold text-white">{value}</div>
-    {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
+  <Card className="bg-card/60 border-primary/15 p-5 relative overflow-hidden">
+    <div className="text-[10px] uppercase tracking-[0.25em] text-primary/70 mb-2 font-bbh">{label}</div>
+    <div className="text-3xl font-bbh tracking-wide text-foreground">{value}</div>
+    {sub && <div className="text-xs text-foreground/40 mt-1">{sub}</div>}
   </Card>
 );
 
@@ -170,6 +182,7 @@ const InvestorsPortal = () => {
   const [active, setActive] = useState<SectionId>("overview");
   const [data, setData] = useState<{
     activity: ActivityRow[]; spending: SpendingRow[]; pipeline: PipelineRow[]; deals: DealRow[]; notes: NoteRow[];
+    players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -189,7 +202,10 @@ const InvestorsPortal = () => {
       if (error) throw error;
       if ((d as any)?.error) throw new Error((d as any).error);
       const dd = d as any;
-      setData({ activity: dd.activity, spending: dd.spending, pipeline: dd.pipeline, deals: dd.deals, notes: dd.notes });
+      setData({
+        activity: dd.activity, spending: dd.spending, pipeline: dd.pipeline, deals: dd.deals, notes: dd.notes,
+        players: dd.players || [], contracts: dd.contracts || [], tasks: dd.tasks || [],
+      });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
     } finally { setLoading(false); }
@@ -223,7 +239,16 @@ const InvestorsPortal = () => {
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
 
   return (
-    <div className="min-h-screen bg-[#070707] text-white">
+    <div
+      className="min-h-screen text-foreground"
+      style={{
+        backgroundImage: "url(/black-marble-bg.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
+      <div className="fixed inset-0 bg-black/75 pointer-events-none" />
       <AnimatePresence>
         {transitioning && (
           <motion.div
@@ -234,15 +259,23 @@ const InvestorsPortal = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex h-screen overflow-hidden">
+      <div className="relative flex h-screen overflow-hidden">
         <Sidebar active={active} setActive={setActive} onSignOut={signOut} displayName={user.display_name} />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-8 py-8">
+          <div className="max-w-6xl mx-auto px-8 py-8 font-agrandir">
             <motion.div key={active} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
               {!data ? (
-                <div className="text-white/40">{loading ? "Loading..." : "No data"}</div>
+                <div className="text-foreground/40">{loading ? "Loading..." : "No data"}</div>
               ) : active === "overview" ? (
-                <OverviewSection data={data} />
+                <OverviewSection data={data} setActive={setActive} />
+              ) : active === "investment" ? (
+                <InvestmentSection />
+              ) : active === "roster" ? (
+                <RosterSection rows={data.players} />
+              ) : active === "contracts" ? (
+                <ContractsSection rows={data.contracts} />
+              ) : active === "tasks" ? (
+                <TasksSection rows={data.tasks} />
               ) : active === "activity" ? (
                 <ActivitySection rows={data.activity} write={writeOp} />
               ) : active === "spending" ? (
@@ -263,10 +296,10 @@ const InvestorsPortal = () => {
 };
 
 const SectionHeader = ({ title, action }: { title: string; action?: React.ReactNode }) => (
-  <div className="flex items-end justify-between mb-6">
+  <div className="flex items-end justify-between mb-6 pb-4 border-b border-primary/15">
     <div>
-      <div className="text-xs uppercase tracking-[0.3em] text-[#C6A332]">RISE</div>
-      <h1 className="text-2xl font-semibold mt-1">{title}</h1>
+      <div className="text-[10px] uppercase tracking-[0.35em] text-primary font-bbh">RISE</div>
+      <h1 className="text-3xl font-bbh tracking-wide mt-1 uppercase">{title}</h1>
     </div>
     {action}
   </div>
