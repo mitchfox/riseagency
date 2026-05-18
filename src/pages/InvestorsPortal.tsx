@@ -98,16 +98,17 @@ interface PlayerAnalysisRow {
   analysis_date: string; opponent: string | null;
   result: string | null; r90_score: number | null; minutes_played: number | null;
   pdf_url: string | null; video_url: string | null; visibility_status: string;
-  category: string; club_logo_url: string | null; updated_at: string;
+  category: string; club_logo_url: string | null; opposition_color?: string | null; updated_at: string;
 }
 interface MatchAnalysisLink {
   id: string; title: string | null; analysis_type: "pre-match" | "post-match" | string | null;
   match_date: string | null; home_team: string | null; away_team: string | null;
+  home_team_bg_color?: string | null; away_team_bg_color?: string | null;
 }
 interface FixtureFeedItem {
   id: string; sort_date: string; match_date: string | null; title: string; subtitle: string;
   players: { id: string; name: string; image_url: string | null }[];
-  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[];
+  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[]; colour: string | null;
 }
 interface BankConnectionRow { id: string; bank_name: string | null; account_label: string | null; last_synced_at: string | null; status: string; created_at: string }
 interface BankTxnRow {
