@@ -228,7 +228,7 @@ const PlayerCard = ({ p, editable, onSave, paidByPlayer }: {
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bbh uppercase tracking-wide text-base truncate">{p.name}</h3>
+            <h3 className="font-semibold text-base truncate text-foreground">{p.name}</h3>
             {p.position && <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">{p.position}</Badge>}
           </div>
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
