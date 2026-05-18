@@ -98,6 +98,25 @@ interface VideoAnalysisProps {
 
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
+const parseMatchTimeInputToSeconds = (value: string): number | null => {
+  const raw = value.trim();
+  if (!raw) return null;
+  const match = raw.match(/^(\d+)(?:[.:](\d{1,2}))?$/);
+  if (!match) return null;
+  const minutes = Number(match[1]);
+  const seconds = match[2] ? Number(match[2].padEnd(2, "0")) : 0;
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || seconds > 59) return null;
+  return minutes * 60 + seconds;
+};
+
+const formatClipMinuteFromSeconds = (seconds: number): string => {
+  const matchSeconds = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  const mins = Math.floor(matchSeconds / 60);
+  const rawSecs = Math.floor(matchSeconds % 60);
+  const roundedSecs = Math.floor(rawSecs / 5) * 5;
+  return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+};
+
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
