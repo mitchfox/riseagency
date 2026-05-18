@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useInvestorSession } from "@/hooks/useInvestorSession";
 import { Button } from "@/components/ui/button";
@@ -1090,22 +1090,6 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   );
 };
 
-// ---------- Category grid (when category open, no section selected) ----------
-const CategoryGrid = ({ category, onSelect }: { category: CategoryDef; onSelect: (s: SectionId) => void }) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-    {category.sections.map(s => {
-      const Icon = s.icon;
-      return (
-        <button key={s.id} onClick={() => onSelect(s.id)}
-          className="group rounded-xl border border-border/60 bg-card/40 hover:border-primary/60 hover:bg-primary/5 p-5 transition-all text-left">
-          <Icon className="w-6 h-6 text-primary mb-2" />
-          <div className="font-bbh uppercase tracking-wide text-sm">{s.title}</div>
-        </button>
-      );
-    })}
-  </div>
-);
-
 // ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
@@ -1113,7 +1097,6 @@ const InvestorsPortal = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
   const [openTabs, setOpenTabs] = useState<SectionId[]>(() => {
     try { return JSON.parse(localStorage.getItem("investor_open_tabs") || "[]"); } catch { return []; }
@@ -1238,17 +1221,6 @@ const InvestorsPortal = () => {
       }
       return next;
     });
-  };
-
-  const runSectionSearch = () => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return;
-    const hit = CATEGORIES.flatMap(cat => cat.sections.map(s => ({ ...s, cat }))).find(s => s.title.toLowerCase().includes(q));
-    if (hit) {
-      handleSectionClick(hit.id, hit.cat.id);
-      setSearchQuery("");
-      setSectionPickerOpen(false);
-    }
   };
 
   if (authLoading) return <div className="min-h-screen bg-background" />;
