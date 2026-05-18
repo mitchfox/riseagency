@@ -213,7 +213,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             className="overflow-hidden border-t border-primary/10">
             <div className="px-4 md:px-5 py-5 space-y-4">
               {card.content && (
-                <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{card.content}</div>
+                <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap font-sans normal-case tracking-normal">{card.content}</div>
               )}
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -249,7 +249,7 @@ export const InvestmentOverview = ({ sections, cards, unlocked, token, onRefresh
   const orphan = cards.filter(c => !sections.find(s => s.id === c.section_id));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-sans normal-case tracking-normal">
       {grouped.map(({ section, cards: list }) => (
         <div key={section.id} className="space-y-3">
           <div className="flex items-center justify-between border-b border-primary/20 pb-2">
