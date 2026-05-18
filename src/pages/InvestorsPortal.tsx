@@ -1437,18 +1437,6 @@ const InvestorsPortal = () => {
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 {data && <InvestorNotificationsDropdown notifications={data.taskNotifications} />}
-                {data?.isAdmin && (
-                  <Button
-                    variant={unlocked ? "default" : "outline"}
-                    size="sm"
-                    className="h-9 shrink-0"
-                    onClick={() => setUnlocked(u => !u)}
-                    title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
-                  >
-                    {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
-                    <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
-                  </Button>
-                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full border border-border">
