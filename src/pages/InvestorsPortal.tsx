@@ -16,8 +16,9 @@ import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
-  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check,
+  ChevronLeft, ArrowLeft, ExternalLink, FileText, Pencil, Check, Menu, HelpCircle,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -505,18 +506,36 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
 }) => {
   const [limit, setLimit] = useState(80);
   const profileMap = new Map(profiles.map(p => [p.id, p]));
+  const emailMap = new Map(profiles.filter(p => p.email).map(p => [p.email!.toLowerCase(), p]));
+  const resolveName = (email?: string | null, userId?: string | null, fallback?: string | null) => {
+    if (userId) {
+      const p = profileMap.get(userId);
+      if (p?.full_name) return p.full_name;
+    }
+    if (email) {
+      const p = emailMap.get(email.toLowerCase());
+      if (p?.full_name) return p.full_name;
+    }
+    if (fallback && fallback.includes("@")) {
+      const local = fallback.split("@")[0];
+      const p = emailMap.get(fallback.toLowerCase());
+      if (p?.full_name) return p.full_name;
+      return local.replace(/[._-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    }
+    return fallback || "Staff";
+  };
 
   const items: FeedItem[] = useMemo(() => {
     const list: FeedItem[] = [];
     rows.forEach(e => {
       list.push({
         id: `a-${e.id}`, ts: e.created_at, kind: "system",
-        actor: e.user_email || "system", action: e.action, subject: e.entity_name || e.entity_type, entity_type: e.entity_type,
+        actor: resolveName(e.user_email, null, e.user_email), action: e.action, subject: e.entity_name || e.entity_type, entity_type: e.entity_type,
       });
     });
     taskNotifications.forEach(n => {
       const data = n.event_data || {};
-      const actorName = data.user_name || (data.user_id ? (profileMap.get(data.user_id)?.full_name || profileMap.get(data.user_id)?.email || "Staff") : "Staff");
+      const actorName = resolveName(data.user_email, data.user_id, data.user_name);
       const subject = data.task_title || data.title || n.title || n.body || "";
       const action = n.event_type.replace(/^task_/, "").replace(/_/g, " ");
       list.push({ id: `t-${n.id}`, ts: n.created_at, kind: "task", actor: actorName, action, subject, entity_type: "task" });
@@ -525,13 +544,13 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
   }, [rows, taskNotifications, profiles]);
 
   const shown = items.slice(0, limit);
-  const tone: Record<string, string> = {
-    created: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
-    updated: "border-blue-500/40 text-blue-300 bg-blue-500/10",
-    deleted: "border-red-500/40 text-red-300 bg-red-500/10",
-    completed: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10",
-    assigned: "border-primary/40 text-primary bg-primary/5",
-    reminder: "border-amber-500/40 text-amber-300 bg-amber-500/10",
+  const verbTone: Record<string, string> = {
+    created: "text-emerald-400",
+    updated: "text-blue-400",
+    deleted: "text-red-400",
+    completed: "text-emerald-400",
+    assigned: "text-primary",
+    reminder: "text-amber-400",
   };
 
   return (
@@ -539,20 +558,26 @@ const ActivityFeed = ({ rows, taskNotifications, profiles }: {
       {shown.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No activity logged.</div>
       ) : (
-        <div className="space-y-1.5">
-          {shown.map(e => (
-            <div key={e.id} className="flex items-start gap-3 px-3 py-2 rounded border border-border/40 bg-card/40 hover:border-primary/30 transition-colors">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-medium truncate">{e.actor}</span>
-                  <Badge variant="outline" className={`text-[10px] ${tone[e.action.split(" ")[0]] || "border-border text-muted-foreground"}`}>{e.action}</Badge>
-                  {e.entity_type && <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">{e.entity_type}</Badge>}
-                  {e.subject && <span className="text-xs text-muted-foreground truncate">{e.subject}</span>}
+        <div className="divide-y divide-border/40">
+          {shown.map(e => {
+            const verb = e.action.split(" ")[0];
+            const verbCls = verbTone[verb] || "text-foreground";
+            return (
+              <div key={e.id} className="flex items-start gap-3 px-2 py-3 hover:bg-muted/20 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground leading-snug">
+                    <span className="font-semibold">{e.actor}</span>
+                    <span className={`font-medium ${verbCls}`}> {e.action}</span>
+                    {e.subject && <span className="text-foreground/80"> — {e.subject}</span>}
+                  </p>
+                  {e.entity_type && (
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-0.5">{e.entity_type}</p>
+                  )}
                 </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap pt-0.5">{formatDistanceToNow(new Date(e.ts), { addSuffix: true })}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(e.ts), { addSuffix: true })}</span>
-            </div>
-          ))}
+            );
+          })}
           {limit < items.length && (
             <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setLimit(l => l + 80)}>Load more</Button>
           )}
@@ -1023,18 +1048,6 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <button onClick={() => setActive("tasks")} className="text-left">
-          <SectionShell icon={CheckSquare} title={`Live Tasks (${activeTasks})`}>
-            <div className="text-sm text-muted-foreground">Click to view the live My Tasks board with staff slider and recent completions.</div>
-          </SectionShell>
-        </button>
-        <button onClick={() => setActive("contracts")} className="text-left">
-          <SectionShell icon={FileSignature} title={`Contracts (${contracts.length})`}>
-            <div className="text-sm text-muted-foreground">{contracts.filter(c => c.locked_at).length} locked • {contracts.filter(c => c.owner_signed_at && !c.locked_at).length} signed • {contracts.filter(c => !c.owner_signed_at && !c.locked_at).length} draft</div>
-          </SectionShell>
-        </button>
-      </div>
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
   );
@@ -1063,6 +1076,7 @@ const InvestorsPortal = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
@@ -1293,18 +1307,6 @@ const InvestorsPortal = () => {
               </div>
             );
           })}
-
-          {/* Show "Back" inside sidebar when category is expanded */}
-          {expandedCategory && (
-            <button
-              onClick={() => { setExpandedCategory(null); setActive(null); }}
-              className="w-full mt-2 rounded-lg flex flex-col items-center justify-center py-2 px-1 transition-all hover:bg-muted/40 text-muted-foreground"
-              title="Back to all categories"
-            >
-              <ArrowLeft className="w-4 h-4 mb-0.5" />
-              <span className="text-[6px] uppercase tracking-tight">Back</span>
-            </button>
-          )}
         </aside>
 
         {/* Collapse toggle */}
@@ -1316,7 +1318,7 @@ const InvestorsPortal = () => {
         {/* Main */}
         <main className={`flex-1 overflow-y-auto overflow-x-hidden relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
-        } ${isMobile ? "pb-[70px]" : ""}`}>
+        } pb-[80px]`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
             {/* Breadcrumb / back button */}
             {active && activeCategory && activeSectionDef && (
@@ -1328,9 +1330,6 @@ const InvestorsPortal = () => {
                 </button>
                 <ChevronLeft className="h-3.5 w-3.5 rotate-180 text-muted-foreground/50" />
                 <span className="text-foreground font-medium">{activeSectionDef.title}</span>
-                <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" onClick={() => { setActive("overview"); setExpandedCategory("dash"); }}>
-                  <ArrowLeft className="w-3 h-3 mr-1" /> Dashboard
-                </Button>
               </div>
             )}
 
@@ -1382,16 +1381,69 @@ const InvestorsPortal = () => {
         </main>
       </div>
 
-      {/* Hidden lock toggle (admin only) */}
-      {data?.isAdmin && (
-        <button
-          onClick={() => setUnlocked(u => !u)}
-          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
-          className={`fixed bottom-3 right-3 z-50 p-2 rounded-full border border-border/40 bg-background/60 backdrop-blur transition-opacity ${unlocked ? "opacity-90 border-primary text-primary" : "opacity-20 hover:opacity-100"}`}
-        >
-          {unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-        </button>
-      )}
+      {/* Footer bar (mirrors staff) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="container mx-auto px-3 md:px-4 py-3">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-4 overflow-y-auto scrollbar-thin">
+                <div className="space-y-6">
+                  {CATEGORIES.map(cat => (
+                    <div key={cat.id} className="space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">{cat.title}</h3>
+                      <div className="space-y-1">
+                        {cat.sections.map(s => {
+                          const Icon = s.icon;
+                          return (
+                            <Button key={s.id} variant={active === s.id ? "default" : "ghost"} className="w-full justify-start text-sm h-10"
+                              onClick={() => { setActive(s.id); setExpandedCategory(cat.id); }}>
+                              <Icon className="w-4 h-4 mr-2 shrink-0" />
+                              <span className="truncate">{s.title}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search sections..." value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase();
+                    for (const cat of CATEGORIES) {
+                      const hit = cat.sections.find(s => s.title.toLowerCase().includes(q));
+                      if (hit) { setActive(hit.id); setExpandedCategory(cat.id); setSearchQuery(""); break; }
+                    }
+                  }
+                }}
+                className="pl-9" />
+            </div>
+            {data?.isAdmin && (
+              <Button variant={unlocked ? "default" : "outline"} size="sm" className="shrink-0"
+                onClick={() => setUnlocked(u => !u)}
+                title={unlocked ? "Lock edit mode" : "Unlock edit mode"}>
+                {unlocked ? <Unlock className="h-4 w-4 md:mr-1" /> : <Lock className="h-4 w-4 md:mr-1" />}
+                <span className="hidden md:inline">{unlocked ? "Edit" : "Locked"}</span>
+              </Button>
+            )}
+            <Button onClick={signOut} variant="outline" size="sm" className="shrink-0">
+              <LogOut className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
+        </div>
+      </div>
       {canEdit && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
       )}
