@@ -1,191 +1,142 @@
-## Goal
+## Plan: fix the Investor Portal properly using staff code, not rebuilt approximations
 
-Turn the Investor Portal into a live operating dashboard, not a pitch deck. Keep the staff shell (header, sidebar, fonts, marble, risegold). Reuse staff components directly instead of rebuilding. Make all overview content card-based, expandable, data-first, and editable via a hidden lock toggle.
+### What is wrong now
+- The Investor Portal still has bespoke `Prospects`, `PlayerDatabase`, `TasksView`, `ActivityFeed`, `ContractsView` and sidebar/header code in `InvestorsPortal.tsx`.
+- That is why the Prospect Board and Player Database do not match staff. They are not the staff components.
+- Annual commission is currently just `players.expected_commission_annual`; it is not connected to invoice revenue.
+- Recent Activity only shows `staff_activity_log`, so task completions from My Tasks are missing because staff tasks mainly write to `staff_notification_events` and `staff_tasks.completion_log`.
+- Contracts use private file URLs directly in an iframe, so the private `signature-contracts` bucket can render as a blank white screen.
+- The sidebar is an imitation of staff and is missing staff behaviour: tabs, search, back/breadcrumb flow, notification button and reliable category collapse.
 
----
+### Implementation plan
 
-## 1. Reuse staff components directly (no rebuilds)
+#### 1. Stop rebuilding staff sections inside the Investor Portal
+Replace the bespoke investor versions with actual staff components in viewer mode:
 
-Drop the bespoke "investor" versions of things staff already does well. Mount the staff components in read-only mode where needed.
+- Prospect Board: use `src/components/staff/ProspectBoard.tsx` directly with `isAdmin={false}` so drag, add, edit and delete are disabled but the board looks identical to staff.
+- Player Database: use `src/components/staff/PlayerDatabaseManagement.tsx` or `PlayerDatabase.tsx` directly so it pulls from the real scouting, youth outreach and pro outreach tables, not the represented players list.
+- My Tasks: use `src/components/staff/StaffAccountabilityOverview.tsx` as the live task view, with a new `readOnly` mode if needed so investors can view the real Tasks, Schedule and Leaderboard tabs without editing.
+- Content Strategy: use the existing staff marketing schedule component in read-only mode if mounted in the Activity category.
+- Activity Log: either reuse `ActivityLog` with an investor-safe data source, or build a small adapter that combines staff activity plus task events while preserving staff styling.
 
-| Investor section | Component reused from staff | Mode |
-|---|---|---|
-| My Tasks | `src/components/staff/MyTasks.tsx` | read-only prop |
-| Leaderboard | existing staff leaderboard component | read-only |
-| Content Strategy | staff `MarketingScheduleBoard` | read-only |
-| Prospect Board | staff `ProspectBoard` | drag disabled |
-| Player Database | staff `PlayerList` | read-only, edit hidden |
-| Activity Feed | staff `ActivityLog` | trimmed to latest distinct entity (one row per entity/entity_name, not one row per edit) |
-| Contracts | new `InvestorContracts` panel with inline iframe — no Dialog |
+#### 2. Add read-only props where staff components need them
+Thread `readOnly?: boolean` through only where required:
 
-Add a `readOnly?: boolean` prop (or `viewerMode="investor"`) to each staff component above so edit controls/buttons render `null` for investor. No new "InvestorTasks" / "InvestorActivityFeed" / "InvestorPipeline" parallel files — delete them.
+- `StaffAccountabilityOverview`: hide Add Task, edit, drag/drop assignment, completion buttons and reminder buttons when `readOnly` is true. Keep tabs, staff slider, task cards, schedule and leaderboard visible.
+- `ProspectBoard`: it already gates most controls behind `isAdmin`; pass `false`.
+- `PlayerDatabase`: add `readOnly?: boolean` only if any edit dialog/action is exposed. Otherwise mount as-is.
+- Marketing schedule component: add `readOnly` or `canManage={false}` depending on its current API.
 
-Activity feed dedupe rule: group by `(entity_type, entity_id)`, keep only the latest `created_at`, sort desc, paginate (`Load more`, 50 at a time). Container scrolls within section, doesn't lock page scroll.
+#### 3. Fix Recent Activity so My Tasks is included
+Update the Investor Portal data layer so Recent Activity is a merged live feed:
 
----
+- `staff_activity_log` entries, deduped as already intended.
+- `staff_tasks` active and recently completed tasks, using `updated_at`, `last_completed_at` and `completion_log`.
+- `staff_notification_events` rows with `event_type` in `task_assigned`, `task_completed`, `task_reminder`.
 
-## 2. Sidebar parity with staff
+Display the merged feed sorted by timestamp, with task rows labelled as task activity rather than hidden under generic activity.
 
-The investor sidebar must match the staff `Staff.tsx` sidebar 1:1 (same widths `w-14 md:w-24`, gold gradient active, framer-motion stagger, gold dividers, expandable categories with sub-items). Categories:
+#### 4. Link annual commission to invoices
+Extend `investor-data` to fetch `invoices` joined to players:
 
-```text
-Dashboard      → Overview, Investment Overview
-Roster         → Represented, Mandated, Previously Mandated
-Pipeline       → Prospect Board, Player Database
-Legal          → Contracts
-Financial      → Spending, Commission Forecast
-Activity       → My Tasks, Leaderboard, Content Strategy, Activity Feed
-```
+- Total invoiced amount.
+- Total paid amount.
+- Outstanding amount.
+- Revenue in the current 12-month window.
+- Player-level invoice totals.
 
-Extract into `src/components/investor/InvestorShell.tsx` mirroring exact Tailwind from `Staff.tsx` lines 1567–1734.
+Update Commission Forecast so the headline figure prioritises real invoice data and then clearly separates:
 
-Remove: "System Notes", visible Sign Out button (move to top-right avatar popover), "Levene/RISE" greetings.
+- Real invoiced revenue.
+- Paid revenue.
+- Outstanding revenue.
+- Expected annual commission editable forecast.
 
----
+The existing `expected_commission_annual` remains a forecast field, but the dashboard will no longer pretend it is real invoice revenue.
 
-## 3. Contracts — inline, no popup
+#### 5. Allow unlocked inline editing of expected commission per year
+When the hidden lock is unlocked and the investor user is admin:
 
-Replace the broken Dialog with a two-pane inline viewer inside the Legal section:
+- Make the `£-/yr expected` value editable directly on roster and commission rows.
+- Save to `players.expected_commission_annual` through a secured backend function, not direct client writes.
+- Keep the UI read-only when locked.
 
-- Left: vertical list of contracts (title, counterparty, status badge, signed/locked dates)
-- Right: `<iframe src={locked_file_url || completed_pdf_url || file_url}>` filling the panel, `min-h-[80vh]`
-- Selecting a contract swaps the iframe src — no modal, no new tab, no navigation
+#### 6. Fix contracts properly
+Replace the current iframe URL logic with a signed URL resolver:
 
-Mobile: list collapses above iframe, iframe `h-[70vh]`.
+- Add contract file path resolution to `investor-data` or a small `investor-contract-url` backend function.
+- Use the same private bucket handling as staff contract code: create signed URLs for `signature-contracts` files.
+- Prefer `completed_pdf_url`, then `locked_file_url`, then `file_url`.
+- Show a proper viewer fallback if the browser cannot display the PDF: `Open PDF`, `Download`, and an error state instead of a blank white panel.
+- Keep the two-pane inline contract layout, but make the PDF source valid.
 
----
+#### 7. Copy staff shell behaviours into the Investor Portal
+Refactor the portal shell so it uses the same patterns as `Staff.tsx`:
 
-## 4. Investment Overview → editable CMS card system
+- Header tabs with open tab chips, close buttons, overflow dialog and plus picker.
+- Notification button using staff notification dropdown styling. For investor users, create a stable pseudo user id from the investor user id, or adapt the dropdown to accept a `readById` string.
+- Sidebar category behaviour copied from staff: clicking an open category closes it, selecting a section opens it, and the category grid view gives a way back out.
+- Staff breadcrumb/back behaviour: clicking the category breadcrumb exits the section back to the category section picker.
+- Add the sidebar search dialog copied from staff, scoped to investor sections.
+- Keep the same widths and mobile offsets as staff: `w-14 md:w-24`, `ml-14 md:ml-24`, mobile safe-area padding.
 
-### 4a. Data model (new table)
+#### 8. Use category pages and back paths so users are not trapped
+When a category is open but no section is selected, show a staff-style category grid:
 
-```sql
-create table public.investor_overview_sections (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  display_order integer not null default 0,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+- Dashboard: Overview, Investment Overview.
+- Roster: Represented, Mandated, Previously Mandated.
+- Pipeline: Prospect Board, Player Database.
+- Legal: Contracts.
+- Financial: Spending, Commission Forecast, Invoices snapshot.
+- Activity: My Tasks, Leaderboard, Content Strategy, Recent Activity.
 
-create table public.investor_overview_cards (
-  id uuid primary key default gen_random_uuid(),
-  section_id uuid references public.investor_overview_sections(id) on delete cascade,
-  title text not null,
-  summary text,                -- collapsed line
-  content text,                -- expanded markdown
-  metrics jsonb default '[]'::jsonb,  -- [{label,value,unit}]
-  tags text[] default '{}',
-  display_order integer not null default 0,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-```
+Every section gets a breadcrumb back to its category. Closing the active tab returns to overview or the previous tab.
 
-RLS: select allowed to anyone with a valid investor session (via edge function, service role) AND to staff (`has_role(auth.uid(),'staff')` OR admin). Write only to staff/admin. Investor write path goes through a dedicated edge function `investor-overview-write` that validates the investor session token and admin flag (see §5).
+#### 9. Clean up the oversized page component
+Split `InvestorsPortal.tsx` into focused components so it stops becoming a fragile one-file rebuild:
 
-Seed the table from the spec the user pasted (Core Vision, Investment Purpose, Operating Model, Use of Funds, Cost Structure, Systems & Infrastructure, Technology Stack, Outreach & Growth, Market Expansion, Player Pipeline, Revenue Model, Transparency, Return Model, Key Constraint, Differentiation) with their summaries, expanded content and metrics (£40k–£60k, £7.2k/player, etc.) as initial rows.
+- `InvestorShell.tsx`: staff-parity header, tabs, sidebar, search and category picker.
+- `InvestorDashboardOverview.tsx`: KPI cards and recent activity preview.
+- `InvestorContracts.tsx`: signed-url PDF viewer.
+- `InvestorCommission.tsx`: invoice-linked commission view and inline forecast editing.
+- `InvestorRecentActivity.tsx`: merged activity/task feed.
+- Keep `InvestmentOverview.tsx` as the CMS card section.
 
-### 4b. Card UI (data-first, expandable)
+### Technical changes
 
-`InvestmentOverviewCard.tsx`:
+#### Backend functions
+- Update `supabase/functions/investor-data/index.ts` to return:
+  - invoices and invoice totals
+  - signed or resolvable contract URLs
+  - merged task activity data
+  - staff notifications relevant to tasks
+- Update or extend `investor-overview-write` or `investor-write` with a secure admin action for editing `players.expected_commission_annual`.
 
-- Collapsed row: number, title (font-bbh uppercase), summary, **KPI chips on the right** (e.g. `£40k–£60k`, `£7.2k / player`) always visible
-- Expand on click → framer-motion height auto, 350ms cubic-bezier
-- Expanded: markdown content + metric grid + tag chips
-- Card style: `border border-primary/20 bg-card`, hover `bg-primary/5`, gold chevron rotates 180°
-- Mobile: KPIs wrap below title
+#### Database
+- No schema change is required for invoice linking if the existing `invoices` table is sufficient.
+- No schema change is required for task activity if `staff_tasks.completion_log`, `last_completed_at` and `staff_notification_events` are used.
+- If a contract signed URL helper needs stored metadata, avoid schema changes unless absolutely required.
 
-Group cards by section, each section a sticky `font-bbh` header.
+#### Frontend files to update
+- `src/pages/InvestorsPortal.tsx`
+- `src/components/investor/InvestorShell.tsx` new
+- `src/components/investor/InvestorContracts.tsx` new or extracted
+- `src/components/investor/InvestorCommission.tsx` new or extracted
+- `src/components/investor/InvestorRecentActivity.tsx` new or extracted
+- `src/components/staff/StaffAccountabilityOverview.tsx` add read-only mode
+- `src/components/staff/PlayerDatabase.tsx` only if edit controls need hiding
+- Marketing schedule component only if it needs a read-only prop
+- `supabase/functions/investor-data/index.ts`
+- `supabase/functions/investor-write/index.ts` or a dedicated secure investor admin write function
 
-### 4c. Inline editing (only in unlocked mode)
-
-When unlocked, every card and section gains:
-
-- Edit title (inline `BlurInput`)
-- Edit summary
-- Edit full content (textarea with markdown preview)
-- Edit metrics (repeater of label/value/unit)
-- Add card below (`+` button between cards)
-- Delete card (with confirm)
-- Reorder via drag handle (dnd-kit, already in project)
-- Section: add new section, rename, delete, reorder
-
-All edits save on blur via `investor-overview-write` edge function.
-
----
-
-## 5. Hidden lock toggle (admin/edit mode)
-
-- Default state on every login/refresh: **locked**. Never persisted across reload.
-- Stored in component state only (`useState`), never localStorage.
-- Toggle: tiny icon (Lock/Unlock from lucide), bottom-right of footer, `opacity-20 hover:opacity-100 transition`, no label.
-- Click → password prompt (one-shot, validated against a new `is_admin` boolean on `investor_users`). On success, flip to unlocked, show editing affordances everywhere, show a thin gold ribbon at top "Edit mode — changes save automatically".
-- All edit UI conditionally rendered behind `if (unlocked && user.is_admin)`. When locked, edit buttons render `null` (not just disabled).
-- Server-side: `investor-overview-write` re-validates `is_admin` on the session token for every request. UI lock is presentation only — security comes from the edge function check.
-
-Migration: `alter table public.investor_users add column is_admin boolean default false;` and flip Levene's row to true via insert tool.
-
----
-
-## 6. Roster, Pipeline, Financial — keep current direction, polish
-
-- Roster cards: player avatar, name, position chip, **flag SVG** via `getCountryFlagUrl` (never raw country text), age from `date_of_birth`, club + club_logo, contract end traffic-light, expected commission. Already migrated in last loop — verify wiring.
-- Pipeline: mount staff `ProspectBoard` with `readOnly` prop + tab to staff `PlayerList` (read-only). Drop the placeholder cards.
-- Commission Forecast: keep, link totals into Return Model card on the Investment Overview.
-
----
-
-## 7. Edge function update
-
-`supabase/functions/investor-data/index.ts`:
-
-- Add `overviewSections` and `overviewCards` to the response (joined and sorted by `display_order`)
-- Return `is_admin` on the user object
-- Activity feed: dedupe server-side via `distinct on (entity_type, entity_id)` ordered by created_at desc, limit 100
-
-New function `supabase/functions/investor-overview-write/index.ts`:
-
-- Validates token + `is_admin`
-- Accepts `{action: 'upsertCard'|'deleteCard'|'upsertSection'|'deleteSection'|'reorder', payload}`
-- Uses service role for writes
-
----
-
-## 8. Remove clutter from the portal
-
-- Delete the bespoke "Live Tasks", "Activity Log (investor flavour)", "System Notes" components
-- Drop visible Sign Out (avatar popover only)
-- No "Welcome Levene", no "RISE Investor Portal" wordmarks repeated in section headers
-- All section headers use `StaffCardHeader` with marble overlay for visual parity
-
----
-
-## 9. Files touched
-
-**Migrations**
-- new table `investor_overview_sections`
-- new table `investor_overview_cards`
-- `investor_users.is_admin` column
-- RLS policies as above
-
-**Edge functions**
-- `supabase/functions/investor-data/index.ts` — add overview tables, dedup activity, return `is_admin`
-- `supabase/functions/investor-overview-write/index.ts` — new
-
-**Frontend**
-- `src/pages/InvestorsPortal.tsx` — slim to a router; delegate to shell
-- `src/components/investor/InvestorShell.tsx` — copy of staff header/sidebar
-- `src/components/investor/InvestmentOverview.tsx` — rewrite to read from DB
-- `src/components/investor/InvestmentOverviewCard.tsx` — new (collapsed+expanded+edit modes)
-- `src/components/investor/InvestmentOverviewEditor.tsx` — new (admin add/edit/reorder)
-- `src/components/investor/InvestorContracts.tsx` — inline iframe viewer (no Dialog)
-- `src/components/investor/InvestorLockToggle.tsx` — new (footer icon + password prompt)
-- `src/components/investor/InvestorContext.tsx` — provides `{unlocked, isAdmin, data}` to children
-- Delete: `InvestorTasks.tsx`, `InvestorActivityFeed.tsx`, `InvestorPipeline.tsx` (bespoke shells)
-- Staff components touched to add `readOnly` prop: `MyTasks.tsx`, `ProspectBoard.tsx`, `MarketingScheduleBoard.tsx`, `PlayerList.tsx`, `ActivityLog.tsx`, leaderboard component
-- Seed insert for the 15 overview cards from the user's spec
-
----
-
-Ready to implement on approval.
+### Validation
+- Log in to `/investors-portal`.
+- Confirm the sidebar opens and closes categories exactly like staff.
+- Confirm category pages and breadcrumbs provide a way back.
+- Confirm header tabs and notifications appear like staff.
+- Confirm Prospect Board visually matches staff.
+- Confirm Player Database shows the real networking/scouting database, not only represented players.
+- Confirm My Tasks is the live staff My Tasks view with tabs and leaderboard.
+- Confirm Recent Activity includes task completions and task assignment events.
+- Confirm contracts display actual PDFs or a clear fallback, not a blank white screen.
+- Confirm commission totals show invoice-linked paid/outstanding/invoiced data and editable forecast values only when unlocked.
