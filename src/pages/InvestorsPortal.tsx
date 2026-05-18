@@ -1436,12 +1436,14 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
 
 const normaliseFixtureKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
 
+const isUsableHexColour = (value: string | null | undefined) => /^#[0-9a-f]{6}$/i.test((value || "").trim());
+
 const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playerById: Map<string, PlayerRow>): FixtureFeedItem[] => {
   const map = new Map<string, FixtureFeedItem>();
   const ensure = (key: string, date: string | null, title: string, subtitle: string) => {
     const existing = map.get(key);
     if (existing) return existing;
-    const item: FixtureFeedItem = { id: key, sort_date: date || new Date(0).toISOString(), match_date: date, title, subtitle, players: [], reports: [], pre_match: [], post_match: [] };
+    const item: FixtureFeedItem = { id: key, sort_date: date || new Date(0).toISOString(), match_date: date, title, subtitle, players: [], reports: [], pre_match: [], post_match: [], colour: null };
     map.set(key, item);
     return item;
   };
@@ -1452,6 +1454,7 @@ const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playe
     const key = report.fixture_id || `report:${normaliseFixtureKey(date)}:${normaliseFixtureKey(report.opponent)}:${report.player_id}`;
     const item = ensure(key, date, report.opponent ? `vs ${report.opponent}` : "Fixture", [report.result, date ? format(new Date(date), "d MMM yyyy") : null].filter(Boolean).join(" · "));
     item.reports.push(report);
+    if (!item.colour && isUsableHexColour(report.opposition_color)) item.colour = report.opposition_color!.trim();
     if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
   });
 
@@ -1462,9 +1465,11 @@ const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playe
     const title = [a.home_team, a.away_team].filter(Boolean).join(" vs ") || a.title || "Fixture";
     const key = a.fixture_id || `analysis:${normaliseFixtureKey(a.match_date)}:${normaliseFixtureKey(a.home_team)}:${normaliseFixtureKey(a.away_team)}`;
     const item = ensure(key, a.match_date || row.created_at, title, a.match_date ? format(new Date(a.match_date), "d MMM yyyy") : "Match analysis");
-    const link: MatchAnalysisLink = { id: a.id, title: a.title, analysis_type: a.analysis_type, match_date: a.match_date, home_team: a.home_team, away_team: a.away_team };
+    const link: MatchAnalysisLink = { id: a.id, title: a.title, analysis_type: a.analysis_type, match_date: a.match_date, home_team: a.home_team, away_team: a.away_team, home_team_bg_color: a.home_team_bg_color, away_team_bg_color: a.away_team_bg_color };
     const target = a.analysis_type === "pre-match" ? item.pre_match : item.post_match;
     if (!target.some(existing => existing.id === link.id)) target.push(link);
+    if (!item.colour && isUsableHexColour(a.home_team_bg_color)) item.colour = a.home_team_bg_color.trim();
+    if (!item.colour && isUsableHexColour(a.away_team_bg_color)) item.colour = a.away_team_bg_color.trim();
     if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
   });
 
