@@ -971,6 +971,236 @@ const InvoicesView = ({ rows, players }: { rows: InvoiceRow[]; players: PlayerRo
   );
 };
 
+// ---------- Forecast: investment spend & long-term projection ----------
+const Forecast = ({ spending, invoices, players }: {
+  spending: SpendingRowExt[]; invoices: InvoiceRow[]; players: PlayerRow[];
+}) => {
+  // Last 12 months: spend vs revenue
+  const months: { key: string; label: string; spend: number; revenue: number; net: number }[] = useMemo(() => {
+    const out: any[] = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      out.push({ key, label: format(d, "MMM yy"), spend: 0, revenue: 0, net: 0 });
+    }
+    const idx = new Map(out.map((m, i) => [m.key, i]));
+    spending.forEach(s => { const k = s.spend_date.slice(0, 7); const i = idx.get(k); if (i != null) out[i].spend += Number(s.amount_gbp || 0); });
+    invoices.forEach(inv => { const k = (inv.invoice_date || "").slice(0, 7); const i = idx.get(k); if (i != null) out[i].revenue += Number(inv.amount_paid || 0); });
+    out.forEach(m => { m.net = m.revenue - m.spend; });
+    return out;
+  }, [spending, invoices]);
+
+  const totalSpend12 = months.reduce((s, m) => s + m.spend, 0);
+  const totalRev12 = months.reduce((s, m) => s + m.revenue, 0);
+  const avgMonthlySpend = totalSpend12 / 12;
+  const avgMonthlyRev = totalRev12 / 12;
+
+  // 24-month forward projection: revenue grows linearly with represented commission ramp
+  const represented = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
+  const annualCommissionForecast = represented.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const monthlyForecastRev = annualCommissionForecast / 12;
+
+  const projection = useMemo(() => {
+    const out: any[] = [];
+    let cumulativeNet = 0;
+    months.forEach(m => { cumulativeNet += m.net; out.push({ label: m.label, cumulative: Math.round(cumulativeNet), kind: "actual" }); });
+    // 24 months forward
+    const now = new Date();
+    for (let i = 1; i <= 24; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const projectedRev = monthlyForecastRev;
+      const projectedSpend = avgMonthlySpend;
+      cumulativeNet += (projectedRev - projectedSpend);
+      out.push({ label: format(d, "MMM yy"), cumulative: Math.round(cumulativeNet), kind: "projected" });
+    }
+    return out;
+  }, [months, monthlyForecastRev, avgMonthlySpend]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat label="Spend (12mo)" value={gbp(totalSpend12)} sub={`Avg ${gbp(avgMonthlySpend)}/mo`} />
+        <Stat label="Revenue (12mo)" value={gbp(totalRev12)} sub={`Avg ${gbp(avgMonthlyRev)}/mo`} />
+        <Stat label="Forecast revenue / yr" value={gbp(annualCommissionForecast)} sub={`${represented.length} live players`} />
+        <Stat label="Projected runway" value={projection[projection.length - 1].cumulative >= 0 ? "Positive" : "Negative"} sub="24mo cumulative net" />
+      </div>
+
+      <SectionShell icon={TrendingUp} title="Monthly spend vs revenue — last 12 months">
+        <div style={{ width: "100%", height: 280 }}>
+          <ResponsiveContainer>
+            <BarChart data={months}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `£${Math.round(v / 1000)}k`} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                formatter={(v: any) => gbp(Number(v))} />
+              <Bar dataKey="spend" name="Spend" fill="hsl(0, 70%, 50%)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </SectionShell>
+
+      <SectionShell icon={TrendingUp} title="Cumulative net position — actual + 24-month projection">
+        <div style={{ width: "100%", height: 300 }}>
+          <ResponsiveContainer>
+            <LineChart data={projection}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={2} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `£${Math.round(v / 1000)}k`} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                formatter={(v: any) => gbp(Number(v))} />
+              <Line type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Projection assumes current average monthly spend continues and live-player commission ramps at the per-player figures recorded in Commission.
+        </p>
+      </SectionShell>
+    </div>
+  );
+};
+
+// ---------- Salary Cap: season-by-season income by represented player ----------
+const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: InvoiceRow[] }) => {
+  const [mode, setMode] = useState<"guaranteed" | "expected">("guaranteed");
+  const live = useMemo(
+    () => players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated"),
+    [players],
+  );
+
+  // Build current + next 4 seasons (Jul–Jun UK football seasons).
+  const seasons = useMemo(() => {
+    const now = new Date();
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return Array.from({ length: 5 }, (_, i) => {
+      const y = startYear + i;
+      return { key: `${y}/${(y + 1).toString().slice(-2)}`, start: new Date(y, 6, 1), end: new Date(y + 1, 5, 30) };
+    });
+  }, []);
+
+  // Per-player expected commission for a given season.
+  // Guaranteed: only counts seasons fully inside the player's contract window.
+  // Expected: assumes the player stays with us indefinitely and includes broader assumed income.
+  const rowsFor = (p: PlayerRow) => seasons.map(s => {
+    const annual = Number(p.expected_commission_annual || 0);
+    const contractStart = p.contract_start_date ? new Date(p.contract_start_date) : null;
+    const contractEnd = p.contract_end_date ? new Date(p.contract_end_date) : null;
+    let guaranteed = 0;
+    if (annual > 0 && contractEnd) {
+      // Proportion of season covered by contract window.
+      const wStart = contractStart && contractStart > s.start ? contractStart : s.start;
+      const wEnd = contractEnd < s.end ? contractEnd : s.end;
+      const days = Math.max(0, (wEnd.getTime() - wStart.getTime()) / 86400000);
+      const seasonDays = (s.end.getTime() - s.start.getTime()) / 86400000;
+      guaranteed = annual * (days / seasonDays);
+    }
+    const expected = annual * 1.15; // broader assumption: 15% upside (renewals, bonuses, image rights)
+    return { season: s.key, guaranteed: Math.max(0, Math.round(guaranteed)), expected: Math.max(0, Math.round(expected)) };
+  });
+
+  const totals = seasons.map(s => {
+    let guaranteed = 0, expected = 0;
+    live.forEach(p => {
+      const r = rowsFor(p).find(x => x.season === s.key)!;
+      guaranteed += r.guaranteed; expected += r.expected;
+    });
+    return { season: s.key, guaranteed, expected };
+  });
+
+  const grandTotal = totals.reduce((s, t) => s + (mode === "guaranteed" ? t.guaranteed : t.expected), 0);
+  const maxVal = Math.max(1, ...totals.map(t => mode === "guaranteed" ? t.guaranteed : t.expected));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 flex-1">
+          <Stat label="Live players" value={String(live.length)} />
+          <Stat label={`5-season ${mode}`} value={gbp(grandTotal)} />
+          <Stat label="Per-season average" value={gbp(Math.round(grandTotal / 5))} />
+        </div>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+          <TabsList>
+            <TabsTrigger value="guaranteed">Guaranteed</TabsTrigger>
+            <TabsTrigger value="expected">Expected</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : "expected income (assumes retention + upside)"}`}>
+        <div className="grid grid-cols-5 gap-2 mb-4">
+          {totals.map(t => {
+            const v = mode === "guaranteed" ? t.guaranteed : t.expected;
+            const pct = Math.round((v / maxVal) * 100);
+            return (
+              <div key={t.season} className="flex flex-col">
+                <div className="text-[10px] text-muted-foreground mb-1">{t.season}</div>
+                <div className="relative h-32 bg-muted/30 rounded-md overflow-hidden border border-border/40">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary/80 to-primary/40 transition-all"
+                    style={{ height: `${pct}%` }} />
+                  <div className="absolute inset-x-0 bottom-1 text-center text-[10px] font-semibold text-primary-foreground mix-blend-difference">
+                    {gbp(v)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="rounded border border-border/40 overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
+            <thead className="bg-muted/30 text-xs text-muted-foreground">
+              <tr>
+                <th className="text-left px-3 py-2">Player</th>
+                {seasons.map(s => <th key={s.key} className="text-right px-3 py-2">{s.key}</th>)}
+                <th className="text-right px-3 py-2">5-yr total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {live.length === 0 ? (
+                <tr><td colSpan={seasons.length + 2} className="text-center text-muted-foreground py-6">No live players.</td></tr>
+              ) : live.map(p => {
+                const r = rowsFor(p);
+                const total = r.reduce((s, x) => s + (mode === "guaranteed" ? x.guaranteed : x.expected), 0);
+                return (
+                  <tr key={p.id} className="hover:bg-muted/20">
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7"><AvatarImage src={p.image_url || undefined} /><AvatarFallback className="text-[10px]">{p.name[0]}</AvatarFallback></Avatar>
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{p.name}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{p.club || "—"}</div>
+                        </div>
+                      </div>
+                    </td>
+                    {r.map(x => (
+                      <td key={x.season} className="px-3 py-2 text-right text-xs tabular-nums">
+                        {gbp(mode === "guaranteed" ? x.guaranteed : x.expected)}
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-right font-semibold text-primary tabular-nums">{gbp(total)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="bg-muted/20 font-semibold">
+              <tr>
+                <td className="px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">Total</td>
+                {totals.map(t => <td key={t.season} className="px-3 py-2 text-right text-xs tabular-nums">{gbp(mode === "guaranteed" ? t.guaranteed : t.expected)}</td>)}
+                <td className="px-3 py-2 text-right text-primary tabular-nums">{gbp(grandTotal)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Guaranteed only counts the contracted portion of each season. Expected assumes the player stays with us beyond contract end and includes a 15% broader-income uplift (renewals, bonuses, image rights).
+        </p>
+      </SectionShell>
+    </div>
+  );
+};
+
 // ---------- Prospect Board (staff-style cards with priority colours) ----------
 const PRIORITY_COLOR = { high: "hsl(0,70%,50%)", medium: "hsl(43,49%,61%)", low: "hsl(140,50%,50%)", null: "hsl(0,0%,40%)" } as any;
 const AGE_GROUP_LABEL = { A: "First Team", B: "U21", C: "U18", D: "U16" } as const;
