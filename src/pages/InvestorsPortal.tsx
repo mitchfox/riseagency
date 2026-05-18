@@ -1826,7 +1826,7 @@ const InvestorsPortal = () => {
                   />
                 )}
                 <div key={active}>
-                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={(section) => {
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} videoAnalyses={data.videoAnalyses || []} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
                   }} />}
