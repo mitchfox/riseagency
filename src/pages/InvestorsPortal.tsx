@@ -1163,10 +1163,10 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
   );
 };
 
-const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, setActive }: {
+const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, videoAnalyses, setActive }: {
   players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
   taskNotifications: NotificationRow[]; spending: SpendingRow[]; prospects: ProspectRow[]; invoices: InvoiceRow[];
-  profiles: ProfileRow[]; setActive: (s: SectionId) => void;
+  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; videoAnalyses: VideoAnalysisRow[]; setActive: (s: SectionId) => void;
 }) => {
   const represented = players.filter(p => p.representation_status === "represented").length;
   const mandated = players.filter(p => p.representation_status === "mandated").length;
@@ -1178,6 +1178,18 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthlySpend = spending.filter(s => s.spend_date.startsWith(thisMonth)).reduce((s, r) => s + Number(r.amount_gbp), 0);
   const activeTasks = tasks.filter(t => !t.completed).length;
+  const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  const reports = useMemo(() => {
+    return (playerAnalyses || [])
+      .filter(r => r.visibility_status === "live" || r.visibility_status === "clipped")
+      .sort((a, b) => +new Date(b.analysis_date || b.updated_at) - +new Date(a.analysis_date || a.updated_at))
+      .slice(0, 12);
+  }, [playerAnalyses]);
+  const videos = useMemo(() => {
+    return (videoAnalyses || [])
+      .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
+      .slice(0, 12);
+  }, [videoAnalyses]);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1186,8 +1198,127 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
+      <PlayerFeed reports={reports} videos={videos} playerById={playerById} />
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
+  );
+};
+
+// ---------- Player Feed: live/clipped performance reports + pre/post match analysis ----------
+const PlayerFeed = ({ reports, videos, playerById }: {
+  reports: PlayerAnalysisRow[]; videos: VideoAnalysisRow[]; playerById: Map<string, PlayerRow>;
+}) => {
+  const [tab, setTab] = useState<"reports" | "videos">("reports");
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
+  if (reports.length === 0 && videos.length === 0) return null;
+  return (
+    <SectionShell icon={Film} title="Player Feed" action={
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+        <TabsList className="h-8">
+          <TabsTrigger value="reports" className="text-xs h-7">Performance Reports ({reports.length})</TabsTrigger>
+          <TabsTrigger value="videos" className="text-xs h-7">Match Analysis ({videos.length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+    }>
+      {tab === "reports" ? (
+        reports.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6">No live or clipped reports yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {reports.map(r => {
+              const p = playerById.get(r.player_id);
+              const isClipped = r.visibility_status === "clipped";
+              return (
+                <Card key={r.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarImage src={p?.image_url || undefined} className="object-cover" />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">{(p?.name || "?")[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="font-semibold text-sm truncate">{p?.name || "Unknown"}</div>
+                        <Badge variant="outline" className={`text-[9px] ${isClipped ? "border-amber-500/40 text-amber-300" : "border-emerald-500/40 text-emerald-300"}`}>
+                          {isClipped ? "Clipped" : "Live"}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {r.opponent ? `vs ${r.opponent}` : ""}{r.result ? ` · ${r.result}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {format(new Date(r.analysis_date || r.updated_at), "d MMM yyyy")}
+                        {r.minutes_played != null && ` · ${r.minutes_played}'`}
+                        {!isClipped && r.r90_score != null && ` · R90 ${Number(r.r90_score).toFixed(2)}`}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        {r.pdf_url && (
+                          <a href={r.pdf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                            <FileText className="w-3 h-3" />Open report
+                          </a>
+                        )}
+                        {r.video_url && (
+                          <button onClick={() => setActiveVideo({ url: r.video_url!, title: `${p?.name || "Player"} — ${r.opponent || ""}` })}
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                            <PlayCircle className="w-3 h-3" />Watch clips
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        videos.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6">No match analysis videos yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {videos.map(v => {
+              const p = v.player_id ? playerById.get(v.player_id) : null;
+              const clipCount = Array.isArray(v.clips) ? v.clips.length : 0;
+              return (
+                <Card key={v.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                      <Film className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-sm truncate">{v.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {p?.name || "Squad"}{v.opponent ? ` · vs ${v.opponent}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {v.match_date ? format(new Date(v.match_date), "d MMM yyyy") : format(new Date(v.updated_at), "d MMM yyyy")}
+                        {clipCount > 0 && ` · ${clipCount} clips`}
+                      </div>
+                      {v.video_url && (
+                        <button onClick={() => setActiveVideo({ url: v.video_url!, title: v.title })}
+                          className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline mt-2">
+                          <PlayCircle className="w-3 h-3" />Watch
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      <Dialog open={!!activeVideo} onOpenChange={(o) => { if (!o) setActiveVideo(null); }}>
+        <DialogContent className="max-w-5xl w-[92vw] p-0 overflow-hidden bg-black">
+          <DialogHeader className="px-4 py-2 border-b border-border/40">
+            <DialogTitle className="text-sm">{activeVideo?.title}</DialogTitle>
+          </DialogHeader>
+          {activeVideo && (
+            <video src={activeVideo.url} controls autoPlay className="w-full max-h-[75vh] bg-black" />
+          )}
+        </DialogContent>
+      </Dialog>
+    </SectionShell>
   );
 };
 
