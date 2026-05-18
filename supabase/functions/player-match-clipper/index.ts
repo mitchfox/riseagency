@@ -131,10 +131,23 @@ Deno.serve(async (req) => {
       }
 
       case 'updateOffset': {
-        const { videoId, match_minute_offset } = body;
+        const { videoId, match_minute_offset, second_half_offset, second_half_video_time, clips } = body;
+        const updates: Record<string, unknown> = {};
+        if (match_minute_offset !== undefined) updates.match_minute_offset = match_minute_offset;
+        if (second_half_offset !== undefined) updates.second_half_offset = second_half_offset;
+        if (second_half_video_time !== undefined) updates.second_half_video_time = second_half_video_time;
+        if (clips !== undefined) updates.clips = clips;
+
+        if (Object.keys(updates).length === 0) {
+          return new Response(
+            JSON.stringify({ error: 'No offset fields supplied' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const { error } = await supabase
           .from('video_analyses')
-          .update({ match_minute_offset })
+          .update(updates)
           .eq('id', videoId)
           .eq('player_id', player.id);
 

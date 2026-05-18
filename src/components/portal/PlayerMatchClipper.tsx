@@ -41,6 +41,25 @@ const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/player-m
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
+const parseMatchTimeInputToSeconds = (value: string): number | null => {
+  const raw = value.trim();
+  if (!raw) return null;
+  const match = raw.match(/^(\d+)(?:[.:](\d{1,2}))?$/);
+  if (!match) return null;
+  const minutes = Number(match[1]);
+  const seconds = match[2] ? Number(match[2].padEnd(2, "0")) : 0;
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || seconds > 59) return null;
+  return minutes * 60 + seconds;
+};
+
+const formatClipMinuteFromSeconds = (seconds: number): string => {
+  const safe = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  const mins = Math.floor(safe / 60);
+  const rawSecs = Math.floor(safe % 60);
+  const roundedSecs = Math.floor(rawSecs / 5) * 5;
+  return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+};
+
 const callFunction = async (body: any) => {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token || ANON_KEY;
@@ -103,8 +122,8 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
           ...v,
           clips: (v.clips as Clip[]) || [],
           match_minute_offset: Number(v.match_minute_offset) || 0,
-          second_half_offset: null,
-          second_half_video_time: null,
+          second_half_offset: v.second_half_offset != null ? Number(v.second_half_offset) : null,
+          second_half_video_time: v.second_half_video_time != null ? Number(v.second_half_video_time) : null,
         })));
       }
     } catch (err) {
@@ -256,12 +275,13 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
     const currentTime = videoRef.current.currentTime;
     const clipStart = Math.max(0, currentTime - 5);
     const clipEnd = Math.min(videoRef.current.duration || currentTime + 5, currentTime + 5);
+    const clipMinute = formatClipMinuteFromSeconds(clipStart + getEffectiveOffset(clipStart));
 
     const newClip: Clip = {
       id: crypto.randomUUID(),
       start: clipStart,
       end: clipEnd,
-      label: `Clip at ${fmtMatchTime(currentTime, selectedVideo.match_minute_offset)}`,
+      label: `Clip ${clipMinute}`,
       created_at: new Date().toISOString(),
     };
 
@@ -382,29 +402,54 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
   const handleTimestampOverride = async () => {
     if (!selectedVideo || !videoRef.current || !overrideMinute) return;
     const currentVideoTime = videoRef.current.currentTime;
-    const targetMatchSeconds = parseFloat(overrideMinute) * 60;
+    const targetMatchSeconds = parseMatchTimeInputToSeconds(overrideMinute);
+    if (targetMatchSeconds === null) {
+      toast.error("Enter match time as mm.ss");
+      return;
+    }
 
     if (syncHalf === "2nd") {
-      const updated = {
-        ...selectedVideo,
-        second_half_offset: targetMatchSeconds - currentVideoTime,
-        second_half_video_time: currentVideoTime,
-      };
-      setSelectedVideo(updated);
-      setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
-      setShowTimestampOverride(false);
-      setOverrideMinute("");
-      toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+      const secondHalfOffset = targetMatchSeconds - currentVideoTime;
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        if (clip.start < currentVideoTime) return clip;
+        const newMinute = formatClipMinuteFromSeconds(clip.start + secondHalfOffset);
+        return { ...clip, label: `Clip ${newMinute}` };
+      });
+      try {
+        await callFunction({
+          action: 'updateOffset',
+          playerEmail,
+          videoId: selectedVideo.id,
+          second_half_offset: secondHalfOffset,
+          second_half_video_time: currentVideoTime,
+          clips: adjustedClips,
+        });
+        const updated = { ...selectedVideo, second_half_offset: secondHalfOffset, second_half_video_time: currentVideoTime, clips: adjustedClips };
+        setSelectedVideo(updated);
+        setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
+        setShowTimestampOverride(false);
+        setOverrideMinute("");
+        toast.success(`2nd half synced: this point is now ${overrideMinute}'`);
+      } catch (err) {
+        toast.error('Failed to sync');
+      }
     } else {
       const newOffset = targetMatchSeconds - currentVideoTime;
+      const adjustedClips = selectedVideo.clips.map(clip => {
+        const isSecondHalf = selectedVideo.second_half_video_time !== null && clip.start >= selectedVideo.second_half_video_time;
+        if (isSecondHalf) return clip;
+        const newMinute = formatClipMinuteFromSeconds(clip.start + newOffset);
+        return { ...clip, label: `Clip ${newMinute}` };
+      });
       try {
         await callFunction({
           action: 'updateOffset',
           playerEmail,
           videoId: selectedVideo.id,
           match_minute_offset: newOffset,
+          clips: adjustedClips,
         });
-        const updated = { ...selectedVideo, match_minute_offset: newOffset };
+        const updated = { ...selectedVideo, match_minute_offset: newOffset, clips: adjustedClips };
         setSelectedVideo(updated);
         setVideos(prev => prev.map(v => v.id === selectedVideo.id ? updated : v));
         setShowTimestampOverride(false);

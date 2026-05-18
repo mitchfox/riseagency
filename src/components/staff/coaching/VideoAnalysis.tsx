@@ -98,6 +98,25 @@ interface VideoAnalysisProps {
 
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024;
 
+const parseMatchTimeInputToSeconds = (value: string): number | null => {
+  const raw = value.trim();
+  if (!raw) return null;
+  const match = raw.match(/^(\d+)(?:[.:](\d{1,2}))?$/);
+  if (!match) return null;
+  const minutes = Number(match[1]);
+  const seconds = match[2] ? Number(match[2].padEnd(2, "0")) : 0;
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || seconds > 59) return null;
+  return minutes * 60 + seconds;
+};
+
+const formatClipMinuteFromSeconds = (seconds: number): string => {
+  const matchSeconds = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  const mins = Math.floor(matchSeconds / 60);
+  const rawSecs = Math.floor(matchSeconds % 60);
+  const roundedSecs = Math.floor(rawSecs / 5) * 5;
+  return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+};
+
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
@@ -865,7 +884,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const handleTimestampOverride = async () => {
     if (!selectedVideo || !videoRef.current || !overrideMinute) return;
     const currentVideoTime = videoRef.current.currentTime;
-    const targetMatchSeconds = parseFloat(overrideMinute) * 60;
+    const targetMatchSeconds = parseMatchTimeInputToSeconds(overrideMinute);
+    if (targetMatchSeconds === null) {
+      toast.error("Enter match time as mm.ss");
+      return;
+    }
 
     if (syncHalf === "2nd") {
       const newSecondHalfOffset = targetMatchSeconds - currentVideoTime;
@@ -883,16 +906,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       }
 
       // Retroactively adjust existing clips that fall in the second half
-      const oldOffset = selectedVideo.match_minute_offset;
       const adjustedClips = selectedVideo.clips.map(clip => {
         // Determine if this clip is in the second half by its video start time
         if (clip.start >= newSecondHalfVideoTime) {
           // Recalculate minute using new second half offset instead of first half offset
-          const correctMatchSeconds = Math.max(0, clip.start + newSecondHalfOffset);
-          const mins = Math.floor(correctMatchSeconds / 60);
-          const rawSecs = Math.floor(correctMatchSeconds % 60);
-          const roundedSecs = Math.floor(rawSecs / 5) * 5;
-          const newMinute = `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+          const newMinute = formatClipMinuteFromSeconds(clip.start + newSecondHalfOffset);
           return { ...clip, minute: newMinute, label: `Clip ${newMinute}` };
         }
         return clip;
@@ -922,11 +940,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       const adjustedClips = selectedVideo.clips.map(clip => {
         const isSecondHalf = selectedVideo.second_half_video_time !== null && clip.start >= selectedVideo.second_half_video_time;
         if (!isSecondHalf) {
-          const correctMatchSeconds = Math.max(0, clip.start + newOffset);
-          const mins = Math.floor(correctMatchSeconds / 60);
-          const rawSecs = Math.floor(correctMatchSeconds % 60);
-          const roundedSecs = Math.floor(rawSecs / 5) * 5;
-          const newMinute = `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+          const newMinute = formatClipMinuteFromSeconds(clip.start + newOffset);
           return { ...clip, minute: newMinute, label: `Clip ${newMinute}` };
         }
         return clip;

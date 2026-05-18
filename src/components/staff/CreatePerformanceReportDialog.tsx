@@ -121,6 +121,7 @@ interface CreatePerformanceReportDialogProps {
 interface Fixture {
   id: string;
   match_date: string;
+  match_time?: string | null;
   home_team: string;
   away_team: string;
   competition: string;
@@ -927,6 +928,22 @@ export const CreatePerformanceReportDialog = ({
       toast.success("Fixture date updated");
     } catch (err: any) {
       toast.error("Failed to update date: " + err.message);
+    }
+  };
+
+  const handleFixtureTimeChange = async (newTime: string) => {
+    if (!selectedFixtureId) return;
+    const normalised = newTime && /^\d{2}:\d{2}$/.test(newTime) ? newTime : null;
+    try {
+      const { error } = await supabase
+        .from("fixtures")
+        .update({ match_time: normalised })
+        .eq("id", selectedFixtureId);
+      if (error) throw error;
+      setFixtures(prev => prev.map(f => f.id === selectedFixtureId ? { ...f, match_time: normalised } : f));
+      toast.success(normalised ? "Kick-off time updated" : "Kick-off time cleared");
+    } catch (err: any) {
+      toast.error("Failed to update kick-off time: " + err.message);
     }
   };
 
@@ -1975,15 +1992,27 @@ export const CreatePerformanceReportDialog = ({
               />
             </div>
             {selectedFixtureId && (
-              <div className="mt-2">
-                <Label htmlFor="fixture-date" className="text-xs">Match Date</Label>
-                <Input
-                  id="fixture-date"
-                  type="date"
-                  value={fixtures.find(f => f.id === selectedFixtureId)?.match_date || ""}
-                  onChange={(e) => handleFixtureDateChange(e.target.value)}
-                  className="h-8 text-sm"
-                />
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="fixture-date" className="text-xs">Match Date</Label>
+                  <Input
+                    id="fixture-date"
+                    type="date"
+                    value={fixtures.find(f => f.id === selectedFixtureId)?.match_date || ""}
+                    onChange={(e) => handleFixtureDateChange(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fixture-time" className="text-xs">Kick-off Time</Label>
+                  <Input
+                    id="fixture-time"
+                    type="time"
+                    value={fixtures.find(f => f.id === selectedFixtureId)?.match_time || ""}
+                    onChange={(e) => handleFixtureTimeChange(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             )}
           </div>

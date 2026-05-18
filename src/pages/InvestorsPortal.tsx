@@ -1147,14 +1147,6 @@ const InvestorsPortal = () => {
   };
 
   const handleSignIn = async (u: string, p: string) => { await signIn(u, p); playChime(); };
-
-  if (authLoading) return <div className="min-h-screen bg-background" />;
-  if (!user) return <LoginGate onSignIn={handleSignIn} />;
-
-  const handleSectionClick = (sid: SectionId, catId: string) => {
-    setActive(sid); setExpandedCategory(catId);
-  };
-
   const canEdit = unlocked && !!data?.isAdmin;
 
   const activeCategory = CATEGORIES.find(c => c.sections.some(s => s.id === active));
@@ -1165,6 +1157,13 @@ const InvestorsPortal = () => {
     (data?.invoices || []).forEach(i => { m[i.player_id] = (m[i.player_id] || 0) + Number(i.amount_paid || 0); });
     return m;
   }, [data?.invoices]);
+
+  if (authLoading) return <div className="min-h-screen bg-background" />;
+  if (!user) return <LoginGate onSignIn={handleSignIn} />;
+
+  const handleSectionClick = (sid: SectionId, catId: string) => {
+    setActive(sid); setExpandedCategory(catId);
+  };
 
   return (
     <div className="min-h-screen text-foreground relative">
