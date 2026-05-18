@@ -1047,18 +1047,6 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
         <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <button onClick={() => setActive("tasks")} className="text-left">
-          <SectionShell icon={CheckSquare} title={`Live Tasks (${activeTasks})`}>
-            <div className="text-sm text-muted-foreground">Click to view the live My Tasks board with staff slider and recent completions.</div>
-          </SectionShell>
-        </button>
-        <button onClick={() => setActive("contracts")} className="text-left">
-          <SectionShell icon={FileSignature} title={`Contracts (${contracts.length})`}>
-            <div className="text-sm text-muted-foreground">{contracts.filter(c => c.locked_at).length} locked • {contracts.filter(c => c.owner_signed_at && !c.locked_at).length} signed • {contracts.filter(c => !c.owner_signed_at && !c.locked_at).length} draft</div>
-          </SectionShell>
-        </button>
-      </div>
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
     </div>
   );
