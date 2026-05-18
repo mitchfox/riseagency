@@ -1114,6 +1114,10 @@ const InvestorsPortal = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
+  const [openTabs, setOpenTabs] = useState<SectionId[]>(() => {
+    try { return JSON.parse(localStorage.getItem("investor_open_tabs") || "[]"); } catch { return []; }
+  });
   const isMobile = useIsMobile();
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
@@ -1202,6 +1206,7 @@ const InvestorsPortal = () => {
 
   const activeCategory = CATEGORIES.find(c => c.sections.some(s => s.id === active));
   const activeSectionDef = activeCategory?.sections.find(s => s.id === active);
+  const allSections = CATEGORIES.flatMap(c => c.sections.map(s => ({ ...s, categoryId: c.id })));
 
   const invoiceTotalsByPlayer = useMemo(() => {
     const m: Record<string, number> = {};
@@ -1209,12 +1214,45 @@ const InvestorsPortal = () => {
     return m;
   }, [data?.invoices]);
 
+  const handleSectionClick = (sid: SectionId, catId: string) => {
+    playChime();
+    setActive(sid);
+    setExpandedCategory(catId);
+    setOpenTabs(prev => {
+      const next = prev.includes(sid) ? prev : [...prev, sid].slice(-12);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const removeTab = (sid: SectionId) => {
+    setOpenTabs(prev => {
+      const next = prev.filter(t => t !== sid);
+      localStorage.setItem("investor_open_tabs", JSON.stringify(next));
+      if (active === sid) {
+        const fallback = next[next.length - 1] || "overview";
+        const parent = CATEGORIES.find(c => c.sections.some(s => s.id === fallback));
+        setActive(fallback);
+        setExpandedCategory(parent?.id || null);
+      }
+      return next;
+    });
+  };
+
+  const runSectionSearch = () => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return;
+    const hit = CATEGORIES.flatMap(cat => cat.sections.map(s => ({ ...s, cat }))).find(s => s.title.toLowerCase().includes(q));
+    if (hit) {
+      handleSectionClick(hit.id, hit.cat.id);
+      setSearchQuery("");
+      setSectionPickerOpen(false);
+    }
+  };
+
   if (authLoading) return <div className="min-h-screen bg-background" />;
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
-
-  const handleSectionClick = (sid: SectionId, catId: string) => {
-    setActive(sid); setExpandedCategory(catId);
-  };
 
   return (
     <div className="min-h-screen text-foreground relative">
