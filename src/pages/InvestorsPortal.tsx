@@ -1273,8 +1273,8 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
                     <FileText className="w-3 h-3 mr-1" />See report
                   </Button>
                 ))}
-                {fixture.reports.filter(r => !!r.video_url).map(report => (
-                  <Button key={`watch-${report.id}`} size="sm" variant="outline" className="h-8 text-xs" onClick={() => setActiveVideo({ url: report.video_url!, title: `${fixture.title} clips` })}>
+                {fixture.reports.map(report => (
+                  <Button key={`watch-${report.id}`} size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setSelectedReportId(report.id); setReportOpen(true); }}>
                     <PlayCircle className="w-3 h-3 mr-1" />Watch
                   </Button>
                 ))}
@@ -1297,7 +1297,7 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
           )}
         </DialogContent>
       </Dialog>
-      <PerformanceReportDialog open={reportOpen} onOpenChange={setReportOpen} analysisId={selectedReportId} isPortalView />
+      <PerformanceReportDialog open={reportOpen} onOpenChange={setReportOpen} analysisId={selectedReportId} isPortalView={false} />
     </SectionShell>
   );
 };
