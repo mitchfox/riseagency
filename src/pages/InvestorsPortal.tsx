@@ -1191,7 +1191,6 @@ const InvestorsPortal = () => {
   }, [data?.invoices]);
 
   const handleSectionClick = (sid: SectionId, catId: string) => {
-    playChime();
     setActive(sid);
     setExpandedCategory(catId);
     setOpenTabs(prev => {
@@ -1199,7 +1198,7 @@ const InvestorsPortal = () => {
       localStorage.setItem("investor_open_tabs", JSON.stringify(next));
       return next;
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0 });
   };
 
   const removeTab = (sid: SectionId) => {
@@ -1482,7 +1481,7 @@ const InvestorsPortal = () => {
                     }}
                   />
                 )}
-                <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                <div key={active}>
                   {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
@@ -1509,7 +1508,7 @@ const InvestorsPortal = () => {
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
-                </motion.div>
+                </div>
               </>
             ) : expandedCategory ? (
               (() => {
