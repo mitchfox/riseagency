@@ -147,7 +147,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
           {String(idx + 1).padStart(2, "0")}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-bbh text-base md:text-lg uppercase tracking-wide text-foreground leading-tight">{card.title}</div>
+          <div className="font-semibold text-base md:text-lg tracking-tight text-foreground leading-tight">{card.title}</div>
           {card.summary && <div className="text-sm text-foreground/60 mt-1 leading-snug">{card.summary}</div>}
           {card.metrics?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 md:hidden">
@@ -175,7 +175,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {card.tags.map(t => (
-                    <span key={t} className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/50">{t}</span>
+                    <span key={t} className="text-[11px] tracking-normal px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/50">{t}</span>
                   ))}
                 </div>
               )}
