@@ -193,3 +193,89 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
   );
 };
 
+export const InvestmentOverview = ({ sections, cards, unlocked, token, onRefresh }: Props) => {
+  const [adding, setAdding] = useState<string | null>(null);
+  const [addingSection, setAddingSection] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState("");
+
+  const grouped = useMemo(() => sections.map(sec => ({
+    section: sec,
+    cards: cards.filter(c => c.section_id === sec.id).sort((a, b) => a.display_order - b.display_order),
+  })), [sections, cards]);
+
+  const orphan = cards.filter(c => !sections.find(s => s.id === c.section_id));
+
+  return (
+    <div className="space-y-8">
+      {grouped.map(({ section, cards: list }) => (
+        <div key={section.id} className="space-y-3">
+          <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+            <h3 className="font-bbh text-xs uppercase tracking-[0.3em] text-primary/80">{section.title}</h3>
+            {unlocked && (
+              <div className="flex gap-1">
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={async () => {
+                  const t = prompt("Rename section", section.title); if (!t || t === section.title) return;
+                  try { await callWrite(token, "upsertSection", { id: section.id, title: t, display_order: section.display_order }); await onRefresh(); }
+                  catch (e: any) { toast.error(e.message); }
+                }}><Pencil className="w-3 h-3" /></Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={async () => {
+                  if (!confirm(`Delete section "${section.title}" and all its cards?`)) return;
+                  try { await callWrite(token, "deleteSection", { id: section.id }); await onRefresh(); }
+                  catch (e: any) { toast.error(e.message); }
+                }}><Trash2 className="w-3 h-3" /></Button>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            {list.map((c, i) => (
+              <OverviewCard key={c.id} card={c} idx={i} unlocked={unlocked} sections={sections} token={token} onChanged={onRefresh} />
+            ))}
+            {adding === section.id && (
+              <CardEditor
+                card={{ section_id: section.id, metrics: [], tags: [], display_order: (list[list.length - 1]?.display_order ?? 0) + 1 }}
+                sections={sections} token={token}
+                onDone={async () => { setAdding(null); await onRefresh(); }}
+                onCancel={() => setAdding(null)}
+              />
+            )}
+            {unlocked && adding !== section.id && (
+              <Button size="sm" variant="outline" className="w-full border-dashed" onClick={() => setAdding(section.id)}>
+                <Plus className="w-3.5 h-3.5 mr-1" />Add card to {section.title}
+              </Button>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {orphan.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-bbh text-xs uppercase tracking-[0.3em] text-muted-foreground">Other</h3>
+          {orphan.map((c, i) => (
+            <OverviewCard key={c.id} card={c} idx={i} unlocked={unlocked} sections={sections} token={token} onChanged={onRefresh} />
+          ))}
+        </div>
+      )}
+
+      {unlocked && (
+        <div className="border-t border-primary/10 pt-4">
+          {addingSection ? (
+            <div className="flex gap-2">
+              <Input value={newSectionTitle} onChange={e => setNewSectionTitle(e.target.value)} placeholder="Section title" autoFocus />
+              <Button onClick={async () => {
+                if (!newSectionTitle.trim()) return;
+                try { await callWrite(token, "upsertSection", { title: newSectionTitle, display_order: (sections[sections.length - 1]?.display_order ?? 0) + 1 }); setNewSectionTitle(""); setAddingSection(false); await onRefresh(); }
+                catch (e: any) { toast.error(e.message); }
+              }} className="bg-primary text-primary-foreground"><Check className="w-4 h-4" /></Button>
+              <Button variant="ghost" onClick={() => { setAddingSection(false); setNewSectionTitle(""); }}><X className="w-4 h-4" /></Button>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" className="border-dashed" onClick={() => setAddingSection(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" />Add section
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
