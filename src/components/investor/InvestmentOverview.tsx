@@ -42,10 +42,10 @@ async function callWrite(token: string | null, action: string, payload: any) {
   return data;
 }
 
-const MetricChip = ({ m }: { m: OverviewMetric }) => (
-  <div className="flex flex-col items-end px-2.5 py-1 rounded border border-primary/30 bg-primary/5">
-    <div className="text-[9px] uppercase tracking-wider text-primary/70 font-bbh leading-none">{m.label}</div>
-    <div className="text-sm font-bbh text-primary leading-tight">{m.value}{m.unit ? <span className="text-[10px] text-primary/70 ml-0.5">{m.unit}</span> : null}</div>
+const MetricChip = ({ m, large }: { m: OverviewMetric; large?: boolean }) => (
+  <div className={`flex flex-col items-end rounded border border-primary/30 bg-primary/5 ${large ? "px-4 py-2" : "px-2.5 py-1"}`}>
+    <div className={`tracking-tight text-primary/70 font-medium leading-none ${large ? "text-xs" : "text-[10px]"}`}>{m.label}</div>
+    <div className={`text-primary leading-tight font-semibold ${large ? "text-2xl mt-1" : "text-sm"}`}>{m.value}{m.unit ? <span className={`text-primary/70 ml-0.5 ${large ? "text-sm" : "text-[10px]"}`}>{m.unit}</span> : null}</div>
   </div>
 );
 
@@ -92,7 +92,7 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
       <Input value={summary} onChange={e => setSummary(e.target.value)} placeholder="One-line summary (shown collapsed)" />
       <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Full expanded content" rows={5} />
       <div className="space-y-2">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bbh">KPI Metrics</div>
+        <div className="text-xs font-medium text-muted-foreground">KPI metrics</div>
         {metrics.map((m, i) => (
           <div key={i} className="flex gap-2">
             <Input className="flex-1" value={m.label} onChange={e => { const c = [...metrics]; c[i] = { ...c[i], label: e.target.value }; setMetrics(c); }} placeholder="Label" />
@@ -104,6 +104,7 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
         <Button size="sm" variant="outline" onClick={() => setMetrics([...metrics, { label: "", value: "", unit: "" }])}><Plus className="w-3 h-3 mr-1" />Metric</Button>
       </div>
       <Input value={tags} onChange={e => setTags(e.target.value)} placeholder="tags, comma, separated" />
+      <p className="text-[11px] text-muted-foreground">Tip: add the tag <code>featured</code> to render the card as a large, hero-style tile.</p>
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onCancel} disabled={busy}><X className="w-4 h-4 mr-1" />Cancel</Button>
         <Button onClick={save} disabled={busy} className="bg-primary text-primary-foreground"><Check className="w-4 h-4 mr-1" />Save</Button>
@@ -135,6 +136,48 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
     catch (e: any) { toast.error(e.message || "Delete failed"); }
   };
 
+  const isFeatured = (card.tags || []).some(t => t.toLowerCase() === "featured" || t.toLowerCase() === "large");
+
+  if (isFeatured) {
+    return (
+      <motion.div layout initial={false}
+        className="relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-lg hover:border-primary/60 transition-colors col-span-full">
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle at 20% 20%, hsl(var(--primary)) 0%, transparent 55%)" }} />
+        <div className="relative p-6 md:p-7 flex flex-col gap-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] tracking-widest text-primary/80 font-medium mb-1">Featured</div>
+              <div className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-tight">{card.title}</div>
+              {card.summary && <div className="text-sm md:text-base text-foreground/70 mt-2 leading-relaxed max-w-2xl">{card.summary}</div>}
+            </div>
+            {unlocked && (
+              <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(true)}><Pencil className="w-3.5 h-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={del}><Trash2 className="w-3.5 h-3.5" /></Button>
+              </div>
+            )}
+          </div>
+          {card.metrics?.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {card.metrics.map((m, i) => <MetricChip key={i} m={m} large />)}
+            </div>
+          )}
+          {card.content && (
+            <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4">{card.content}</div>
+          )}
+          {card.tags?.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {card.tags.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").map(t => (
+                <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/50">{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div layout initial={false}
       className="relative overflow-hidden rounded-md border border-primary/20 bg-card hover:border-primary/40 transition-colors">
@@ -143,7 +186,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         className="w-full flex items-start gap-4 text-left px-4 md:px-5 py-4 hover:bg-primary/5 transition-colors"
       >
         {unlocked && <GripVertical className="w-4 h-4 text-muted-foreground/40 mt-1 shrink-0" />}
-        <div className="font-bbh text-2xl md:text-3xl text-primary/60 leading-none w-9 shrink-0 tabular-nums">
+        <div className="text-2xl md:text-3xl text-primary/60 font-semibold leading-none w-9 shrink-0 tabular-nums">
           {String(idx + 1).padStart(2, "0")}
         </div>
         <div className="flex-1 min-w-0">
@@ -210,7 +253,7 @@ export const InvestmentOverview = ({ sections, cards, unlocked, token, onRefresh
       {grouped.map(({ section, cards: list }) => (
         <div key={section.id} className="space-y-3">
           <div className="flex items-center justify-between border-b border-primary/20 pb-2">
-            <h3 className="font-bbh text-xs uppercase tracking-[0.3em] text-primary/80">{section.title}</h3>
+            <h3 className="text-base font-semibold tracking-tight text-foreground">{section.title}</h3>
             {unlocked && (
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={async () => {
@@ -249,7 +292,7 @@ export const InvestmentOverview = ({ sections, cards, unlocked, token, onRefresh
 
       {orphan.length > 0 && (
         <div className="space-y-2">
-          <h3 className="font-bbh text-xs uppercase tracking-[0.3em] text-muted-foreground">Other</h3>
+          <h3 className="text-base font-semibold tracking-tight text-muted-foreground">Other</h3>
           {orphan.map((c, i) => (
             <OverviewCard key={c.id} card={c} idx={i} unlocked={unlocked} sections={sections} token={token} onChanged={onRefresh} />
           ))}
