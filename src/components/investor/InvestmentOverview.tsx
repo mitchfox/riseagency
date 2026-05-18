@@ -149,7 +149,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             <div className="min-w-0 flex-1">
               <div className="text-[11px] tracking-widest text-primary/80 font-medium mb-1">Featured</div>
               <div className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-tight">{card.title}</div>
-              {card.summary && <div className="text-sm md:text-base text-foreground/70 mt-2 leading-relaxed max-w-2xl">{card.summary}</div>}
+              {card.summary && <div className="text-sm md:text-base text-foreground/70 mt-2 leading-relaxed max-w-2xl font-sans normal-case tracking-normal">{card.summary}</div>}
             </div>
             {unlocked && (
               <div className="flex gap-1 shrink-0">
@@ -164,7 +164,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             </div>
           )}
           {card.content && (
-            <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4">{card.content}</div>
+            <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4 font-sans normal-case tracking-normal">{card.content}</div>
           )}
           {card.tags?.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -191,7 +191,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-base md:text-lg tracking-tight text-foreground leading-tight">{card.title}</div>
-          {card.summary && <div className="text-sm text-foreground/60 mt-1 leading-snug">{card.summary}</div>}
+          {card.summary && <div className="text-sm text-foreground/60 mt-1 leading-snug font-sans normal-case tracking-normal">{card.summary}</div>}
           {card.metrics?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 md:hidden">
               {card.metrics.map((m, i) => <MetricChip key={i} m={m} />)}
@@ -213,7 +213,7 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             className="overflow-hidden border-t border-primary/10">
             <div className="px-4 md:px-5 py-5 space-y-4">
               {card.content && (
-                <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{card.content}</div>
+                <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap font-sans normal-case tracking-normal">{card.content}</div>
               )}
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -249,7 +249,7 @@ export const InvestmentOverview = ({ sections, cards, unlocked, token, onRefresh
   const orphan = cards.filter(c => !sections.find(s => s.id === c.section_id));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 font-sans normal-case tracking-normal">
       {grouped.map(({ section, cards: list }) => (
         <div key={section.id} className="space-y-3">
           <div className="flex items-center justify-between border-b border-primary/20 pb-2">

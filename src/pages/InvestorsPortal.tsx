@@ -98,16 +98,17 @@ interface PlayerAnalysisRow {
   analysis_date: string; opponent: string | null;
   result: string | null; r90_score: number | null; minutes_played: number | null;
   pdf_url: string | null; video_url: string | null; visibility_status: string;
-  category: string; club_logo_url: string | null; updated_at: string;
+  category: string; club_logo_url: string | null; opposition_color?: string | null; updated_at: string;
 }
 interface MatchAnalysisLink {
   id: string; title: string | null; analysis_type: "pre-match" | "post-match" | string | null;
   match_date: string | null; home_team: string | null; away_team: string | null;
+  home_team_bg_color?: string | null; away_team_bg_color?: string | null;
 }
 interface FixtureFeedItem {
   id: string; sort_date: string; match_date: string | null; title: string; subtitle: string;
   players: { id: string; name: string; image_url: string | null }[];
-  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[];
+  reports: PlayerAnalysisRow[]; pre_match: MatchAnalysisLink[]; post_match: MatchAnalysisLink[]; colour: string | null;
 }
 interface BankConnectionRow { id: string; bank_name: string | null; account_label: string | null; last_synced_at: string | null; status: string; created_at: string }
 interface BankTxnRow {
@@ -1435,12 +1436,14 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
 
 const normaliseFixtureKey = (value: string | null | undefined) => (value || "").trim().toLowerCase();
 
+const isUsableHexColour = (value: string | null | undefined) => /^#[0-9a-f]{6}$/i.test((value || "").trim());
+
 const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playerById: Map<string, PlayerRow>): FixtureFeedItem[] => {
   const map = new Map<string, FixtureFeedItem>();
   const ensure = (key: string, date: string | null, title: string, subtitle: string) => {
     const existing = map.get(key);
     if (existing) return existing;
-    const item: FixtureFeedItem = { id: key, sort_date: date || new Date(0).toISOString(), match_date: date, title, subtitle, players: [], reports: [], pre_match: [], post_match: [] };
+    const item: FixtureFeedItem = { id: key, sort_date: date || new Date(0).toISOString(), match_date: date, title, subtitle, players: [], reports: [], pre_match: [], post_match: [], colour: null };
     map.set(key, item);
     return item;
   };
@@ -1451,6 +1454,7 @@ const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playe
     const key = report.fixture_id || `report:${normaliseFixtureKey(date)}:${normaliseFixtureKey(report.opponent)}:${report.player_id}`;
     const item = ensure(key, date, report.opponent ? `vs ${report.opponent}` : "Fixture", [report.result, date ? format(new Date(date), "d MMM yyyy") : null].filter(Boolean).join(" · "));
     item.reports.push(report);
+    if (!item.colour && isUsableHexColour(report.opposition_color)) item.colour = report.opposition_color!.trim();
     if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
   });
 
@@ -1461,9 +1465,11 @@ const buildFixtureFeed = (reports: PlayerAnalysisRow[], taggedRows: any[], playe
     const title = [a.home_team, a.away_team].filter(Boolean).join(" vs ") || a.title || "Fixture";
     const key = a.fixture_id || `analysis:${normaliseFixtureKey(a.match_date)}:${normaliseFixtureKey(a.home_team)}:${normaliseFixtureKey(a.away_team)}`;
     const item = ensure(key, a.match_date || row.created_at, title, a.match_date ? format(new Date(a.match_date), "d MMM yyyy") : "Match analysis");
-    const link: MatchAnalysisLink = { id: a.id, title: a.title, analysis_type: a.analysis_type, match_date: a.match_date, home_team: a.home_team, away_team: a.away_team };
+    const link: MatchAnalysisLink = { id: a.id, title: a.title, analysis_type: a.analysis_type, match_date: a.match_date, home_team: a.home_team, away_team: a.away_team, home_team_bg_color: a.home_team_bg_color, away_team_bg_color: a.away_team_bg_color };
     const target = a.analysis_type === "pre-match" ? item.pre_match : item.post_match;
     if (!target.some(existing => existing.id === link.id)) target.push(link);
+    if (!item.colour && isUsableHexColour(a.home_team_bg_color)) item.colour = a.home_team_bg_color.trim();
+    if (!item.colour && isUsableHexColour(a.away_team_bg_color)) item.colour = a.away_team_bg_color.trim();
     if (player && !item.players.some(p => p.id === player.id)) item.players.push({ id: player.id, name: player.name, image_url: player.image_url });
   });
 
@@ -1482,13 +1488,12 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
     <SectionShell icon={Film} title="Player Feed">
       <div className="space-y-2">
         {visibleFixtures.map((fixture) => {
-          const hasClipped = fixture.reports.some(r => r.visibility_status === "clipped");
           const hasLive = fixture.reports.some(r => r.visibility_status === "live");
-          const stripColour = hasClipped ? "hsl(43, 96%, 56%)" : hasLive ? "hsl(var(--primary))" : "hsl(var(--border))";
+          const stripColour = fixture.colour || (hasLive ? "hsl(var(--primary))" : "hsl(var(--border))");
           const clubLogo = fixture.reports.find(r => r.club_logo_url)?.club_logo_url || null;
           return (
-          <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-4 hover:border-primary/40 transition-colors overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: stripColour }} />
+          <Card key={fixture.id} className="relative bg-card/60 border-border/60 p-3 pt-5 hover:border-primary/40 transition-colors overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-2" style={{ backgroundColor: stripColour }} />
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1 flex items-start gap-3">
                 {clubLogo ? (
