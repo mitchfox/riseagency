@@ -908,6 +908,20 @@ const InvestorsPortal = () => {
           </div>
         </main>
       </div>
+
+      {/* Hidden lock toggle (admin only) — bottom right, semi-hidden */}
+      {data?.isAdmin && (
+        <button
+          onClick={() => setUnlocked(u => !u)}
+          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
+          className={`fixed bottom-3 right-3 z-50 p-2 rounded-full border border-border/40 bg-background/60 backdrop-blur transition-opacity ${unlocked ? "opacity-90 border-primary text-primary" : "opacity-20 hover:opacity-100"}`}
+        >
+          {unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+        </button>
+      )}
+      {unlocked && data?.isAdmin && (
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
+      )}
     </div>
   );
 };
