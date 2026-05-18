@@ -638,7 +638,7 @@ const InvestorNotificationsDropdown = ({ notifications }: { notifications: Notif
   );
 };
 
-const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
+const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; write: any; token: string | null; onRefresh: () => Promise<void> }) => {
   const [category, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -647,11 +647,20 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
   const [vendor, setVendor] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [scope, setScope] = useState<"business" | "personal">("business");
+  const [isPersonalNew, setIsPersonalNew] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [bankBusy, setBankBusy] = useState(false);
 
-  const filtered = useMemo(() => rows.filter(r =>
+  const scoped = useMemo(
+    () => rows.filter(r => (scope === "personal" ? !!r.is_personal : !r.is_personal)),
+    [rows, scope]
+  );
+
+  const filtered = useMemo(() => scoped.filter(r =>
     (category === "all" || r.category === category) &&
     (!search || (r.vendor || "").toLowerCase().includes(search.toLowerCase()) || (r.notes || "").toLowerCase().includes(search.toLowerCase()))
-  ), [rows, category, search]);
+  ), [scoped, category, search]);
 
   const byCategory = useMemo(() => {
     const m: Record<string, number> = {};
@@ -664,17 +673,59 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
     return Object.entries(m).sort(([a], [b]) => a.localeCompare(b)).map(([month, total]) => ({ month, total }));
   }, [filtered]);
   const total = filtered.reduce((s, r) => s + Number(r.amount_gbp), 0);
-  const cats = Array.from(new Set(rows.map(r => r.category)));
+  const cats = Array.from(new Set(scoped.map(r => r.category)));
+  const businessTotal = rows.filter(r => !r.is_personal).reduce((s, r) => s + Number(r.amount_gbp), 0);
+  const personalTotal = rows.filter(r => !!r.is_personal).reduce((s, r) => s + Number(r.amount_gbp), 0);
+
+  const callBank = async (action: string, body?: any) => {
+    setBankBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("truelayer-bank", {
+        body: { action, token, ...(body || {}) },
+      });
+      if (error) throw error;
+      return data;
+    } finally { setBankBusy(false); }
+  };
+
+  const linkBank = async () => {
+    try {
+      const res = await callBank("link");
+      if (res?.url) window.location.href = res.url;
+      else toast.error("Could not start bank connection");
+    } catch (e: any) { toast.error(e.message || "TrueLayer link failed"); }
+  };
+  const syncBank = async () => {
+    try {
+      await callBank("sync");
+      toast.success("Bank synced");
+      await onRefresh();
+    } catch (e: any) { toast.error(e.message || "Sync failed"); }
+  };
 
   return (
     <div className="space-y-4">
+      <Tabs value={scope} onValueChange={(v) => setScope(v as any)}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <TabsList>
+            <TabsTrigger value="business">Business ({gbp(businessTotal)})</TabsTrigger>
+            <TabsTrigger value="personal">Personal ({gbp(personalTotal)})</TabsTrigger>
+          </TabsList>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setConnectOpen(true)}>
+              <Building2 className="w-3.5 h-3.5 mr-1" />Bank accounts
+            </Button>
+          </div>
+        </div>
+      </Tabs>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Filtered Total" value={gbp(total)} />
+        <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
         <Stat label="Entries" value={String(filtered.length)} />
         <Stat label="Categories" value={String(byCategory.length)} />
         <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
       </div>
-      <SectionShell icon={Wallet} title="Spending Tracker" action={
+      <SectionShell icon={Wallet} title={`Spending Tracker — ${scope === "personal" ? "Personal" : "Business"}`} action={
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add</Button>
@@ -694,10 +745,14 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
               <div><Label>Vendor</Label><Input value={vendor} onChange={(e) => setVendor(e.target.value)} /></div>
               <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
               <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" checked={isPersonalNew} onChange={e => setIsPersonalNew(e.target.checked)} />
+                Mark as personal spending
+              </label>
               <Button className="bg-primary text-primary-foreground" onClick={async () => {
                 if (!amount) return;
-                await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes } });
-                setVendor(""); setAmount(""); setNotes(""); setAddOpen(false);
+                await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes, is_personal: isPersonalNew } });
+                setVendor(""); setAmount(""); setNotes(""); setIsPersonalNew(false); setAddOpen(false);
               }}>Save</Button>
             </div>
           </DialogContent>
@@ -765,13 +820,45 @@ const Spending = ({ rows, write }: { rows: SpendingRow[]; write: any }) => {
                   <td className="px-3 py-2">{r.vendor || "—"}</td>
                   <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
                   <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
-                  <td className="px-3 py-2"><Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button></td>
+                  <td className="px-3 py-2 flex items-center justify-end gap-1">
+                    <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
+                      onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
+                      {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </SectionShell>
+
+      <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Connect bank accounts</DialogTitle>
+            <DialogDescription>
+              Link UK high-street banks (Barclays, NatWest, HSBC etc.) via Open Banking. Transactions sync into the
+              spending tracker for you to approve or reject.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={linkBank} disabled={bankBusy} className="bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-1" />Connect a bank account
+              </Button>
+              <Button variant="outline" onClick={syncBank} disabled={bankBusy}>
+                <RefreshCw className="w-4 h-4 mr-1" />Sync transactions
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Once linked, new transactions appear here for review. Approving a transaction moves it into Spending under
+              the selected scope.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
