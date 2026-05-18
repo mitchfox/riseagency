@@ -4684,11 +4684,16 @@ export type Database = {
           category: string | null
           club: string | null
           club_logo: string | null
+          commission_notes: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
           contracts_password: string | null
           created_at: string | null
           created_by: string | null
+          current_salary_annual: number | null
           date_of_birth: string | null
           email: string | null
+          expected_commission_annual: number | null
           has_representation_offer: boolean
           highlighted_match: Json | null
           highlights: Json | null
@@ -4725,11 +4730,16 @@ export type Database = {
           category?: string | null
           club?: string | null
           club_logo?: string | null
+          commission_notes?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           contracts_password?: string | null
           created_at?: string | null
           created_by?: string | null
+          current_salary_annual?: number | null
           date_of_birth?: string | null
           email?: string | null
+          expected_commission_annual?: number | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
@@ -4766,11 +4776,16 @@ export type Database = {
           category?: string | null
           club?: string | null
           club_logo?: string | null
+          commission_notes?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           contracts_password?: string | null
           created_at?: string | null
           created_by?: string | null
+          current_salary_annual?: number | null
           date_of_birth?: string | null
           email?: string | null
+          expected_commission_annual?: number | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
