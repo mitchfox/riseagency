@@ -45,16 +45,16 @@ Deno.serve(async (req) => {
         .in("representation_status", ["represented", "mandated", "previously_mandated"])
         .order("name"),
       supabase.from("signature_contracts")
-        .select("id, title, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, counterparty_name")
+        .select("id, title, description, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, completed_pdf_url")
         .order("updated_at", { ascending: false }).limit(200),
       supabase.from("staff_tasks")
-        .select("id, title, category, priority, completed, deadline, created_at, last_completed_at, assigned_to, notes")
+        .select("id, title, description, category, priority, completed, deadline, created_at, updated_at, last_completed_at, assigned_to, image_url, display_order, is_recurring, recurrence_label")
         .order("updated_at", { ascending: false }).limit(500),
       supabase.from("staff_activity_log")
         .select("id, user_email, action, entity_type, entity_id, entity_name, details, created_at")
         .order("created_at", { ascending: false }).limit(200),
       supabase.from("prospects")
-        .select("id, name, status, position, nationality, date_of_birth, club, image_url, probability, notes, updated_at")
+        .select("id, name, stage, position, nationality, date_of_birth, age, current_club, profile_image_url, probability_weight, projected_revenue, revenue_currency, notes, last_contact_date, updated_at")
         .order("updated_at", { ascending: false }).limit(500),
     ]);
     return new Response(JSON.stringify({
