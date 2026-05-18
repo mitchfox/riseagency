@@ -870,7 +870,23 @@ const InvestorsPortal = () => {
             ) : !data ? null : (
               <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} spending={data.spending} prospects={data.prospects} setActive={setActive} />}
-                {active === "investment" && <SectionShell icon={Sparkles} title="Investment Overview"><InvestmentOverview /></SectionShell>}
+                {active === "investment" && (
+                  <SectionShell icon={Sparkles} title="Investment Overview" action={
+                    data.isAdmin ? (
+                      <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                        {unlocked ? "Edit mode" : "Read-only"}
+                      </span>
+                    ) : undefined
+                  }>
+                    <InvestmentOverview
+                      sections={data.overviewSections}
+                      cards={data.overviewCards}
+                      unlocked={unlocked && data.isAdmin}
+                      token={token}
+                      onRefresh={refresh}
+                    />
+                  </SectionShell>
+                )}
                 {active === "represented" && <Roster players={data.players} status="represented" />}
                 {active === "mandated" && <Roster players={data.players} status="mandated" />}
                 {active === "previously" && <Roster players={data.players} status="previously_mandated" />}
