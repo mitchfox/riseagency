@@ -2111,6 +2111,230 @@ export type Database = {
           },
         ]
       }
+      investor_activity_log: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          external_ref: string | null
+          id: string
+          occurred_at: string
+          person: string
+          source: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          external_ref?: string | null
+          id?: string
+          occurred_at?: string
+          person: string
+          source?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          external_ref?: string | null
+          id?: string
+          occurred_at?: string
+          person?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      investor_deals: {
+        Row: {
+          counterparty: string | null
+          created_at: string
+          id: string
+          stage: string
+          timeline_notes: Json
+          title: string
+          updated_at: string
+          value_gbp: number | null
+        }
+        Insert: {
+          counterparty?: string | null
+          created_at?: string
+          id?: string
+          stage?: string
+          timeline_notes?: Json
+          title: string
+          updated_at?: string
+          value_gbp?: number | null
+        }
+        Update: {
+          counterparty?: string | null
+          created_at?: string
+          id?: string
+          stage?: string
+          timeline_notes?: Json
+          title?: string
+          updated_at?: string
+          value_gbp?: number | null
+        }
+        Relationships: []
+      }
+      investor_notes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          kind?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_pipeline: {
+        Row: {
+          age_group: string | null
+          country: string | null
+          created_at: string
+          expected_value_gbp: number | null
+          id: string
+          name: string
+          notes: string | null
+          player_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          age_group?: string | null
+          country?: string | null
+          created_at?: string
+          expected_value_gbp?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          player_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          age_group?: string | null
+          country?: string | null
+          created_at?: string
+          expected_value_gbp?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          player_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "investor_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_spending: {
+        Row: {
+          amount_gbp: number
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          source: string
+          spend_date: string
+          vendor: string | null
+        }
+        Insert: {
+          amount_gbp: number
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          source?: string
+          spend_date: string
+          vendor?: string | null
+        }
+        Update: {
+          amount_gbp?: number
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          source?: string
+          spend_date?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
+      investor_users: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          password_hash: string
+          status: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          password_hash: string
+          status?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          password_hash?: string
+          status?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number

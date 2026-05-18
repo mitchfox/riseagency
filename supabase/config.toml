@@ -146,3 +146,12 @@ verify_jwt = false
 
 [functions.highlight-maker-data]
 verify_jwt = false
+
+[functions.investor-login]
+verify_jwt = false
+
+[functions.investor-data]
+verify_jwt = false
+
+[functions.investor-write]
+verify_jwt = false

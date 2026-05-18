@@ -1,33 +1,111 @@
-## Problem
+Four independent workstreams in one pass.
 
-1. `/highlights-login` still renders a "Password (optional)" field. Highlights Makers should sign in with just a username — no password input at all.
-2. When creating an account from **Staff → Staff Accounts**, there is no "Highlights Maker" option, so picking any role there goes through the normal flow that requires an email + password and creates a real Supabase auth user. Highlights Makers should never get an auth user, an `@rise.local` email, or a password — they live only in the `highlight_makers` table.
+---
 
-## Fix
+## 1. RISE Investor Portal (`/investors-portal`)
 
-### 1. `src/pages/HighlightsLogin.tsx`
-- Delete the password `<Input>`, its `<Label>`, and the `password` state entirely.
-- Send only `{ username }` to the `highlight-maker-login-check` edge function (the function already treats password as optional).
-- Keep "Remember me" and the existing welcome / error toasts unchanged.
+New private dashboard, fully built with live tables. Not indexed.
 
-### 2. `src/components/staff/StaffAccountManagement.tsx`
-Add Highlights Maker as a first-class option in the **Create account** form, so the user never has to leave the Staff Accounts section.
+### Database (new tables, RLS open to anyone with a valid `investor_session` token only via edge functions; direct client reads blocked)
+- `investor_users` — username, password_hash (bcrypt), display_name, status, created_at
+- `investor_sessions` — token, user_id, expires_at
+- `investor_activity_log` — date, person, category (outreach/analysis/admin/travel/deal/communication), description, source ('manual'|'staff_activity'|'api'), external_ref
+- `investor_spending` — date, category (tools/travel/staff/misc), vendor, amount_gbp, notes, source
+- `investor_pipeline` — name, age_group, country, status (lead/contact/mandate/active/deal_in_progress), notes, expected_value_gbp, player_id (optional link)
+- `investor_deals` — title, stage, counterparty, timeline_notes (jsonb), value_gbp, updated_at
+- `investor_notes` — title, body, kind (founder/reflection/decision), created_at
 
-- Inject a synthetic entry `{ role_key: "highlights_maker", role_label: "Highlights Maker" }` into the role dropdown (kept client-side; not added to `available_roles` because it isn't a real app_role).
-- When `newAccount.role === "highlights_maker"`:
-  - Re-label the "Email or username" field to **Username** and hide the password field and "(optional)" hint entirely.
-  - Skip the `@rise.local` synthesis, skip auto-generating a password, skip the `create-staff-account` edge function, and skip the post-create credentials panel.
-  - Insert directly into `public.highlight_makers` with `{ username, display_name: full_name, password: "", status: "active" }`. Toast "Highlights Maker created" on success and reset the form.
-- For every other role keep the current behaviour exactly as it is (email-or-username, password optional only for `stats_updater`, etc.).
-- Existing Highlights Maker accounts are still fully managed (assign players, disable, delete, edit) from the dedicated **Tools → Highlights Makers** section — no need to duplicate that table here.
+All tables: RLS enabled, deny direct access. Reads/writes go through edge functions that verify the session token. This way client-side Supabase queries can't leak data even if the URL is guessed.
 
-### 3. `src/components/staff/HighlightMakersManagement.tsx`
-Already password-free after the previous change. No edits needed; just verifying the form still has only Display name + Username so the two entry points behave identically.
+Seed `investor_users` with `levene` / `England4` (bcrypt-hashed). Auto-ingest hook: optional row insert via `investor-ingest` edge function for the existing `staff_activity_log` table (future automation point — not wired live now, just the endpoint).
 
-### 4. No database, edge function, or routing changes
-- `highlight_makers` table, RLS, and the two edge functions (`highlight-maker-login-check`, `highlight-maker-data`) already support password-less sign-in.
-- `supabase/config.toml` already has `verify_jwt = false` on both functions.
+### Edge functions
+- `investor-login` — validates username + password, issues session token (30d)
+- `investor-data` — single endpoint returning overview/activity/spending/pipeline/deals/notes for a valid token
+- `investor-write` — handles inserts/updates/deletes on the six data tables (token-gated)
+- `investor-ingest` — public-with-shared-secret endpoint for future automation (CSV / API)
+
+### Frontend
+- Route `/investors-portal` in `src/App.tsx` (lazy)
+- `src/pages/InvestorsPortal.tsx` — handles unauth (login card) + auth (dashboard) states
+- `src/components/investors/` directory: `Shader.tsx` (reuse RISE shader from existing component if available, otherwise a small WebGL/CSS gradient component), `LoginGate.tsx`, `Overview.tsx`, `ActivityLog.tsx`, `SpendingTracker.tsx` (with Recharts bar/line), `PlayerPipeline.tsx`, `DealsBoard.tsx`, `SystemNotes.tsx`
+- Sidebar nav with the six sections, dark premium aesthetic, Rise Gold accents, smooth section transitions (framer-motion)
+- Pre-login shader intro; post-login shader sweep transition; subtle success chime (reusing `src/lib/soundEffects.ts`), with mute toggle stored in localStorage
+- `useInvestorSession` hook handles token persistence + auto-redirect
+
+### Indexing
+- Add `Disallow: /investors-portal` to `public/robots.txt`
+- Add `<meta name="robots" content="noindex,nofollow,noarchive">` on the page
+
+---
+
+## 2. Stats Updater fixes
+
+Two problems: (a) sidebar shows full category structure even when only a handful of sections are permitted; (b) all players are visible when only assigned ones should be.
+
+### Sidebar
+In `src/pages/Staff.tsx` `applyRoleVisibility`: after filtering, count the total visible non-group sections across all categories. If `<= 7` (configurable constant `FLAT_SIDEBAR_THRESHOLD = 7`), flatten — drop category wrappers and the `isGroupLabel` separators, render every section as a top-level item in a single ungrouped list. Categories stay as-is above the threshold.
+
+### Player scoping
+Audit usage of `useStatsUpdaterAssignments` — confirm every component a stats_updater can reach (`StaffOverview`, player pickers, fixtures editor, match data editor) filters by `allowedIds` when `isScoped` is true. Add the filter where missing. The hook itself is correct; the regression is at call sites.
+
+Also: ensure the wrong sections (e.g. coaching, finance) don't appear at all — verify `role_permissions` seed for `stats_updater` and tighten if extra `can_view=true` rows exist.
+
+---
+
+## 3. Highlights Portal completion
+
+Last pass left gaps. Finish:
+
+### Player rail
+Show club logos from each player's most-recent performance report (`analyses.club_logo_url`) on the player picker, matching how the staff performance report displays them.
+
+### Video player
+Replace the current player with the exact `ClippedActionsPlayer` already used on staff/portal (the imports are already there but the wrapper is wrong) — same controls, autoplay-next, action title overlay, R90/Action Score badge.
+
+### Action score tiles
+Reuse the staff performance report's action-tile component (same colour palette, same badge layout, same hover). Pull from `src/components/staff/...ActionsList` or shared util — don't reinvent in HighlightsPortal.tsx.
+
+### Wyscout-style Video Reports tab
+Currently embeds a stripped `AnalysisVideoReports`. Swap to the exact `AnalysisVideoReports` used on the Stars profile (`PlayerDetail.tsx`) with identical filters, match selectors, Best Actions, ZIP and Play-all.
+
+### Playlists + uploads (shared with staff)
+- New "My Playlists" tab inside each player view
+- Create playlist (writes to existing `playlists` table with `is_favourite=true` by default so they appear everywhere)
+- Upload clips: reuse `analysis-videos` bucket + `clipped_actions`-style flow; new clips attach to the assigned player and surface in the staff highlights compiler
+- Add RLS so highlight makers can insert into `playlists` and `analysis-videos` only for assigned players (use a `has_highlight_maker_player_access(maker_id, player_id)` SQL helper)
+
+---
+
+## 4. Video Reports action-type merging
+
+The categoriser in `AnalysisVideoReports.tsx` does shallow `includes()` matching, so "Tackle - Not Held", "tackle not held", "Tacle Not Held" all stay separate.
+
+### Fix
+New helper `src/lib/actionTypeNormaliser.ts`:
+- `normaliseActionType(raw)` → strips punctuation, lowercases, collapses whitespace, applies a synonym map (`"not held" → "tackle"`, `"hdr"/"header won" → "aerial"`, common misspellings via Levenshtein distance ≤ 2 against a canonical list)
+- Canonical list seeded from existing distinct `actions.action_type` values plus the Sportscode dictionary already in the codebase
+- `canonicalActionType(raw)` returns the display label; `groupKey(raw)` returns a stable key used for counting and filtering
+
+Update `AnalysisVideoReports.tsx`:
+- Build `typeCounts` keyed by `groupKey`, displayed via `canonicalActionType`
+- `actionMatchesTypes` matches by `groupKey`, so picking "Tackle" pulls in every spelling variant
+- Display merged count next to each chip
+
+Same helper reused in `HighlightsPortal.tsx` so the two stay in sync.
+
+---
+
+## Technical notes
+
+- All new tables get RLS denying direct client access; edge functions hold the trust boundary for investor data
+- Investor shader: prefer reusing an existing shader component if one exists in `src/components`; otherwise a lightweight WebGL plane with a noise/gradient fragment shader
+- `public/robots.txt` keeps existing rules; only add `Disallow: /investors-portal`
+- No changes to the staff/player portal video pipelines beyond the categoriser swap
+- Highlights maker upload path: server-side edge function (`highlight-maker-upload`) checks maker→player assignment before issuing a signed upload URL
 
 ## Out of scope
-- No changes to the highlights portal workspace, clip download, or playlist logic.
-- No changes to other staff roles, the staff login page, or `create-staff-account`.
+
+- Multi-user invite system for investors (structure supports it; UI not built now)
+- Wiring the existing staff activity log into `investor_activity_log` (ingest endpoint exists; cron/trigger to be defined later)
+- Translating the investor portal (English only)
