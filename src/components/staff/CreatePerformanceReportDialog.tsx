@@ -121,6 +121,7 @@ interface CreatePerformanceReportDialogProps {
 interface Fixture {
   id: string;
   match_date: string;
+  match_time?: string | null;
   home_team: string;
   away_team: string;
   competition: string;
@@ -927,6 +928,22 @@ export const CreatePerformanceReportDialog = ({
       toast.success("Fixture date updated");
     } catch (err: any) {
       toast.error("Failed to update date: " + err.message);
+    }
+  };
+
+  const handleFixtureTimeChange = async (newTime: string) => {
+    if (!selectedFixtureId) return;
+    const normalised = newTime && /^\d{2}:\d{2}$/.test(newTime) ? newTime : null;
+    try {
+      const { error } = await supabase
+        .from("fixtures")
+        .update({ match_time: normalised })
+        .eq("id", selectedFixtureId);
+      if (error) throw error;
+      setFixtures(prev => prev.map(f => f.id === selectedFixtureId ? { ...f, match_time: normalised } : f));
+      toast.success(normalised ? "Kick-off time updated" : "Kick-off time cleared");
+    } catch (err: any) {
+      toast.error("Failed to update kick-off time: " + err.message);
     }
   };
 
