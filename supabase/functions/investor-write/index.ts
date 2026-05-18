@@ -17,7 +17,7 @@ async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
   const { data } = await supabase
     .from("investor_sessions")
-    .select("user_id, expires_at, investor_users(id, username, status)")
+    .select("user_id, expires_at, investor_users(id, username, status, is_admin)")
     .eq("token", token)
     .maybeSingle();
   if (!data) return null;
@@ -30,12 +30,8 @@ async function getSessionUser(supabase: any, token: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { token, op, table, row, id } = await req.json();
-    if (!ALLOWED_TABLES.has(table)) {
-      return new Response(JSON.stringify({ error: "Invalid table" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const body = await req.json();
+    const { token, op, table, row, id, action, payload } = body;
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -44,6 +40,41 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Admin-only structured actions (e.g. update player commission forecast)
+    if (action) {
+      if (!user.is_admin) {
+        return new Response(JSON.stringify({ error: "Admin only" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (action === "updatePlayerCommission") {
+        const { player_id, expected_commission_annual, current_salary_annual, commission_notes } = payload || {};
+        if (!player_id) {
+          return new Response(JSON.stringify({ error: "player_id required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const upd: any = {};
+        if (expected_commission_annual !== undefined) upd.expected_commission_annual = expected_commission_annual === null || expected_commission_annual === "" ? null : Number(expected_commission_annual);
+        if (current_salary_annual !== undefined) upd.current_salary_annual = current_salary_annual === null || current_salary_annual === "" ? null : Number(current_salary_annual);
+        if (commission_notes !== undefined) upd.commission_notes = commission_notes;
+        const { error } = await supabase.from("players").update(upd).eq("id", player_id);
+        if (error) throw error;
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: "Unknown action" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!ALLOWED_TABLES.has(table)) {
+      return new Response(JSON.stringify({ error: "Invalid table" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     let result: any;
