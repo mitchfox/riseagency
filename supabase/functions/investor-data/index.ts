@@ -9,7 +9,7 @@ async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
   const { data } = await supabase
     .from("investor_sessions")
-    .select("user_id, expires_at, investor_users(id, username, display_name, status)")
+    .select("user_id, expires_at, investor_users(id, username, display_name, status, is_admin)")
     .eq("token", token)
     .maybeSingle();
   if (!data) return null;
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -52,13 +52,25 @@ Deno.serve(async (req) => {
         .order("updated_at", { ascending: false }).limit(500),
       supabase.from("staff_activity_log")
         .select("id, user_email, action, entity_type, entity_id, entity_name, details, created_at")
-        .order("created_at", { ascending: false }).limit(200),
+        .order("created_at", { ascending: false }).limit(800),
       supabase.from("prospects")
         .select("id, name, stage, position, nationality, date_of_birth, age, current_club, profile_image_url, probability_weight, projected_revenue, revenue_currency, notes, last_contact_date, updated_at")
         .order("updated_at", { ascending: false }).limit(500),
+      supabase.from("investor_overview_sections").select("*").order("display_order", { ascending: true }),
+      supabase.from("investor_overview_cards").select("*").order("display_order", { ascending: true }),
     ]);
+
+    // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
+    const seen = new Set<string>();
+    const dedupActivity = (staffActivity.data || []).filter((e: any) => {
+      const key = `${e.entity_type}::${e.entity_id || e.entity_name || e.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 200);
+
     return new Response(JSON.stringify({
-      user,
+      user: { ...user, is_admin: (user as any).is_admin === true },
       activity: activity.data || [],
       spending: spending.data || [],
       pipeline: pipeline.data || [],
@@ -67,8 +79,10 @@ Deno.serve(async (req) => {
       players: players.data || [],
       contracts: contracts.data || [],
       tasks: tasks.data || [],
-      staffActivity: staffActivity.data || [],
+      staffActivity: dedupActivity,
       prospects: prospects.data || [],
+      overviewSections: overviewSections.data || [],
+      overviewCards: overviewCards.data || [],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {

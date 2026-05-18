@@ -2204,6 +2204,77 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_overview_cards: {
+        Row: {
+          content: string | null
+          created_at: string
+          display_order: number
+          id: string
+          metrics: Json
+          section_id: string | null
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          metrics?: Json
+          section_id?: string | null
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          metrics?: Json
+          section_id?: string | null
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_overview_cards_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "investor_overview_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_overview_sections: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_pipeline: {
         Row: {
           age_group: string | null
@@ -2310,6 +2381,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          is_admin: boolean
           password_hash: string
           status: string
           updated_at: string
@@ -2319,6 +2391,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          is_admin?: boolean
           password_hash: string
           status?: string
           updated_at?: string
@@ -2328,6 +2401,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          is_admin?: boolean
           password_hash?: string
           status?: string
           updated_at?: string

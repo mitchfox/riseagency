@@ -15,13 +15,13 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow, differenceInMonths } from "date-fns";
 import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
-  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Star, Eye, Calendar, Target,
+  Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Star, Eye, Calendar, Target,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
-import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
+import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
@@ -281,51 +281,57 @@ const Roster = ({ players, status }: { players: PlayerRow[]; status: string }) =
 };
 
 const ContractsView = ({ rows }: { rows: ContractRow[] }) => {
-  const [open, setOpen] = useState<ContractRow | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = rows.find(r => r.id === selectedId) || rows[0] || null;
+  const url = selected ? (selected.completed_pdf_url || selected.locked_file_url || selected.file_url) : null;
   return (
     <SectionShell icon={FileSignature} title={`Contracts (${rows.length})`}>
       {rows.length === 0 ? (
         <div className="text-sm text-muted-foreground text-center py-8">No contracts yet.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {rows.map(c => {
-            const signed = !!c.owner_signed_at || !!c.locked_at;
-            const url = c.completed_pdf_url || c.locked_file_url || c.file_url;
-            return (
-              <Card key={c.id} className="bg-card/60 border-border/60 p-4">
-                <div className="flex items-start gap-3">
-                  <FileSignature className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bbh uppercase text-sm truncate">{c.title || "Untitled"}</div>
-                    {c.description && <div className="text-xs text-muted-foreground line-clamp-2 mt-1">{c.description}</div>}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className={signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}>
-                        {c.locked_at ? <><Lock className="w-3 h-3 mr-1" />Locked</> : signed ? "Signed" : c.status || "Draft"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">Updated {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+          <div className="space-y-2 lg:max-h-[80vh] lg:overflow-y-auto pr-1">
+            {rows.map(c => {
+              const signed = !!c.owner_signed_at || !!c.locked_at;
+              const isSelected = selected?.id === c.id;
+              return (
+                <button key={c.id} onClick={() => setSelectedId(c.id)}
+                  className={`w-full text-left p-3 rounded border transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border/60 bg-card/60 hover:border-primary/40"}`}>
+                  <div className="flex items-start gap-2">
+                    <FileSignature className={`w-4 h-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bbh uppercase text-sm truncate">{c.title || "Untitled"}</div>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <Badge variant="outline" className={`text-[9px] ${signed ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}>
+                          {c.locked_at ? <><Lock className="w-2.5 h-2.5 mr-0.5" />Locked</> : signed ? "Signed" : c.status || "Draft"}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</span>
+                      </div>
                     </div>
                   </div>
-                  {url && (
-                    <Button size="sm" variant="ghost" className="text-primary" onClick={() => setOpen(c)}>
-                      <Eye className="w-4 h-4 mr-1" />View
-                    </Button>
-                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="rounded border border-border/60 bg-background overflow-hidden flex flex-col min-h-[60vh] lg:min-h-[80vh]">
+            {selected ? (
+              <>
+                <div className="px-4 py-2 border-b border-border/60 flex items-center justify-between bg-card/50">
+                  <div className="font-bbh uppercase text-sm truncate">{selected.title}</div>
+                  {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Open in new tab</a>}
                 </div>
-              </Card>
-            );
-          })}
+                {url ? (
+                  <iframe src={url} className="flex-1 w-full bg-white" title={selected.title} />
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">No PDF available for this contract yet.</div>
+                )}
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Select a contract to preview.</div>
+            )}
+          </div>
         </div>
       )}
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 bg-background">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle className="font-bbh uppercase">{open?.title}</DialogTitle>
-          </DialogHeader>
-          {open && (
-            <iframe src={(open.completed_pdf_url || open.locked_file_url || open.file_url) || ""} className="w-full flex-1 bg-white" title={open.title} />
-          )}
-        </DialogContent>
-      </Dialog>
     </SectionShell>
   );
 };
@@ -692,8 +698,14 @@ const InvestorsPortal = () => {
   const [data, setData] = useState<{
     players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[];
     staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
+    overviewSections: OverviewSectionData[]; overviewCards: OverviewCardData[];
+    isAdmin: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+
+  // Auto-lock on every load/refresh
+  useEffect(() => { setUnlocked(false); }, [user?.id]);
 
   useEffect(() => {
     document.title = "RISE Investor Portal";
@@ -716,6 +728,13 @@ const InvestorsPortal = () => {
       setData({
         players: dd.players || [], contracts: dd.contracts || [], tasks: dd.tasks || [],
         staffActivity: dd.staffActivity || [], prospects: dd.prospects || [], spending: dd.spending || [],
+        overviewSections: dd.overviewSections || [],
+        overviewCards: (dd.overviewCards || []).map((c: any) => ({
+          ...c,
+          metrics: Array.isArray(c.metrics) ? c.metrics : [],
+          tags: Array.isArray(c.tags) ? c.tags : [],
+        })),
+        isAdmin: !!dd.user?.is_admin,
       });
     } catch (e: any) {
       toast.error(e.message || "Failed to load");
@@ -857,7 +876,23 @@ const InvestorsPortal = () => {
             ) : !data ? null : (
               <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} spending={data.spending} prospects={data.prospects} setActive={setActive} />}
-                {active === "investment" && <SectionShell icon={Sparkles} title="Investment Overview"><InvestmentOverview /></SectionShell>}
+                {active === "investment" && (
+                  <SectionShell icon={Sparkles} title="Investment Overview" action={
+                    data.isAdmin ? (
+                      <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                        {unlocked ? "Edit mode" : "Read-only"}
+                      </span>
+                    ) : undefined
+                  }>
+                    <InvestmentOverview
+                      sections={data.overviewSections}
+                      cards={data.overviewCards}
+                      unlocked={unlocked && data.isAdmin}
+                      token={token}
+                      onRefresh={refresh}
+                    />
+                  </SectionShell>
+                )}
                 {active === "represented" && <Roster players={data.players} status="represented" />}
                 {active === "mandated" && <Roster players={data.players} status="mandated" />}
                 {active === "previously" && <Roster players={data.players} status="previously_mandated" />}
@@ -873,6 +908,20 @@ const InvestorsPortal = () => {
           </div>
         </main>
       </div>
+
+      {/* Hidden lock toggle (admin only) — bottom right, semi-hidden */}
+      {data?.isAdmin && (
+        <button
+          onClick={() => setUnlocked(u => !u)}
+          title={unlocked ? "Lock edit mode" : "Unlock edit mode"}
+          className={`fixed bottom-3 right-3 z-50 p-2 rounded-full border border-border/40 bg-background/60 backdrop-blur transition-opacity ${unlocked ? "opacity-90 border-primary text-primary" : "opacity-20 hover:opacity-100"}`}
+        >
+          {unlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+        </button>
+      )}
+      {unlocked && data?.isAdmin && (
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent z-[60] pointer-events-none" />
+      )}
     </div>
   );
 };
