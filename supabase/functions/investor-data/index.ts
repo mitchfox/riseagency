@@ -34,21 +34,27 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
       supabase.from("investor_deals").select("*").order("updated_at", { ascending: false }),
       supabase.from("investor_notes").select("*").order("created_at", { ascending: false }),
       supabase.from("players")
-        .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page")
+        .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page, image_url, hover_image_url, club, club_logo, league, age, contract_start_date, contract_end_date, current_salary_annual, expected_commission_annual, commission_notes")
         .in("representation_status", ["represented", "mandated", "previously_mandated"])
         .order("name"),
       supabase.from("signature_contracts")
-        .select("id, title, status, created_at, updated_at, owner_signed_at, locked_at")
+        .select("id, title, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, counterparty_name")
         .order("updated_at", { ascending: false }).limit(200),
       supabase.from("staff_tasks")
-        .select("id, title, category, priority, completed, deadline, created_at, last_completed_at")
+        .select("id, title, category, priority, completed, deadline, created_at, last_completed_at, assigned_to, notes")
+        .order("updated_at", { ascending: false }).limit(500),
+      supabase.from("staff_activity_log")
+        .select("id, user_email, action, entity_type, entity_id, entity_name, details, created_at")
+        .order("created_at", { ascending: false }).limit(200),
+      supabase.from("prospects")
+        .select("id, name, status, position, nationality, date_of_birth, club, image_url, probability, notes, updated_at")
         .order("updated_at", { ascending: false }).limit(500),
     ]);
     return new Response(JSON.stringify({
@@ -61,6 +67,8 @@ Deno.serve(async (req) => {
       players: players.data || [],
       contracts: contracts.data || [],
       tasks: tasks.data || [],
+      staffActivity: staffActivity.data || [],
+      prospects: prospects.data || [],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
