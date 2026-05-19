@@ -2960,7 +2960,11 @@ export const CreatePerformanceReportDialog = ({
             </div>
             
             {/* Action Stats Summary removed - now integrated into Additional Statistics section */}
+            {/* Option B compact editor replaces the standard lists */}
+            {isOptionBTeam && renderTeamOptionBEditor()}
+
             {/* Mobile Card View */}
+            {!isOptionBTeam && (
             <div className="space-y-4 sm:hidden">
               {actions.map((action, index) => (
                 <div
@@ -3269,8 +3273,10 @@ export const CreatePerformanceReportDialog = ({
                 </div>
               ))}
             </div>
+            )}
 
             {/* Desktop Two-Line View */}
+            {!isOptionBTeam && (
             <div className="hidden sm:block space-y-1">
               {actions.map((action, index) => (
                 <React.Fragment key={index}>
@@ -3609,6 +3615,7 @@ export const CreatePerformanceReportDialog = ({
                 </React.Fragment>
               ))}
             </div>
+            )}
             
           </div>
 
