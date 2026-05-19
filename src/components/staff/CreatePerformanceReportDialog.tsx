@@ -566,12 +566,13 @@ export const CreatePerformanceReportDialog = ({
         // Create mode
         setIsEditMode(false);
         resetForm();
+        setReportType(initialReportType);
         // Auto-add of stats removed: staff will manually pick which stats to display.
       }
       fetchFixtures();
       fetchPlayerClub();
     }
-  }, [inline, open, analysisId, playerId]);
+  }, [inline, open, analysisId, playerId, initialReportType]);
 
   // Realtime: when clips are exported into this report from elsewhere
   // (e.g. Video Analysis "Export to Report"), append them to local state
@@ -1295,7 +1296,7 @@ export const CreatePerformanceReportDialog = ({
     setResult("");
     setSelectedFixtureId("");
     setPerformanceOverview("");
-    setReportType('player');
+    setReportType(initialReportType);
     setIsScoutingReport(false);
     setTeamRoster([]);
     setShowStrikerStats(false);
