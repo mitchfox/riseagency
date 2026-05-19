@@ -13,6 +13,7 @@ export interface SessionState {
     playerId: string;
     playerName: string;
     analysisId?: string;
+    reportType?: 'player' | 'team';
     opponent?: string;
   };
   savedAt: number;
