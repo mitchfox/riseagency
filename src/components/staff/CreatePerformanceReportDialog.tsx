@@ -2004,6 +2004,70 @@ export const CreatePerformanceReportDialog = ({
     }));
   };
 
+  const setInvolvedPlayerScore = (actionIndex: number, rosterId: string, score: string) => {
+    setActions(prev => prev.map((a, i) => {
+      if (i !== actionIndex) return a;
+      const parsedScore = score.trim() === "" ? null : Number(score);
+      const current = a.involved_players || [];
+      const next = current.some(p => p.roster_id === rosterId)
+        ? current.map(p => p.roster_id === rosterId ? { ...p, score: Number.isFinite(parsedScore as number) ? parsedScore : null } : p)
+        : [...current, { roster_id: rosterId, score: Number.isFinite(parsedScore as number) ? parsedScore : null }];
+      return { ...a, involved_players: next };
+    }));
+  };
+
+  const renderTeamActionScoring = (action: PerformanceAction, index: number) => {
+    if (reportType !== 'team' || teamScoringMethod !== 'option_b') return null;
+    if (teamRoster.length === 0) {
+      return <div className="text-[11px] text-muted-foreground italic">Add players to the roster above to score this action by player.</div>;
+    }
+
+    const involved = action.involved_players || [];
+    const involvedMap = new Map(involved.map(p => [p.roster_id, p]));
+    return (
+      <div className="rounded-md border bg-primary/5 p-2 space-y-2">
+        <div className="flex flex-wrap gap-1">
+          {teamRoster.map((entry) => {
+            const isOn = involvedMap.has(entry.id);
+            const label = entry.number || entry.name || '?';
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => toggleInvolvedPlayer(index, entry.id)}
+                title={entry.name ? `#${entry.number} ${entry.name}` : `#${entry.number}`}
+                className={`px-2 h-7 rounded-full border text-[11px] font-semibold transition-colors ${isOn ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+              >
+                #{label}
+              </button>
+            );
+          })}
+        </div>
+        {involved.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {involved.map((player) => {
+              const entry = teamRoster.find(r => r.id === player.roster_id);
+              if (!entry) return null;
+              return (
+                <div key={player.roster_id} className="flex items-center gap-1 rounded-md border bg-background px-2 py-1">
+                  <span className="text-[11px] font-semibold min-w-7">#{entry.number || '?'}</span>
+                  <Input
+                    type="number"
+                    step="0.00001"
+                    value={player.score ?? ''}
+                    onChange={(e) => setInvolvedPlayerScore(index, player.roster_id, e.target.value)}
+                    placeholder={action.action_score || 'team score'}
+                    className="h-7 text-xs"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderInvolvedChips = (action: PerformanceAction, index: number) => {
     if (reportType !== 'team') return null;
     if (teamRoster.length === 0) {
