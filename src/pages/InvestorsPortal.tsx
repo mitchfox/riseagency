@@ -1684,6 +1684,10 @@ const InvestorsPortal = () => {
     clubContacts: ClubContactRow[];
     playerAnalyses: PlayerAnalysisRow[];
     matchAnalyses: any[];
+    timeCategories: OpsCategory[];
+    timeItems: OpsItem[];
+    priorityCategories: OpsCategory[];
+    priorityItems: OpsItem[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -1747,6 +1751,10 @@ const InvestorsPortal = () => {
         clubContacts: dd.clubContacts || [],
         playerAnalyses: dd.playerAnalyses || [],
         matchAnalyses: dd.matchAnalyses || [],
+        timeCategories: dd.timeCategories || [],
+        timeItems: (dd.timeItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
+        priorityCategories: dd.priorityCategories || [],
+        priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
