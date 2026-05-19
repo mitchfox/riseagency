@@ -1293,6 +1293,9 @@ export const CreatePerformanceReportDialog = ({
     setResult("");
     setSelectedFixtureId("");
     setPerformanceOverview("");
+    setReportType('player');
+    setIsScoutingReport(false);
+    setTeamRoster([]);
     setShowStrikerStats(false);
     setAdditionalStats({});
     setOriginalStrikerStats(null);
