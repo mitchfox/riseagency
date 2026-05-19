@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2, Square, CheckSquare } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2, Square, CheckSquare, Eye, EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -111,10 +111,15 @@ const parseMatchTimeInputToSeconds = (value: string): number | null => {
 
 const formatClipMinuteFromSeconds = (seconds: number): string => {
   const matchSeconds = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
-  const mins = Math.floor(matchSeconds / 60);
-  const rawSecs = Math.floor(matchSeconds % 60);
-  const roundedSecs = Math.floor(rawSecs / 5) * 5;
-  return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+  // Snap the entire match-time to the nearest 5s bucket, then split into
+  // mm.ss. Using nearest-snap (rather than floor) prevents a systematic
+  // bias where every clip rounded DOWN by up to ~4.99s, which compounded
+  // to feel like timestamps were "a minute out" when the bucketed seconds
+  // crossed a minute boundary (e.g. real 1:59 floored to 1.55 instead of 2.00).
+  const totalSnapped = Math.round(matchSeconds / 5) * 5;
+  const mins = Math.floor(totalSnapped / 60);
+  const secs = totalSnapped % 60;
+  return `${mins}.${secs.toString().padStart(2, '0')}`;
 };
 
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
