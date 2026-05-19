@@ -22,9 +22,12 @@ interface ActionReport {
   r90_score: number | null;
   minutes_played: number | null;
   result: string | null;
-  player_id: string;
+  player_id: string | null;
   player_name?: string;
   player_image_url?: string;
+  report_type?: 'player' | 'team' | string | null;
+  team_name?: string | null;
+  team_logo_url?: string | null;
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
@@ -95,6 +98,9 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           minutes_played,
           result,
           player_id,
+          report_type,
+          team_name,
+          team_logo_url,
           visibility_status,
           placeholder_raw_score,
           placeholder_minutes,
@@ -117,8 +123,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         minutes_played: report.minutes_played,
         result: report.result,
         player_id: report.player_id,
-        player_name: report.players?.name || "Unknown Player",
-        player_image_url: report.players?.image_url || null,
+        report_type: report.report_type || "player",
+        team_name: report.team_name || null,
+        team_logo_url: report.team_logo_url || null,
+        player_name: report.report_type === "team" ? (report.team_name || "Team Report") : (report.players?.name || "Unknown Player"),
+        player_image_url: report.report_type === "team" ? (report.team_logo_url || null) : (report.players?.image_url || null),
         visibility_status: report.visibility_status || "draft",
         placeholder_raw_score: report.placeholder_raw_score,
         placeholder_minutes: report.placeholder_minutes,
@@ -324,7 +333,21 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                           <User className="h-3 w-3 text-muted-foreground" />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-primary">{report.player_name}</span>
+                      {report.report_type === "team" || !report.player_id ? (
+                        <span className="text-sm font-medium text-primary">{report.player_name}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-primary hover:underline"
+                          onClick={() => {
+                            setPlayerFilter(report.player_id || "all");
+                            setStatusTab("all");
+                            setSearchQuery("");
+                          }}
+                        >
+                          {report.player_name}
+                        </button>
+                      )}
                       {report.visibility_status && report.visibility_status !== "live" && (
                         <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                           report.visibility_status === "draft" 
@@ -377,11 +400,12 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                       size="sm"
                       onClick={() => {
                         if (onEditReport) {
-                          onEditReport(report.player_id, report.player_name || "", report.id);
+                          onEditReport(report.player_id || "", report.player_name || "", report.id);
                         } else {
                           setReportEditorAnalysisId(report.id);
-                          setReportEditorPlayerId(report.player_id);
+                          setReportEditorPlayerId(report.player_id || null);
                           setReportEditorPlayerName(report.player_name || "");
+                          setReportEditorInitialType(report.report_type === "team" ? "team" : "player");
                           setShowReportEditor(true);
                         }
                       }}
