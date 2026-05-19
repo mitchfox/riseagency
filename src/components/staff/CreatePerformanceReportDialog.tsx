@@ -1974,7 +1974,104 @@ export const CreatePerformanceReportDialog = ({
             <CategoryToggle value={reportCategory} onChange={setReportCategory} />
           </div>
 
-          {/* Highlights title (Highlights mode only) — stored in player_analysis.notes */}
+          {/* Report type (Player / Team) + Scouting flag */}
+          {reportCategory !== "highlights" && (
+            <div className="rounded-lg border bg-card/40 p-3 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex rounded-md border overflow-hidden text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setReportType('player')}
+                    className={`px-3 py-1.5 ${reportType === 'player' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                  >Player report</button>
+                  <button
+                    type="button"
+                    onClick={() => setReportType('team')}
+                    className={`px-3 py-1.5 border-l ${reportType === 'team' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                  >Team report</button>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={isScoutingReport}
+                    onCheckedChange={(v) => setIsScoutingReport(!!v)}
+                  />
+                  <span>Scouting report</span>
+                </label>
+                {reportType === 'team' && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs ml-auto"
+                    onClick={() => setShowRoster(s => !s)}
+                  >
+                    {showRoster ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
+                    Roster ({teamRoster.length})
+                  </Button>
+                )}
+              </div>
+              {reportType === 'team' && showRoster && (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {teamRoster.map((entry, i) => (
+                      <div key={entry.id} className="flex items-center gap-1 rounded-md border bg-background p-1">
+                        <Input
+                          value={entry.number}
+                          onChange={(e) => setTeamRoster(prev => prev.map((r, idx) => idx === i ? { ...r, number: e.target.value } : r))}
+                          placeholder="#"
+                          className="h-7 w-12 text-xs text-center"
+                        />
+                        <Input
+                          value={entry.name}
+                          onChange={(e) => setTeamRoster(prev => prev.map((r, idx) => idx === i ? { ...r, name: e.target.value } : r))}
+                          placeholder="Name (optional)"
+                          className="h-7 w-40 text-xs"
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            const removed = teamRoster[i];
+                            setTeamRoster(prev => prev.filter((_, idx) => idx !== i));
+                            setActions(prev => prev.map(a => ({
+                              ...a,
+                              involved_players: (a.involved_players || []).filter(p => p.roster_id !== removed.id),
+                            })));
+                          }}
+                          title="Remove"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-9 text-xs"
+                      onClick={() => setTeamRoster(prev => [
+                        ...prev,
+                        {
+                          id: (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+                          number: '',
+                          name: '',
+                        },
+                      ])}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add player
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tag involved players on each action using the chip strip. Scores on the action apply to every selected player; tap a chip-score to override per player.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Highlights title (Highlights mode only) */}
           {reportCategory === "highlights" && (
             <div>
               <Label htmlFor="highlights-title">Highlights Title *</Label>
