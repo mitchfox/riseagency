@@ -2241,6 +2241,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                         compact
                         overlayMode
                         triggerRef={overlayActionTypeBtnRef}
+                        portalContainer={isPlayerFullscreen ? playerShellRef.current : null}
                         onKeyDown={(e) => {
                           if (e.key === 'Tab') {
                             e.preventDefault();
@@ -3411,6 +3412,7 @@ function ActionTypeCombobox({
   triggerRef,
   onKeyDown,
   overlayMode = false,
+  portalContainer,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -3419,6 +3421,7 @@ function ActionTypeCombobox({
   triggerRef?: React.RefObject<HTMLButtonElement>;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   overlayMode?: boolean;
+  portalContainer?: HTMLElement | null;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -3458,6 +3461,7 @@ function ActionTypeCombobox({
         align="start"
         side={overlayMode ? "top" : "bottom"}
         sideOffset={overlayMode ? 8 : 4}
+        container={portalContainer ?? undefined}
       >
         <Command onKeyDownCapture={onKeyDown}>
           <CommandInput
