@@ -1175,6 +1175,21 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     )}
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
+                    {analysis?.report_type === 'team' && Array.isArray(analysis?.team_roster) && analysis.team_roster.length > 0 && (
+                      <div className="mb-3 rounded-md border bg-muted/30 p-2">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                          Team roster{analysis?.is_scouting_report ? ' · Scouting report' : ''}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {analysis.team_roster.map((r: any) => (
+                            <span key={r.id} className="px-2 h-6 inline-flex items-center rounded-full border bg-background text-[11px]" title={r.name || ''}>
+                              <span className="font-semibold mr-1">#{r.number || '?'}</span>
+                              {r.name && <span className="text-muted-foreground">{r.name}</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {/* Mobile: Compact card layout */}
                     <div className="block md:hidden space-y-2">
                       {filteredActions.map((action) => (
@@ -1200,6 +1215,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           </div>
                           <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
                           {(analysis?.show_descriptions !== false) && <div className="text-[10px] text-foreground/80">{tAction(action.action_number - 1, "description", action.action_description)}</div>}
+                          {analysis?.report_type === 'team' && Array.isArray((action as any).involved_players) && (action as any).involved_players.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {(action as any).involved_players.map((p: any) => {
+                                const entry = (analysis?.team_roster || []).find((r: any) => r.id === p.roster_id);
+                                if (!entry) return null;
+                                return (
+                                  <span key={p.roster_id} className="px-1.5 h-4 inline-flex items-center rounded-full bg-primary/15 text-primary text-[9px] font-medium" title={entry.name || ''}>
+                                    #{entry.number || '?'}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                           {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
                             <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 break-words">
                               {tAction(action.action_number - 1, "notes", action.notes || "")}
@@ -1228,7 +1256,22 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                              <td className="py-2 px-2">{toTitleCase(hasTranslation ? tAction(action.action_number - 1, "type", action.action_type) : translateActionType(reportLanguage, tAction(action.action_number - 1, "type", action.action_type)))}</td>
+                              <td className="py-2 px-2">
+                                {toTitleCase(hasTranslation ? tAction(action.action_number - 1, "type", action.action_type) : translateActionType(reportLanguage, tAction(action.action_number - 1, "type", action.action_type)))}
+                                {analysis?.report_type === 'team' && Array.isArray((action as any).involved_players) && (action as any).involved_players.length > 0 && (
+                                  <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                                    {(action as any).involved_players.map((p: any) => {
+                                      const entry = (analysis?.team_roster || []).find((r: any) => r.id === p.roster_id);
+                                      if (!entry) return null;
+                                      return (
+                                        <span key={p.roster_id} className="px-1.5 h-4 inline-flex items-center rounded-full bg-primary/15 text-primary text-[10px] font-medium" title={entry.name || ''}>
+                                          #{entry.number || '?'}
+                                        </span>
+                                      );
+                                    })}
+                                  </span>
+                                )}
+                              </td>
                               {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
                               <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
