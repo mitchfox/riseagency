@@ -1489,10 +1489,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const fmtClipMinute = (videoSeconds: number, _offset: number) => {
     const offset = getEffectiveOffset(videoSeconds);
     const matchSeconds = Math.max(0, (Number.isFinite(videoSeconds) ? videoSeconds : 0) + offset);
-    const mins = Math.floor(matchSeconds / 60);
-    const rawSecs = Math.floor(matchSeconds % 60);
-    const roundedSecs = Math.floor(rawSecs / 5) * 5;
-    return `${mins}.${roundedSecs.toString().padStart(2, '0')}`;
+    // Nearest-5 snap (see formatClipMinuteFromSeconds for rationale).
+    const totalSnapped = Math.round(matchSeconds / 5) * 5;
+    const mins = Math.floor(totalSnapped / 60);
+    const secs = totalSnapped % 60;
+    return `${mins}.${secs.toString().padStart(2, '0')}`;
   };
 
   const getMatchMinute = (videoSeconds: number, _offset: number) => {
