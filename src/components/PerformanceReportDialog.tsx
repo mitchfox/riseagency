@@ -232,8 +232,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
       if (analysisResult.error) throw analysisResult.error;
 
-      const isTeamReport = (analysisResult.data as any).report_type === 'team';
-      const teamName = (analysisResult.data as any).team_name || "Team Report";
+      const analysisRow = analysisResult.data as any;
+      const isTeamReport = analysisRow.report_type === 'team';
+      const teamName = analysisRow.team_name || "Team Report";
       setAnalysis({
         id: analysisResult.data.id,
         analysis_date: analysisResult.data.analysis_date,
@@ -241,8 +242,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         result: analysisResult.data.result || "",
         r90_score: analysisResult.data.r90_score,
         minutes_played: analysisResult.data.minutes_played,
-        player_name: isTeamReport ? teamName : (analysisResult.data.players?.name || "Unknown Player"),
-        player_position: (analysisResult.data.players as any)?.position || null,
+        player_name: isTeamReport ? teamName : (analysisRow.players?.name || "Unknown Player"),
+        player_position: analysisRow.players?.position || null,
         striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
         performance_overview: analysisResult.data.performance_overview,
         visibility_status: (analysisResult.data as any).visibility_status || "live",
