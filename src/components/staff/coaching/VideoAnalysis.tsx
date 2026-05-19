@@ -1629,7 +1629,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     // Use capture phase so our handler fires before the browser's native video handlers
     window.addEventListener('keydown', handleHotkey, true);
     return () => window.removeEventListener('keydown', handleHotkey, true);
-  }, [selectedVideo, handleInstantClip]);
+  }, [selectedVideo, handleInstantClip, showClipOverlay]);
 
   // Fetch linked report IDs for clip-to-report attachment
   const fetchLinkedReports = useCallback(async () => {
