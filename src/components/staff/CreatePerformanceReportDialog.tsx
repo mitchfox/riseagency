@@ -2498,12 +2498,10 @@ export const CreatePerformanceReportDialog = ({
                    <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Minute *</Label>
-                      <Input
-                        type="text"
+                       <FlywheelMinuteInput
                         value={action.minute}
-                        onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        onBlur={handleMinuteBlur}
-                        placeholder="45"
+                         onChange={(v) => updateAction(index, "minute", v)}
+                         placeholder="0.00"
                         className="text-sm"
                       />
                     </div>
@@ -2727,11 +2725,9 @@ export const CreatePerformanceReportDialog = ({
                     <div className="flex items-start gap-2 rounded-md border bg-card/50 p-2">
                       <span className="text-sm font-medium text-muted-foreground pt-2 shrink-0 w-6 text-center">{action.action_number}</span>
 
-                      <Input
-                        type="text"
+                      <FlywheelMinuteInput
                         value={action.minute}
-                        onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        onBlur={handleMinuteBlur}
+                        onChange={(v) => updateAction(index, "minute", v)}
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
