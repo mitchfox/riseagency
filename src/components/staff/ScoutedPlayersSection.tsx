@@ -53,6 +53,8 @@ export const ScoutedPlayersSection = () => {
   const [playerAnalyses, setPlayerAnalyses] = useState<PlayerAnalysis[]>([]);
   const [showReportEditor, setShowReportEditor] = useState(false);
   const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
+  const [reportEditorInitialType, setReportEditorInitialType] = useState<'player' | 'team'>('player');
+  const [showReportTypePicker, setShowReportTypePicker] = useState(false);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [newPlayerForm, setNewPlayerForm] = useState({
@@ -256,7 +258,7 @@ export const ScoutedPlayersSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Performance Reports</h3>
-                <Button size="sm" onClick={() => { setReportEditorAnalysisId(undefined); setShowReportEditor(true); }}>
+                <Button size="sm" onClick={() => setShowReportTypePicker(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Report
                 </Button>
@@ -346,12 +348,39 @@ export const ScoutedPlayersSection = () => {
             </div>
 
             {/* Inline Report Editor */}
+            <Dialog open={showReportTypePicker} onOpenChange={setShowReportTypePicker}>
+              <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
+                <DialogHeader>
+                  <DialogTitle>Create Action Report</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(['player', 'team'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => {
+                        setReportEditorAnalysisId(undefined);
+                        setReportEditorInitialType(type);
+                        setShowReportTypePicker(false);
+                        setShowReportEditor(true);
+                      }}
+                      className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+                    >
+                      <div className="font-semibold">{type === 'player' ? 'Player report' : 'Team report'}</div>
+                      <p className="mt-2 text-xs text-muted-foreground">{type === 'player' ? 'Create a report for one player.' : 'Create a report with a roster and player chips on actions.'}</p>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {showReportEditor && (
               <CreatePerformanceReportDialog
                 inline={true}
                 playerId={selectedPlayer.id}
                 playerName={selectedPlayer.name}
                 analysisId={reportEditorAnalysisId}
+                initialReportType={reportEditorInitialType}
                 onClose={() => {
                   setShowReportEditor(false);
                   setReportEditorAnalysisId(undefined);
