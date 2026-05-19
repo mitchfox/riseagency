@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ChevronsUpDown } from "lucide-react";
 
 /**
  * Minute input that:
@@ -118,23 +119,30 @@ export const FlywheelMinuteInput: React.FC<FlywheelMinuteInputProps> = ({
   };
 
   return (
-    <Input
-      ref={ref}
-      type="text"
-      inputMode="decimal"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={handleBlur}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-      placeholder={placeholder}
-      aria-label={ariaLabel || "Minute"}
-      disabled={disabled}
-      className={cn("touch-none select-none", className)}
-      style={{ touchAction: "none" }}
-    />
+    <div className="relative inline-block w-full">
+      <Input
+        ref={ref}
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={handleBlur}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        placeholder={placeholder}
+        aria-label={ariaLabel || "Minute"}
+        title="Scroll / drag to adjust in 5s steps, or click to type"
+        disabled={disabled}
+        className={cn(
+          "touch-none select-none cursor-ns-resize pr-6 border-primary/40 focus-visible:ring-primary/40",
+          className,
+        )}
+        style={{ touchAction: "none" }}
+      />
+      <ChevronsUpDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/60" />
+    </div>
   );
 };
 
