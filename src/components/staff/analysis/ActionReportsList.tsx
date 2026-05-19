@@ -418,10 +418,36 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       )}
 
       {/* Player Picker Dialog */}
-      <Dialog open={showPlayerPicker} onOpenChange={setShowPlayerPicker}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showReportTypePicker} onOpenChange={setShowReportTypePicker}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Select Player</DialogTitle>
+            <DialogTitle>Create Action Report</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => beginCreateReport('player')}
+              className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+            >
+              <div className="flex items-center gap-2 font-semibold"><User className="h-4 w-4 text-primary" />Player report</div>
+              <p className="mt-2 text-xs text-muted-foreground">Create a report for one player.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => beginCreateReport('team')}
+              className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+            >
+              <div className="flex items-center gap-2 font-semibold"><Radio className="h-4 w-4 text-primary" />Team report</div>
+              <p className="mt-2 text-xs text-muted-foreground">Create a report with a roster and player chips on actions.</p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPlayerPicker} onOpenChange={setShowPlayerPicker}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Select Player for {pendingReportType === 'team' ? 'Team' : 'Player'} Report</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="relative">
@@ -441,13 +467,14 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                     key={player.id}
                     onClick={() => {
                       if (onCreateReport) {
-                        onCreateReport(player.id, player.name);
+                        onCreateReport(player.id, player.name, pendingReportType);
                         setShowPlayerPicker(false);
                         setPlayerSearchQuery("");
                       } else {
                         setReportEditorPlayerId(player.id);
                         setReportEditorPlayerName(player.name);
                         setReportEditorAnalysisId(undefined);
+                        setReportEditorInitialType(pendingReportType);
                         setShowPlayerPicker(false);
                         setPlayerSearchQuery("");
                         setShowReportEditor(true);
@@ -472,6 +499,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           playerId={reportEditorPlayerId || undefined}
           playerName={reportEditorPlayerName}
           analysisId={reportEditorAnalysisId}
+          initialReportType={reportEditorInitialType}
           onSuccess={() => {
             fetchReports();
             setShowReportEditor(false);
