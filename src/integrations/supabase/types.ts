@@ -3666,6 +3666,7 @@ export type Database = {
           minutes_played: number | null
           notes: string | null
           opponent: string | null
+          opponent_logo_url: string | null
           opposition_color: string | null
           pdf_url: string | null
           performance_overview: string | null
@@ -3679,6 +3680,9 @@ export type Database = {
           result: string | null
           show_descriptions: boolean
           striker_stats: Json | null
+          team_color: string | null
+          team_logo_url: string | null
+          team_name: string | null
           team_roster: Json
           translated_content: Json | null
           updated_at: string
@@ -3700,6 +3704,7 @@ export type Database = {
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
+          opponent_logo_url?: string | null
           opposition_color?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
@@ -3713,6 +3718,9 @@ export type Database = {
           result?: string | null
           show_descriptions?: boolean
           striker_stats?: Json | null
+          team_color?: string | null
+          team_logo_url?: string | null
+          team_name?: string | null
           team_roster?: Json
           translated_content?: Json | null
           updated_at?: string
@@ -3734,6 +3742,7 @@ export type Database = {
           minutes_played?: number | null
           notes?: string | null
           opponent?: string | null
+          opponent_logo_url?: string | null
           opposition_color?: string | null
           pdf_url?: string | null
           performance_overview?: string | null
@@ -3747,6 +3756,9 @@ export type Database = {
           result?: string | null
           show_descriptions?: boolean
           striker_stats?: Json | null
+          team_color?: string | null
+          team_logo_url?: string | null
+          team_name?: string | null
           team_roster?: Json
           translated_content?: Json | null
           updated_at?: string

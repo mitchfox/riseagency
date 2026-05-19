@@ -330,6 +330,11 @@ export const CreatePerformanceReportDialog = ({
   const [performanceOverview, setPerformanceOverview] = useState("");
   const [clubLogoUrl, setClubLogoUrl] = useState("");
   const [oppositionColor, setOppositionColor] = useState("");
+  // Team-report extra fields (own team side; opponent side reuses opponent + clubLogoUrl + oppositionColor below)
+  const [teamName, setTeamName] = useState("");
+  const [teamLogoUrl, setTeamLogoUrl] = useState("");
+  const [teamColor, setTeamColor] = useState("");
+  const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -977,7 +982,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, team_name, team_logo_url, team_color, opponent_logo_url")
         .eq("id", analysisId)
         .single();
 
@@ -1019,6 +1024,10 @@ export const CreatePerformanceReportDialog = ({
       setFixtureStats((analysisData.fixture_stats as Record<string, number>) || {});
       setClubLogoUrl((analysisData as any).club_logo_url || "");
       setOppositionColor((analysisData as any).opposition_color || "");
+      setTeamName((analysisData as any).team_name || "");
+      setTeamLogoUrl((analysisData as any).team_logo_url || "");
+      setTeamColor((analysisData as any).team_color || "");
+      setOpponentLogoUrl((analysisData as any).opponent_logo_url || "");
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
@@ -1518,8 +1527,9 @@ export const CreatePerformanceReportDialog = ({
 
   const handleSave = async () => {
     const isHighlightsReport = reportCategory === "highlights";
-    // Validation - fixture only required for non-highlights reports
-    if (!isHighlightsReport && !selectedFixtureId) {
+    const isTeamReport = reportType === 'team';
+    // Validation - fixture only required for non-highlights, non-team reports
+    if (!isHighlightsReport && !isTeamReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
       return;
     }
@@ -1584,14 +1594,14 @@ export const CreatePerformanceReportDialog = ({
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
-            fixture_id: isHighlightsReport ? null : selectedFixtureId,
-            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
-            r90_score: isHighlightsReport ? null : calculatedR90,
-            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
+            fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
+            analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
+            minutes_played: (isHighlightsReport || isTeamReport) ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
             opponent: isHighlightsReport ? null : opponent,
             result: isHighlightsReport ? null : (result || null),
-            striker_stats: isHighlightsReport ? null : strikerStatsJson,
-            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            striker_stats: (isHighlightsReport || isTeamReport) ? null : strikerStatsJson,
+            fixture_stats: (isHighlightsReport || isTeamReport) ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
             notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
@@ -1608,6 +1618,10 @@ export const CreatePerformanceReportDialog = ({
             report_type: reportType,
             is_scouting_report: isScoutingReport,
             team_roster: reportType === 'team' ? teamRoster : [],
+            team_name: isTeamReport ? (teamName || null) : null,
+            team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
+            team_color: isTeamReport ? (teamColor || null) : null,
+            opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
           } as any)
           .eq("id", analysisId);
 
@@ -1666,14 +1680,14 @@ export const CreatePerformanceReportDialog = ({
           .from("player_analysis")
           .insert({
             player_id: playerId ?? null,
-            fixture_id: isHighlightsReport ? null : selectedFixtureId,
-            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
-            r90_score: isHighlightsReport ? null : calculatedR90,
-            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null),
+            fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
+            analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
+            minutes_played: (isHighlightsReport || isTeamReport) ? null : (!isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null),
             opponent: isHighlightsReport ? null : opponent,
             result: isHighlightsReport ? null : (result || null),
-            striker_stats: isHighlightsReport ? null : strikerStatsJson,
-            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            striker_stats: (isHighlightsReport || isTeamReport) ? null : strikerStatsJson,
+            fixture_stats: (isHighlightsReport || isTeamReport) ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
             notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
@@ -1690,6 +1704,10 @@ export const CreatePerformanceReportDialog = ({
             report_type: reportType,
             is_scouting_report: isScoutingReport,
             team_roster: reportType === 'team' ? teamRoster : [],
+            team_name: isTeamReport ? (teamName || null) : null,
+            team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
+            team_color: isTeamReport ? (teamColor || null) : null,
+            opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
           } as any)
           .select()
           .single();
@@ -2130,8 +2148,94 @@ export const CreatePerformanceReportDialog = ({
             </div>
           )}
 
+          {/* Team report header — team + opponent (no fixture, minutes or per-90 stats) */}
+          {reportType === 'team' && reportCategory !== "highlights" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Own team */}
+              <div className="rounded-lg border bg-card/40 p-3 space-y-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Team</div>
+                <div>
+                  <Label htmlFor="team-name">Team Name</Label>
+                  <Input id="team-name" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="e.g., Rise FC U19" />
+                </div>
+                <div>
+                  <Label htmlFor="team-logo">Team Logo</Label>
+                  <div className="flex items-center gap-2">
+                    {teamLogoUrl && <img src={teamLogoUrl} alt="Team logo" className="h-10 w-10 object-contain rounded border" />}
+                    <Button type="button" variant="outline" size="sm" className="text-xs"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file'; input.accept = 'image/*';
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+                          const ext = file.name.split('.').pop() || 'png';
+                          const fileName = `club-logos/${Date.now()}-team.${ext}`;
+                          const { error } = await supabase.storage.from('club-logos').upload(fileName, file, { cacheControl: '31536000', upsert: true });
+                          if (error) { toast.error('Failed to upload logo'); return; }
+                          const { data: { publicUrl } } = supabase.storage.from('club-logos').getPublicUrl(fileName);
+                          setTeamLogoUrl(publicUrl);
+                          toast.success('Logo uploaded');
+                        };
+                        input.click();
+                      }}>Upload</Button>
+                    {teamLogoUrl && <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setTeamLogoUrl("")}>Remove</Button>}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="team-color">Team Colour</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={teamColor || '#cccccc'} onChange={(e) => setTeamColor(e.target.value)} className="h-10 w-12 rounded border cursor-pointer bg-transparent p-0.5" />
+                    <Input id="team-color" value={teamColor} onChange={(e) => setTeamColor(e.target.value)} placeholder="#1E3A8A" className="flex-1" />
+                  </div>
+                </div>
+              </div>
+              {/* Opponent */}
+              <div className="rounded-lg border bg-card/40 p-3 space-y-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Opponent</div>
+                <div>
+                  <Label htmlFor="opponent-name">Opponent Name</Label>
+                  <Input id="opponent-name" value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="e.g., Real Madrid U19" />
+                </div>
+                <div>
+                  <Label htmlFor="opponent-logo">Opponent Logo</Label>
+                  <div className="flex items-center gap-2">
+                    {opponentLogoUrl && <img src={opponentLogoUrl} alt="Opponent logo" className="h-10 w-10 object-contain rounded border" />}
+                    <Button type="button" variant="outline" size="sm" className="text-xs"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file'; input.accept = 'image/*';
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+                          const ext = file.name.split('.').pop() || 'png';
+                          const fileName = `club-logos/${Date.now()}-opp.${ext}`;
+                          const { error } = await supabase.storage.from('club-logos').upload(fileName, file, { cacheControl: '31536000', upsert: true });
+                          if (error) { toast.error('Failed to upload logo'); return; }
+                          const { data: { publicUrl } } = supabase.storage.from('club-logos').getPublicUrl(fileName);
+                          setOpponentLogoUrl(publicUrl);
+                          toast.success('Logo uploaded');
+                        };
+                        input.click();
+                      }}>Upload</Button>
+                    {opponentLogoUrl && <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setOpponentLogoUrl("")}>Remove</Button>}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="opposition-color-team">Opponent Colour</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={oppositionColor || '#cccccc'} onChange={(e) => setOppositionColor(e.target.value)} className="h-10 w-12 rounded border cursor-pointer bg-transparent p-0.5" />
+                    <Input id="opposition-color-team" value={oppositionColor} onChange={(e) => setOppositionColor(e.target.value)} placeholder="#E63946" className="flex-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="team-result">Result (optional)</Label>
+                  <Input id="team-result" value={result} onChange={(e) => setResult(e.target.value)} placeholder="e.g., W 2-1" />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Fixture Selection — hidden in Highlights mode */}
-          {reportCategory !== "highlights" && (
+          {reportCategory !== "highlights" && reportType !== 'team' && (
           <div>
             <Label htmlFor="fixture">Select Fixture *</Label>
             <Select value={selectedFixtureId} onValueChange={handleFixtureChange}>
@@ -2197,7 +2301,7 @@ export const CreatePerformanceReportDialog = ({
           )}
 
           {/* Key Stats — hidden in Highlights mode */}
-          {reportCategory !== "highlights" && (
+          {reportCategory !== "highlights" && reportType !== 'team' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="r90">R90 Score (Auto-calculated)</Label>
@@ -2327,7 +2431,7 @@ export const CreatePerformanceReportDialog = ({
           )}
 
           {/* Optional Striker Stats — hidden in Highlights mode */}
-          {reportCategory !== "highlights" && (
+          {reportCategory !== "highlights" && reportType !== 'team' && (
           <Collapsible open={showStrikerStats} onOpenChange={setShowStrikerStats}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">
@@ -2398,7 +2502,7 @@ export const CreatePerformanceReportDialog = ({
           )}
 
           {/* Per-90 Fixture Stats (synced to Player Data) — hidden in Highlights mode */}
-          {reportCategory !== "highlights" && (
+          {reportCategory !== "highlights" && reportType !== 'team' && (
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full text-sm sm:text-base">

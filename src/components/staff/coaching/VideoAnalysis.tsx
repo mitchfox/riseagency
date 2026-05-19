@@ -209,6 +209,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // score / notes / zone pinned to the top of the player so the analyst can
   // tag without leaving fullscreen. Toggled by the semi-invisible eye icon.
   const [showClipOverlay, setShowClipOverlay] = useState(false);
+  // Refs for in-overlay hotkeys (a/s/n/Tab) while in fullscreen
+  const overlayActionTypeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const overlayScoreInputRef = useRef<HTMLInputElement | null>(null);
+  const overlayNotesInputRef = useRef<HTMLInputElement | null>(null);
 
   // 8x simulation: native 4x + RAF nudge to double effective speed
   const eightXRafRef = useRef<number | null>(null);
@@ -1594,12 +1598,38 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         e.stopPropagation();
         setPlaybackSpeed(1);
         applySpeed(1);
+      } else if (showClipOverlay && (e.key === 'a' || e.key === 'A')) {
+        if (overlayActionTypeBtnRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayActionTypeBtnRef.current.click();
+        }
+      } else if (showClipOverlay && (e.key === 's' || e.key === 'S')) {
+        if (overlayScoreInputRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayScoreInputRef.current.focus();
+          overlayScoreInputRef.current.select();
+        }
+      } else if (showClipOverlay && (e.key === 'n' || e.key === 'N')) {
+        if (overlayNotesInputRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayNotesInputRef.current.focus();
+        }
+      } else if (showClipOverlay && e.key === 'Tab') {
+        // Cycle action type → score → notes when none focused
+        const active = document.activeElement as HTMLElement | null;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        overlayActionTypeBtnRef.current?.click();
       }
     };
     // Use capture phase so our handler fires before the browser's native video handlers
     window.addEventListener('keydown', handleHotkey, true);
     return () => window.removeEventListener('keydown', handleHotkey, true);
-  }, [selectedVideo, handleInstantClip]);
+  }, [selectedVideo, handleInstantClip, showClipOverlay]);
 
   // Fetch linked report IDs for clip-to-report attachment
   const fetchLinkedReports = useCallback(async () => {
@@ -2191,7 +2221,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   onMouseDown={stopVideoControlEvent}
                   onTouchStart={stopVideoControlEvent}
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute top-14 left-3 right-3 z-40 bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2 shadow-lg"
+                  className="absolute bottom-28 left-3 right-3 z-40 bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2 shadow-lg"
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] uppercase tracking-wider text-white/50 shrink-0">Latest clip</span>
@@ -2204,6 +2234,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                         onChange={(v) => handleUpdateClipAction(latest.id, v)}
                         actionTypes={allActionTypes}
                         compact
+                        overlayMode
+                        triggerRef={overlayActionTypeBtnRef}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Tab') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            overlayScoreInputRef.current?.focus();
+                            overlayScoreInputRef.current?.select();
+                          }
+                        }}
                       />
                     </div>
                     <ZonePitchSelector
@@ -2213,11 +2253,12 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       compact
                     />
                     <Input
+                      ref={overlayScoreInputRef}
                       key={`${latest.id}-score`}
                       placeholder="Score"
                       type="number"
                       step="0.00001"
-                      defaultValue={latest.action_score != null ? latest.action_score : ""}
+                      defaultValue={latest.action_score != null ? latest.action_score : "0.0"}
                       onBlur={e => {
                         const v = e.target.value;
                         const parsed = v === "" ? null : Number(v);
@@ -2225,15 +2266,37 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                           handleUpdateClipScore(latest.id, parsed);
                         }
                       }}
+                      onKeyDown={e => {
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          (e.currentTarget as HTMLInputElement).blur();
+                          overlayNotesInputRef.current?.focus();
+                        } else {
+                          // Stop all other keys from reaching the global hotkey listener
+                          e.stopPropagation();
+                        }
+                      }}
                       className="h-7 text-xs w-[90px] bg-black/40 border-white/20 text-white"
                     />
                     <Input
+                      ref={overlayNotesInputRef}
                       key={`${latest.id}-notes`}
                       placeholder="Coach's note…"
                       defaultValue={latest.notes || ""}
                       onBlur={e => {
                         if (e.target.value !== (latest.notes || "")) {
                           handleUpdateClipNotes(latest.id, e.target.value);
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          (e.currentTarget as HTMLInputElement).blur();
+                        } else {
+                          // Stop other keys from reaching global hotkeys while typing
+                          e.stopPropagation();
                         }
                       }}
                       className="h-7 text-xs flex-1 min-w-[120px] bg-black/40 border-white/20 text-white"
@@ -3340,11 +3403,17 @@ function ActionTypeCombobox({
   onChange,
   actionTypes,
   compact = false,
+  triggerRef,
+  onKeyDown,
+  overlayMode = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   actionTypes: string[];
   compact?: boolean;
+  triggerRef?: React.RefObject<HTMLButtonElement>;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  overlayMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -3371,6 +3440,7 @@ function ActionTypeCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           size="sm"
           className={`justify-between ${compact ? 'h-7 text-[10px] w-[110px]' : 'w-[130px]'}`}
@@ -3378,12 +3448,18 @@ function ActionTypeCombobox({
           {toTitleCase(value) || "Action type"}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
+      <PopoverContent
+        className={overlayMode ? "w-[420px] max-w-[90vw] p-0" : "w-[200px] p-0"}
+        align="start"
+        side={overlayMode ? "top" : "bottom"}
+        sideOffset={overlayMode ? 8 : 4}
+      >
+        <Command onKeyDownCapture={onKeyDown}>
           <CommandInput
             placeholder="Search or type..."
             value={search}
             onValueChange={setSearch}
+            onKeyDown={onKeyDown}
           />
           <CommandList>
             <CommandEmpty>
