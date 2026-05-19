@@ -2119,6 +2119,46 @@ const InvestorsPortal = () => {
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
                   {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
+                  {active === "timeManagement" && (
+                    <SectionShell icon={Clock} title="Time Management" action={
+                      data.isAdmin ? (
+                        <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                          {unlocked ? "Edit mode" : "Read-only"}
+                        </span>
+                      ) : undefined
+                    }>
+                      <OpsBoard
+                        kind="time"
+                        categories={data.timeCategories}
+                        items={data.timeItems}
+                        staffTasks={(data.tasks || []).map(t => ({ id: t.id, title: t.title, description: t.description, category: t.category }))}
+                        unlocked={canEdit}
+                        token={token}
+                        onRefresh={refresh}
+                      />
+                    </SectionShell>
+                  )}
+                  {active === "priorities" && (
+                    <SectionShell icon={ListOrdered} title="Priorities" action={
+                      data.isAdmin ? (
+                        <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                          {unlocked ? "Edit mode" : "Read-only"}
+                        </span>
+                      ) : undefined
+                    }>
+                      <OpsBoard
+                        kind="priority"
+                        categories={data.priorityCategories}
+                        items={data.priorityItems}
+                        staffTasks={(data.tasks || []).map(t => ({ id: t.id, title: t.title, description: t.description, category: t.category }))}
+                        unlocked={canEdit}
+                        token={token}
+                        reorderable
+                        defaultCategorySuggestions={["Daily", "Weekly", "Monthly", "Seasonal"]}
+                        onRefresh={refresh}
+                      />
+                    </SectionShell>
+                  )}
                 </div>
               </>
             ) : expandedCategory ? (
