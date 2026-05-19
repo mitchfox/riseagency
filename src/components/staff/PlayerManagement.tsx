@@ -139,6 +139,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [reportEditorPlayerId, setReportEditorPlayerId] = useState<string>("");
   const [reportEditorPlayerName, setReportEditorPlayerName] = useState<string>("");
   const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
+  const [reportEditorInitialType, setReportEditorInitialType] = useState<'player' | 'team'>('player');
+  const [showReportTypePicker, setShowReportTypePicker] = useState(false);
   const [isProgrammingDialogOpen, setIsProgrammingDialogOpen] = useState(false);
   const [selectedProgrammingPlayerId, setSelectedProgrammingPlayerId] = useState<string>("");
   const [selectedProgrammingPlayerName, setSelectedProgrammingPlayerName] = useState<string>("");
@@ -1833,12 +1835,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                           <Button
                             size="sm"
                             className="w-full sm:w-auto"
-                            onClick={() => {
-                              setReportEditorPlayerId(selectedPlayerId!);
-                              setReportEditorPlayerName(selectedPlayer!.name);
-                              setReportEditorAnalysisId(undefined);
-                              setShowReportEditor(true);
-                            }}
+                            onClick={() => setShowReportTypePicker(true)}
                           >
                             <Plus className="w-4 h-4 mr-2" />
                             New Report
@@ -3166,6 +3163,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           playerId={reportEditorPlayerId}
           playerName={reportEditorPlayerName}
           analysisId={reportEditorAnalysisId}
+          initialReportType={reportEditorInitialType}
           onClose={() => {
             setShowReportEditor(false);
             setReportEditorAnalysisId(undefined);
