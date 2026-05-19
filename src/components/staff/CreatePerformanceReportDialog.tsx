@@ -1313,6 +1313,7 @@ export const CreatePerformanceReportDialog = ({
     setReportType(initialReportType);
     setIsScoutingReport(false);
     setTeamRoster([]);
+    setTeamScoringMethod(initialReportType === 'team' ? 'option_b' : 'option_a');
     setShowStrikerStats(false);
     setAdditionalStats({});
     setOriginalStrikerStats(null);
@@ -1625,6 +1626,7 @@ export const CreatePerformanceReportDialog = ({
             team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
             team_color: isTeamReport ? (teamColor || null) : null,
             opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
+            team_scoring_method: isTeamReport ? teamScoringMethod : 'option_a',
           } as any)
           .eq("id", analysisId);
 
@@ -1803,12 +1805,12 @@ export const CreatePerformanceReportDialog = ({
         });
 
         // Check for performance improvements
-        const { data: recentReports } = await supabase
+        const { data: recentReports } = (!isTeamReport && safePlayerId) ? await supabase
           .from("player_analysis")
           .select("r90_score, fixture_stats, opponent, analysis_date")
-          .eq("player_id", playerId)
+          .eq("player_id", safePlayerId)
           .order("analysis_date", { ascending: false })
-          .limit(3);
+          .limit(3) : { data: null as any };
 
         if (recentReports && recentReports.length >= 2) {
           const current = recentReports[0];
@@ -1838,7 +1840,7 @@ export const CreatePerformanceReportDialog = ({
             const { data: fullReports } = await supabase
               .from("player_analysis")
               .select("striker_stats")
-              .eq("player_id", playerId)
+              .eq("player_id", safePlayerId)
               .order("analysis_date", { ascending: false })
               .limit(2);
             
