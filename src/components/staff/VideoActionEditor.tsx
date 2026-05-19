@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { formatScoreWithFrequency } from "@/lib/utils";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
+import { FlywheelMinuteInput } from "./flywheel/FlywheelMinuteInput";
 import type { RecordedStat } from "./ActionStatRecorder";
 import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 
@@ -286,10 +287,9 @@ export const VideoActionEditor = ({
                 #{current.action_number}
               </span>
               <div className="w-16 md:w-20">
-                <Input
-                  type="text"
+                <FlywheelMinuteInput
                   value={current.minute}
-                  onChange={(e) => updateAction(realIndex, "minute", e.target.value)}
+                  onChange={(value) => updateAction(realIndex, "minute", value)}
                   placeholder="Min"
                   className="h-7 md:h-8 text-xs md:text-sm"
                 />
