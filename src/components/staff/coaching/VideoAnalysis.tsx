@@ -205,6 +205,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const SPEED_STEPS = [0.25, 0.5, 1, 2, 4];
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
+  // Fullscreen quick-edit overlay: shows the most recent clip's action type /
+  // score / notes / zone pinned to the top of the player so the analyst can
+  // tag without leaving fullscreen. Toggled by the semi-invisible eye icon.
+  const [showClipOverlay, setShowClipOverlay] = useState(false);
 
   // 8x simulation: native 4x + RAF nudge to double effective speed
   const eightXRafRef = useRef<number | null>(null);
