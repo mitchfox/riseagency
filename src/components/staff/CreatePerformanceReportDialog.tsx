@@ -1530,6 +1530,7 @@ export const CreatePerformanceReportDialog = ({
   const handleSave = async () => {
     const isHighlightsReport = reportCategory === "highlights";
     const isTeamReport = reportType === 'team';
+    const safePlayerId = playerId && playerId.trim() ? playerId : null;
     // Validation - fixture only required for non-highlights, non-team reports
     if (!isHighlightsReport && !isTeamReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
@@ -1661,11 +1662,11 @@ export const CreatePerformanceReportDialog = ({
         (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
-        if (playerId && selectedFixtureId) {
+        if (safePlayerId && selectedFixtureId) {
           const { data: existingAnalysis } = await supabase
             .from("player_analysis")
             .select("id")
-            .eq("player_id", playerId)
+            .eq("player_id", safePlayerId)
             .eq("fixture_id", selectedFixtureId)
             .maybeSingle();
 
@@ -1681,7 +1682,7 @@ export const CreatePerformanceReportDialog = ({
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
-            player_id: playerId ?? null,
+            player_id: isTeamReport ? null : safePlayerId,
             fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
             analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
             r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
@@ -1710,6 +1711,7 @@ export const CreatePerformanceReportDialog = ({
             team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
             team_color: isTeamReport ? (teamColor || null) : null,
             opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
+            team_scoring_method: isTeamReport ? teamScoringMethod : 'option_a',
           } as any)
           .select()
           .single();
