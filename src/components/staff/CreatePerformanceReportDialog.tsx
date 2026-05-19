@@ -2128,18 +2128,35 @@ export const CreatePerformanceReportDialog = ({
                   <span>Scouting report</span>
                 </label>
                 {reportType === 'team' && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs ml-auto"
-                    onClick={() => setShowRoster(s => !s)}
-                  >
-                    {showRoster ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
-                    Roster ({teamRoster.length})
-                  </Button>
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-md border bg-background p-1">
+                      <Button type="button" size="sm" variant={teamScoringMethod === 'option_a' ? 'default' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setTeamScoringMethod('option_a')}>
+                        Option A · Team score
+                      </Button>
+                      <Button type="button" size="sm" variant={teamScoringMethod === 'option_b' ? 'default' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setTeamScoringMethod('option_b')}>
+                        Option B · Action by action
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={() => setShowRoster(s => !s)}
+                    >
+                      {showRoster ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
+                      Roster ({teamRoster.length})
+                    </Button>
+                  </div>
                 )}
               </div>
+              {reportType === 'team' && (
+                <p className="text-[11px] text-muted-foreground">
+                  {teamScoringMethod === 'option_b'
+                    ? 'Option B scores each action by the players involved. Leave a player score blank to inherit the main action score.'
+                    : 'Option A keeps the classic single team score on each action.'}
+                </p>
+              )}
               {reportType === 'team' && showRoster && (
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-2">
