@@ -2594,6 +2594,9 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
+                    {reportType === 'team' && (action.involved_players?.length || 0) > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{action.involved_players?.length} tagged</span>
+                    )}
                     <div className="flex gap-1">
                       <Button
                         onClick={() => openR90Viewer(index)}
