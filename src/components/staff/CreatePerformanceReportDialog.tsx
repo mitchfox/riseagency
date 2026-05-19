@@ -111,8 +111,8 @@ const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAc
 interface CreatePerformanceReportDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  playerId: string;
-  playerName: string;
+  playerId?: string;
+  playerName?: string;
   onSuccess?: () => void;
   analysisId?: string; // For edit mode
   inline?: boolean; // When true, renders without Dialog wrapper
@@ -531,6 +531,7 @@ export const CreatePerformanceReportDialog = ({
 
   // Fetch previous fixture stats from the player's most recent report
   const fetchPreviousFixtureStats = async () => {
+    if (!playerId) return;
     try {
       const { data } = await supabase
         .from("player_analysis")
@@ -551,8 +552,8 @@ export const CreatePerformanceReportDialog = ({
 
   useEffect(() => {
     // In inline mode, always load; in dialog mode, only when open
-    if ((inline || open) && playerId) {
-      console.log('CreatePerformanceReportDialog opened for player:', playerId);
+    if ((inline || open) && (playerId || initialReportType === 'team' || analysisId)) {
+      console.log('CreatePerformanceReportDialog opened for player:', playerId, 'type:', initialReportType);
       fetchActionTypes();
       fetchAllR90Ratings(); // Fetch all R90 ratings once for local filtering
       fetchPreviousFixtureStats();
@@ -831,6 +832,7 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchPlayerClub = async () => {
+    if (!playerId) return;
     try {
       const { data, error } = await supabase
         .from("players")
@@ -878,6 +880,7 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchFixtures = async () => {
+    if (!playerId) return;
     console.log('fetchFixtures called for playerId:', playerId);
     try {
       const { data: playerFixtures, error: pfError } = await supabase
@@ -1642,17 +1645,19 @@ export const CreatePerformanceReportDialog = ({
         (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
-        const { data: existingAnalysis } = await supabase
-          .from("player_analysis")
-          .select("id")
-          .eq("player_id", playerId)
-          .eq("fixture_id", selectedFixtureId)
-          .maybeSingle();
+        if (playerId && selectedFixtureId) {
+          const { data: existingAnalysis } = await supabase
+            .from("player_analysis")
+            .select("id")
+            .eq("player_id", playerId)
+            .eq("fixture_id", selectedFixtureId)
+            .maybeSingle();
 
-        if (existingAnalysis) {
-          toast.error("A performance report already exists for this fixture. Please edit the existing report instead.");
-          setLoading(false);
-          return;
+          if (existingAnalysis) {
+            toast.error("A performance report already exists for this fixture. Please edit the existing report instead.");
+            setLoading(false);
+            return;
+          }
         }
 
         // Insert new record
@@ -1660,7 +1665,7 @@ export const CreatePerformanceReportDialog = ({
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
-            player_id: playerId,
+            player_id: playerId ?? null,
             fixture_id: isHighlightsReport ? null : selectedFixtureId,
             analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
             r90_score: isHighlightsReport ? null : calculatedR90,
@@ -3885,9 +3890,9 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName || (reportType === 'team' ? 'Team Report' : '')}</h1>
 
-          <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />
+          {playerId && <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />}
 
           {mainContent}
         </div>
@@ -3902,7 +3907,7 @@ export const CreatePerformanceReportDialog = ({
       <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none lg:max-w-[1200px] max-h-[92vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName || (reportType === 'team' ? 'Team Report' : '')}</DialogTitle>
             {languageSelector}
           </div>
         </DialogHeader>

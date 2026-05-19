@@ -3673,7 +3673,7 @@ export type Database = {
           placeholder_per: number | null
           placeholder_raw_score: number | null
           placeholder_sr: number | null
-          player_id: string
+          player_id: string | null
           r90_score: number | null
           report_type: string
           result: string | null
@@ -3707,7 +3707,7 @@ export type Database = {
           placeholder_per?: number | null
           placeholder_raw_score?: number | null
           placeholder_sr?: number | null
-          player_id: string
+          player_id?: string | null
           r90_score?: number | null
           report_type?: string
           result?: string | null
@@ -3741,7 +3741,7 @@ export type Database = {
           placeholder_per?: number | null
           placeholder_raw_score?: number | null
           placeholder_sr?: number | null
-          player_id?: string
+          player_id?: string | null
           r90_score?: number | null
           report_type?: string
           result?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.player_analysis ALTER COLUMN player_id DROP NOT NULL;
