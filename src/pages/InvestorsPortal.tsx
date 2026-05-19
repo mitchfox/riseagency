@@ -33,7 +33,6 @@ import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
-import staffMarbleBackground from "@/assets/smudged-marble-overlay.png";
 
 type SectionId =
   | "overview" | "investment"
@@ -1834,7 +1833,7 @@ const InvestorsPortal = () => {
       {/* Marble background (matches staff portal) */}
       <div className="fixed inset-0 pointer-events-none -z-10"
         style={{
-          backgroundImage: `url(${staffMarbleBackground})`,
+          backgroundImage: `url(${smudgedMarble})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
