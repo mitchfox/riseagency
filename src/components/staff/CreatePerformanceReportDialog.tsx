@@ -335,6 +335,7 @@ export const CreatePerformanceReportDialog = ({
   const [teamLogoUrl, setTeamLogoUrl] = useState("");
   const [teamColor, setTeamColor] = useState("");
   const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
+  const [teamScoringMethod, setTeamScoringMethod] = useState<'option_a' | 'option_b'>('option_b');
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -982,7 +983,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, team_name, team_logo_url, team_color, opponent_logo_url")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, team_name, team_logo_url, team_color, opponent_logo_url, team_scoring_method")
         .eq("id", analysisId)
         .single();
 
@@ -1028,6 +1029,7 @@ export const CreatePerformanceReportDialog = ({
       setTeamLogoUrl((analysisData as any).team_logo_url || "");
       setTeamColor((analysisData as any).team_color || "");
       setOpponentLogoUrl((analysisData as any).opponent_logo_url || "");
+      setTeamScoringMethod(((analysisData as any).team_scoring_method === 'option_a') ? 'option_a' : 'option_b');
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
