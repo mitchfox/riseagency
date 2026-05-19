@@ -551,8 +551,8 @@ export const CreatePerformanceReportDialog = ({
 
   useEffect(() => {
     // In inline mode, always load; in dialog mode, only when open
-    if ((inline || open) && playerId) {
-      console.log('CreatePerformanceReportDialog opened for player:', playerId);
+    if ((inline || open) && (playerId || initialReportType === 'team' || analysisId)) {
+      console.log('CreatePerformanceReportDialog opened for player:', playerId, 'type:', initialReportType);
       fetchActionTypes();
       fetchAllR90Ratings(); // Fetch all R90 ratings once for local filtering
       fetchPreviousFixtureStats();
@@ -831,6 +831,7 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchPlayerClub = async () => {
+    if (!playerId) return;
     try {
       const { data, error } = await supabase
         .from("players")
@@ -878,6 +879,7 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const fetchFixtures = async () => {
+    if (!playerId) return;
     console.log('fetchFixtures called for playerId:', playerId);
     try {
       const { data: playerFixtures, error: pfError } = await supabase
