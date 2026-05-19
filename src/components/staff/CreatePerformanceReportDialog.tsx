@@ -1514,7 +1514,7 @@ export const CreatePerformanceReportDialog = ({
       if (analysisError) throw analysisError;
 
       toast.success("Performance report deleted successfully");
-      onOpenChange(false);
+      handleClose();
       if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error("Error deleting performance report:", error);
@@ -1901,7 +1901,7 @@ export const CreatePerformanceReportDialog = ({
       // Only close dialog and call onSuccess in create mode
       // In edit mode, keep dialog open for continued editing
       if (!analysisId) {
-        onOpenChange(false);
+        handleClose();
         if (onSuccess) onSuccess();
       }
     } catch (error: any) {
