@@ -29,8 +29,8 @@ Add a new migration:
 No changes to RLS policies needed (existing policies already cover the columns).
 
 ### Create / Edit flow (staff)
-In `CreatePerformanceReportDialog.tsx`:
-- Add a **Report type** toggle at the top: *Player report* (default for existing) / *Team report*.
+In the report creation flow:
+- Choose **Player report** or **Team report** before opening the report editor. Existing reports keep their saved type and the editor only displays the type.
 - When *Team report* is selected:
   - Hide the single-player picker; show a collapsible **Team roster** panel where staff add rows of `{ number, optional name, optional linked player }`. Drag-to-reorder; rosters persist on save.
   - The default action-entry mode becomes **Quick tag mode** (new): each action row shows the roster as a strip of small "number" chips; tapping a chip toggles that player as involved. The existing free-form fields (action type, zone, score, notes, etc.) stay below. A toggle exposes the original "classic" entry layout for power users.
@@ -56,7 +56,8 @@ In `CreatePerformanceReportDialog.tsx`:
 
 ## Files affected
 - new: `src/components/staff/flywheel/FlywheelMinuteInput.tsx` (+ optional `useFlywheel` hook)
-- edit: `src/components/staff/CreatePerformanceReportDialog.tsx` — type toggle, roster, quick-tag mode, mobile sticky layout, flywheel + prev-action default, individual-score popover, scouting checkbox
+- edit: `src/components/staff/CreatePerformanceReportDialog.tsx` — chosen report type display, roster, quick-tag mode, mobile sticky layout, flywheel + prev-action default, individual-score popover, scouting checkbox
+- edit: report creation entry points — pre-create player/team choice and wide-screen pop-up
 - edit: `src/pages/PerformanceReport.tsx` — team roster header, per-action player chips, Players tab
 - edit: `src/components/staff/AllReportsSection.tsx` — filter/badge for team vs player and scouting
 - edit: scouting surfaces (`ScoutedPlayersSection.tsx`, scout portal pages) — include team scouting reports

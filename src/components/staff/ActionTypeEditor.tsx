@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BlurInput } from "./BlurInput";
 import { canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
+import { FlywheelMinuteInput } from "./flywheel/FlywheelMinuteInput";
 import { InlinePitchGrid } from "./InlinePitchGrid";
 import type { ZonePoint } from "@/components/report/ZonePitchSelector";
 import { supabase } from "@/integrations/supabase/client";
@@ -999,7 +1000,7 @@ export const ActionTypeEditor = ({
                     <div>
                       <label className="text-[10px] text-muted-foreground">Minute</label>
                       <div className="flex items-center gap-1">
-                        <Input value={activeAction.minute} onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)} placeholder="Min" className="h-8 text-xs flex-1" />
+                        <FlywheelMinuteInput value={activeAction.minute} onChange={(value) => updateAction(selectedActionIndex, "minute", value)} placeholder="Min" className="h-8 text-xs flex-1" />
                         {(() => {
                           const mins = parseFloat(activeAction.minute);
                           if (isNaN(mins) || mins < 45 || mins > 51) return null;
@@ -1432,9 +1433,9 @@ export const ActionTypeEditor = ({
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="w-16">
-                        <Input
+                        <FlywheelMinuteInput
                           value={activeAction.minute}
-                          onChange={(e) => updateAction(selectedActionIndex, "minute", e.target.value)}
+                          onChange={(value) => updateAction(selectedActionIndex, "minute", value)}
                           placeholder="Min"
                           className="h-7 text-xs"
                         />

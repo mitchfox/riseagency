@@ -44,6 +44,7 @@ export const snapMinuteString = (raw: string | null | undefined): string => {
 interface FlywheelMinuteInputProps {
   value: string;
   onChange: (next: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   className?: string;
   ariaLabel?: string;
@@ -53,6 +54,7 @@ interface FlywheelMinuteInputProps {
 export const FlywheelMinuteInput: React.FC<FlywheelMinuteInputProps> = ({
   value,
   onChange,
+  onBlur,
   placeholder,
   className,
   ariaLabel,
@@ -111,8 +113,8 @@ export const FlywheelMinuteInput: React.FC<FlywheelMinuteInputProps> = ({
   };
 
   const handleBlur = () => {
-    if (!value) return;
-    onChange(snapMinuteString(value));
+    if (value) onChange(snapMinuteString(value));
+    onBlur?.();
   };
 
   return (

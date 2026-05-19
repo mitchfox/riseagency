@@ -117,6 +117,7 @@ interface CreatePerformanceReportDialogProps {
   analysisId?: string; // For edit mode
   inline?: boolean; // When true, renders without Dialog wrapper
   onClose?: () => void; // Required for inline mode
+  initialReportType?: 'player' | 'team';
 }
 
 interface Fixture {
@@ -256,6 +257,7 @@ export const CreatePerformanceReportDialog = ({
   analysisId,
   inline = false,
   onClose,
+  initialReportType = 'player',
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [videoEditorOpen, setVideoEditorOpen] = useState(false);
@@ -298,7 +300,7 @@ export const CreatePerformanceReportDialog = ({
   const [showDescriptions, setShowDescriptions] = useState(true);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("match");
   // Team / Scouting report state
-  const [reportType, setReportType] = useState<'player' | 'team'>('player');
+  const [reportType, setReportType] = useState<'player' | 'team'>(initialReportType);
   const [isScoutingReport, setIsScoutingReport] = useState(false);
   const [teamRoster, setTeamRoster] = useState<RosterEntry[]>([]);
   const [showRoster, setShowRoster] = useState(true);
@@ -564,12 +566,13 @@ export const CreatePerformanceReportDialog = ({
         // Create mode
         setIsEditMode(false);
         resetForm();
+        setReportType(initialReportType);
         // Auto-add of stats removed: staff will manually pick which stats to display.
       }
       fetchFixtures();
       fetchPlayerClub();
     }
-  }, [inline, open, analysisId, playerId]);
+  }, [inline, open, analysisId, playerId, initialReportType]);
 
   // Realtime: when clips are exported into this report from elsewhere
   // (e.g. Video Analysis "Export to Report"), append them to local state
@@ -1293,7 +1296,7 @@ export const CreatePerformanceReportDialog = ({
     setResult("");
     setSelectedFixtureId("");
     setPerformanceOverview("");
-    setReportType('player');
+    setReportType(initialReportType);
     setIsScoutingReport(false);
     setTeamRoster([]);
     setShowStrikerStats(false);
@@ -2017,21 +2020,12 @@ export const CreatePerformanceReportDialog = ({
             <CategoryToggle value={reportCategory} onChange={setReportCategory} />
           </div>
 
-          {/* Report type (Player / Team) + Scouting flag */}
+          {/* Report creation flags */}
           {reportCategory !== "highlights" && (
             <div className="rounded-lg border bg-card/40 p-3 space-y-3">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex rounded-md border overflow-hidden text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setReportType('player')}
-                    className={`px-3 py-1.5 ${reportType === 'player' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-                  >Player report</button>
-                  <button
-                    type="button"
-                    onClick={() => setReportType('team')}
-                    className={`px-3 py-1.5 border-l ${reportType === 'team' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-                  >Team report</button>
+                <div className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  {reportType === 'team' ? 'Team report' : 'Player report'}
                 </div>
                 <label className="inline-flex items-center gap-2 text-xs cursor-pointer">
                   <Checkbox
@@ -2679,8 +2673,9 @@ export const CreatePerformanceReportDialog = ({
                       <Label className="text-xs">Minute *</Label>
                        <FlywheelMinuteInput
                         value={action.minute}
-                         onChange={(v) => updateAction(index, "minute", v)}
-                         placeholder="0.00"
+                        onChange={(v) => updateAction(index, "minute", v)}
+                        onBlur={handleMinuteBlur}
+                        placeholder="0.00"
                         className="text-sm"
                       />
                     </div>
@@ -2908,6 +2903,7 @@ export const CreatePerformanceReportDialog = ({
                       <FlywheelMinuteInput
                         value={action.minute}
                         onChange={(v) => updateAction(index, "minute", v)}
+                        onBlur={handleMinuteBlur}
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
@@ -3903,7 +3899,7 @@ export const CreatePerformanceReportDialog = ({
   // Dialog mode: render with Dialog wrapper
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none lg:max-w-[1200px] max-h-[92vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>

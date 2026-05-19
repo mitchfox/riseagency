@@ -33,7 +33,7 @@ interface ActionReport {
 }
 
 interface ActionReportsListProps {
-  onCreateReport?: (playerId: string, playerName: string) => void;
+  onCreateReport?: (playerId: string, playerName: string, reportType?: 'player' | 'team') => void;
   onEditReport?: (playerId: string, playerName: string, analysisId: string) => void;
   defaultPlayerId?: string;
   defaultPlayerName?: string;
@@ -54,8 +54,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [reportEditorPlayerId, setReportEditorPlayerId] = useState<string | null>(null);
   const [reportEditorPlayerName, setReportEditorPlayerName] = useState<string>("");
   const [reportEditorAnalysisId, setReportEditorAnalysisId] = useState<string | undefined>(undefined);
+  const [reportEditorInitialType, setReportEditorInitialType] = useState<'player' | 'team'>('player');
   const [selectedReportAnalysisId, setSelectedReportAnalysisId] = useState<string | null>(null);
   const [performanceReportDialogOpen, setPerformanceReportDialogOpen] = useState(false);
+  const [showReportTypePicker, setShowReportTypePicker] = useState(false);
+  const [pendingReportType, setPendingReportType] = useState<'player' | 'team'>('player');
   const [showPlayerPicker, setShowPlayerPicker] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
 
@@ -174,6 +177,24 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
     live: reports.filter(r => r.visibility_status === "live").length,
   };
 
+  const beginCreateReport = (reportType: 'player' | 'team') => {
+    setPendingReportType(reportType);
+    setShowReportTypePicker(false);
+    if (defaultPlayerId && defaultPlayerName) {
+      if (onCreateReport) {
+        onCreateReport(defaultPlayerId, defaultPlayerName, reportType);
+      } else {
+        setReportEditorPlayerId(defaultPlayerId);
+        setReportEditorPlayerName(defaultPlayerName);
+        setReportEditorAnalysisId(undefined);
+        setReportEditorInitialType(reportType);
+        setShowReportEditor(true);
+      }
+    } else {
+      setShowPlayerPicker(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -216,20 +237,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
             </Select>
           )}
         </div>
-        <Button onClick={() => {
-          if (defaultPlayerId && defaultPlayerName) {
-            if (onCreateReport) {
-              onCreateReport(defaultPlayerId, defaultPlayerName);
-            } else {
-              setReportEditorPlayerId(defaultPlayerId);
-              setReportEditorPlayerName(defaultPlayerName);
-              setReportEditorAnalysisId(undefined);
-              setShowReportEditor(true);
-            }
-          } else {
-            setShowPlayerPicker(true);
-          }
-        }}>
+        <Button onClick={() => setShowReportTypePicker(true)}>
           <Plus className="w-4 h-4 mr-2" />
           New Action Report
         </Button>
@@ -410,10 +418,36 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       )}
 
       {/* Player Picker Dialog */}
-      <Dialog open={showPlayerPicker} onOpenChange={setShowPlayerPicker}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showReportTypePicker} onOpenChange={setShowReportTypePicker}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Select Player</DialogTitle>
+            <DialogTitle>Create Action Report</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => beginCreateReport('player')}
+              className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+            >
+              <div className="flex items-center gap-2 font-semibold"><User className="h-4 w-4 text-primary" />Player report</div>
+              <p className="mt-2 text-xs text-muted-foreground">Create a report for one player.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => beginCreateReport('team')}
+              className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+            >
+              <div className="flex items-center gap-2 font-semibold"><Radio className="h-4 w-4 text-primary" />Team report</div>
+              <p className="mt-2 text-xs text-muted-foreground">Create a report with a roster and player chips on actions.</p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPlayerPicker} onOpenChange={setShowPlayerPicker}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Select Player for {pendingReportType === 'team' ? 'Team' : 'Player'} Report</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="relative">
@@ -433,13 +467,14 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                     key={player.id}
                     onClick={() => {
                       if (onCreateReport) {
-                        onCreateReport(player.id, player.name);
+                        onCreateReport(player.id, player.name, pendingReportType);
                         setShowPlayerPicker(false);
                         setPlayerSearchQuery("");
                       } else {
                         setReportEditorPlayerId(player.id);
                         setReportEditorPlayerName(player.name);
                         setReportEditorAnalysisId(undefined);
+                        setReportEditorInitialType(pendingReportType);
                         setShowPlayerPicker(false);
                         setPlayerSearchQuery("");
                         setShowReportEditor(true);
@@ -464,6 +499,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           playerId={reportEditorPlayerId || undefined}
           playerName={reportEditorPlayerName}
           analysisId={reportEditorAnalysisId}
+          initialReportType={reportEditorInitialType}
           onSuccess={() => {
             fetchReports();
             setShowReportEditor(false);

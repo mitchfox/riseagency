@@ -28,6 +28,7 @@ interface InlineReportState {
   playerId: string;
   playerName: string;
   analysisId?: string;
+  reportType?: 'player' | 'team';
 }
 
 export const CoachingDataSection = () => {
@@ -104,6 +105,7 @@ export const CoachingDataSection = () => {
         playerId={inlineReport.playerId}
         playerName={inlineReport.playerName}
         analysisId={inlineReport.analysisId}
+        initialReportType={inlineReport.reportType || 'player'}
         onClose={() => setInlineReport(null)}
         onSuccess={() => setInlineReport(null)}
       />
@@ -170,8 +172,8 @@ export const CoachingDataSection = () => {
         <TabsContent value="reports" className="mt-0">
           <ActionReportsList
             key={reportsKey}
-            onCreateReport={(playerId, playerName) => {
-              setInlineReport({ playerId, playerName });
+            onCreateReport={(playerId, playerName, reportType) => {
+              setInlineReport({ playerId, playerName, reportType: reportType || 'player' });
             }}
             onEditReport={(playerId, playerName, analysisId) => {
               setInlineReport({ playerId, playerName, analysisId });

@@ -16,6 +16,7 @@ import { calculateAdjustedScore, isDefensiveR90Category } from "@/lib/zoneMultip
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ScoreDropdown } from "./ScoreDropdown";
+import { FlywheelMinuteInput } from "./flywheel/FlywheelMinuteInput";
 
 interface PerformanceAction {
   id?: string;
@@ -494,11 +495,10 @@ export const ActionsByTypeDialog = ({
                                   </div>
                                   <div className="space-y-1">
                                     <Label className="text-xs">Minute</Label>
-                                    <Input
-                                      type="text"
+                                    <FlywheelMinuteInput
                                       value={edited.minute.toFixed(2)}
-                                      onChange={(e) => {
-                                        const val = parseFloat(e.target.value);
+                                      onChange={(value) => {
+                                        const val = parseFloat(value);
                                         if (!isNaN(val)) {
                                           updateEditedAction(action.id!, {
                                             minute: val,
