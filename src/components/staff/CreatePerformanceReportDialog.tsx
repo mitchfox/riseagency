@@ -2673,8 +2673,9 @@ export const CreatePerformanceReportDialog = ({
                       <Label className="text-xs">Minute *</Label>
                        <FlywheelMinuteInput
                         value={action.minute}
-                         onChange={(v) => updateAction(index, "minute", v)}
-                         placeholder="0.00"
+                        onChange={(v) => updateAction(index, "minute", v)}
+                        onBlur={handleMinuteBlur}
+                        placeholder="0.00"
                         className="text-sm"
                       />
                     </div>
@@ -2902,6 +2903,7 @@ export const CreatePerformanceReportDialog = ({
                       <FlywheelMinuteInput
                         value={action.minute}
                         onChange={(v) => updateAction(index, "minute", v)}
+                        onBlur={handleMinuteBlur}
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
