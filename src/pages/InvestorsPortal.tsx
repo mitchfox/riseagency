@@ -19,13 +19,14 @@ import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
-  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle,
+  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle, Clock, ListOrdered,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
@@ -40,7 +41,8 @@ type SectionId =
   | "contracts"
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
-  | "outreach" | "clubnetwork";
+  | "outreach" | "clubnetwork"
+  | "timeManagement" | "priorities";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -174,6 +176,10 @@ const CATEGORIES: CategoryDef[] = [
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "My Tasks", icon: CheckSquare },
     { id: "activity", title: "Activity Feed", icon: Activity },
+  ]},
+  { id: "ops", title: "Operations", icon: Clock, sections: [
+    { id: "timeManagement", title: "Time Management", icon: Clock },
+    { id: "priorities", title: "Priorities", icon: ListOrdered },
   ]},
 ];
 
