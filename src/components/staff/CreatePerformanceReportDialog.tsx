@@ -1527,8 +1527,9 @@ export const CreatePerformanceReportDialog = ({
 
   const handleSave = async () => {
     const isHighlightsReport = reportCategory === "highlights";
-    // Validation - fixture only required for non-highlights reports
-    if (!isHighlightsReport && !selectedFixtureId) {
+    const isTeamReport = reportType === 'team';
+    // Validation - fixture only required for non-highlights, non-team reports
+    if (!isHighlightsReport && !isTeamReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
       return;
     }
@@ -1593,14 +1594,14 @@ export const CreatePerformanceReportDialog = ({
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
-            fixture_id: isHighlightsReport ? null : selectedFixtureId,
-            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
-            r90_score: isHighlightsReport ? null : calculatedR90,
-            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
+            fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
+            analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
+            minutes_played: (isHighlightsReport || isTeamReport) ? null : (!isNaN(parsedMinutes) ? parsedMinutes : null),
             opponent: isHighlightsReport ? null : opponent,
             result: isHighlightsReport ? null : (result || null),
-            striker_stats: isHighlightsReport ? null : strikerStatsJson,
-            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            striker_stats: (isHighlightsReport || isTeamReport) ? null : strikerStatsJson,
+            fixture_stats: (isHighlightsReport || isTeamReport) ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
             notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
@@ -1617,6 +1618,10 @@ export const CreatePerformanceReportDialog = ({
             report_type: reportType,
             is_scouting_report: isScoutingReport,
             team_roster: reportType === 'team' ? teamRoster : [],
+            team_name: isTeamReport ? (teamName || null) : null,
+            team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
+            team_color: isTeamReport ? (teamColor || null) : null,
+            opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
           } as any)
           .eq("id", analysisId);
 
@@ -1675,14 +1680,14 @@ export const CreatePerformanceReportDialog = ({
           .from("player_analysis")
           .insert({
             player_id: playerId ?? null,
-            fixture_id: isHighlightsReport ? null : selectedFixtureId,
-            analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
-            r90_score: isHighlightsReport ? null : calculatedR90,
-            minutes_played: isHighlightsReport ? null : (!isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null),
+            fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
+            analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
+            r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
+            minutes_played: (isHighlightsReport || isTeamReport) ? null : (!isNaN(parsedMinutesInsert) ? parsedMinutesInsert : null),
             opponent: isHighlightsReport ? null : opponent,
             result: isHighlightsReport ? null : (result || null),
-            striker_stats: isHighlightsReport ? null : strikerStatsJson,
-            fixture_stats: isHighlightsReport ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
+            striker_stats: (isHighlightsReport || isTeamReport) ? null : strikerStatsJson,
+            fixture_stats: (isHighlightsReport || isTeamReport) ? null : (Object.keys(fixtureStats).length > 0 ? fixtureStats : null),
             notes: isHighlightsReport ? (highlightsTitle || null) : null,
             performance_overview: performanceOverview || null,
             visibility_status: visibilityStatus,
