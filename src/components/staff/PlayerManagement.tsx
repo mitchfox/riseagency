@@ -3156,6 +3156,39 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         )}
       </div>
 
+      <Dialog open={showReportTypePicker} onOpenChange={setShowReportTypePicker}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none sm:max-w-3xl p-3 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Create Action Report</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(['player', 'team'] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setReportEditorPlayerId(selectedPlayerId!);
+                  setReportEditorPlayerName(selectedPlayer!.name);
+                  setReportEditorAnalysisId(undefined);
+                  setReportEditorInitialType(type);
+                  setShowReportTypePicker(false);
+                  setShowReportEditor(true);
+                }}
+                className="rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent"
+              >
+                <div className="flex items-center gap-2 font-semibold">
+                  {type === 'player' ? <User className="h-4 w-4 text-primary" /> : <LineChart className="h-4 w-4 text-primary" />}
+                  {type === 'player' ? 'Player report' : 'Team report'}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {type === 'player' ? 'Create a report for one player.' : 'Create a report with a roster and player chips on actions.'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Inline Performance Report Editor */}
       {showReportEditor && (
         <CreatePerformanceReportDialog
