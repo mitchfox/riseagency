@@ -2020,21 +2020,12 @@ export const CreatePerformanceReportDialog = ({
             <CategoryToggle value={reportCategory} onChange={setReportCategory} />
           </div>
 
-          {/* Report type (Player / Team) + Scouting flag */}
+          {/* Report creation flags */}
           {reportCategory !== "highlights" && (
             <div className="rounded-lg border bg-card/40 p-3 space-y-3">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex rounded-md border overflow-hidden text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setReportType('player')}
-                    className={`px-3 py-1.5 ${reportType === 'player' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-                  >Player report</button>
-                  <button
-                    type="button"
-                    onClick={() => setReportType('team')}
-                    className={`px-3 py-1.5 border-l ${reportType === 'team' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
-                  >Team report</button>
+                <div className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  {reportType === 'team' ? 'Team report' : 'Player report'}
                 </div>
                 <label className="inline-flex items-center gap-2 text-xs cursor-pointer">
                   <Checkbox
