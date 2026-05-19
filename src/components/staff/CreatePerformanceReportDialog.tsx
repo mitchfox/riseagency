@@ -531,6 +531,7 @@ export const CreatePerformanceReportDialog = ({
 
   // Fetch previous fixture stats from the player's most recent report
   const fetchPreviousFixtureStats = async () => {
+    if (!playerId) return;
     try {
       const { data } = await supabase
         .from("player_analysis")
