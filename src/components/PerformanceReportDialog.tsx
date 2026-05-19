@@ -216,12 +216,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, players!inner (name, position)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat, is_first_half")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat, is_first_half, involved_players")
           .eq("analysis_id", id)
           .order("action_number", { ascending: true })
       ]);
@@ -250,6 +250,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         opposition_color: (analysisResult.data as any).opposition_color || null,
         category: (analysisResult.data as any).category || "match",
         notes: (analysisResult.data as any).notes || null,
+        report_type: (analysisResult.data as any).report_type || 'player',
+        team_roster: Array.isArray((analysisResult.data as any).team_roster) ? (analysisResult.data as any).team_roster : [],
+        is_scouting_report: !!(analysisResult.data as any).is_scouting_report,
       });
 
       if (actionsResult.error) throw actionsResult.error;
