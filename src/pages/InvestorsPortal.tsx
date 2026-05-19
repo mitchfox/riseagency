@@ -1997,11 +1997,20 @@ const InvestorsPortal = () => {
             return (
               <div key={cat.id} className="w-full">
                 <button
-                  onClick={() => {
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (isSingleSection) {
                       handleSectionClick(cat.sections[0].id, cat.id);
                     } else {
-                      setExpandedCategory(isExpanded ? null : cat.id);
+                      // Toggle: if already expanded, collapse back to category overview.
+                      // Also clear the active section so all categories reappear cleanly.
+                      if (isExpanded) {
+                        setExpandedCategory(null);
+                        if (hasActive) setActive(null);
+                      } else {
+                        setExpandedCategory(cat.id);
+                      }
                     }
                   }}
                   className={`group relative w-full rounded-lg flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 transition-all hover:bg-primary/20 ${
