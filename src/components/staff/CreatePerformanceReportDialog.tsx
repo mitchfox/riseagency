@@ -2884,6 +2884,7 @@ export const CreatePerformanceReportDialog = ({
                       {loading ? "Saving..." : (analysisId ? "Update" : "Save")}
                     </Button>
                   </div>
+                  {reportType === 'team' && renderInvolvedChips(action, index)}
                 </div>
               ))}
             </div>
