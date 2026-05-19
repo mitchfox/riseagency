@@ -3340,11 +3340,17 @@ function ActionTypeCombobox({
   onChange,
   actionTypes,
   compact = false,
+  triggerRef,
+  onKeyDown,
+  overlayMode = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   actionTypes: string[];
   compact?: boolean;
+  triggerRef?: React.RefObject<HTMLButtonElement>;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  overlayMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -3371,6 +3377,7 @@ function ActionTypeCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           size="sm"
           className={`justify-between ${compact ? 'h-7 text-[10px] w-[110px]' : 'w-[130px]'}`}
@@ -3378,12 +3385,18 @@ function ActionTypeCombobox({
           {toTitleCase(value) || "Action type"}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
+      <PopoverContent
+        className={overlayMode ? "w-[420px] max-w-[90vw] p-0" : "w-[200px] p-0"}
+        align="start"
+        side={overlayMode ? "top" : "bottom"}
+        sideOffset={overlayMode ? 8 : 4}
+      >
+        <Command onKeyDownCapture={onKeyDown}>
           <CommandInput
             placeholder="Search or type..."
             value={search}
             onValueChange={setSearch}
+            onKeyDown={onKeyDown}
           />
           <CommandList>
             <CommandEmpty>
