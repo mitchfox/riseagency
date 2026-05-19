@@ -43,6 +43,7 @@ import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitch
 import { ShotMapSelector, type ShotMapData, isShotMapAction } from "@/components/report/ShotMapSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
+import { FlywheelMinuteInput, snapMinuteString } from "./flywheel/FlywheelMinuteInput";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1340,11 +1341,12 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const addAction = () => {
+    const prevMinute = actions.length > 0 ? snapMinuteString(actions[actions.length - 1].minute) : "";
     setActions([
       ...actions,
       {
         action_number: actions.length + 1,
-        minute: "",
+        minute: prevMinute,
         action_score: "",
         action_type: "",
         action_description: "",
@@ -1354,9 +1356,10 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const insertActionAt = (position: number) => {
+    const prevMinute = position > 0 ? snapMinuteString(actions[position - 1].minute) : "";
     const newAction = {
       action_number: position + 1,
-      minute: "",
+      minute: prevMinute,
       action_score: "",
       action_type: "",
       action_description: "",
