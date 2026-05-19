@@ -78,6 +78,7 @@ interface InlineReportState {
   playerId: string;
   playerName: string;
   analysisId?: string;
+  reportType?: 'player' | 'team';
 }
 
 // ─── Match Flow Section ──────────────────────────────────────────────────────
@@ -117,6 +118,7 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer, initialOpenSections, init
         playerId={inlineReport.playerId}
         playerName={inlineReport.playerName}
         analysisId={inlineReport.analysisId}
+        initialReportType={inlineReport.reportType || 'player'}
         onClose={() => setInlineReport(null)}
         onSuccess={() => setInlineReport(null)}
       />
@@ -172,8 +174,8 @@ const MatchFlowTab = ({ selectedPlayer, currentPlayer, initialOpenSections, init
                 <ActionReportsList
                   defaultPlayerId={selectedPlayer || undefined}
                   defaultPlayerName={currentPlayer?.name}
-                  onCreateReport={(playerId, playerName) => {
-                    setInlineReport({ playerId, playerName });
+                  onCreateReport={(playerId, playerName, reportType) => {
+                    setInlineReport({ playerId, playerName, reportType: reportType || 'player' });
                   }}
                   onEditReport={(playerId, playerName, analysisId) => {
                     setInlineReport({ playerId, playerName, analysisId });
