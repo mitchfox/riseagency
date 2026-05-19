@@ -82,6 +82,10 @@ interface AnalysisDetails {
   club_logo_url?: string | null;
   opposition_color?: string | null;
   report_type?: 'player' | 'team' | string | null;
+  team_name?: string | null;
+  team_logo_url?: string | null;
+  team_color?: string | null;
+  opponent_logo_url?: string | null;
   team_roster?: Array<{ id: string; number: string; name?: string }> | null;
   is_scouting_report?: boolean | null;
 }
@@ -216,7 +220,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, players!inner (name, position)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_name, team_logo_url, team_color, opponent_logo_url, team_roster, is_scouting_report, players!player_analysis_player_id_fkey (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -228,6 +232,8 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
 
       if (analysisResult.error) throw analysisResult.error;
 
+      const isTeamReport = (analysisResult.data as any).report_type === 'team';
+      const teamName = (analysisResult.data as any).team_name || "Team Report";
       setAnalysis({
         id: analysisResult.data.id,
         analysis_date: analysisResult.data.analysis_date,
@@ -235,7 +241,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         result: analysisResult.data.result || "",
         r90_score: analysisResult.data.r90_score,
         minutes_played: analysisResult.data.minutes_played,
-        player_name: analysisResult.data.players?.name || "Unknown Player",
+        player_name: isTeamReport ? teamName : (analysisResult.data.players?.name || "Unknown Player"),
         player_position: (analysisResult.data.players as any)?.position || null,
         striker_stats: analysisResult.data.striker_stats as StrikerStats | null,
         performance_overview: analysisResult.data.performance_overview,
@@ -251,6 +257,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         category: (analysisResult.data as any).category || "match",
         notes: (analysisResult.data as any).notes || null,
         report_type: (analysisResult.data as any).report_type || 'player',
+        team_name: (analysisResult.data as any).team_name || null,
+        team_logo_url: (analysisResult.data as any).team_logo_url || null,
+        team_color: (analysisResult.data as any).team_color || null,
+        opponent_logo_url: (analysisResult.data as any).opponent_logo_url || null,
         team_roster: Array.isArray((analysisResult.data as any).team_roster) ? (analysisResult.data as any).team_roster : [],
         is_scouting_report: !!(analysisResult.data as any).is_scouting_report,
       });
