@@ -52,6 +52,7 @@ interface PerformanceAction {
   zone?: number | null;
   zone_details?: any | null;
   recorded_stat?: unknown;
+  involved_players?: Array<{ roster_id: string; score?: number | null }> | null;
 }
 
 interface StrikerStats {
@@ -80,6 +81,9 @@ interface AnalysisDetails {
   show_descriptions?: boolean;
   club_logo_url?: string | null;
   opposition_color?: string | null;
+  report_type?: 'player' | 'team' | string | null;
+  team_roster?: Array<{ id: string; number: string; name?: string }> | null;
+  is_scouting_report?: boolean | null;
 }
 
 interface PerformanceReportDialogProps {
