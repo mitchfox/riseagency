@@ -1859,7 +1859,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         .update(updateData)
         .eq("id", actionId);
       if (error) throw error;
-      toast.success("Clip attached to action", { id: toastId });
+      toast.success("Clip attached to action", { id: toastId, duration: 15000 });
     } catch (err: any) {
       toast.error(err.message || "Failed to attach clip", { id: toastId });
     }
