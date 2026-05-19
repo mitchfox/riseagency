@@ -94,7 +94,6 @@ const SECTION_PREVIEWS: Record<string, string> = {
   interactionhistory: "History of staff interactions with contacts",
   transferreports: "Transfer reports and recommendation write-ups",
   corporationtax: "Corporation tax filings and TinyTax exports",
-  salesdeck: "Sales deck builder and presentation tools",
   // Investor portal sections
   investment: "Investment thesis, sections and overview cards",
   represented: "Players currently under representation",
