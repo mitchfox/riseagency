@@ -1704,6 +1704,10 @@ export const CreatePerformanceReportDialog = ({
             report_type: reportType,
             is_scouting_report: isScoutingReport,
             team_roster: reportType === 'team' ? teamRoster : [],
+            team_name: isTeamReport ? (teamName || null) : null,
+            team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
+            team_color: isTeamReport ? (teamColor || null) : null,
+            opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
           } as any)
           .select()
           .single();
