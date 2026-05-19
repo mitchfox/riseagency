@@ -97,6 +97,70 @@ Deno.serve(async (req) => {
         }
         return ok();
       }
+      // ---------- Time Management / Priorities (generic) ----------
+      case "upsertOpsCategory":
+      case "deleteOpsCategory":
+      case "upsertOpsItem":
+      case "deleteOpsItem":
+      case "reorderOpsItems": {
+        const kind = payload.kind === "priority" ? "priority" : "time";
+        const catTable = kind === "priority" ? "investor_priority_categories" : "investor_time_categories";
+        const itemTable = kind === "priority" ? "investor_priority_items" : "investor_time_items";
+        if (action === "upsertOpsCategory") {
+          const { id, title, display_order } = payload;
+          if (!title) return bad("title required");
+          if (id) {
+            const { error } = await supabase.from(catTable).update({ title, display_order }).eq("id", id);
+            if (error) return bad(error.message, 500);
+            return ok();
+          }
+          const { data, error } = await supabase.from(catTable).insert({ title, display_order: display_order ?? 999 }).select().single();
+          if (error) return bad(error.message, 500);
+          return ok({ row: data });
+        }
+        if (action === "deleteOpsCategory") {
+          if (!payload.id) return bad("id required");
+          const { error } = await supabase.from(catTable).delete().eq("id", payload.id);
+          if (error) return bad(error.message, 500);
+          return ok();
+        }
+        if (action === "upsertOpsItem") {
+          const { id, category_id, title, description, rough_time, highlights, staff_task_id, display_order } = payload;
+          if (!title || !category_id) return bad("title and category_id required");
+          const row: any = {
+            category_id, title,
+            description: description ?? null,
+            rough_time: rough_time ?? null,
+            highlights: Array.isArray(highlights) ? highlights : [],
+            staff_task_id: staff_task_id || null,
+            display_order: display_order ?? 999,
+          };
+          if (id) {
+            const { error } = await supabase.from(itemTable).update(row).eq("id", id);
+            if (error) return bad(error.message, 500);
+            return ok();
+          }
+          const { data, error } = await supabase.from(itemTable).insert(row).select().single();
+          if (error) return bad(error.message, 500);
+          return ok({ row: data });
+        }
+        if (action === "deleteOpsItem") {
+          if (!payload.id) return bad("id required");
+          const { error } = await supabase.from(itemTable).delete().eq("id", payload.id);
+          if (error) return bad(error.message, 500);
+          return ok();
+        }
+        if (action === "reorderOpsItems") {
+          const items = Array.isArray(payload.items) ? payload.items : [];
+          for (const it of items) {
+            await supabase.from(itemTable)
+              .update({ display_order: it.display_order, category_id: it.category_id })
+              .eq("id", it.id);
+          }
+          return ok();
+        }
+        return bad("Unknown ops action");
+      }
       default:
         return bad("Unknown action");
     }
