@@ -333,7 +333,21 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                           <User className="h-3 w-3 text-muted-foreground" />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-primary">{report.player_name}</span>
+                      {report.report_type === "team" || !report.player_id ? (
+                        <span className="text-sm font-medium text-primary">{report.player_name}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-primary hover:underline"
+                          onClick={() => {
+                            setPlayerFilter(report.player_id || "all");
+                            setStatusTab("all");
+                            setSearchQuery("");
+                          }}
+                        >
+                          {report.player_name}
+                        </button>
+                      )}
                       {report.visibility_status && report.visibility_status !== "live" && (
                         <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                           report.visibility_status === "draft" 
@@ -386,11 +400,12 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                       size="sm"
                       onClick={() => {
                         if (onEditReport) {
-                          onEditReport(report.player_id, report.player_name || "", report.id);
+                          onEditReport(report.player_id || "", report.player_name || "", report.id);
                         } else {
                           setReportEditorAnalysisId(report.id);
-                          setReportEditorPlayerId(report.player_id);
+                          setReportEditorPlayerId(report.player_id || null);
                           setReportEditorPlayerName(report.player_name || "");
+                          setReportEditorInitialType(report.report_type === "team" ? "team" : "player");
                           setShowReportEditor(true);
                         }
                       }}
