@@ -1240,7 +1240,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch performance actions
       const { data: actionsData, error: actionsError } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details, is_first_half")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details, is_first_half, involved_players")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
@@ -1263,6 +1263,7 @@ export const CreatePerformanceReportDialog = ({
             zone_details: (action as any).zone_details || null,
             shot_map: extractShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
             is_first_half: (action as any).is_first_half ?? false,
+            involved_players: Array.isArray((action as any).involved_players) ? (action as any).involved_players : [],
           }));
         skipNextActionSyncRef.current = true;
         setActions(sortActionsChronologically(mappedActions));
