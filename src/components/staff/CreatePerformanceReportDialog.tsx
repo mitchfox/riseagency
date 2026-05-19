@@ -117,6 +117,7 @@ interface CreatePerformanceReportDialogProps {
   analysisId?: string; // For edit mode
   inline?: boolean; // When true, renders without Dialog wrapper
   onClose?: () => void; // Required for inline mode
+  initialReportType?: 'player' | 'team';
 }
 
 interface Fixture {
@@ -256,6 +257,7 @@ export const CreatePerformanceReportDialog = ({
   analysisId,
   inline = false,
   onClose,
+  initialReportType = 'player',
 }: CreatePerformanceReportDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [videoEditorOpen, setVideoEditorOpen] = useState(false);
@@ -298,7 +300,7 @@ export const CreatePerformanceReportDialog = ({
   const [showDescriptions, setShowDescriptions] = useState(true);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("match");
   // Team / Scouting report state
-  const [reportType, setReportType] = useState<'player' | 'team'>('player');
+  const [reportType, setReportType] = useState<'player' | 'team'>(initialReportType);
   const [isScoutingReport, setIsScoutingReport] = useState(false);
   const [teamRoster, setTeamRoster] = useState<RosterEntry[]>([]);
   const [showRoster, setShowRoster] = useState(true);
