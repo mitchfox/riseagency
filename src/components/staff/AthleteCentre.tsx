@@ -359,6 +359,7 @@ export const AthleteCentre = () => {
         playerId: inlineReport.playerId,
         playerName: inlineReport.playerName,
         analysisId: inlineReport.analysisId,
+        reportType: inlineReport.reportType,
       } : undefined,
     });
   };
@@ -447,6 +448,7 @@ export const AthleteCentre = () => {
                       playerId: resumedSession.inlineReport.playerId,
                       playerName: resumedSession.inlineReport.playerName,
                       analysisId: resumedSession.inlineReport.analysisId,
+                      reportType: (resumedSession.inlineReport as any).reportType,
                     } : null}
                     onSessionChange={handleMatchFlowSessionChange}
                   />
