@@ -297,6 +297,11 @@ export const CreatePerformanceReportDialog = ({
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [showDescriptions, setShowDescriptions] = useState(true);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("match");
+  // Team / Scouting report state
+  const [reportType, setReportType] = useState<'player' | 'team'>('player');
+  const [isScoutingReport, setIsScoutingReport] = useState(false);
+  const [teamRoster, setTeamRoster] = useState<RosterEntry[]>([]);
+  const [showRoster, setShowRoster] = useState(true);
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
