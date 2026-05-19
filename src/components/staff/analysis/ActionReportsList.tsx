@@ -22,9 +22,12 @@ interface ActionReport {
   r90_score: number | null;
   minutes_played: number | null;
   result: string | null;
-  player_id: string;
+  player_id: string | null;
   player_name?: string;
   player_image_url?: string;
+  report_type?: 'player' | 'team' | string | null;
+  team_name?: string | null;
+  team_logo_url?: string | null;
   visibility_status?: string;
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
@@ -95,6 +98,9 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           minutes_played,
           result,
           player_id,
+          report_type,
+          team_name,
+          team_logo_url,
           visibility_status,
           placeholder_raw_score,
           placeholder_minutes,
@@ -117,8 +123,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         minutes_played: report.minutes_played,
         result: report.result,
         player_id: report.player_id,
-        player_name: report.players?.name || "Unknown Player",
-        player_image_url: report.players?.image_url || null,
+        report_type: report.report_type || "player",
+        team_name: report.team_name || null,
+        team_logo_url: report.team_logo_url || null,
+        player_name: report.report_type === "team" ? (report.team_name || "Team Report") : (report.players?.name || "Unknown Player"),
+        player_image_url: report.report_type === "team" ? (report.team_logo_url || null) : (report.players?.image_url || null),
         visibility_status: report.visibility_status || "draft",
         placeholder_raw_score: report.placeholder_raw_score,
         placeholder_minutes: report.placeholder_minutes,
