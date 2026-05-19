@@ -1645,17 +1645,19 @@ export const CreatePerformanceReportDialog = ({
         (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
-        const { data: existingAnalysis } = await supabase
-          .from("player_analysis")
-          .select("id")
-          .eq("player_id", playerId)
-          .eq("fixture_id", selectedFixtureId)
-          .maybeSingle();
+        if (playerId && selectedFixtureId) {
+          const { data: existingAnalysis } = await supabase
+            .from("player_analysis")
+            .select("id")
+            .eq("player_id", playerId)
+            .eq("fixture_id", selectedFixtureId)
+            .maybeSingle();
 
-        if (existingAnalysis) {
-          toast.error("A performance report already exists for this fixture. Please edit the existing report instead.");
-          setLoading(false);
-          return;
+          if (existingAnalysis) {
+            toast.error("A performance report already exists for this fixture. Please edit the existing report instead.");
+            setLoading(false);
+            return;
+          }
         }
 
         // Insert new record
@@ -1663,7 +1665,7 @@ export const CreatePerformanceReportDialog = ({
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
-            player_id: playerId,
+            player_id: playerId ?? null,
             fixture_id: isHighlightsReport ? null : selectedFixtureId,
             analysis_date: isHighlightsReport ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
             r90_score: isHighlightsReport ? null : calculatedR90,
