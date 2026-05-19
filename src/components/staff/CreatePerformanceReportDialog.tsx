@@ -146,6 +146,13 @@ interface PerformanceAction {
   zone_details?: ZonePoint[] | null;
   shot_map?: ShotMapData | null;
   is_first_half?: boolean;
+  involved_players?: Array<{ roster_id: string; score?: number | null }>;
+}
+
+interface RosterEntry {
+  id: string;
+  number: string;
+  name: string;
 }
 
 const SHOT_MAP_STAT_KEY = "__shot_map";
@@ -290,6 +297,11 @@ export const CreatePerformanceReportDialog = ({
   const [visibilityStatus, setVisibilityStatus] = useState<VisibilityStatus>("draft");
   const [showDescriptions, setShowDescriptions] = useState(true);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("match");
+  // Team / Scouting report state
+  const [reportType, setReportType] = useState<'player' | 'team'>('player');
+  const [isScoutingReport, setIsScoutingReport] = useState(false);
+  const [teamRoster, setTeamRoster] = useState<RosterEntry[]>([]);
+  const [showRoster, setShowRoster] = useState(true);
   const [placeholderRawScore, setPlaceholderRawScore] = useState("");
   const [placeholderMinutes, setPlaceholderMinutes] = useState("");
   const [placeholderPer, setPlaceholderPer] = useState("");
@@ -959,7 +971,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report")
         .eq("id", analysisId)
         .single();
 
@@ -970,6 +982,19 @@ export const CreatePerformanceReportDialog = ({
       setMinutesPlayed(analysisData.minutes_played?.toString() || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
+      setReportType(((analysisData as any).report_type === 'team') ? 'team' : 'player');
+      setIsScoutingReport(!!(analysisData as any).is_scouting_report);
+      {
+        const rosterRaw = (analysisData as any).team_roster;
+        const roster = Array.isArray(rosterRaw)
+          ? rosterRaw.map((r: any) => ({
+              id: String(r?.id || r?.roster_id || (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))),
+              number: String(r?.number ?? ''),
+              name: String(r?.name ?? ''),
+            }))
+          : [];
+        setTeamRoster(roster);
+      }
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
       setShowDescriptions((analysisData as any).show_descriptions !== false);
       setReportCategory(((analysisData as any).category as ReportCategory) || "match");
@@ -1215,7 +1240,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch performance actions
       const { data: actionsData, error: actionsError } = await supabase
         .from("performance_report_actions")
-        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details, is_first_half")
+        .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, recorded_stat, zone, zone_details, is_first_half, involved_players")
         .eq("analysis_id", analysisId)
         .order("action_number", { ascending: true });
 
@@ -1238,6 +1263,7 @@ export const CreatePerformanceReportDialog = ({
             zone_details: (action as any).zone_details || null,
             shot_map: extractShotMapFromRecordedStat(action.recorded_stat as unknown as RecordedStat | RecordedStat[] | null),
             is_first_half: (action as any).is_first_half ?? false,
+            involved_players: Array.isArray((action as any).involved_players) ? (action as any).involved_players : [],
           }));
         skipNextActionSyncRef.current = true;
         setActions(sortActionsChronologically(mappedActions));
@@ -1267,6 +1293,9 @@ export const CreatePerformanceReportDialog = ({
     setResult("");
     setSelectedFixtureId("");
     setPerformanceOverview("");
+    setReportType('player');
+    setIsScoutingReport(false);
+    setTeamRoster([]);
     setShowStrikerStats(false);
     setAdditionalStats({});
     setOriginalStrikerStats(null);
@@ -1570,6 +1599,9 @@ export const CreatePerformanceReportDialog = ({
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
             category: reportCategory,
+            report_type: reportType,
+            is_scouting_report: isScoutingReport,
+            team_roster: reportType === 'team' ? teamRoster : [],
           } as any)
           .eq("id", analysisId);
 
@@ -1647,6 +1679,9 @@ export const CreatePerformanceReportDialog = ({
             club_logo_url: clubLogoUrl || null,
             opposition_color: oppositionColor || null,
             category: reportCategory,
+            report_type: reportType,
+            is_scouting_report: isScoutingReport,
+            team_roster: reportType === 'team' ? teamRoster : [],
           } as any)
           .select()
           .single();
@@ -1678,6 +1713,7 @@ export const CreatePerformanceReportDialog = ({
             zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
             zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
             is_first_half: a.is_first_half ?? false,
+            involved_players: Array.isArray(a.involved_players) && a.involved_players.length > 0 ? a.involved_players : [],
           };
         });
       
@@ -1924,6 +1960,49 @@ export const CreatePerformanceReportDialog = ({
   );
 
   // The main content (used in both inline and dialog modes)
+  const toggleInvolvedPlayer = (actionIndex: number, rosterId: string) => {
+    setActions(prev => prev.map((a, i) => {
+      if (i !== actionIndex) return a;
+      const current = a.involved_players || [];
+      const exists = current.some(p => p.roster_id === rosterId);
+      const next = exists
+        ? current.filter(p => p.roster_id !== rosterId)
+        : [...current, { roster_id: rosterId }];
+      return { ...a, involved_players: next };
+    }));
+  };
+
+  const renderInvolvedChips = (action: PerformanceAction, index: number) => {
+    if (reportType !== 'team') return null;
+    if (teamRoster.length === 0) {
+      return (
+        <div className="text-[11px] text-muted-foreground italic">
+          Add players to the roster above to tag them on this action.
+        </div>
+      );
+    }
+    const selected = new Set((action.involved_players || []).map(p => p.roster_id));
+    return (
+      <div className="flex flex-wrap gap-1 pt-1">
+        {teamRoster.map((entry) => {
+          const isOn = selected.has(entry.id);
+          const label = entry.number || entry.name || '?';
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => toggleInvolvedPlayer(index, entry.id)}
+              title={entry.name ? `#${entry.number} ${entry.name}` : `#${entry.number}`}
+              className={`px-2 h-6 rounded-full border text-[11px] font-medium transition-colors ${isOn ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const mainContent = (
     <div spellCheck={spellCheckOn}>
       {loadingData ? (
@@ -1938,7 +2017,104 @@ export const CreatePerformanceReportDialog = ({
             <CategoryToggle value={reportCategory} onChange={setReportCategory} />
           </div>
 
-          {/* Highlights title (Highlights mode only) — stored in player_analysis.notes */}
+          {/* Report type (Player / Team) + Scouting flag */}
+          {reportCategory !== "highlights" && (
+            <div className="rounded-lg border bg-card/40 p-3 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex rounded-md border overflow-hidden text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setReportType('player')}
+                    className={`px-3 py-1.5 ${reportType === 'player' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                  >Player report</button>
+                  <button
+                    type="button"
+                    onClick={() => setReportType('team')}
+                    className={`px-3 py-1.5 border-l ${reportType === 'team' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                  >Team report</button>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={isScoutingReport}
+                    onCheckedChange={(v) => setIsScoutingReport(!!v)}
+                  />
+                  <span>Scouting report</span>
+                </label>
+                {reportType === 'team' && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs ml-auto"
+                    onClick={() => setShowRoster(s => !s)}
+                  >
+                    {showRoster ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
+                    Roster ({teamRoster.length})
+                  </Button>
+                )}
+              </div>
+              {reportType === 'team' && showRoster && (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {teamRoster.map((entry, i) => (
+                      <div key={entry.id} className="flex items-center gap-1 rounded-md border bg-background p-1">
+                        <Input
+                          value={entry.number}
+                          onChange={(e) => setTeamRoster(prev => prev.map((r, idx) => idx === i ? { ...r, number: e.target.value } : r))}
+                          placeholder="#"
+                          className="h-7 w-12 text-xs text-center"
+                        />
+                        <Input
+                          value={entry.name}
+                          onChange={(e) => setTeamRoster(prev => prev.map((r, idx) => idx === i ? { ...r, name: e.target.value } : r))}
+                          placeholder="Name (optional)"
+                          className="h-7 w-40 text-xs"
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            const removed = teamRoster[i];
+                            setTeamRoster(prev => prev.filter((_, idx) => idx !== i));
+                            setActions(prev => prev.map(a => ({
+                              ...a,
+                              involved_players: (a.involved_players || []).filter(p => p.roster_id !== removed.id),
+                            })));
+                          }}
+                          title="Remove"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-9 text-xs"
+                      onClick={() => setTeamRoster(prev => [
+                        ...prev,
+                        {
+                          id: (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+                          number: '',
+                          name: '',
+                        },
+                      ])}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add player
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tag involved players on each action using the chip strip. Scores on the action apply to every selected player; tap a chip-score to override per player.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Highlights title (Highlights mode only) */}
           {reportCategory === "highlights" && (
             <div>
               <Label htmlFor="highlights-title">Highlights Title *</Label>
@@ -2418,6 +2594,9 @@ export const CreatePerformanceReportDialog = ({
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold text-sm">Action #{action.action_number}</span>
+                    {reportType === 'team' && (action.involved_players?.length || 0) > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{action.involved_players?.length} tagged</span>
+                    )}
                     <div className="flex gap-1">
                       <Button
                         onClick={() => openR90Viewer(index)}
@@ -2705,6 +2884,7 @@ export const CreatePerformanceReportDialog = ({
                       {loading ? "Saving..." : (analysisId ? "Update" : "Save")}
                     </Button>
                   </div>
+                  {reportType === 'team' && renderInvolvedChips(action, index)}
                 </div>
               ))}
             </div>
@@ -3008,6 +3188,12 @@ export const CreatePerformanceReportDialog = ({
                       {getFilteredScores(index).length === 0 && (
                         <p className="text-muted-foreground text-center py-1 text-xs">No matching scores</p>
                       )}
+                    </div>
+                  )}
+
+                  {reportType === 'team' && (
+                    <div className="pl-8 pr-2">
+                      {renderInvolvedChips(action, index)}
                     </div>
                   )}
 

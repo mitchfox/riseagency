@@ -52,6 +52,7 @@ interface PerformanceAction {
   zone?: number | null;
   zone_details?: any | null;
   recorded_stat?: unknown;
+  involved_players?: Array<{ roster_id: string; score?: number | null }> | null;
 }
 
 interface StrikerStats {
@@ -80,6 +81,9 @@ interface AnalysisDetails {
   show_descriptions?: boolean;
   club_logo_url?: string | null;
   opposition_color?: string | null;
+  report_type?: 'player' | 'team' | string | null;
+  team_roster?: Array<{ id: string; number: string; name?: string }> | null;
+  is_scouting_report?: boolean | null;
 }
 
 interface PerformanceReportDialogProps {
@@ -212,12 +216,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, players!inner (name, position)")
+          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, players!inner (name, position)")
           .eq("id", id)
           .single(),
         supabase
           .from("performance_report_actions")
-          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat, is_first_half")
+          .select("id, action_number, minute, action_score, action_type, action_description, notes, video_url, clip_start, clip_end, zone, zone_details, recorded_stat, is_first_half, involved_players")
           .eq("analysis_id", id)
           .order("action_number", { ascending: true })
       ]);
@@ -246,6 +250,9 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         opposition_color: (analysisResult.data as any).opposition_color || null,
         category: (analysisResult.data as any).category || "match",
         notes: (analysisResult.data as any).notes || null,
+        report_type: (analysisResult.data as any).report_type || 'player',
+        team_roster: Array.isArray((analysisResult.data as any).team_roster) ? (analysisResult.data as any).team_roster : [],
+        is_scouting_report: !!(analysisResult.data as any).is_scouting_report,
       });
 
       if (actionsResult.error) throw actionsResult.error;
@@ -1168,6 +1175,21 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     )}
                   </CardHeader>
                   <CardContent className="p-2 md:p-4">
+                    {analysis?.report_type === 'team' && Array.isArray(analysis?.team_roster) && analysis.team_roster.length > 0 && (
+                      <div className="mb-3 rounded-md border bg-muted/30 p-2">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                          Team roster{analysis?.is_scouting_report ? ' · Scouting report' : ''}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {analysis.team_roster.map((r: any) => (
+                            <span key={r.id} className="px-2 h-6 inline-flex items-center rounded-full border bg-background text-[11px]" title={r.name || ''}>
+                              <span className="font-semibold mr-1">#{r.number || '?'}</span>
+                              {r.name && <span className="text-muted-foreground">{r.name}</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {/* Mobile: Compact card layout */}
                     <div className="block md:hidden space-y-2">
                       {filteredActions.map((action) => (
@@ -1193,6 +1215,19 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                           </div>
                           <div className="font-medium text-xs mt-1 truncate">{toTitleCase(tAction(action.action_number - 1, "type", action.action_type))}</div>
                           {(analysis?.show_descriptions !== false) && <div className="text-[10px] text-foreground/80">{tAction(action.action_number - 1, "description", action.action_description)}</div>}
+                          {analysis?.report_type === 'team' && Array.isArray((action as any).involved_players) && (action as any).involved_players.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {(action as any).involved_players.map((p: any) => {
+                                const entry = (analysis?.team_roster || []).find((r: any) => r.id === p.roster_id);
+                                if (!entry) return null;
+                                return (
+                                  <span key={p.roster_id} className="px-1.5 h-4 inline-flex items-center rounded-full bg-primary/15 text-primary text-[9px] font-medium" title={entry.name || ''}>
+                                    #{entry.number || '?'}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                           {(action.notes || tAction(action.action_number - 1, "notes", "")) && (
                             <div className="text-[9px] text-muted-foreground italic mt-1 pt-1 border-t border-border/50 break-words">
                               {tAction(action.action_number - 1, "notes", action.notes || "")}
@@ -1221,7 +1256,22 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                             <tr key={action.id} className="border-b border-border/50">
                               <td className="py-2 px-2">{action.action_number}</td>
                               <td className="py-2 px-2">{formatMinute(action.minute)}'</td>
-                              <td className="py-2 px-2">{toTitleCase(hasTranslation ? tAction(action.action_number - 1, "type", action.action_type) : translateActionType(reportLanguage, tAction(action.action_number - 1, "type", action.action_type)))}</td>
+                              <td className="py-2 px-2">
+                                {toTitleCase(hasTranslation ? tAction(action.action_number - 1, "type", action.action_type) : translateActionType(reportLanguage, tAction(action.action_number - 1, "type", action.action_type)))}
+                                {analysis?.report_type === 'team' && Array.isArray((action as any).involved_players) && (action as any).involved_players.length > 0 && (
+                                  <span className="ml-2 inline-flex flex-wrap gap-1 align-middle">
+                                    {(action as any).involved_players.map((p: any) => {
+                                      const entry = (analysis?.team_roster || []).find((r: any) => r.id === p.roster_id);
+                                      if (!entry) return null;
+                                      return (
+                                        <span key={p.roster_id} className="px-1.5 h-4 inline-flex items-center rounded-full bg-primary/15 text-primary text-[10px] font-medium" title={entry.name || ''}>
+                                          #{entry.number || '?'}
+                                        </span>
+                                      );
+                                    })}
+                                  </span>
+                                )}
+                              </td>
                               {(analysis?.show_descriptions !== false) && <td className="py-2 px-2">{tAction(action.action_number - 1, "description", action.action_description)}</td>}
                               <td className="py-2 px-2 text-muted-foreground">{tAction(action.action_number - 1, "notes", action.notes || "") || "-"}</td>
                               <td className={`py-2 px-2 text-right ${getActionScoreColor(action.action_score)}`}>
