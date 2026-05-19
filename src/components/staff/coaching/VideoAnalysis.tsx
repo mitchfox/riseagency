@@ -1598,6 +1598,32 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         e.stopPropagation();
         setPlaybackSpeed(1);
         applySpeed(1);
+      } else if (showClipOverlay && (e.key === 'a' || e.key === 'A')) {
+        if (overlayActionTypeBtnRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayActionTypeBtnRef.current.click();
+        }
+      } else if (showClipOverlay && (e.key === 's' || e.key === 'S')) {
+        if (overlayScoreInputRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayScoreInputRef.current.focus();
+          overlayScoreInputRef.current.select();
+        }
+      } else if (showClipOverlay && (e.key === 'n' || e.key === 'N')) {
+        if (overlayNotesInputRef.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          overlayNotesInputRef.current.focus();
+        }
+      } else if (showClipOverlay && e.key === 'Tab') {
+        // Cycle action type → score → notes when none focused
+        const active = document.activeElement as HTMLElement | null;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        overlayActionTypeBtnRef.current?.click();
       }
     };
     // Use capture phase so our handler fires before the browser's native video handlers
