@@ -2069,6 +2069,194 @@ export const CreatePerformanceReportDialog = ({
     );
   };
 
+  // Option B compact action-by-action editor. Renders one row per action with
+  // minute (flywheel), action type, single team score (auto-credited to every
+  // selected player), and a roster chip strip for tagging involved players.
+  // A per-action "different scores" toggle reveals per-player score overrides.
+  const [optionBExpandedScores, setOptionBExpandedScores] = useState<Record<number, boolean>>({});
+  const renderTeamOptionBEditor = () => {
+    return (
+      <div className="space-y-2">
+        {actions.map((action, index) => {
+          const involved = action.involved_players || [];
+          const involvedIds = new Set(involved.map((p) => p.roster_id));
+          const showOverrides = !!optionBExpandedScores[index];
+          return (
+            <div
+              key={index}
+              className="border rounded-lg p-3 bg-card/40 space-y-2 animate-in fade-in slide-in-from-bottom-1"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-mono text-muted-foreground w-6 text-center shrink-0">
+                  {action.action_number}
+                </span>
+                <div className="shrink-0">
+                  <FlywheelMinuteInput
+                    value={action.minute}
+                    onChange={(v) => updateAction(index, "minute", v)}
+                    onBlur={handleMinuteBlur}
+                    placeholder="0.00"
+                    className="w-20 h-9 text-sm"
+                  />
+                </div>
+                <div className="relative shrink-0">
+                  <Input
+                    value={action.action_type}
+                    onChange={(e) => {
+                      updateAction(index, "action_type", e.target.value);
+                      setActionTypePopoverOpen((prev) => ({ ...prev, [2000 + index]: true }));
+                    }}
+                    onFocus={() => setActionTypePopoverOpen((prev) => ({ ...prev, [2000 + index]: true }))}
+                    onBlur={() => {
+                      setTimeout(() => setActionTypePopoverOpen((prev) => ({ ...prev, [2000 + index]: false })), 200);
+                      if (action.action_type) updateAction(index, "action_type", canonicalActionType(action.action_type));
+                    }}
+                    placeholder="Action type"
+                    className="w-40 text-sm h-9"
+                  />
+                  {actionTypePopoverOpen[2000 + index] && (
+                    <div className="absolute z-50 mt-1 w-64 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                      {actionTypes
+                        .filter((type) => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
+                        .slice(0, 15)
+                        .map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent flex justify-between"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              updateAction(index, "action_type", type);
+                              setActionTypePopoverOpen((prev) => ({ ...prev, [2000 + index]: false }));
+                            }}
+                          >
+                            <span>{type}</span>
+                            <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                <ScoreDropdown
+                  value={action.action_score}
+                  onChange={(val) => updateAction(index, "action_score", val)}
+                  className="w-24 shrink-0"
+                  inputClassName="h-9 text-sm"
+                />
+                <div className="flex-1 min-w-[160px]">
+                  <Textarea
+                    value={action.action_description}
+                    onChange={(e) => updateAction(index, "action_description", e.target.value)}
+                    placeholder="Description (optional)"
+                    className="min-h-[36px] text-sm"
+                    rows={1}
+                  />
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={showOverrides ? "default" : "ghost"}
+                    className="h-8 text-[11px]"
+                    onClick={() => setOptionBExpandedScores((s) => ({ ...s, [index]: !s[index] }))}
+                    disabled={involved.length === 0}
+                    title={involved.length === 0 ? "Tag players first" : "Set different scores per player"}
+                  >
+                    Different scores
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive"
+                    onClick={() => removeAction(index)}
+                    disabled={actions.length === 1}
+                    title="Remove action"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Roster chips — single tap toggles a player on this action */}
+              {teamRoster.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground italic">
+                  Add players to the roster above to tag them on this action.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {teamRoster.map((entry) => {
+                    const isOn = involvedIds.has(entry.id);
+                    const label = entry.number || entry.name || "?";
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => toggleInvolvedPlayer(index, entry.id)}
+                        title={entry.name ? `#${entry.number} ${entry.name}` : `#${entry.number}`}
+                        className={`px-2 h-7 rounded-full border text-[11px] font-semibold transition-colors ${
+                          isOn
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        #{label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Per-player score overrides — only when staff explicitly opens it */}
+              {showOverrides && involved.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1 border-t border-border/40">
+                  {involved.map((player) => {
+                    const entry = teamRoster.find((r) => r.id === player.roster_id);
+                    if (!entry) return null;
+                    return (
+                      <div
+                        key={player.roster_id}
+                        className="flex items-center gap-1 rounded-md border bg-background px-2 py-1"
+                      >
+                        <span className="text-[11px] font-semibold min-w-7">#{entry.number || "?"}</span>
+                        <Input
+                          type="number"
+                          step="0.00001"
+                          value={player.score ?? ""}
+                          onChange={(e) => setInvolvedPlayerScore(index, player.roster_id, e.target.value)}
+                          placeholder={action.action_score || "team score"}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => insertActionAt(index + 1)}
+                >
+                  <Plus className="h-3 w-3 mr-1" /> Add action below
+                </Button>
+                <span className="text-[10px] text-muted-foreground">
+                  {involved.length > 0
+                    ? `Score credited to ${involved.length} player${involved.length === 1 ? "" : "s"}`
+                    : "Score will apply once players are tagged"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+  const isOptionBTeam = reportType === "team" && teamScoringMethod === "option_b" && reportCategory !== "highlights";
+
   const renderInvolvedChips = (action: PerformanceAction, index: number) => {
     if (reportType !== 'team') return null;
     if (teamRoster.length === 0) {
