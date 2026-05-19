@@ -180,6 +180,19 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const beginCreateReport = (reportType: 'player' | 'team') => {
     setPendingReportType(reportType);
     setShowReportTypePicker(false);
+    // Team reports are anchored to a club, not a player — skip the picker entirely.
+    if (reportType === 'team') {
+      if (onCreateReport) {
+        onCreateReport('', '', reportType);
+      } else {
+        setReportEditorPlayerId(null);
+        setReportEditorPlayerName('');
+        setReportEditorAnalysisId(undefined);
+        setReportEditorInitialType('team');
+        setShowReportEditor(true);
+      }
+      return;
+    }
     if (defaultPlayerId && defaultPlayerName) {
       if (onCreateReport) {
         onCreateReport(defaultPlayerId, defaultPlayerName, reportType);
