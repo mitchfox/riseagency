@@ -1859,7 +1859,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         .update(updateData)
         .eq("id", actionId);
       if (error) throw error;
-      toast.success("Clip attached to action", { id: toastId });
+      toast.success("Clip attached to action", { id: toastId, duration: 15000 });
     } catch (err: any) {
       toast.error(err.message || "Failed to attach clip", { id: toastId });
     }
@@ -2225,9 +2225,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] uppercase tracking-wider text-white/50 shrink-0">Latest clip</span>
-                    <span className="font-mono text-xs text-white/90 shrink-0" title="Match minute (auto, set by sync)">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); playClip(latest); }}
+                      className="font-mono text-xs text-white/90 hover:text-primary hover:underline shrink-0"
+                      title="Return to the start of this clip"
+                    >
                       {latest.minute || fmtClipMinute(latest.start, selectedVideo.match_minute_offset)}
-                    </span>
+                    </button>
                     <div className="min-w-[160px]">
                       <ActionTypeCombobox
                         value={latest.action_type}

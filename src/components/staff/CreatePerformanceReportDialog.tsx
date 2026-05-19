@@ -335,6 +335,7 @@ export const CreatePerformanceReportDialog = ({
   const [teamLogoUrl, setTeamLogoUrl] = useState("");
   const [teamColor, setTeamColor] = useState("");
   const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
+  const [teamScoringMethod, setTeamScoringMethod] = useState<'option_a' | 'option_b'>('option_b');
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
@@ -982,7 +983,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, team_name, team_logo_url, team_color, opponent_logo_url")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report, team_name, team_logo_url, team_color, opponent_logo_url, team_scoring_method")
         .eq("id", analysisId)
         .single();
 
@@ -1028,6 +1029,7 @@ export const CreatePerformanceReportDialog = ({
       setTeamLogoUrl((analysisData as any).team_logo_url || "");
       setTeamColor((analysisData as any).team_color || "");
       setOpponentLogoUrl((analysisData as any).opponent_logo_url || "");
+      setTeamScoringMethod(((analysisData as any).team_scoring_method === 'option_a') ? 'option_a' : 'option_b');
       
       // Re-derive opponent from fixture data to reflect any changes to fixture
       // (fixture team names may have been edited since report was saved)
@@ -1311,6 +1313,7 @@ export const CreatePerformanceReportDialog = ({
     setReportType(initialReportType);
     setIsScoutingReport(false);
     setTeamRoster([]);
+    setTeamScoringMethod(initialReportType === 'team' ? 'option_b' : 'option_a');
     setShowStrikerStats(false);
     setAdditionalStats({});
     setOriginalStrikerStats(null);
@@ -1528,6 +1531,7 @@ export const CreatePerformanceReportDialog = ({
   const handleSave = async () => {
     const isHighlightsReport = reportCategory === "highlights";
     const isTeamReport = reportType === 'team';
+    const safePlayerId = playerId && playerId.trim() ? playerId : null;
     // Validation - fixture only required for non-highlights, non-team reports
     if (!isHighlightsReport && !isTeamReport && !selectedFixtureId) {
       toast.error("Please select a fixture");
@@ -1622,6 +1626,7 @@ export const CreatePerformanceReportDialog = ({
             team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
             team_color: isTeamReport ? (teamColor || null) : null,
             opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
+            team_scoring_method: isTeamReport ? teamScoringMethod : 'option_a',
           } as any)
           .eq("id", analysisId);
 
@@ -1659,11 +1664,11 @@ export const CreatePerformanceReportDialog = ({
         (window as any).__preservedVideoData = existingVideoData;
       } else {
         // Create mode - check for existing analysis by fixture_id
-        if (playerId && selectedFixtureId) {
+        if (safePlayerId && selectedFixtureId) {
           const { data: existingAnalysis } = await supabase
             .from("player_analysis")
             .select("id")
-            .eq("player_id", playerId)
+            .eq("player_id", safePlayerId)
             .eq("fixture_id", selectedFixtureId)
             .maybeSingle();
 
@@ -1679,7 +1684,7 @@ export const CreatePerformanceReportDialog = ({
         const { data: analysisData, error: analysisError } = await supabase
           .from("player_analysis")
           .insert({
-            player_id: playerId ?? null,
+            player_id: isTeamReport ? null : safePlayerId,
             fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
             analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
             r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
@@ -1708,6 +1713,7 @@ export const CreatePerformanceReportDialog = ({
             team_logo_url: isTeamReport ? (teamLogoUrl || null) : null,
             team_color: isTeamReport ? (teamColor || null) : null,
             opponent_logo_url: isTeamReport ? (opponentLogoUrl || null) : null,
+            team_scoring_method: isTeamReport ? teamScoringMethod : 'option_a',
           } as any)
           .select()
           .single();
@@ -1799,12 +1805,12 @@ export const CreatePerformanceReportDialog = ({
         });
 
         // Check for performance improvements
-        const { data: recentReports } = await supabase
+        const { data: recentReports } = (!isTeamReport && safePlayerId) ? await supabase
           .from("player_analysis")
           .select("r90_score, fixture_stats, opponent, analysis_date")
-          .eq("player_id", playerId)
+          .eq("player_id", safePlayerId)
           .order("analysis_date", { ascending: false })
-          .limit(3);
+          .limit(3) : { data: null as any };
 
         if (recentReports && recentReports.length >= 2) {
           const current = recentReports[0];
@@ -1834,7 +1840,7 @@ export const CreatePerformanceReportDialog = ({
             const { data: fullReports } = await supabase
               .from("player_analysis")
               .select("striker_stats")
-              .eq("player_id", playerId)
+              .eq("player_id", safePlayerId)
               .order("analysis_date", { ascending: false })
               .limit(2);
             
