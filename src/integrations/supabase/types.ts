@@ -2425,6 +2425,77 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_priority_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_priority_items: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          highlights: string[]
+          id: string
+          rough_time: string | null
+          staff_task_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          highlights?: string[]
+          id?: string
+          rough_time?: string | null
+          staff_task_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          highlights?: string[]
+          id?: string
+          rough_time?: string | null
+          staff_task_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_priority_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "investor_priority_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investor_sessions: {
         Row: {
           created_at: string
@@ -2492,6 +2563,77 @@ export type Database = {
           vendor?: string | null
         }
         Relationships: []
+      }
+      investor_time_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_time_items: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          highlights: string[]
+          id: string
+          rough_time: string | null
+          staff_task_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          highlights?: string[]
+          id?: string
+          rough_time?: string | null
+          staff_task_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          highlights?: string[]
+          id?: string
+          rough_time?: string | null
+          staff_task_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_time_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "investor_time_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investor_users: {
         Row: {

@@ -19,13 +19,14 @@ import {
   LayoutDashboard, Sparkles, UserCheck, FileSignature, CheckSquare, Activity, Wallet,
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
-  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle,
+  Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle, Clock, ListOrdered,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
@@ -40,7 +41,8 @@ type SectionId =
   | "contracts"
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
-  | "outreach" | "clubnetwork";
+  | "outreach" | "clubnetwork"
+  | "timeManagement" | "priorities";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -174,6 +176,10 @@ const CATEGORIES: CategoryDef[] = [
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "My Tasks", icon: CheckSquare },
     { id: "activity", title: "Activity Feed", icon: Activity },
+  ]},
+  { id: "ops", title: "Operations", icon: Clock, sections: [
+    { id: "timeManagement", title: "Time Management", icon: Clock },
+    { id: "priorities", title: "Priorities", icon: ListOrdered },
   ]},
 ];
 
@@ -1678,6 +1684,10 @@ const InvestorsPortal = () => {
     clubContacts: ClubContactRow[];
     playerAnalyses: PlayerAnalysisRow[];
     matchAnalyses: any[];
+    timeCategories: OpsCategory[];
+    timeItems: OpsItem[];
+    priorityCategories: OpsCategory[];
+    priorityItems: OpsItem[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -1741,6 +1751,10 @@ const InvestorsPortal = () => {
         clubContacts: dd.clubContacts || [],
         playerAnalyses: dd.playerAnalyses || [],
         matchAnalyses: dd.matchAnalyses || [],
+        timeCategories: dd.timeCategories || [],
+        timeItems: (dd.timeItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
+        priorityCategories: dd.priorityCategories || [],
+        priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -2105,6 +2119,46 @@ const InvestorsPortal = () => {
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
                   {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
+                  {active === "timeManagement" && (
+                    <SectionShell icon={Clock} title="Time Management" action={
+                      data.isAdmin ? (
+                        <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                          {unlocked ? "Edit mode" : "Read-only"}
+                        </span>
+                      ) : undefined
+                    }>
+                      <OpsBoard
+                        kind="time"
+                        categories={data.timeCategories}
+                        items={data.timeItems}
+                        staffTasks={(data.tasks || []).map(t => ({ id: t.id, title: t.title, description: t.description, category: t.category }))}
+                        unlocked={canEdit}
+                        token={token}
+                        onRefresh={refresh}
+                      />
+                    </SectionShell>
+                  )}
+                  {active === "priorities" && (
+                    <SectionShell icon={ListOrdered} title="Priorities" action={
+                      data.isAdmin ? (
+                        <span className={`text-[10px] uppercase tracking-widest font-bbh px-2 py-1 rounded border ${unlocked ? "border-primary text-primary bg-primary/10" : "border-border text-muted-foreground"}`}>
+                          {unlocked ? "Edit mode" : "Read-only"}
+                        </span>
+                      ) : undefined
+                    }>
+                      <OpsBoard
+                        kind="priority"
+                        categories={data.priorityCategories}
+                        items={data.priorityItems}
+                        staffTasks={(data.tasks || []).map(t => ({ id: t.id, title: t.title, description: t.description, category: t.category }))}
+                        unlocked={canEdit}
+                        token={token}
+                        reorderable
+                        defaultCategorySuggestions={["Daily", "Weekly", "Monthly", "Seasonal"]}
+                        onRefresh={refresh}
+                      />
+                    </SectionShell>
+                  )}
                 </div>
               </>
             ) : expandedCategory ? (

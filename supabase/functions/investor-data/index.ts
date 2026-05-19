@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -107,6 +107,10 @@ Deno.serve(async (req) => {
         .select("player_id, created_at, analyses(id, title, analysis_type, match_date, home_team, away_team, home_score, away_score, category, fixture_id, home_team_bg_color, away_team_bg_color)")
         .gte("created_at", ninetyDaysAgo)
         .order("created_at", { ascending: false }).limit(300),
+      supabase.from("investor_time_categories").select("*").order("display_order", { ascending: true }),
+      supabase.from("investor_time_items").select("*").order("display_order", { ascending: true }),
+      supabase.from("investor_priority_categories").select("*").order("display_order", { ascending: true }),
+      supabase.from("investor_priority_items").select("*").order("display_order", { ascending: true }),
     ]);
 
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
@@ -168,6 +172,10 @@ Deno.serve(async (req) => {
       clubContacts: clubContacts.data || [],
       playerAnalyses: playerAnalyses.data || [],
       matchAnalyses: [...linkedMatchAnalyses, ...taggedMatchAnalyses],
+      timeCategories: timeCategories.data || [],
+      timeItems: timeItems.data || [],
+      priorityCategories: priorityCategories.data || [],
+      priorityItems: priorityItems.data || [],
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
