@@ -209,6 +209,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // score / notes / zone pinned to the top of the player so the analyst can
   // tag without leaving fullscreen. Toggled by the semi-invisible eye icon.
   const [showClipOverlay, setShowClipOverlay] = useState(false);
+  // Refs for in-overlay hotkeys (a/s/n/Tab) while in fullscreen
+  const overlayActionTypeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const overlayScoreInputRef = useRef<HTMLInputElement | null>(null);
+  const overlayNotesInputRef = useRef<HTMLInputElement | null>(null);
 
   // 8x simulation: native 4x + RAF nudge to double effective speed
   const eightXRafRef = useRef<number | null>(null);
