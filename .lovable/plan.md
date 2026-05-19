@@ -1,48 +1,70 @@
-Plan to fix the Investor Portal properly against the staff portal patterns:
+## Scope
+Two related changes to the staff performance report system: (1) better minute/score inputs on every action, and (2) a new "team" report variant that records which players were involved in each action.
 
-1. Replace the investor sidebar behaviour with the staff behaviour
-- Use the same category toggle logic as Staff.tsx: clicking an already expanded category collapses it back to the full category list.
-- Remove the custom investor-only logic that sets the active section to null when a category is clicked.
-- Keep the selected section active while category navigation opens and closes, the same as staff.
-- Match the staff sidebar classes, timings, search button placement and collapse toggle behaviour rather than the current half-copy.
+---
 
-2. Make tabs work like staff tabs
-- Stop rendering only the first three tabs with no usable overflow.
-- Add the same visible-tab plus overflow dialog pattern from staff: 2 visible on mobile, 3 on desktop, the rest available through a +N button.
-- Add the staff-style tab close behaviour, active fallback behaviour and persistent localStorage state.
-- Keep the add-tab grid picker, but make it behave like staff’s section picker.
+## Part 1 — Flywheel minute & default-from-previous-action
 
-3. Fix the header to follow staff structure
-- Keep the centred RISE logo, left-side open tabs and right-side action cluster.
-- Remove the investor-only odd layout differences.
-- Keep refresh, notifications, edit lock and sign out, but position and style them in the same header structure as staff.
-- Add the missing accessible dialog title/description to the section picker so the console warning is resolved.
+Applies to every action minute input in `CreatePerformanceReportDialog.tsx` (lines ~2498, ~2730) and the new team-report editor.
 
-4. Remove the Edge-blocked contract iframe/object preview
-- Do not embed contract PDFs inline in the investor page because Edge is blocking that page load.
-- Replace the preview panel with staff-style contract cards, readable metadata and clear Open/Download actions.
-- Keep the signed/private contract URL resolution from the backend, but only use it for direct opening or downloading.
-- This avoids the blank white/blocked contract screen while keeping contracts accessible.
+- **Default minute on add**: when adding a new action, prefill `minute` with the chronologically previous action's minute (instead of empty). Click-to-edit still works as today.
+- **Flywheel behaviour** on the minute field, always snapped to 5-second steps formatted as `mm.ss` (00, 05, 10, 15, …, 55):
+  - Desktop: wheel up = +5s, wheel down = −5s. Use `onWheel` with `preventDefault` and pointer/hover gating so it only fires when the field is hovered/focused (avoid hijacking page scroll).
+  - Mobile: vertical touch drag (touchstart/touchmove) on the field — every ~8 px of drag = 1 step (5s). `touch-action: none` on the field while dragging.
+  - Existing click-to-edit text input retains current behaviour; blur snaps the value to the nearest 5s and re-formats as `mm.ss`.
+- **Score field**: same flywheel pattern with sensible 0.05 increments (keeps existing typing behaviour). *(Optional — confirm if wanted; the spec only explicitly requested flywheel on minute. I'll include score only if you confirm.)*
+- Wrap the behaviour in a small reusable `FlywheelInput` (or a `useFlywheel` hook) so both the player and team editors share it.
 
-5. Make body text readable and remove unnecessary uppercase styling
-- Audit the investor page components and remove `font-bbh uppercase tracking` from body text, tables, feed rows, player cards and status text.
-- Keep uppercase only for tiny labels/badges where staff already does it.
-- Use staff-like readable weights: normal sentence case for feed text, table content and card descriptions, stronger weight only for names/titles.
-- Replace the remaining hard-to-read em dash activity sentence with simpler sentence-style copy.
+---
 
-6. Improve investor portal reaction time
-- Remove expensive page-wide animation where it is not used on staff.
-- Reduce staggered sidebar animation cost and avoid remounting large sections unnecessarily.
-- Memoise heavier derived lists like player database, activity feed and invoice totals where needed.
-- Prevent smooth-scroll and repeated full refresh calls from making every navigation feel delayed.
-- Keep data loading broad enough to show the portal, but avoid unnecessary render work on each sidebar/tab click.
+## Part 2 — Team Performance Reports
 
-7. Keep existing investor data work intact
-- Do not re-add Live Tasks or Contracts cards to the overview.
-- Keep task completions in Recent Activity.
-- Keep the invoice-linked commission logic already added.
-- Keep the network/player database source work already in place, but make the UI readable and responsive.
+### Data model
+Add a new migration:
+- `player_analysis.report_type text not null default 'player'` with values `'player' | 'team'`. All existing rows become `player`.
+- `player_analysis.team_roster jsonb default '[]'` — array of `{ number: int, name?: string, player_id?: uuid }`. Used only when `report_type = 'team'`. `player_id` lets us link to real `players` rows so a per-player breakdown can be generated; free entries (no link) are allowed.
+- `player_analysis.is_scouting_report boolean not null default false` — marks the report as scouting so it surfaces in the scouting sections.
+- `performance_report_actions.involved_players jsonb default '[]'` — array of `{ roster_id: string, score?: numeric }`. `score` is only set when the per-action score differs per player; otherwise each tagged player inherits the action's main `action_score`.
 
-Technical target files
-- `src/pages/InvestorsPortal.tsx` for header, tabs, sidebar, contracts UI, activity text and performance cleanup.
-- `supabase/functions/investor-data/index.ts` only if the contract URL or player database payload needs a small adjustment after the UI change.
+No changes to RLS policies needed (existing policies already cover the columns).
+
+### Create / Edit flow (staff)
+In `CreatePerformanceReportDialog.tsx`:
+- Add a **Report type** toggle at the top: *Player report* (default for existing) / *Team report*.
+- When *Team report* is selected:
+  - Hide the single-player picker; show a collapsible **Team roster** panel where staff add rows of `{ number, optional name, optional linked player }`. Drag-to-reorder; rosters persist on save.
+  - The default action-entry mode becomes **Quick tag mode** (new): each action row shows the roster as a strip of small "number" chips; tapping a chip toggles that player as involved. The existing free-form fields (action type, zone, score, notes, etc.) stay below. A toggle exposes the original "classic" entry layout for power users.
+  - **Minute**: uses the flywheel from Part 1, prefilled from previous action's minute.
+  - **Score**: a single score input applies to every selected player. A "Set individual scores" button opens a popover listing each selected player with their own score input; once any differ, the main score input shows "Mixed" and the popover becomes the source of truth.
+- **Mobile**: the action editor is rendered as a sticky bottom sheet pinned to the viewport with safe-area top/bottom padding so the active action row + roster chips + flywheel are always reachable.
+- A **Scouting report** checkbox at the top of the dialog writes to `is_scouting_report`.
+
+### Live report view (`PerformanceReport.tsx`)
+- If `report_type = 'team'`:
+  - Header shows the team roster in a collapsible tab (numbers, optional names).
+  - Each action row shows the chips/numbers of the involved players inline.
+  - Add a **Players** tab that lets the viewer pick any roster entry to see a generated per-player view: their actions only, their per-player scores (using `involved_players.score` when set, else the parent `action_score`), their own R90/totals computed from those filtered actions.
+- For `report_type = 'player'`, the page renders exactly as today.
+
+### Scouting integration
+- Where the scouting sections currently list player analyses or scouted reports (e.g. `ScoutedPlayersSection.tsx`, scout portal views), include team reports where `is_scouting_report = true`. They appear as team-level scouting reports; clicking the linked roster entries (those with a `player_id`) deep-links into that player's per-player view of the team report.
+
+### Sharing
+- Team reports are shared via the same public URL as player reports — no player-tagging in the description text, as requested.
+
+---
+
+## Files affected
+- new: `src/components/staff/flywheel/FlywheelMinuteInput.tsx` (+ optional `useFlywheel` hook)
+- edit: `src/components/staff/CreatePerformanceReportDialog.tsx` — type toggle, roster, quick-tag mode, mobile sticky layout, flywheel + prev-action default, individual-score popover, scouting checkbox
+- edit: `src/pages/PerformanceReport.tsx` — team roster header, per-action player chips, Players tab
+- edit: `src/components/staff/AllReportsSection.tsx` — filter/badge for team vs player and scouting
+- edit: scouting surfaces (`ScoutedPlayersSection.tsx`, scout portal pages) — include team scouting reports
+- new migration: `report_type`, `team_roster`, `is_scouting_report`, `involved_players`
+
+---
+
+## Open questions
+1. Should the **score flywheel** also apply (5-something step), or is flywheel minute-only? (Spec said minute; I'll do minute only unless told otherwise.)
+2. For a team report's overall `r90_score` and aggregate stats, do you want it computed (e.g. sum/average across roster) or left blank in favour of the per-player tab?
+3. When a roster entry has no linked `player_id` (free entry, e.g. trialist #14), the per-player view should still work but can't link out — confirm OK.

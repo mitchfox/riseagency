@@ -43,6 +43,7 @@ import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitch
 import { ShotMapSelector, type ShotMapData, isShotMapAction } from "@/components/report/ShotMapSelector";
 import { fetchPlayerActionFrequencies, canonicalActionType } from "@/lib/playerActionFrequency";
 import { ScoreDropdown } from "./ScoreDropdown";
+import { FlywheelMinuteInput, snapMinuteString } from "./flywheel/FlywheelMinuteInput";
 
 // Format minute as MM.SS with proper zero padding (e.g., 0.3 → "0.30", 10.5 → "10.50")
 const formatMinuteForInput = (minute: number | null): string => {
@@ -1340,11 +1341,12 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const addAction = () => {
+    const prevMinute = actions.length > 0 ? snapMinuteString(actions[actions.length - 1].minute) : "";
     setActions([
       ...actions,
       {
         action_number: actions.length + 1,
-        minute: "",
+        minute: prevMinute,
         action_score: "",
         action_type: "",
         action_description: "",
@@ -1354,9 +1356,10 @@ export const CreatePerformanceReportDialog = ({
   };
 
   const insertActionAt = (position: number) => {
+    const prevMinute = position > 0 ? snapMinuteString(actions[position - 1].minute) : "";
     const newAction = {
       action_number: position + 1,
-      minute: "",
+      minute: prevMinute,
       action_score: "",
       action_type: "",
       action_description: "",
@@ -2495,12 +2498,10 @@ export const CreatePerformanceReportDialog = ({
                    <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Minute *</Label>
-                      <Input
-                        type="text"
+                       <FlywheelMinuteInput
                         value={action.minute}
-                        onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        onBlur={handleMinuteBlur}
-                        placeholder="45"
+                         onChange={(v) => updateAction(index, "minute", v)}
+                         placeholder="0.00"
                         className="text-sm"
                       />
                     </div>
@@ -2724,11 +2725,9 @@ export const CreatePerformanceReportDialog = ({
                     <div className="flex items-start gap-2 rounded-md border bg-card/50 p-2">
                       <span className="text-sm font-medium text-muted-foreground pt-2 shrink-0 w-6 text-center">{action.action_number}</span>
 
-                      <Input
-                        type="text"
+                      <FlywheelMinuteInput
                         value={action.minute}
-                        onChange={(e) => updateAction(index, "minute", e.target.value)}
-                        onBlur={handleMinuteBlur}
+                        onChange={(v) => updateAction(index, "minute", v)}
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
