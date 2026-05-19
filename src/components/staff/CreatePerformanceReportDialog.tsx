@@ -1960,6 +1960,49 @@ export const CreatePerformanceReportDialog = ({
   );
 
   // The main content (used in both inline and dialog modes)
+  const toggleInvolvedPlayer = (actionIndex: number, rosterId: string) => {
+    setActions(prev => prev.map((a, i) => {
+      if (i !== actionIndex) return a;
+      const current = a.involved_players || [];
+      const exists = current.some(p => p.roster_id === rosterId);
+      const next = exists
+        ? current.filter(p => p.roster_id !== rosterId)
+        : [...current, { roster_id: rosterId }];
+      return { ...a, involved_players: next };
+    }));
+  };
+
+  const renderInvolvedChips = (action: PerformanceAction, index: number) => {
+    if (reportType !== 'team') return null;
+    if (teamRoster.length === 0) {
+      return (
+        <div className="text-[11px] text-muted-foreground italic">
+          Add players to the roster above to tag them on this action.
+        </div>
+      );
+    }
+    const selected = new Set((action.involved_players || []).map(p => p.roster_id));
+    return (
+      <div className="flex flex-wrap gap-1 pt-1">
+        {teamRoster.map((entry) => {
+          const isOn = selected.has(entry.id);
+          const label = entry.number || entry.name || '?';
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => toggleInvolvedPlayer(index, entry.id)}
+              title={entry.name ? `#${entry.number} ${entry.name}` : `#${entry.number}`}
+              className={`px-2 h-6 rounded-full border text-[11px] font-medium transition-colors ${isOn ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const mainContent = (
     <div spellCheck={spellCheckOn}>
       {loadingData ? (
