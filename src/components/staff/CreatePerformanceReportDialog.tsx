@@ -1598,6 +1598,7 @@ export const CreatePerformanceReportDialog = ({
         const { error: analysisError } = await supabase
           .from("player_analysis")
           .update({
+            player_id: isTeamReport ? null : safePlayerId,
             fixture_id: (isHighlightsReport || isTeamReport) ? null : selectedFixtureId,
             analysis_date: (isHighlightsReport || isTeamReport) ? new Date().toISOString().slice(0, 10) : fixture?.match_date,
             r90_score: (isHighlightsReport || isTeamReport) ? null : calculatedR90,
