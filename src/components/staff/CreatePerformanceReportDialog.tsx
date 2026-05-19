@@ -2888,6 +2888,7 @@ export const CreatePerformanceReportDialog = ({
                     </div>
                   </div>
                   )}
+                  {renderTeamActionScoring(action, index)}
                   
                   <div>
                     <Label className="text-xs">Action Type *</Label>
@@ -3075,7 +3076,7 @@ export const CreatePerformanceReportDialog = ({
                       {loading ? "Saving..." : (analysisId ? "Update" : "Save")}
                     </Button>
                   </div>
-                  {reportType === 'team' && renderInvolvedChips(action, index)}
+                  {reportType === 'team' && teamScoringMethod === 'option_a' && renderInvolvedChips(action, index)}
                 </div>
               ))}
             </div>
@@ -3383,7 +3384,13 @@ export const CreatePerformanceReportDialog = ({
                     </div>
                   )}
 
-                  {reportType === 'team' && (
+                  {reportType === 'team' && teamScoringMethod === 'option_b' && (
+                    <div className="pl-8 pr-2">
+                      {renderTeamActionScoring(action, index)}
+                    </div>
+                  )}
+
+                  {reportType === 'team' && teamScoringMethod === 'option_a' && (
                     <div className="pl-8 pr-2">
                       {renderInvolvedChips(action, index)}
                     </div>
