@@ -3516,6 +3516,7 @@ export type Database = {
           clip_start: number | null
           created_at: string | null
           id: string
+          involved_players: Json
           is_first_half: boolean
           is_successful: boolean | null
           minute: number | null
@@ -3539,6 +3540,7 @@ export type Database = {
           clip_start?: number | null
           created_at?: string | null
           id?: string
+          involved_players?: Json
           is_first_half?: boolean
           is_successful?: boolean | null
           minute?: number | null
@@ -3562,6 +3564,7 @@ export type Database = {
           clip_start?: number | null
           created_at?: string | null
           id?: string
+          involved_players?: Json
           is_first_half?: boolean
           is_successful?: boolean | null
           minute?: number | null
@@ -3658,6 +3661,7 @@ export type Database = {
           fixture_id: string | null
           fixture_stats: Json | null
           id: string
+          is_scouting_report: boolean
           linked_video_analysis_ids: string[] | null
           minutes_played: number | null
           notes: string | null
@@ -3671,9 +3675,11 @@ export type Database = {
           placeholder_sr: number | null
           player_id: string
           r90_score: number | null
+          report_type: string
           result: string | null
           show_descriptions: boolean
           striker_stats: Json | null
+          team_roster: Json
           translated_content: Json | null
           updated_at: string
           video_url: string | null
@@ -3689,6 +3695,7 @@ export type Database = {
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
+          is_scouting_report?: boolean
           linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
@@ -3702,9 +3709,11 @@ export type Database = {
           placeholder_sr?: number | null
           player_id: string
           r90_score?: number | null
+          report_type?: string
           result?: string | null
           show_descriptions?: boolean
           striker_stats?: Json | null
+          team_roster?: Json
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
@@ -3720,6 +3729,7 @@ export type Database = {
           fixture_id?: string | null
           fixture_stats?: Json | null
           id?: string
+          is_scouting_report?: boolean
           linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
@@ -3733,9 +3743,11 @@ export type Database = {
           placeholder_sr?: number | null
           player_id?: string
           r90_score?: number | null
+          report_type?: string
           result?: string | null
           show_descriptions?: boolean
           striker_stats?: Json | null
+          team_roster?: Json
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
