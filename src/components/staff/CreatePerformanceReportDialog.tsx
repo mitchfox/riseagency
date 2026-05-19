@@ -330,6 +330,11 @@ export const CreatePerformanceReportDialog = ({
   const [performanceOverview, setPerformanceOverview] = useState("");
   const [clubLogoUrl, setClubLogoUrl] = useState("");
   const [oppositionColor, setOppositionColor] = useState("");
+  // Team-report extra fields (own team side; opponent side reuses opponent + clubLogoUrl + oppositionColor below)
+  const [teamName, setTeamName] = useState("");
+  const [teamLogoUrl, setTeamLogoUrl] = useState("");
+  const [teamColor, setTeamColor] = useState("");
+  const [opponentLogoUrl, setOpponentLogoUrl] = useState("");
 
   // Function to intelligently map action type/description to R90 category
   const getR90CategoryFromAction = (actionType: string, actionDescription: string): string => {
