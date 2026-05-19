@@ -146,6 +146,13 @@ interface PerformanceAction {
   zone_details?: ZonePoint[] | null;
   shot_map?: ShotMapData | null;
   is_first_half?: boolean;
+  involved_players?: Array<{ roster_id: string; score?: number | null }>;
+}
+
+interface RosterEntry {
+  id: string;
+  number: string;
+  name: string;
 }
 
 const SHOT_MAP_STAT_KEY = "__shot_map";
