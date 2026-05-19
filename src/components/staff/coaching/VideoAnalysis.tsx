@@ -2167,6 +2167,81 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               {isPlayerFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               {isPlayerFullscreen ? "Exit full screen" : "Full screen"}
             </Button>
+            {/* Semi-invisible quick-tag overlay toggle (sits left of Full screen). */}
+            <button
+              type="button"
+              data-video-control="true"
+              onPointerDown={stopVideoControlEvent}
+              onMouseDown={stopVideoControlEvent}
+              onTouchStart={stopVideoControlEvent}
+              onClick={(e) => { e.stopPropagation(); setShowClipOverlay(v => !v); }}
+              className="absolute top-3 right-32 z-40 h-8 w-8 inline-flex items-center justify-center rounded-md text-white/30 hover:text-white/90 hover:bg-black/40 transition-colors"
+              title={showClipOverlay ? "Hide quick-tag overlay" : "Show quick-tag overlay"}
+              aria-label={showClipOverlay ? "Hide quick-tag overlay" : "Show quick-tag overlay"}
+            >
+              {showClipOverlay ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            {/* Quick-tag overlay: most recent clip's editable fields pinned to top */}
+            {showClipOverlay && clipsNewestFirst.length > 0 && (() => {
+              const latest = clipsNewestFirst[0];
+              return (
+                <div
+                  data-video-control="true"
+                  onPointerDown={stopVideoControlEvent}
+                  onMouseDown={stopVideoControlEvent}
+                  onTouchStart={stopVideoControlEvent}
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-14 left-3 right-3 z-40 bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2 shadow-lg"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] uppercase tracking-wider text-white/50 shrink-0">Latest clip</span>
+                    <span className="font-mono text-xs text-white/90 shrink-0" title="Match minute (auto, set by sync)">
+                      {latest.minute || fmtClipMinute(latest.start, selectedVideo.match_minute_offset)}
+                    </span>
+                    <div className="min-w-[160px]">
+                      <ActionTypeCombobox
+                        value={latest.action_type}
+                        onChange={(v) => handleUpdateClipAction(latest.id, v)}
+                        actionTypes={allActionTypes}
+                        compact
+                      />
+                    </div>
+                    <ZonePitchSelector
+                      value={(latest.zone_details || []) as ZonePoint[]}
+                      onChange={(zd) => handleUpdateClipZones(latest.id, zd as Clip['zone_details'])}
+                      actionType={latest.action_type}
+                      compact
+                    />
+                    <Input
+                      key={`${latest.id}-score`}
+                      placeholder="Score"
+                      type="number"
+                      step="0.00001"
+                      defaultValue={latest.action_score != null ? latest.action_score : ""}
+                      onBlur={e => {
+                        const v = e.target.value;
+                        const parsed = v === "" ? null : Number(v);
+                        if (parsed !== (latest.action_score ?? null)) {
+                          handleUpdateClipScore(latest.id, parsed);
+                        }
+                      }}
+                      className="h-7 text-xs w-[90px] bg-black/40 border-white/20 text-white"
+                    />
+                    <Input
+                      key={`${latest.id}-notes`}
+                      placeholder="Coach's note…"
+                      defaultValue={latest.notes || ""}
+                      onBlur={e => {
+                        if (e.target.value !== (latest.notes || "")) {
+                          handleUpdateClipNotes(latest.id, e.target.value);
+                        }
+                      }}
+                      className="h-7 text-xs flex-1 min-w-[120px] bg-black/40 border-white/20 text-white"
+                    />
+                  </div>
+                </div>
+              );
+            })()}
             <video
               ref={videoRef}
               key={selectedVideo.id}
