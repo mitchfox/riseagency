@@ -1713,6 +1713,7 @@ export const CreatePerformanceReportDialog = ({
             zone: a.zone_details?.length ? a.zone_details[0].zone : (a.zone || null),
             zone_details: (a.zone_details?.length ? a.zone_details : null) as any,
             is_first_half: a.is_first_half ?? false,
+            involved_players: Array.isArray(a.involved_players) && a.involved_players.length > 0 ? a.involved_players : [],
           };
         });
       
