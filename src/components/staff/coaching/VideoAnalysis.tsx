@@ -2241,6 +2241,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                         compact
                         overlayMode
                         triggerRef={overlayActionTypeBtnRef}
+                        portalContainer={isPlayerFullscreen ? playerShellRef.current : null}
                         onKeyDown={(e) => {
                           if (e.key === 'Tab') {
                             e.preventDefault();
