@@ -3191,6 +3191,12 @@ export const CreatePerformanceReportDialog = ({
                     </div>
                   )}
 
+                  {reportType === 'team' && (
+                    <div className="pl-8 pr-2">
+                      {renderInvolvedChips(action, index)}
+                    </div>
+                  )}
+
                   {/* Insert Action Row */}
                   <div className="flex gap-2 justify-center py-0.5">
                     <Button
