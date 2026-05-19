@@ -33,6 +33,7 @@ import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import blackMarble from "@/assets/black-marble-bg.png";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
+import staffMarbleBackground from "@/assets/smudged-marble-overlay.png";
 
 type SectionId =
   | "overview" | "investment"
@@ -150,6 +151,14 @@ const CATEGORIES: CategoryDef[] = [
     { id: "overview", title: "Overview", icon: LayoutDashboard },
     { id: "investment", title: "Investment", icon: Sparkles },
   ]},
+  { id: "act", title: "Activity", icon: Activity, sections: [
+    { id: "tasks", title: "My Tasks", icon: CheckSquare },
+    { id: "activity", title: "Activity Feed", icon: Activity },
+  ]},
+  { id: "ops", title: "Operations", icon: Clock, sections: [
+    { id: "timeManagement", title: "Time Management", icon: Clock },
+    { id: "priorities", title: "Priorities", icon: ListOrdered },
+  ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
     { id: "mandated", title: "Mandated", icon: UserCheck },
@@ -160,12 +169,6 @@ const CATEGORIES: CategoryDef[] = [
     { id: "playerdatabase", title: "Player Database", icon: Network },
     { id: "outreach", title: "Player Outreach", icon: Users },
   ]},
-  { id: "net", title: "Network", icon: Building2, sections: [
-    { id: "clubnetwork", title: "Club Network", icon: Building2 },
-  ]},
-  { id: "legal", title: "Legal", icon: FileSignature, sections: [
-    { id: "contracts", title: "Contracts", icon: FileSignature },
-  ]},
   { id: "fin", title: "Financial", icon: Wallet, sections: [
     { id: "spending", title: "Spending", icon: Wallet },
     { id: "commission", title: "Commission", icon: TrendingUp },
@@ -173,13 +176,11 @@ const CATEGORIES: CategoryDef[] = [
     { id: "forecast", title: "Forecast", icon: TrendingUp },
     { id: "salaryCap", title: "Salary Cap", icon: Target },
   ]},
-  { id: "act", title: "Activity", icon: Activity, sections: [
-    { id: "tasks", title: "My Tasks", icon: CheckSquare },
-    { id: "activity", title: "Activity Feed", icon: Activity },
+  { id: "net", title: "Network", icon: Building2, sections: [
+    { id: "clubnetwork", title: "Club Network", icon: Building2 },
   ]},
-  { id: "ops", title: "Operations", icon: Clock, sections: [
-    { id: "timeManagement", title: "Time Management", icon: Clock },
-    { id: "priorities", title: "Priorities", icon: ListOrdered },
+  { id: "legal", title: "Legal", icon: FileSignature, sections: [
+    { id: "contracts", title: "Contracts", icon: FileSignature },
   ]},
 ];
 
@@ -1664,7 +1665,7 @@ const ClubNetworkView = ({ rows }: { rows: ClubContactRow[] }) => {
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
   const [active, setActive] = useState<SectionId | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>("dash");
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [sectionPickerOpen, setSectionPickerOpen] = useState(false);
@@ -1712,7 +1713,7 @@ const InvestorsPortal = () => {
     if (!token || initialisedSessionRef.current) return;
     initialisedSessionRef.current = true;
     setActive(prev => prev ?? "overview");
-    setExpandedCategory(prev => prev ?? "dash");
+    // Default: leave sidebar showing all categories rather than auto-expanding Dashboard.
     setOpenTabs(prev => {
       const next: SectionId[] = prev.includes("overview") ? prev : (["overview", ...prev].slice(0, 12) as SectionId[]);
       localStorage.setItem("investor_open_tabs", JSON.stringify(next));
@@ -1830,9 +1831,15 @@ const InvestorsPortal = () => {
 
   return (
     <div className="min-h-screen text-foreground relative">
-      {/* Black marble background */}
+      {/* Marble background (matches staff portal) */}
       <div className="fixed inset-0 pointer-events-none -z-10"
-        style={{ backgroundImage: `url(${blackMarble})`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.25 }} />
+        style={{
+          backgroundImage: `url(${staffMarbleBackground})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundColor: "hsl(var(--background))",
+        }} />
 
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? "h-10" : ""}`}>
