@@ -971,7 +971,7 @@ export const CreatePerformanceReportDialog = ({
       // Fetch analysis data
       const { data: analysisData, error: analysisError } = await supabase
         .from("player_analysis")
-        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes")
+        .select("id, r90_score, minutes_played, fixture_id, opponent, result, striker_stats, fixture_stats, performance_overview, visibility_status, show_descriptions, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, estimated_ready_at, translated_content, club_logo_url, opposition_color, category, notes, report_type, team_roster, is_scouting_report")
         .eq("id", analysisId)
         .single();
 
@@ -982,6 +982,19 @@ export const CreatePerformanceReportDialog = ({
       setMinutesPlayed(analysisData.minutes_played?.toString() || "");
       setSelectedFixtureId(analysisData.fixture_id || "");
       setPerformanceOverview(analysisData.performance_overview || "");
+      setReportType(((analysisData as any).report_type === 'team') ? 'team' : 'player');
+      setIsScoutingReport(!!(analysisData as any).is_scouting_report);
+      {
+        const rosterRaw = (analysisData as any).team_roster;
+        const roster = Array.isArray(rosterRaw)
+          ? rosterRaw.map((r: any) => ({
+              id: String(r?.id || r?.roster_id || (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2))),
+              number: String(r?.number ?? ''),
+              name: String(r?.name ?? ''),
+            }))
+          : [];
+        setTeamRoster(roster);
+      }
       setVisibilityStatus((analysisData as any).visibility_status || "draft");
       setShowDescriptions((analysisData as any).show_descriptions !== false);
       setReportCategory(((analysisData as any).category as ReportCategory) || "match");
