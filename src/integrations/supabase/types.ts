@@ -3684,6 +3684,7 @@ export type Database = {
           team_logo_url: string | null
           team_name: string | null
           team_roster: Json
+          team_scoring_method: string
           translated_content: Json | null
           updated_at: string
           video_url: string | null
@@ -3722,6 +3723,7 @@ export type Database = {
           team_logo_url?: string | null
           team_name?: string | null
           team_roster?: Json
+          team_scoring_method?: string
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
@@ -3760,6 +3762,7 @@ export type Database = {
           team_logo_url?: string | null
           team_name?: string | null
           team_roster?: Json
+          team_scoring_method?: string
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
