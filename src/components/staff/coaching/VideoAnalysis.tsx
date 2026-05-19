@@ -2175,7 +2175,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
               onMouseDown={stopVideoControlEvent}
               onTouchStart={stopVideoControlEvent}
               onClick={(e) => { e.stopPropagation(); setShowClipOverlay(v => !v); }}
-              className="absolute top-3 right-32 z-40 h-8 w-8 inline-flex items-center justify-center rounded-md text-white/30 hover:text-white/90 hover:bg-black/40 transition-colors"
+              className="absolute top-3 left-3 z-40 h-8 w-8 inline-flex items-center justify-center rounded-md text-white/30 hover:text-white/90 hover:bg-black/40 transition-colors"
               title={showClipOverlay ? "Hide quick-tag overlay" : "Show quick-tag overlay"}
               aria-label={showClipOverlay ? "Hide quick-tag overlay" : "Show quick-tag overlay"}
             >
