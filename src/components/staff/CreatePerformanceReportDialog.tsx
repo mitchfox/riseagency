@@ -3890,9 +3890,9 @@ export const CreatePerformanceReportDialog = ({
             </div>
           </div>
 
-          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</h1>
+          <h1 className="text-lg md:text-2xl font-bold mb-4 truncate">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName || (reportType === 'team' ? 'Team Report' : '')}</h1>
 
-          <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />
+          {playerId && <FFFPackageWrapper playerId={playerId} analysisId={analysisId} />}
 
           {mainContent}
         </div>
@@ -3907,7 +3907,7 @@ export const CreatePerformanceReportDialog = ({
       <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none lg:max-w-[1200px] max-h-[92vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">{analysisId ? 'Edit' : 'Create'} Performance Report - {playerName || (reportType === 'team' ? 'Team Report' : '')}</DialogTitle>
             {languageSelector}
           </div>
         </DialogHeader>
