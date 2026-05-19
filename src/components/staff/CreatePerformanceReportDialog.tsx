@@ -111,8 +111,8 @@ const sortActionsChronologically = (actions: PerformanceAction[]): PerformanceAc
 interface CreatePerformanceReportDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  playerId: string;
-  playerName: string;
+  playerId?: string;
+  playerName?: string;
   onSuccess?: () => void;
   analysisId?: string; // For edit mode
   inline?: boolean; // When true, renders without Dialog wrapper
