@@ -92,6 +92,19 @@ Deno.serve(async (req) => {
         if (error) return bad(error.message, 500);
         return ok();
       }
+      case "uploadImage": {
+        const { base64, contentType, ext } = payload;
+        if (!base64 || typeof base64 !== "string") return bad("base64 required");
+        const bin = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const safeExt = (ext || "jpg").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "jpg";
+        const path = `investors/${crypto.randomUUID()}.${safeExt}`;
+        const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+          contentType: contentType || "image/jpeg", cacheControl: "31536000", upsert: false,
+        });
+        if (error) return bad(error.message, 500);
+        const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+        return ok({ url: data.publicUrl });
+      }
       case "reorderCards": {
         const items = Array.isArray(payload.items) ? payload.items : [];
         for (const it of items) {
