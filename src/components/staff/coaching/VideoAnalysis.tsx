@@ -448,7 +448,24 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const fetchPlayers = async () => {
     const { data } = await supabase.from("players").select("id, name, position, representation_status, image_url").order("name");
-    if (data) setPlayers(sortPlayersByRepresentation(data));
+    if (!data) return;
+    // Stats updater scoping: only show assigned players
+    let list: any[] = data;
+    try {
+      const uid = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      if (uid) {
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+        const rl = (roles || []).map((r: any) => r.role);
+        if (rl.length > 0 && rl.every((r: string) => r === "stats_updater")) {
+          const { data: assigns } = await (supabase as any)
+            .from("staff_player_assignments").select("player_id")
+            .eq("user_id", uid).eq("role_key", "stats_updater");
+          const allowed = new Set(((assigns as any[]) || []).map((a: any) => a.player_id));
+          list = list.filter((p) => allowed.has(p.id));
+        }
+      }
+    } catch { /* ignore */ }
+    setPlayers(sortPlayersByRepresentation(list));
   };
 
   const fetchKnownActionTypes = async (forPlayerId?: string | null) => {
