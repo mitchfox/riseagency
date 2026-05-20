@@ -32,3 +32,14 @@ export function useStatsUpdaterAssignments() {
 
   return { isScoped, allowedIds, loading };
 }
+
+/** Filter a player list down to those the current stats updater can access. */
+export function applyStatsUpdaterScope<T extends { id: string }>(
+  players: T[],
+  scope: { isScoped: boolean; allowedIds: Set<string> | null },
+): T[] {
+  if (!scope.isScoped) return players;
+  const ids = scope.allowedIds;
+  if (!ids) return [];
+  return players.filter((p) => ids.has(p.id));
+}

@@ -46,6 +46,8 @@ import { PlayerTransferHub } from "@/components/player/TransferHub";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
 import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDisplay";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
+import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
+import { OperatingProfileDialog } from "@/components/portal/OperatingProfileDialog";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
@@ -174,6 +176,32 @@ const Dashboard = () => {
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
   const [showAnalysisSub, setShowAnalysisSub] = useState(false);
   const [portalSettings, setPortalSettings] = useState<any>(null);
+  const [operatingProfileOpen, setOperatingProfileOpen] = useState(false);
+  const [operatingProfileChecked, setOperatingProfileChecked] = useState(false);
+
+  useEffect(() => {
+    if (operatingProfileChecked) return;
+    if (!playerData?.id) return;
+    // Wait until welcome modal has been seen so we don't double-stack popups
+    const welcomeSeen =
+      portalSettings?.has_seen_welcome_modal === true ||
+      localStorage.getItem(`player_welcome_seen_${playerData.id}`) === "true";
+    if (!welcomeSeen) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("player_operating_profile")
+        .select("submitted_at")
+        .eq("player_id", playerData.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setOperatingProfileChecked(true);
+      if (!data?.submitted_at) {
+        setOperatingProfileOpen(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [playerData?.id, portalSettings?.has_seen_welcome_modal, operatingProfileChecked]);
   const [navDropdownOpen, setNavDropdownOpen] = useState(false);
 
   // Initialize form grade configs from database
@@ -1729,6 +1757,14 @@ const Dashboard = () => {
           onMarkSeen={() => markWelcomeSeen(playerData.id)}
         />
       )}
+      {playerData && (
+        <OperatingProfileDialog
+          playerId={playerData.id}
+          open={operatingProfileOpen}
+          onOpenChange={setOperatingProfileOpen}
+          onSubmitted={() => setOperatingProfileChecked(true)}
+        />
+      )}
       {/* Header with Logo */}
       <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50 pwa-safe-top">
         <div className="container mx-auto px-4">
@@ -2624,6 +2660,12 @@ const Dashboard = () => {
 
                 <TabsContent value="comparisons">
                   <AnalysisComparisons analyses={analyses} playerData={playerData} />
+                  <LongTermVisionSection
+                    skillset={portalSettings?.vision_skillset}
+                    per90Targets={portalSettings?.vision_per90_targets}
+                    roadmap={portalSettings?.vision_roadmap}
+                    playersToWatch={portalSettings?.vision_players_to_watch}
+                  />
                 </TabsContent>
 
                 <TabsContent value="video-reports">

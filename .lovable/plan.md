@@ -1,79 +1,122 @@
-## Scope
+## Goals for this turn
 
-A round of fixes across the Staff portal, Highlights portal, Player portal, Rise With Us flow and the Investors portal. No new features beyond what's asked.
+Ship three big pieces deliberately, in this order:
 
----
-
-## 1. Staff portal — Stats Updater profile
-
-**Problem:** Sidebar shows no options and opens onto "my tasks" (a section the role can't access).
-
-**Fix in `src/pages/Staff.tsx` + `src/hooks/useRolePermissions.ts`:**
-- Wait for `permissionsLoading` before resolving `defaultSection` for ALL permission-managed roles (already partially there) and additionally guard against the stale `staff_active_tab` / `staff_open_tabs` in localStorage by validating each saved tab against `canView()` and stripping any that fail.
-- New default-resolution order for stats_updater: first viewable section in role order, NOT `my-tasks`. Confirm `my-tasks` is removed from `getViewableSections()` for the role (it shouldn't be in `role_permissions` at all — verify via read_query and clean up if it is).
-- Render the sidebar category list only after permissions resolve; show a small loading state instead of an empty list (prevents the "no options" flash that persists).
-
-**Stats Updater player scoping:**
-- Already handled by `useStatsUpdaterAssignments` — verify it's applied wherever the role lands by default (the section it opens on). If the default section reads players without applying `allowedIds`, wire the filter in.
+1. **Stats updater scoping** — make the staff portal actually show only the players a stats updater is assigned to, everywhere they can reach.
+2. **Long-Term Vision** block on the player portal hub (after Comparisons), pulling from the Athlete Centre.
+3. **Player Operating Profile** questionnaire — one-time pop-up on the portal that feeds the Athlete Centre.
 
 ---
 
-## 2. Highlights login titles
+## 1. Stats updater player scoping
 
-**Fix in `src/pages/HighlightsLogin.tsx` (and the playlist titles surfaced after login):**
-- Convert playlist / category labels to Title Case at render using existing `toTitleCase` from `src/lib/titleCase.ts` so e.g. "Performance reports" becomes "Performance Reports". Source data stays untouched.
+Right now `useStatsUpdaterAssignments` exists but isn't enforced in most lists. Apply it as a single, consistent filter in every section a stats updater can reach.
 
----
+Sections to scope (verified via `role_permissions` + sidebar):
+- Overview / Recent players / Search results
+- Focused Tasks (`FocusedTasksSection`)
+- Coaching Data → Performance Reports, Match Data, Comparisons (`CoachingDataSection`, `ActionReportsList`)
+- Video Analysis (`coaching/VideoAnalysis`, `AnalysisManagement`)
+- Vision Board / Athlete Centre player picker (`AthleteCentre`)
+- Any global player combobox / recent players bar
 
-## 3. Player portal — duplicate playlist on Highlights
+Approach:
+- Add a small `scopePlayersToStatsUpdater(players, scope)` helper next to the hook.
+- In each list/grid, call `useStatsUpdaterAssignments()` once and filter the players array before render.
+- For queries that hit Supabase by `player_id` (analyses, reports, video), add `.in("player_id", [...allowedIds])` when `isScoped` is true. If `allowedIds` is empty, short-circuit to an empty result and show a "No assigned players yet" empty state (no spinner).
+- Block deep links: in `PerformanceReport.tsx` and any report/edit route, if `isScoped && !allowedIds.has(reportPlayerId)` redirect back to overview with a toast.
+- Default landing: `Staff.tsx` already lands stats updater on first viewable section — keep that, but ensure overview is in their viewable set or pick `coaching-data` instead.
 
-**Fix in the player highlights view (find the playlist card component under `src/components/player/...`):**
-- Add a "Duplicate" button next to each playlist. On click it copies the playlist row + all clip mappings via a new edge function action `duplicate-playlist` (or extend the existing one) and refreshes the list. Toast "Playlist duplicated".
-
----
-
-## 4. Rise With Us → portal screen
-
-All changes in `src/pages/RiseWithUs.tsx` + translation files under `src/lib/portalTranslations.ts` (or wherever Rise With Us keys live).
-
-- **Welcome overlay popup:** Closable overlay shown once per visit on the portal screen with copy: "See a real preview of the work we do with our Stars to make the difference on the pitch." Add translation key `riseWithUs.portalOverlay.body` (+ title + dismiss) and add translations for all 12 supported languages.
-- **Optional second paragraph:** Add a field `representation_subtitle_secondary` (text, nullable) on the players table via migration. Surface it on the staff player profile editor so it can be filled in. Render it on the Rise With Us "stood out" screen below the existing paragraph when present.
-- **RiseWhite logo with gold star (not blue):** Replace the broken/filtered logo usage with the standard RiseWhite import already used elsewhere (search for the canonical import path and reuse). Remove any `filter`/`hue-rotate`/CSS recolour applied.
-- **Under-18 toggle in settings:** Add a boolean `is_under_18` (default false) to the relevant settings table (likely `player_portal_settings` or per-player settings used by Rise With Us). Add a toggle in the settings page. When true, render the under-18 card variants that clearly state "no commission". 18+ keeps existing cards.
+Test matrix: log in as a stats updater with 0, 1, and 3 assignments and walk each section.
 
 ---
 
-## 5. Investors portal — Priorities / Time Management
+## 2. Portal hub: Long-Term Vision block
 
-All changes in `src/components/investor/OpsBoard.tsx`, `src/pages/InvestorsPortal.tsx`, and edge function if needed.
+Placement: in `src/pages/Dashboard.tsx`, immediately after the `comparisons` TabsContent (line ~2627), inside the same hub flow. Render only if at least one of the four parts has content.
 
-- **Add-category typing doesn't work:** Bug in `OpsBoard.tsx` — the Input inside the popover / collapsible likely loses focus or its parent intercepts the keydown. Investigate and fix (likely a parent `onClick`/Popover focus trap or AnimatePresence remounting on every keystroke because of an unstable parent key). Ensure controlled `<Input>` updates `newCategoryTitle` on each keystroke without the parent re-rendering it.
-- **Card spacing + bold position number:** Redesign `ItemCard` header. Layout: `[big bold white number] [▲ ▼ small buttons stacked] [title block] [actions]`. Number is the live `idx + 1` in `list`, font-size ~`text-3xl font-extrabold text-white/90`, fixed width column. Buttons sit immediately right of the number. Properly spaced via `gap-4`.
-- **Reorder actually reorders:** Current `moveItem` only swaps `display_order` of two adjacent rows but the local optimistic state map in `OpsBoard` keeps the old `display_order` from the merged `items` list, so the sorted view doesn't change. Fix by ALSO patching `localItems` with the two swapped rows (set their new `display_order`) before/with the server call, so `visibleItems.sort(...)` reflects the change immediately. Verify the persisted update sticks via read_query after a reorder.
-- **Persistence on reload:** Confirmed in DB that rows DO persist (6 categories, 4 items). The "lost on reload" symptom is the UI not rendering them — verify that `InvestorsPortal` passes `data.timeCategories` / `data.priorityCategories` into `OpsBoard` correctly AND that the initial `localCategories` / `localItems` state doesn't accidentally hide server rows (the merge map dedupes by id, but if a deletedCategoryIds entry persists from a prior session via any storage, server rows would be filtered out). Ensure `deletedCategoryIds` / `deletedItemIds` are not persisted between mounts. Also confirm `investor-data` edge function isn't being short-circuited by an old cache header — set `Cache-Control: no-store` on its response.
+Layout: 2x2 grid on desktop (`md:grid-cols-2`), single column on mobile, with the existing marble Card chrome and Rise Gold top border to match the rest of the hub.
+
+The four parts (titles localised, content from Athlete Centre):
+
+```text
++---------------------------+---------------------------+
+| 1. Skillset & Potential   | 2. Per-90 Targets         |
+|    written eval           |    list of metrics + goal |
++---------------------------+---------------------------+
+| 3. Development Road Map   | 4. Players to Watch       |
+|    6 / 18 / 36 months     |    glassy cards + play    |
++---------------------------+---------------------------+
+```
+
+Each tile: glossy glass surface (`bg-card/60 backdrop-blur border border-white/10 rounded-2xl`), Rise Gold accent heading, content-aware empty handling (a missing part collapses, doesn't show "—").
+
+Part 4 cards: name (heading), reason (body), and a circular play button linking out via `openExternalUrl`. Stack vertically inside the tile, glassy chip per player.
+
+Data source: extend `player_athlete_profile` (existing table backing Athlete Centre) — see Technical section for schema.
+
+Trigger to staff: in Athlete Centre, the existing "Long-Term Plan" tab becomes "Long-Term Vision" with four sub-fields matching the portal tiles. Save persists; the portal reads the same row.
 
 ---
 
-## 6. Stars content translations
+## 3. Player Operating Profile questionnaire
 
-**Audit pass across Stars-related pages (`src/pages/Stars.tsx`, `src/pages/stars/*`, `public/stars/*`, and any star component):**
-- Find hard-coded English strings and route them through the existing translation system (likely `useTranslation` / `t()` from `LanguageContext`).
-- Add missing keys to all 12 language files. Where AI translation is needed, follow the existing AI-mimic constraint memory (preserve facts, UK English styles).
-- Verify by switching language and walking each Stars screen.
+A one-time pop-up on the portal (wide, not thin — per project convention) the first time a player lands after release. Once submitted, it never re-opens; staff can clear it from the Athlete Centre to re-trigger.
+
+Pop-up shell:
+- Reuse `Dialog` with `max-w-4xl`, scrollable body, "Save and continue later" + "Submit" footer.
+- 6 sections as accordion steps with a progress bar (Communication, Engagement, Discipline, Energy, Match Prep, Reflection).
+- Ranking questions: drag-to-reorder list (use `@dnd-kit` already in the project) with numbered chips.
+- Single-select: `RadioGroup`. Multi-select up to N: checkbox grid with counter.
+- Open responses: `Textarea`.
+- Autosave draft every 10s into `player_operating_profile_drafts` keyed by player id so they don't lose progress.
+
+Staff side: new tab in Athlete Centre → Development → "Operating Profile" rendering the answers read-only, grouped by section, with a "Reset questionnaire" button. This becomes the opening section of Development for that player.
+
+Localisation: all question text goes through `t()` with keys under `operatingProfile.*` so the 12 portal languages pick it up. English source first, then run the existing auto-translate pass.
 
 ---
 
 ## Technical notes
 
-- New migration: `players.representation_subtitle_secondary text`, `player_portal_settings.is_under_18 boolean default false` (or equivalent table).
-- Edge function additions: `duplicate-playlist` action on the highlights/player-data writer; no other backend changes needed (ops writes already work).
-- Translation keys to add (non-exhaustive): `riseWithUs.portalOverlay.title`, `riseWithUs.portalOverlay.body`, `riseWithUs.portalOverlay.dismiss`, settings toggle label `settings.under18.label`, settings toggle help text, and all newly externalised Stars strings.
-- No design system / token changes. All new UI uses existing semantic tokens (`primary`, `foreground`, `card`, `muted-foreground`, etc.).
-- Persistence is verified server-side; ops-board fixes are purely frontend rendering/state.
+### DB migrations
+- Extend `player_athlete_profile` (or create if missing) with:
+  - `vision_skillset text`
+  - `vision_per90_targets jsonb`  // `[{metric, target, unit}]`
+  - `vision_roadmap jsonb`  // `{ six_months, eighteen_months, thirty_six_months }`
+  - `vision_players_to_watch jsonb`  // `[{name, reason, url}]`
+- New table `player_operating_profile`:
+  - `player_id uuid PK FK players(id)`
+  - `answers jsonb not null` (sectioned)
+  - `submitted_at timestamptz`
+  - `updated_at timestamptz default now()`
+  - RLS: select/update by the player's own email match (existing portal pattern), full access to admin/staff. Stats updater: no access.
+- New table `player_operating_profile_drafts` mirroring the above for autosave.
+
+### Edge functions
+- `operating-profile-save` — accepts `{playerEmail, answers, submit}`, validates with zod, upserts draft or final row using service role. Mirrors the `playlist-manage` auth pattern.
+
+### Files likely touched
+- `src/hooks/useStatsUpdaterAssignments.ts` (+ helper)
+- `src/pages/Staff.tsx`, `Dashboard.tsx`, `PerformanceReport.tsx`
+- `src/components/staff/{FocusedTasksSection,CoachingDataSection,AthleteCentre,AnalysisManagement}.tsx` and `analysis/ActionReportsList.tsx`, `coaching/VideoAnalysis.tsx`
+- `src/components/portal/LongTermVisionSection.tsx` (new)
+- `src/components/portal/OperatingProfileDialog.tsx` (new) + step components
+- `src/components/staff/AthleteCentre.tsx` long-term vision editor + operating profile viewer
+- `supabase/functions/operating-profile-save/index.ts` (new)
+- One migration file for the schema changes above
+
+### Out of scope (will not touch this turn)
+- Re-styling existing hub sections
+- Auto-translation runs beyond English source strings (kicks off separately)
+- Investor portal, Rise With Us, playlists — already shipped previously
 
 ---
 
-## Out of scope
+## Order of execution
 
-- Reworking the staff portal sidebar architecture beyond fixing the stats_updater default.
-- Any change to action timing / flywheel inputs (already shipped in prior turn).
+1. Stats updater scoping (most-asked, smallest UI surface)
+2. DB migration for vision + operating profile
+3. Long-Term Vision tiles (staff editor → portal renderer)
+4. Operating Profile dialog + autosave + staff viewer
+5. Smoke test all three as a stats updater and as a player

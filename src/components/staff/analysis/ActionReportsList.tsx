@@ -14,6 +14,7 @@ import { ScoreEditMode } from "@/components/staff/analysis/ScoreEditMode";
 import { format } from "date-fns";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
+import { useStatsUpdaterAssignments } from "@/hooks/useStatsUpdaterAssignments";
 
 interface ActionReport {
   id: string;
@@ -44,6 +45,7 @@ interface ActionReportsListProps {
 
 export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerId, defaultPlayerName }: ActionReportsListProps = {}) => {
   const [reports, setReports] = useState<ActionReport[]>([]);
+  const scope = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [playerFilter, setPlayerFilter] = useState(defaultPlayerId || "all");
@@ -66,9 +68,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
 
   useEffect(() => {
+    if (scope.loading) return;
     fetchReports();
     fetchPlayers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope.loading, scope.isScoped]);
 
   useEffect(() => {
     if (defaultPlayerId) {
@@ -81,8 +85,13 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       .from("players")
       .select("id, name")
       .order("name");
-    
-    setPlayers(data || []);
+    const all = data || [];
+    if (scope.isScoped) {
+      const ids = scope.allowedIds;
+      setPlayers(ids ? all.filter(p => ids.has(p.id)) : []);
+    } else {
+      setPlayers(all);
+    }
   };
 
   const fetchReports = async () => {
@@ -135,7 +144,12 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         notes: report.notes || null,
       }));
 
-      setReports(formattedReports);
+      const scoped = scope.isScoped
+        ? (scope.allowedIds
+            ? formattedReports.filter((r) => r.player_id && scope.allowedIds!.has(r.player_id))
+            : [])
+        : formattedReports;
+      setReports(scoped);
     } catch (error: any) {
       console.error("Failed to fetch reports:", error);
       toast.error("Failed to load action reports");

@@ -34,6 +34,8 @@ import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 import { RecentPlayersBar, getRecentPlayerIds, addRecentPlayer } from "@/components/staff/RecentPlayersBar";
 import { SessionResumeBanner, saveSession, clearSession, type SessionState } from "@/components/staff/SessionResumeBanner";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
+import { LongTermVisionEditor } from "@/components/staff/LongTermVisionEditor";
+import { OperatingProfileViewer } from "@/components/staff/OperatingProfileViewer";
 
 interface Player {
   id: string;
@@ -239,15 +241,32 @@ export const AthleteCentre = () => {
       .order("name");
 
     if (!error && data) {
-      setPlayers(data);
-      if (data.length > 0) {
+      const userId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      let filtered = data as Player[];
+      if (userId) {
+        try {
+          const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+          const onlyStatsUpdater = (roles || []).length > 0 && (roles || []).every((r: any) => r.role === "stats_updater");
+          if (onlyStatsUpdater) {
+            const { data: assignments } = await (supabase as any)
+              .from("staff_player_assignments")
+              .select("player_id")
+              .eq("user_id", userId)
+              .eq("role_key", "stats_updater");
+            const allowed = new Set(((assignments as any[]) || []).map((a: any) => a.player_id));
+            filtered = (data as Player[]).filter(p => allowed.has(p.id));
+          }
+        } catch {/* ignore */}
+      }
+      setPlayers(filtered);
+      if (filtered.length > 0) {
         const savedPlayerId = localStorage.getItem('athleteCentre_lastPlayer');
-        const savedPlayer = savedPlayerId ? data.find(p => p.id === savedPlayerId) : null;
+        const savedPlayer = savedPlayerId ? filtered.find(p => p.id === savedPlayerId) : null;
         if (savedPlayer) {
           setSelectedPlayer(savedPlayer.id);
         } else {
-          const firstRepresented = data.find(p => p.representation_status === 'represented');
-          setSelectedPlayer(firstRepresented?.id || data[0].id);
+          const firstRepresented = filtered.find(p => p.representation_status === 'represented');
+          setSelectedPlayer(firstRepresented?.id || filtered[0].id);
         }
       }
     }
@@ -318,7 +337,8 @@ export const AthleteCentre = () => {
   }
 
   const devTabItems = [
-    { value: "longterm", label: "Long-Term Plan", icon: Calendar },
+    { value: "profile", label: "Operating Profile", icon: Brain },
+    { value: "longterm", label: "Long-Term Vision", icon: Calendar },
     { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
     { value: "programming", label: "Programming", icon: Dumbbell },
@@ -489,23 +509,11 @@ export const AthleteCentre = () => {
                     </div>
 
                     <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
-                      <div className="flex items-center justify-between mb-3 md:mb-4">
-                        <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
-                      </div>
-                      <div className="space-y-3 md:space-y-4">
-                        <Textarea
-                          placeholder="Outline the long-term development trajectory for this player..."
-                          value={longTermPlan}
-                          onChange={(e) => setLongTermPlan(e.target.value)}
-                          className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                        />
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm">
-                            {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
-                            Save Plan
-                          </Button>
-                        </div>
-                      </div>
+                      {selectedPlayer && <LongTermVisionEditor playerId={selectedPlayer} />}
+                    </TabsContent>
+
+                    <TabsContent value="profile" className="mt-0 space-y-3 md:space-y-4">
+                      {selectedPlayer && <OperatingProfileViewer playerId={selectedPlayer} />}
                     </TabsContent>
 
                     <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
