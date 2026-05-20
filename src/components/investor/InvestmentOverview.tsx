@@ -112,14 +112,25 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
   const [busy, setBusy] = useState(false);
 
   const uploadImage = async (file: File): Promise<string | null> => {
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `investors/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("marketing-gallery").upload(path, file, {
-      cacheControl: "31536000", upsert: false,
-    });
-    if (error) { toast.error(error.message); return null; }
-    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      if (file.size > 8 * 1024 * 1024) { toast.error("Image must be under 8MB"); return null; }
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+      }
+      const base64 = btoa(binary);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const res: any = await callWrite(token, "uploadImage", {
+        base64, contentType: file.type || "image/jpeg", ext,
+      });
+      return res?.url || null;
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+      return null;
+    }
   };
 
   const handleHeroPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
