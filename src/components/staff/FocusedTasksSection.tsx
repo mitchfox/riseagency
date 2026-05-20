@@ -57,7 +57,7 @@ export const FocusedTasksSection = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <ActiveIcon className="h-4 w-4" />
-          <span>{TASK_CONFIG[activeTask].name}</span>
+          <span>{(TASK_CONFIG as any)[activeTask]?.name}</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -67,7 +67,7 @@ export const FocusedTasksSection = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
             {(Object.keys(TASK_CONFIG) as TaskType[]).map((taskId) => {
-              const Icon = TASK_CONFIG[taskId].icon;
+              const Icon = (TASK_CONFIG as any)[taskId].icon;
               return (
                 <DropdownMenuItem
                   key={taskId}
@@ -75,7 +75,7 @@ export const FocusedTasksSection = () => {
                   className={activeTask === taskId ? "bg-accent" : ""}
                 >
                   <Icon className="h-4 w-4 mr-2" />
-                  {TASK_CONFIG[taskId].name}
+                  {(TASK_CONFIG as any)[taskId].name}
                 </DropdownMenuItem>
               );
             })}
