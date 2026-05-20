@@ -12,6 +12,7 @@ import { ClipboardList, BarChart3, Database, User, RefreshCw } from "lucide-reac
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
 import { toast } from "sonner";
 import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
+import { useStatsUpdaterAssignments, applyStatsUpdaterScope } from "@/hooks/useStatsUpdaterAssignments";
 
 interface PlayerAnalysis {
   id: string;
@@ -52,6 +53,7 @@ export const CoachingDataSection = () => {
     }
   }, []);
   const [reportsKey, setReportsKey] = useState(0);
+  const scope = useStatsUpdaterAssignments();
 
   useEffect(() => {
     fetchPlayers();
@@ -89,7 +91,8 @@ export const CoachingDataSection = () => {
     toast.success("Data refreshed");
   }, [selectedPlayer]);
 
-  const currentPlayer = players.find(p => p.id === selectedPlayer);
+  const visiblePlayers = applyStatsUpdaterScope(players, scope);
+  const currentPlayer = visiblePlayers.find(p => p.id === selectedPlayer);
 
   const tabItems = [
     { value: "reports", label: "Performance Reports", icon: ClipboardList },
@@ -183,7 +186,7 @@ export const CoachingDataSection = () => {
 
         <TabsContent value="matchdata" className="mt-0 space-y-4">
           <PlayerCombobox
-            players={sortPlayersByRepresentation(players)}
+            players={sortPlayersByRepresentation(visiblePlayers)}
             value={selectedPlayer}
             onChange={setSelectedPlayer}
             allLabel="Select a player..."
@@ -202,7 +205,7 @@ export const CoachingDataSection = () => {
 
         <TabsContent value="comparisons" className="mt-0 space-y-4">
           <PlayerCombobox
-            players={sortPlayersByRepresentation(players)}
+            players={sortPlayersByRepresentation(visiblePlayers)}
             value={selectedPlayer}
             onChange={setSelectedPlayer}
             allLabel="Select a player..."
