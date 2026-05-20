@@ -25,6 +25,7 @@ interface Template { id: string; message_title: string; message_content: string;
 interface Script { id: string; title: string; description: string | null; sort_order?: number | null; }
 interface ScriptNode { id: string; script_id: string; parent_node_id: string | null; kind: string; branch_label: string | null; content: string | null; optional: boolean; sort_order: number; }
 interface ScriptObjection { id: string; script_id: string; objection: string; response: string | null; sort_order: number; }
+interface CaseStudy { id: string; title: string; description: string | null; context_notes: string | null; }
 interface StaffTask { id: string; title: string; description: string | null; category: string | null; priority: string | null; completed: boolean; deadline: string | null; assigned_to?: string[] | null; recurrence_label?: string | null; }
 
 type SourceEntry = {
@@ -43,6 +44,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   const [scripts, setScripts] = useState<Script[]>([]);
   const [scriptNodes, setScriptNodes] = useState<ScriptNode[]>([]);
   const [scriptObjections, setScriptObjections] = useState<ScriptObjection[]>([]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
   const [newBody, setNewBody] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [authorLabel, setAuthorLabel] = useState(() => localStorage.getItem("exec_author_label") || "");
@@ -65,16 +67,18 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   };
   const loadSources = async () => {
     if (kind === "script") {
-      const [tpl, scr, nd, obj] = await Promise.all([
-        (supabase as any).from("marketing_templates").select("id, message_title, message_content, recipient_type").eq("show_on_investor_portal", true).order("message_title"),
+      const [tpl, scr, nd, obj, cs] = await Promise.all([
+        (supabase as any).from("marketing_templates").select("id, message_title, message_content, recipient_type").order("message_title"),
         (supabase as any).from("messaging_scripts").select("id, title, description, sort_order").order("sort_order").order("created_at"),
         (supabase as any).from("messaging_script_nodes").select("*").order("sort_order"),
         (supabase as any).from("messaging_script_objections").select("*").order("sort_order"),
+        (supabase as any).from("messaging_case_studies").select("id, title, description, context_notes").order("updated_at", { ascending: false }),
       ]);
       setTemplates((tpl.data as Template[]) || []);
       setScripts((scr.data as Script[]) || []);
       setScriptNodes((nd.data as ScriptNode[]) || []);
       setScriptObjections((obj.data as ScriptObjection[]) || []);
+      setCaseStudies((cs.data as CaseStudy[]) || []);
     }
   };
   useEffect(() => { load(); loadSources(); }, [kind]);
@@ -114,7 +118,14 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
         body: template.message_content,
         badge: template.recipient_type || "Message template",
       }));
-      return [...scriptCards, ...templateCards];
+      const caseStudyCards: SourceEntry[] = caseStudies.map((cs) => ({
+        source_type: "messaging_script" as const,
+        source_id: `case-${cs.id}`,
+        title: cs.title,
+        body: [cs.description, cs.context_notes].filter(Boolean).join("\n\n") || null,
+        badge: "Case study",
+      }));
+      return [...scriptCards, ...templateCards, ...caseStudyCards];
     }
 
     if (kind === "workflow") {
@@ -129,7 +140,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
     }
 
     return [];
-  }, [kind, scripts, scriptNodes, scriptObjections, templates, staffTasks]);
+  }, [kind, scripts, scriptNodes, scriptObjections, templates, caseStudies, staffTasks]);
 
   const sourceItems = sourceEntries.map((source) => {
     const feedbackItem = items.find((it) => it.source_type === source.source_type && it.source_id === source.source_id);

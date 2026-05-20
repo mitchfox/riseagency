@@ -154,7 +154,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "investment", title: "Investment", icon: Sparkles },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
-    { id: "tasks", title: "My Tasks", icon: CheckSquare },
+    { id: "tasks", title: "All Tasks", icon: CheckSquare },
     { id: "activity", title: "Activity Feed", icon: Activity },
   ]},
   { id: "ops", title: "Operations", icon: Clock, sections: [
@@ -471,7 +471,7 @@ const TasksView = ({ rows, profiles }: { rows: TaskRow[]; profiles: ProfileRow[]
   }, 0);
 
   return (
-    <SectionShell icon={CheckSquare} title="My Tasks — Live View">
+    <SectionShell icon={CheckSquare} title="All Tasks — Live View">
       {/* Staff slider */}
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-thin">
         <button
@@ -2040,7 +2040,13 @@ const InvestorsPortal = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (isSingleSection) {
-                      handleSectionClick(cat.sections[0].id, cat.id);
+                      // Toggle single-section categories: clicking again clears them so all categories reappear.
+                      if (hasActive) {
+                        setExpandedCategory(null);
+                        setActive(null);
+                      } else {
+                        handleSectionClick(cat.sections[0].id, cat.id);
+                      }
                     } else {
                       // Toggle: if already expanded, collapse back to category overview.
                       // Also clear the active section so all categories reappear cleanly.

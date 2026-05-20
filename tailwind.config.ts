@@ -171,6 +171,15 @@ export default {
           "0%": { stroke: "currentColor" },
           "100%": { stroke: "hsl(var(--primary))" },
         },
+        "liquid-wave": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "bubble-rise": {
+          "0%": { transform: "translateY(0) scale(0.8)", opacity: "0" },
+          "20%": { opacity: "0.8" },
+          "100%": { transform: "translateY(-60px) scale(1.2)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
