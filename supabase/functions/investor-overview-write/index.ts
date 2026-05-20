@@ -33,6 +33,38 @@ async function getInvestorUser(supabase: any, token: string) {
   return u;
 }
 
+async function notifyThoughtWallReply(
+  supabase: any,
+  itemId: string,
+  bodyText: string | null,
+  authorLabel: string,
+  isAdmin: boolean,
+) {
+  try {
+    const { data: item } = await supabase
+      .from("exec_support_items")
+      .select("kind, title, body")
+      .eq("id", itemId)
+      .maybeSingle();
+    if (!item || item.kind !== "note") return;
+    const snippet = (bodyText || "").trim().slice(0, 140) || "(audio reply)";
+    const itemSnippet = (item.title || item.body || "").toString().trim().slice(0, 80) || "Thought wall note";
+    await supabase.from("staff_notification_events").insert({
+      event_type: "investor_thought_reply",
+      title: `New reply on thought wall — ${itemSnippet}`,
+      body: `${authorLabel}${isAdmin ? " (admin)" : ""}: ${snippet}`,
+      event_data: {
+        item_id: itemId,
+        author_label: authorLabel,
+        is_admin: isAdmin,
+        target_email: "jolonlevene98@gmail.com",
+      },
+    });
+  } catch (_e) {
+    // never block the reply on notification failure
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
