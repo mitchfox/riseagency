@@ -2319,8 +2319,11 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          detail_blocks: Json
           display_order: number
           id: string
+          image_alt: string | null
+          image_url: string | null
           metrics: Json
           section_id: string | null
           summary: string | null
@@ -2331,8 +2334,11 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
+          detail_blocks?: Json
           display_order?: number
           id?: string
+          image_alt?: string | null
+          image_url?: string | null
           metrics?: Json
           section_id?: string | null
           summary?: string | null
@@ -2343,8 +2349,11 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
+          detail_blocks?: Json
           display_order?: number
           id?: string
+          image_alt?: string | null
+          image_url?: string | null
           metrics?: Json
           section_id?: string | null
           summary?: string | null
@@ -4645,10 +4654,12 @@ export type Database = {
           id: string
           music_tracks: Json | null
           player_id: string
+          representation_subtitle_secondary: string | null
           rise_with_us_closing: string | null
           rise_with_us_intro: string | null
           rise_with_us_show_portal: boolean | null
           rise_with_us_show_services: boolean | null
+          rise_with_us_under18: boolean
           show_analysis: boolean
           show_aphorisms: boolean
           show_cognisance: boolean
@@ -4683,10 +4694,12 @@ export type Database = {
           id?: string
           music_tracks?: Json | null
           player_id: string
+          representation_subtitle_secondary?: string | null
           rise_with_us_closing?: string | null
           rise_with_us_intro?: string | null
           rise_with_us_show_portal?: boolean | null
           rise_with_us_show_services?: boolean | null
+          rise_with_us_under18?: boolean
           show_analysis?: boolean
           show_aphorisms?: boolean
           show_cognisance?: boolean
@@ -4721,10 +4734,12 @@ export type Database = {
           id?: string
           music_tracks?: Json | null
           player_id?: string
+          representation_subtitle_secondary?: string | null
           rise_with_us_closing?: string | null
           rise_with_us_intro?: string | null
           rise_with_us_show_portal?: boolean | null
           rise_with_us_show_services?: boolean | null
+          rise_with_us_under18?: boolean
           show_analysis?: boolean
           show_aphorisms?: boolean
           show_cognisance?: boolean

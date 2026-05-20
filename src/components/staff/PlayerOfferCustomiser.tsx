@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +46,8 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [images, setImages] = useState<Record<string, string>>({});
   const [language, setLanguage] = useState<string>("en");
+  const [under18, setUnder18] = useState(false);
+  const [secondaryParagraph, setSecondaryParagraph] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -59,6 +62,13 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       const { data: pData } = await (supabase as any)
         .from("players").select("portal_language").eq("id", playerId).maybeSingle();
       setLanguage(pData?.portal_language || "en");
+      const { data: portalData } = await (supabase as any)
+        .from("player_portal_settings")
+        .select("rise_with_us_under18, representation_subtitle_secondary")
+        .eq("player_id", playerId)
+        .maybeSingle();
+      setUnder18(!!portalData?.rise_with_us_under18);
+      setSecondaryParagraph(portalData?.representation_subtitle_secondary || "");
       setLoading(false);
     })();
   }, [open, playerId]);
@@ -100,6 +110,14 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
     const { error: lErr } = await (supabase as any)
       .from("players").update({ portal_language: language }).eq("id", playerId);
     if (lErr) { toast.error("Failed to save language"); setSaving(false); return; }
+    const { error: portalErr } = await (supabase as any)
+      .from("player_portal_settings")
+      .upsert({
+        player_id: playerId,
+        rise_with_us_under18: under18,
+        representation_subtitle_secondary: secondaryParagraph.trim() || null,
+      }, { onConflict: "player_id" });
+    if (portalErr) { toast.error("Failed to save offer settings"); setSaving(false); return; }
     toast.success("Offer page updated");
     setSaving(false);
     onOpenChange(false);
@@ -126,6 +144,24 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">Sets the language for both the offer page and the embedded portal preview.</p>
+          </div>
+          <div className="rounded-lg border p-3 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label className="font-medium">Under-18 offer</Label>
+                <p className="text-xs text-muted-foreground">Uses the under-18 version of fees, agreement and expectation cards, including no-commission language.</p>
+              </div>
+              <Switch checked={under18} onCheckedChange={setUnder18} />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-medium">Optional second intro paragraph</Label>
+              <Textarea
+                value={secondaryParagraph}
+                onChange={(e) => setSecondaryParagraph(e.target.value)}
+                placeholder="Add an extra paragraph under the main Rise With Us introduction..."
+                rows={4}
+              />
+            </div>
           </div>
           <div className="rounded-lg border p-3 space-y-3">
             <div>

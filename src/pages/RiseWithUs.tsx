@@ -35,6 +35,8 @@ interface ProspectPlayer {
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
+  rise_with_us_under18?: boolean;
+  representation_subtitle_secondary?: string | null;
 }
 
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
@@ -446,7 +448,7 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {} });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, rise_with_us_under18: false, representation_subtitle_secondary: null });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -481,12 +483,17 @@ const RiseWithUs = () => {
           .select("hidden_sections, section_images")
           .eq("player_id", data.id)
           .maybeSingle();
-        if (sData) {
-          setSettings({
-            hidden_sections: (sData.hidden_sections || []) as string[],
-            section_images: (sData.section_images || {}) as Record<string, string>,
-          });
-        }
+        const { data: portalData } = await (supabase as any)
+          .from("player_portal_settings")
+          .select("rise_with_us_under18, representation_subtitle_secondary")
+          .eq("player_id", data.id)
+          .maybeSingle();
+        setSettings({
+          hidden_sections: (sData?.hidden_sections || []) as string[],
+          section_images: (sData?.section_images || {}) as Record<string, string>,
+          rise_with_us_under18: !!portalData?.rise_with_us_under18,
+          representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
+        });
         // NOTE: We do NOT call switchLanguage here — it would redirect to a
         // different language subdomain on production and break the offer
         // URL. Imported representation card content uses the current site
@@ -499,7 +506,7 @@ const RiseWithUs = () => {
 
   // ageGroup defaults to over18 (most prospects). Card content uses this
   // to switch the under18/over18 specific copy in fees/agreement/expectations.
-  const ageGroup: Exclude<AgeGroup, null> = "over18";
+  const ageGroup: Exclude<AgeGroup, null> = settings.rise_with_us_under18 ? "under18" : "over18";
 
   const cardContent = useMemo(() => getCardContent(ageGroup), [ageGroup]);
 
