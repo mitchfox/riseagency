@@ -26,6 +26,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
+import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
 import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
