@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Pencil, Plus, Trash2, Check, X, GripVertical } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2, Check, X, GripVertical, Image as ImageIcon, Upload, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,15 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface OverviewMetric { label: string; value: string; unit?: string }
+export interface DetailBlock {
+  kind: "heading" | "paragraph" | "image" | "bullets" | "stat";
+  text?: string;
+  url?: string;
+  alt?: string;
+  items?: string[];
+  label?: string;
+  value?: string;
+}
 export interface OverviewCardData {
   id: string;
   section_id: string | null;
@@ -17,6 +26,9 @@ export interface OverviewCardData {
   metrics: OverviewMetric[];
   tags: string[];
   display_order: number;
+  image_url?: string | null;
+  image_alt?: string | null;
+  detail_blocks?: DetailBlock[];
 }
 export interface OverviewSectionData {
   id: string;
