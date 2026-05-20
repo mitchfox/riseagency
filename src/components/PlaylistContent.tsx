@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { PlaylistPlayer } from "./PlaylistPlayer";
@@ -169,6 +169,39 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       console.error('Error duplicating playlist:', err);
       toast.error("Failed to duplicate playlist");
     }
+  };
+
+  const renamePlaylist = async (playlistId: string, currentName: string) => {
+    const next = window.prompt("Rename playlist", currentName);
+    if (!next || !next.trim() || next.trim() === currentName) return;
+    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (!playerEmail) { toast.error("Please log in again"); return; }
+    const { data, error } = await supabase.functions.invoke('playlist-manage', {
+      body: { action: 'rename', playlistId, playerEmail, name: next.trim() },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Rename failed");
+      return;
+    }
+    const newName = next.trim();
+    setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, name: newName } : p));
+    setSelectedPlaylist(prev => prev && prev.id === playlistId ? { ...prev, name: newName } : prev);
+    toast.success("Playlist renamed");
+  };
+
+  const toggleFavourite = async (playlist: Playlist) => {
+    const next = !playlist.is_favourite;
+    const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+    if (!playerEmail) { toast.error("Please log in again"); return; }
+    const { data, error } = await supabase.functions.invoke('playlist-manage', {
+      body: { action: 'favourite', playlistId: playlist.id, playerEmail, isFavourite: next },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Failed to update favourite");
+      return;
+    }
+    setPlaylists(prev => prev.map(p => p.id === playlist.id ? { ...p, is_favourite: next } : p));
+    toast.success(next ? 'Marked as favourite — visible to highlights makers' : 'Removed from favourites');
   };
 
   const addClipsToPlaylist = async () => {
