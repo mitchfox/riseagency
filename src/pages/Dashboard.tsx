@@ -178,6 +178,30 @@ const Dashboard = () => {
   const [portalSettings, setPortalSettings] = useState<any>(null);
   const [operatingProfileOpen, setOperatingProfileOpen] = useState(false);
   const [operatingProfileChecked, setOperatingProfileChecked] = useState(false);
+
+  useEffect(() => {
+    if (operatingProfileChecked) return;
+    if (!playerData?.id) return;
+    // Wait until welcome modal has been seen so we don't double-stack popups
+    const welcomeSeen =
+      portalSettings?.has_seen_welcome_modal === true ||
+      localStorage.getItem(`player_welcome_seen_${playerData.id}`) === "true";
+    if (!welcomeSeen) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("player_operating_profile")
+        .select("submitted_at")
+        .eq("player_id", playerData.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setOperatingProfileChecked(true);
+      if (!data?.submitted_at) {
+        setOperatingProfileOpen(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [playerData?.id, portalSettings?.has_seen_welcome_modal, operatingProfileChecked]);
   const [navDropdownOpen, setNavDropdownOpen] = useState(false);
 
   // Initialize form grade configs from database
