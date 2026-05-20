@@ -135,13 +135,14 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
   );
 };
 
-const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onMove }: {
+const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
   item: OpsItem; staffTask?: StaffTaskOption;
   unlocked: boolean; reorderable?: boolean; isFirst: boolean; isLast: boolean;
   token: string | null; kind: "time" | "priority";
   staffTasks: StaffTaskOption[];
   onChanged: () => Promise<void> | void;
   onItemSaved?: (item: OpsItem) => void;
+  onItemDeleted?: (id: string) => void;
   onMove?: (dir: -1 | 1) => Promise<void> | void;
 }) => {
   const [editing, setEditing] = useState(false);
@@ -158,7 +159,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
 
   const del = async () => {
     if (!confirm(`Delete "${displayTitle}"?`)) return;
-    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); toast.success("Task deleted"); await onChanged(); }
+    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); onItemDeleted?.(item.id); toast.success("Task deleted"); await onChanged(); }
     catch (e: any) { toast.error(e.message || "Delete failed"); }
   };
 
