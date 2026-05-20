@@ -44,6 +44,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   const [scripts, setScripts] = useState<Script[]>([]);
   const [scriptNodes, setScriptNodes] = useState<ScriptNode[]>([]);
   const [scriptObjections, setScriptObjections] = useState<ScriptObjection[]>([]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
   const [newBody, setNewBody] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [authorLabel, setAuthorLabel] = useState(() => localStorage.getItem("exec_author_label") || "");
