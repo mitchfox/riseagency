@@ -145,7 +145,7 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
   let globalIdx = 0;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full min-h-0 flex flex-col font-sans normal-case tracking-normal">
       {/* Search */}
       <div className="px-6 pt-6 pb-4">
         <div className="relative max-w-md mx-auto">
@@ -161,7 +161,7 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
       </div>
 
       {/* Grid */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 scrollbar-thin">
         <div className="space-y-8 max-w-6xl mx-auto">
           {filteredCategories.map(cat => {
             const realSections = cat.sections.filter(s => !(s as any).isGroupLabel);
@@ -172,7 +172,7 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
               <div key={cat.id}>
                 <div className="flex items-center gap-2 mb-3">
                   <CatIcon className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">
+                  <h3 className="text-sm font-semibold tracking-normal text-primary">
                     {cat.title}
                   </h3>
                   <div className="flex-1 h-px bg-border" />
@@ -206,7 +206,7 @@ export const SectionGridPicker = ({ categories, onSelect }: SectionGridPickerPro
                         <div className="px-3 py-3 flex flex-col gap-1">
                           <span className="text-xs font-semibold leading-tight">{section.title}</span>
                           {preview && (
-                            <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                            <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2 normal-case tracking-normal font-sans">
                               {preview}
                             </span>
                           )}

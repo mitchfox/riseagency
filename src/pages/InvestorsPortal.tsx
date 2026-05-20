@@ -1944,7 +1944,7 @@ const InvestorsPortal = () => {
       </header>
 
       <Dialog open={sectionPickerOpen} onOpenChange={setSectionPickerOpen}>
-        <DialogContent className="overflow-hidden p-0 shadow-lg max-w-5xl w-[92vw] h-[80vh]">
+        <DialogContent className="p-0 shadow-lg max-w-[98vw] md:max-w-[90vw] w-full h-[85vh] max-h-[90vh] overflow-hidden">
           <VisuallyHidden>
             <DialogTitle>Open a section</DialogTitle>
             <DialogDescription>Pick a section to open in a new tab.</DialogDescription>
@@ -2088,7 +2088,7 @@ const InvestorsPortal = () => {
         <main className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative z-10 transition-all duration-300 ${headerCollapsed ? "pt-14" : "pt-20"} ${
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
         } ${isMobile ? "pb-[70px]" : ""}`}>
-          <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-agrandir">
+          <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-sans normal-case tracking-normal">
             {loading && !data ? (
               <div className="text-muted-foreground text-center py-12">Loading...</div>
             ) : !data ? null : active ? (

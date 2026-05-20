@@ -53,10 +53,15 @@ async function callWrite(token: string | null, action: string, payload: any) {
   return data;
 }
 
+const normaliseItem = (row: any): OpsItem => ({
+  ...row,
+  highlights: Array.isArray(row?.highlights) ? row.highlights : [],
+});
+
 const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, onDone, onCancel }: {
   item?: Partial<OpsItem>; categoryId: string; kind: "time" | "priority";
   token: string | null; staffTasks: StaffTaskOption[]; displayOrder: number;
-  onDone: () => void; onCancel: () => void;
+  onDone: (saved?: OpsItem) => void; onCancel: () => void;
 }) => {
   const [title, setTitle] = useState(item?.title || "");
   const [description, setDescription] = useState(item?.description || "");
@@ -70,7 +75,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
     setBusy(true);
     try {
       const isEdit = Boolean(item?.id);
-      await callWrite(token, "upsertOpsItem", {
+      const saved = await callWrite(token, "upsertOpsItem", {
         kind,
         id: item?.id,
         category_id: categoryId,
@@ -80,7 +85,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
         display_order: item?.display_order ?? displayOrder,
       });
       toast.success(isEdit ? "Task updated" : "Task added");
-      onDone();
+      onDone((saved as any)?.row ? normaliseItem((saved as any).row) : undefined);
     } catch (e: any) { toast.error(e.message || "Save failed"); }
     finally { setBusy(false); }
   };
@@ -117,7 +122,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
               }}
               className={`w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-sm ${staffTaskId === t.id ? "bg-primary/15" : ""}`}>
               <div className="font-medium truncate">{t.title}</div>
-              {t.category && <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.category}</div>}
+              {t.category && <div className="text-[10px] text-muted-foreground tracking-normal normal-case">{t.category}</div>}
             </button>
           ))}
         </PopoverContent>
@@ -130,12 +135,14 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
   );
 };
 
-const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onMove }: {
+const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
   item: OpsItem; staffTask?: StaffTaskOption;
   unlocked: boolean; reorderable?: boolean; isFirst: boolean; isLast: boolean;
   token: string | null; kind: "time" | "priority";
   staffTasks: StaffTaskOption[];
   onChanged: () => Promise<void> | void;
+  onItemSaved?: (item: OpsItem) => void;
+  onItemDeleted?: (id: string) => void;
   onMove?: (dir: -1 | 1) => Promise<void> | void;
 }) => {
   const [editing, setEditing] = useState(false);
@@ -146,13 +153,13 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
   if (editing) {
     return <ItemEditor item={item} categoryId={item.category_id || ""} kind={kind} token={token} staffTasks={staffTasks}
       displayOrder={item.display_order}
-      onDone={async () => { setEditing(false); await onChanged(); }}
+      onDone={async (saved) => { setEditing(false); if (saved) onItemSaved?.(saved); await onChanged(); }}
       onCancel={() => setEditing(false)} />;
   }
 
   const del = async () => {
     if (!confirm(`Delete "${displayTitle}"?`)) return;
-    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); toast.success("Task deleted"); await onChanged(); }
+    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); onItemDeleted?.(item.id); toast.success("Task deleted"); await onChanged(); }
     catch (e: any) { toast.error(e.message || "Delete failed"); }
   };
 
@@ -212,13 +219,43 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   const [adding, setAdding] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const [localCategories, setLocalCategories] = useState<OpsCategory[]>([]);
+  const [localItems, setLocalItems] = useState<OpsItem[]>([]);
+  const [deletedCategoryIds, setDeletedCategoryIds] = useState<string[]>([]);
+  const [deletedItemIds, setDeletedItemIds] = useState<string[]>([]);
 
-  const grouped = useMemo(() => categories.map(cat => ({
+  const visibleCategories = useMemo(() => {
+    const byId = new Map<string, OpsCategory>();
+    [...categories, ...localCategories].forEach(cat => byId.set(cat.id, cat));
+    return [...byId.values()]
+      .filter(cat => !deletedCategoryIds.includes(cat.id))
+      .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [categories, localCategories, deletedCategoryIds]);
+
+  const visibleItems = useMemo(() => {
+    const byId = new Map<string, OpsItem>();
+    [...items, ...localItems].forEach(item => byId.set(item.id, item));
+    return [...byId.values()]
+      .filter(item => !deletedItemIds.includes(item.id) && (!item.category_id || !deletedCategoryIds.includes(item.category_id)))
+      .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [items, localItems, deletedItemIds, deletedCategoryIds]);
+
+  const saveLocalItem = (item: OpsItem) => {
+    setDeletedItemIds(prev => prev.filter(id => id !== item.id));
+    setLocalItems(prev => [...prev.filter(existing => existing.id !== item.id), item]);
+  };
+
+  const deleteLocalItem = (id: string) => {
+    setDeletedItemIds(prev => prev.includes(id) ? prev : [...prev, id]);
+    setLocalItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const grouped = useMemo(() => visibleCategories.map(cat => ({
     cat,
-    list: items.filter(i => i.category_id === cat.id).sort((a, b) => a.display_order - b.display_order),
-  })), [categories, items]);
+    list: visibleItems.filter(i => i.category_id === cat.id).sort((a, b) => a.display_order - b.display_order),
+  })), [visibleCategories, visibleItems]);
 
-  const orphan = items.filter(i => !categories.find(c => c.id === i.category_id));
+  const orphan = visibleItems.filter(i => !visibleCategories.find(c => c.id === i.category_id));
 
   const moveItem = async (list: OpsItem[], idx: number, dir: -1 | 1) => {
     const swapIdx = idx + dir;
@@ -240,10 +277,15 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   const createCategory = async (title: string) => {
     if (!title.trim()) return;
     try {
-      await callWrite(token, "upsertOpsCategory", {
+      const saved = await callWrite(token, "upsertOpsCategory", {
         kind, title: title.trim(),
-        display_order: (categories[categories.length - 1]?.display_order ?? 0) + 1,
+        display_order: (visibleCategories[visibleCategories.length - 1]?.display_order ?? 0) + 1,
       });
+      const savedRow = (saved as any)?.row;
+      if (savedRow) {
+        setDeletedCategoryIds(prev => prev.filter(id => id !== savedRow.id));
+        setLocalCategories(prev => [...prev.filter(c => c.id !== savedRow.id), savedRow]);
+      }
       setNewCategoryTitle(""); setAddingCategory(false);
       toast.success("Category added");
       await onRefresh();
@@ -257,18 +299,18 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
           {/* Rise Gold divider header */}
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/60 to-primary/80" />
-            <h3 className="text-sm md:text-base font-bbh uppercase tracking-[0.2em] text-primary shrink-0">{cat.title}</h3>
+            <h3 className="text-sm md:text-base font-semibold tracking-normal text-primary shrink-0">{cat.title}</h3>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/60 to-primary/80" />
             {unlocked && (
               <div className="flex gap-1 shrink-0">
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={async () => {
                   const t = prompt("Rename category", cat.title); if (!t || t === cat.title) return;
-                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); toast.success("Category renamed"); await onRefresh(); }
+                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); setLocalCategories(prev => [...prev.filter(c => c.id !== cat.id), { ...cat, title: t }]); toast.success("Category renamed"); await onRefresh(); }
                   catch (e: any) { toast.error(e.message || "Rename failed"); }
                 }}><Pencil className="w-3 h-3" /></Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={async () => {
                   if (!confirm(`Delete category "${cat.title}" and all its items?`)) return;
-                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); toast.success("Category deleted"); await onRefresh(); }
+                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); setDeletedCategoryIds(prev => prev.includes(cat.id) ? prev : [...prev, cat.id]); setLocalCategories(prev => prev.filter(c => c.id !== cat.id)); toast.success("Category deleted"); await onRefresh(); }
                   catch (e: any) { toast.error(e.message || "Delete failed"); }
                 }}><Trash2 className="w-3 h-3" /></Button>
               </div>
@@ -284,13 +326,15 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
                   isFirst={idx === 0} isLast={idx === list.length - 1}
                   token={token} kind={kind} staffTasks={staffTasks}
                   onChanged={onRefresh}
+                  onItemSaved={saveLocalItem}
+                  onItemDeleted={deleteLocalItem}
                   onMove={(dir) => moveItem(list, idx, dir)} />
               ))}
             </AnimatePresence>
             {adding === cat.id && (
               <ItemEditor categoryId={cat.id} kind={kind} token={token} staffTasks={staffTasks}
                 displayOrder={(list[list.length - 1]?.display_order ?? 0) + 1}
-                onDone={async () => { setAdding(null); await onRefresh(); }}
+                onDone={async (saved) => { setAdding(null); if (saved) saveLocalItem(saved); await onRefresh(); }}
                 onCancel={() => setAdding(null)} />
             )}
             {unlocked && adding !== cat.id && (
@@ -306,7 +350,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-primary/40" />
-            <h3 className="text-sm font-bbh uppercase tracking-[0.2em] text-muted-foreground shrink-0">Uncategorised</h3>
+            <h3 className="text-sm font-semibold tracking-normal text-muted-foreground shrink-0">Uncategorised</h3>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/30 to-primary/40" />
           </div>
           {orphan.map((it, idx) => (
@@ -315,7 +359,9 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               unlocked={unlocked} reorderable={false}
               isFirst={idx === 0} isLast={idx === orphan.length - 1}
               token={token} kind={kind} staffTasks={staffTasks}
-              onChanged={onRefresh} />
+              onChanged={onRefresh}
+              onItemSaved={saveLocalItem}
+              onItemDeleted={deleteLocalItem} />
           ))}
         </div>
       )}
@@ -334,7 +380,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               {defaultCategorySuggestions && defaultCategorySuggestions.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {defaultCategorySuggestions
-                    .filter(s => !categories.find(c => c.title.toLowerCase() === s.toLowerCase()))
+                    .filter(s => !visibleCategories.find(c => c.title.toLowerCase() === s.toLowerCase()))
                     .map(s => (
                       <Button key={s} variant="outline" size="sm" className="h-6 text-[11px]"
                         onClick={() => createCategory(s)}>{s}</Button>
