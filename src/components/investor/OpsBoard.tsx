@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
 export interface OpsCategory {
@@ -45,7 +45,7 @@ interface Props {
 
 async function callWrite(token: string | null, action: string, payload: any) {
   if (!token) throw new Error("Not authenticated");
-  const { data, error } = await supabase.functions.invoke("investor-overview-write", {
+  const { data, error } = await invokeEdgeFunction("investor-overview-write", {
     body: { token, action, payload },
   });
   if (error) throw error;
@@ -69,6 +69,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
     if (!title.trim()) { toast.error("Title required"); return; }
     setBusy(true);
     try {
+      const isEdit = Boolean(item?.id);
       await callWrite(token, "upsertOpsItem", {
         kind,
         id: item?.id,
@@ -78,7 +79,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
         staff_task_id: staffTaskId,
         display_order: item?.display_order ?? displayOrder,
       });
-      toast.success("Saved");
+      toast.success(isEdit ? "Task updated" : "Task added");
       onDone();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
     finally { setBusy(false); }
@@ -151,7 +152,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
 
   const del = async () => {
     if (!confirm(`Delete "${displayTitle}"?`)) return;
-    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); toast.success("Deleted"); await onChanged(); }
+    try { await callWrite(token, "deleteOpsItem", { kind, id: item.id }); toast.success("Task deleted"); await onChanged(); }
     catch (e: any) { toast.error(e.message || "Delete failed"); }
   };
 
@@ -231,6 +232,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
           { id: b.id, display_order: a.display_order, category_id: b.category_id },
         ],
       });
+      toast.success("Reordered");
       await onRefresh();
     } catch (e: any) { toast.error(e.message || "Reorder failed"); }
   };
@@ -243,8 +245,9 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         display_order: (categories[categories.length - 1]?.display_order ?? 0) + 1,
       });
       setNewCategoryTitle(""); setAddingCategory(false);
+      toast.success("Category added");
       await onRefresh();
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e.message || "Failed to add category"); }
   };
 
   return (
@@ -260,13 +263,13 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               <div className="flex gap-1 shrink-0">
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={async () => {
                   const t = prompt("Rename category", cat.title); if (!t || t === cat.title) return;
-                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); await onRefresh(); }
-                  catch (e: any) { toast.error(e.message); }
+                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); toast.success("Category renamed"); await onRefresh(); }
+                  catch (e: any) { toast.error(e.message || "Rename failed"); }
                 }}><Pencil className="w-3 h-3" /></Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={async () => {
                   if (!confirm(`Delete category "${cat.title}" and all its items?`)) return;
-                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); await onRefresh(); }
-                  catch (e: any) { toast.error(e.message); }
+                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); toast.success("Category deleted"); await onRefresh(); }
+                  catch (e: any) { toast.error(e.message || "Delete failed"); }
                 }}><Trash2 className="w-3 h-3" /></Button>
               </div>
             )}
