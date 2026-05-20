@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star,
+  Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -256,6 +256,22 @@ const HighlightsPortal = () => {
       return n;
     });
 
+  const renamePlaylist = async (pl: PlaylistRow) => {
+    if (!maker) return;
+    const next = window.prompt("Rename playlist", pl.name);
+    if (!next || !next.trim() || next.trim() === pl.name) return;
+    const { data, error } = await supabase.functions.invoke('playlist-manage', {
+      body: { action: 'rename', playlistId: pl.id, makerUsername: maker.username, name: next.trim() },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Rename failed");
+      return;
+    }
+    const newName = next.trim();
+    setPlaylists(prev => prev.map(p => p.id === pl.id ? { ...p, name: newName } : p));
+    toast.success("Playlist renamed");
+  };
+
   const toggleReport = (id: string) =>
     setExpandedReports((s) => {
       const n = new Set(s);
@@ -389,6 +405,14 @@ const HighlightsPortal = () => {
                             disabled={pl.clips.length === 0}
                           >
                             <FolderDown className="w-4 h-4 mr-1" /> ZIP
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => renamePlaylist(pl)}
+                            title="Rename playlist"
+                          >
+                            <Pencil className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>

@@ -67,12 +67,16 @@ Deno.serve(async (req) => {
         return ok();
       }
       case "upsertCard": {
-        const { id, section_id, title, summary, content, metrics, tags, display_order } = payload;
+        const { id, section_id, title, summary, content, metrics, tags, display_order, image_url, image_alt, detail_blocks } = payload;
         if (!title || !section_id) return bad("title and section_id required");
         const row: any = { section_id, title, summary, content,
           metrics: Array.isArray(metrics) ? metrics : [],
           tags: Array.isArray(tags) ? tags : [],
-          display_order: display_order ?? 999 };
+          display_order: display_order ?? 999,
+          image_url: image_url ?? null,
+          image_alt: image_alt ?? null,
+          detail_blocks: Array.isArray(detail_blocks) ? detail_blocks : [],
+        };
         if (id) {
           const { error } = await supabase.from("investor_overview_cards").update(row).eq("id", id);
           if (error) return bad(error.message, 500);
@@ -87,6 +91,19 @@ Deno.serve(async (req) => {
         const { error } = await supabase.from("investor_overview_cards").delete().eq("id", payload.id);
         if (error) return bad(error.message, 500);
         return ok();
+      }
+      case "uploadImage": {
+        const { base64, contentType, ext } = payload;
+        if (!base64 || typeof base64 !== "string") return bad("base64 required");
+        const bin = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const safeExt = (ext || "jpg").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "jpg";
+        const path = `investors/${crypto.randomUUID()}.${safeExt}`;
+        const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+          contentType: contentType || "image/jpeg", cacheControl: "31536000", upsert: false,
+        });
+        if (error) return bad(error.message, 500);
+        const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+        return ok({ url: data.publicUrl });
       }
       case "reorderCards": {
         const items = Array.isArray(payload.items) ? payload.items : [];

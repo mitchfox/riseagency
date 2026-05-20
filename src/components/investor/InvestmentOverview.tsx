@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Pencil, Plus, Trash2, Check, X, GripVertical } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2, Check, X, GripVertical, Image as ImageIcon, Upload, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,15 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface OverviewMetric { label: string; value: string; unit?: string }
+export interface DetailBlock {
+  kind: "heading" | "paragraph" | "image" | "bullets" | "stat";
+  text?: string;
+  url?: string;
+  alt?: string;
+  items?: string[];
+  label?: string;
+  value?: string;
+}
 export interface OverviewCardData {
   id: string;
   section_id: string | null;
@@ -17,6 +26,9 @@ export interface OverviewCardData {
   metrics: OverviewMetric[];
   tags: string[];
   display_order: number;
+  image_url?: string | null;
+  image_alt?: string | null;
+  detail_blocks?: DetailBlock[];
 }
 export interface OverviewSectionData {
   id: string;
@@ -49,6 +61,36 @@ const MetricChip = ({ m, large }: { m: OverviewMetric; large?: boolean }) => (
   </div>
 );
 
+const DetailBlocksView = ({ blocks }: { blocks: DetailBlock[] }) => {
+  if (!blocks || blocks.length === 0) return null;
+  return (
+    <div className="space-y-4">
+      {blocks.map((b, i) => {
+        if (b.kind === "heading") return <h4 key={i} className="text-base md:text-lg font-semibold tracking-tight text-foreground">{b.text}</h4>;
+        if (b.kind === "paragraph") return <p key={i} className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{b.text}</p>;
+        if (b.kind === "bullets") return (
+          <ul key={i} className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
+            {(b.items || []).filter(Boolean).map((it, j) => <li key={j}>{it}</li>)}
+          </ul>
+        );
+        if (b.kind === "stat") return (
+          <div key={i} className="inline-flex flex-col items-start rounded border border-primary/30 bg-primary/5 px-4 py-2">
+            <div className="text-xs text-primary/70 font-medium">{b.label}</div>
+            <div className="text-2xl text-primary font-semibold">{b.value}</div>
+          </div>
+        );
+        if (b.kind === "image" && b.url) return (
+          <figure key={i} className="rounded-lg overflow-hidden border border-border">
+            <img src={b.url} alt={b.alt || ""} className="w-full max-h-[420px] object-cover" />
+            {b.alt && <figcaption className="text-xs text-muted-foreground px-3 py-2 bg-muted/30">{b.alt}</figcaption>}
+          </figure>
+        );
+        return null;
+      })}
+    </div>
+  );
+};
+
 const CardEditor = ({ card, sections, token, onDone, onCancel }: {
   card: Partial<OverviewCardData>;
   sections: OverviewSectionData[];
@@ -62,7 +104,52 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
   const [section_id, setSectionId] = useState(card.section_id || sections[0]?.id || "");
   const [metrics, setMetrics] = useState<OverviewMetric[]>(card.metrics || []);
   const [tags, setTags] = useState<string>(((card.tags) || []).join(", "));
+  const [imageUrl, setImageUrl] = useState<string>(card.image_url || "");
+  const [imageAlt, setImageAlt] = useState<string>(card.image_alt || "");
+  const [blocks, setBlocks] = useState<DetailBlock[]>(card.detail_blocks || []);
+  const [uploading, setUploading] = useState(false);
+  const heroInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      if (file.size > 8 * 1024 * 1024) { toast.error("Image must be under 8MB"); return null; }
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+      }
+      const base64 = btoa(binary);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const res: any = await callWrite(token, "uploadImage", {
+        base64, contentType: file.type || "image/jpeg", ext,
+      });
+      return res?.url || null;
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+      return null;
+    }
+  };
+
+  const handleHeroPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true);
+    const url = await uploadImage(file);
+    setUploading(false);
+    if (url) setImageUrl(url);
+    e.target.value = "";
+  };
+
+  const updateBlock = (i: number, patch: Partial<DetailBlock>) =>
+    setBlocks(prev => prev.map((b, j) => j === i ? { ...b, ...patch } : b));
+  const removeBlock = (i: number) => setBlocks(prev => prev.filter((_, j) => j !== i));
+  const moveBlock = (i: number, dir: -1 | 1) => setBlocks(prev => {
+    const next = [...prev]; const j = i + dir;
+    if (j < 0 || j >= next.length) return prev;
+    [next[i], next[j]] = [next[j], next[i]]; return next;
+  });
 
   const save = async () => {
     if (!title.trim()) { toast.error("Title required"); return; }
@@ -73,6 +160,9 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
         metrics: metrics.filter(m => m.label && m.value),
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
         display_order: card.display_order ?? 999,
+        image_url: imageUrl.trim() || null,
+        image_alt: imageAlt.trim() || null,
+        detail_blocks: blocks,
       });
       toast.success("Saved");
       onDone();
@@ -91,6 +181,31 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
       </div>
       <Input value={summary} onChange={e => setSummary(e.target.value)} placeholder="One-line summary (shown collapsed)" />
       <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Full expanded content" rows={5} />
+
+      <div className="space-y-2 border-t border-primary/15 pt-3">
+        <div className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          <ImageIcon className="w-3 h-3" /> Hero image (shown at the top of the expanded card)
+        </div>
+        {imageUrl && (
+          <div className="relative rounded-md overflow-hidden border border-border">
+            <img src={imageUrl} alt={imageAlt || title} className="w-full max-h-56 object-cover" />
+            <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setImageUrl("")}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Paste image URL or upload" className="flex-1" />
+          <input ref={heroInputRef} type="file" accept="image/*" className="hidden" onChange={handleHeroPick} />
+          <Button size="sm" variant="outline" onClick={() => heroInputRef.current?.click()} disabled={uploading}>
+            <Upload className="w-3.5 h-3.5 mr-1" />{uploading ? "Uploading…" : "Upload"}
+          </Button>
+        </div>
+        {imageUrl && (
+          <Input value={imageAlt} onChange={e => setImageAlt(e.target.value)} placeholder="Image alt text (accessibility)" />
+        )}
+      </div>
+
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">KPI metrics</div>
         {metrics.map((m, i) => (
@@ -103,12 +218,109 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
         ))}
         <Button size="sm" variant="outline" onClick={() => setMetrics([...metrics, { label: "", value: "", unit: "" }])}><Plus className="w-3 h-3 mr-1" />Metric</Button>
       </div>
+
+      <div className="space-y-2 border-t border-primary/15 pt-3">
+        <div className="text-xs font-medium text-muted-foreground">Detail blocks (mix-and-match richer content)</div>
+        {blocks.map((b, i) => (
+          <DetailBlockEditor
+            key={i}
+            block={b}
+            uploadImage={uploadImage}
+            onChange={(patch) => updateBlock(i, patch)}
+            onRemove={() => removeBlock(i)}
+            onMove={(dir) => moveBlock(i, dir)}
+          />
+        ))}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "heading", text: "" }])}><Plus className="w-3 h-3 mr-1" />Heading</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "paragraph", text: "" }])}><Plus className="w-3 h-3 mr-1" />Paragraph</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "bullets", items: [""] }])}><Plus className="w-3 h-3 mr-1" />Bullets</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "stat", label: "", value: "" }])}><Plus className="w-3 h-3 mr-1" />Stat</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "image", url: "", alt: "" }])}><Plus className="w-3 h-3 mr-1" />Image</Button>
+        </div>
+      </div>
+
       <Input value={tags} onChange={e => setTags(e.target.value)} placeholder="tags, comma, separated" />
       <p className="text-[11px] text-muted-foreground">Tip: add the tag <code>featured</code> to render the card as a large, hero-style tile.</p>
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onCancel} disabled={busy}><X className="w-4 h-4 mr-1" />Cancel</Button>
         <Button onClick={save} disabled={busy} className="bg-primary text-primary-foreground"><Check className="w-4 h-4 mr-1" />Save</Button>
       </div>
+    </div>
+  );
+};
+
+const DetailBlockEditor = ({ block, uploadImage, onChange, onRemove, onMove }: {
+  block: DetailBlock;
+  uploadImage: (f: File) => Promise<string | null>;
+  onChange: (patch: Partial<DetailBlock>) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+}) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setUploading(true);
+    const url = await uploadImage(f);
+    setUploading(false);
+    if (url) onChange({ url });
+    e.target.value = "";
+  };
+  return (
+    <div className="rounded border border-border/60 bg-background/50 p-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{block.kind}</span>
+        <div className="flex gap-1">
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onMove(-1)}><ArrowUp className="w-3 h-3" /></Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onMove(1)}><ArrowDown className="w-3 h-3" /></Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={onRemove}><Trash2 className="w-3 h-3" /></Button>
+        </div>
+      </div>
+      {block.kind === "heading" && (
+        <Input value={block.text || ""} onChange={e => onChange({ text: e.target.value })} placeholder="Section heading" />
+      )}
+      {block.kind === "paragraph" && (
+        <Textarea value={block.text || ""} onChange={e => onChange({ text: e.target.value })} placeholder="Paragraph text" rows={3} />
+      )}
+      {block.kind === "bullets" && (
+        <div className="space-y-1">
+          {(block.items || []).map((item, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={item} onChange={e => {
+                const items = [...(block.items || [])]; items[i] = e.target.value;
+                onChange({ items });
+              }} placeholder={`Bullet ${i + 1}`} />
+              <Button size="icon" variant="ghost" onClick={() => {
+                const items = (block.items || []).filter((_, j) => j !== i);
+                onChange({ items });
+              }}><X className="w-3 h-3" /></Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={() => onChange({ items: [...(block.items || []), ""] })}>
+            <Plus className="w-3 h-3 mr-1" />Add bullet
+          </Button>
+        </div>
+      )}
+      {block.kind === "stat" && (
+        <div className="flex gap-2">
+          <Input value={block.label || ""} onChange={e => onChange({ label: e.target.value })} placeholder="Stat label" />
+          <Input value={block.value || ""} onChange={e => onChange({ value: e.target.value })} placeholder="Stat value" />
+        </div>
+      )}
+      {block.kind === "image" && (
+        <div className="space-y-2">
+          {block.url && <img src={block.url} alt={block.alt || ""} className="w-full max-h-48 object-cover rounded" />}
+          <div className="flex gap-2">
+            <Input value={block.url || ""} onChange={e => onChange({ url: e.target.value })} placeholder="Image URL" className="flex-1" />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pick} />
+            <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              <Upload className="w-3.5 h-3.5 mr-1" />{uploading ? "…" : "Upload"}
+            </Button>
+          </div>
+          <Input value={block.alt || ""} onChange={e => onChange({ alt: e.target.value })} placeholder="Alt text" />
+        </div>
+      )}
     </div>
   );
 };
@@ -144,6 +356,12 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         className="relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-lg hover:border-primary/60 transition-colors col-span-full">
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, hsl(var(--primary)) 0%, transparent 55%)" }} />
+        {card.image_url && (
+          <div className="relative w-full h-56 md:h-72 overflow-hidden">
+            <img src={card.image_url} alt={card.image_alt || card.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
+          </div>
+        )}
         <div className="relative p-6 md:p-7 flex flex-col gap-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -165,6 +383,11 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
           )}
           {card.content && (
             <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4 font-sans normal-case tracking-normal">{card.content}</div>
+          )}
+          {card.detail_blocks && card.detail_blocks.length > 0 && (
+            <div className="border-t border-primary/15 pt-4">
+              <DetailBlocksView blocks={card.detail_blocks} />
+            </div>
           )}
           {card.tags?.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -212,8 +435,16 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden border-t border-primary/10">
             <div className="px-4 md:px-5 py-5 space-y-4">
+              {card.image_url && (
+                <figure className="rounded-md overflow-hidden border border-border">
+                  <img src={card.image_url} alt={card.image_alt || card.title} className="w-full max-h-[420px] object-cover" />
+                </figure>
+              )}
               {card.content && (
                 <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap font-sans normal-case tracking-normal">{card.content}</div>
+              )}
+              {card.detail_blocks && card.detail_blocks.length > 0 && (
+                <DetailBlocksView blocks={card.detail_blocks} />
               )}
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
