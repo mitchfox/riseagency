@@ -171,8 +171,15 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
     setter("");
   };
 
+  const replyToSource = async (source: SourceEntry, text: string, setter: (s: string) => void) => {
+    if (!text.trim()) return;
+    const feedbackItem = await ensureSourceItem(source);
+    if (!feedbackItem?.id) return;
+    await reply(feedbackItem.id, text, setter);
+  };
+
   const Icon = kind === "note" ? StickyNote : kind === "script" ? FileText : WorkflowIcon;
-  const canCreate = kind === "note" ? true : isAdmin;
+  const canCreate = kind === "note" ? true : isAdmin && unlocked;
 
   return (
     <div className="space-y-4">
