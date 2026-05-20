@@ -203,16 +203,27 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
 
       {/* Items */}
       <div className={kind === "note" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" : "space-y-3"}>
-        {items.map((it) => {
+        {sourceItems.map(({ source, feedbackItem, feedbackReplies }) => (
+          <SourceCard
+            key={`${source.source_type}-${source.source_id}`}
+            source={source}
+            replies={feedbackReplies}
+            item={feedbackItem}
+            unlocked={unlocked}
+            isAdmin={isAdmin}
+            onReply={(t, setter) => replyToSource(source, t, setter)}
+            onResolveReply={isAdmin && unlocked ? (id, status) => call("updateExecReplyStatus", { id, status }) : undefined}
+            onDeleteReply={isAdmin && unlocked ? (id) => call("deleteExecReply", { id }) : undefined}
+          />
+        ))}
+        {manualItems.map((it) => {
           const itemReplies = replies.filter(r => r.item_id === it.id);
-          return <ItemCard key={it.id} item={it} replies={itemReplies} unlocked={unlocked} isAdmin={isAdmin} onReply={(t, setter) => reply(it.id, t, setter)} onDelete={isAdmin && unlocked ? async () => { await call("deleteExecItem", { id: it.id }); } : undefined} />;
+          return <ItemCard key={it.id} item={it} replies={itemReplies} unlocked={unlocked} isAdmin={isAdmin} onReply={(t, setter) => reply(it.id, t, setter)} onDelete={isAdmin && unlocked ? async () => { await call("deleteExecItem", { id: it.id }); } : undefined} onResolveReply={isAdmin && unlocked ? (id, status) => call("updateExecReplyStatus", { id, status }) : undefined} onDeleteReply={isAdmin && unlocked ? (id) => call("deleteExecReply", { id }) : undefined} />;
         })}
-        {items.length === 0 && (
+        {items.length === 0 && sourceItems.length === 0 && (
           <div className="text-sm text-muted-foreground italic py-6 text-center col-span-full">No {kind === "note" ? "thoughts" : kind + "s"} yet.</div>
         )}
       </div>
-
-      {kind === "script" && <FavouriteTemplates />}
     </div>
   );
 };
