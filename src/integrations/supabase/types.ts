@@ -2355,6 +2355,7 @@ export type Database = {
           created_at: string
           custom_label: string | null
           day_of_week: string | null
+          days_of_week: string[]
           display_order: number
           hours_per_week: number
           id: string
@@ -2366,6 +2367,7 @@ export type Database = {
           created_at?: string
           custom_label?: string | null
           day_of_week?: string | null
+          days_of_week?: string[]
           display_order?: number
           hours_per_week?: number
           id?: string
@@ -2377,6 +2379,7 @@ export type Database = {
           created_at?: string
           custom_label?: string | null
           day_of_week?: string | null
+          days_of_week?: string[]
           display_order?: number
           hours_per_week?: number
           id?: string
@@ -2400,6 +2403,7 @@ export type Database = {
           daily_hours: Json
           id: string
           mode: string
+          monthly_hours_total: number
           singleton: boolean
           updated_at: string
           weekly_hours_total: number
@@ -2409,6 +2413,7 @@ export type Database = {
           daily_hours?: Json
           id?: string
           mode?: string
+          monthly_hours_total?: number
           singleton?: boolean
           updated_at?: string
           weekly_hours_total?: number
@@ -2418,6 +2423,7 @@ export type Database = {
           daily_hours?: Json
           id?: string
           mode?: string
+          monthly_hours_total?: number
           singleton?: boolean
           updated_at?: string
           weekly_hours_total?: number

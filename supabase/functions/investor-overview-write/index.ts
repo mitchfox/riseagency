@@ -137,10 +137,11 @@ Deno.serve(async (req) => {
       }
       // ---------- Capacity ----------
       case "upsertCapacitySettings": {
-        const { mode, weekly_hours_total, daily_hours } = payload;
+        const { mode, weekly_hours_total, daily_hours, monthly_hours_total } = payload;
         const row: any = {};
-        if (mode) row.mode = mode === "day" ? "day" : "week";
+        if (mode) row.mode = mode === "day" ? "day" : mode === "month" ? "month" : "week";
         if (weekly_hours_total != null) row.weekly_hours_total = Number(weekly_hours_total);
+        if (monthly_hours_total != null) row.monthly_hours_total = Number(monthly_hours_total);
         if (daily_hours && typeof daily_hours === "object") row.daily_hours = daily_hours;
         row.updated_at = new Date().toISOString();
         const { data: existing } = await supabase.from("investor_capacity_settings").select("id").limit(1).maybeSingle();
@@ -154,7 +155,7 @@ Deno.serve(async (req) => {
         return ok();
       }
       case "upsertCapacityAllocation": {
-        const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, display_order } = payload;
+        const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, days_of_week, display_order } = payload;
         if (!player_type || !["youth","pro"].includes(player_type)) return bad("player_type required");
         const row: any = {
           time_item_id: time_item_id || null,
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
           player_type,
           hours_per_week: Number(hours_per_week) || 0,
           day_of_week: day_of_week || null,
+          days_of_week: Array.isArray(days_of_week) ? days_of_week : [],
           display_order: display_order ?? 999,
           updated_at: new Date().toISOString(),
         };
