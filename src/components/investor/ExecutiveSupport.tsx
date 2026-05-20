@@ -35,23 +35,48 @@ type SourceEntry = {
   metadata?: Record<string, any>;
 };
 
-export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked }: { kind: Kind; token: string; isAdmin: boolean; unlocked: boolean }) => {
+export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = [] }: { kind: Kind; token: string; isAdmin: boolean; unlocked: boolean; staffTasks?: StaffTask[] }) => {
   const [items, setItems] = useState<Item[]>([]);
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [scriptNodes, setScriptNodes] = useState<ScriptNode[]>([]);
+  const [scriptObjections, setScriptObjections] = useState<ScriptObjection[]>([]);
   const [newBody, setNewBody] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [authorLabel, setAuthorLabel] = useState(() => localStorage.getItem("exec_author_label") || "");
 
   const load = async () => {
-    const { data: it } = await (supabase as any).from("exec_support_items").select("*").eq("kind", kind).order("created_at", { ascending: false });
-    const list = (it as Item[]) || [];
+    const itemQuery = (supabase as any).from("exec_support_items").select("*").eq("kind", kind);
+    const { data: it } = kind === "note"
+      ? await itemQuery.order("created_at", { ascending: false })
+      : await itemQuery.order("created_at", { ascending: false });
+    const list = ((it as Item[]) || []).filter((item) => {
+      if (kind === "script") return !item.source_type || ["messaging_script", "marketing_template"].includes(item.source_type);
+      if (kind === "workflow") return !item.source_type || item.source_type === "staff_task";
+      return true;
+    });
     setItems(list);
     if (list.length > 0) {
       const { data: rp } = await (supabase as any).from("exec_support_replies").select("*").in("item_id", list.map(i => i.id)).order("created_at");
       setReplies((rp as Reply[]) || []);
     } else setReplies([]);
   };
-  useEffect(() => { load(); }, [kind]);
+  const loadSources = async () => {
+    if (kind === "script") {
+      const [tpl, scr, nd, obj] = await Promise.all([
+        (supabase as any).from("marketing_templates").select("id, message_title, message_content, recipient_type").eq("show_on_investor_portal", true).order("message_title"),
+        (supabase as any).from("messaging_scripts").select("id, title, description, sort_order").order("sort_order").order("created_at"),
+        (supabase as any).from("messaging_script_nodes").select("*").order("sort_order"),
+        (supabase as any).from("messaging_script_objections").select("*").order("sort_order"),
+      ]);
+      setTemplates((tpl.data as Template[]) || []);
+      setScripts((scr.data as Script[]) || []);
+      setScriptNodes((nd.data as ScriptNode[]) || []);
+      setScriptObjections((obj.data as ScriptObjection[]) || []);
+    }
+  };
+  useEffect(() => { load(); loadSources(); }, [kind]);
 
   const call = async (action: string, payload: any) => {
     const { data, error } = await supabase.functions.invoke("investor-overview-write", { body: { token, action, payload } });
