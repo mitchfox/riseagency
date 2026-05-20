@@ -320,16 +320,10 @@ const Staff = () => {
     // Determine the default section based on role permissions
     let defaultSection = 'overview';
     if (permissionManagedRole) {
-      // If the role can't view overview, try dashboard, then first viewable
-      if (!canView('overview')) {
-        if (canView('dashboard')) {
-          defaultSection = 'dashboard';
-        } else {
-          const viewable = getViewableSections();
-          const firstViewable = viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
-          if (firstViewable) defaultSection = firstViewable;
-        }
-      }
+      const viewable = getViewableSections();
+      const firstViewable = viewable.find(s => s !== 'overview' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
+        || viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
+      if (firstViewable) defaultSection = firstViewable;
     }
     
     // Restore saved tabs if none currently open
@@ -354,8 +348,9 @@ const Staff = () => {
     // Determine which section to show
     const savedActive = localStorage.getItem('staff_active_tab');
     const savedActiveValid = savedActive && (!permissionManagedRole || canView(savedActive));
-    const section = urlSection
-      || (!isTrustedNetworkRole ? defaultSection : (savedActiveValid ? savedActive : defaultSection));
+    const section = urlSection && (!permissionManagedRole || canView(urlSection))
+      ? urlSection
+      : (!isTrustedNetworkRole ? defaultSection : (savedActiveValid ? savedActive : defaultSection));
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     setExpandedSection(finalSection as any);
