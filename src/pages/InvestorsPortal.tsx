@@ -2184,6 +2184,26 @@ const InvestorsPortal = () => {
                       />
                     </SectionShell>
                   )}
+                  {active === "capacity" && (
+                    <SectionShell icon={Activity} title="Capacity">
+                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} />
+                    </SectionShell>
+                  )}
+                  {active === "execNotes" && (
+                    <SectionShell icon={Sparkles} title="Thought Wall">
+                      <ExecutiveSupport kind="note" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                    </SectionShell>
+                  )}
+                  {active === "execScripts" && (
+                    <SectionShell icon={FileText} title="Scripts">
+                      <ExecutiveSupport kind="script" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                    </SectionShell>
+                  )}
+                  {active === "execWorkflow" && (
+                    <SectionShell icon={Network} title="Workflow">
+                      <ExecutiveSupport kind="workflow" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                    </SectionShell>
+                  )}
                 </div>
               </>
             ) : expandedCategory ? (
