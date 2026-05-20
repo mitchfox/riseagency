@@ -239,15 +239,32 @@ export const AthleteCentre = () => {
       .order("name");
 
     if (!error && data) {
-      setPlayers(data);
-      if (data.length > 0) {
+      const userId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+      let filtered = data as Player[];
+      if (userId) {
+        try {
+          const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+          const onlyStatsUpdater = (roles || []).length > 0 && (roles || []).every((r: any) => r.role === "stats_updater");
+          if (onlyStatsUpdater) {
+            const { data: assignments } = await (supabase as any)
+              .from("staff_player_assignments")
+              .select("player_id")
+              .eq("user_id", userId)
+              .eq("role_key", "stats_updater");
+            const allowed = new Set(((assignments as any[]) || []).map((a: any) => a.player_id));
+            filtered = (data as Player[]).filter(p => allowed.has(p.id));
+          }
+        } catch {/* ignore */}
+      }
+      setPlayers(filtered);
+      if (filtered.length > 0) {
         const savedPlayerId = localStorage.getItem('athleteCentre_lastPlayer');
-        const savedPlayer = savedPlayerId ? data.find(p => p.id === savedPlayerId) : null;
+        const savedPlayer = savedPlayerId ? filtered.find(p => p.id === savedPlayerId) : null;
         if (savedPlayer) {
           setSelectedPlayer(savedPlayer.id);
         } else {
-          const firstRepresented = data.find(p => p.representation_status === 'represented');
-          setSelectedPlayer(firstRepresented?.id || data[0].id);
+          const firstRepresented = filtered.find(p => p.representation_status === 'represented');
+          setSelectedPlayer(firstRepresented?.id || filtered[0].id);
         }
       }
     }
