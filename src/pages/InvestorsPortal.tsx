@@ -1318,18 +1318,17 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
 
   useEffect(() => {
     (async () => {
-      const [{ data: ratings }, { data: networkClubs }] = await Promise.all([
-        (supabase as any).from("club_ratings").select("club_name, first_team_rating, academy_rating"),
-        (supabase as any).from("network_club_profiles").select("club_name, logo_url").not("logo_url", "is", null),
-      ]);
+      const { data: ratings } = await (supabase as any).from("club_ratings").select("club_name, first_team_rating, academy_rating");
       setClubRatings((ratings as any) || []);
+      // Build a logo lookup from any rows that already carry a club_logo_url (scouting reports)
       const m: Record<string, string> = {};
-      ((networkClubs as any[]) || []).forEach((c) => {
-        if (c?.club_name && c?.logo_url) m[c.club_name.trim().toLowerCase()] = c.logo_url;
+      [...scouting, ...youth, ...pro].forEach((r: any) => {
+        const name = (r?.current_club || "").trim().toLowerCase();
+        if (name && r?.club_logo_url) m[name] = m[name] || r.club_logo_url;
       });
       setClubLogosByName(m);
     })();
-  }, []);
+  }, [scouting, youth, pro]);
 
   const logoFor = (clubName: string | null, fallback: string | null) => {
     if (fallback) return fallback;
