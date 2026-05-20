@@ -2040,7 +2040,13 @@ const InvestorsPortal = () => {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (isSingleSection) {
-                      handleSectionClick(cat.sections[0].id, cat.id);
+                      // Toggle single-section categories: clicking again clears them so all categories reappear.
+                      if (hasActive) {
+                        setExpandedCategory(null);
+                        setActive(null);
+                      } else {
+                        handleSectionClick(cat.sections[0].id, cat.id);
+                      }
                     } else {
                       // Toggle: if already expanded, collapse back to category overview.
                       // Also clear the active section so all categories reappear cleanly.
