@@ -220,18 +220,24 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
   const [localCategories, setLocalCategories] = useState<OpsCategory[]>([]);
   const [localItems, setLocalItems] = useState<OpsItem[]>([]);
+  const [deletedCategoryIds, setDeletedCategoryIds] = useState<string[]>([]);
+  const [deletedItemIds, setDeletedItemIds] = useState<string[]>([]);
 
   const visibleCategories = useMemo(() => {
     const byId = new Map<string, OpsCategory>();
     [...categories, ...localCategories].forEach(cat => byId.set(cat.id, cat));
-    return [...byId.values()].sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
-  }, [categories, localCategories]);
+    return [...byId.values()]
+      .filter(cat => !deletedCategoryIds.includes(cat.id))
+      .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [categories, localCategories, deletedCategoryIds]);
 
   const visibleItems = useMemo(() => {
     const byId = new Map<string, OpsItem>();
     [...items, ...localItems].forEach(item => byId.set(item.id, item));
-    return [...byId.values()].sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
-  }, [items, localItems]);
+    return [...byId.values()]
+      .filter(item => !deletedItemIds.includes(item.id) && (!item.category_id || !deletedCategoryIds.includes(item.category_id)))
+      .sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [items, localItems, deletedItemIds, deletedCategoryIds]);
 
   const saveLocalItem = (item: OpsItem) => {
     setLocalItems(prev => [...prev.filter(existing => existing.id !== item.id), item]);
