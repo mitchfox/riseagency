@@ -18,7 +18,7 @@ interface Reply {
   body_text: string | null; audio_url: string | null;
   is_admin: boolean; created_at: string;
 }
-interface Template { id: string; title: string; message_content: string; category: string | null; }
+interface Template { id: string; message_title: string; message_content: string; recipient_type: string | null; }
 
 export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked }: { kind: Kind; token: string; isAdmin: boolean; unlocked: boolean }) => {
   const [items, setItems] = useState<Item[]>([]);
@@ -142,10 +142,10 @@ const FavouriteTemplates = () => {
   const [rows, setRows] = useState<Template[]>([]);
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any).from("whatsapp_quick_messages")
-        .select("id, title, message_content, category")
+      const { data } = await (supabase as any).from("marketing_templates")
+        .select("id, message_title, message_content, recipient_type")
         .eq("show_on_investor_portal", true)
-        .order("title");
+        .order("message_title");
       setRows((data as Template[]) || []);
     })();
   }, []);
@@ -160,9 +160,9 @@ const FavouriteTemplates = () => {
         {rows.map(t => (
           <div key={t.id} className="rounded border border-border bg-card/40 p-2.5">
             <div className="text-xs font-semibold flex items-center gap-1.5">
-              <MessageSquare className="h-3 w-3 text-primary" /> {t.title}
+              <MessageSquare className="h-3 w-3 text-primary" /> {t.message_title}
             </div>
-            {t.category && <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">{t.category}</div>}
+            {t.recipient_type && <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">{t.recipient_type}</div>}
             <div className="text-xs whitespace-pre-wrap mt-1.5">{t.message_content}</div>
           </div>
         ))}
