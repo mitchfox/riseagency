@@ -241,7 +241,13 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   }, [items, localItems, deletedItemIds, deletedCategoryIds]);
 
   const saveLocalItem = (item: OpsItem) => {
+    setDeletedItemIds(prev => prev.filter(id => id !== item.id));
     setLocalItems(prev => [...prev.filter(existing => existing.id !== item.id), item]);
+  };
+
+  const deleteLocalItem = (id: string) => {
+    setDeletedItemIds(prev => prev.includes(id) ? prev : [...prev, id]);
+    setLocalItems(prev => prev.filter(item => item.id !== id));
   };
 
   const grouped = useMemo(() => visibleCategories.map(cat => ({
@@ -275,8 +281,10 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         kind, title: title.trim(),
         display_order: (visibleCategories[visibleCategories.length - 1]?.display_order ?? 0) + 1,
       });
-      if ((saved as any)?.row) {
-        setLocalCategories(prev => [...prev.filter(c => c.id !== (saved as any).row.id), (saved as any).row]);
+      const savedRow = (saved as any)?.row;
+      if (savedRow) {
+        setDeletedCategoryIds(prev => prev.filter(id => id !== savedRow.id));
+        setLocalCategories(prev => [...prev.filter(c => c.id !== savedRow.id), savedRow]);
       }
       setNewCategoryTitle(""); setAddingCategory(false);
       toast.success("Category added");
