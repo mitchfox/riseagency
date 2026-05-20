@@ -61,6 +61,36 @@ const MetricChip = ({ m, large }: { m: OverviewMetric; large?: boolean }) => (
   </div>
 );
 
+const DetailBlocksView = ({ blocks }: { blocks: DetailBlock[] }) => {
+  if (!blocks || blocks.length === 0) return null;
+  return (
+    <div className="space-y-4">
+      {blocks.map((b, i) => {
+        if (b.kind === "heading") return <h4 key={i} className="text-base md:text-lg font-semibold tracking-tight text-foreground">{b.text}</h4>;
+        if (b.kind === "paragraph") return <p key={i} className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{b.text}</p>;
+        if (b.kind === "bullets") return (
+          <ul key={i} className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
+            {(b.items || []).filter(Boolean).map((it, j) => <li key={j}>{it}</li>)}
+          </ul>
+        );
+        if (b.kind === "stat") return (
+          <div key={i} className="inline-flex flex-col items-start rounded border border-primary/30 bg-primary/5 px-4 py-2">
+            <div className="text-xs text-primary/70 font-medium">{b.label}</div>
+            <div className="text-2xl text-primary font-semibold">{b.value}</div>
+          </div>
+        );
+        if (b.kind === "image" && b.url) return (
+          <figure key={i} className="rounded-lg overflow-hidden border border-border">
+            <img src={b.url} alt={b.alt || ""} className="w-full max-h-[420px] object-cover" />
+            {b.alt && <figcaption className="text-xs text-muted-foreground px-3 py-2 bg-muted/30">{b.alt}</figcaption>}
+          </figure>
+        );
+        return null;
+      })}
+    </div>
+  );
+};
+
 const CardEditor = ({ card, sections, token, onDone, onCancel }: {
   card: Partial<OverviewCardData>;
   sections: OverviewSectionData[];
