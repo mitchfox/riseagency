@@ -55,9 +55,16 @@ async function callWrite(token: string | null, action: string, payload: any) {
 }
 
 const MetricChip = ({ m, large }: { m: OverviewMetric; large?: boolean }) => (
-  <div className={`flex flex-col items-end rounded border border-primary/30 bg-primary/5 ${large ? "px-4 py-2" : "px-2.5 py-1"}`}>
-    <div className={`tracking-tight text-primary/70 font-medium leading-none ${large ? "text-xs" : "text-[10px]"}`}>{m.label}</div>
-    <div className={`text-primary leading-tight font-semibold ${large ? "text-2xl mt-1" : "text-sm"}`}>{m.value}{m.unit ? <span className={`text-primary/70 ml-0.5 ${large ? "text-sm" : "text-[10px]"}`}>{m.unit}</span> : null}</div>
+  <div
+    className={`relative flex flex-col items-start rounded-xl border border-primary/30 bg-white/[0.04] backdrop-blur-md shadow-[0_4px_18px_rgba(0,0,0,0.25)] overflow-hidden ${large ? "px-5 py-4 min-w-[140px]" : "px-3 py-2 min-w-[110px]"}`}
+  >
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+    <div className="pointer-events-none absolute -inset-px rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60" />
+    <div className={`relative tracking-wider uppercase text-primary/70 font-medium leading-none ${large ? "text-[11px]" : "text-[9px]"}`}>{m.label}</div>
+    <div className={`relative text-primary leading-tight font-semibold mt-1.5 tabular-nums ${large ? "text-3xl" : "text-base"}`}>
+      {m.value}
+      {m.unit ? <span className={`text-primary/70 ml-1 ${large ? "text-sm" : "text-[10px]"}`}>{m.unit}</span> : null}
+    </div>
   </div>
 );
 
@@ -69,19 +76,27 @@ const DetailBlocksView = ({ blocks }: { blocks: DetailBlock[] }) => {
         if (b.kind === "heading") return <h4 key={i} className="text-base md:text-lg font-semibold tracking-tight text-foreground">{b.text}</h4>;
         if (b.kind === "paragraph") return <p key={i} className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{b.text}</p>;
         if (b.kind === "bullets") return (
-          <ul key={i} className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
-            {(b.items || []).filter(Boolean).map((it, j) => <li key={j}>{it}</li>)}
-          </ul>
+          <div key={i} className="rounded-xl border border-primary/20 bg-white/[0.03] backdrop-blur-sm p-4 shadow-[0_4px_18px_rgba(0,0,0,0.2)]">
+            <ul className="space-y-2 text-sm text-foreground/85">
+              {(b.items || []).filter(Boolean).map((it, j) => (
+                <li key={j} className="flex gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  <span className="leading-relaxed">{it}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         );
         if (b.kind === "stat") return (
-          <div key={i} className="inline-flex flex-col items-start rounded border border-primary/30 bg-primary/5 px-4 py-2">
-            <div className="text-xs text-primary/70 font-medium">{b.label}</div>
-            <div className="text-2xl text-primary font-semibold">{b.value}</div>
+          <div key={i} className="relative inline-flex flex-col items-start rounded-xl border border-primary/30 bg-white/[0.05] backdrop-blur-md px-5 py-3 shadow-[0_6px_20px_rgba(0,0,0,0.25)] overflow-hidden">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+            <div className="relative text-[11px] uppercase tracking-wider text-primary/70 font-medium">{b.label}</div>
+            <div className="relative text-2xl text-primary font-semibold mt-1 tabular-nums">{b.value}</div>
           </div>
         );
         if (b.kind === "image" && b.url) return (
-          <figure key={i} className="rounded-lg overflow-hidden border border-border">
-            <img src={b.url} alt={b.alt || ""} className="w-full max-h-[420px] object-cover" />
+          <figure key={i} className="rounded-lg overflow-hidden border border-border bg-black/40">
+            <img src={b.url} alt={b.alt || ""} className="w-full max-h-[520px] object-contain" />
             {b.alt && <figcaption className="text-xs text-muted-foreground px-3 py-2 bg-muted/30">{b.alt}</figcaption>}
           </figure>
         );
