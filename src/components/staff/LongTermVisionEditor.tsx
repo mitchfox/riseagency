@@ -23,7 +23,7 @@ export const LongTermVisionEditor = ({ playerId }: { playerId: string }) => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("player_portal_settings")
         .select("vision_skillset, vision_per90_targets, vision_roadmap, vision_players_to_watch")
         .eq("player_id", playerId)
