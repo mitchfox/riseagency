@@ -1694,6 +1694,7 @@ const InvestorsPortal = () => {
   const initialisedSessionRef = useRef(false);
   const refreshSeqRef = useRef(0);
   const refreshInFlightRef = useRef(false);
+  const refreshPendingRef = useRef(false);
 
   useEffect(() => { initialisedSessionRef.current = false; setUnlocked(false); }, [user?.id]);
 
@@ -1722,7 +1723,11 @@ const InvestorsPortal = () => {
 
   const refresh = async () => {
     if (!token) return;
-    if (refreshInFlightRef.current) return; // collapse duplicate concurrent calls
+    if (refreshInFlightRef.current) {
+      // Queue a follow-up refresh so writes that finish during an in-flight load still re-fetch
+      refreshPendingRef.current = true;
+      return;
+    }
     const seq = ++refreshSeqRef.current;
     refreshInFlightRef.current = true;
     setLoading(true);
@@ -1761,6 +1766,11 @@ const InvestorsPortal = () => {
     } finally {
       refreshInFlightRef.current = false;
       if (seq === refreshSeqRef.current) setLoading(false);
+      if (refreshPendingRef.current) {
+        refreshPendingRef.current = false;
+        // fire-and-forget; do not await inside finally
+        setTimeout(() => { refresh(); }, 0);
+      }
     }
   };
   useEffect(() => { if (token) refresh(); }, [token]);
