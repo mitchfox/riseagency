@@ -20,7 +20,7 @@ interface Props {
 
 type Answers = Record<string, any>;
 
-const RankInput = ({ q, value, onChange }: { q: Question; value: string[]; onChange: (v: string[]) => void }) => {
+const RankInput = ({ q, value, onChange, labelFor }: { q: Question; value: string[]; onChange: (v: string[]) => void; labelFor: (s: string) => string }) => {
   const list = value && value.length === q.options!.length ? value : [...q.options!];
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -36,7 +36,7 @@ const RankInput = ({ q, value, onChange }: { q: Question; value: string[]; onCha
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(43,49%,61%)]/15 text-[hsl(43,49%,61%)] text-xs font-semibold">
             {i + 1}
           </span>
-          <span className="flex-1 text-sm">{opt}</span>
+          <span className="flex-1 text-sm">{labelFor(opt)}</span>
           <button type="button" onClick={() => move(i, -1)} aria-label="Move up" className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={i === 0}>
             <ArrowUp className="h-4 w-4" />
           </button>
@@ -49,7 +49,7 @@ const RankInput = ({ q, value, onChange }: { q: Question; value: string[]; onCha
   );
 };
 
-const MultiInput = ({ q, value, onChange }: { q: Question; value: string[]; onChange: (v: string[]) => void }) => {
+const MultiInput = ({ q, value, onChange, labelFor }: { q: Question; value: string[]; onChange: (v: string[]) => void; labelFor: (s: string) => string }) => {
   const set = new Set(value || []);
   const toggle = (opt: string) => {
     const next = new Set(set);
@@ -67,12 +67,12 @@ const MultiInput = ({ q, value, onChange }: { q: Question; value: string[]; onCh
         return (
           <label key={opt} className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition ${checked ? "border-[hsl(43,49%,61%)] bg-[hsl(43,49%,61%)]/10" : "border-border bg-card/40"}`}>
             <Checkbox checked={checked} onCheckedChange={() => toggle(opt)} />
-            <span>{opt}</span>
+            <span>{labelFor(opt)}</span>
           </label>
         );
       })}
       {q.maxSelect && (
-        <div className="col-span-full text-xs text-muted-foreground">Choose up to {q.maxSelect}.</div>
+        <div className="col-span-full text-xs text-muted-foreground">{labelFor("Choose up to")} {q.maxSelect}.</div>
       )}
     </div>
   );
@@ -83,7 +83,7 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
   const [stepIdx, setStepIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const { sections } = useTranslatedOperatingProfile();
+  const { sections, labelFor } = useTranslatedOperatingProfile();
 
   useEffect(() => {
     if (!open || !playerId) return;
@@ -147,16 +147,16 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
           {q.options!.map((opt) => (
             <div key={opt} className="flex items-center gap-2">
               <RadioGroupItem value={opt} id={`${q.id}-${opt}`} />
-              <Label htmlFor={`${q.id}-${opt}`} className="cursor-pointer">{opt}</Label>
+              <Label htmlFor={`${q.id}-${opt}`} className="cursor-pointer">{labelFor(opt)}</Label>
             </div>
           ))}
         </RadioGroup>
       );
     }
     if (q.type === "multi") {
-      return <MultiInput q={q} value={answers[q.id] || []} onChange={(v) => setAnswer(q.id, v)} />;
+      return <MultiInput q={q} value={answers[q.id] || []} onChange={(v) => setAnswer(q.id, v)} labelFor={labelFor} />;
     }
-    return <RankInput q={q} value={answers[q.id] || []} onChange={(v) => setAnswer(q.id, v)} />;
+    return <RankInput q={q} value={answers[q.id] || []} onChange={(v) => setAnswer(q.id, v)} labelFor={labelFor} />;
   };
 
   return (
