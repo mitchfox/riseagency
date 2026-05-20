@@ -279,6 +279,7 @@ Deno.serve(async (req) => {
           is_admin: true, author_label: author_label || null,
         }).select().single();
         if (error) return bad(error.message, 500);
+        await notifyThoughtWallReply(supabase, item_id, body_text, author_label || user.username || "Admin", true);
         return ok({ row: data });
       }
       case "deleteExecReply": {
@@ -345,6 +346,7 @@ Deno.serve(async (req) => {
           is_admin: !!user.is_admin, author_label: author_label || user.username || "Investor",
         }).select().single();
         if (error) return bad(error.message, 500);
+        await notifyThoughtWallReply(supabase, item_id, body_text, author_label || user.username || "Investor", !!user.is_admin);
         return ok({ row: data });
       }
       // ---------- Time Management / Priorities (generic) ----------
