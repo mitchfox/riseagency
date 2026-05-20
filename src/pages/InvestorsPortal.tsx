@@ -160,6 +160,12 @@ const CATEGORIES: CategoryDef[] = [
   { id: "ops", title: "Operations", icon: Clock, sections: [
     { id: "timeManagement", title: "Time Management", icon: Clock },
     { id: "priorities", title: "Priorities", icon: ListOrdered },
+    { id: "capacity", title: "Capacity", icon: Activity },
+  ]},
+  { id: "exec", title: "Executive Support", icon: Sparkles, sections: [
+    { id: "execNotes", title: "Thought Wall", icon: Sparkles },
+    { id: "execScripts", title: "Scripts", icon: FileText },
+    { id: "execWorkflow", title: "Workflow", icon: Network },
   ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
