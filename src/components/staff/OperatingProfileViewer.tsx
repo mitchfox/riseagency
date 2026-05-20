@@ -13,7 +13,7 @@ export const OperatingProfileViewer = ({ playerId }: { playerId: string }) => {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("player_operating_profile")
       .select("answers, submitted_at")
       .eq("player_id", playerId)
