@@ -436,15 +436,12 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-base md:text-lg tracking-tight text-foreground leading-tight">{card.title}</div>
           {card.summary && <div className="text-sm text-foreground/60 mt-1 leading-snug font-sans normal-case tracking-normal">{card.summary}</div>}
-          {card.metrics?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3 md:hidden">
-              {card.metrics.map((m, i) => <MetricChip key={i} m={m} />)}
-            </div>
-          )}
         </div>
-        <div className="hidden md:flex flex-wrap gap-2 justify-end max-w-[40%] shrink-0">
-          {card.metrics?.map((m, i) => <MetricChip key={i} m={m} />)}
-        </div>
+        {card.metrics?.length > 0 && (
+          <div className="hidden md:flex items-center gap-1.5 shrink-0 text-[10px] uppercase tracking-wider text-primary/60 font-medium">
+            {card.metrics.length} metric{card.metrics.length === 1 ? "" : "s"}
+          </div>
+        )}
         <ChevronDown className={`w-5 h-5 text-primary mt-1 shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence initial={false}>
