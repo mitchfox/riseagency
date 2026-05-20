@@ -1,30 +1,47 @@
-Implement the missing team-report Option B workflow and fix the fullscreen action-type dropdown.
+## Root cause
 
-1. Team report Option A vs Option B
-- Keep Option A as the existing full report editor: standard action rows with one score per action, plus simple involved-player tagging.
-- Rebuild Option B as the default team-report writing mode, not just a small extra panel:
-  - A compact action-by-action layout focused on team actions.
-  - Roster chips/buttons shown directly on each action for fast involved-player selection.
-  - Minute input remains a flywheel with 5-second intervals only.
-  - New actions inherit the previous action’s minute as the starting point.
-  - Score entered once on the action is credited to every selected player by default.
-  - Add a clear “different scores” control that expands per-player score inputs only when needed.
-  - Keep the roster in a collapsible section at the top with number and optional name.
-  - Keep scouting report toggle available for team reports.
+When you add a category or item on Priorities / Time Management, the write succeeds but the follow-up reload is silently dropped, so nothing appears.
 
-2. Flywheel time behaviour
-- Ensure all performance-report action minute fields use the flywheel, including team Option B.
-- Desktop: wheel up/down on the minute adjusts by 5 seconds.
-- Mobile: vertical scroll/drag on the minute adjusts by 5 seconds.
-- Preserve click-to-edit and mm.ss formatting.
+In `src/pages/InvestorsPortal.tsx` the `refresh()` function has this guard:
 
-3. Save and display structure
-- Persist involved players and per-player override scores in the existing `involved_players` action data.
-- Keep `team_scoring_method` as the saved mode so reopening the report restores the correct editor.
-- Avoid fixture, minutes played, fixture stats and additional player stats for team reports.
+```
+if (refreshInFlightRef.current) return; // collapse duplicate concurrent calls
+```
 
-4. Fullscreen action-type dropdown
-- Fix the fullscreen quick-tag action-type control so clicking it actually opens while in fullscreen.
-- The likely issue is the popover being portalled outside the fullscreen element or the video click overlay intercepting it.
-- Make the overlay control explicitly interactive above the video layer, stop pointer events properly, and render the popover within the fullscreen overlay context instead of somewhere the browser fullscreen mode blocks.
-- Keep hotkeys intact: `a` opens action type, `s` focuses score, `n` focuses coach’s note, `Tab` cycles fields, and existing video-analysis hotkeys remain while typing is protected.
+`OpsBoard.createCategory` calls `onRefresh()` immediately after the write. The initial portal-load refresh is often still in flight, so the post-save refresh is dropped entirely. The new row exists in the DB but the UI never re-fetches it. Editing items has the same problem — the save works but the page state never updates, so it looks like "editing didn't save".
+
+The DB confirms it (`investor_priority_categories` is empty after your attempt — meaning either the refresh was dropped, OR the write itself failed with a generic `"Edge Function returned a non-2xx status code"` and was swallowed). Both paths need fixing.
+
+Also: `OpsBoard` only shows a toast on error, never on success, so there's no feedback when things do save.
+
+## Plan
+
+### 1. Fix the refresh-dropping bug (`src/pages/InvestorsPortal.tsx`)
+Replace the "drop if in flight" guard with a "queue one more refresh" pattern, so a write-triggered refresh after the initial load always runs:
+
+- Keep `refreshInFlightRef` but instead of `return`, set a `refreshPendingRef = true`.
+- In the `finally` block, if `refreshPendingRef` is true, clear it and call `refresh()` again.
+- This guarantees the user-triggered refresh after `createCategory` / `upsertOpsItem` / `deleteOpsItem` / `reorderOpsItems` actually runs.
+
+### 2. Surface real edge function errors (`src/components/investor/OpsBoard.tsx`)
+Swap the raw `supabase.functions.invoke` call inside `callWrite` for the existing `invokeEdgeFunction` helper from `src/lib/edgeFunctionHelper.ts`. That helper unwraps `FunctionsHttpError` and returns the real message (e.g. "Unauthorized", RLS errors) instead of "Edge Function returned a non-2xx status code".
+
+### 3. Add success toasts (`src/components/investor/OpsBoard.tsx`)
+Add `toast.success(...)` after each successful write so the user gets confirmation:
+- `createCategory` → `toast.success("Category added")`
+- Category rename → `toast.success("Category renamed")`
+- Category delete → `toast.success("Category deleted")`
+- Item save (new) → `toast.success("Task added")`
+- Item save (edit) → `toast.success("Task updated")` (distinguish via `item?.id` presence)
+- Item delete → `toast.success("Task deleted")` (already exists, keep)
+- Reorder → `toast.success("Reordered")`
+
+### 4. Verify persistence across page refresh
+Since the writes hit the DB via the edge function and `refresh()` re-fetches from `investor-data`, fixing #1 means edits persist visually immediately AND after a hard reload. No schema changes needed.
+
+## Files touched
+
+- `src/pages/InvestorsPortal.tsx` — refresh queue fix
+- `src/components/investor/OpsBoard.tsx` — use `invokeEdgeFunction`, add success toasts
+
+No DB migration, no edge function redeploy needed.
