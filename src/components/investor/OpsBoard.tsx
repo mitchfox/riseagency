@@ -339,6 +339,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
                 <ItemCard key={it.id} item={it}
                   staffTask={it.staff_task_id ? staffTasks.find(t => t.id === it.staff_task_id) : undefined}
                   unlocked={unlocked} reorderable={reorderable}
+                  position={idx + 1}
                   isFirst={idx === 0} isLast={idx === list.length - 1}
                   token={token} kind={kind} staffTasks={staffTasks}
                   onChanged={onRefresh}
@@ -373,6 +374,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
             <ItemCard key={it.id} item={it}
               staffTask={it.staff_task_id ? staffTasks.find(t => t.id === it.staff_task_id) : undefined}
               unlocked={unlocked} reorderable={false}
+              position={idx + 1}
               isFirst={idx === 0} isLast={idx === orphan.length - 1}
               token={token} kind={kind} staffTasks={staffTasks}
               onChanged={onRefresh}
@@ -387,11 +389,21 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
           {addingCategory ? (
             <div className="space-y-2">
               <div className="flex gap-2">
-                <Input value={newCategoryTitle} onChange={e => setNewCategoryTitle(e.target.value)}
+                <Input
+                  ref={newCategoryInputRef}
+                  defaultValue=""
                   placeholder="Category title"
-                  onKeyDown={e => { if (e.key === "Enter") createCategory(newCategoryTitle); }} autoFocus />
-                <Button onClick={() => createCategory(newCategoryTitle)} className="bg-primary text-primary-foreground"><Check className="w-4 h-4" /></Button>
-                <Button variant="ghost" onClick={() => { setAddingCategory(false); setNewCategoryTitle(""); }}><X className="w-4 h-4" /></Button>
+                  onKeyDown={e => { if (e.key === "Enter") createCategory(newCategoryInputRef.current?.value || ""); }}
+                  autoFocus
+                />
+                <Button
+                  onClick={() => createCategory(newCategoryInputRef.current?.value || "")}
+                  className="bg-primary text-primary-foreground"
+                ><Check className="w-4 h-4" /></Button>
+                <Button variant="ghost" onClick={() => {
+                  if (newCategoryInputRef.current) newCategoryInputRef.current.value = "";
+                  setAddingCategory(false);
+                }}><X className="w-4 h-4" /></Button>
               </div>
               {defaultCategorySuggestions && defaultCategorySuggestions.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
