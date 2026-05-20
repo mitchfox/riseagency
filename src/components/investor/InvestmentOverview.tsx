@@ -345,6 +345,12 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         className="relative overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-lg hover:border-primary/60 transition-colors col-span-full">
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, hsl(var(--primary)) 0%, transparent 55%)" }} />
+        {card.image_url && (
+          <div className="relative w-full h-56 md:h-72 overflow-hidden">
+            <img src={card.image_url} alt={card.image_alt || card.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
+          </div>
+        )}
         <div className="relative p-6 md:p-7 flex flex-col gap-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -366,6 +372,11 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
           )}
           {card.content && (
             <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4 font-sans normal-case tracking-normal">{card.content}</div>
+          )}
+          {card.detail_blocks && card.detail_blocks.length > 0 && (
+            <div className="border-t border-primary/15 pt-4">
+              <DetailBlocksView blocks={card.detail_blocks} />
+            </div>
           )}
           {card.tags?.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -413,8 +424,16 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden border-t border-primary/10">
             <div className="px-4 md:px-5 py-5 space-y-4">
+              {card.image_url && (
+                <figure className="rounded-md overflow-hidden border border-border">
+                  <img src={card.image_url} alt={card.image_alt || card.title} className="w-full max-h-[420px] object-cover" />
+                </figure>
+              )}
               {card.content && (
                 <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap font-sans normal-case tracking-normal">{card.content}</div>
+              )}
+              {card.detail_blocks && card.detail_blocks.length > 0 && (
+                <DetailBlocksView blocks={card.detail_blocks} />
               )}
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
