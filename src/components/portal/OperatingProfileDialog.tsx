@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Check } from "lucide-react";
 import { toast } from "sonner";
-import { OPERATING_PROFILE_SECTIONS, Question } from "./operatingProfileQuestions";
+import { Question } from "./operatingProfileQuestions";
+import { useTranslatedOperatingProfile } from "./useTranslatedOperatingProfile";
 
 interface Props {
   playerId: string | null | undefined;
@@ -82,6 +83,7 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
   const [stepIdx, setStepIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const { sections } = useTranslatedOperatingProfile();
 
   useEffect(() => {
     if (!open || !playerId) return;
@@ -96,7 +98,6 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
     })();
   }, [open, playerId]);
 
-  const sections = OPERATING_PROFILE_SECTIONS;
   const current = sections[stepIdx];
   const progress = Math.round(((stepIdx + 1) / sections.length) * 100);
 
