@@ -48,7 +48,7 @@ const PerformanceReport = () => {
 
       const { data, error } = await supabase
         .from("player_analysis")
-        .select("id, opponent, report_type, team_name, players!player_analysis_player_id_fkey(name)")
+        .select("id, opponent, report_type, team_name, player_id, players!player_analysis_player_id_fkey(name)")
         .eq("id", id)
         .maybeSingle();
 
