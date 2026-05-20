@@ -344,8 +344,8 @@ const HighlightsPortal = () => {
           <Tabs defaultValue="playlists" className="w-full">
             <TabsList>
               <TabsTrigger value="playlists">Playlists</TabsTrigger>
-              <TabsTrigger value="reports">Performance reports</TabsTrigger>
-              <TabsTrigger value="videoreports">Video reports</TabsTrigger>
+              <TabsTrigger value="reports">Performance Reports</TabsTrigger>
+              <TabsTrigger value="videoreports">Video Reports</TabsTrigger>
             </TabsList>
 
             <TabsContent value="playlists" className="mt-4 space-y-3">
