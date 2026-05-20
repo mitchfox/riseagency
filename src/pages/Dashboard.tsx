@@ -46,6 +46,8 @@ import { PlayerTransferHub } from "@/components/player/TransferHub";
 import { CognisanceSection } from "@/components/portal/CognisanceSection";
 import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDisplay";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
+import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
+import { OperatingProfileDialog } from "@/components/portal/OperatingProfileDialog";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
@@ -2624,6 +2626,12 @@ const Dashboard = () => {
 
                 <TabsContent value="comparisons">
                   <AnalysisComparisons analyses={analyses} playerData={playerData} />
+                  <LongTermVisionSection
+                    skillset={portalSettings?.vision_skillset}
+                    per90Targets={portalSettings?.vision_per90_targets}
+                    roadmap={portalSettings?.vision_roadmap}
+                    playersToWatch={portalSettings?.vision_players_to_watch}
+                  />
                 </TabsContent>
 
                 <TabsContent value="video-reports">
