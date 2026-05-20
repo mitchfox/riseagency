@@ -53,10 +53,15 @@ async function callWrite(token: string | null, action: string, payload: any) {
   return data;
 }
 
+const normaliseItem = (row: any): OpsItem => ({
+  ...row,
+  highlights: Array.isArray(row?.highlights) ? row.highlights : [],
+});
+
 const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, onDone, onCancel }: {
   item?: Partial<OpsItem>; categoryId: string; kind: "time" | "priority";
   token: string | null; staffTasks: StaffTaskOption[]; displayOrder: number;
-  onDone: () => void; onCancel: () => void;
+  onDone: (saved?: OpsItem) => void; onCancel: () => void;
 }) => {
   const [title, setTitle] = useState(item?.title || "");
   const [description, setDescription] = useState(item?.description || "");
@@ -70,7 +75,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
     setBusy(true);
     try {
       const isEdit = Boolean(item?.id);
-      await callWrite(token, "upsertOpsItem", {
+      const saved = await callWrite(token, "upsertOpsItem", {
         kind,
         id: item?.id,
         category_id: categoryId,
@@ -80,7 +85,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
         display_order: item?.display_order ?? displayOrder,
       });
       toast.success(isEdit ? "Task updated" : "Task added");
-      onDone();
+      onDone((saved as any)?.row ? normaliseItem((saved as any).row) : undefined);
     } catch (e: any) { toast.error(e.message || "Save failed"); }
     finally { setBusy(false); }
   };
