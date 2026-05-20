@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Send, FileText, Workflow as WorkflowIcon, StickyNote, CheckCircle2, RotateCcw, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 
 type Kind = "note" | "script" | "workflow";
 interface Item {
@@ -79,7 +80,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   useEffect(() => { load(); loadSources(); }, [kind]);
 
   const call = async (action: string, payload: any) => {
-    const { data, error } = await supabase.functions.invoke("investor-overview-write", { body: { token, action, payload } });
+    const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
     await load();
     return true;
@@ -140,7 +141,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   const ensureSourceItem = async (source: SourceEntry): Promise<Item | null> => {
     const existing = items.find((it) => it.source_type === source.source_type && it.source_id === source.source_id);
     if (existing) return existing;
-    const { data, error } = await supabase.functions.invoke("investor-overview-write", {
+    const { data, error } = await invokeEdgeFunction("investor-overview-write", {
       body: { token, action: "ensureExecSourceItem", payload: { kind, ...source } },
     });
     if (error || (data as any)?.error) {
