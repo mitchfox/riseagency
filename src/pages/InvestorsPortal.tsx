@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { findClubRating, findClubCountry } from "@/lib/clubNameUtils";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
 import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
