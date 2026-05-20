@@ -1733,6 +1733,14 @@ const Dashboard = () => {
           onMarkSeen={() => markWelcomeSeen(playerData.id)}
         />
       )}
+      {playerData && (
+        <OperatingProfileDialog
+          playerId={playerData.id}
+          open={operatingProfileOpen}
+          onOpenChange={setOperatingProfileOpen}
+          onSubmitted={() => setOperatingProfileChecked(true)}
+        />
+      )}
       {/* Header with Logo */}
       <header className="sticky top-0 bg-background/80 backdrop-blur-md border-b border-border z-50 pwa-safe-top">
         <div className="container mx-auto px-4">
