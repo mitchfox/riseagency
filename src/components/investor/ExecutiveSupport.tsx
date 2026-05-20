@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, MessageSquare, Send, FileText, Workflow as WorkflowIcon, StickyNote, Star, CheckCircle2, RotateCcw, Copy } from "lucide-react";
+import { Plus, Trash2, Send, FileText, Workflow as WorkflowIcon, StickyNote, CheckCircle2, RotateCcw, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -305,39 +305,6 @@ const ItemCard = ({ item, replies, isAdmin, unlocked, onReply, onDelete, onResol
       <div className="flex items-center gap-1.5">
         <Input placeholder="Reply…" value={text} onChange={(e) => setText(e.target.value)} className="h-8 text-xs" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onReply(text, setText); } }} />
         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => onReply(text, setText)}><Send className="h-3.5 w-3.5" /></Button>
-      </div>
-    </div>
-  );
-};
-
-const FavouriteTemplates = () => {
-  const [rows, setRows] = useState<Template[]>([]);
-  useEffect(() => {
-    (async () => {
-      const { data } = await (supabase as any).from("marketing_templates")
-        .select("id, message_title, message_content, recipient_type")
-        .eq("show_on_investor_portal", true)
-        .order("message_title");
-      setRows((data as Template[]) || []);
-    })();
-  }, []);
-  if (rows.length === 0) return null;
-  return (
-    <div className="mt-6 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bbh text-primary">
-        <Star className="h-3.5 w-3.5" /> How we present in conversations
-      </div>
-      <p className="text-xs text-muted-foreground">A small selection of our staff message templates, kept here so you can feel how we open and run conversations.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {rows.map(t => (
-          <div key={t.id} className="rounded border border-border bg-card/40 p-2.5">
-            <div className="text-xs font-semibold flex items-center gap-1.5">
-              <MessageSquare className="h-3 w-3 text-primary" /> {t.message_title}
-            </div>
-            {t.recipient_type && <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">{t.recipient_type}</div>}
-            <div className="text-xs whitespace-pre-wrap mt-1.5">{t.message_content}</div>
-          </div>
-        ))}
       </div>
     </div>
   );
