@@ -141,6 +141,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
   token: string | null; kind: "time" | "priority";
   staffTasks: StaffTaskOption[];
   onChanged: () => Promise<void> | void;
+  onItemSaved?: (item: OpsItem) => void;
   onMove?: (dir: -1 | 1) => Promise<void> | void;
 }) => {
   const [editing, setEditing] = useState(false);
@@ -151,7 +152,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
   if (editing) {
     return <ItemEditor item={item} categoryId={item.category_id || ""} kind={kind} token={token} staffTasks={staffTasks}
       displayOrder={item.display_order}
-      onDone={async () => { setEditing(false); await onChanged(); }}
+      onDone={async (saved) => { setEditing(false); if (saved) onItemSaved?.(saved); await onChanged(); }}
       onCancel={() => setEditing(false)} />;
   }
 
