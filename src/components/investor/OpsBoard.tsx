@@ -135,7 +135,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
   );
 };
 
-const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onMove }: {
+const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onMove }: {
   item: OpsItem; staffTask?: StaffTaskOption;
   unlocked: boolean; reorderable?: boolean; isFirst: boolean; isLast: boolean;
   token: string | null; kind: "time" | "priority";
