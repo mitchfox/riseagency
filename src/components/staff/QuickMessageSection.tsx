@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Plus, Trash2, Edit, Copy, Sparkles } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Edit, Copy, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 
 interface MarketingTemplate {
@@ -26,6 +26,7 @@ interface MarketingTemplate {
   recipient_type: string;
   message_title: string;
   message_content: string;
+  show_on_investor_portal?: boolean;
 }
 
 const RECIPIENT_TYPES = [
@@ -56,12 +57,12 @@ export const QuickMessageSection = () => {
     try {
       const { data, error } = await supabase
         .from("marketing_templates")
-        .select("*")
+        .select("id, recipient_type, message_title, message_content, show_on_investor_portal")
         .order("recipient_type", { ascending: true })
         .order("message_title", { ascending: true });
 
       if (error) throw error;
-      setTemplates(data || []);
+      setTemplates((data as any) || []);
     } catch (error: any) {
       console.error("Error fetching templates:", error);
       toast.error("Failed to load templates");
@@ -132,6 +133,22 @@ export const QuickMessageSection = () => {
     }
   };
 
+  const toggleInvestorVisibility = async (template: MarketingTemplate) => {
+    const next = !template.show_on_investor_portal;
+    setTemplates((prev) => prev.map((t) => (t.id === template.id ? { ...t, show_on_investor_portal: next } : t)));
+    try {
+      const { error } = await (supabase as any)
+        .from("marketing_templates")
+        .update({ show_on_investor_portal: next })
+        .eq("id", template.id);
+      if (error) throw error;
+      toast.success(next ? "Visible on Investors portal" : "Hidden from Investors portal");
+    } catch (e: any) {
+      setTemplates((prev) => prev.map((t) => (t.id === template.id ? { ...t, show_on_investor_portal: !next } : t)));
+      toast.error(e?.message || "Could not update visibility");
+    }
+  };
+
   const groupedTemplates = templates.reduce((acc, template) => {
     if (!acc[template.recipient_type]) {
       acc[template.recipient_type] = [];
@@ -197,6 +214,17 @@ export const QuickMessageSection = () => {
                           <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{template.message_content}</p>
                         </div>
                         <div className="flex gap-1 sm:gap-2 sm:ml-4 w-full sm:w-auto justify-end shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            onClick={() => toggleInvestorVisibility(template)}
+                            title={template.show_on_investor_portal ? "Hide from Investors portal" : "Show on Investors portal"}
+                          >
+                            <Star
+                              className={`w-3 h-3 sm:w-4 sm:h-4 ${template.show_on_investor_portal ? "fill-[hsl(43,49%,61%)] text-[hsl(43,49%,61%)]" : ""}`}
+                            />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
