@@ -285,6 +285,18 @@ Deno.serve(async (req) => {
         if (error) return bad(error.message, 500);
         return ok();
       }
+      case "updateExecReplyStatus": {
+        const { id, status } = payload;
+        if (!payload.id) return bad("id required");
+        const nextStatus = status === "resolved" ? "resolved" : "open";
+        const { error } = await supabase.from("exec_support_replies").update({
+          status: nextStatus,
+          resolved_at: nextStatus === "resolved" ? new Date().toISOString() : null,
+          resolved_by_label: nextStatus === "resolved" ? (user.username || "Admin") : null,
+        }).eq("id", id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
       case "postExecNote": {
         const { body: itemBody, audio_base64, audio_ext, author_label } = payload;
         if (!itemBody && !audio_base64) return bad("body or audio required");
