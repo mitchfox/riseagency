@@ -68,9 +68,11 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
 
   useEffect(() => {
+    if (scope.loading) return;
     fetchReports();
     fetchPlayers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope.loading, scope.isScoped]);
 
   useEffect(() => {
     if (defaultPlayerId) {
