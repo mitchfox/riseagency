@@ -509,23 +509,11 @@ export const AthleteCentre = () => {
                     </div>
 
                     <TabsContent value="longterm" className="mt-0 space-y-3 md:space-y-4">
-                      <div className="flex items-center justify-between mb-3 md:mb-4">
-                        <h3 className="text-base md:text-lg font-semibold">Long-Term Development Plan</h3>
-                      </div>
-                      <div className="space-y-3 md:space-y-4">
-                        <Textarea
-                          placeholder="Outline the long-term development trajectory for this player..."
-                          value={longTermPlan}
-                          onChange={(e) => setLongTermPlan(e.target.value)}
-                          className="min-h-[150px] md:min-h-[200px] resize-none text-sm md:text-base"
-                        />
-                        <div className="flex justify-end">
-                          <Button onClick={handleSaveLongTermPlan} disabled={saving} size="sm">
-                            {saving ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-2 animate-spin" /> : <Save className="h-3 w-3 md:h-4 md:w-4 mr-2" />}
-                            Save Plan
-                          </Button>
-                        </div>
-                      </div>
+                      {selectedPlayer && <LongTermVisionEditor playerId={selectedPlayer} />}
+                    </TabsContent>
+
+                    <TabsContent value="profile" className="mt-0 space-y-3 md:space-y-4">
+                      {selectedPlayer && <OperatingProfileViewer playerId={selectedPlayer} />}
                     </TabsContent>
 
                     <TabsContent value="focuses" className="mt-0 space-y-3 md:space-y-4">
