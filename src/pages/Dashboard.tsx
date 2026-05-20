@@ -176,6 +176,8 @@ const Dashboard = () => {
   const [nutritionPrograms, setNutritionPrograms] = useState<any[]>([]);
   const [showAnalysisSub, setShowAnalysisSub] = useState(false);
   const [portalSettings, setPortalSettings] = useState<any>(null);
+  const [operatingProfileOpen, setOperatingProfileOpen] = useState(false);
+  const [operatingProfileChecked, setOperatingProfileChecked] = useState(false);
   const [navDropdownOpen, setNavDropdownOpen] = useState(false);
 
   // Initialize form grade configs from database
