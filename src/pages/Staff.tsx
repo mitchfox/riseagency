@@ -335,7 +335,16 @@ const Staff = () => {
     // Restore saved tabs if none currently open
     try {
       const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
-      if (savedTabs.length === 0) {
+      // For permission-managed roles, strip any saved tabs the role can't actually view
+      // (prevents stats_updater from landing on my-tasks / having a sidebar full of forbidden tabs)
+      const cleanedTabs = permissionManagedRole
+        ? savedTabs.filter(t => canView(t))
+        : savedTabs;
+      if (cleanedTabs.length !== savedTabs.length) {
+        localStorage.setItem('staff_open_tabs', JSON.stringify(cleanedTabs));
+        setTabsVersion(v => v + 1);
+      }
+      if (cleanedTabs.length === 0) {
         const initial = urlSection || defaultSection;
         localStorage.setItem('staff_open_tabs', JSON.stringify([initial]));
         setTabsVersion(v => v + 1);
@@ -343,7 +352,10 @@ const Staff = () => {
     } catch {}
 
     // Determine which section to show
-    const section = urlSection || (!isTrustedNetworkRole ? defaultSection : localStorage.getItem('staff_active_tab') || defaultSection);
+    const savedActive = localStorage.getItem('staff_active_tab');
+    const savedActiveValid = savedActive && (!permissionManagedRole || canView(savedActive));
+    const section = urlSection
+      || (!isTrustedNetworkRole ? defaultSection : (savedActiveValid ? savedActive : defaultSection));
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     setExpandedSection(finalSection as any);
