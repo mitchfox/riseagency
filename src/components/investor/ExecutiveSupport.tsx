@@ -85,6 +85,72 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
     return true;
   };
 
+  const sourceEntries = useMemo<SourceEntry[]>(() => {
+    if (kind === "script") {
+      const scriptCards = scripts.map((script) => {
+        const nodes = scriptNodes.filter((n) => n.script_id === script.id).sort((a, b) => a.sort_order - b.sort_order);
+        const objections = scriptObjections.filter((o) => o.script_id === script.id).sort((a, b) => a.sort_order - b.sort_order);
+        const flowText = nodes
+          .map((n) => [n.branch_label, n.content].filter(Boolean).join(" — "))
+          .filter(Boolean)
+          .join("\n\n");
+        const objectionText = objections.length
+          ? `\n\nCommon objections\n${objections.map((o) => `• ${o.objection}${o.response ? `\n  ${o.response}` : ""}`).join("\n")}`
+          : "";
+        return {
+          source_type: "messaging_script" as const,
+          source_id: script.id,
+          title: script.title,
+          body: [script.description, flowText].filter(Boolean).join("\n\n") + objectionText,
+          badge: "Staff script",
+          metadata: { node_count: nodes.length, objection_count: objections.length },
+        };
+      });
+      const templateCards = templates.map((template) => ({
+        source_type: "marketing_template" as const,
+        source_id: template.id,
+        title: template.message_title,
+        body: template.message_content,
+        badge: template.recipient_type || "Message template",
+      }));
+      return [...scriptCards, ...templateCards];
+    }
+
+    if (kind === "workflow") {
+      return staffTasks.map((task) => ({
+        source_type: "staff_task" as const,
+        source_id: task.id,
+        title: task.title,
+        body: [task.description, task.deadline ? `Deadline: ${new Date(task.deadline).toLocaleDateString("en-GB")}` : null, task.recurrence_label ? `Cadence: ${task.recurrence_label}` : null].filter(Boolean).join("\n"),
+        badge: [task.category || "Focused task", task.priority || null, task.completed ? "complete" : "active"].filter(Boolean).join(" • "),
+        metadata: { completed: task.completed, category: task.category, priority: task.priority },
+      }));
+    }
+
+    return [];
+  }, [kind, scripts, scriptNodes, scriptObjections, templates, staffTasks]);
+
+  const sourceItems = sourceEntries.map((source) => {
+    const feedbackItem = items.find((it) => it.source_type === source.source_type && it.source_id === source.source_id);
+    return { source, feedbackItem, feedbackReplies: feedbackItem ? replies.filter((r) => r.item_id === feedbackItem.id) : [] };
+  });
+
+  const manualItems = items.filter((item) => !item.source_type);
+
+  const ensureSourceItem = async (source: SourceEntry): Promise<Item | null> => {
+    const existing = items.find((it) => it.source_type === source.source_type && it.source_id === source.source_id);
+    if (existing) return existing;
+    const { data, error } = await supabase.functions.invoke("investor-overview-write", {
+      body: { token, action: "ensureExecSourceItem", payload: { kind, ...source } },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Could not open feedback");
+      return null;
+    }
+    await load();
+    return ((data as any)?.row as Item) || null;
+  };
+
   const create = async () => {
     if (!newBody.trim() && !newTitle.trim()) return;
     if (authorLabel) localStorage.setItem("exec_author_label", authorLabel);
