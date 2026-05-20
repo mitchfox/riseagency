@@ -222,7 +222,7 @@ export const QuickMessageSection = () => {
                             title={template.show_on_investor_portal ? "Hide from Investors portal" : "Show on Investors portal"}
                           >
                             <Star
-                              className={`w-3 h-3 sm:w-4 sm:h-4 ${template.show_on_investor_portal ? "fill-[hsl(43,49%,61%)] text-[hsl(43,49%,61%)]" : ""}`}
+                              className={`w-3 h-3 sm:w-4 sm:h-4 ${template.show_on_investor_portal ? "fill-primary text-primary" : ""}`}
                             />
                           </Button>
                           <Button

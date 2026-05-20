@@ -92,7 +92,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
         const nodes = scriptNodes.filter((n) => n.script_id === script.id).sort((a, b) => a.sort_order - b.sort_order);
         const objections = scriptObjections.filter((o) => o.script_id === script.id).sort((a, b) => a.sort_order - b.sort_order);
         const flowText = nodes
-          .map((n) => [n.branch_label, n.content].filter(Boolean).join(" — "))
+          .map((n) => [n.branch_label, n.content].filter(Boolean).join(" - "))
           .filter(Boolean)
           .join("\n\n");
         const objectionText = objections.length
