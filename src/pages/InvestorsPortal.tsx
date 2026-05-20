@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { findClubRating, findClubCountry } from "@/lib/clubNameUtils";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
 import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
 import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
@@ -334,13 +335,14 @@ const PlayerCard = ({ p, editable, onSave, paidByPlayer }: {
 
 // ---------- Marble card header ----------
 const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string; action?: React.ReactNode }) => (
-  <div className="relative overflow-hidden rounded-t-lg border-b border-border/60">
-    <div className="absolute inset-0 opacity-30 pointer-events-none"
-      style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center", mixBlendMode: "overlay" }} />
-    <div className="relative px-5 py-3 flex items-center justify-between bg-card/60 backdrop-blur-sm">
+  <div className="relative overflow-hidden rounded-t-lg border-b border-primary/30">
+    <div className="absolute inset-0 pointer-events-none"
+      style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+    <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/30 via-transparent to-black/50" />
+    <div className="relative px-5 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
-        <Icon className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+        <Icon className="w-4 h-4 text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+        <h2 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{title}</h2>
       </div>
       {action}
     </div>
@@ -348,7 +350,7 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
 );
 
 const SectionShell = ({ icon, title, children, action }: { icon: any; title: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <Card className="bg-card/40 border-border/60 overflow-hidden">
+  <Card className="bg-card/80 border-border/60 overflow-hidden backdrop-blur-sm">
     <MarbleHeader icon={icon} title={title} action={action} />
     <div className="p-5">{children}</div>
   </Card>
@@ -1307,6 +1309,32 @@ const Prospects = ({ rows }: { rows: ProspectRow[] }) => {
 const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; youth: any[]; pro: any[] }) => {
   const [q, setQ] = useState("");
   const [src, setSrc] = useState<string>("all");
+  const [positionFilter, setPositionFilter] = useState<string>("all");
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [ageMin, setAgeMin] = useState<string>("");
+  const [ageMax, setAgeMax] = useState<string>("");
+  const [clubRatings, setClubRatings] = useState<Array<{ club_name: string; first_team_rating: string; academy_rating: string }>>([]);
+  const [clubLogosByName, setClubLogosByName] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data: ratings } = await (supabase as any).from("club_ratings").select("club_name, first_team_rating, academy_rating");
+      setClubRatings((ratings as any) || []);
+      // Build a logo lookup from any rows that already carry a club_logo_url (scouting reports)
+      const m: Record<string, string> = {};
+      [...scouting, ...youth, ...pro].forEach((r: any) => {
+        const name = (r?.current_club || "").trim().toLowerCase();
+        if (name && r?.club_logo_url) m[name] = m[name] || r.club_logo_url;
+      });
+      setClubLogosByName(m);
+    })();
+  }, [scouting, youth, pro]);
+
+  const logoFor = (clubName: string | null, fallback: string | null) => {
+    if (fallback) return fallback;
+    if (!clubName) return null;
+    return clubLogosByName[clubName.trim().toLowerCase()] || null;
+  };
 
   const combined: DbPlayer[] = useMemo(() => {
     const map = new Map<string, DbPlayer>();
@@ -1344,8 +1372,17 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
     return Array.from(map.values());
   }, [scouting, youth, pro]);
 
+  const allPositions = useMemo(() => Array.from(new Set(combined.map(p => p.position).filter(Boolean))).sort() as string[], [combined]);
+
   const filtered = combined.filter(p => {
     if (src !== "all" && p.source !== src) return false;
+    if (positionFilter !== "all" && p.position !== positionFilter) return false;
+    if (ageMin && Number(p.age || 0) < Number(ageMin)) return false;
+    if (ageMax && Number(p.age || 0) > Number(ageMax)) return false;
+    if (ratingFilter !== "all") {
+      const rating = findClubRating(p.current_club, clubRatings, p.source === "youth_outreach");
+      if (rating !== ratingFilter) return false;
+    }
     if (!q) return true;
     const Q = q.toLowerCase();
     return (p.player_name || "").toLowerCase().includes(Q) ||
@@ -1354,11 +1391,19 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
       (p.position || "").toLowerCase().includes(Q);
   }).sort((a, b) => (a.player_name || "").localeCompare(b.player_name || ""));
 
+  const ratingColours: Record<string, string> = {
+    R1: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    R2: "bg-green-500/20 text-green-300 border-green-500/40",
+    R3: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    R4: "bg-orange-500/20 text-orange-300 border-orange-500/40",
+    R5: "bg-red-500/20 text-red-300 border-red-500/40",
+  };
+
   return (
     <SectionShell icon={Network} title={`Player Database (${filtered.length} of ${combined.length})`} action={
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Select value={src} onValueChange={setSrc}>
-          <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All sources</SelectItem>
             <SelectItem value="scouting">Scouting</SelectItem>
@@ -1366,11 +1411,27 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
             <SelectItem value="pro_outreach">Pro Outreach</SelectItem>
           </SelectContent>
         </Select>
-        <Input placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} className="h-8 w-48" />
+        <Select value={positionFilter} onValueChange={setPositionFilter}>
+          <SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue placeholder="Position" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All positions</SelectItem>
+            {allPositions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={ratingFilter} onValueChange={setRatingFilter}>
+          <SelectTrigger className="h-8 w-[110px] text-xs"><SelectValue placeholder="Club tier" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All tiers</SelectItem>
+            {["R1","R2","R3","R4","R5"].map(r => <SelectItem key={r} value={r}>{r} club</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input placeholder="Min age" value={ageMin} onChange={e => setAgeMin(e.target.value.replace(/[^0-9]/g, ""))} className="h-8 w-[70px] text-xs" />
+        <Input placeholder="Max age" value={ageMax} onChange={e => setAgeMax(e.target.value.replace(/[^0-9]/g, ""))} className="h-8 w-[70px] text-xs" />
+        <Input placeholder="Search..." value={q} onChange={e => setQ(e.target.value)} className="h-8 w-44" />
       </div>
     }>
       <div className="rounded border border-border/40 overflow-x-auto">
-        <table className="w-full text-sm min-w-[720px]">
+        <table className="w-full text-sm min-w-[820px]">
           <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
             <tr>
               <th className="text-left px-3 py-2 w-12"></th>
@@ -1379,12 +1440,16 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
               <th className="text-left px-3 py-2">Position</th>
               <th className="text-left px-3 py-2">Age</th>
               <th className="text-left px-3 py-2">Club</th>
+              <th className="text-left px-3 py-2">Tier</th>
               <th className="text-left px-3 py-2">Source</th>
               <th className="text-right px-3 py-2">Reports</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
-            {filtered.slice(0, 500).map(p => (
+            {filtered.slice(0, 500).map(p => {
+              const rating = findClubRating(p.current_club, clubRatings, p.source === "youth_outreach");
+              const logo = logoFor(p.current_club, p.club_logo_url || null);
+              return (
               <tr key={`${p.source}-${p.id}`} className="hover:bg-muted/20">
                 <td className="px-3 py-2">
                   <Avatar className="h-8 w-8">
@@ -1401,13 +1466,28 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
                 </td>
                 <td className="px-3 py-2 text-xs">{p.position || "—"}</td>
                 <td className="px-3 py-2 text-xs">{p.age ?? "—"}</td>
-                <td className="px-3 py-2 text-xs truncate max-w-[200px]">{p.current_club || "—"}</td>
+                <td className="px-3 py-2 text-xs">
+                  <div className="flex items-center gap-2 min-w-0 max-w-[220px]">
+                    {logo ? (
+                      <img src={logo} alt="" className="h-5 w-5 object-contain shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="h-5 w-5 rounded bg-muted/40 shrink-0" />
+                    )}
+                    <span className="truncate">{p.current_club || "—"}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2">
+                  {rating ? (
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${ratingColours[rating] || ""}`}>{rating}</Badge>
+                  ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                </td>
                 <td className="px-3 py-2">
                   <Badge variant="outline" className="text-[9px] capitalize">{p.source.replace("_", " ")}</Badge>
                 </td>
                 <td className="px-3 py-2 text-right text-xs">{p.report_count}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
         {filtered.length > 500 && (
@@ -1848,16 +1928,9 @@ const InvestorsPortal = () => {
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
 
   return (
-    <div className="min-h-screen text-foreground relative">
-      {/* Marble background (matches staff portal) */}
-      <div className="fixed inset-0 pointer-events-none -z-10"
-        style={{
-          backgroundImage: `url(${smudgedMarble})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "hsl(var(--background))",
-        }} />
+    <div className="min-h-screen text-foreground relative bg-black">
+      {/* Subtle vignette over black — marble lives on the card headers instead */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-b from-black via-black to-zinc-950" />
 
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? "h-10" : ""}`}>
