@@ -20,7 +20,7 @@ import {
   type PerformanceSub,
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
-import riseLogoWhite from "@/assets/RISEWhiteHQ.png";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
 interface ProspectPlayer {

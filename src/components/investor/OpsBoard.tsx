@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Plus, Trash2, Check, X, ChevronUp, ChevronDown, Link2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,9 +135,10 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
   );
 };
 
-const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
+const ItemCard = ({ item, staffTask, unlocked, reorderable, position, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
   item: OpsItem; staffTask?: StaffTaskOption;
-  unlocked: boolean; reorderable?: boolean; isFirst: boolean; isLast: boolean;
+  unlocked: boolean; reorderable?: boolean; position: number;
+  isFirst: boolean; isLast: boolean;
   token: string | null; kind: "time" | "priority";
   staffTasks: StaffTaskOption[];
   onChanged: () => Promise<void> | void;
@@ -171,11 +172,16 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
         <div className="absolute inset-0 opacity-60 pointer-events-none"
           style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-background/10 to-background/30 pointer-events-none" />
-        <div className="relative flex items-start gap-3 px-5 md:px-6 py-4">
+        <div className="relative flex items-center gap-4 px-5 md:px-6 py-4">
+          {reorderable && (
+            <span className="shrink-0 w-10 text-3xl md:text-4xl font-extrabold text-white/90 tabular-nums leading-none text-center select-none">
+              {position}
+            </span>
+          )}
           {reorderable && unlocked && (
-            <div className="flex flex-col gap-0.5 shrink-0">
-              <Button size="icon" variant="ghost" className="h-6 w-6" disabled={isFirst} onClick={() => onMove?.(-1)}><ChevronUp className="w-3.5 h-3.5" /></Button>
-              <Button size="icon" variant="ghost" className="h-6 w-6" disabled={isLast} onClick={() => onMove?.(1)}><ChevronDown className="w-3.5 h-3.5" /></Button>
+            <div className="flex flex-col gap-1 shrink-0">
+              <Button size="icon" variant="outline" className="h-7 w-7 border-primary/40 bg-background/40" disabled={isFirst} onClick={() => onMove?.(-1)}><ChevronUp className="w-4 h-4" /></Button>
+              <Button size="icon" variant="outline" className="h-7 w-7 border-primary/40 bg-background/40" disabled={isLast} onClick={() => onMove?.(1)}><ChevronDown className="w-4 h-4" /></Button>
             </div>
           )}
           <h4 className="flex-1 text-lg md:text-xl font-bold tracking-tight text-foreground leading-tight">{displayTitle}</h4>
@@ -218,7 +224,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
 export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token, reorderable, defaultCategorySuggestions, onRefresh }: Props) => {
   const [adding, setAdding] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
-  const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const newCategoryInputRef = useRef<HTMLInputElement>(null);
   const [localCategories, setLocalCategories] = useState<OpsCategory[]>([]);
   const [localItems, setLocalItems] = useState<OpsItem[]>([]);
   const [deletedCategoryIds, setDeletedCategoryIds] = useState<string[]>([]);
@@ -261,6 +267,15 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
     const swapIdx = idx + dir;
     if (swapIdx < 0 || swapIdx >= list.length) return;
     const a = list[idx], b = list[swapIdx];
+    // Optimistically swap display_order locally so the sorted view updates immediately
+    setLocalItems(prev => {
+      const without = prev.filter(p => p.id !== a.id && p.id !== b.id);
+      return [
+        ...without,
+        { ...a, display_order: b.display_order },
+        { ...b, display_order: a.display_order },
+      ];
+    });
     try {
       await callWrite(token, "reorderOpsItems", {
         kind,
@@ -286,7 +301,8 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         setDeletedCategoryIds(prev => prev.filter(id => id !== savedRow.id));
         setLocalCategories(prev => [...prev.filter(c => c.id !== savedRow.id), savedRow]);
       }
-      setNewCategoryTitle(""); setAddingCategory(false);
+      if (newCategoryInputRef.current) newCategoryInputRef.current.value = "";
+      setAddingCategory(false);
       toast.success("Category added");
       await onRefresh();
     } catch (e: any) { toast.error(e.message || "Failed to add category"); }
@@ -323,6 +339,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
                 <ItemCard key={it.id} item={it}
                   staffTask={it.staff_task_id ? staffTasks.find(t => t.id === it.staff_task_id) : undefined}
                   unlocked={unlocked} reorderable={reorderable}
+                  position={idx + 1}
                   isFirst={idx === 0} isLast={idx === list.length - 1}
                   token={token} kind={kind} staffTasks={staffTasks}
                   onChanged={onRefresh}
@@ -357,6 +374,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
             <ItemCard key={it.id} item={it}
               staffTask={it.staff_task_id ? staffTasks.find(t => t.id === it.staff_task_id) : undefined}
               unlocked={unlocked} reorderable={false}
+              position={idx + 1}
               isFirst={idx === 0} isLast={idx === orphan.length - 1}
               token={token} kind={kind} staffTasks={staffTasks}
               onChanged={onRefresh}
@@ -371,11 +389,21 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
           {addingCategory ? (
             <div className="space-y-2">
               <div className="flex gap-2">
-                <Input value={newCategoryTitle} onChange={e => setNewCategoryTitle(e.target.value)}
+                <Input
+                  ref={newCategoryInputRef}
+                  defaultValue=""
                   placeholder="Category title"
-                  onKeyDown={e => { if (e.key === "Enter") createCategory(newCategoryTitle); }} autoFocus />
-                <Button onClick={() => createCategory(newCategoryTitle)} className="bg-primary text-primary-foreground"><Check className="w-4 h-4" /></Button>
-                <Button variant="ghost" onClick={() => { setAddingCategory(false); setNewCategoryTitle(""); }}><X className="w-4 h-4" /></Button>
+                  onKeyDown={e => { if (e.key === "Enter") createCategory(newCategoryInputRef.current?.value || ""); }}
+                  autoFocus
+                />
+                <Button
+                  onClick={() => createCategory(newCategoryInputRef.current?.value || "")}
+                  className="bg-primary text-primary-foreground"
+                ><Check className="w-4 h-4" /></Button>
+                <Button variant="ghost" onClick={() => {
+                  if (newCategoryInputRef.current) newCategoryInputRef.current.value = "";
+                  setAddingCategory(false);
+                }}><X className="w-4 h-4" /></Button>
               </div>
               {defaultCategorySuggestions && defaultCategorySuggestions.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
