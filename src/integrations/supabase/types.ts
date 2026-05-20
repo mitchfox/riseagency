@@ -1614,6 +1614,86 @@ export type Database = {
         }
         Relationships: []
       }
+      exec_support_items: {
+        Row: {
+          author_label: string | null
+          body: string | null
+          created_at: string
+          created_by_admin: boolean
+          display_order: number
+          id: string
+          kind: string
+          metadata: Json
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_label?: string | null
+          body?: string | null
+          created_at?: string
+          created_by_admin?: boolean
+          display_order?: number
+          id?: string
+          kind: string
+          metadata?: Json
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_label?: string | null
+          body?: string | null
+          created_at?: string
+          created_by_admin?: boolean
+          display_order?: number
+          id?: string
+          kind?: string
+          metadata?: Json
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      exec_support_replies: {
+        Row: {
+          audio_url: string | null
+          author_label: string | null
+          body_text: string | null
+          created_at: string
+          id: string
+          is_admin: boolean
+          item_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          author_label?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          item_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          author_label?: string | null
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exec_support_replies_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "exec_support_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -2254,6 +2334,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      investor_capacity_allocations: {
+        Row: {
+          created_at: string
+          custom_label: string | null
+          day_of_week: string | null
+          display_order: number
+          hours_per_week: number
+          id: string
+          player_type: string
+          time_item_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_label?: string | null
+          day_of_week?: string | null
+          display_order?: number
+          hours_per_week?: number
+          id?: string
+          player_type: string
+          time_item_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_label?: string | null
+          day_of_week?: string | null
+          display_order?: number
+          hours_per_week?: number
+          id?: string
+          player_type?: string
+          time_item_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_capacity_allocations_time_item_id_fkey"
+            columns: ["time_item_id"]
+            isOneToOne: false
+            referencedRelation: "investor_time_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investor_capacity_settings: {
+        Row: {
+          created_at: string
+          daily_hours: Json
+          id: string
+          mode: string
+          singleton: boolean
+          updated_at: string
+          weekly_hours_total: number
+        }
+        Insert: {
+          created_at?: string
+          daily_hours?: Json
+          id?: string
+          mode?: string
+          singleton?: boolean
+          updated_at?: string
+          weekly_hours_total?: number
+        }
+        Update: {
+          created_at?: string
+          daily_hours?: Json
+          id?: string
+          mode?: string
+          singleton?: boolean
+          updated_at?: string
+          weekly_hours_total?: number
+        }
+        Relationships: []
       }
       investor_deals: {
         Row: {
@@ -7768,6 +7922,7 @@ export type Database = {
           created_at: string | null
           id: string
           message_content: string
+          show_on_investor_portal: boolean
           title: string
           updated_at: string | null
         }
@@ -7776,6 +7931,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_content: string
+          show_on_investor_portal?: boolean
           title: string
           updated_at?: string | null
         }
@@ -7784,6 +7940,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_content?: string
+          show_on_investor_portal?: boolean
           title?: string
           updated_at?: string | null
         }
