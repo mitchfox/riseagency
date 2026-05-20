@@ -372,9 +372,12 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
         <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, hsl(var(--primary)) 0%, transparent 55%)" }} />
         {card.image_url && (
-          <div className="relative w-full h-56 md:h-72 overflow-hidden">
-            <img src={card.image_url} alt={card.image_alt || card.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-card/95 via-card/30 to-transparent" />
+          <div className="relative w-full bg-black/40 flex items-center justify-center">
+            <img
+              src={card.image_url}
+              alt={card.image_alt || card.title}
+              className="w-full h-auto max-h-[560px] object-contain"
+            />
           </div>
         )}
         <div className="relative p-6 md:p-7 flex flex-col gap-5">
@@ -391,17 +394,20 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
               </div>
             )}
           </div>
-          {card.metrics?.length > 0 && (
-            <div className="flex flex-wrap gap-3">
-              {card.metrics.map((m, i) => <MetricChip key={i} m={m} large />)}
-            </div>
-          )}
           {card.content && (
             <div className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border-t border-primary/15 pt-4 font-sans normal-case tracking-normal">{card.content}</div>
           )}
           {card.detail_blocks && card.detail_blocks.length > 0 && (
             <div className="border-t border-primary/15 pt-4">
               <DetailBlocksView blocks={card.detail_blocks} />
+            </div>
+          )}
+          {card.metrics?.length > 0 && (
+            <div className="border-t border-primary/15 pt-5">
+              <div className="text-[11px] uppercase tracking-widest text-primary/70 font-medium mb-3">Key metrics</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {card.metrics.map((m, i) => <MetricChip key={i} m={m} large />)}
+              </div>
             </div>
           )}
           {card.tags?.filter(t => t.toLowerCase() !== "featured" && t.toLowerCase() !== "large").length > 0 && (
@@ -451,8 +457,8 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
             className="overflow-hidden border-t border-primary/10">
             <div className="px-4 md:px-5 py-5 space-y-4">
               {card.image_url && (
-                <figure className="rounded-md overflow-hidden border border-border">
-                  <img src={card.image_url} alt={card.image_alt || card.title} className="w-full max-h-[420px] object-cover" />
+                <figure className="rounded-md overflow-hidden border border-border bg-black/40 flex items-center justify-center">
+                  <img src={card.image_url} alt={card.image_alt || card.title} className="w-full max-h-[520px] object-contain" />
                 </figure>
               )}
               {card.content && (
@@ -460,6 +466,14 @@ const OverviewCard = ({ card, idx, unlocked, sections, token, onChanged }: {
               )}
               {card.detail_blocks && card.detail_blocks.length > 0 && (
                 <DetailBlocksView blocks={card.detail_blocks} />
+              )}
+              {card.metrics?.length > 0 && (
+                <div className="border-t border-primary/10 pt-4">
+                  <div className="text-[11px] uppercase tracking-widest text-primary/70 font-medium mb-3">Key metrics</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {card.metrics.map((m, i) => <MetricChip key={i} m={m} large />)}
+                  </div>
+                </div>
               )}
               {card.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
