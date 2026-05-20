@@ -34,6 +34,8 @@ import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 import { RecentPlayersBar, getRecentPlayerIds, addRecentPlayer } from "@/components/staff/RecentPlayersBar";
 import { SessionResumeBanner, saveSession, clearSession, type SessionState } from "@/components/staff/SessionResumeBanner";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
+import { LongTermVisionEditor } from "@/components/staff/LongTermVisionEditor";
+import { OperatingProfileViewer } from "@/components/staff/OperatingProfileViewer";
 
 interface Player {
   id: string;
@@ -335,7 +337,8 @@ export const AthleteCentre = () => {
   }
 
   const devTabItems = [
-    { value: "longterm", label: "Long-Term Plan", icon: Calendar },
+    { value: "profile", label: "Operating Profile", icon: Brain },
+    { value: "longterm", label: "Long-Term Vision", icon: Calendar },
     { value: "periodisation", label: "Periodisation", icon: GripHorizontal },
     { value: "focuses", label: "Dev Focuses", icon: Target },
     { value: "programming", label: "Programming", icon: Dumbbell },
