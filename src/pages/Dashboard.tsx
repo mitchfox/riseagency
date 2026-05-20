@@ -189,7 +189,7 @@ const Dashboard = () => {
     if (!welcomeSeen) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("player_operating_profile")
         .select("submitted_at")
         .eq("player_id", playerData.id)
