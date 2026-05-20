@@ -1773,7 +1773,7 @@ const Dashboard = () => {
           playerId={playerData.id}
           open={operatingProfileOpen}
           onOpenChange={setOperatingProfileOpen}
-          onSubmitted={() => setOperatingProfileChecked(true)}
+          onSubmitted={() => { setOperatingProfileChecked(true); setOperatingProfileStatus("done"); }}
         />
       )}
       {/* Header with Logo */}
