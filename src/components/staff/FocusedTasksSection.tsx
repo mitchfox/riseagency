@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -25,22 +25,31 @@ import { IdeasReview } from "./marketing/IdeasReview";
 import { BTLWriter } from "./marketing/BTLWriter";
 import { ImageCreator } from "./marketing/ImageCreator";
 import { PostContent } from "./marketing/PostContent";
+import { useStatsUpdaterAssignments } from "@/hooks/useStatsUpdaterAssignments";
 
 type TaskType = "club-networking" | "player-networking" | "content-creation";
 
-const TASK_CONFIG = {
+const ALL_TASK_CONFIG = {
   "club-networking": { name: "Club Networking", icon: Building2 },
   "player-networking": { name: "Player Networking", icon: Users },
   "content-creation": { name: "Content Creation", icon: Megaphone }
 };
 
 export const FocusedTasksSection = () => {
+  const { isScoped } = useStatsUpdaterAssignments();
+  // Stats updaters never run player outreach — hide that task entirely
+  const TASK_CONFIG = isScoped
+    ? { "club-networking": ALL_TASK_CONFIG["club-networking"], "content-creation": ALL_TASK_CONFIG["content-creation"] }
+    : ALL_TASK_CONFIG;
   const [activeTask, setActiveTask] = useState<TaskType>("club-networking");
+  useEffect(() => {
+    if (!(activeTask in TASK_CONFIG)) setActiveTask("club-networking");
+  }, [isScoped]);
   const [clubSubTab, setClubSubTab] = useState("outreach");
   const [playerSubTab, setPlayerSubTab] = useState("outreach");
   const [contentSubTab, setContentSubTab] = useState("review");
 
-  const ActiveIcon = TASK_CONFIG[activeTask].icon;
+  const ActiveIcon = (TASK_CONFIG as any)[activeTask]?.icon ?? Building2;
 
   return (
     <div className="w-full">
