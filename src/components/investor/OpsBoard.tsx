@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Plus, Trash2, Check, X, ChevronUp, ChevronDown, Link2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,9 +135,10 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
   );
 };
 
-const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
+const ItemCard = ({ item, staffTask, unlocked, reorderable, position, isFirst, isLast, token, kind, staffTasks, onChanged, onItemSaved, onItemDeleted, onMove }: {
   item: OpsItem; staffTask?: StaffTaskOption;
-  unlocked: boolean; reorderable?: boolean; isFirst: boolean; isLast: boolean;
+  unlocked: boolean; reorderable?: boolean; position: number;
+  isFirst: boolean; isLast: boolean;
   token: string | null; kind: "time" | "priority";
   staffTasks: StaffTaskOption[];
   onChanged: () => Promise<void> | void;
@@ -171,11 +172,16 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, isFirst, isLast, tok
         <div className="absolute inset-0 opacity-60 pointer-events-none"
           style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-background/10 to-background/30 pointer-events-none" />
-        <div className="relative flex items-start gap-3 px-5 md:px-6 py-4">
+        <div className="relative flex items-center gap-4 px-5 md:px-6 py-4">
+          {reorderable && (
+            <span className="shrink-0 w-10 text-3xl md:text-4xl font-extrabold text-white/90 tabular-nums leading-none text-center select-none">
+              {position}
+            </span>
+          )}
           {reorderable && unlocked && (
-            <div className="flex flex-col gap-0.5 shrink-0">
-              <Button size="icon" variant="ghost" className="h-6 w-6" disabled={isFirst} onClick={() => onMove?.(-1)}><ChevronUp className="w-3.5 h-3.5" /></Button>
-              <Button size="icon" variant="ghost" className="h-6 w-6" disabled={isLast} onClick={() => onMove?.(1)}><ChevronDown className="w-3.5 h-3.5" /></Button>
+            <div className="flex flex-col gap-1 shrink-0">
+              <Button size="icon" variant="outline" className="h-7 w-7 border-primary/40 bg-background/40" disabled={isFirst} onClick={() => onMove?.(-1)}><ChevronUp className="w-4 h-4" /></Button>
+              <Button size="icon" variant="outline" className="h-7 w-7 border-primary/40 bg-background/40" disabled={isLast} onClick={() => onMove?.(1)}><ChevronDown className="w-4 h-4" /></Button>
             </div>
           )}
           <h4 className="flex-1 text-lg md:text-xl font-bold tracking-tight text-foreground leading-tight">{displayTitle}</h4>
