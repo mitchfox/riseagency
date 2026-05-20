@@ -42,7 +42,8 @@ type SectionId =
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
   | "outreach" | "clubnetwork"
-  | "timeManagement" | "priorities";
+  | "timeManagement" | "priorities" | "capacity"
+  | "execNotes" | "execScripts" | "execWorkflow";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
