@@ -1849,16 +1849,9 @@ const InvestorsPortal = () => {
   if (!user) return <LoginGate onSignIn={handleSignIn} />;
 
   return (
-    <div className="min-h-screen text-foreground relative">
-      {/* Marble background (matches staff portal) */}
-      <div className="fixed inset-0 pointer-events-none -z-10"
-        style={{
-          backgroundImage: `url(${smudgedMarble})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: "hsl(var(--background))",
-        }} />
+    <div className="min-h-screen text-foreground relative bg-black">
+      {/* Subtle vignette over black — marble lives on the card headers instead */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-b from-black via-black to-zinc-950" />
 
       {/* Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? "h-10" : ""}`}>
