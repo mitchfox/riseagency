@@ -67,16 +67,18 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   };
   const loadSources = async () => {
     if (kind === "script") {
-      const [tpl, scr, nd, obj] = await Promise.all([
-        (supabase as any).from("marketing_templates").select("id, message_title, message_content, recipient_type").eq("show_on_investor_portal", true).order("message_title"),
+      const [tpl, scr, nd, obj, cs] = await Promise.all([
+        (supabase as any).from("marketing_templates").select("id, message_title, message_content, recipient_type").order("message_title"),
         (supabase as any).from("messaging_scripts").select("id, title, description, sort_order").order("sort_order").order("created_at"),
         (supabase as any).from("messaging_script_nodes").select("*").order("sort_order"),
         (supabase as any).from("messaging_script_objections").select("*").order("sort_order"),
+        (supabase as any).from("messaging_case_studies").select("id, title, description, context_notes").order("updated_at", { ascending: false }),
       ]);
       setTemplates((tpl.data as Template[]) || []);
       setScripts((scr.data as Script[]) || []);
       setScriptNodes((nd.data as ScriptNode[]) || []);
       setScriptObjections((obj.data as ScriptObjection[]) || []);
+      setCaseStudies((cs.data as CaseStudy[]) || []);
     }
   };
   useEffect(() => { load(); loadSources(); }, [kind]);
