@@ -34,17 +34,19 @@ function collectStrings(): string[] {
   return Array.from(new Set(out));
 }
 
-function applyMap(map: Record<string, string>): Section[] {
+function applyMap(map: Record<string, string>): { sections: Section[]; labelFor: (s: string) => string } {
   const tr = (s: string) => map[s] || s;
-  return OPERATING_PROFILE_SECTIONS.map((s) => ({
+  const sections = OPERATING_PROFILE_SECTIONS.map((s) => ({
     ...s,
     title: tr(s.title),
     questions: s.questions.map((q) => ({
       ...q,
       label: tr(q.label),
-      options: q.options ? q.options.map(tr) : undefined,
+      // Keep options as original English (used as storage keys)
+      options: q.options ? [...q.options] : undefined,
     })),
   }));
+  return { sections, labelFor: tr };
 }
 
 async function translateBatch(texts: string[]): Promise<Array<Record<string, string>>> {
@@ -56,17 +58,20 @@ async function translateBatch(texts: string[]): Promise<Array<Record<string, str
 export function useTranslatedOperatingProfile() {
   const { language } = useLanguage();
   const [sections, setSections] = useState<Section[]>(OPERATING_PROFILE_SECTIONS);
+  const [labelFor, setLabelFor] = useState<(s: string) => string>(() => (s: string) => s);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const lang = language as LangCode;
     if (lang === "en") {
       setSections(OPERATING_PROFILE_SECTIONS);
+      setLabelFor(() => (s: string) => s);
       return;
     }
     const col = colMap[lang as Exclude<LangCode, "en">];
     if (!col) {
       setSections(OPERATING_PROFILE_SECTIONS);
+      setLabelFor(() => (s: string) => s);
       return;
     }
 
@@ -75,7 +80,9 @@ export function useTranslatedOperatingProfile() {
       const raw = localStorage.getItem(cacheKey(lang));
       if (raw) {
         const map = JSON.parse(raw) as Record<string, string>;
-        setSections(applyMap(map));
+        const applied = applyMap(map);
+        setSections(applied.sections);
+        setLabelFor(() => applied.labelFor);
         return;
       }
     } catch {}
@@ -98,7 +105,9 @@ export function useTranslatedOperatingProfile() {
         try {
           localStorage.setItem(cacheKey(lang), JSON.stringify(map));
         } catch {}
-        setSections(applyMap(map));
+        const applied = applyMap(map);
+        setSections(applied.sections);
+        setLabelFor(() => applied.labelFor);
       } catch (e) {
         console.error("Operating profile translation failed", e);
         setSections(OPERATING_PROFILE_SECTIONS);
@@ -108,5 +117,5 @@ export function useTranslatedOperatingProfile() {
     })();
   }, [language]);
 
-  return { sections, loading };
+  return { sections, loading, labelFor };
 }
