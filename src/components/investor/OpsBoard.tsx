@@ -122,7 +122,7 @@ const ItemEditor = ({ item, categoryId, kind, token, staffTasks, displayOrder, o
               }}
               className={`w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-sm ${staffTaskId === t.id ? "bg-primary/15" : ""}`}>
               <div className="font-medium truncate">{t.title}</div>
-              {t.category && <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.category}</div>}
+              {t.category && <div className="text-[10px] text-muted-foreground tracking-normal normal-case">{t.category}</div>}
             </button>
           ))}
         </PopoverContent>
@@ -284,7 +284,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
           {/* Rise Gold divider header */}
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/60 to-primary/80" />
-            <h3 className="text-sm md:text-base font-bbh uppercase tracking-[0.2em] text-primary shrink-0">{cat.title}</h3>
+            <h3 className="text-sm md:text-base font-semibold tracking-normal text-primary shrink-0">{cat.title}</h3>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/60 to-primary/80" />
             {unlocked && (
               <div className="flex gap-1 shrink-0">
@@ -334,7 +334,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-primary/40" />
-            <h3 className="text-sm font-bbh uppercase tracking-[0.2em] text-muted-foreground shrink-0">Uncategorised</h3>
+            <h3 className="text-sm font-semibold tracking-normal text-muted-foreground shrink-0">Uncategorised</h3>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-primary/30 to-primary/40" />
           </div>
           {orphan.map((it, idx) => (
