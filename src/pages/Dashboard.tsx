@@ -48,6 +48,7 @@ import { NutritionProgramDisplay } from "@/components/portal/NutritionProgramDis
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
 import { OperatingProfileDialog } from "@/components/portal/OperatingProfileDialog";
+import { OperatingProfileReminder } from "@/components/portal/OperatingProfileReminder";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
@@ -178,6 +179,8 @@ const Dashboard = () => {
   const [portalSettings, setPortalSettings] = useState<any>(null);
   const [operatingProfileOpen, setOperatingProfileOpen] = useState(false);
   const [operatingProfileChecked, setOperatingProfileChecked] = useState(false);
+  const [operatingProfileStatus, setOperatingProfileStatus] = useState<"unknown" | "none" | "in_progress" | "done">("unknown");
+  const [operatingProfileReminderDismissed, setOperatingProfileReminderDismissed] = useState(false);
 
   useEffect(() => {
     if (operatingProfileChecked) return;
@@ -191,12 +194,20 @@ const Dashboard = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("player_operating_profile")
-        .select("submitted_at")
+        .select("submitted_at, answers")
         .eq("player_id", playerData.id)
         .maybeSingle();
       if (cancelled) return;
       setOperatingProfileChecked(true);
-      if (!data?.submitted_at) {
+      const hasAny = data?.answers && typeof data.answers === "object" && Object.keys(data.answers).length > 0;
+      if (data?.submitted_at) {
+        setOperatingProfileStatus("done");
+      } else if (hasAny) {
+        setOperatingProfileStatus("in_progress");
+      } else {
+        setOperatingProfileStatus("none");
+      }
+      if (!data?.submitted_at && !hasAny) {
         setOperatingProfileOpen(true);
       }
     })();
@@ -1762,7 +1773,7 @@ const Dashboard = () => {
           playerId={playerData.id}
           open={operatingProfileOpen}
           onOpenChange={setOperatingProfileOpen}
-          onSubmitted={() => setOperatingProfileChecked(true)}
+          onSubmitted={() => { setOperatingProfileChecked(true); setOperatingProfileStatus("done"); }}
         />
       )}
       {/* Header with Logo */}
@@ -1777,6 +1788,15 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
+
+      {playerData && operatingProfileStatus !== "unknown" && (
+        <OperatingProfileReminder
+          visible={(operatingProfileStatus === "in_progress" || operatingProfileStatus === "none") && !operatingProfileReminderDismissed && !operatingProfileOpen}
+          inProgress={operatingProfileStatus === "in_progress"}
+          onOpen={() => setOperatingProfileOpen(true)}
+          onDismiss={() => setOperatingProfileReminderDismissed(true)}
+        />
+      )}
 
       {/* Subheader with Options */}
       <div id="subheader" className="bg-background lg:bg-background bg-[url('/smudged-marble-header.png')] lg:bg-none bg-cover bg-center bg-no-repeat border-b border-border/50">

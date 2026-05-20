@@ -6,10 +6,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Check, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { Question } from "./operatingProfileQuestions";
 import { useTranslatedOperatingProfile } from "./useTranslatedOperatingProfile";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Props {
   playerId: string | null | undefined;
@@ -20,8 +27,41 @@ interface Props {
 
 type Answers = Record<string, any>;
 
+const SortableRow = ({ id, index, label, onUp, onDown, isFirst, isLast }: {
+  id: string; index: number; label: string;
+  onUp: () => void; onDown: () => void; isFirst: boolean; isLast: boolean;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : "auto", opacity: isDragging ? 0.85 : 1 };
+  return (
+    <li
+      ref={setNodeRef}
+      style={style as any}
+      className={`flex items-center gap-2 rounded-lg border bg-card/40 px-3 py-2 ${isDragging ? "border-[hsl(43,49%,61%)] shadow-lg" : "border-border"}`}
+    >
+      <button type="button" className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-foreground touch-none" {...attributes} {...listeners} aria-label="Drag to reorder">
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[hsl(43,49%,61%)]/15 text-[hsl(43,49%,61%)] text-sm font-semibold tabular-nums">
+        {index + 1}
+      </span>
+      <span className="flex-1 text-sm">{label}</span>
+      <button type="button" onClick={onUp} aria-label="Move up" className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={isFirst}>
+        <ArrowUp className="h-4 w-4" />
+      </button>
+      <button type="button" onClick={onDown} aria-label="Move down" className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={isLast}>
+        <ArrowDown className="h-4 w-4" />
+      </button>
+    </li>
+  );
+};
+
 const RankInput = ({ q, value, onChange, labelFor }: { q: Question; value: string[]; onChange: (v: string[]) => void; labelFor: (s: string) => string }) => {
   const list = value && value.length === q.options!.length ? value : [...q.options!];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= list.length) return;
@@ -29,23 +69,29 @@ const RankInput = ({ q, value, onChange, labelFor }: { q: Question; value: strin
     [copy[i], copy[j]] = [copy[j], copy[i]];
     onChange(copy);
   };
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = list.indexOf(String(active.id));
+    const newIdx = list.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    onChange(arrayMove(list, oldIdx, newIdx));
+  };
   return (
-    <ol className="space-y-1.5">
-      {list.map((opt, i) => (
-        <li key={opt} className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(43,49%,61%)]/15 text-[hsl(43,49%,61%)] text-xs font-semibold">
-            {i + 1}
-          </span>
-          <span className="flex-1 text-sm">{labelFor(opt)}</span>
-          <button type="button" onClick={() => move(i, -1)} aria-label="Move up" className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={i === 0}>
-            <ArrowUp className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => move(i, 1)} aria-label="Move down" className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30" disabled={i === list.length - 1}>
-            <ArrowDown className="h-4 w-4" />
-          </button>
-        </li>
-      ))}
-    </ol>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={list} strategy={verticalListSortingStrategy}>
+        <ol className="space-y-1.5">
+          {list.map((opt, i) => (
+            <SortableRow
+              key={opt} id={opt} index={i}
+              label={labelFor(opt)}
+              onUp={() => move(i, -1)} onDown={() => move(i, 1)}
+              isFirst={i === 0} isLast={i === list.length - 1}
+            />
+          ))}
+        </ol>
+      </SortableContext>
+    </DndContext>
   );
 };
 
@@ -130,6 +176,26 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
     }
   };
 
+  const persistSilent = async () => {
+    if (!playerId) return;
+    try {
+      await (supabase as any)
+        .from("player_operating_profile")
+        .upsert({ player_id: playerId, answers }, { onConflict: "player_id" });
+    } catch (e) {
+      // swallow — saved on next navigation or submit
+    }
+  };
+
+  const goNext = async () => {
+    await persistSilent();
+    setStepIdx((i) => Math.min(sections.length - 1, i + 1));
+  };
+  const goBack = async () => {
+    await persistSilent();
+    setStepIdx((i) => Math.max(0, i - 1));
+  };
+
   const renderQuestion = (q: Question) => {
     if (q.type === "text") {
       return (
@@ -190,11 +256,11 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
             Save &amp; continue later
           </Button>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => setStepIdx((i) => Math.max(0, i - 1))} disabled={stepIdx === 0}>
+            <Button type="button" variant="outline" onClick={goBack} disabled={stepIdx === 0}>
               <ChevronLeft className="h-4 w-4 mr-1" /> Back
             </Button>
             {stepIdx < sections.length - 1 ? (
-              <Button type="button" onClick={() => setStepIdx((i) => Math.min(sections.length - 1, i + 1))}>
+              <Button type="button" onClick={goNext}>
                 Next <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
