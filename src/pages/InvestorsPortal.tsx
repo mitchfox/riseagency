@@ -26,6 +26,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } from "@/components/investor/InvestmentOverview";
+import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
+import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
 import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
@@ -42,7 +44,8 @@ type SectionId =
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
   | "outreach" | "clubnetwork"
-  | "timeManagement" | "priorities";
+  | "timeManagement" | "priorities" | "capacity"
+  | "execNotes" | "execScripts" | "execWorkflow";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -157,6 +160,12 @@ const CATEGORIES: CategoryDef[] = [
   { id: "ops", title: "Operations", icon: Clock, sections: [
     { id: "timeManagement", title: "Time Management", icon: Clock },
     { id: "priorities", title: "Priorities", icon: ListOrdered },
+    { id: "capacity", title: "Capacity", icon: Activity },
+  ]},
+  { id: "exec", title: "Executive Support", icon: Sparkles, sections: [
+    { id: "execNotes", title: "Thought Wall", icon: Sparkles },
+    { id: "execScripts", title: "Scripts", icon: FileText },
+    { id: "execWorkflow", title: "Workflow", icon: Network },
   ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
@@ -2173,6 +2182,26 @@ const InvestorsPortal = () => {
                         defaultCategorySuggestions={["Daily", "Weekly", "Monthly", "Seasonal"]}
                         onRefresh={refresh}
                       />
+                    </SectionShell>
+                  )}
+                  {active === "capacity" && (
+                    <SectionShell icon={Activity} title="Capacity">
+                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} />
+                    </SectionShell>
+                  )}
+                  {active === "execNotes" && (
+                    <SectionShell icon={Sparkles} title="Thought Wall">
+                      <ExecutiveSupport kind="note" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                    </SectionShell>
+                  )}
+                  {active === "execScripts" && (
+                    <SectionShell icon={FileText} title="Scripts">
+                      <ExecutiveSupport kind="script" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                    </SectionShell>
+                  )}
+                  {active === "execWorkflow" && (
+                    <SectionShell icon={Network} title="Workflow">
+                      <ExecutiveSupport kind="workflow" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
                     </SectionShell>
                   )}
                 </div>

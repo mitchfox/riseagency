@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -25,22 +25,31 @@ import { IdeasReview } from "./marketing/IdeasReview";
 import { BTLWriter } from "./marketing/BTLWriter";
 import { ImageCreator } from "./marketing/ImageCreator";
 import { PostContent } from "./marketing/PostContent";
+import { useStatsUpdaterAssignments } from "@/hooks/useStatsUpdaterAssignments";
 
 type TaskType = "club-networking" | "player-networking" | "content-creation";
 
-const TASK_CONFIG = {
+const ALL_TASK_CONFIG = {
   "club-networking": { name: "Club Networking", icon: Building2 },
   "player-networking": { name: "Player Networking", icon: Users },
   "content-creation": { name: "Content Creation", icon: Megaphone }
 };
 
 export const FocusedTasksSection = () => {
+  const { isScoped } = useStatsUpdaterAssignments();
+  // Stats updaters never run player outreach — hide that task entirely
+  const TASK_CONFIG = isScoped
+    ? { "club-networking": ALL_TASK_CONFIG["club-networking"], "content-creation": ALL_TASK_CONFIG["content-creation"] }
+    : ALL_TASK_CONFIG;
   const [activeTask, setActiveTask] = useState<TaskType>("club-networking");
+  useEffect(() => {
+    if (!(activeTask in TASK_CONFIG)) setActiveTask("club-networking");
+  }, [isScoped]);
   const [clubSubTab, setClubSubTab] = useState("outreach");
   const [playerSubTab, setPlayerSubTab] = useState("outreach");
   const [contentSubTab, setContentSubTab] = useState("review");
 
-  const ActiveIcon = TASK_CONFIG[activeTask].icon;
+  const ActiveIcon = (TASK_CONFIG as any)[activeTask]?.icon ?? Building2;
 
   return (
     <div className="w-full">
@@ -48,7 +57,7 @@ export const FocusedTasksSection = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <ActiveIcon className="h-4 w-4" />
-          <span>{TASK_CONFIG[activeTask].name}</span>
+          <span>{(TASK_CONFIG as any)[activeTask]?.name}</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -58,7 +67,7 @@ export const FocusedTasksSection = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover">
             {(Object.keys(TASK_CONFIG) as TaskType[]).map((taskId) => {
-              const Icon = TASK_CONFIG[taskId].icon;
+              const Icon = (TASK_CONFIG as any)[taskId].icon;
               return (
                 <DropdownMenuItem
                   key={taskId}
@@ -66,7 +75,7 @@ export const FocusedTasksSection = () => {
                   className={activeTask === taskId ? "bg-accent" : ""}
                 >
                   <Icon className="h-4 w-4 mr-2" />
-                  {TASK_CONFIG[taskId].name}
+                  {(TASK_CONFIG as any)[taskId].name}
                 </DropdownMenuItem>
               );
             })}

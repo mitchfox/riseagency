@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_templates ADD COLUMN IF NOT EXISTS show_on_investor_portal boolean NOT NULL DEFAULT false;

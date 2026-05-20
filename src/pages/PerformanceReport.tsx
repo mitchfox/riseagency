@@ -48,7 +48,7 @@ const PerformanceReport = () => {
 
       const { data, error } = await supabase
         .from("player_analysis")
-        .select("id, opponent, report_type, team_name, players!player_analysis_player_id_fkey(name)")
+        .select("id, opponent, report_type, team_name, player_id, players!player_analysis_player_id_fkey(name)")
         .eq("id", id)
         .maybeSingle();
 
@@ -57,6 +57,29 @@ const PerformanceReport = () => {
       if (error || !data) {
         setNotFound(true);
       } else {
+        // Deep-link guard: stats updaters can only open reports for assigned players
+        try {
+          const staffUserId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
+          if (staffUserId) {
+            const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", staffUserId);
+            const list = (roles || []).map((r: any) => r.role);
+            const onlyStatsUpdater = list.length > 0 && list.every((r: string) => r === "stats_updater");
+            if (onlyStatsUpdater) {
+              const { data: assignments } = await (supabase as any)
+                .from("staff_player_assignments")
+                .select("player_id")
+                .eq("user_id", staffUserId)
+                .eq("role_key", "stats_updater");
+              const allowed = new Set(((assignments as any[]) || []).map((a: any) => a.player_id));
+              const pid = (data as any).player_id;
+              if (!pid || !allowed.has(pid)) {
+                setNotFound(true);
+                setResolving(false);
+                return;
+              }
+            }
+          }
+        } catch { /* fall through */ }
         const playerName = (data as any).report_type === "team"
           ? ((data as any).team_name || "Team Report")
           : ((data as any).players?.name || "Player");

@@ -19,6 +19,20 @@ async function getAdminUser(supabase: any, token: string) {
   return u;
 }
 
+async function getInvestorUser(supabase: any, token: string) {
+  if (!token) return null;
+  const { data } = await supabase
+    .from("investor_sessions")
+    .select("expires_at, investor_users(id, username, status, is_admin)")
+    .eq("token", token)
+    .maybeSingle();
+  if (!data) return null;
+  if (new Date(data.expires_at).getTime() < Date.now()) return null;
+  const u = (data as any).investor_users;
+  if (!u || u.status !== "active") return null;
+  return u;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -28,14 +42,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const user = await getAdminUser(supabase, token);
+    const action = String(body.action || "");
+    // Actions any active investor can run (post note / reply on Thought Wall)
+    const INVESTOR_ACTIONS = new Set(["postExecNote", "addExecReplyAsInvestor"]);
+    let user: any = null;
+    if (INVESTOR_ACTIONS.has(action)) {
+      user = await getInvestorUser(supabase, token);
+    } else {
+      user = await getAdminUser(supabase, token);
+    }
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const action = String(body.action || "");
     const payload = body.payload || {};
 
     const ok = (data: any = {}) => new Response(JSON.stringify({ ok: true, ...data }), {
@@ -113,6 +133,156 @@ Deno.serve(async (req) => {
             .eq("id", it.id);
         }
         return ok();
+      }
+      // ---------- Capacity ----------
+      case "upsertCapacitySettings": {
+        const { mode, weekly_hours_total, daily_hours } = payload;
+        const row: any = {};
+        if (mode) row.mode = mode === "day" ? "day" : "week";
+        if (weekly_hours_total != null) row.weekly_hours_total = Number(weekly_hours_total);
+        if (daily_hours && typeof daily_hours === "object") row.daily_hours = daily_hours;
+        row.updated_at = new Date().toISOString();
+        const { data: existing } = await supabase.from("investor_capacity_settings").select("id").limit(1).maybeSingle();
+        if (existing?.id) {
+          const { error } = await supabase.from("investor_capacity_settings").update(row).eq("id", existing.id);
+          if (error) return bad(error.message, 500);
+        } else {
+          const { error } = await supabase.from("investor_capacity_settings").insert({ singleton: true, ...row });
+          if (error) return bad(error.message, 500);
+        }
+        return ok();
+      }
+      case "upsertCapacityAllocation": {
+        const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, display_order } = payload;
+        if (!player_type || !["youth","pro"].includes(player_type)) return bad("player_type required");
+        const row: any = {
+          time_item_id: time_item_id || null,
+          custom_label: custom_label || null,
+          player_type,
+          hours_per_week: Number(hours_per_week) || 0,
+          day_of_week: day_of_week || null,
+          display_order: display_order ?? 999,
+          updated_at: new Date().toISOString(),
+        };
+        if (id) {
+          const { error } = await supabase.from("investor_capacity_allocations").update(row).eq("id", id);
+          if (error) return bad(error.message, 500);
+          return ok();
+        }
+        const { data, error } = await supabase.from("investor_capacity_allocations").insert(row).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
+      case "deleteCapacityAllocation": {
+        if (!payload.id) return bad("id required");
+        const { error } = await supabase.from("investor_capacity_allocations").delete().eq("id", payload.id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
+      // ---------- Executive Support ----------
+      case "upsertExecItem": {
+        const { id, kind, title, body: itemBody, metadata, status, author_label } = payload;
+        if (!kind || !["note","script","workflow"].includes(kind)) return bad("kind required");
+        const row: any = {
+          kind,
+          title: title || null,
+          body: itemBody || null,
+          metadata: metadata && typeof metadata === "object" ? metadata : {},
+          status: status || "open",
+          author_label: author_label || null,
+          created_by_admin: true,
+          updated_at: new Date().toISOString(),
+        };
+        if (id) {
+          const { error } = await supabase.from("exec_support_items").update(row).eq("id", id);
+          if (error) return bad(error.message, 500);
+          return ok();
+        }
+        const { data, error } = await supabase.from("exec_support_items").insert(row).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
+      case "deleteExecItem": {
+        if (!payload.id) return bad("id required");
+        const { error } = await supabase.from("exec_support_items").delete().eq("id", payload.id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
+      case "addExecReply": {
+        const { item_id, body_text, audio_base64, audio_ext, author_label } = payload;
+        if (!item_id) return bad("item_id required");
+        let audio_url: string | null = null;
+        if (audio_base64 && typeof audio_base64 === "string") {
+          const bin = Uint8Array.from(atob(audio_base64), c => c.charCodeAt(0));
+          const ext = (audio_ext || "webm").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "webm";
+          const path = `exec-support/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+            contentType: ext === "webm" ? "audio/webm" : "audio/mpeg", cacheControl: "31536000", upsert: false,
+          });
+          if (error) return bad(error.message, 500);
+          const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+          audio_url = data.publicUrl;
+        }
+        const { data, error } = await supabase.from("exec_support_replies").insert({
+          item_id, body_text: body_text || null, audio_url,
+          is_admin: true, author_label: author_label || null,
+        }).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
+      case "deleteExecReply": {
+        if (!payload.id) return bad("id required");
+        const { error } = await supabase.from("exec_support_replies").delete().eq("id", payload.id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
+      case "postExecNote": {
+        const { body: itemBody, audio_base64, audio_ext, author_label } = payload;
+        if (!itemBody && !audio_base64) return bad("body or audio required");
+        let audio_url: string | null = null;
+        let storedBody = itemBody || null;
+        if (audio_base64 && typeof audio_base64 === "string") {
+          const bin = Uint8Array.from(atob(audio_base64), c => c.charCodeAt(0));
+          const ext = (audio_ext || "webm").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "webm";
+          const path = `exec-support/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+            contentType: ext === "webm" ? "audio/webm" : "audio/mpeg", cacheControl: "31536000", upsert: false,
+          });
+          if (error) return bad(error.message, 500);
+          const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+          audio_url = data.publicUrl;
+        }
+        const meta: any = audio_url ? { audio_url } : {};
+        const { data, error } = await supabase.from("exec_support_items").insert({
+          kind: "note", body: storedBody, metadata: meta,
+          author_label: author_label || user.username || "Investor",
+          created_by_admin: !!user.is_admin,
+        }).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
+      case "addExecReplyAsInvestor": {
+        const { item_id, body_text, audio_base64, audio_ext, author_label } = payload;
+        if (!item_id) return bad("item_id required");
+        if (!body_text && !audio_base64) return bad("body or audio required");
+        let audio_url: string | null = null;
+        if (audio_base64 && typeof audio_base64 === "string") {
+          const bin = Uint8Array.from(atob(audio_base64), c => c.charCodeAt(0));
+          const ext = (audio_ext || "webm").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "webm";
+          const path = `exec-support/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+            contentType: ext === "webm" ? "audio/webm" : "audio/mpeg", cacheControl: "31536000", upsert: false,
+          });
+          if (error) return bad(error.message, 500);
+          const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+          audio_url = data.publicUrl;
+        }
+        const { data, error } = await supabase.from("exec_support_replies").insert({
+          item_id, body_text: body_text || null, audio_url,
+          is_admin: !!user.is_admin, author_label: author_label || user.username || "Investor",
+        }).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
       }
       // ---------- Time Management / Priorities (generic) ----------
       case "upsertOpsCategory":
