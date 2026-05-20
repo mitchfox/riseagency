@@ -458,6 +458,17 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
+                        duplicatePlaylist(playlist.id);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      title="Duplicate playlist"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         deletePlaylist(playlist.id);
                       }}
                       variant="ghost"
