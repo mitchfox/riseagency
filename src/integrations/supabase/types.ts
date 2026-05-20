@@ -3183,6 +3183,7 @@ export type Database = {
           message_content: string
           message_title: string
           recipient_type: string
+          show_on_investor_portal: boolean
           updated_at: string
         }
         Insert: {
@@ -3191,6 +3192,7 @@ export type Database = {
           message_content: string
           message_title: string
           recipient_type: string
+          show_on_investor_portal?: boolean
           updated_at?: string
         }
         Update: {
@@ -3199,6 +3201,7 @@ export type Database = {
           message_content?: string
           message_title?: string
           recipient_type?: string
+          show_on_investor_portal?: boolean
           updated_at?: string
         }
         Relationships: []
