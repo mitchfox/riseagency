@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, MessageSquare, Send, FileText, Workflow as WorkflowIcon, StickyNote, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, MessageSquare, Send, FileText, Workflow as WorkflowIcon, StickyNote, Star, CheckCircle2, RotateCcw, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -12,13 +13,27 @@ interface Item {
   id: string; kind: Kind; title: string | null; body: string | null;
   metadata: any; status: string; author_label: string | null;
   created_by_admin: boolean; created_at: string;
+  source_type?: string | null; source_id?: string | null;
 }
 interface Reply {
   id: string; item_id: string; author_label: string | null;
   body_text: string | null; audio_url: string | null;
-  is_admin: boolean; created_at: string;
+  is_admin: boolean; created_at: string; status?: string | null;
 }
 interface Template { id: string; message_title: string; message_content: string; recipient_type: string | null; }
+interface Script { id: string; title: string; description: string | null; sort_order?: number | null; }
+interface ScriptNode { id: string; script_id: string; parent_node_id: string | null; kind: string; branch_label: string | null; content: string | null; optional: boolean; sort_order: number; }
+interface ScriptObjection { id: string; script_id: string; objection: string; response: string | null; sort_order: number; }
+interface StaffTask { id: string; title: string; description: string | null; category: string | null; priority: string | null; completed: boolean; deadline: string | null; assigned_to?: string[] | null; recurrence_label?: string | null; }
+
+type SourceEntry = {
+  source_type: "messaging_script" | "marketing_template" | "staff_task";
+  source_id: string;
+  title: string;
+  body: string | null;
+  badge: string;
+  metadata?: Record<string, any>;
+};
 
 export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked }: { kind: Kind; token: string; isAdmin: boolean; unlocked: boolean }) => {
   const [items, setItems] = useState<Item[]>([]);
