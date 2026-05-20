@@ -170,9 +170,38 @@ const offerDict: Record<string, Partial<Record<Lang, string>>> = {
   },
 };
 
+const portalWelcomeDict: Record<string, Partial<Record<Lang, string>>> = {
+  welcome_title: {
+    en: "A real preview", es: "Una vista previa real", pt: "Uma pré-visualização real",
+    fr: "Un véritable aperçu", de: "Eine echte Vorschau", it: "Un'anteprima reale",
+    pl: "Prawdziwy podgląd", cs: "Skutečná ukázka", ru: "Настоящий предпросмотр",
+    tr: "Gerçek bir önizleme", hr: "Pravi pregled", no: "En ekte forhåndsvisning",
+  },
+  welcome_body: {
+    en: "See a real preview of the work we do with our Stars to make the difference on the pitch.",
+    es: "Mira una vista real del trabajo que hacemos con nuestras Estrellas para marcar la diferencia en el campo.",
+    pt: "Vê uma pré-visualização real do trabalho que fazemos com as nossas Estrelas para fazer a diferença em campo.",
+    fr: "Découvrez un véritable aperçu du travail que nous menons avec nos Stars pour faire la différence sur le terrain.",
+    de: "Sieh dir eine echte Vorschau der Arbeit an, die wir mit unseren Stars leisten, um auf dem Platz den Unterschied zu machen.",
+    it: "Guarda un'anteprima reale del lavoro che facciamo con le nostre Stelle per fare la differenza in campo.",
+    pl: "Zobacz prawdziwy podgląd pracy, jaką wykonujemy z naszymi Gwiazdami, by robić różnicę na boisku.",
+    cs: "Podívej se na skutečnou ukázku práce, kterou s našimi hvězdami děláme, aby na hřišti dělali rozdíl.",
+    ru: "Посмотрите реальный предпросмотр работы, которую мы проводим с нашими звёздами, чтобы делать разницу на поле.",
+    tr: "Sahada fark yaratmak için Yıldızlarımızla yaptığımız çalışmanın gerçek bir önizlemesini gör.",
+    hr: "Pogledaj pravi pregled rada koji radimo s našim Zvijezdama kako bismo napravili razliku na terenu.",
+    no: "Se en ekte forhåndsvisning av arbeidet vi gjør med våre Stjerner for å utgjøre forskjellen på banen.",
+  },
+  got_it: {
+    en: "Got it", es: "Entendido", pt: "Entendido", fr: "Compris",
+    de: "Verstanden", it: "Capito", pl: "Rozumiem", cs: "Rozumím",
+    ru: "Понятно", tr: "Anladım", hr: "Razumijem", no: "Skjønner",
+  },
+};
+const allDicts = { ...offerDict, ...portalWelcomeDict };
+
 const offerT = (lang: string, key: string, fallback: string): string => {
   const code = (lang || "en") as Lang;
-  return offerDict[key]?.[code] || offerDict[key]?.en || fallback;
+  return allDicts[key]?.[code] || allDicts[key]?.en || fallback;
 };
 
 /* ============== INTRO ============== */
