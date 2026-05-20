@@ -193,7 +193,7 @@ const Stars = () => {
                     {t('stars.declare_interest_desc', 'Select players and submit your interest')}
                   </p>
                   <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
-                    <span className="uppercase tracking-wider text-xs">Get Started</span>
+                    <span className="uppercase tracking-wider text-xs">{t('stars.cta_get_started', 'Get Started')}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
@@ -216,7 +216,7 @@ const Stars = () => {
                     {t('stars.contact_desc', 'Get in touch with us directly')}
                   </p>
                   <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
-                    <span className="uppercase tracking-wider text-xs">Reach Out</span>
+                    <span className="uppercase tracking-wider text-xs">{t('stars.cta_reach_out', 'Reach Out')}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
@@ -239,7 +239,7 @@ const Stars = () => {
                     {t('stars.request_portfolio_desc', 'Access our complete player portfolio')}
                   </p>
                   <div className="mt-6 flex items-center gap-2 text-primary text-sm font-medium">
-                    <span className="uppercase tracking-wider text-xs">Request Access</span>
+                    <span className="uppercase tracking-wider text-xs">{t('stars.cta_request_access', 'Request Access')}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { PlaylistPlayer } from "./PlaylistPlayer";
@@ -147,6 +147,27 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
     } catch (error: any) {
       console.error('Error deleting playlist:', error);
       toast.error("Failed to delete playlist");
+    }
+  };
+
+  const duplicatePlaylist = async (playlistId: string) => {
+    try {
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      if (!playerEmail) {
+        toast.error("Please log in again");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('duplicate-playlist', {
+        body: { playerEmail, playlistId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const copy = { ...data.playlist, clips: (data.playlist.clips as any) || [] };
+      setPlaylists(prev => [copy, ...prev]);
+      toast.success("Playlist duplicated");
+    } catch (err: any) {
+      console.error('Error duplicating playlist:', err);
+      toast.error("Failed to duplicate playlist");
     }
   };
 
@@ -433,6 +454,17 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                       title="Download playlist"
                     >
                       <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicatePlaylist(playlist.id);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      title="Duplicate playlist"
+                    >
+                      <Copy className="w-4 h-4" />
                     </Button>
                     <Button
                       onClick={(e) => {
