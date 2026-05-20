@@ -305,12 +305,12 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               <div className="flex gap-1 shrink-0">
                 <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={async () => {
                   const t = prompt("Rename category", cat.title); if (!t || t === cat.title) return;
-                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); toast.success("Category renamed"); await onRefresh(); }
+                  try { await callWrite(token, "upsertOpsCategory", { kind, id: cat.id, title: t, display_order: cat.display_order }); setLocalCategories(prev => [...prev.filter(c => c.id !== cat.id), { ...cat, title: t }]); toast.success("Category renamed"); await onRefresh(); }
                   catch (e: any) { toast.error(e.message || "Rename failed"); }
                 }}><Pencil className="w-3 h-3" /></Button>
                 <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={async () => {
                   if (!confirm(`Delete category "${cat.title}" and all its items?`)) return;
-                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); toast.success("Category deleted"); await onRefresh(); }
+                  try { await callWrite(token, "deleteOpsCategory", { kind, id: cat.id }); setDeletedCategoryIds(prev => prev.includes(cat.id) ? prev : [...prev, cat.id]); setLocalCategories(prev => prev.filter(c => c.id !== cat.id)); toast.success("Category deleted"); await onRefresh(); }
                   catch (e: any) { toast.error(e.message || "Delete failed"); }
                 }}><Trash2 className="w-3 h-3" /></Button>
               </div>
@@ -327,6 +327,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
                   token={token} kind={kind} staffTasks={staffTasks}
                   onChanged={onRefresh}
                   onItemSaved={saveLocalItem}
+                  onItemDeleted={deleteLocalItem}
                   onMove={(dir) => moveItem(list, idx, dir)} />
               ))}
             </AnimatePresence>
@@ -359,7 +360,8 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               isFirst={idx === 0} isLast={idx === orphan.length - 1}
               token={token} kind={kind} staffTasks={staffTasks}
               onChanged={onRefresh}
-              onItemSaved={saveLocalItem} />
+              onItemSaved={saveLocalItem}
+              onItemDeleted={deleteLocalItem} />
           ))}
         </div>
       )}
