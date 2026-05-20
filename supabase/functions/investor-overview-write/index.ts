@@ -67,12 +67,16 @@ Deno.serve(async (req) => {
         return ok();
       }
       case "upsertCard": {
-        const { id, section_id, title, summary, content, metrics, tags, display_order } = payload;
+        const { id, section_id, title, summary, content, metrics, tags, display_order, image_url, image_alt, detail_blocks } = payload;
         if (!title || !section_id) return bad("title and section_id required");
         const row: any = { section_id, title, summary, content,
           metrics: Array.isArray(metrics) ? metrics : [],
           tags: Array.isArray(tags) ? tags : [],
-          display_order: display_order ?? 999 };
+          display_order: display_order ?? 999,
+          image_url: image_url ?? null,
+          image_alt: image_alt ?? null,
+          detail_blocks: Array.isArray(detail_blocks) ? detail_blocks : [],
+        };
         if (id) {
           const { error } = await supabase.from("investor_overview_cards").update(row).eq("id", id);
           if (error) return bad(error.message, 500);
