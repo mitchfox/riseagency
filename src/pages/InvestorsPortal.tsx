@@ -2201,7 +2201,7 @@ const InvestorsPortal = () => {
                   )}
                   {active === "execWorkflow" && (
                     <SectionShell icon={Network} title="Workflow">
-                      <ExecutiveSupport kind="workflow" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} />
+                      <ExecutiveSupport kind="workflow" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} staffTasks={data.tasks} />
                     </SectionShell>
                   )}
                 </div>

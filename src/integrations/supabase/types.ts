@@ -1624,6 +1624,8 @@ export type Database = {
           id: string
           kind: string
           metadata: Json
+          source_id: string | null
+          source_type: string | null
           status: string
           title: string | null
           updated_at: string
@@ -1637,6 +1639,8 @@ export type Database = {
           id?: string
           kind: string
           metadata?: Json
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -1650,6 +1654,8 @@ export type Database = {
           id?: string
           kind?: string
           metadata?: Json
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -1665,6 +1671,9 @@ export type Database = {
           id: string
           is_admin: boolean
           item_id: string
+          resolved_at: string | null
+          resolved_by_label: string | null
+          status: string
         }
         Insert: {
           audio_url?: string | null
@@ -1674,6 +1683,9 @@ export type Database = {
           id?: string
           is_admin?: boolean
           item_id: string
+          resolved_at?: string | null
+          resolved_by_label?: string | null
+          status?: string
         }
         Update: {
           audio_url?: string | null
@@ -1683,6 +1695,9 @@ export type Database = {
           id?: string
           is_admin?: boolean
           item_id?: string
+          resolved_at?: string | null
+          resolved_by_label?: string | null
+          status?: string
         }
         Relationships: [
           {

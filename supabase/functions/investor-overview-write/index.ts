@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const action = String(body.action || "");
-    // Actions any active investor can run (post note / reply on Thought Wall)
-    const INVESTOR_ACTIONS = new Set(["postExecNote", "addExecReplyAsInvestor"]);
+    // Actions any active investor can run (posting notes/replies and creating a
+    // lightweight feedback target for staff-sourced scripts/tasks).
+    const INVESTOR_ACTIONS = new Set(["postExecNote", "addExecReplyAsInvestor", "ensureExecSourceItem"]);
     let user: any = null;
     if (INVESTOR_ACTIONS.has(action)) {
       user = await getInvestorUser(supabase, token);
@@ -208,6 +209,54 @@ Deno.serve(async (req) => {
         if (error) return bad(error.message, 500);
         return ok();
       }
+      case "ensureExecSourceItem": {
+        const { kind, source_type, source_id, title, body: itemBody, metadata } = payload;
+        if (!kind || !["script","workflow"].includes(kind)) return bad("kind required");
+        if (!source_type || !source_id) return bad("source required");
+
+        const { data: existing, error: existingError } = await supabase
+          .from("exec_support_items")
+          .select("*")
+          .eq("kind", kind)
+          .eq("source_type", source_type)
+          .eq("source_id", String(source_id))
+          .maybeSingle();
+        if (existingError) return bad(existingError.message, 500);
+        if (existing) return ok({ row: existing });
+
+        const { data, error } = await supabase.from("exec_support_items").insert({
+          kind,
+          source_type,
+          source_id: String(source_id),
+          title: title || null,
+          body: itemBody || null,
+          metadata: metadata && typeof metadata === "object" ? metadata : {},
+          author_label: user.username || "Investor",
+          created_by_admin: !!user.is_admin,
+        }).select().single();
+        if (error) {
+          const { data: raced } = await supabase
+            .from("exec_support_items")
+            .select("*")
+            .eq("kind", kind)
+            .eq("source_type", source_type)
+            .eq("source_id", String(source_id))
+            .maybeSingle();
+          if (raced) return ok({ row: raced });
+          return bad(error.message, 500);
+        }
+        return ok({ row: data });
+      }
+      case "updateExecItemStatus": {
+        const { id, status } = payload;
+        if (!id) return bad("id required");
+        const nextStatus = status === "resolved" ? "resolved" : "open";
+        const { error } = await supabase.from("exec_support_items")
+          .update({ status: nextStatus, updated_at: new Date().toISOString() })
+          .eq("id", id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
       case "addExecReply": {
         const { item_id, body_text, audio_base64, audio_ext, author_label } = payload;
         if (!item_id) return bad("item_id required");
@@ -233,6 +282,18 @@ Deno.serve(async (req) => {
       case "deleteExecReply": {
         if (!payload.id) return bad("id required");
         const { error } = await supabase.from("exec_support_replies").delete().eq("id", payload.id);
+        if (error) return bad(error.message, 500);
+        return ok();
+      }
+      case "updateExecReplyStatus": {
+        const { id, status } = payload;
+        if (!payload.id) return bad("id required");
+        const nextStatus = status === "resolved" ? "resolved" : "open";
+        const { error } = await supabase.from("exec_support_replies").update({
+          status: nextStatus,
+          resolved_at: nextStatus === "resolved" ? new Date().toISOString() : null,
+          resolved_by_label: nextStatus === "resolved" ? (user.username || "Admin") : null,
+        }).eq("id", id);
         if (error) return bad(error.message, 500);
         return ok();
       }

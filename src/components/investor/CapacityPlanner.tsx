@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Trash2, Clock, Users } from "lucide-react";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 
 interface Settings {
   id: string;
@@ -79,7 +80,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
   useEffect(() => { load(); }, []);
 
   const call = async (action: string, payload: any) => {
-    const { data, error } = await supabase.functions.invoke("investor-overview-write", { body: { token, action, payload } });
+    const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
     await load();
     onChange?.();
