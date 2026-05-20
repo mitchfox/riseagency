@@ -236,6 +236,54 @@ Deno.serve(async (req) => {
         if (error) return bad(error.message, 500);
         return ok();
       }
+      case "postExecNote": {
+        const { body: itemBody, audio_base64, audio_ext, author_label } = payload;
+        if (!itemBody && !audio_base64) return bad("body or audio required");
+        let audio_url: string | null = null;
+        let storedBody = itemBody || null;
+        if (audio_base64 && typeof audio_base64 === "string") {
+          const bin = Uint8Array.from(atob(audio_base64), c => c.charCodeAt(0));
+          const ext = (audio_ext || "webm").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "webm";
+          const path = `exec-support/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+            contentType: ext === "webm" ? "audio/webm" : "audio/mpeg", cacheControl: "31536000", upsert: false,
+          });
+          if (error) return bad(error.message, 500);
+          const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+          audio_url = data.publicUrl;
+        }
+        const meta: any = audio_url ? { audio_url } : {};
+        const { data, error } = await supabase.from("exec_support_items").insert({
+          kind: "note", body: storedBody, metadata: meta,
+          author_label: author_label || user.username || "Investor",
+          created_by_admin: !!user.is_admin,
+        }).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
+      case "addExecReplyAsInvestor": {
+        const { item_id, body_text, audio_base64, audio_ext, author_label } = payload;
+        if (!item_id) return bad("item_id required");
+        if (!body_text && !audio_base64) return bad("body or audio required");
+        let audio_url: string | null = null;
+        if (audio_base64 && typeof audio_base64 === "string") {
+          const bin = Uint8Array.from(atob(audio_base64), c => c.charCodeAt(0));
+          const ext = (audio_ext || "webm").toString().replace(/[^a-z0-9]/gi, "").slice(0, 5) || "webm";
+          const path = `exec-support/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage.from("marketing-gallery").upload(path, bin, {
+            contentType: ext === "webm" ? "audio/webm" : "audio/mpeg", cacheControl: "31536000", upsert: false,
+          });
+          if (error) return bad(error.message, 500);
+          const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+          audio_url = data.publicUrl;
+        }
+        const { data, error } = await supabase.from("exec_support_replies").insert({
+          item_id, body_text: body_text || null, audio_url,
+          is_admin: !!user.is_admin, author_label: author_label || user.username || "Investor",
+        }).select().single();
+        if (error) return bad(error.message, 500);
+        return ok({ row: data });
+      }
       // ---------- Time Management / Priorities (generic) ----------
       case "upsertOpsCategory":
       case "deleteOpsCategory":
