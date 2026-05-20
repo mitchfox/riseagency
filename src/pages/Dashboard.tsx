@@ -1789,6 +1789,15 @@ const Dashboard = () => {
         </div>
       </header>
 
+      {playerData && operatingProfileStatus !== "unknown" && (
+        <OperatingProfileReminder
+          visible={(operatingProfileStatus === "in_progress" || operatingProfileStatus === "none") && !operatingProfileReminderDismissed && !operatingProfileOpen}
+          inProgress={operatingProfileStatus === "in_progress"}
+          onOpen={() => setOperatingProfileOpen(true)}
+          onDismiss={() => setOperatingProfileReminderDismissed(true)}
+        />
+      )}
+
       {/* Subheader with Options */}
       <div id="subheader" className="bg-background lg:bg-background bg-[url('/smudged-marble-header.png')] lg:bg-none bg-cover bg-center bg-no-repeat border-b border-border/50">
         <div className="container mx-auto px-4">
