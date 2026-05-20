@@ -228,7 +228,65 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
   );
 };
 
-const ItemCard = ({ item, replies, isAdmin, unlocked, onReply, onDelete }: { item: Item; replies: Reply[]; isAdmin: boolean; unlocked: boolean; onReply: (t: string, setter: (s: string) => void) => void; onDelete?: () => void }) => {
+const SourceCard = ({ source, item, replies, isAdmin, unlocked, onReply, onResolveReply, onDeleteReply }: { source: SourceEntry; item?: Item; replies: Reply[]; isAdmin: boolean; unlocked: boolean; onReply: (t: string, setter: (s: string) => void) => void; onResolveReply?: (id: string, status: "open" | "resolved") => void; onDeleteReply?: (id: string) => void }) => {
+  const [text, setText] = useState("");
+  return (
+    <div className="rounded-lg border border-border bg-card/30 p-3 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold">{source.title}</h3>
+            <Badge variant="outline" className="text-[10px] uppercase tracking-widest">{source.badge}</Badge>
+            {item?.status === "resolved" && <Badge variant="secondary" className="text-[10px] uppercase tracking-widest">Resolved</Badge>}
+          </div>
+          {source.body && <div className="text-xs whitespace-pre-wrap text-muted-foreground max-h-56 overflow-auto pr-1">{source.body}</div>}
+        </div>
+        {source.body && (
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(source.body || ""); toast.success("Copied"); }}>
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+      <FeedbackReplies replies={replies} unlocked={unlocked} isAdmin={isAdmin} onResolveReply={onResolveReply} onDeleteReply={onDeleteReply} />
+      <div className="flex items-center gap-1.5 border-t border-border pt-2">
+        <Input placeholder="Comment or feedback…" value={text} onChange={(e) => setText(e.target.value)} className="h-8 text-xs" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onReply(text, setText); } }} />
+        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => onReply(text, setText)}><Send className="h-3.5 w-3.5" /></Button>
+      </div>
+    </div>
+  );
+};
+
+const FeedbackReplies = ({ replies, isAdmin, unlocked, onResolveReply, onDeleteReply }: { replies: Reply[]; isAdmin: boolean; unlocked: boolean; onResolveReply?: (id: string, status: "open" | "resolved") => void; onDeleteReply?: (id: string) => void }) => {
+  if (replies.length === 0) return null;
+  return (
+    <div className="mt-1 space-y-1.5 border-t border-border pt-2">
+      {replies.map(r => {
+        const resolved = r.status === "resolved";
+        return (
+          <div key={r.id} className={`rounded bg-card/50 px-2 py-1.5 ${resolved ? "opacity-60" : ""}`}>
+            {r.body_text && <div className={`text-xs whitespace-pre-wrap ${resolved ? "line-through" : ""}`}>{r.body_text}</div>}
+            {r.audio_url && <audio controls src={r.audio_url} className="w-full h-7 mt-1" />}
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{r.author_label || (r.is_admin ? "Admin" : "Investor")} • {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</div>
+              {isAdmin && unlocked && (
+                <div className="flex items-center gap-1">
+                  {onResolveReply && (
+                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onResolveReply(r.id, resolved ? "open" : "resolved")}>
+                      {resolved ? <RotateCcw className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                    </Button>
+                  )}
+                  {onDeleteReply && <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => onDeleteReply(r.id)}><Trash2 className="h-3 w-3" /></Button>}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const ItemCard = ({ item, replies, isAdmin, unlocked, onReply, onDelete, onResolveReply, onDeleteReply }: { item: Item; replies: Reply[]; isAdmin: boolean; unlocked: boolean; onReply: (t: string, setter: (s: string) => void) => void; onDelete?: () => void; onResolveReply?: (id: string, status: "open" | "resolved") => void; onDeleteReply?: (id: string) => void }) => {
   const [text, setText] = useState("");
   return (
     <div className="rounded-lg border border-border bg-card/30 p-3 space-y-2">
@@ -243,17 +301,7 @@ const ItemCard = ({ item, replies, isAdmin, unlocked, onReply, onDelete }: { ite
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}><Trash2 className="h-3 w-3" /></Button>
         )}
       </div>
-      {replies.length > 0 && (
-        <div className="mt-1 space-y-1.5 border-t border-border pt-2">
-          {replies.map(r => (
-            <div key={r.id} className="rounded bg-card/50 px-2 py-1.5">
-              {r.body_text && <div className="text-xs whitespace-pre-wrap">{r.body_text}</div>}
-              {r.audio_url && <audio controls src={r.audio_url} className="w-full h-7 mt-1" />}
-              <div className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">{r.author_label || (r.is_admin ? "Admin" : "Investor")} • {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <FeedbackReplies replies={replies} unlocked={unlocked} isAdmin={isAdmin} onResolveReply={onResolveReply} onDeleteReply={onDeleteReply} />
       <div className="flex items-center gap-1.5">
         <Input placeholder="Reply…" value={text} onChange={(e) => setText(e.target.value)} className="h-8 text-xs" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onReply(text, setText); } }} />
         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => onReply(text, setText)}><Send className="h-3.5 w-3.5" /></Button>
