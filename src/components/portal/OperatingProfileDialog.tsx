@@ -86,7 +86,7 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
   useEffect(() => {
     if (!open || !playerId) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("player_operating_profile")
         .select("answers, submitted_at")
         .eq("player_id", playerId)
