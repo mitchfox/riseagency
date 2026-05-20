@@ -233,6 +233,10 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
     return [...byId.values()].sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
   }, [items, localItems]);
 
+  const saveLocalItem = (item: OpsItem) => {
+    setLocalItems(prev => [...prev.filter(existing => existing.id !== item.id), item]);
+  };
+
   const grouped = useMemo(() => visibleCategories.map(cat => ({
     cat,
     list: visibleItems.filter(i => i.category_id === cat.id).sort((a, b) => a.display_order - b.display_order),
@@ -307,13 +311,14 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
                   isFirst={idx === 0} isLast={idx === list.length - 1}
                   token={token} kind={kind} staffTasks={staffTasks}
                   onChanged={onRefresh}
+                  onItemSaved={saveLocalItem}
                   onMove={(dir) => moveItem(list, idx, dir)} />
               ))}
             </AnimatePresence>
             {adding === cat.id && (
               <ItemEditor categoryId={cat.id} kind={kind} token={token} staffTasks={staffTasks}
                 displayOrder={(list[list.length - 1]?.display_order ?? 0) + 1}
-                onDone={async () => { setAdding(null); await onRefresh(); }}
+                onDone={async (saved) => { setAdding(null); if (saved) saveLocalItem(saved); await onRefresh(); }}
                 onCancel={() => setAdding(null)} />
             )}
             {unlocked && adding !== cat.id && (
@@ -338,7 +343,8 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               unlocked={unlocked} reorderable={false}
               isFirst={idx === 0} isLast={idx === orphan.length - 1}
               token={token} kind={kind} staffTasks={staffTasks}
-              onChanged={onRefresh} />
+              onChanged={onRefresh}
+              onItemSaved={saveLocalItem} />
           ))}
         </div>
       )}
