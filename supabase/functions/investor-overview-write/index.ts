@@ -19,6 +19,20 @@ async function getAdminUser(supabase: any, token: string) {
   return u;
 }
 
+async function getInvestorUser(supabase: any, token: string) {
+  if (!token) return null;
+  const { data } = await supabase
+    .from("investor_sessions")
+    .select("expires_at, investor_users(id, username, status, is_admin)")
+    .eq("token", token)
+    .maybeSingle();
+  if (!data) return null;
+  if (new Date(data.expires_at).getTime() < Date.now()) return null;
+  const u = (data as any).investor_users;
+  if (!u || u.status !== "active") return null;
+  return u;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -28,14 +42,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const user = await getAdminUser(supabase, token);
+    const action = String(body.action || "");
+    // Actions any active investor can run (post note / reply on Thought Wall)
+    const INVESTOR_ACTIONS = new Set(["postExecNote", "addExecReplyAsInvestor"]);
+    let user: any = null;
+    if (INVESTOR_ACTIONS.has(action)) {
+      user = await getInvestorUser(supabase, token);
+    } else {
+      user = await getAdminUser(supabase, token);
+    }
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const action = String(body.action || "");
     const payload = body.payload || {};
 
     const ok = (data: any = {}) => new Response(JSON.stringify({ ok: true, ...data }), {
