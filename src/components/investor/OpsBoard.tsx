@@ -217,13 +217,27 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   const [adding, setAdding] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const [localCategories, setLocalCategories] = useState<OpsCategory[]>([]);
+  const [localItems, setLocalItems] = useState<OpsItem[]>([]);
 
-  const grouped = useMemo(() => categories.map(cat => ({
+  const visibleCategories = useMemo(() => {
+    const byId = new Map<string, OpsCategory>();
+    [...categories, ...localCategories].forEach(cat => byId.set(cat.id, cat));
+    return [...byId.values()].sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [categories, localCategories]);
+
+  const visibleItems = useMemo(() => {
+    const byId = new Map<string, OpsItem>();
+    [...items, ...localItems].forEach(item => byId.set(item.id, item));
+    return [...byId.values()].sort((a, b) => a.display_order - b.display_order || a.title.localeCompare(b.title));
+  }, [items, localItems]);
+
+  const grouped = useMemo(() => visibleCategories.map(cat => ({
     cat,
-    list: items.filter(i => i.category_id === cat.id).sort((a, b) => a.display_order - b.display_order),
-  })), [categories, items]);
+    list: visibleItems.filter(i => i.category_id === cat.id).sort((a, b) => a.display_order - b.display_order),
+  })), [visibleCategories, visibleItems]);
 
-  const orphan = items.filter(i => !categories.find(c => c.id === i.category_id));
+  const orphan = visibleItems.filter(i => !visibleCategories.find(c => c.id === i.category_id));
 
   const moveItem = async (list: OpsItem[], idx: number, dir: -1 | 1) => {
     const swapIdx = idx + dir;
@@ -245,10 +259,13 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
   const createCategory = async (title: string) => {
     if (!title.trim()) return;
     try {
-      await callWrite(token, "upsertOpsCategory", {
+      const saved = await callWrite(token, "upsertOpsCategory", {
         kind, title: title.trim(),
-        display_order: (categories[categories.length - 1]?.display_order ?? 0) + 1,
+        display_order: (visibleCategories[visibleCategories.length - 1]?.display_order ?? 0) + 1,
       });
+      if ((saved as any)?.row) {
+        setLocalCategories(prev => [...prev.filter(c => c.id !== (saved as any).row.id), (saved as any).row]);
+      }
       setNewCategoryTitle(""); setAddingCategory(false);
       toast.success("Category added");
       await onRefresh();
@@ -339,7 +356,7 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
               {defaultCategorySuggestions && defaultCategorySuggestions.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {defaultCategorySuggestions
-                    .filter(s => !categories.find(c => c.title.toLowerCase() === s.toLowerCase()))
+                    .filter(s => !visibleCategories.find(c => c.title.toLowerCase() === s.toLowerCase()))
                     .map(s => (
                       <Button key={s} variant="outline" size="sm" className="h-6 text-[11px]"
                         onClick={() => createCategory(s)}>{s}</Button>
