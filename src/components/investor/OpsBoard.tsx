@@ -224,7 +224,7 @@ const ItemCard = ({ item, staffTask, unlocked, reorderable, position, isFirst, i
 export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token, reorderable, defaultCategorySuggestions, onRefresh }: Props) => {
   const [adding, setAdding] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
-  const [newCategoryTitle, setNewCategoryTitle] = useState("");
+  const newCategoryInputRef = useRef<HTMLInputElement>(null);
   const [localCategories, setLocalCategories] = useState<OpsCategory[]>([]);
   const [localItems, setLocalItems] = useState<OpsItem[]>([]);
   const [deletedCategoryIds, setDeletedCategoryIds] = useState<string[]>([]);
@@ -267,6 +267,15 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
     const swapIdx = idx + dir;
     if (swapIdx < 0 || swapIdx >= list.length) return;
     const a = list[idx], b = list[swapIdx];
+    // Optimistically swap display_order locally so the sorted view updates immediately
+    setLocalItems(prev => {
+      const without = prev.filter(p => p.id !== a.id && p.id !== b.id);
+      return [
+        ...without,
+        { ...a, display_order: b.display_order },
+        { ...b, display_order: a.display_order },
+      ];
+    });
     try {
       await callWrite(token, "reorderOpsItems", {
         kind,
@@ -292,7 +301,8 @@ export const OpsBoard = ({ kind, categories, items, staffTasks, unlocked, token,
         setDeletedCategoryIds(prev => prev.filter(id => id !== savedRow.id));
         setLocalCategories(prev => [...prev.filter(c => c.id !== savedRow.id), savedRow]);
       }
-      setNewCategoryTitle(""); setAddingCategory(false);
+      if (newCategoryInputRef.current) newCategoryInputRef.current.value = "";
+      setAddingCategory(false);
       toast.success("Category added");
       await onRefresh();
     } catch (e: any) { toast.error(e.message || "Failed to add category"); }
