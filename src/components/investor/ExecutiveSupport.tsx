@@ -118,7 +118,14 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
         body: template.message_content,
         badge: template.recipient_type || "Message template",
       }));
-      return [...scriptCards, ...templateCards];
+      const caseStudyCards: SourceEntry[] = caseStudies.map((cs) => ({
+        source_type: "messaging_script" as const,
+        source_id: `case-${cs.id}`,
+        title: cs.title,
+        body: [cs.description, cs.context_notes].filter(Boolean).join("\n\n") || null,
+        badge: "Case study",
+      }));
+      return [...scriptCards, ...templateCards, ...caseStudyCards];
     }
 
     if (kind === "workflow") {
@@ -133,7 +140,7 @@ export const ExecutiveSupport = ({ kind, token, isAdmin, unlocked, staffTasks = 
     }
 
     return [];
-  }, [kind, scripts, scriptNodes, scriptObjections, templates, staffTasks]);
+  }, [kind, scripts, scriptNodes, scriptObjections, templates, caseStudies, staffTasks]);
 
   const sourceItems = sourceEntries.map((source) => {
     const feedbackItem = items.find((it) => it.source_type === source.source_type && it.source_id === source.source_id);
