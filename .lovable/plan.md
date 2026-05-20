@@ -1,122 +1,100 @@
-## Goals for this turn
 
-Ship three big pieces deliberately, in this order:
+## 1. Finish stats_updater scoping
 
-1. **Stats updater scoping** — make the staff portal actually show only the players a stats updater is assigned to, everywhere they can reach.
-2. **Long-Term Vision** block on the player portal hub (after Comparisons), pulling from the Athlete Centre.
-3. **Player Operating Profile** questionnaire — one-time pop-up on the portal that feeds the Athlete Centre.
+Apply `useStatsUpdaterAssignments` + `applyStatsUpdaterScope` consistently across the remaining staff surfaces, plus add a deep-link guard.
 
----
+- **FocusedTasksSection** — hide `Player Networking` task entirely for `stats_updater` (their outreach lists shouldn't span unassigned players). Filter `PlayerOutreach` player dropdowns/lists by allowed IDs when shown.
+- **CoachingDataSection / Coaching subsections** — already filters player list; extend to any nested player pickers (program assign, exercise assign) so unassigned players never appear.
+- **VideoAnalysis** + **AnalysisManagement** — filter player selector and the analyses query (`.in("player_id", [...allowedIds])`). Hide team-wide analyses unless the assigned roster includes a player on that team.
+- **ActionReportsList** — already filtered; double-check the "all reports" tab.
+- **AthleteCentre** — already filtered.
+- **PerformanceReport deep-link guard** — in `src/pages/PerformanceReport.tsx`, after resolving the analysis, if the visitor is an authenticated staff user with `stats_updater` only, look up `staff_player_assignments` and 404 (or redirect to `/staff`) when `player_id` not in their set. Team reports: allow only if at least one assigned player belongs to that team.
 
-## 1. Stats updater player scoping
+Edge case: when `allowedIds` is empty, render an empty-state with "No players assigned yet" rather than the full dataset.
 
-Right now `useStatsUpdaterAssignments` exists but isn't enforced in most lists. Apply it as a single, consistent filter in every section a stats updater can reach.
+## 2. Auto-translate Operating Profile questionnaire
 
-Sections to scope (verified via `role_permissions` + sidebar):
-- Overview / Recent players / Search results
-- Focused Tasks (`FocusedTasksSection`)
-- Coaching Data → Performance Reports, Match Data, Comparisons (`CoachingDataSection`, `ActionReportsList`)
-- Video Analysis (`coaching/VideoAnalysis`, `AnalysisManagement`)
-- Vision Board / Athlete Centre player picker (`AthleteCentre`)
-- Any global player combobox / recent players bar
+- Move all English strings in `src/components/portal/operatingProfileQuestions.ts` and `OperatingProfileDialog.tsx` into the existing localisation pipeline (`usePlayerLanguageTranslations` / `useAutoTranslate`), under a new `operatingProfile.*` namespace.
+- On first render in a non-English language, fire one batched translation request covering: section titles, question prompts, option labels, helper copy, button labels. Cache per language in the existing translations table so we don't re-translate.
+- Football/position terms stay English per Core memory.
 
-Approach:
-- Add a small `scopePlayersToStatsUpdater(players, scope)` helper next to the hook.
-- In each list/grid, call `useStatsUpdaterAssignments()` once and filter the players array before render.
-- For queries that hit Supabase by `player_id` (analyses, reports, video), add `.in("player_id", [...allowedIds])` when `isScoped` is true. If `allowedIds` is empty, short-circuit to an empty result and show a "No assigned players yet" empty state (no spinner).
-- Block deep links: in `PerformanceReport.tsx` and any report/edit route, if `isScoped && !allowedIds.has(reportPlayerId)` redirect back to overview with a toast.
-- Default landing: `Staff.tsx` already lands stats updater on first viewable section — keep that, but ensure overview is in their viewable set or pick `coaching-data` instead.
+## 3. Investors Portal — Executive Support category
 
-Test matrix: log in as a stats updater with 0, 1, and 3 assignments and walk each section.
+New top-level category alongside Operations / Investment etc.
 
----
+**Sections inside Executive Support:**
 
-## 2. Portal hub: Long-Term Vision block
+a. **Thought Wall** (main)
+   - Sticky-note board (masonry). Anyone with portal access (admin or investor) can post a note.
+   - Each note: author, body (text or voice clip), created_at, status (open / resolved).
+   - Reply chain underneath each note. Replies support text OR voice recording (reuse existing `audio commentary` recorder pattern; upload to `marketing-gallery` or a new `exec-support-audio` bucket).
+   - Realtime updates so a new reply appears without refresh.
 
-Placement: in `src/pages/Dashboard.tsx`, immediately after the `comparisons` TabsContent (line ~2627), inside the same hub flow. Render only if at least one of the four parts has content.
+b. **Scripts**
+   - Repository of conversation scripts. Each script: title, scenario, body (rich text), tags.
+   - Comment thread per script encouraging advice (same text/voice reply primitive as Thought Wall).
+   - Linked **Message Templates** panel: pulls from existing `quick_messages` (Staff → Templates), but only those an admin has starred as "investor visible". Investors see them read-only as examples of tone.
 
-Layout: 2x2 grid on desktop (`md:grid-cols-2`), single column on mobile, with the existing marble Card chrome and Rise Gold top border to match the rest of the hub.
+c. **Workflow**
+   - Same primitive as Scripts: title, description, ordered steps, comment thread.
 
-The four parts (titles localised, content from Athlete Centre):
+**Staff side changes:**
+- `QuickMessageSection` (templates): add a star/favourite toggle per template — column `show_on_investor_portal boolean default false` on `quick_messages`.
+- Admin-only toggle.
 
-```text
-+---------------------------+---------------------------+
-| 1. Skillset & Potential   | 2. Per-90 Targets         |
-|    written eval           |    list of metrics + goal |
-+---------------------------+---------------------------+
-| 3. Development Road Map   | 4. Players to Watch       |
-|    6 / 18 / 36 months     |    glassy cards + play    |
-+---------------------------+---------------------------+
-```
+**DB (new tables):**
+- `exec_support_categories` (kind: 'note' | 'script' | 'workflow') — or three lean tables, prefer one `exec_support_items` with `kind` + `metadata jsonb` for steps/tags.
+- `exec_support_replies` (item_id, author_type, author_id, body_text, audio_url, created_at).
+- `quick_messages.show_on_investor_portal` column.
+- RLS: read = active investor session OR admin; write = admin OR active investor (notes/replies only). Voice uploads via service-role edge function (mirror `investor-overview-write` pattern).
 
-Each tile: glossy glass surface (`bg-card/60 backdrop-blur border border-white/10 rounded-2xl`), Rise Gold accent heading, content-aware empty handling (a missing part collapses, doesn't show "—").
+**Edge function:** `exec-support-write` for create/reply/upload-audio actions, auth via investor session token (like `investor-overview-write`).
 
-Part 4 cards: name (heading), reason (body), and a circular play button linking out via `openExternalUrl`. Stack vertically inside the tile, glassy chip per player.
+## 4. Investors Portal — Capacity (under Operations)
 
-Data source: extend `player_athlete_profile` (existing table backing Athlete Centre) — see Technical section for schema.
+New section beneath the existing Time Management + Priorities cards.
 
-Trigger to staff: in Athlete Centre, the existing "Long-Term Plan" tab becomes "Long-Term Vision" with four sub-fields matching the portal tiles. Save persists; the portal reads the same row.
+**Data model:**
+- `investor_capacity_settings` — one row: `mode` ('week' | 'day'), `weekly_hours_total int`, `daily_hours jsonb` ({mon:8, tue:8,...}), `max_youth_per_player_hours numeric`, `max_pro_per_player_hours numeric`.
+- `investor_capacity_allocations` — `id`, `time_item_id` (FK to `investor_time_items`), `player_type` ('youth' | 'pro'), `hours_per_week numeric`, `day_of_week` nullable (when mode = day).
 
----
+**UI:**
+- Big horizontal cylinder/bar at the top of the section showing:
+  - filled portion = currently allocated hours
+  - dashed marker = projected (allocations × players)
+  - end cap = maximum capacity
+  - legend with totals + "Players you can support: N youth / M pro"
+- Toggle: **Week ↔ Day**. Day view shows 7 mini cylinders (one per weekday) with per-day allocations and per-day max.
+- Below the cylinder: two columns "Youth Player" and "Pro Player". Admin can drag tasks from a left-hand picker (sourced from `investor_time_items`) into either column and set hours per task per week (or per day).
+- Compute capacity:
+  - `hours_per_player_youth = sum(youth allocations)` ; `players_youth = floor(weekly_hours_total / hours_per_player_youth)` (same for pro).
+  - When mixing, show a small calculator: "If 60% youth / 40% pro → x youth + y pro".
+- Investors see read-only view; admin sees edit controls (reuse `getAdminUser` pattern).
 
-## 3. Player Operating Profile questionnaire
+**Edge function:** extend `investor-overview-write` with `upsertCapacitySettings`, `upsertCapacityAllocation`, `deleteCapacityAllocation`.
 
-A one-time pop-up on the portal (wide, not thin — per project convention) the first time a player lands after release. Once submitted, it never re-opens; staff can clear it from the Athlete Centre to re-trigger.
+## 5. Out of scope (this turn)
+- Restyling Time Management / Priorities cards themselves
+- Voice-note transcription
+- Investor-facing notifications for new Thought Wall replies (future)
 
-Pop-up shell:
-- Reuse `Dialog` with `max-w-4xl`, scrollable body, "Save and continue later" + "Submit" footer.
-- 6 sections as accordion steps with a progress bar (Communication, Engagement, Discipline, Energy, Match Prep, Reflection).
-- Ranking questions: drag-to-reorder list (use `@dnd-kit` already in the project) with numbered chips.
-- Single-select: `RadioGroup`. Multi-select up to N: checkbox grid with counter.
-- Open responses: `Textarea`.
-- Autosave draft every 10s into `player_operating_profile_drafts` keyed by player id so they don't lose progress.
+## Technical summary
 
-Staff side: new tab in Athlete Centre → Development → "Operating Profile" rendering the answers read-only, grouped by section, with a "Reset questionnaire" button. This becomes the opening section of Development for that player.
+New files:
+- `src/components/investor/ExecutiveSupportSection.tsx`
+- `src/components/investor/ThoughtWall.tsx`
+- `src/components/investor/ScriptsPanel.tsx`
+- `src/components/investor/WorkflowPanel.tsx`
+- `src/components/investor/CapacityPlanner.tsx`
+- `src/components/investor/CapacityCylinder.tsx`
+- `supabase/functions/exec-support-write/index.ts`
+- migration: `exec_support_items`, `exec_support_replies`, `investor_capacity_settings`, `investor_capacity_allocations`, `quick_messages.show_on_investor_portal`, `player_operating_profile_translations` (cache).
 
-Localisation: all question text goes through `t()` with keys under `operatingProfile.*` so the 12 portal languages pick it up. English source first, then run the existing auto-translate pass.
-
----
-
-## Technical notes
-
-### DB migrations
-- Extend `player_athlete_profile` (or create if missing) with:
-  - `vision_skillset text`
-  - `vision_per90_targets jsonb`  // `[{metric, target, unit}]`
-  - `vision_roadmap jsonb`  // `{ six_months, eighteen_months, thirty_six_months }`
-  - `vision_players_to_watch jsonb`  // `[{name, reason, url}]`
-- New table `player_operating_profile`:
-  - `player_id uuid PK FK players(id)`
-  - `answers jsonb not null` (sectioned)
-  - `submitted_at timestamptz`
-  - `updated_at timestamptz default now()`
-  - RLS: select/update by the player's own email match (existing portal pattern), full access to admin/staff. Stats updater: no access.
-- New table `player_operating_profile_drafts` mirroring the above for autosave.
-
-### Edge functions
-- `operating-profile-save` — accepts `{playerEmail, answers, submit}`, validates with zod, upserts draft or final row using service role. Mirrors the `playlist-manage` auth pattern.
-
-### Files likely touched
-- `src/hooks/useStatsUpdaterAssignments.ts` (+ helper)
-- `src/pages/Staff.tsx`, `Dashboard.tsx`, `PerformanceReport.tsx`
-- `src/components/staff/{FocusedTasksSection,CoachingDataSection,AthleteCentre,AnalysisManagement}.tsx` and `analysis/ActionReportsList.tsx`, `coaching/VideoAnalysis.tsx`
-- `src/components/portal/LongTermVisionSection.tsx` (new)
-- `src/components/portal/OperatingProfileDialog.tsx` (new) + step components
-- `src/components/staff/AthleteCentre.tsx` long-term vision editor + operating profile viewer
-- `supabase/functions/operating-profile-save/index.ts` (new)
-- One migration file for the schema changes above
-
-### Out of scope (will not touch this turn)
-- Re-styling existing hub sections
-- Auto-translation runs beyond English source strings (kicks off separately)
-- Investor portal, Rise With Us, playlists — already shipped previously
-
----
-
-## Order of execution
-
-1. Stats updater scoping (most-asked, smallest UI surface)
-2. DB migration for vision + operating profile
-3. Long-Term Vision tiles (staff editor → portal renderer)
-4. Operating Profile dialog + autosave + staff viewer
-5. Smoke test all three as a stats updater and as a player
+Edited:
+- `src/components/staff/QuickMessageSection.tsx` (star toggle)
+- `src/components/staff/FocusedTasksSection.tsx` (hide Player Networking for stats_updater)
+- `src/components/staff/PlayerOutreach.tsx`, `VideoAnalysis.tsx`, `AnalysisManagement.tsx` (scope filters)
+- `src/pages/PerformanceReport.tsx` (deep-link guard)
+- `src/components/portal/operatingProfileQuestions.ts` + `OperatingProfileDialog.tsx` (auto-translate)
+- `src/pages/InvestorsPortal.tsx` (mount Executive Support category, Capacity section)
+- `supabase/functions/investor-overview-write/index.ts` (capacity actions)
