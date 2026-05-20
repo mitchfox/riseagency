@@ -25,6 +25,7 @@ interface Template { id: string; message_title: string; message_content: string;
 interface Script { id: string; title: string; description: string | null; sort_order?: number | null; }
 interface ScriptNode { id: string; script_id: string; parent_node_id: string | null; kind: string; branch_label: string | null; content: string | null; optional: boolean; sort_order: number; }
 interface ScriptObjection { id: string; script_id: string; objection: string; response: string | null; sort_order: number; }
+interface CaseStudy { id: string; title: string; description: string | null; context_notes: string | null; }
 interface StaffTask { id: string; title: string; description: string | null; category: string | null; priority: string | null; completed: boolean; deadline: string | null; assigned_to?: string[] | null; recurrence_label?: string | null; }
 
 type SourceEntry = {
