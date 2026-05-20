@@ -4491,6 +4491,33 @@ export type Database = {
         }
         Relationships: []
       }
+      player_operating_profile: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          player_id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          player_id: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          player_id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_other_analysis: {
         Row: {
           analysis_id: string
@@ -4685,6 +4712,10 @@ export type Database = {
           show_video_reports: boolean
           show_view_profile: boolean
           updated_at: string
+          vision_per90_targets: Json | null
+          vision_players_to_watch: Json | null
+          vision_roadmap: Json | null
+          vision_skillset: string | null
         }
         Insert: {
           created_at?: string
@@ -4725,6 +4756,10 @@ export type Database = {
           show_video_reports?: boolean
           show_view_profile?: boolean
           updated_at?: string
+          vision_per90_targets?: Json | null
+          vision_players_to_watch?: Json | null
+          vision_roadmap?: Json | null
+          vision_skillset?: string | null
         }
         Update: {
           created_at?: string
@@ -4765,6 +4800,10 @@ export type Database = {
           show_video_reports?: boolean
           show_view_profile?: boolean
           updated_at?: string
+          vision_per90_targets?: Json | null
+          vision_players_to_watch?: Json | null
+          vision_roadmap?: Json | null
+          vision_skillset?: string | null
         }
         Relationships: [
           {
