@@ -1652,6 +1652,39 @@ const PlayerFeed = ({ fixtures }: { fixtures: FixtureFeedItem[] }) => {
 const OutreachView = ({ youth, pro }: { youth: any[]; pro: any[] }) => {
   const [tab, setTab] = useState<"youth" | "pro">("youth");
   const rows = tab === "youth" ? youth : pro;
+  const [clubRatings, setClubRatings] = useState<Array<{ club_name: string; first_team_rating: string; academy_rating: string }>>([]);
+  const [clubLogosByName, setClubLogosByName] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    (async () => {
+      const { data: ratings } = await (supabase as any).from("club_ratings").select("club_name, first_team_rating, academy_rating");
+      setClubRatings((ratings as any) || []);
+      const { data: clubs } = await (supabase as any).from("clubs").select("name, logo_url");
+      const m: Record<string, string> = {};
+      (clubs as any[] || []).forEach((c: any) => {
+        if (c?.name && c?.logo_url) m[c.name.trim().toLowerCase()] = c.logo_url;
+      });
+      [...youth, ...pro].forEach((r: any) => {
+        const name = (r?.current_club || r?.club || "").trim().toLowerCase();
+        if (name && r?.club_logo_url) m[name] = m[name] || r.club_logo_url;
+      });
+      setClubLogosByName(m);
+    })();
+  }, [youth, pro]);
+
+  const logoFor = (clubName: string | null) => {
+    if (!clubName) return null;
+    return clubLogosByName[clubName.trim().toLowerCase()] || null;
+  };
+
+  const ratingColours: Record<string, string> = {
+    R1: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    R2: "bg-green-500/20 text-green-300 border-green-500/40",
+    R3: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    R4: "bg-orange-500/20 text-orange-300 border-orange-500/40",
+    R5: "bg-red-500/20 text-red-300 border-red-500/40",
+  };
+
   return (
     <SectionShell icon={Users} title={`Player Outreach (${youth.length + pro.length})`}>
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
@@ -1660,36 +1693,52 @@ const OutreachView = ({ youth, pro }: { youth: any[]; pro: any[] }) => {
           <TabsTrigger value="pro">Pro ({pro.length})</TabsTrigger>
         </TabsList>
         <TabsContent value={tab}>
-          <div className="rounded border border-border/40 overflow-x-auto">
-            <table className="w-full text-sm min-w-[640px]">
-              <thead className="bg-muted/30 text-xs text-muted-foreground">
-                <tr>
-                  <th className="text-left px-3 py-2">Name</th>
-                  <th className="text-left px-3 py-2">Position</th>
-                  <th className="text-left px-3 py-2">Age</th>
-                  <th className="text-left px-3 py-2">Nationality</th>
-                  <th className="text-left px-3 py-2">Club</th>
-                  <th className="text-left px-3 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {rows.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No outreach entries.</td></tr>
-                ) : rows.slice(0, 300).map((r: any) => (
-                  <tr key={r.id} className="hover:bg-muted/20">
-                    <td className="px-3 py-2 font-medium">{r.player_name || r.name || "—"}</td>
-                    <td className="px-3 py-2 text-xs">{r.position || "—"}</td>
-                    <td className="px-3 py-2 text-xs">{r.age ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs">{r.nationality || "—"}</td>
-                    <td className="px-3 py-2 text-xs truncate max-w-[200px]">{r.current_club || r.club || "—"}</td>
-                    <td className="px-3 py-2 text-xs">
-                      <Badge variant="outline" className="text-[10px]">{r.status || r.stage || "Active"}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {rows.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">No outreach entries.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {rows.slice(0, 300).map((r: any) => {
+                const clubName = r.current_club || r.club || null;
+                const logo = logoFor(clubName);
+                const rating = findClubRating(clubName, clubRatings, tab === "youth");
+                return (
+                  <Card key={r.id} className="bg-card/60 border-border/60 p-3 hover:border-primary/40 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12 border border-border">
+                        <AvatarImage src={r.profile_image_url || undefined} className="object-cover" />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">{(r.player_name || r.name || "?")[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="font-semibold text-sm truncate">{r.player_name || r.name || "—"}</div>
+                          {rating && <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${ratingColours[rating] || ""}`}>{rating}</Badge>}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
+                          {r.nationality && <img src={getCountryFlagUrl(r.nationality)} alt="" className="w-4 h-3 rounded-sm object-cover" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+                          <span>{r.nationality || "—"}</span>
+                          <span>•</span>
+                          <span>{r.position || "—"}</span>
+                          <span>•</span>
+                          <span>{r.age ?? "—"} yrs</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5 min-w-0">
+                          {logo ? (
+                            <img src={logo} alt="" className="h-5 w-5 object-contain shrink-0" loading="lazy" />
+                          ) : (
+                            <div className="h-5 w-5 rounded bg-muted/40 shrink-0" />
+                          )}
+                          <span className="text-xs text-foreground/80 truncate">{clubName || "—"}</span>
+                        </div>
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-[10px]">{r.status || r.stage || "Active"}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </SectionShell>
