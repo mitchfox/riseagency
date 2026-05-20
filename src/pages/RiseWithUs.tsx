@@ -673,6 +673,7 @@ const RiseWithUs = () => {
           {/* ============ STAGE: PORTAL ============ */}
           {stage === "portal" && (
             <section className="relative w-full bg-background" style={{ minHeight: "100dvh" }}>
+              <PortalWelcomeOverlay lang={lang} />
               <div
                 className="relative mx-auto"
                 style={{
