@@ -1318,14 +1318,14 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
 
   useEffect(() => {
     (async () => {
-      const [{ data: ratings }, { data: clubs }] = await Promise.all([
+      const [{ data: ratings }, { data: networkClubs }] = await Promise.all([
         (supabase as any).from("club_ratings").select("club_name, first_team_rating, academy_rating"),
-        (supabase as any).from("clubs").select("name, logo_url").not("logo_url", "is", null),
+        (supabase as any).from("network_club_profiles").select("club_name, logo_url").not("logo_url", "is", null),
       ]);
       setClubRatings((ratings as any) || []);
       const m: Record<string, string> = {};
-      ((clubs as any[]) || []).forEach((c) => {
-        if (c?.name && c?.logo_url) m[c.name.trim().toLowerCase()] = c.logo_url;
+      ((networkClubs as any[]) || []).forEach((c) => {
+        if (c?.club_name && c?.logo_url) m[c.club_name.trim().toLowerCase()] = c.logo_url;
       });
       setClubLogosByName(m);
     })();
