@@ -334,13 +334,14 @@ const PlayerCard = ({ p, editable, onSave, paidByPlayer }: {
 
 // ---------- Marble card header ----------
 const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string; action?: React.ReactNode }) => (
-  <div className="relative overflow-hidden rounded-t-lg border-b border-border/60">
-    <div className="absolute inset-0 opacity-30 pointer-events-none"
-      style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center", mixBlendMode: "overlay" }} />
-    <div className="relative px-5 py-3 flex items-center justify-between bg-card/60 backdrop-blur-sm">
+  <div className="relative overflow-hidden rounded-t-lg border-b border-primary/30">
+    <div className="absolute inset-0 pointer-events-none"
+      style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+    <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/30 via-transparent to-black/50" />
+    <div className="relative px-5 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2.5">
-        <Icon className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+        <Icon className="w-4 h-4 text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+        <h2 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{title}</h2>
       </div>
       {action}
     </div>
@@ -348,7 +349,7 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
 );
 
 const SectionShell = ({ icon, title, children, action }: { icon: any; title: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <Card className="bg-card/40 border-border/60 overflow-hidden">
+  <Card className="bg-card/80 border-border/60 overflow-hidden backdrop-blur-sm">
     <MarbleHeader icon={icon} title={title} action={action} />
     <div className="p-5">{children}</div>
   </Card>
