@@ -74,7 +74,41 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
   const [section_id, setSectionId] = useState(card.section_id || sections[0]?.id || "");
   const [metrics, setMetrics] = useState<OverviewMetric[]>(card.metrics || []);
   const [tags, setTags] = useState<string>(((card.tags) || []).join(", "));
+  const [imageUrl, setImageUrl] = useState<string>(card.image_url || "");
+  const [imageAlt, setImageAlt] = useState<string>(card.image_alt || "");
+  const [blocks, setBlocks] = useState<DetailBlock[]>(card.detail_blocks || []);
+  const [uploading, setUploading] = useState(false);
+  const heroInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `investors/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("marketing-gallery").upload(path, file, {
+      cacheControl: "31536000", upsert: false,
+    });
+    if (error) { toast.error(error.message); return null; }
+    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleHeroPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true);
+    const url = await uploadImage(file);
+    setUploading(false);
+    if (url) setImageUrl(url);
+    e.target.value = "";
+  };
+
+  const updateBlock = (i: number, patch: Partial<DetailBlock>) =>
+    setBlocks(prev => prev.map((b, j) => j === i ? { ...b, ...patch } : b));
+  const removeBlock = (i: number) => setBlocks(prev => prev.filter((_, j) => j !== i));
+  const moveBlock = (i: number, dir: -1 | 1) => setBlocks(prev => {
+    const next = [...prev]; const j = i + dir;
+    if (j < 0 || j >= next.length) return prev;
+    [next[i], next[j]] = [next[j], next[i]]; return next;
+  });
 
   const save = async () => {
     if (!title.trim()) { toast.error("Title required"); return; }
@@ -85,6 +119,9 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
         metrics: metrics.filter(m => m.label && m.value),
         tags: tags.split(",").map(t => t.trim()).filter(Boolean),
         display_order: card.display_order ?? 999,
+        image_url: imageUrl.trim() || null,
+        image_alt: imageAlt.trim() || null,
+        detail_blocks: blocks,
       });
       toast.success("Saved");
       onDone();
@@ -103,6 +140,31 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
       </div>
       <Input value={summary} onChange={e => setSummary(e.target.value)} placeholder="One-line summary (shown collapsed)" />
       <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Full expanded content" rows={5} />
+
+      <div className="space-y-2 border-t border-primary/15 pt-3">
+        <div className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          <ImageIcon className="w-3 h-3" /> Hero image (shown at the top of the expanded card)
+        </div>
+        {imageUrl && (
+          <div className="relative rounded-md overflow-hidden border border-border">
+            <img src={imageUrl} alt={imageAlt || title} className="w-full max-h-56 object-cover" />
+            <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-7 w-7" onClick={() => setImageUrl("")}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Paste image URL or upload" className="flex-1" />
+          <input ref={heroInputRef} type="file" accept="image/*" className="hidden" onChange={handleHeroPick} />
+          <Button size="sm" variant="outline" onClick={() => heroInputRef.current?.click()} disabled={uploading}>
+            <Upload className="w-3.5 h-3.5 mr-1" />{uploading ? "Uploading…" : "Upload"}
+          </Button>
+        </div>
+        {imageUrl && (
+          <Input value={imageAlt} onChange={e => setImageAlt(e.target.value)} placeholder="Image alt text (accessibility)" />
+        )}
+      </div>
+
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">KPI metrics</div>
         {metrics.map((m, i) => (
@@ -115,12 +177,109 @@ const CardEditor = ({ card, sections, token, onDone, onCancel }: {
         ))}
         <Button size="sm" variant="outline" onClick={() => setMetrics([...metrics, { label: "", value: "", unit: "" }])}><Plus className="w-3 h-3 mr-1" />Metric</Button>
       </div>
+
+      <div className="space-y-2 border-t border-primary/15 pt-3">
+        <div className="text-xs font-medium text-muted-foreground">Detail blocks (mix-and-match richer content)</div>
+        {blocks.map((b, i) => (
+          <DetailBlockEditor
+            key={i}
+            block={b}
+            uploadImage={uploadImage}
+            onChange={(patch) => updateBlock(i, patch)}
+            onRemove={() => removeBlock(i)}
+            onMove={(dir) => moveBlock(i, dir)}
+          />
+        ))}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "heading", text: "" }])}><Plus className="w-3 h-3 mr-1" />Heading</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "paragraph", text: "" }])}><Plus className="w-3 h-3 mr-1" />Paragraph</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "bullets", items: [""] }])}><Plus className="w-3 h-3 mr-1" />Bullets</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "stat", label: "", value: "" }])}><Plus className="w-3 h-3 mr-1" />Stat</Button>
+          <Button size="sm" variant="outline" onClick={() => setBlocks([...blocks, { kind: "image", url: "", alt: "" }])}><Plus className="w-3 h-3 mr-1" />Image</Button>
+        </div>
+      </div>
+
       <Input value={tags} onChange={e => setTags(e.target.value)} placeholder="tags, comma, separated" />
       <p className="text-[11px] text-muted-foreground">Tip: add the tag <code>featured</code> to render the card as a large, hero-style tile.</p>
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onCancel} disabled={busy}><X className="w-4 h-4 mr-1" />Cancel</Button>
         <Button onClick={save} disabled={busy} className="bg-primary text-primary-foreground"><Check className="w-4 h-4 mr-1" />Save</Button>
       </div>
+    </div>
+  );
+};
+
+const DetailBlockEditor = ({ block, uploadImage, onChange, onRemove, onMove }: {
+  block: DetailBlock;
+  uploadImage: (f: File) => Promise<string | null>;
+  onChange: (patch: Partial<DetailBlock>) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+}) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setUploading(true);
+    const url = await uploadImage(f);
+    setUploading(false);
+    if (url) onChange({ url });
+    e.target.value = "";
+  };
+  return (
+    <div className="rounded border border-border/60 bg-background/50 p-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{block.kind}</span>
+        <div className="flex gap-1">
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onMove(-1)}><ArrowUp className="w-3 h-3" /></Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onMove(1)}><ArrowDown className="w-3 h-3" /></Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={onRemove}><Trash2 className="w-3 h-3" /></Button>
+        </div>
+      </div>
+      {block.kind === "heading" && (
+        <Input value={block.text || ""} onChange={e => onChange({ text: e.target.value })} placeholder="Section heading" />
+      )}
+      {block.kind === "paragraph" && (
+        <Textarea value={block.text || ""} onChange={e => onChange({ text: e.target.value })} placeholder="Paragraph text" rows={3} />
+      )}
+      {block.kind === "bullets" && (
+        <div className="space-y-1">
+          {(block.items || []).map((item, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={item} onChange={e => {
+                const items = [...(block.items || [])]; items[i] = e.target.value;
+                onChange({ items });
+              }} placeholder={`Bullet ${i + 1}`} />
+              <Button size="icon" variant="ghost" onClick={() => {
+                const items = (block.items || []).filter((_, j) => j !== i);
+                onChange({ items });
+              }}><X className="w-3 h-3" /></Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={() => onChange({ items: [...(block.items || []), ""] })}>
+            <Plus className="w-3 h-3 mr-1" />Add bullet
+          </Button>
+        </div>
+      )}
+      {block.kind === "stat" && (
+        <div className="flex gap-2">
+          <Input value={block.label || ""} onChange={e => onChange({ label: e.target.value })} placeholder="Stat label" />
+          <Input value={block.value || ""} onChange={e => onChange({ value: e.target.value })} placeholder="Stat value" />
+        </div>
+      )}
+      {block.kind === "image" && (
+        <div className="space-y-2">
+          {block.url && <img src={block.url} alt={block.alt || ""} className="w-full max-h-48 object-cover rounded" />}
+          <div className="flex gap-2">
+            <Input value={block.url || ""} onChange={e => onChange({ url: e.target.value })} placeholder="Image URL" className="flex-1" />
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pick} />
+            <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              <Upload className="w-3.5 h-3.5 mr-1" />{uploading ? "…" : "Upload"}
+            </Button>
+          </div>
+          <Input value={block.alt || ""} onChange={e => onChange({ alt: e.target.value })} placeholder="Alt text" />
+        </div>
+      )}
     </div>
   );
 };
