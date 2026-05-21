@@ -132,6 +132,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hoverPreview, setHoverPreview] = useState<{ x: number; time: number } | null>(null);
+  const [r90ViewerOpen, setR90ViewerOpen] = useState(false);
+  const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
