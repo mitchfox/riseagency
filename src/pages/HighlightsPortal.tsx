@@ -317,6 +317,36 @@ const HighlightsPortal = () => {
       return n;
     });
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const reorderClips = async (pl: PlaylistRow, fromId: string, toId: string) => {
+    if (!maker) return;
+    const ids = pl.clips.map((c, i) => c.id || `idx-${i}`);
+    const from = ids.indexOf(fromId);
+    const to = ids.indexOf(toId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = arrayMove(pl.clips, from, to);
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: next.map((c, i) => ({ ...c, order: i })) } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "reorder", playlistId: pl.id, makerUsername: maker.username, clips: next },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Reorder failed");
+    }
+  };
+
+  const removeClipFromPlaylist = async (pl: PlaylistRow, clipIndex: number) => {
+    if (!maker) return;
+    if (!window.confirm("Remove this clip from the playlist?")) return;
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: p.clips.filter((_, i) => i !== clipIndex) } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "removeClip", playlistId: pl.id, makerUsername: maker.username, clipIndex },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Remove failed");
+    }
+  };
+
   const renamePlaylist = async (pl: PlaylistRow) => {
     if (!maker) return;
     const next = window.prompt("Rename playlist", pl.name);
