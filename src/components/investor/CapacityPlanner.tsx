@@ -300,6 +300,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
               value={settings.current_youth_players ?? 0}
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
               onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_youth_players ?? 0) > totals.playersYouth) ? "text-destructive" : "text-muted-foreground"}`}>
@@ -320,6 +321,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
               value={settings.current_pro_players ?? 0}
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
               onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_pro_players ?? 0) > totals.playersPro) ? "text-destructive" : "text-muted-foreground"}`}>

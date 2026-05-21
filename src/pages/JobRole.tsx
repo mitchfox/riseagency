@@ -11,7 +11,7 @@ import { ArrowLeft, Briefcase, ChevronRight, Clock, MapPin, PoundSterling } from
 import { JobBody } from "@/components/jobs/JobBody";
 import { JobShareButton } from "@/components/jobs/JobShareButton";
 import { JobApplyForm } from "@/components/jobs/JobApplyForm";
-import bannerHero from "@/assets/banner-hero.jpg";
+import smudgedMarble from "@/assets/smudged-marble-overlay.png";
 
 interface Job {
   id: string;
@@ -36,6 +36,7 @@ const JobRole = () => {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showFloatingApply, setShowFloatingApply] = useState(true);
 
   useEffect(() => {
     if (!slug) return;
@@ -54,6 +55,19 @@ const JobRole = () => {
     })();
     return () => { cancelled = true; };
   }, [slug]);
+
+  // Hide the floating "Apply now" pill once the user reaches the apply section.
+  useEffect(() => {
+    if (!job) return;
+    const target = document.getElementById("apply");
+    if (!target || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setShowFloatingApply(!entry.isIntersecting),
+      { threshold: 0.15 },
+    );
+    obs.observe(target);
+    return () => obs.disconnect();
+  }, [job]);
 
   const canonical = `https://risefootballagency.com/jobs/${slug}`;
 
@@ -118,8 +132,12 @@ const JobRole = () => {
       <main className="pt-32 md:pt-24">
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bannerHero})` }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-background" />
+          <div className="absolute inset-0 bg-black" />
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-screen"
+            style={{ backgroundImage: `url(${smudgedMarble})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           <div className="relative container mx-auto px-4 py-12 md:py-20">
             <Link to="/jobs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
               <ArrowLeft className="h-4 w-4" /> All roles
@@ -152,21 +170,21 @@ const JobRole = () => {
         <section className="container mx-auto px-4 py-12 md:py-16">
           <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
             <ScrollReveal>
-              <div className="space-y-10">
+              <div className="space-y-10 divide-y divide-primary/15">
                 {job.description && (
-                  <div>
+                  <div className="pt-0">
                     <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">About the role</h2>
                     <JobBody content={job.description} />
                   </div>
                 )}
                 {job.responsibilities && (
-                  <div>
+                  <div className="pt-10">
                     <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">Responsibilities</h2>
                     <JobBody content={job.responsibilities} />
                   </div>
                 )}
                 {job.requirements && (
-                  <div>
+                  <div className="pt-10">
                     <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">Requirements</h2>
                     <JobBody content={job.requirements} />
                   </div>
@@ -205,6 +223,16 @@ const JobRole = () => {
           </div>
         </section>
       </main>
+
+      {/* Floating Apply Now pill — hides once the apply section is in view */}
+      {showFloatingApply && (
+        <a
+          href="#apply"
+          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-primary/60 bg-primary px-6 py-3 font-bebas text-sm uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.7)] backdrop-blur-md transition hover:scale-[1.03] md:bottom-8"
+        >
+          Apply now
+        </a>
+      )}
 
       <Footer />
     </div>
