@@ -16,6 +16,7 @@ import { toast } from "sonner";
 interface Job {
   id: string;
   title: string;
+  slug: string;
   department: string;
   location: string | null;
   description: string | null;
@@ -25,10 +26,13 @@ interface Job {
   requirements: string | null;
   responsibilities: string | null;
   salary_range: string | null;
+  summary: string | null;
+  seo_image_url: string | null;
 }
 
 interface JobFormData {
   title: string;
+  slug: string;
   department: string;
   location: string;
   description: string;
@@ -37,10 +41,13 @@ interface JobFormData {
   requirements: string;
   responsibilities: string;
   salary_range: string;
+  summary: string;
+  seo_image_url: string;
 }
 
 const defaultFormData: JobFormData = {
   title: "",
+  slug: "",
   department: "General",
   location: "",
   description: "",
@@ -49,7 +56,16 @@ const defaultFormData: JobFormData = {
   requirements: "",
   responsibilities: "",
   salary_range: "",
+  summary: "",
+  seo_image_url: "",
 };
+
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-+|-+$)/g, "");
 
 export const JobsManagement = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -80,6 +96,7 @@ export const JobsManagement = () => {
       setEditingJob(job);
       setFormData({
         title: job.title,
+        slug: job.slug || slugify(job.title),
         department: job.department,
         location: job.location || "",
         description: job.description || "",
@@ -88,6 +105,8 @@ export const JobsManagement = () => {
         requirements: job.requirements || "",
         responsibilities: job.responsibilities || "",
         salary_range: job.salary_range || "",
+        summary: job.summary || "",
+        seo_image_url: job.seo_image_url || "",
       });
     } else {
       setEditingJob(null);
@@ -104,8 +123,10 @@ export const JobsManagement = () => {
 
     setSaving(true);
     try {
+      const finalSlug = slugify(formData.slug || formData.title);
       const jobData = {
         title: formData.title,
+        slug: finalSlug,
         department: formData.department,
         location: formData.location || null,
         description: formData.description || null,
@@ -114,6 +135,8 @@ export const JobsManagement = () => {
         requirements: formData.requirements || null,
         responsibilities: formData.responsibilities || null,
         salary_range: formData.salary_range || null,
+        summary: formData.summary || null,
+        seo_image_url: formData.seo_image_url || null,
       };
 
       if (editingJob) {
@@ -127,7 +150,7 @@ export const JobsManagement = () => {
       } else {
         const { error } = await supabase
           .from("jobs")
-          .insert(jobData);
+          .insert([jobData]);
 
         if (error) throw error;
         toast.success("Job created successfully");
@@ -266,6 +289,28 @@ export const JobsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="slug">URL Slug</Label>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    placeholder="auto-generated from title (e.g. talent-scout)"
+                  />
+                  <p className="text-xs text-muted-foreground">Public URL: /jobs/{formData.slug || slugify(formData.title) || "slug"}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="summary">Summary (card & social preview)</Label>
+                  <Textarea
+                    id="summary"
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                    placeholder="One or two sentences shown on the listing card and in social previews."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -277,24 +322,34 @@ export const JobsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="responsibilities">Responsibilities</Label>
+                  <Label htmlFor="responsibilities">Responsibilities (use - for bullet points)</Label>
                   <Textarea
                     id="responsibilities"
                     value={formData.responsibilities}
                     onChange={(e) => setFormData({ ...formData, responsibilities: e.target.value })}
-                    placeholder="Key responsibilities..."
-                    rows={3}
+                    placeholder={"Optional intro paragraph...\n- First responsibility\n- Second responsibility\n- Third responsibility\nOptional closing line."}
+                    rows={6}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="requirements">Requirements</Label>
+                  <Label htmlFor="requirements">Requirements (use - for bullet points)</Label>
                   <Textarea
                     id="requirements"
                     value={formData.requirements}
                     onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                    placeholder="Job requirements..."
-                    rows={3}
+                    placeholder={"Optional intro paragraph...\n- First requirement\n- Second requirement\n- Third requirement"}
+                    rows={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="seo_image">Social Share Image URL (optional)</Label>
+                  <Input
+                    id="seo_image"
+                    value={formData.seo_image_url}
+                    onChange={(e) => setFormData({ ...formData, seo_image_url: e.target.value })}
+                    placeholder="https://..."
                   />
                 </div>
 
