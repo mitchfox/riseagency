@@ -58,6 +58,19 @@ Disallow: /scout-portal
 Disallow: /pdf-viewer
 Disallow: /analysis/
 Disallow: /investors-portal
+Disallow: /highlights
+Disallow: /highlights-login
+Disallow: /scout-login
+Disallow: /sign/
+Disallow: /performance-report/
+Disallow: /transfer-report/
+Disallow: /spq
+Disallow: /spq-report/
+Disallow: /risewithus/
+Disallow: /contact/
+Disallow: /auth/
+Disallow: /diagnostics
+Disallow: /error
 
 # Sitemaps
 Sitemap: https://risefootballagency.com/sitemap.xml
