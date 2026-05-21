@@ -4170,6 +4170,69 @@ export type Database = {
         }
         Relationships: []
       }
+      player_club_contracts: {
+        Row: {
+          annual_salary: number | null
+          bonuses_notes: string | null
+          clauses_notes: string | null
+          club_name: string
+          contract_end: string | null
+          contract_start: string | null
+          created_at: string
+          general_notes: string | null
+          id: string
+          is_current: boolean
+          player_id: string
+          sponsor_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          annual_salary?: number | null
+          bonuses_notes?: string | null
+          clauses_notes?: string | null
+          club_name: string
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          is_current?: boolean
+          player_id: string
+          sponsor_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annual_salary?: number | null
+          bonuses_notes?: string | null
+          clauses_notes?: string | null
+          club_name?: string
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          general_notes?: string | null
+          id?: string
+          is_current?: boolean
+          player_id?: string
+          sponsor_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_club_contracts_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_club_contracts_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_club_submissions: {
         Row: {
           club_name: string
@@ -5354,9 +5417,11 @@ export type Database = {
           player_list_order: number | null
           portal_language: string | null
           position: string
+          potential_commission_annual: number | null
           preferred_currency: string | null
           programming_notes: string | null
           representation_status: string | null
+          salary_cap_overrides: Json
           star_order: number | null
           transfer_priority: string | null
           transfer_status: string | null
@@ -5400,9 +5465,11 @@ export type Database = {
           player_list_order?: number | null
           portal_language?: string | null
           position: string
+          potential_commission_annual?: number | null
           preferred_currency?: string | null
           programming_notes?: string | null
           representation_status?: string | null
+          salary_cap_overrides?: Json
           star_order?: number | null
           transfer_priority?: string | null
           transfer_status?: string | null
@@ -5446,9 +5513,11 @@ export type Database = {
           player_list_order?: number | null
           portal_language?: string | null
           position?: string
+          potential_commission_annual?: number | null
           preferred_currency?: string | null
           programming_notes?: string | null
           representation_status?: string | null
+          salary_cap_overrides?: Json
           star_order?: number | null
           transfer_priority?: string | null
           transfer_status?: string | null
@@ -6617,6 +6686,39 @@ export type Database = {
           status?: string
           successful_signings?: number
           total_submissions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seo_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          og_description: string | null
+          og_image_url: string | null
+          og_title: string | null
+          path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          og_description?: string | null
+          og_image_url?: string | null
+          og_title?: string | null
+          path?: string
           updated_at?: string
         }
         Relationships: []
