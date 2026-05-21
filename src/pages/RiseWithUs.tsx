@@ -258,10 +258,10 @@ const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
 interface PulsePoint { x: number; y: number; id: number }
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, playerImage, onDone,
+  fullName, lang, extraImages, playerImage, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
-  playerImage: string | null; onDone: () => void;
+  playerImage: string | null; secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -396,6 +396,12 @@ const IntroCinematic = ({
                  style={{ wordSpacing: "-0.03em" }}>
                 {offerT(lang, "stood_out_line", "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star.")}
               </p>
+              {secondaryParagraph && (
+                <p className="text-justify text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90"
+                   style={{ wordSpacing: "-0.02em" }}>
+                  {secondaryParagraph}
+                </p>
+              )}
             </motion.div>
           )}
           {phase === 2 && (
@@ -559,6 +565,7 @@ const RiseWithUs = () => {
             lang={lang}
             extraImages={extraImages}
             playerImage={player.image_url}
+            secondaryParagraph={settings.representation_subtitle_secondary}
             onDone={() => setIntroDone(true)}
           />
         )}
