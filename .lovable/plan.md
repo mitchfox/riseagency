@@ -1,100 +1,96 @@
+## Goals
 
-## 1. Finish stats_updater scoping
+Turn the Jobs page from a cramped collapsible list with a modal apply form into a proper editorial job board with shareable role pages, polished cards, and a fuller application flow that lands in staff form submissions.
 
-Apply `useStatsUpdaterAssignments` + `applyStatsUpdaterScope` consistently across the remaining staff surfaces, plus add a deep-link guard.
+## Database
 
-- **FocusedTasksSection** — hide `Player Networking` task entirely for `stats_updater` (their outreach lists shouldn't span unassigned players). Filter `PlayerOutreach` player dropdowns/lists by allowed IDs when shown.
-- **CoachingDataSection / Coaching subsections** — already filters player list; extend to any nested player pickers (program assign, exercise assign) so unassigned players never appear.
-- **VideoAnalysis** + **AnalysisManagement** — filter player selector and the analyses query (`.in("player_id", [...allowedIds])`). Hide team-wide analyses unless the assigned roster includes a player on that team.
-- **ActionReportsList** — already filtered; double-check the "all reports" tab.
-- **AthleteCentre** — already filtered.
-- **PerformanceReport deep-link guard** — in `src/pages/PerformanceReport.tsx`, after resolving the analysis, if the visitor is an authenticated staff user with `stats_updater` only, look up `staff_player_assignments` and 404 (or redirect to `/staff`) when `player_id` not in their set. Team reports: allow only if at least one assigned player belongs to that team.
+New migration:
+- Add `slug` (text, unique), `summary` (text, short pitch for cards/OG), `seo_image_url` (text, optional override for social share) to `public.jobs`.
+- Backfill `slug` from existing titles (`talent-scout`, `head-of-scouting`).
+- New storage bucket `job-applications` (private) with RLS allowing public INSERT (uploads via the apply form) and staff SELECT/DELETE only.
 
-Edge case: when `allowedIds` is empty, render an empty-state with "No players assigned yet" rather than the full dataset.
+CV uploads are stored in that bucket; the resulting path is saved on the `form_submissions.data.cv_path` and the public CV URL (signed via edge function on staff side) shown in the staff submissions view.
 
-## 2. Auto-translate Operating Profile questionnaire
+## Routes
 
-- Move all English strings in `src/components/portal/operatingProfileQuestions.ts` and `OperatingProfileDialog.tsx` into the existing localisation pipeline (`usePlayerLanguageTranslations` / `useAutoTranslate`), under a new `operatingProfile.*` namespace.
-- On first render in a non-English language, fire one batched translation request covering: section titles, question prompts, option labels, helper copy, button labels. Cache per language in the existing translations table so we don't re-translate.
-- Football/position terms stay English per Core memory.
+- `/jobs` — list page (redesigned cards, no inline expand).
+- `/jobs/:slug` — dedicated role page (full description, requirements, responsibilities, apply form rendered in-page below).
+- Add localized variants via existing `createLocalizedRoutes` helper.
 
-## 3. Investors Portal — Executive Support category
+Old expand/collapse and Apply dialog removed.
 
-New top-level category alongside Operations / Investment etc.
+## Jobs list redesign (`/jobs`)
 
-**Sections inside Executive Support:**
+Replace the current cramped accordion with a clean two-column grid (single column on mobile) of role cards:
 
-a. **Thought Wall** (main)
-   - Sticky-note board (masonry). Anyone with portal access (admin or investor) can post a note.
-   - Each note: author, body (text or voice clip), created_at, status (open / resolved).
-   - Reply chain underneath each note. Replies support text OR voice recording (reuse existing `audio commentary` recorder pattern; upload to `marketing-gallery` or a new `exec-support-audio` bucket).
-   - Realtime updates so a new reply appears without refresh.
+```text
+┌─────────────────────────────┐
+│ DEPARTMENT · LOCATION       │
+│ Role Title (large, gold)    │
+│ Short summary line…         │
+│ [Full-time] [Remote] [£…]   │
+│                  View role →│
+└─────────────────────────────┘
+```
 
-b. **Scripts**
-   - Repository of conversation scripts. Each script: title, scenario, body (rich text), tags.
-   - Comment thread per script encouraging advice (same text/voice reply primitive as Thought Wall).
-   - Linked **Message Templates** panel: pulls from existing `quick_messages` (Staff → Templates), but only those an admin has starred as "investor visible". Investors see them read-only as examples of tone.
+- Cards use existing token palette (border, primary gold accent, dark surface).
+- Whole card clickable, navigates to `/jobs/:slug`.
+- Hover: subtle lift + gold border, no layout shift.
+- Empty / loading states retained.
 
-c. **Workflow**
-   - Same primitive as Scripts: title, description, ordered steps, comment thread.
+## Role page (`/jobs/:slug`)
 
-**Staff side changes:**
-- `QuickMessageSection` (templates): add a star/favourite toggle per template — column `show_on_investor_portal boolean default false` on `quick_messages`.
-- Admin-only toggle.
+Layout:
+1. Hero band with banner image, breadcrumb (Jobs › Title), title, meta chips (department, location, type, salary), and a Share button that copies the canonical URL with a tooltip + toast ("Link copied"). Share button also exposes WhatsApp / LinkedIn / X quick links via a small popover.
+2. Two-column body on desktop (single column mobile):
+   - Left: About the Role (description), Responsibilities, Requirements — each rendered with a lightweight markdown renderer so authors can mix paragraphs and bullet lists. Bullets via standard `-` / `*` lines, fully styled (gold marker, comfortable line height).
+   - Right: sticky summary card (salary, type, location, quick Apply CTA that scrolls to the form).
+3. Apply section rendered **on the page** (no dialog), full-width card with the form.
 
-**DB (new tables):**
-- `exec_support_categories` (kind: 'note' | 'script' | 'workflow') — or three lean tables, prefer one `exec_support_items` with `kind` + `metadata jsonb` for steps/tags.
-- `exec_support_replies` (item_id, author_type, author_id, body_text, audio_url, created_at).
-- `quick_messages.show_on_investor_portal` column.
-- RLS: read = active investor session OR admin; write = admin OR active investor (notes/replies only). Voice uploads via service-role edge function (mirror `investor-overview-write` pattern).
+Authors enter responsibilities/requirements as plain text with `-` bullets and optional intro/outro paragraphs — we render via the existing `markdownRenderer` util.
 
-**Edge function:** `exec-support-write` for create/reply/upload-audio actions, auth via investor session token (like `investor-overview-write`).
+## Application form (in-page)
 
-## 4. Investors Portal — Capacity (under Operations)
+Fields:
+- Full name (required)
+- Email (required, validated)
+- Phone (optional)
+- LinkedIn / portfolio URL (optional)
+- CV upload (optional, PDF/DOC/DOCX, max 10 MB) — uploaded directly to `job-applications` bucket under `{job_slug}/{timestamp}-{filename}`.
+- Cover letter / message (optional)
+- Zod validation, inline errors, disabled submit while uploading.
 
-New section beneath the existing Time Management + Priorities cards.
+On submit: insert into `public.form_submissions` with `form_type = 'job_application'` and `data = { job_id, job_slug, job_title, name, email, phone, link, message, cv_path, cv_filename }`. The existing `log_form_submission_notification` trigger already routes it to staff notifications, and `FormSubmissionsManagement` already renders job_application rows — we add a CV download link when `cv_path` is present (signed URL via a small edge function `get-application-cv`).
 
-**Data model:**
-- `investor_capacity_settings` — one row: `mode` ('week' | 'day'), `weekly_hours_total int`, `daily_hours jsonb` ({mon:8, tue:8,...}), `max_youth_per_player_hours numeric`, `max_pro_per_player_hours numeric`.
-- `investor_capacity_allocations` — `id`, `time_item_id` (FK to `investor_time_items`), `player_type` ('youth' | 'pro'), `hours_per_week numeric`, `day_of_week` nullable (when mode = day).
+Success state replaces the form with a confirmation panel.
 
-**UI:**
-- Big horizontal cylinder/bar at the top of the section showing:
-  - filled portion = currently allocated hours
-  - dashed marker = projected (allocations × players)
-  - end cap = maximum capacity
-  - legend with totals + "Players you can support: N youth / M pro"
-- Toggle: **Week ↔ Day**. Day view shows 7 mini cylinders (one per weekday) with per-day allocations and per-day max.
-- Below the cylinder: two columns "Youth Player" and "Pro Player". Admin can drag tasks from a left-hand picker (sourced from `investor_time_items`) into either column and set hours per task per week (or per day).
-- Compute capacity:
-  - `hours_per_player_youth = sum(youth allocations)` ; `players_youth = floor(weekly_hours_total / hours_per_player_youth)` (same for pro).
-  - When mixing, show a small calculator: "If 60% youth / 40% pro → x youth + y pro".
-- Investors see read-only view; admin sees edit controls (reuse `getAdminUser` pattern).
+## SEO & social sharing
 
-**Edge function:** extend `investor-overview-write` with `upsertCapacitySettings`, `upsertCapacityAllocation`, `deleteCapacityAllocation`.
+For each role page:
+- `SEO` component with title `"{title} — Careers at RISE"`, description from `summary` (or trimmed description), canonical `/jobs/{slug}`.
+- OG image: `seo_image_url` override, else `/og-preview-jobs.png`.
+- JSON-LD `JobPosting` schema (title, description, hiringOrganization, jobLocation, employmentType, datePosted, baseSalary when present) for rich results.
+- `sitemap.xml` entries appended for each active job slug (static generation step in the migration / one-off script).
 
-## 5. Out of scope (this turn)
-- Restyling Time Management / Priorities cards themselves
-- Voice-note transcription
-- Investor-facing notifications for new Thought Wall replies (future)
+## Share UI
 
-## Technical summary
+Share button in hero:
+- Primary action: copy link (Lucide `Link2` icon → swap to `Check` for 1.5 s, toast "Link copied").
+- Popover with WhatsApp, LinkedIn, X, Email share intents pre-filled with title + URL.
+- Tooltip "Share this role" on hover.
 
-New files:
-- `src/components/investor/ExecutiveSupportSection.tsx`
-- `src/components/investor/ThoughtWall.tsx`
-- `src/components/investor/ScriptsPanel.tsx`
-- `src/components/investor/WorkflowPanel.tsx`
-- `src/components/investor/CapacityPlanner.tsx`
-- `src/components/investor/CapacityCylinder.tsx`
-- `supabase/functions/exec-support-write/index.ts`
-- migration: `exec_support_items`, `exec_support_replies`, `investor_capacity_settings`, `investor_capacity_allocations`, `quick_messages.show_on_investor_portal`, `player_operating_profile_translations` (cache).
+## Files touched
 
-Edited:
-- `src/components/staff/QuickMessageSection.tsx` (star toggle)
-- `src/components/staff/FocusedTasksSection.tsx` (hide Player Networking for stats_updater)
-- `src/components/staff/PlayerOutreach.tsx`, `VideoAnalysis.tsx`, `AnalysisManagement.tsx` (scope filters)
-- `src/pages/PerformanceReport.tsx` (deep-link guard)
-- `src/components/portal/operatingProfileQuestions.ts` + `OperatingProfileDialog.tsx` (auto-translate)
-- `src/pages/InvestorsPortal.tsx` (mount Executive Support category, Capacity section)
-- `supabase/functions/investor-overview-write/index.ts` (capacity actions)
+- `src/pages/Jobs.tsx` — list redesign, remove dialog/accordion.
+- `src/pages/JobRole.tsx` — new role page.
+- `src/components/jobs/JobCard.tsx`, `JobShareButton.tsx`, `JobApplyForm.tsx` — new.
+- `src/App.tsx` — add `/jobs/:slug` route.
+- `src/components/staff/FormSubmissionsManagement.tsx` — show CV link for `job_application` rows.
+- `supabase/functions/get-application-cv/index.ts` — staff-only signed URL.
+- New migration for `slug`/`summary`/`seo_image_url` + `job-applications` bucket + policies.
+- `public/sitemap.xml` — append job URLs (or generate from a small script).
+
+## Out of scope
+
+- Editing job content UI (admin already manages jobs elsewhere — only add `slug`/`summary` inputs if requested next).
+- Multi-step application wizard.
