@@ -2282,12 +2282,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       ref={overlayScoreInputRef}
                       key={`${latest.id}-score`}
                       placeholder="Score"
-                      type="number"
-                      step="0.00001"
+                      type="text"
+                      inputMode="decimal"
                       defaultValue={latest.action_score != null ? latest.action_score : "0.0"}
                       onBlur={e => {
                         const v = e.target.value;
-                        const parsed = v === "" ? null : Number(v);
+                        let parsed: number | null = null;
+                        if (v !== "") {
+                          const n = Number(v.replace(/-/g, ""));
+                          if (!Number.isNaN(n)) {
+                            parsed = v.includes("-") ? -Math.abs(n) : n;
+                          }
+                        }
                         if (parsed !== (latest.action_score ?? null)) {
                           handleUpdateClipScore(latest.id, parsed);
                         }
@@ -2305,6 +2311,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       }}
                       className="h-7 text-xs w-[90px] bg-black/40 border-white/20 text-white"
                     />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Search R90 database"
+                        onClick={() => { setR90ViewerSearch(latest.action_type || ""); setR90ViewerOpen(true); }}
+                        className="h-7 w-7 text-white hover:bg-white/10"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </Button>
                     <Input
                       ref={overlayNotesInputRef}
                       key={`${latest.id}-notes`}
