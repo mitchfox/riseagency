@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star, Pencil,
-  Upload, GripVertical, Trash2,
+  GripVertical, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -20,7 +20,6 @@ import { AddToPlaylistButton } from "@/components/portal/AddToPlaylistButton";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Input } from "@/components/ui/input";
 import { UploadsTab } from "@/components/portal/UploadsTab";
 
 // --- Sortable row for playlist clips (drag-and-drop reorder) ---
