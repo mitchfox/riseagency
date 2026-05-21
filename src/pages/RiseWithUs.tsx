@@ -590,16 +590,6 @@ const RiseWithUs = () => {
                         {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
                       </p>
                     </div>
-                    {settings.representation_subtitle_secondary && (
-                      <div className="mt-3 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
-                        <p
-                          className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
-                          style={{ hyphens: "none", wordBreak: "normal", overflowWrap: "normal" }}
-                        >
-                          {settings.representation_subtitle_secondary}
-                        </p>
-                      </div>
-                    )}
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
