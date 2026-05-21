@@ -15,6 +15,7 @@ import { createAnalysisSlug } from "@/lib/urlHelpers";
 import { QuickStatsComparison } from "./QuickStatsComparison";
 import { NewsFeed } from "./NewsFeed";
 import { ParallaxHero } from "@/components/portal/ParallaxHero";
+import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
 import { checkAndFireConfetti } from "@/lib/confetti";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
@@ -1033,6 +1034,14 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           onSeeAll={onNavigateToComparisons || onNavigateToAnalysis}
         />
       )}
+
+      {/* Long-Term Vision - sits between Comparisons and the Daily Aphorism */}
+      <LongTermVisionSection
+        skillset={portalSettings?.vision_skillset}
+        per90Targets={portalSettings?.vision_per90_targets}
+        roadmap={portalSettings?.vision_roadmap}
+        playersToWatch={portalSettings?.vision_players_to_watch}
+      />
 
       {/* Gold Separator Line */}
       {dailyAphorism && (portalSettings?.show_aphorisms !== false) && (
