@@ -453,6 +453,7 @@ const HighlightsPortal = () => {
               <TabsTrigger value="playlists">Playlists</TabsTrigger>
               <TabsTrigger value="reports">Performance Reports</TabsTrigger>
               <TabsTrigger value="videoreports">Video Reports</TabsTrigger>
+              <TabsTrigger value="uploads">Uploads</TabsTrigger>
             </TabsList>
 
             <TabsContent value="playlists" className="mt-4 space-y-3">
@@ -655,6 +656,20 @@ const HighlightsPortal = () => {
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                 </span>
+                                <span
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute top-1 left-1"
+                                >
+                                  <AddToPlaylistButton
+                                    playerId={selectedPlayer.id}
+                                    makerUsername={maker.username}
+                                    clip={{
+                                      name: `${a.action_type || "Action"} vs ${analysis.opponent || "Unknown"}`,
+                                      videoUrl: a.video_url!,
+                                    }}
+                                    className="h-7 w-7 bg-black/30 hover:bg-black/60 text-white"
+                                  />
+                                </span>
                               </button>
                             );
                           })}
@@ -679,6 +694,14 @@ const HighlightsPortal = () => {
                   }))}
                 playerId={selectedPlayerId!}
                 embedded
+              />
+            </TabsContent>
+
+            <TabsContent value="uploads" className="mt-4">
+              <UploadsTab
+                playerId={selectedPlayer.id}
+                makerUsername={maker.username}
+                onPlay={(c) => openPlaylistReel([c], c.name, 0)}
               />
             </TabsContent>
           </Tabs>
