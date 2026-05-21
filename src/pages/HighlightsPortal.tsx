@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star, Pencil,
+  GripVertical, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -15,6 +16,65 @@ import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { sortActionsByMinute } from "@/lib/actionSorting";
 import { format } from "date-fns";
+import { AddToPlaylistButton } from "@/components/portal/AddToPlaylistButton";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { UploadsTab } from "@/components/portal/UploadsTab";
+
+// --- Sortable row for playlist clips (drag-and-drop reorder) ---
+const SortableClipRow = ({
+  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove,
+}: {
+  id: string;
+  idx: number;
+  name: string;
+  videoUrl: string;
+  onPlay: () => void;
+  onDownload: () => void;
+  onRemove: () => void;
+  makerUsername?: string;
+  playerEmail?: string;
+  playerId: string;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center justify-between gap-2 p-3 hover:bg-muted/30 ${isDragging ? "bg-muted/40 opacity-80" : ""}`}
+    >
+      <button
+        type="button"
+        className="touch-none cursor-grab text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        title="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <button
+        className="flex items-center gap-3 flex-1 text-left min-w-0"
+        onClick={onPlay}
+      >
+        <span className="text-xs text-muted-foreground w-6 text-right">{idx + 1}</span>
+        <span className="truncate">{name}</span>
+      </button>
+      <AddToPlaylistButton
+        playerId={playerId}
+        playerEmail={playerEmail}
+        makerUsername={makerUsername}
+        clip={{ name, videoUrl }}
+      />
+      <Button size="sm" variant="ghost" onClick={onDownload} title="Download clip">
+        <Download className="w-4 h-4" />
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onRemove} title="Remove from playlist">
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+};
 
 interface PlayerLite {
   id: string;
@@ -256,6 +316,36 @@ const HighlightsPortal = () => {
       return n;
     });
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const reorderClips = async (pl: PlaylistRow, fromId: string, toId: string) => {
+    if (!maker) return;
+    const ids = pl.clips.map((c, i) => c.id || `idx-${i}`);
+    const from = ids.indexOf(fromId);
+    const to = ids.indexOf(toId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = arrayMove(pl.clips, from, to);
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: next.map((c, i) => ({ ...c, order: i })) } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "reorder", playlistId: pl.id, makerUsername: maker.username, clips: next },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Reorder failed");
+    }
+  };
+
+  const removeClipFromPlaylist = async (pl: PlaylistRow, clipIndex: number) => {
+    if (!maker) return;
+    if (!window.confirm("Remove this clip from the playlist?")) return;
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: p.clips.filter((_, i) => i !== clipIndex) } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "removeClip", playlistId: pl.id, makerUsername: maker.username, clipIndex },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Remove failed");
+    }
+  };
+
   const renamePlaylist = async (pl: PlaylistRow) => {
     if (!maker) return;
     const next = window.prompt("Rename playlist", pl.name);
@@ -362,6 +452,7 @@ const HighlightsPortal = () => {
               <TabsTrigger value="playlists">Playlists</TabsTrigger>
               <TabsTrigger value="reports">Performance Reports</TabsTrigger>
               <TabsTrigger value="videoreports">Video Reports</TabsTrigger>
+              <TabsTrigger value="uploads">Uploads</TabsTrigger>
             </TabsList>
 
             <TabsContent value="playlists" className="mt-4 space-y-3">
@@ -418,34 +509,42 @@ const HighlightsPortal = () => {
                       </div>
                       {isOpen && (
                         <div className="border-t border-border divide-y divide-border">
-                          {pl.clips.map((c, idx) => (
-                            <div
-                              key={`${pl.id}-${idx}`}
-                              className="flex items-center justify-between gap-2 p-3 hover:bg-muted/30"
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(e: DragEndEvent) => {
+                              if (!e.over || e.active.id === e.over.id) return;
+                              reorderClips(pl, String(e.active.id), String(e.over.id));
+                            }}
+                          >
+                            <SortableContext
+                              items={pl.clips.map((c, i) => c.id || `idx-${i}`)}
+                              strategy={verticalListSortingStrategy}
                             >
-                              <button
-                                className="flex items-center gap-3 flex-1 text-left min-w-0"
-                                onClick={() => openPlaylistReel(pl.clips, pl.name, idx)}
-                              >
-                                <span className="text-xs text-muted-foreground w-6 text-right">
-                                  {idx + 1}
-                                </span>
-                                <span className="truncate">{c.name}</span>
-                              </button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  downloadOne(
-                                    c.videoUrl,
-                                    `${sanitize(`${selectedPlayer.name} - ${pl.name} - ${String(idx + 1).padStart(2, "0")} ${c.name}`)}.mp4`,
-                                  )
-                                }
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
+                              {pl.clips.map((c, idx) => {
+                                const rowId = c.id || `idx-${idx}`;
+                                return (
+                                  <SortableClipRow
+                                    key={rowId}
+                                    id={rowId}
+                                    idx={idx}
+                                    name={c.name}
+                                    videoUrl={c.videoUrl}
+                                    playerId={selectedPlayer.id}
+                                    makerUsername={maker.username}
+                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx)}
+                                    onDownload={() =>
+                                      downloadOne(
+                                        c.videoUrl,
+                                        `${sanitize(`${selectedPlayer.name} - ${pl.name} - ${String(idx + 1).padStart(2, "0")} ${c.name}`)}.mp4`,
+                                      )
+                                    }
+                                    onRemove={() => removeClipFromPlaylist(pl, idx)}
+                                  />
+                                );
+                              })}
+                            </SortableContext>
+                          </DndContext>
                         </div>
                       )}
                     </Card>
@@ -556,6 +655,20 @@ const HighlightsPortal = () => {
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                 </span>
+                                <span
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute top-1 left-1"
+                                >
+                                  <AddToPlaylistButton
+                                    playerId={selectedPlayer.id}
+                                    makerUsername={maker.username}
+                                    clip={{
+                                      name: `${a.action_type || "Action"} vs ${analysis.opponent || "Unknown"}`,
+                                      videoUrl: a.video_url!,
+                                    }}
+                                    className="h-7 w-7 bg-black/30 hover:bg-black/60 text-white"
+                                  />
+                                </span>
                               </button>
                             );
                           })}
@@ -580,6 +693,14 @@ const HighlightsPortal = () => {
                   }))}
                 playerId={selectedPlayerId!}
                 embedded
+              />
+            </TabsContent>
+
+            <TabsContent value="uploads" className="mt-4">
+              <UploadsTab
+                playerId={selectedPlayer.id}
+                makerUsername={maker.username}
+                onPlay={(c) => openPlaylistReel([c], c.name, 0)}
               />
             </TabsContent>
           </Tabs>

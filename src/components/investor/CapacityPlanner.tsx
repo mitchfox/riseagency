@@ -13,12 +13,14 @@ interface Settings {
   weekly_hours_total: number;
   monthly_hours_total: number;
   daily_hours: Record<string, number>;
+  current_youth_players?: number;
+  current_pro_players?: number;
 }
 interface Allocation {
   id: string;
   time_item_id: string | null;
   custom_label: string | null;
-  player_type: "youth" | "pro";
+  player_type: "youth" | "pro" | "ongoing";
   hours_per_week: number;
   day_of_week: string | null;
   days_of_week: string[] | null;
@@ -119,7 +121,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
       (supabase as any).from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
     const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
-    setSettings(settingsRow);
+    setSettings({ ...settingsRow, current_youth_players: settingsRow.current_youth_players ?? 0, current_pro_players: settingsRow.current_pro_players ?? 0 });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
     setAllocations((a.data || []).map((row: any) => ({ ...row, days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [] })));
     setTimeItems(t.data || []);
@@ -139,11 +141,14 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
   const totals = useMemo(() => {
     const youth = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
     const pro = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const ongoing = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
     const maxWeek = settings?.weekly_hours_total || 40;
     const maxMonth = settings?.monthly_hours_total || 160;
-    const playersYouth = youth > 0 ? Math.floor(maxWeek / youth) : 0;
-    const playersPro = pro > 0 ? Math.floor(maxWeek / pro) : 0;
-    return { youth, pro, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro };
+    // Effective free capacity = total weekly limit minus ongoing tasks that aren't tied to a player.
+    const free = Math.max(0, maxWeek - ongoing);
+    const playersYouth = youth > 0 ? Math.floor(free / youth) : 0;
+    const playersPro = pro > 0 ? Math.floor(free / pro) : 0;
+    return { youth, pro, ongoing, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro + ongoing };
   }, [allocations, settings]);
 
   // Per-day load: an allocation contributes its hours_per_week to each day it covers.
@@ -241,6 +246,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
           <LiquidBattery used={totals.total} max={totals.maxWeek} label="Combined weekly load" />
           <LiquidBattery used={totals.youth} max={totals.maxWeek} label="Youth allocation" size="sm" />
           <LiquidBattery used={totals.pro} max={totals.maxWeek} label="Pro allocation" size="sm" />
+          <LiquidBattery used={totals.ongoing} max={totals.maxWeek} label="Ongoing tasks" size="sm" />
         </div>
       )}
       {mode === "month" && (
@@ -248,6 +254,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
           <LiquidBattery used={totals.total * 4.33} max={totals.maxMonth} label="Combined monthly load" />
           <LiquidBattery used={totals.youth * 4.33} max={totals.maxMonth} label="Youth allocation" size="sm" />
           <LiquidBattery used={totals.pro * 4.33} max={totals.maxMonth} label="Pro allocation" size="sm" />
+          <LiquidBattery used={totals.ongoing * 4.33} max={totals.maxMonth} label="Ongoing tasks" size="sm" />
         </div>
       )}
       {mode === "day" && (
@@ -286,20 +293,52 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground"><Users className="h-3.5 w-3.5" /> Youth player capacity</div>
           <div className="mt-1 text-3xl font-semibold text-primary">{totals.playersYouth}</div>
           <div className="text-xs text-muted-foreground">at {totals.youth.toFixed(1)}h per player / week</div>
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground uppercase font-bbh tracking-widest">Currently signed</span>
+            <Input
+              type="number" min={0} step={1} className="h-7 w-16"
+              value={settings.current_youth_players ?? 0}
+              disabled={!unlocked}
+              onChange={(e) => setSettings({ ...settings, current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
+            />
+            <span className={`text-[11px] ${((settings.current_youth_players ?? 0) > totals.playersYouth) ? "text-destructive" : "text-muted-foreground"}`}>
+              {totals.playersYouth - (settings.current_youth_players ?? 0) >= 0
+                ? `${totals.playersYouth - (settings.current_youth_players ?? 0)} headroom`
+                : `${(settings.current_youth_players ?? 0) - totals.playersYouth} over capacity`}
+            </span>
+          </div>
         </div>
         <div className="rounded-lg border border-border bg-card/30 p-4">
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground"><Users className="h-3.5 w-3.5" /> Pro player capacity</div>
           <div className="mt-1 text-3xl font-semibold text-primary">{totals.playersPro}</div>
           <div className="text-xs text-muted-foreground">at {totals.pro.toFixed(1)}h per player / week</div>
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground uppercase font-bbh tracking-widest">Currently signed</span>
+            <Input
+              type="number" min={0} step={1} className="h-7 w-16"
+              value={settings.current_pro_players ?? 0}
+              disabled={!unlocked}
+              onChange={(e) => setSettings({ ...settings, current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
+            />
+            <span className={`text-[11px] ${((settings.current_pro_players ?? 0) > totals.playersPro) ? "text-destructive" : "text-muted-foreground"}`}>
+              {totals.playersPro - (settings.current_pro_players ?? 0) >= 0
+                ? `${totals.playersPro - (settings.current_pro_players ?? 0)} headroom`
+                : `${(settings.current_pro_players ?? 0) - totals.playersPro} over capacity`}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Allocation columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(["youth","pro"] as const).map(pt => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(["youth","pro","ongoing"] as const).map(pt => (
           <div key={pt} className="rounded-lg border border-border bg-card/20 p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-widest font-bbh">{pt === "youth" ? "Youth Player" : "Pro Player"}</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-widest font-bbh">
+                {pt === "youth" ? "Youth Player" : pt === "pro" ? "Pro Player" : "Ongoing Tasks"}
+              </h3>
               {unlocked && (
                 <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", { ...p, player_type: pt })} />
               )}
