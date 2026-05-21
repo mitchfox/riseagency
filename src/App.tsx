@@ -173,6 +173,7 @@ const App = () => {
                       {createLocalizedRoutes('/player-journey', <PlayerJourney />)}
                       {createLocalizedRoutes('/faq', <PlayersFAQPage />)}
                       {createLocalizedRoutes('/jobs', <Jobs />)}
+                      <Route path="/jobs/:slug" element={<JobRole />} />
                       {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
                       {createLocalizedRoutes('/club-direction', <ClubDirection />)}
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />
