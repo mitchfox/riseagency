@@ -67,6 +67,7 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const SignContract = lazy(() => import("./pages/SignContract"));
 const Jobs = lazy(() => import("./pages/Jobs"));
+const JobRole = lazy(() => import("./pages/JobRole"));
 const AgentRequests = lazy(() => import("./pages/AgentRequests"));
 const ClubDirection = lazy(() => import("./pages/ClubDirection"));
 const RiseWithUs = lazy(() => import("./pages/RiseWithUs"));
@@ -172,6 +173,7 @@ const App = () => {
                       {createLocalizedRoutes('/player-journey', <PlayerJourney />)}
                       {createLocalizedRoutes('/faq', <PlayersFAQPage />)}
                       {createLocalizedRoutes('/jobs', <Jobs />)}
+                      <Route path="/jobs/:slug" element={<JobRole />} />
                       {createLocalizedRoutes('/agent-requests', <AgentRequests />)}
                       {createLocalizedRoutes('/club-direction', <ClubDirection />)}
                       <Route path="/performance-report/:slug" element={<PerformanceReport />} />

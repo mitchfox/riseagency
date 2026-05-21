@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Mail, Users, MessageSquare, Calendar, Send, MessageCircle } from "lucide-react";
+import { Mail, Users, MessageSquare, Calendar, Send, MessageCircle, Briefcase, FileText } from "lucide-react";
 import { EmailResponseDialog } from "./EmailResponseDialog";
 import { openExternalUrl, openMailto } from "@/utils/openExternalUrl";
 import { RepresentationVisitorsTracker } from "./RepresentationVisitorsTracker";
@@ -139,6 +139,8 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
         return <Mail className="w-4 h-4" />;
       case "request-scout":
         return <Calendar className="w-4 h-4" />;
+      case "job_application":
+        return <Briefcase className="w-4 h-4" />;
       default:
         return <Mail className="w-4 h-4" />;
     }
@@ -154,6 +156,8 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
         return "Representation Request";
       case "request-scout":
         return "Scout Request";
+      case "job_application":
+        return "Job Application";
       default:
         return formType;
     }
@@ -245,6 +249,36 @@ export const FormSubmissionsManagement = ({ isAdmin }: { isAdmin: boolean }) => 
             <div><strong>Match Date:</strong> {data.matchDate}</div>
             <div><strong>Location:</strong> {data.location}</div>
             {data.message && <div><strong>Additional Info:</strong> {data.message}</div>}
+          </div>
+        );
+
+      case "job_application":
+        return (
+          <div className="space-y-2 text-sm">
+            <div><strong>Role:</strong> {data.job_title}{data.job_slug ? <> · <a href={`/jobs/${data.job_slug}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View role</a></> : null}</div>
+            <div><strong>Name:</strong> {data.name}</div>
+            <div><strong>Email:</strong> {data.email}</div>
+            {data.phone && (
+              <div>
+                <strong>Phone:</strong>{" "}
+                <PhoneWhatsAppLink phone={data.phone} />
+              </div>
+            )}
+            {data.link && (
+              <div>
+                <strong>Profile / Portfolio:</strong>{" "}
+                <a href={data.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{data.link}</a>
+              </div>
+            )}
+            {data.cv_url && (
+              <div>
+                <strong>CV:</strong>{" "}
+                <a href={data.cv_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <FileText className="w-3 h-3" /> {data.cv_filename || "Download CV"}
+                </a>
+              </div>
+            )}
+            {data.message && <div><strong>Cover letter:</strong> <span className="whitespace-pre-line">{data.message}</span></div>}
           </div>
         );
 

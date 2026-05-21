@@ -2941,6 +2941,9 @@ export type Database = {
           requirements: string | null
           responsibilities: string | null
           salary_range: string | null
+          seo_image_url: string | null
+          slug: string
+          summary: string | null
           title: string
           type: string | null
           updated_at: string
@@ -2955,6 +2958,9 @@ export type Database = {
           requirements?: string | null
           responsibilities?: string | null
           salary_range?: string | null
+          seo_image_url?: string | null
+          slug: string
+          summary?: string | null
           title: string
           type?: string | null
           updated_at?: string
@@ -2969,6 +2975,9 @@ export type Database = {
           requirements?: string | null
           responsibilities?: string | null
           salary_range?: string | null
+          seo_image_url?: string | null
+          slug?: string
+          summary?: string | null
           title?: string
           type?: string | null
           updated_at?: string
