@@ -2680,12 +2680,6 @@ const Dashboard = () => {
 
                 <TabsContent value="comparisons">
                   <AnalysisComparisons analyses={analyses} playerData={playerData} />
-                  <LongTermVisionSection
-                    skillset={portalSettings?.vision_skillset}
-                    per90Targets={portalSettings?.vision_per90_targets}
-                    roadmap={portalSettings?.vision_roadmap}
-                    playersToWatch={portalSettings?.vision_players_to_watch}
-                  />
                 </TabsContent>
 
                 <TabsContent value="video-reports">
