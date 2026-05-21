@@ -125,7 +125,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-5xl p-4 sm:p-6">
+      <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-5xl p-4 sm:p-6 max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Customise offer for {playerName}</DialogTitle></DialogHeader>
         {loading ? (
           <div className="flex items-center justify-center py-10"><Loader2 className="h-4 w-4 animate-spin" /></div>
