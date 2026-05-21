@@ -3442,6 +3442,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           setCreating(false);
         }}
       />
+      <R90RatingsViewer
+        open={r90ViewerOpen}
+        onOpenChange={(o) => { setR90ViewerOpen(o); if (!o) setR90ViewerSearch(undefined); }}
+        searchTerm={r90ViewerSearch}
+      />
     </div>
   );
 };
