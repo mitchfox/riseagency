@@ -509,34 +509,42 @@ const HighlightsPortal = () => {
                       </div>
                       {isOpen && (
                         <div className="border-t border-border divide-y divide-border">
-                          {pl.clips.map((c, idx) => (
-                            <div
-                              key={`${pl.id}-${idx}`}
-                              className="flex items-center justify-between gap-2 p-3 hover:bg-muted/30"
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(e: DragEndEvent) => {
+                              if (!e.over || e.active.id === e.over.id) return;
+                              reorderClips(pl, String(e.active.id), String(e.over.id));
+                            }}
+                          >
+                            <SortableContext
+                              items={pl.clips.map((c, i) => c.id || `idx-${i}`)}
+                              strategy={verticalListSortingStrategy}
                             >
-                              <button
-                                className="flex items-center gap-3 flex-1 text-left min-w-0"
-                                onClick={() => openPlaylistReel(pl.clips, pl.name, idx)}
-                              >
-                                <span className="text-xs text-muted-foreground w-6 text-right">
-                                  {idx + 1}
-                                </span>
-                                <span className="truncate">{c.name}</span>
-                              </button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  downloadOne(
-                                    c.videoUrl,
-                                    `${sanitize(`${selectedPlayer.name} - ${pl.name} - ${String(idx + 1).padStart(2, "0")} ${c.name}`)}.mp4`,
-                                  )
-                                }
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
+                              {pl.clips.map((c, idx) => {
+                                const rowId = c.id || `idx-${idx}`;
+                                return (
+                                  <SortableClipRow
+                                    key={rowId}
+                                    id={rowId}
+                                    idx={idx}
+                                    name={c.name}
+                                    videoUrl={c.videoUrl}
+                                    playerId={selectedPlayer.id}
+                                    makerUsername={maker.username}
+                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx)}
+                                    onDownload={() =>
+                                      downloadOne(
+                                        c.videoUrl,
+                                        `${sanitize(`${selectedPlayer.name} - ${pl.name} - ${String(idx + 1).padStart(2, "0")} ${c.name}`)}.mp4`,
+                                      )
+                                    }
+                                    onRemove={() => removeClipFromPlaylist(pl, idx)}
+                                  />
+                                );
+                              })}
+                            </SortableContext>
+                          </DndContext>
                         </div>
                       )}
                     </Card>
