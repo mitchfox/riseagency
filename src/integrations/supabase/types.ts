@@ -2400,6 +2400,8 @@ export type Database = {
       investor_capacity_settings: {
         Row: {
           created_at: string
+          current_pro_players: number
+          current_youth_players: number
           daily_hours: Json
           id: string
           mode: string
@@ -2410,6 +2412,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_pro_players?: number
+          current_youth_players?: number
           daily_hours?: Json
           id?: string
           mode?: string
@@ -2420,6 +2424,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_pro_players?: number
+          current_youth_players?: number
           daily_hours?: Json
           id?: string
           mode?: string
@@ -5267,6 +5273,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_uploaded_clips: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          name: string
+          player_id: string
+          updated_at: string
+          uploaded_by_maker_id: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          name: string
+          player_id: string
+          updated_at?: string
+          uploaded_by_maker_id?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          name?: string
+          player_id?: string
+          updated_at?: string
+          uploaded_by_maker_id?: string | null
+          video_url?: string
+        }
+        Relationships: []
       }
       players: {
         Row: {
