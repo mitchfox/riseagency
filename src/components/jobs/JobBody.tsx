@@ -1,9 +1,10 @@
 import { renderMarkdown } from "@/utils/markdownRenderer";
 
 /**
- * Renders a job content block (description/requirements/responsibilities)
+ * Renders a job content block (description / requirements / responsibilities).
  * Supports a mix of paragraphs and bullet points (lines starting with - or *).
- * Bullets get a gold marker; paragraphs are spaced cleanly.
+ * Paragraphs that appear BEFORE the first bullet render in italics as an intro;
+ * paragraphs after bullets render as plain body copy. Bullets get a gold marker.
  */
 export function JobBody({ content, className = "" }: { content: string; className?: string }) {
   if (!content?.trim()) return null;
@@ -30,8 +31,10 @@ export function JobBody({ content, className = "" }: { content: string; classNam
     }
   }
 
+  const firstBulletIdx = blocks.findIndex(b => b.type === "ul");
+
   return (
-    <div className={`space-y-4 text-muted-foreground leading-relaxed ${className}`}>
+    <div className={`space-y-4 text-white/90 leading-relaxed ${className}`}>
       {blocks.map((b, i) => {
         if (b.type === "ul") {
           return (
@@ -39,7 +42,7 @@ export function JobBody({ content, className = "" }: { content: string; classNam
               {b.items.map((item, j) => (
                 <li key={j} className="flex gap-3">
                   <span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  <span>{renderMarkdown(item)}</span>
+                  <span className="text-white/90">{renderMarkdown(item)}</span>
                 </li>
               ))}
             </ul>
@@ -47,7 +50,15 @@ export function JobBody({ content, className = "" }: { content: string; classNam
         }
         const text = b.items[0];
         if (!text) return <div key={i} className="h-1" />;
-        return <p key={i}>{renderMarkdown(text)}</p>;
+        const isIntro = firstBulletIdx !== -1 && i < firstBulletIdx;
+        return (
+          <p
+            key={i}
+            className={isIntro ? "italic text-white/80" : "text-white/90"}
+          >
+            {renderMarkdown(text)}
+          </p>
+        );
       })}
     </div>
   );
