@@ -2745,11 +2745,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   />
                   <Input
                     placeholder="R90 score (e.g. 0.05)"
-                    type="number"
-                    step="0.00001"
+                    type="text"
+                    inputMode="decimal"
                     defaultValue={clip.action_score != null ? clip.action_score : ""}
                     onBlur={e => {
-                      const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                      const raw = e.target.value;
+                      let val: number | null = null;
+                      if (raw !== "") {
+                        const n = parseFloat(raw.replace(/-/g, ""));
+                        if (!Number.isNaN(n)) {
+                          val = raw.includes("-") ? -Math.abs(n) : n;
+                        }
+                      }
                       if (val !== (clip.action_score ?? null)) {
                         handleUpdateClipScore(clip.id, val);
                       }
