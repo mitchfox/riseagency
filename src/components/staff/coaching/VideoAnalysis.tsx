@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2, Square, CheckSquare, Eye, EyeOff } from "lucide-react";
+import { Film, Plus, Play, Trash2, Loader2, Upload, MessageSquare, Scissors, Clock, X, ChevronLeft, ChevronsLeft, ChevronsRight, ArrowLeft, Download, Pencil, Link2, Paperclip, UserSearch, Check, HelpCircle, HardDriveDownload, RefreshCw, Maximize2, Minimize2, Square, CheckSquare, Eye, EyeOff, Search } from "lucide-react";
+import { R90RatingsViewer } from "@/components/staff/R90RatingsViewer";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -131,6 +132,8 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const playerShellRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hoverPreview, setHoverPreview] = useState<{ x: number; time: number } | null>(null);
+  const [r90ViewerOpen, setR90ViewerOpen] = useState(false);
+  const [r90ViewerSearch, setR90ViewerSearch] = useState<string | undefined>(undefined);
 
   // Upload form
   const [newTitle, setNewTitle] = useState("");
@@ -2279,12 +2282,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       ref={overlayScoreInputRef}
                       key={`${latest.id}-score`}
                       placeholder="Score"
-                      type="number"
-                      step="0.00001"
+                      type="text"
+                      inputMode="decimal"
                       defaultValue={latest.action_score != null ? latest.action_score : "0.0"}
                       onBlur={e => {
                         const v = e.target.value;
-                        const parsed = v === "" ? null : Number(v);
+                        let parsed: number | null = null;
+                        if (v !== "") {
+                          const n = Number(v.replace(/-/g, ""));
+                          if (!Number.isNaN(n)) {
+                            parsed = v.includes("-") ? -Math.abs(n) : n;
+                          }
+                        }
                         if (parsed !== (latest.action_score ?? null)) {
                           handleUpdateClipScore(latest.id, parsed);
                         }
@@ -2302,6 +2311,16 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                       }}
                       className="h-7 text-xs w-[90px] bg-black/40 border-white/20 text-white"
                     />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Search R90 database"
+                        onClick={() => { setR90ViewerSearch(latest.action_type || ""); setR90ViewerOpen(true); }}
+                        className="h-7 w-7 text-white hover:bg-white/10"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </Button>
                     <Input
                       ref={overlayNotesInputRef}
                       key={`${latest.id}-notes`}
@@ -2726,11 +2745,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   />
                   <Input
                     placeholder="R90 score (e.g. 0.05)"
-                    type="number"
-                    step="0.00001"
+                    type="text"
+                    inputMode="decimal"
                     defaultValue={clip.action_score != null ? clip.action_score : ""}
                     onBlur={e => {
-                      const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                      const raw = e.target.value;
+                      let val: number | null = null;
+                      if (raw !== "") {
+                        const n = parseFloat(raw.replace(/-/g, ""));
+                        if (!Number.isNaN(n)) {
+                          val = raw.includes("-") ? -Math.abs(n) : n;
+                        }
+                      }
                       if (val !== (clip.action_score ?? null)) {
                         handleUpdateClipScore(clip.id, val);
                       }
@@ -3415,6 +3441,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           setHybridProgress(null);
           setCreating(false);
         }}
+      />
+      <R90RatingsViewer
+        open={r90ViewerOpen}
+        onOpenChange={(o) => { setR90ViewerOpen(o); if (!o) setR90ViewerSearch(undefined); }}
+        searchTerm={r90ViewerSearch}
       />
     </div>
   );
