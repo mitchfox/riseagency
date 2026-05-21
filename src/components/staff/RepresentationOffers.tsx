@@ -20,7 +20,8 @@ type OfferPlayer = {
   has_representation_offer: boolean | null;
 };
 
-const slugFor = (name: string) => name.toLowerCase().trim().replace(/\s+/g, "-");
+const slugFor = (name: string | null | undefined) =>
+  (name || "").toLowerCase().trim().replace(/\s+/g, "-");
 
 export const RepresentationOffers = () => {
   const [players, setPlayers] = useState<OfferPlayer[]>([]);
@@ -49,20 +50,49 @@ export const RepresentationOffers = () => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return players;
-    return players.filter((p) => [p.name, p.position, p.club, p.nationality].some((v) => v?.toLowerCase().includes(q)));
+    return players.filter((p) =>
+      [p.name, p.position, p.club, p.nationality].some((v) =>
+        (v || "").toLowerCase().includes(q),
+      ),
+    );
   }, [players, query]);
 
-  const openOffer = (player: OfferPlayer) => window.open(`${window.location.origin}/risewithus/${slugFor(player.name)}`, "_blank");
-  const copyOffer = async (player: OfferPlayer) => {
-    await navigator.clipboard.writeText(`${window.location.origin}/risewithus/${slugFor(player.name)}`);
-    toast.success("Offer page link copied");
+  const openOffer = (e: React.MouseEvent, player: OfferPlayer) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const slug = slugFor(player.name);
+    if (!slug) {
+      toast.error("Player has no name to build offer link");
+      return;
+    }
+    window.open(`${window.location.origin}/risewithus/${slug}`, "_blank", "noopener,noreferrer");
+  };
+  const copyOffer = async (e: React.MouseEvent, player: OfferPlayer) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const slug = slugFor(player.name);
+    if (!slug) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/risewithus/${slug}`);
+      toast.success("Offer page link copied");
+    } catch {
+      toast.error("Clipboard unavailable");
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search representation offers..." className="pl-9" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
+          placeholder="Search representation offers..."
+          className="pl-9"
+        />
       </div>
       {loading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading offers...</div>
@@ -86,9 +116,15 @@ export const RepresentationOffers = () => {
                   {player.club && <Badge variant="secondary">{player.club}</Badge>}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1" onClick={() => openOffer(player)}><ExternalLink className="mr-2 h-4 w-4" />View</Button>
-                  <Button size="sm" variant="outline" onClick={() => copyOffer(player)}><Copy className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="outline" onClick={() => setCustomising(player)}><Settings2 className="h-4 w-4" /></Button>
+                  <Button type="button" size="sm" className="flex-1" onClick={(e) => openOffer(e, player)}>
+                    <ExternalLink className="mr-2 h-4 w-4" />View
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={(e) => copyOffer(e, player)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCustomising(player); }}>
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>

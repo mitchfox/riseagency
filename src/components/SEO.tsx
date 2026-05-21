@@ -26,7 +26,7 @@ const getSitelinksData = () => ({
       "url": "https://risefootballagency.com",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://risefootballagency.com/favicon.ico"
+        "url": "https://risefootballagency.com/favicon.png"
       },
       "sameAs": [
         "https://www.instagram.com/risefootballagency/",
