@@ -21,6 +21,61 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Input } from "@/components/ui/input";
+import { UploadsTab } from "@/components/portal/UploadsTab";
+
+// --- Sortable row for playlist clips (drag-and-drop reorder) ---
+const SortableClipRow = ({
+  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove,
+}: {
+  id: string;
+  idx: number;
+  name: string;
+  videoUrl: string;
+  onPlay: () => void;
+  onDownload: () => void;
+  onRemove: () => void;
+  makerUsername?: string;
+  playerEmail?: string;
+  playerId: string;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center justify-between gap-2 p-3 hover:bg-muted/30 ${isDragging ? "bg-muted/40 opacity-80" : ""}`}
+    >
+      <button
+        type="button"
+        className="touch-none cursor-grab text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        title="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <button
+        className="flex items-center gap-3 flex-1 text-left min-w-0"
+        onClick={onPlay}
+      >
+        <span className="text-xs text-muted-foreground w-6 text-right">{idx + 1}</span>
+        <span className="truncate">{name}</span>
+      </button>
+      <AddToPlaylistButton
+        playerId={playerId}
+        playerEmail={playerEmail}
+        makerUsername={makerUsername}
+        clip={{ name, videoUrl }}
+      />
+      <Button size="sm" variant="ghost" onClick={onDownload} title="Download clip">
+        <Download className="w-4 h-4" />
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onRemove} title="Remove from playlist">
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+};
 
 interface PlayerLite {
   id: string;
