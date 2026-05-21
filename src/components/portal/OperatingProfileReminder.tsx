@@ -19,10 +19,10 @@ export const OperatingProfileReminder = ({ visible, inProgress, onOpen, onDismis
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium leading-tight">
-              {inProgress ? "Pick up where you left off" : "Tell us about you"}
+              {inProgress ? "Pick up where you left off" : "What makes you tick?"}
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              {inProgress ? "Your operating profile is saved — finish it when you get time." : "A quick operating profile helps us tailor your plan."}
+              {inProgress ? "Your operating profile is saved — finish it when you get time." : "Help us to know how to provide the best support to you"}
             </div>
           </div>
           <Button size="sm" className="h-8 bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,55%)]" onClick={onOpen}>
