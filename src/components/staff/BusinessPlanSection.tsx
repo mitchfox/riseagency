@@ -1,15 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Lock, Unlock, Loader2, Briefcase } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-const PASSWORD = "Jolon";
-const SESSION_KEY = "business_plan_unlocked";
 
 type Field = {
   key:
@@ -123,16 +118,12 @@ type Row = {
 };
 
 export const BusinessPlanSection = () => {
-  const initiallyUnlocked = typeof window !== "undefined" && sessionStorage.getItem(SESSION_KEY) === "1";
-  const [unlocked, setUnlocked] = useState(initiallyUnlocked);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [row, setRow] = useState<Row | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!unlocked) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -170,25 +161,7 @@ export const BusinessPlanSection = () => {
     return () => {
       cancelled = true;
     };
-  }, [unlocked]);
-
-  const handleUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, "1");
-      setUnlocked(true);
-      setPasswordInput("");
-    } else {
-      toast.error("Incorrect password");
-    }
-  };
-
-  const handleLock = () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    setUnlocked(false);
-    setRow(null);
-    setDraft({});
-  };
+  }, []);
 
   const handleBlurSave = async (field: Field["key"]) => {
     if (!row) return;
@@ -207,47 +180,6 @@ export const BusinessPlanSection = () => {
     setRow({ ...row, [field]: next });
   };
 
-  if (!unlocked) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="w-full max-w-md border-2 border-risegold/40 bg-card/80">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-risegold/10">
-              <Lock className="h-6 w-6 text-risegold" />
-            </div>
-            <CardTitle className="font-bebas text-2xl uppercase tracking-wider">
-              Business Plan
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              This section is password protected.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUnlock} className="space-y-3">
-              <div>
-                <Label htmlFor="bp-password" className="text-xs uppercase tracking-wider">
-                  Password
-                </Label>
-                <Input
-                  id="bp-password"
-                  type="password"
-                  autoFocus
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <Button type="submit" className="w-full bg-risegold text-black hover:bg-risegold/90">
-                <Unlock className="mr-2 h-4 w-4" />
-                Unlock
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -259,10 +191,6 @@ export const BusinessPlanSection = () => {
             The eight-part business plan. Changes save when you click outside a field.
           </p>
         </div>
-        <Button variant="outline" onClick={handleLock} className="gap-2">
-          <Lock className="h-4 w-4" />
-          Lock
-        </Button>
       </div>
 
       {loading && (

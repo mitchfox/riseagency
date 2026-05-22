@@ -3114,9 +3114,8 @@ export const CreatePerformanceReportDialog = ({
                           <X className="h-3.5 w-3.5" />
                         </button>
                       )}
-                    </div>
-                    {actionTypePopoverOpen[index] && (
-                      <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                      {actionTypePopoverOpen[index] && (
+                        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                         {actionTypes
                           .filter(type => !action.action_type || type.toLowerCase().includes(action.action_type.toLowerCase()))
                           .slice(0, 15)
@@ -3135,8 +3134,9 @@ export const CreatePerformanceReportDialog = ({
                               <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
                             </button>
                           ))}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
