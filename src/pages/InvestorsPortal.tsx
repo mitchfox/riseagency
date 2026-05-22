@@ -1925,7 +1925,7 @@ const InvestorsPortal = () => {
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
-  const saveCommission = async (
+  const savePlayerFinance = async (
     player_id: string,
     patch: { expected_commission_annual?: number | null; potential_commission_annual?: number | null; current_salary_annual?: number | null },
   ) => {
@@ -1939,6 +1939,8 @@ const InvestorsPortal = () => {
       await refresh();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
+  const saveCommission = (player_id: string, expected_commission_annual: number | null) =>
+    savePlayerFinance(player_id, { expected_commission_annual });
 
   const handleSignIn = async (u: string, p: string) => { await signIn(u, p); playChime(); };
   const canEdit = unlocked && !!data?.isAdmin;
