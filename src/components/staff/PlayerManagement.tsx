@@ -3162,6 +3162,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              <TabsContent value="contracts" className="mt-4 md:mt-0">
+                {selectedPlayerId && <PlayerContractsTab playerId={selectedPlayerId} />}
+              </TabsContent>
             </Tabs>
           </div>
         )}
