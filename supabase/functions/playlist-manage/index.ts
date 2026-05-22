@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
       // Authorise caller
-      let ok = false;
+      let ok = isStaff;
       if (playerEmail) {
         const { data: player } = await supabase.from("players").select("id").ilike("email", playerEmail).maybeSingle();
         if (player && player.id === playerId) ok = true;
