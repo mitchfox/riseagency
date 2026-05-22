@@ -1834,6 +1834,7 @@ const Staff = () => {
                   {expandedSection === 'legal' && <LegalManagement isAdmin={canManageSection('legal')} />}
                   {expandedSection === 'partners' && <PartnersManagement isAdmin={canManageSection('partners')} />}
                   {expandedSection === 'jobs' && <JobsManagement />}
+                  {expandedSection === 'socialshare' && <SocialShareManagement />}
                   {expandedSection === 'requests' && <RequestsManagement />}
                   {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={canManageSection('sitetext')} />}
                   {expandedSection === 'languages' && <LanguagesManagement isAdmin={canManageSection('languages')} />}
