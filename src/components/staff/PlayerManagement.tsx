@@ -1789,12 +1789,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         <span>Invoices</span>
                       </div>
                     </SelectItem>
+                    <SelectItem value="contracts">
+                      <div className="flex items-center gap-2">
+                        <ScrollText className="w-4 h-4" />
+                        <span>Contracts</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Desktop Tabs */}
-              <TabsList className="hidden md:grid md:grid-cols-5 w-full gap-1.5 bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-4">
+              <TabsList className="hidden md:grid md:grid-cols-6 w-full gap-1.5 bg-sidebar-accent/50 backdrop-blur-sm rounded-lg p-1.5 mb-4">
                 <TabsTrigger value="analysis" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <LineChart className="w-4 h-4 flex-shrink-0" />
                   <span>Analysis</span>
@@ -1814,6 +1820,10 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 <TabsTrigger value="invoices" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <DollarSign className="w-4 h-4 flex-shrink-0" />
                   <span>Invoices</span>
+                </TabsTrigger>
+                <TabsTrigger value="contracts" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                  <ScrollText className="w-4 h-4 flex-shrink-0" />
+                  <span>Contracts</span>
                 </TabsTrigger>
               </TabsList>
 
