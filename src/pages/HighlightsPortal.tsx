@@ -712,6 +712,7 @@ const HighlightsPortal = () => {
         onOpenChange={(o) => { setActionPlayerOpen(o); if (!o) setActionClips(null); }}
         clips={actionClips || []}
         title={actionPlayerTitle}
+        playerId={selectedPlayerId || undefined}
       />
     </div>
   );
