@@ -938,7 +938,12 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
   players: PlayerRow[]; invoices: InvoiceRow[]; editable: boolean;
   onSaveCommission: (id: string, val: number | null) => Promise<void>;
 }) => {
-  const live = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
+  const live = players.filter(p =>
+    p.representation_status === "represented" ||
+    p.representation_status === "fuel_for_football" ||
+    p.representation_status === "mandated" ||
+    p.representation_status === "previously_mandated",
+  );
   const forecast = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
   const potential = live.reduce((s, p) => s + Number(p.potential_commission_annual || 0), 0);
 
@@ -952,7 +957,7 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
   const paidByPlayer: Record<string, number> = {};
   invoices.forEach(i => { paidByPlayer[i.player_id] = (paidByPlayer[i.player_id] || 0) + Number(i.amount_paid || 0); });
 
-  const sorted = [...live].sort((a, b) => Number(b.expected_commission_annual || 0) - Number(a.expected_commission_annual || 0));
+  const sorted = sortPlayersByRepresentation(live);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1059,7 +1064,12 @@ const Forecast = ({ spending, invoices, players }: {
   const avgMonthlyRev = totalRev12 / 12;
 
   // 24-month forward projection: revenue grows linearly with represented commission ramp
-  const represented = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
+  const represented = players.filter(p =>
+    p.representation_status === "represented" ||
+    p.representation_status === "fuel_for_football" ||
+    p.representation_status === "mandated" ||
+    p.representation_status === "previously_mandated",
+  );
   const annualCommissionForecast = represented.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
   const monthlyForecastRev = annualCommissionForecast / 12;
 
