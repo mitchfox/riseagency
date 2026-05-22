@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ListPlus, Loader2, Plus, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 
 interface Playlist {
   id: string;
@@ -51,7 +52,7 @@ export const AddToPlaylistButton = ({
     setLoading(true);
     (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("playlist-manage", {
+        const { data, error } = await invokeEdgeFunction("playlist-manage", {
           body: { action: "listForPlayer", playerId, playerEmail, makerUsername, starredOnly },
         });
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
@@ -67,7 +68,7 @@ export const AddToPlaylistButton = ({
   const addTo = async (pl: Playlist) => {
     setBusyId(pl.id);
     try {
-      const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      const { data, error } = await invokeEdgeFunction("playlist-manage", {
         body: { action: "addClip", playlistId: pl.id, playerEmail, makerUsername, clip },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
@@ -90,7 +91,7 @@ export const AddToPlaylistButton = ({
     if (!trimmed) return;
     setBusyId("__create__");
     try {
-      const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      const { data, error } = await invokeEdgeFunction("playlist-manage", {
         body: { action: "create", playerId, name: trimmed, playerEmail, makerUsername, clip, isFavourite: starredOnly },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
