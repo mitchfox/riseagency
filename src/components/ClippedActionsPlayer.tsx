@@ -379,6 +379,16 @@ export const ClippedActionsPlayer = ({
                         {savingClipId === clip.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className="h-3 w-3" />}
                       </Button>
                     )}
+                    {playerId && clip.video_url && (
+                      <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                        <AddToPlaylistButton
+                          asStaff
+                          playerId={playerId}
+                          clip={{ name: toTitleCase(clip.action_type) || `Clip ${clip.action_number}`, videoUrl: clip.video_url }}
+                          className="h-6 w-6 text-white/50 hover:text-white"
+                        />
+                      </div>
+                    )}
                     {showDownloads && (
                       <Button
                         variant="ghost"
