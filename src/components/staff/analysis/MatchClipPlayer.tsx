@@ -541,6 +541,17 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, ena
                   {enableAnnotations ? 'Click to draw · Right-click clear · ←→ clips · Space play · Scroll zoom' : '←→ clips · Space play'}
                 </span>
               )}
+              {playerId && currentClip?.video_url && (
+                <AddToPlaylistButton
+                  asStaff
+                  playerId={playerId}
+                  clip={{
+                    name: `${currentClip.action_type}${currentClip.minute ? ` · ${currentClip.minute}'` : ''} vs ${opponent}`,
+                    videoUrl: currentClip.video_url,
+                  }}
+                  className="text-white/40 hover:text-[#C6A332] hover:bg-white/10 h-7 w-7"
+                />
+              )}
               <Button size="sm" variant="ghost" className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] gap-1 h-7"
                 onClick={() => setShowClipList(!showClipList)}>
                 {showClipList ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
