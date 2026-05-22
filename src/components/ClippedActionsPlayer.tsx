@@ -8,6 +8,7 @@ import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useShar
 import { toast } from 'sonner';
 import { toTitleCase } from '@/lib/titleCase';
 import { isFullMatchUrl } from '@/lib/clipVideoUtils';
+import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
 
 interface ClipAction {
   id: string;
@@ -34,6 +35,8 @@ interface ClippedActionsPlayerProps {
   onDownloadAll?: (clips: ClipAction[]) => void;
   onSaveToBest?: (clip: ClipAction) => void;
   savingClipId?: string | null;
+  /** When provided, shows an Add-to-Playlist button per clip (staff context). */
+  playerId?: string;
 }
 
 const normaliseType = (t: string) => (t || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -63,6 +66,7 @@ export const ClippedActionsPlayer = ({
   onDownloadAll,
   onSaveToBest,
   savingClipId,
+  playerId,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
