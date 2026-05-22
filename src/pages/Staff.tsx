@@ -83,7 +83,6 @@ import { RequestsManagement } from "@/components/staff/RequestsManagement";
 
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
 import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
-import { BusinessPlanSection } from "@/components/staff/BusinessPlanSection";
 import { DocsSection } from "@/components/staff/DocsSection";
 import { SheetsSection } from "@/components/staff/SheetsSection";
 import { MobileScrollButtons } from "@/components/staff/MobileScrollButtons";
