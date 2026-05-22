@@ -156,6 +156,7 @@ import {
   UserRound,
   MessageSquare,
   Briefcase,
+  Share2,
   Handshake,
   Database,
   UtensilsCrossed,
