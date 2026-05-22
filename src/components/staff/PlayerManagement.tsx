@@ -41,6 +41,7 @@ import { AddTestResultDialog } from "./AddTestResultDialog";
 import { PlayerFixtureStats } from "./PlayerFixtureStats";
 import { PlayerHudlVisibilityTab, type PlayerHudlVisibilityHandle } from "./PlayerHudlVisibilityTab";
 import { PlayerFormConfigTab, type PlayerFormConfigHandle } from "./PlayerFormConfigTab";
+import { PlayerContractsTab } from "./PlayerContractsTab";
 import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
 import { PlayerSpqHistory } from "./PlayerSpqHistory";
