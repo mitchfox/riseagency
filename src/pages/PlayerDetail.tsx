@@ -941,6 +941,7 @@ const PlayerDetail = () => {
             onOpenChange={setHudlPlayerOpen}
             clips={hudlPlayerClips}
             title={hudlPlayerTitle}
+            playerId={player?.id}
           />
 
           {/* Video Clip Playback Modal - supports playlist navigation */}
