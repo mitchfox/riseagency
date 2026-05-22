@@ -250,6 +250,33 @@ const LoginGate = ({ onSignIn }: { onSignIn: (u: string, p: string) => Promise<v
 };
 
 // ---------- Player card with inline editable commission ----------
+const InlineMoneyCell = ({ value, editable, onSave }: { value: number | null; editable: boolean; onSave: (v: number | null) => Promise<void> | void }) => {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState(value?.toString() ?? "");
+  useEffect(() => { setVal(value?.toString() ?? ""); }, [value]);
+  const commit = async () => {
+    const trimmed = val.trim();
+    const n = trimmed === "" ? null : Number(trimmed);
+    if (n != null && Number.isNaN(n)) { toast.error("Invalid number"); return; }
+    if (n !== (value ?? null)) await onSave(n);
+    setEdit(false);
+  };
+  if (edit && editable) {
+    return (
+      <Input type="number" value={val} autoFocus onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEdit(false); setVal(value?.toString() ?? ""); } }}
+        onBlur={commit} className="h-7 w-24 text-right text-xs ml-auto" placeholder="0" />
+    );
+  }
+  return (
+    <button type="button" onClick={() => editable && setEdit(true)}
+      className={`tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${value == null ? "text-muted-foreground" : ""}`}
+      title={editable ? "Click to edit" : undefined}>
+      {value == null ? "—" : gbp(value)}
+    </button>
+  );
+};
+
 const ContractBadge = ({ end }: { end: string | null }) => {
   if (!end) return <span className="text-xs text-muted-foreground">No contract end</span>;
   const months = differenceInMonths(new Date(end), new Date());
