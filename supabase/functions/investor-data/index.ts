@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       supabase.from("investor_deals").select("*").order("updated_at", { ascending: false }),
       supabase.from("investor_notes").select("*").order("created_at", { ascending: false }),
       supabase.from("players")
-        .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page, image_url, hover_image_url, club, club_logo, league, age, contract_start_date, contract_end_date, current_salary_annual, expected_commission_annual, commission_notes")
+        .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page, image_url, hover_image_url, club, club_logo, league, age, contract_start_date, contract_end_date, current_salary_annual, expected_commission_annual, potential_commission_annual, commission_notes, salary_cap_overrides")
         .in("representation_status", ["represented", "mandated", "previously_mandated"])
         .order("name"),
       supabase.from("signature_contracts")

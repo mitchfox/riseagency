@@ -55,7 +55,9 @@ interface PlayerRow {
   age: number | null;
   contract_start_date: string | null; contract_end_date: string | null;
   current_salary_annual: number | null; expected_commission_annual: number | null;
+  potential_commission_annual: number | null;
   commission_notes: string | null;
+  salary_cap_overrides: any | null;
 }
 interface ContractRow {
   id: string; title: string; description: string | null; status: string | null;
@@ -248,6 +250,33 @@ const LoginGate = ({ onSignIn }: { onSignIn: (u: string, p: string) => Promise<v
 };
 
 // ---------- Player card with inline editable commission ----------
+const InlineMoneyCell = ({ value, editable, onSave }: { value: number | null; editable: boolean; onSave: (v: number | null) => Promise<void> | void }) => {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState(value?.toString() ?? "");
+  useEffect(() => { setVal(value?.toString() ?? ""); }, [value]);
+  const commit = async () => {
+    const trimmed = val.trim();
+    const n = trimmed === "" ? null : Number(trimmed);
+    if (n != null && Number.isNaN(n)) { toast.error("Invalid number"); return; }
+    if (n !== (value ?? null)) await onSave(n);
+    setEdit(false);
+  };
+  if (edit && editable) {
+    return (
+      <Input type="number" value={val} autoFocus onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEdit(false); setVal(value?.toString() ?? ""); } }}
+        onBlur={commit} className="h-7 w-24 text-right text-xs ml-auto" placeholder="0" />
+    );
+  }
+  return (
+    <button type="button" onClick={() => editable && setEdit(true)}
+      className={`tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${value == null ? "text-muted-foreground" : ""}`}
+      title={editable ? "Click to edit" : undefined}>
+      {value == null ? "—" : gbp(value)}
+    </button>
+  );
+};
+
 const ContractBadge = ({ end }: { end: string | null }) => {
   if (!end) return <span className="text-xs text-muted-foreground">No contract end</span>;
   const months = differenceInMonths(new Date(end), new Date());
@@ -897,6 +926,7 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
 }) => {
   const live = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
   const forecast = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const potential = live.reduce((s, p) => s + Number(p.potential_commission_annual || 0), 0);
 
   // Invoice totals
   const invoicedTotal = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -914,8 +944,8 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Real Revenue (12mo)" value={gbp(last12Paid)} sub={`From ${invoices.length} invoices`} />
         <Stat label="Invoiced (All)" value={gbp(invoicedTotal)} sub={`${gbp(paidTotal)} paid`} />
-        <Stat label="Outstanding" value={gbp(outstanding)} sub="Awaiting payment" />
-        <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players`} />
+        <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players · guaranteed-style`} />
+        <Stat label="Potential / yr" value={gbp(potential)} sub="Mandate upside (not guaranteed)" />
       </div>
       <SectionShell icon={TrendingUp} title="Commission Forecast — Editable per player" action={
         editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click figure to edit</Badge> : undefined
@@ -1082,8 +1112,12 @@ const Forecast = ({ spending, invoices, players }: {
 };
 
 // ---------- Salary Cap: season-by-season income by represented player ----------
-const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: InvoiceRow[] }) => {
-  const [mode, setMode] = useState<"guaranteed" | "expected">("guaranteed");
+const SalaryCap = ({ players, invoices, editable, onSave }: {
+  players: PlayerRow[]; invoices: InvoiceRow[];
+  editable: boolean;
+  onSave: (id: string, patch: { current_salary_annual?: number | null; expected_commission_annual?: number | null; potential_commission_annual?: number | null }) => Promise<void>;
+}) => {
+  const [mode, setMode] = useState<"guaranteed" | "expected" | "potential">("guaranteed");
   const live = useMemo(
     () => players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated"),
     [players],
@@ -1103,33 +1137,42 @@ const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: Invo
   // Guaranteed: only counts seasons fully inside the player's contract window.
   // Expected: assumes the player stays with us indefinitely and includes broader assumed income.
   const rowsFor = (p: PlayerRow) => seasons.map(s => {
-    const annual = Number(p.expected_commission_annual || 0);
+    const annualExpected = Number(p.expected_commission_annual || 0);
+    const annualPotential = Number(p.potential_commission_annual || 0);
     const contractStart = p.contract_start_date ? new Date(p.contract_start_date) : null;
     const contractEnd = p.contract_end_date ? new Date(p.contract_end_date) : null;
     let guaranteed = 0;
-    if (annual > 0 && contractEnd) {
+    if (annualExpected > 0 && contractEnd) {
       // Proportion of season covered by contract window.
       const wStart = contractStart && contractStart > s.start ? contractStart : s.start;
       const wEnd = contractEnd < s.end ? contractEnd : s.end;
       const days = Math.max(0, (wEnd.getTime() - wStart.getTime()) / 86400000);
       const seasonDays = (s.end.getTime() - s.start.getTime()) / 86400000;
-      guaranteed = annual * (days / seasonDays);
+      guaranteed = annualExpected * (days / seasonDays);
     }
-    const expected = annual * 1.15; // broader assumption: 15% upside (renewals, bonuses, image rights)
-    return { season: s.key, guaranteed: Math.max(0, Math.round(guaranteed)), expected: Math.max(0, Math.round(expected)) };
+    const expected = annualExpected * 1.15; // broader assumption: 15% upside (renewals, bonuses, image rights)
+    const potential = annualPotential; // raw potential (mandate / pipeline upside)
+    return {
+      season: s.key,
+      guaranteed: Math.max(0, Math.round(guaranteed)),
+      expected: Math.max(0, Math.round(expected)),
+      potential: Math.max(0, Math.round(potential)),
+    };
   });
 
   const totals = seasons.map(s => {
-    let guaranteed = 0, expected = 0;
+    let guaranteed = 0, expected = 0, potential = 0;
     live.forEach(p => {
       const r = rowsFor(p).find(x => x.season === s.key)!;
-      guaranteed += r.guaranteed; expected += r.expected;
+      guaranteed += r.guaranteed; expected += r.expected; potential += r.potential;
     });
-    return { season: s.key, guaranteed, expected };
+    return { season: s.key, guaranteed, expected, potential };
   });
 
-  const grandTotal = totals.reduce((s, t) => s + (mode === "guaranteed" ? t.guaranteed : t.expected), 0);
-  const maxVal = Math.max(1, ...totals.map(t => mode === "guaranteed" ? t.guaranteed : t.expected));
+  const pick = (t: { guaranteed: number; expected: number; potential: number }) =>
+    mode === "guaranteed" ? t.guaranteed : mode === "expected" ? t.expected : t.potential;
+  const grandTotal = totals.reduce((s, t) => s + pick(t), 0);
+  const maxVal = Math.max(1, ...totals.map(pick));
 
   return (
     <div className="space-y-4">
@@ -1143,14 +1186,17 @@ const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: Invo
           <TabsList>
             <TabsTrigger value="guaranteed">Guaranteed</TabsTrigger>
             <TabsTrigger value="expected">Expected</TabsTrigger>
+            <TabsTrigger value="potential">Potential</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : "expected income (assumes retention + upside)"}`}>
+      <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
+        action={editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click figures to edit</Badge> : undefined}
+      >
         <div className="grid grid-cols-5 gap-2 mb-4">
           {totals.map(t => {
-            const v = mode === "guaranteed" ? t.guaranteed : t.expected;
+            const v = pick(t);
             const pct = Math.round((v / maxVal) * 100);
             return (
               <div key={t.season} className="flex flex-col">
@@ -1167,20 +1213,23 @@ const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: Invo
           })}
         </div>
         <div className="rounded border border-border/40 overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
+          <table className="w-full text-sm min-w-[820px]">
             <thead className="bg-muted/30 text-xs text-muted-foreground">
               <tr>
                 <th className="text-left px-3 py-2">Player</th>
+                <th className="text-right px-3 py-2">Salary / yr</th>
+                <th className="text-right px-3 py-2">Commission / yr</th>
+                <th className="text-right px-3 py-2">Potential / yr</th>
                 {seasons.map(s => <th key={s.key} className="text-right px-3 py-2">{s.key}</th>)}
                 <th className="text-right px-3 py-2">5-yr total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
               {live.length === 0 ? (
-                <tr><td colSpan={seasons.length + 2} className="text-center text-muted-foreground py-6">No live players.</td></tr>
+                <tr><td colSpan={seasons.length + 5} className="text-center text-muted-foreground py-6">No live players.</td></tr>
               ) : live.map(p => {
                 const r = rowsFor(p);
-                const total = r.reduce((s, x) => s + (mode === "guaranteed" ? x.guaranteed : x.expected), 0);
+                const total = r.reduce((s, x) => s + pick(x), 0);
                 return (
                   <tr key={p.id} className="hover:bg-muted/20">
                     <td className="px-3 py-2">
@@ -1192,9 +1241,21 @@ const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: Invo
                         </div>
                       </div>
                     </td>
+                    <td className="px-3 py-2 text-right text-xs tabular-nums">
+                      <InlineMoneyCell value={p.current_salary_annual} editable={editable}
+                        onSave={(v) => onSave(p.id, { current_salary_annual: v })} />
+                    </td>
+                    <td className="px-3 py-2 text-right text-xs tabular-nums">
+                      <InlineMoneyCell value={p.expected_commission_annual} editable={editable}
+                        onSave={(v) => onSave(p.id, { expected_commission_annual: v })} />
+                    </td>
+                    <td className="px-3 py-2 text-right text-xs tabular-nums">
+                      <InlineMoneyCell value={p.potential_commission_annual} editable={editable}
+                        onSave={(v) => onSave(p.id, { potential_commission_annual: v })} />
+                    </td>
                     {r.map(x => (
                       <td key={x.season} className="px-3 py-2 text-right text-xs tabular-nums">
-                        {gbp(mode === "guaranteed" ? x.guaranteed : x.expected)}
+                        {gbp(pick(x))}
                       </td>
                     ))}
                     <td className="px-3 py-2 text-right font-semibold text-primary tabular-nums">{gbp(total)}</td>
@@ -1205,14 +1266,15 @@ const SalaryCap = ({ players, invoices }: { players: PlayerRow[]; invoices: Invo
             <tfoot className="bg-muted/20 font-semibold">
               <tr>
                 <td className="px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">Total</td>
-                {totals.map(t => <td key={t.season} className="px-3 py-2 text-right text-xs tabular-nums">{gbp(mode === "guaranteed" ? t.guaranteed : t.expected)}</td>)}
+                <td colSpan={3} />
+                {totals.map(t => <td key={t.season} className="px-3 py-2 text-right text-xs tabular-nums">{gbp(pick(t))}</td>)}
                 <td className="px-3 py-2 text-right text-primary tabular-nums">{gbp(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Guaranteed only counts the contracted portion of each season. Expected assumes the player stays with us beyond contract end and includes a 15% broader-income uplift (renewals, bonuses, image rights).
+          Guaranteed counts only the contracted portion of each season. Expected assumes the player stays with us beyond contract end and includes a 15% broader-income uplift (renewals, bonuses, image rights). Potential reflects mandate upside that isn't guaranteed yet.
         </p>
       </SectionShell>
     </div>
@@ -1923,17 +1985,22 @@ const InvestorsPortal = () => {
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
-  const saveCommission = async (player_id: string, expected_commission_annual: number | null) => {
+  const savePlayerFinance = async (
+    player_id: string,
+    patch: { expected_commission_annual?: number | null; potential_commission_annual?: number | null; current_salary_annual?: number | null },
+  ) => {
     try {
       const { data: r, error } = await supabase.functions.invoke("investor-write", {
-        body: { token, action: "updatePlayerCommission", payload: { player_id, expected_commission_annual } },
+        body: { token, action: "updatePlayerCommission", payload: { player_id, ...patch } },
       });
       if (error) throw error;
       if ((r as any)?.error) throw new Error((r as any).error);
-      toast.success("Commission updated");
+      toast.success("Saved");
       await refresh();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
+  const saveCommission = (player_id: string, expected_commission_annual: number | null) =>
+    savePlayerFinance(player_id, { expected_commission_annual });
 
   const handleSignIn = async (u: string, p: string) => { await signIn(u, p); playChime(); };
   const canEdit = unlocked && !!data?.isAdmin;
@@ -2267,7 +2334,7 @@ const InvestorsPortal = () => {
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} players={data.players} />}
-                  {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} />}
+                  {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} editable={canEdit} onSave={savePlayerFinance} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
