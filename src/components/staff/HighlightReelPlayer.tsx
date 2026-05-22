@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, ChevronLeft, ChevronRight, Maximize, Minimize, Star } from "lucide-react";
+import { AddToPlaylistButton } from "@/components/portal/AddToPlaylistButton";
 
 const getScoreBgColor = (score: number | null | undefined): string => {
   if (score === null || score === undefined) return 'bg-primary/90';
@@ -51,9 +52,11 @@ interface HighlightReelPlayerProps {
   projectName: string;
   isOpen: boolean;
   onClose: () => void;
+  /** When supplied, surfaces "Add to playlist" for the current clip. */
+  playerId?: string | null;
 }
 
-export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: HighlightReelPlayerProps) => {
+export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose, playerId }: HighlightReelPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,6 +96,16 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose }: Hig
               </div>
             </div>
             <div className="flex gap-2 pointer-events-auto">
+              {playerId && currentClip?.videoUrl && (
+                <div className="bg-background/95 backdrop-blur-sm rounded-md shadow-xl border border-border/50">
+                  <AddToPlaylistButton
+                    asStaff
+                    playerId={playerId}
+                    clip={{ name: currentClip.title || `${projectName} clip`, videoUrl: currentClip.videoUrl }}
+                    className="h-10 w-10"
+                  />
+                </div>
+              )}
               <Button onClick={toggleFullscreen} variant="ghost" size="icon" className="bg-background/95 backdrop-blur-sm hover:bg-background shadow-xl border border-border/50">
                 {isFullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
               </Button>

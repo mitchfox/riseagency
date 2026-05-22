@@ -78,6 +78,7 @@ import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
 import { Meetings } from "@/components/staff/coaching/Meetings";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 import { JobsManagement } from "@/components/staff/JobsManagement";
+import { SocialShareManagement } from "@/components/staff/SocialShareManagement";
 import { RequestsManagement } from "@/components/staff/RequestsManagement";
 
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
@@ -155,6 +156,7 @@ import {
   UserRound,
   MessageSquare,
   Briefcase,
+  Share2,
   Handshake,
   Database,
   UtensilsCrossed,
@@ -190,7 +192,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'businessplan' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'businessplan' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -1029,6 +1031,7 @@ const Staff = () => {
           { id: 'legal', title: 'Legal', icon: Scale },
           { id: 'partners', title: 'Partners', icon: Handshake },
           { id: 'jobs', title: 'Jobs', icon: Briefcase },
+          { id: 'socialshare', title: 'Social Share', icon: Share2 },
         ]
       },
       {
@@ -1831,6 +1834,7 @@ const Staff = () => {
                   {expandedSection === 'legal' && <LegalManagement isAdmin={canManageSection('legal')} />}
                   {expandedSection === 'partners' && <PartnersManagement isAdmin={canManageSection('partners')} />}
                   {expandedSection === 'jobs' && <JobsManagement />}
+                  {expandedSection === 'socialshare' && <SocialShareManagement />}
                   {expandedSection === 'requests' && <RequestsManagement />}
                   {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={canManageSection('sitetext')} />}
                   {expandedSection === 'languages' && <LanguagesManagement isAdmin={canManageSection('languages')} />}
