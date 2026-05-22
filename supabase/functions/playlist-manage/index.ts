@@ -11,6 +11,26 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+async function callerIsStaff(req: Request): Promise<boolean> {
+  try {
+    const auth = req.headers.get("authorization") || req.headers.get("Authorization");
+    if (!auth) return false;
+    const token = auth.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return false;
+    const { data: userData } = await supabase.auth.getUser(token);
+    const uid = userData?.user?.id;
+    if (!uid) return false;
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", uid);
+    if (!roles) return false;
+    return roles.some((r: any) => r.role === "admin" || r.role === "staff");
+  } catch {
+    return false;
+  }
+}
+
 async function callerCanTouchPlaylist(opts: {
   playerEmail?: string;
   makerUsername?: string;
