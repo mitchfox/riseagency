@@ -1031,6 +1031,7 @@ const Staff = () => {
           { id: 'legal', title: 'Legal', icon: Scale },
           { id: 'partners', title: 'Partners', icon: Handshake },
           { id: 'jobs', title: 'Jobs', icon: Briefcase },
+          { id: 'socialshare', title: 'Social Share', icon: Share2 },
         ]
       },
       {
