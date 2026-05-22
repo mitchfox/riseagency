@@ -1087,6 +1087,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           opponent={clippedAnalysis.opponent || "Unknown"}
           onClose={() => setClippedAnalysis(null)}
           enableAnnotations={false}
+          playerId={playerData?.id || null}
         />
       )}
     </>
