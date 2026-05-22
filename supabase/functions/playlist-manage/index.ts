@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const allowed = await callerCanTouchPlaylist({ playerEmail, makerUsername, playlistId });
+    const allowed = isStaff || await callerCanTouchPlaylist({ playerEmail, makerUsername, playlistId });
     if (!allowed) {
       return new Response(JSON.stringify({ error: "Not authorised for this playlist" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
