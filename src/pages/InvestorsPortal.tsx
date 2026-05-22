@@ -145,6 +145,16 @@ const gbp = (n: number | null | undefined) =>
 const ccy = (n: number | null | undefined, c: string = "GBP") =>
   n == null ? "—" : new Intl.NumberFormat("en-GB", { style: "currency", currency: c, maximumFractionDigits: 0 }).format(Number(n));
 
+// Chart-axis money formatter: handles small/large/negative values cleanly.
+const gbpAxis = (v: number) => {
+  if (v == null || Number.isNaN(v)) return "";
+  const n = Math.abs(v);
+  const sign = v < 0 ? "-" : "";
+  if (n >= 1_000_000) return `${sign}£${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}m`;
+  if (n >= 1_000) return `${sign}£${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k`;
+  return `${sign}£${Math.round(n)}`;
+};
+
 const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
 
 interface CategoryDef {
@@ -1084,7 +1094,7 @@ const Forecast = ({ spending, invoices, players }: {
             <BarChart data={months}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `£${Math.round(v / 1000)}k`} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
                 formatter={(v: any) => gbp(Number(v))} />
               <Bar dataKey="spend" name="Spend" fill="hsl(0, 70%, 50%)" radius={[3, 3, 0, 0]} />
@@ -1100,7 +1110,7 @@ const Forecast = ({ spending, invoices, players }: {
             <LineChart data={projection}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={2} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `£${Math.round(v / 1000)}k`} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
                 formatter={(v: any) => gbp(Number(v))} />
               <Line type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
