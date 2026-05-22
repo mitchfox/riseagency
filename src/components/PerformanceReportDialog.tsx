@@ -61,6 +61,7 @@ interface StrikerStats {
 
 interface AnalysisDetails {
   id: string;
+  player_id?: string | null;
   analysis_date: string;
   opponent: string;
   result: string;
@@ -220,7 +221,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
       const [analysisResult, actionsResult] = await Promise.all([
         supabase
           .from("player_analysis")
-          .select("id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_name, team_logo_url, team_color, opponent_logo_url, team_roster, is_scouting_report, players!player_analysis_player_id_fkey (name, position)")
+          .select("id, player_id, analysis_date, opponent, result, r90_score, minutes_played, striker_stats, performance_overview, visibility_status, placeholder_raw_score, placeholder_minutes, placeholder_per, placeholder_sr, translated_content, show_descriptions, club_logo_url, opposition_color, category, notes, report_type, team_name, team_logo_url, team_color, opponent_logo_url, team_roster, is_scouting_report, players!player_analysis_player_id_fkey (name, position)")
           .eq("id", id)
           .single(),
         supabase
@@ -1371,6 +1372,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           });
           toast.success(`Downloading ${valid.length} clips…`);
         }}
+        playerId={analysis?.player_id || undefined}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -1429,6 +1431,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         language={reportLanguage}
         title={zonePlayerTitle}
         player={sharedClipPlayer}
+        playerId={analysis?.player_id || undefined}
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>

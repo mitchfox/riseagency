@@ -364,6 +364,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
           onDownloadAll={handleDownloadAll}
           onSaveToBest={handleSaveToBestClips}
           savingClipId={savingToBestClips}
+          playerId={playerId}
         />
       </CardContent>
     </Card>
