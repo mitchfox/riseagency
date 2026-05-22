@@ -322,7 +322,22 @@ export const JobsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="responsibilities">Responsibilities (use - for bullet points)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="responsibilities">Responsibilities (use - for bullet points)</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        const cur = formData.responsibilities || "";
+                        const sep = cur && !cur.endsWith("\n") ? "\n" : "";
+                        setFormData({ ...formData, responsibilities: `${cur}${sep}- ` });
+                      }}
+                    >
+                      + Add bullet
+                    </Button>
+                  </div>
                   <Textarea
                     id="responsibilities"
                     value={formData.responsibilities}
@@ -333,7 +348,22 @@ export const JobsManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="requirements">Requirements (use - for bullet points)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="requirements">Requirements (use - for bullet points)</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        const cur = formData.requirements || "";
+                        const sep = cur && !cur.endsWith("\n") ? "\n" : "";
+                        setFormData({ ...formData, requirements: `${cur}${sep}- ` });
+                      }}
+                    >
+                      + Add bullet
+                    </Button>
+                  </div>
                   <Textarea
                     id="requirements"
                     value={formData.requirements}

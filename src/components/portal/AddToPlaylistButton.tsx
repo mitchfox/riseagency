@@ -20,6 +20,8 @@ interface Props {
   /** Identify caller: player session uses email, highlight maker uses username. */
   playerEmail?: string;
   makerUsername?: string;
+  /** Caller is staff (Lovable Cloud auth) — bypasses player/maker auth check. */
+  asStaff?: boolean;
   /** Restrict to starred playlists only (used by performance reports). */
   starredOnly?: boolean;
   /** Allow creating new playlists from this popover. */
@@ -34,6 +36,7 @@ export const AddToPlaylistButton = ({
   clip,
   playerEmail,
   makerUsername,
+  asStaff,
   starredOnly,
   allowCreate = true,
   size = "icon",

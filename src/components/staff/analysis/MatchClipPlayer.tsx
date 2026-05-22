@@ -9,6 +9,7 @@ import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanva
 import { AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
 import { AnnotationTool } from "@/components/staff/annotations/AnnotationEditor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AddToPlaylistButton } from "@/components/portal/AddToPlaylistButton";
 
 interface MatchClipPlayerProps {
   analysisId: string;
@@ -16,6 +17,8 @@ interface MatchClipPlayerProps {
   opponent: string;
   onClose: () => void;
   enableAnnotations?: boolean;
+  /** Player ID — when supplied, shows an "Add to playlist" button on the current clip. */
+  playerId?: string | null;
 }
 
 interface ClipAction {
@@ -78,7 +81,7 @@ type SortMode = 'match' | 'score' | 'type';
 
 
 
-export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, enableAnnotations = true }: MatchClipPlayerProps) => {
+export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, enableAnnotations = true, playerId }: MatchClipPlayerProps) => {
   const [clips, setClips] = useState<ClipAction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -537,6 +540,17 @@ export const MatchClipPlayer = ({ analysisId, playerName, opponent, onClose, ena
                 <span className="text-white/10 text-[10px] hidden lg:inline">
                   {enableAnnotations ? 'Click to draw · Right-click clear · ←→ clips · Space play · Scroll zoom' : '←→ clips · Space play'}
                 </span>
+              )}
+              {playerId && currentClip?.video_url && (
+                <AddToPlaylistButton
+                  asStaff
+                  playerId={playerId}
+                  clip={{
+                    name: `${currentClip.action_type}${currentClip.minute ? ` · ${currentClip.minute}'` : ''} vs ${opponent}`,
+                    videoUrl: currentClip.video_url,
+                  }}
+                  className="text-white/40 hover:text-[#C6A332] hover:bg-white/10 h-7 w-7"
+                />
               )}
               <Button size="sm" variant="ghost" className="text-white/40 hover:text-white hover:bg-white/10 text-[10px] gap-1 h-7"
                 onClick={() => setShowClipList(!showClipList)}>
