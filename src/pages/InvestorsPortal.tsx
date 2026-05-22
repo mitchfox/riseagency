@@ -55,7 +55,9 @@ interface PlayerRow {
   age: number | null;
   contract_start_date: string | null; contract_end_date: string | null;
   current_salary_annual: number | null; expected_commission_annual: number | null;
+  potential_commission_annual: number | null;
   commission_notes: string | null;
+  salary_cap_overrides: any | null;
 }
 interface ContractRow {
   id: string; title: string; description: string | null; status: string | null;
