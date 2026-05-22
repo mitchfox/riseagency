@@ -1006,6 +1006,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
         projectName={activeProject.name}
         isOpen={reelPlayerOpen}
         onClose={() => setReelPlayerOpen(false)}
+        playerId={activeProject.player_id}
       />
     </div>
   );
