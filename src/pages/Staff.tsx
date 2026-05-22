@@ -78,6 +78,7 @@ import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
 import { Meetings } from "@/components/staff/coaching/Meetings";
 import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
 import { JobsManagement } from "@/components/staff/JobsManagement";
+import { SocialShareManagement } from "@/components/staff/SocialShareManagement";
 import { RequestsManagement } from "@/components/staff/RequestsManagement";
 
 import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
