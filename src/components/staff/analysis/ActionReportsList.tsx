@@ -577,6 +577,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           playerName={clipPlayerReport.player_name || "Unknown"}
           opponent={clipPlayerReport.opponent || "Unknown"}
           onClose={() => setClipPlayerReport(null)}
+          playerId={clipPlayerReport.player_id}
         />
       )}
 
