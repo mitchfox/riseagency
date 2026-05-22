@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         });
       }
       if (action === "updatePlayerCommission") {
-        const { player_id, expected_commission_annual, potential_commission_annual, current_salary_annual, commission_notes, salary_cap_overrides } = payload || {};
+        const { player_id, expected_commission_annual, potential_commission_annual, current_salary_annual, commission_notes, salary_cap_overrides, contract_start_date, contract_end_date } = payload || {};
         if (!player_id) {
           return new Response(JSON.stringify({ error: "player_id required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,6 +63,8 @@ Deno.serve(async (req) => {
         if (current_salary_annual !== undefined) upd.current_salary_annual = current_salary_annual === null || current_salary_annual === "" ? null : Number(current_salary_annual);
         if (commission_notes !== undefined) upd.commission_notes = commission_notes;
         if (salary_cap_overrides !== undefined) upd.salary_cap_overrides = salary_cap_overrides;
+        if (contract_start_date !== undefined) upd.contract_start_date = contract_start_date === null || contract_start_date === "" ? null : contract_start_date;
+        if (contract_end_date !== undefined) upd.contract_end_date = contract_end_date === null || contract_end_date === "" ? null : contract_end_date;
         const { error } = await supabase.from("players").update(upd).eq("id", player_id);
         if (error) throw error;
         return new Response(JSON.stringify({ ok: true }), {
