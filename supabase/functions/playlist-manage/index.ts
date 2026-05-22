@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const isStaff = await callerIsStaff(req);
+
     // listForPlayer doesn't require a playlistId — just an authorised caller for the player.
     if (action === "listForPlayer") {
       const { playerId } = body || {};
@@ -89,7 +91,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
       // Validate caller has access to this player's playlists
-      let ok = false;
+      let ok = isStaff;
       if (playerEmail) {
         const { data: player } = await supabase.from("players").select("id").ilike("email", playerEmail).maybeSingle();
         if (player && player.id === playerId) ok = true;
