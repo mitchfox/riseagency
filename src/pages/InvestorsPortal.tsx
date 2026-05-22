@@ -926,6 +926,7 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
 }) => {
   const live = players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated");
   const forecast = live.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  const potential = live.reduce((s, p) => s + Number(p.potential_commission_annual || 0), 0);
 
   // Invoice totals
   const invoicedTotal = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -943,8 +944,8 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Real Revenue (12mo)" value={gbp(last12Paid)} sub={`From ${invoices.length} invoices`} />
         <Stat label="Invoiced (All)" value={gbp(invoicedTotal)} sub={`${gbp(paidTotal)} paid`} />
-        <Stat label="Outstanding" value={gbp(outstanding)} sub="Awaiting payment" />
-        <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players`} />
+        <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players · guaranteed-style`} />
+        <Stat label="Potential / yr" value={gbp(potential)} sub="Mandate upside (not guaranteed)" />
       </div>
       <SectionShell icon={TrendingUp} title="Commission Forecast — Editable per player" action={
         editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click figure to edit</Badge> : undefined
