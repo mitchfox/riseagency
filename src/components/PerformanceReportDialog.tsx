@@ -1372,6 +1372,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
           });
           toast.success(`Downloading ${valid.length} clips…`);
         }}
+        playerId={analysis?.player_id || undefined}
       />
 
       {/* Ranked/Full Match Video Player */}
@@ -1430,6 +1431,7 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
         language={reportLanguage}
         title={zonePlayerTitle}
         player={sharedClipPlayer}
+        playerId={analysis?.player_id || undefined}
       />
 
       <Dialog open={showR90Info} onOpenChange={setShowR90Info}>
