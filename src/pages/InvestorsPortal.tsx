@@ -30,6 +30,8 @@ import { InvestmentOverview, type OverviewCardData, type OverviewSectionData } f
 import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
 import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
 import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
+import { BusinessPlanSection } from "@/components/staff/BusinessPlanSection";
+import { sortPlayersByRepresentation } from "@/lib/playerSorting";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
@@ -46,7 +48,8 @@ type SectionId =
   | "tasks" | "activity"
   | "outreach" | "clubnetwork"
   | "timeManagement" | "priorities" | "capacity"
-  | "execNotes" | "execScripts" | "execWorkflow";
+  | "execNotes" | "execScripts" | "execWorkflow"
+  | "businessPlan";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -169,6 +172,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "execNotes", title: "Thought Wall", icon: Sparkles },
     { id: "execScripts", title: "Scripts", icon: FileText },
     { id: "execWorkflow", title: "Workflow", icon: Network },
+    { id: "businessPlan", title: "Business Plan", icon: Briefcase },
   ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
@@ -2397,6 +2401,11 @@ const InvestorsPortal = () => {
                   {active === "execWorkflow" && (
                     <SectionShell icon={Network} title="Workflow">
                       <ExecutiveSupport kind="workflow" token={token} isAdmin={!!data.isAdmin} unlocked={canEdit} staffTasks={data.tasks} />
+                    </SectionShell>
+                  )}
+                  {active === "businessPlan" && (
+                    <SectionShell icon={Briefcase} title="Business Plan">
+                      <BusinessPlanSection />
                     </SectionShell>
                   )}
                 </div>
