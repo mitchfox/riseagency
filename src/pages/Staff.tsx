@@ -836,7 +836,6 @@ const Staff = () => {
             { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
             { id: 'visionboard', title: 'Vision Board', icon: Target },
-            { id: 'businessplan', title: 'Business Plan', icon: Briefcase },
             { id: 'docs', title: 'Docs', icon: FileText },
             { id: 'sheets', title: 'Sheets', icon: FileSpreadsheet },
           ],
@@ -912,7 +911,6 @@ const Staff = () => {
           { id: '_group_tasks', title: 'Tasks', isGroupLabel: true },
           { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
           { id: 'visionboard', title: 'Vision Board', icon: Target },
-          { id: 'businessplan', title: 'Business Plan', icon: Briefcase },
         ],
         locked: false
       },
