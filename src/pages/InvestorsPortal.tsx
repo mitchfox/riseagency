@@ -2011,7 +2011,14 @@ const InvestorsPortal = () => {
 
   const savePlayerFinance = async (
     player_id: string,
-    patch: { expected_commission_annual?: number | null; potential_commission_annual?: number | null; current_salary_annual?: number | null },
+    patch: {
+      expected_commission_annual?: number | null;
+      potential_commission_annual?: number | null;
+      current_salary_annual?: number | null;
+      contract_start_date?: string | null;
+      contract_end_date?: string | null;
+      salary_cap_overrides?: any;
+    },
   ) => {
     try {
       const { data: r, error } = await supabase.functions.invoke("investor-write", {
