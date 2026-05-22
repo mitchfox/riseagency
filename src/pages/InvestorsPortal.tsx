@@ -1135,15 +1135,95 @@ const Forecast = ({ spending, invoices, players }: {
   );
 };
 
+// ---------- Inline editable cells for Salary Cap ----------
+const InlineDateCell = ({ value, editable, onSave }: { value: string | null; editable: boolean; onSave: (v: string | null) => Promise<void> | void }) => {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState(value ?? "");
+  useEffect(() => { setVal(value ?? ""); }, [value]);
+  const commit = async () => {
+    const next = val.trim() === "" ? null : val.trim();
+    if (next !== (value ?? null)) await onSave(next);
+    setEdit(false);
+  };
+  if (edit && editable) {
+    return (
+      <Input type="date" value={val || ""} autoFocus onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEdit(false); setVal(value ?? ""); } }}
+        onBlur={commit} className="h-7 w-[140px] text-[11px]" />
+    );
+  }
+  return (
+    <button type="button" onClick={() => editable && setEdit(true)}
+      className={`text-[11px] tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${value == null ? "text-muted-foreground" : ""}`}
+      title={editable ? "Click to edit" : undefined}>
+      {value ? format(new Date(value), "d MMM yyyy") : "—"}
+    </button>
+  );
+};
+
+const SeasonOverrideCell = ({
+  computed, override, editable, onSave,
+}: {
+  computed: number; override: number | null | undefined; editable: boolean;
+  onSave: (v: number | null) => Promise<void> | void;
+}) => {
+  const [edit, setEdit] = useState(false);
+  const display = override != null ? override : computed;
+  const [val, setVal] = useState(display.toString());
+  useEffect(() => { setVal(display.toString()); }, [display]);
+  const commit = async () => {
+    const trimmed = val.trim();
+    if (trimmed === "") { if (override != null) await onSave(null); setEdit(false); return; }
+    const n = Number(trimmed);
+    if (Number.isNaN(n)) { toast.error("Invalid number"); return; }
+    if (n !== (override ?? computed)) await onSave(n);
+    setEdit(false);
+  };
+  if (edit && editable) {
+    return (
+      <Input type="number" value={val} autoFocus onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { setEdit(false); setVal(display.toString()); } }}
+        onBlur={commit} className="h-7 w-24 text-right text-xs ml-auto" placeholder="0" />
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 justify-end">
+      <button type="button" onClick={() => editable && setEdit(true)}
+        className={`tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${override != null ? "text-primary font-semibold" : ""}`}
+        title={editable ? (override != null ? "Override — click to edit, blank to reset" : "Click to override") : undefined}>
+        {gbp(display)}
+      </button>
+      {editable && override != null && (
+        <button type="button" onClick={() => onSave(null)} className="text-muted-foreground hover:text-foreground"
+          title="Clear override (revert to formula)">
+          <X className="h-3 w-3" />
+        </button>
+      )}
+    </span>
+  );
+};
+
 // ---------- Salary Cap: season-by-season income by represented player ----------
 const SalaryCap = ({ players, invoices, editable, onSave }: {
   players: PlayerRow[]; invoices: InvoiceRow[];
   editable: boolean;
-  onSave: (id: string, patch: { current_salary_annual?: number | null; expected_commission_annual?: number | null; potential_commission_annual?: number | null }) => Promise<void>;
+  onSave: (id: string, patch: {
+    current_salary_annual?: number | null;
+    expected_commission_annual?: number | null;
+    potential_commission_annual?: number | null;
+    contract_start_date?: string | null;
+    contract_end_date?: string | null;
+    salary_cap_overrides?: any;
+  }) => Promise<void>;
 }) => {
   const [mode, setMode] = useState<"guaranteed" | "expected" | "potential">("guaranteed");
   const live = useMemo(
-    () => players.filter(p => p.representation_status === "represented" || p.representation_status === "mandated"),
+    () => sortPlayersByRepresentation(players.filter(p =>
+      p.representation_status === "represented" ||
+      p.representation_status === "fuel_for_football" ||
+      p.representation_status === "mandated" ||
+      p.representation_status === "previously_mandated",
+    )),
     [players],
   );
 
@@ -1176,11 +1256,13 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
     }
     const expected = annualExpected * 1.15; // broader assumption: 15% upside (renewals, bonuses, image rights)
     const potential = annualPotential; // raw potential (mandate / pipeline upside)
+    const ov = (p.salary_cap_overrides && typeof p.salary_cap_overrides === "object" ? p.salary_cap_overrides[s.key] : null) || null;
     return {
       season: s.key,
       guaranteed: Math.max(0, Math.round(guaranteed)),
       expected: Math.max(0, Math.round(expected)),
       potential: Math.max(0, Math.round(potential)),
+      override: ov as { guaranteed?: number; expected?: number; potential?: number } | null,
     };
   });
 
@@ -1188,7 +1270,10 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
     let guaranteed = 0, expected = 0, potential = 0;
     live.forEach(p => {
       const r = rowsFor(p).find(x => x.season === s.key)!;
-      guaranteed += r.guaranteed; expected += r.expected; potential += r.potential;
+      const og = r.override?.guaranteed; const oe = r.override?.expected; const op = r.override?.potential;
+      guaranteed += og != null ? og : r.guaranteed;
+      expected += oe != null ? oe : r.expected;
+      potential += op != null ? op : r.potential;
     });
     return { season: s.key, guaranteed, expected, potential };
   });
@@ -1197,6 +1282,29 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
     mode === "guaranteed" ? t.guaranteed : mode === "expected" ? t.expected : t.potential;
   const grandTotal = totals.reduce((s, t) => s + pick(t), 0);
   const maxVal = Math.max(1, ...totals.map(pick));
+
+  const saveSeasonOverride = async (p: PlayerRow, seasonKey: string, mode: "guaranteed" | "expected" | "potential", value: number | null) => {
+    const current = (p.salary_cap_overrides && typeof p.salary_cap_overrides === "object" ? { ...p.salary_cap_overrides } : {}) as Record<string, any>;
+    const seasonCur = { ...(current[seasonKey] || {}) };
+    if (value == null) delete seasonCur[mode];
+    else seasonCur[mode] = value;
+    if (Object.keys(seasonCur).length === 0) delete current[seasonKey];
+    else current[seasonKey] = seasonCur;
+    await onSave(p.id, { salary_cap_overrides: current });
+  };
+
+  // Group rows by representation_status to render dividers.
+  const groupedRows: { status: string; label: string; players: PlayerRow[] }[] = [];
+  const statusOrder: { key: string; label: string }[] = [
+    { key: "represented", label: "Represented" },
+    { key: "fuel_for_football", label: "Fuel For Football" },
+    { key: "mandated", label: "Mandated" },
+    { key: "previously_mandated", label: "Previously Mandated" },
+  ];
+  statusOrder.forEach(s => {
+    const ps = live.filter(p => p.representation_status === s.key);
+    if (ps.length) groupedRows.push({ status: s.key, label: s.label, players: ps });
+  });
 
   return (
     <div className="space-y-4">
@@ -1216,7 +1324,7 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
       </div>
 
       <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
-        action={editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click figures to edit</Badge> : undefined}
+        action={editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click any figure or date to edit</Badge> : undefined}
       >
         <div className="grid grid-cols-5 gap-2 mb-4">
           {totals.map(t => {
@@ -1237,10 +1345,11 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
           })}
         </div>
         <div className="rounded border border-border/40 overflow-x-auto">
-          <table className="w-full text-sm min-w-[820px]">
+          <table className="w-full text-sm min-w-[1080px]">
             <thead className="bg-muted/30 text-xs text-muted-foreground">
               <tr>
                 <th className="text-left px-3 py-2">Player</th>
+                <th className="text-left px-3 py-2">Contract</th>
                 <th className="text-right px-3 py-2">Salary / yr</th>
                 <th className="text-right px-3 py-2">Commission / yr</th>
                 <th className="text-right px-3 py-2">Potential / yr</th>
@@ -1250,10 +1359,21 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
             </thead>
             <tbody className="divide-y divide-border/40">
               {live.length === 0 ? (
-                <tr><td colSpan={seasons.length + 5} className="text-center text-muted-foreground py-6">No live players.</td></tr>
-              ) : live.map(p => {
+                <tr><td colSpan={seasons.length + 6} className="text-center text-muted-foreground py-6">No live players.</td></tr>
+              ) : groupedRows.flatMap(group => [
+                (
+                  <tr key={`group-${group.status}`} className="bg-muted/20">
+                    <td colSpan={seasons.length + 6} className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-primary font-bbh">
+                      {group.label} · {group.players.length}
+                    </td>
+                  </tr>
+                ),
+                ...group.players.map(p => {
                 const r = rowsFor(p);
-                const total = r.reduce((s, x) => s + pick(x), 0);
+                const total = r.reduce((s, x) => {
+                  const ov = x.override ? (x.override as any)[mode] : null;
+                  return s + (ov != null ? ov : pick(x));
+                }, 0);
                 return (
                   <tr key={p.id} className="hover:bg-muted/20">
                     <td className="px-3 py-2">
@@ -1263,6 +1383,14 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
                           <div className="font-medium truncate">{p.name}</div>
                           <div className="text-[10px] text-muted-foreground truncate">{p.club || "—"}</div>
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-[11px] text-muted-foreground">
+                      <div className="flex flex-col gap-0.5">
+                        <InlineDateCell value={p.contract_start_date} editable={editable}
+                          onSave={(v) => onSave(p.id, { contract_start_date: v })} />
+                        <InlineDateCell value={p.contract_end_date} editable={editable}
+                          onSave={(v) => onSave(p.id, { contract_end_date: v })} />
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right text-xs tabular-nums">
@@ -1279,18 +1407,24 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
                     </td>
                     {r.map(x => (
                       <td key={x.season} className="px-3 py-2 text-right text-xs tabular-nums">
-                        {gbp(pick(x))}
+                        <SeasonOverrideCell
+                          computed={pick(x)}
+                          override={x.override ? (x.override as any)[mode] ?? null : null}
+                          editable={editable}
+                          onSave={(v) => saveSeasonOverride(p, x.season, mode, v)}
+                        />
                       </td>
                     ))}
                     <td className="px-3 py-2 text-right font-semibold text-primary tabular-nums">{gbp(total)}</td>
                   </tr>
                 );
-              })}
+              }),
+              ])}
             </tbody>
             <tfoot className="bg-muted/20 font-semibold">
               <tr>
                 <td className="px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground">Total</td>
-                <td colSpan={3} />
+                <td colSpan={4} />
                 {totals.map(t => <td key={t.season} className="px-3 py-2 text-right text-xs tabular-nums">{gbp(pick(t))}</td>)}
                 <td className="px-3 py-2 text-right text-primary tabular-nums">{gbp(grandTotal)}</td>
               </tr>
@@ -1298,7 +1432,7 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
           </table>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Guaranteed counts only the contracted portion of each season. Expected assumes the player stays with us beyond contract end and includes a 15% broader-income uplift (renewals, bonuses, image rights). Potential reflects mandate upside that isn't guaranteed yet.
+          Guaranteed counts only the contracted portion of each season. Expected assumes the player stays with us beyond contract end and includes a 15% broader-income uplift (renewals, bonuses, image rights). Potential reflects mandate upside that isn't guaranteed yet. Click any per-season cell to override the formula for that season and tab; the gold value indicates an override. Click the X to revert.
         </p>
       </SectionShell>
     </div>
