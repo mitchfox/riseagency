@@ -61,6 +61,7 @@ interface StrikerStats {
 
 interface AnalysisDetails {
   id: string;
+  player_id?: string | null;
   analysis_date: string;
   opponent: string;
   result: string;
