@@ -1925,14 +1925,17 @@ const InvestorsPortal = () => {
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
-  const saveCommission = async (player_id: string, expected_commission_annual: number | null) => {
+  const saveCommission = async (
+    player_id: string,
+    patch: { expected_commission_annual?: number | null; potential_commission_annual?: number | null; current_salary_annual?: number | null },
+  ) => {
     try {
       const { data: r, error } = await supabase.functions.invoke("investor-write", {
-        body: { token, action: "updatePlayerCommission", payload: { player_id, expected_commission_annual } },
+        body: { token, action: "updatePlayerCommission", payload: { player_id, ...patch } },
       });
       if (error) throw error;
       if ((r as any)?.error) throw new Error((r as any).error);
-      toast.success("Commission updated");
+      toast.success("Saved");
       await refresh();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
