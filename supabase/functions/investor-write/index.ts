@@ -11,6 +11,7 @@ const ALLOWED_TABLES = new Set([
   "investor_pipeline",
   "investor_deals",
   "investor_notes",
+  "investor_projections",
 ]);
 
 async function getSessionUser(supabase: any, token: string) {
@@ -81,9 +82,14 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (table === "investor_projections" && !user.is_admin) {
+      return new Response(JSON.stringify({ error: "Admin only" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     let result: any;
     if (op === "insert") result = await supabase.from(table).insert(row).select().single();
-    else if (op === "update") result = await supabase.from(table).update(row).eq("id", id).select().single();
+    else if (op === "update") result = await supabase.from(table).update(row || body.patch || {}).eq("id", id).select().single();
     else if (op === "delete") result = await supabase.from(table).delete().eq("id", id);
     else return new Response(JSON.stringify({ error: "Invalid op" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
