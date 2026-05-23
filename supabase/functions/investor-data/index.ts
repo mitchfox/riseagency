@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
       supabase.from("invoices")
         .select("id, player_id, invoice_number, invoice_date, due_date, amount, currency, status, amount_paid, billing_month, description")
         .order("invoice_date", { ascending: false }).limit(2000),
+      supabase.from("investor_projections").select("*").order("display_order", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("scouting_reports").select("*").order("created_at", { ascending: false }).limit(1000),
       supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }).limit(1000),
       supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false }).limit(1000),
@@ -164,6 +165,7 @@ Deno.serve(async (req) => {
       overviewSections: overviewSections.data || [],
       overviewCards: overviewCards.data || [],
       invoices: invoices.data || [],
+      projections: projections.data || [],
       scoutingReports: scouting.data || [],
       outreachYouth: outreachYouth.data || [],
       outreachPro: outreachPro.data || [],
