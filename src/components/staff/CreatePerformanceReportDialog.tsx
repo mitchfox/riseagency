@@ -3288,7 +3288,7 @@ export const CreatePerformanceReportDialog = ({
                     onDragLeave={() => setDragOverAction(null)}
                     onDrop={(e) => handleActionDrop(e, index)}
                   >
-                    {/* Line 1: #, Minute, Type, Description, Notes */}
+                    {/* Line 1: #, Minute, Description, Type, Notes */}
                     <div className="flex items-start gap-2 rounded-md border bg-card/50 p-2">
                       <span className="text-sm font-medium text-muted-foreground pt-2 shrink-0 w-6 text-center">{action.action_number}</span>
 
@@ -3299,6 +3299,50 @@ export const CreatePerformanceReportDialog = ({
                         placeholder="Min"
                         className="w-16 h-9 text-sm shrink-0"
                       />
+
+                      <div className="relative flex-1 min-w-0">
+                        <Textarea
+                          value={getActionDisplayValue(index, 'description', action.action_description)}
+                          onChange={(e) => {
+                            if (isTranslatedView) return;
+                            updateAction(index, "action_description", e.target.value);
+                            setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                          }}
+                          onFocus={() => {
+                            if (!isTranslatedView && action.action_type && getDescriptionsForType(action.action_type).length > 0) {
+                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
+                            }
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
+                          }}
+                          placeholder="Description"
+                          readOnly={isTranslatedView}
+                          className={`min-h-[36px] text-sm ${isTranslatedView ? "bg-muted/50" : ""}`}
+                          rows={1}
+                        />
+                        {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
+                          <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                            {getDescriptionsForType(action.action_type)
+                              .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
+                              .slice(0, 12)
+                              .map((desc, di) => (
+                                <button
+                                  key={di}
+                                  type="button"
+                                  className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    updateAction(index, "action_description", desc);
+                                    setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
+                                  }}
+                                >
+                                  {desc}
+                                </button>
+                              ))}
+                          </div>
+                        )}
+                      </div>
 
                       <div className="relative shrink-0">
                         <Input
@@ -3347,50 +3391,6 @@ export const CreatePerformanceReportDialog = ({
                                 >
                                   <span>{type}</span>
                                   <span className="text-xs text-muted-foreground">{actionTypeFrequencyMap[type] || 0}</span>
-                                </button>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="relative flex-1 min-w-0">
-                        <Textarea
-                          value={getActionDisplayValue(index, 'description', action.action_description)}
-                          onChange={(e) => {
-                            if (isTranslatedView) return;
-                            updateAction(index, "action_description", e.target.value);
-                            setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
-                          }}
-                          onFocus={() => {
-                            if (!isTranslatedView && action.action_type && getDescriptionsForType(action.action_type).length > 0) {
-                              setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: true }));
-                            }
-                          }}
-                          onBlur={() => {
-                            setTimeout(() => setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false })), 200);
-                          }}
-                          placeholder="Description"
-                          readOnly={isTranslatedView}
-                          className={`min-h-[36px] text-sm ${isTranslatedView ? "bg-muted/50" : ""}`}
-                          rows={1}
-                        />
-                        {descriptionPopoverOpen[1000 + index] && action.action_type && getDescriptionsForType(action.action_type).length > 0 && (
-                          <div className="absolute z-50 mt-1 w-72 max-h-48 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                            {getDescriptionsForType(action.action_type)
-                              .filter(desc => !action.action_description || desc.toLowerCase().includes(action.action_description.toLowerCase()))
-                              .slice(0, 12)
-                              .map((desc, di) => (
-                                <button
-                                  key={di}
-                                  type="button"
-                                  className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    updateAction(index, "action_description", desc);
-                                    setDescriptionPopoverOpen(prev => ({ ...prev, [1000 + index]: false }));
-                                  }}
-                                >
-                                  {desc}
                                 </button>
                               ))}
                           </div>
