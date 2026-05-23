@@ -2686,6 +2686,45 @@ export type Database = {
           },
         ]
       }
+      investor_projections: {
+        Row: {
+          costs_gbp: number
+          created_at: string
+          display_order: number
+          extra_income_gbp: number
+          id: string
+          name: string
+          notes: string | null
+          player_rows: Json
+          scenario: string
+          updated_at: string
+        }
+        Insert: {
+          costs_gbp?: number
+          created_at?: string
+          display_order?: number
+          extra_income_gbp?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          player_rows?: Json
+          scenario?: string
+          updated_at?: string
+        }
+        Update: {
+          costs_gbp?: number
+          created_at?: string
+          display_order?: number
+          extra_income_gbp?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          player_rows?: Json
+          scenario?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_sessions: {
         Row: {
           created_at: string

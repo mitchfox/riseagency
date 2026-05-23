@@ -1,10 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-};
+const responseHeaders = { ...corsHeaders, "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" };
 
 async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
@@ -41,7 +38,7 @@ async function resolveContractUrl(supabase: any, raw: string | null): Promise<st
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: responseHeaders });
   try {
     const body = await req.json().catch(() => ({}));
     const token = body.token || req.headers.get("x-investor-token") || "";
@@ -52,12 +49,12 @@ Deno.serve(async (req) => {
     const user = await getSessionUser(supabase, token);
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...responseHeaders, "Content-Type": "application/json" },
       });
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -65,7 +62,7 @@ Deno.serve(async (req) => {
       supabase.from("investor_notes").select("*").order("created_at", { ascending: false }),
       supabase.from("players")
         .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page, image_url, hover_image_url, club, club_logo, league, age, contract_start_date, contract_end_date, current_salary_annual, expected_commission_annual, potential_commission_annual, commission_notes, salary_cap_overrides")
-        .in("representation_status", ["represented", "mandated", "previously_mandated"])
+        .in("representation_status", ["represented", "fuel_for_football", "mandated", "previously_mandated"])
         .order("name"),
       supabase.from("signature_contracts")
         .select("id, title, description, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, completed_pdf_url")
@@ -84,6 +81,7 @@ Deno.serve(async (req) => {
       supabase.from("invoices")
         .select("id, player_id, invoice_number, invoice_date, due_date, amount, currency, status, amount_paid, billing_month, description")
         .order("invoice_date", { ascending: false }).limit(2000),
+      supabase.from("investor_projections").select("*").order("display_order", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("scouting_reports").select("*").order("created_at", { ascending: false }).limit(1000),
       supabase.from("player_outreach_youth").select("*").order("created_at", { ascending: false }).limit(1000),
       supabase.from("player_outreach_pro").select("*").order("created_at", { ascending: false }).limit(1000),
@@ -164,6 +162,7 @@ Deno.serve(async (req) => {
       overviewSections: overviewSections.data || [],
       overviewCards: overviewCards.data || [],
       invoices: invoices.data || [],
+      projections: projections.data || [],
       scoutingReports: scouting.data || [],
       outreachYouth: outreachYouth.data || [],
       outreachPro: outreachPro.data || [],
@@ -177,10 +176,10 @@ Deno.serve(async (req) => {
       timeItems: timeItems.data || [],
       priorityCategories: priorityCategories.data || [],
       priorityItems: priorityItems.data || [],
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...responseHeaders, "Content-Type": "application/json" },
     });
   }
 });

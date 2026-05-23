@@ -43,7 +43,7 @@ type SectionId =
   | "overview" | "investment"
   | "represented" | "mandated" | "previously"
   | "prospects" | "playerdatabase"
-  | "contracts"
+  | "contracts" | "projections"
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
   | "outreach" | "clubnetwork"
@@ -132,6 +132,12 @@ interface InvoiceRow {
   amount: number; currency: string; status: string; amount_paid: number | null;
   billing_month: string | null; description: string | null;
 }
+interface ProjectionPlayerRow { player_id: string; income_gbp: number | null; notes?: string | null; }
+interface ProjectionRow {
+  id: string; name: string; scenario: string; notes: string | null;
+  player_rows: ProjectionPlayerRow[]; extra_income_gbp: number; costs_gbp: number;
+  display_order: number; created_at: string; updated_at: string;
+}
 interface DbPlayer {
   id: string; player_name: string; position: string | null; age: number | null;
   current_club: string | null; nationality: string | null; date_of_birth: string | null;
@@ -199,6 +205,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "commission", title: "Commission", icon: TrendingUp },
     { id: "invoices", title: "Invoices", icon: FileText },
     { id: "forecast", title: "Forecast", icon: TrendingUp },
+    { id: "projections", title: "Projections", icon: Target },
     { id: "salaryCap", title: "Salary Cap", icon: Target },
   ]},
   { id: "net", title: "Network", icon: Building2, sections: [
@@ -289,6 +296,21 @@ const InlineMoneyCell = ({ value, editable, onSave }: { value: number | null; ed
       {value == null ? "—" : gbp(value)}
     </button>
   );
+};
+
+const EditableTextField = ({ value, editable, onSave, multiline = false, placeholder }: {
+  value: string | null | undefined; editable: boolean; onSave: (v: string) => Promise<void> | void;
+  multiline?: boolean; placeholder?: string;
+}) => {
+  const [val, setVal] = useState(value || "");
+  useEffect(() => { setVal(value || ""); }, [value]);
+  const commit = async () => {
+    if (val !== (value || "")) await onSave(val);
+  };
+  if (multiline) {
+    return <Textarea value={val} disabled={!editable} placeholder={placeholder} onChange={e => setVal(e.target.value)} onBlur={commit} />;
+  }
+  return <Input value={val} disabled={!editable} placeholder={placeholder} onChange={e => setVal(e.target.value)} onBlur={commit} />;
 };
 
 const ContractBadge = ({ end }: { end: string | null }) => {
@@ -1439,6 +1461,87 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
   );
 };
 
+// ---------- Projections: editable scenario planning ----------
+const Projections = ({ projections, players, editable, write }: {
+  projections: ProjectionRow[]; players: PlayerRow[]; editable: boolean;
+  write: (op: string, table: string, payload: any) => Promise<void>;
+}) => {
+  const [activeId, setActiveId] = useState<string | null>(projections[0]?.id || null);
+  useEffect(() => { if (!activeId && projections[0]) setActiveId(projections[0].id); }, [activeId, projections]);
+  const active = projections.find(p => p.id === activeId) || projections[0] || null;
+  const playerMap = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  const availablePlayers = players.filter(p => ["represented", "fuel_for_football", "mandated", "previously_mandated"].includes(p.representation_status || ""));
+  const rows = Array.isArray(active?.player_rows) ? active!.player_rows : [];
+  const playerIncome = rows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
+  const total = playerIncome + Number(active?.extra_income_gbp || 0) - Number(active?.costs_gbp || 0);
+  const updateProjection = (patch: Partial<ProjectionRow>) => active && write("update", "investor_projections", { id: active.id, patch });
+  const updateRows = (nextRows: ProjectionPlayerRow[]) => updateProjection({ player_rows: nextRows });
+  const addProjection = () => write("insert", "investor_projections", {
+    row: { name: "New projection", scenario: "expected", player_rows: [], display_order: projections.length },
+  });
+  const addPlayer = (playerId: string) => {
+    if (!active || !playerId || rows.some(r => r.player_id === playerId)) return;
+    const p = playerMap.get(playerId);
+    updateRows([...rows, { player_id: playerId, income_gbp: p?.expected_commission_annual ?? 0, notes: "" }]);
+  };
+  return (
+    <SectionShell icon={Target} title="Projections" action={editable ? <Button size="sm" onClick={addProjection} className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add projection</Button> : undefined}>
+      {projections.length === 0 ? (
+        <div className="text-center py-10 text-sm text-muted-foreground">No projections yet.</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {projections.map(p => (
+              <Button key={p.id} size="sm" variant={p.id === active?.id ? "default" : "outline"} onClick={() => setActiveId(p.id)}>
+                {p.name}
+              </Button>
+            ))}
+          </div>
+          {active && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Stat label="Player income" value={gbp(playerIncome)} />
+                <Stat label="Extra income" value={gbp(active.extra_income_gbp)} />
+                <Stat label="Costs" value={gbp(active.costs_gbp)} />
+                <Stat label="Projected result" value={gbp(total)} />
+              </div>
+              <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-3">
+                <Card className="bg-card/60 border-border/60 p-4 space-y-3">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div><Label>Name</Label><EditableTextField value={active.name} editable={editable} onSave={v => updateProjection({ name: v || "Untitled projection" })} /></div>
+                    <div><Label>Scenario</Label><Select value={active.scenario} disabled={!editable} onValueChange={v => updateProjection({ scenario: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="badly">Badly</SelectItem><SelectItem value="expected">Expected</SelectItem><SelectItem value="better">Better than expected</SelectItem><SelectItem value="custom">Custom</SelectItem></SelectContent></Select></div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div><Label>Extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
+                    <div><Label>Costs</Label><InlineMoneyCell value={active.costs_gbp} editable={editable} onSave={(v) => updateProjection({ costs_gbp: v || 0 })} /></div>
+                  </div>
+                  <div><Label>Notes</Label><EditableTextField value={active.notes} editable={editable} multiline onSave={v => updateProjection({ notes: v })} /></div>
+                </Card>
+                <Card className="bg-card/60 border-border/60 p-4 space-y-3">
+                  <Label>Add player</Label>
+                  <Select disabled={!editable} onValueChange={addPlayer} value=""><SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger><SelectContent>{availablePlayers.filter(p => !rows.some(r => r.player_id === p.id)).map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
+                  {editable && <Button variant="destructive" size="sm" onClick={() => active && write("delete", "investor_projections", { id: active.id })}><Trash2 className="w-4 h-4 mr-1" />Delete projection</Button>}
+                </Card>
+              </div>
+              <div className="rounded border border-border/40 overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left px-3 py-2">Player</th><th className="text-left px-3 py-2">Status</th><th className="text-right px-3 py-2">Income</th><th className="text-left px-3 py-2">Notes</th><th /></tr></thead>
+                  <tbody className="divide-y divide-border/40">
+                    {rows.length === 0 ? <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No players in this projection.</td></tr> : rows.map((row, idx) => {
+                      const p = playerMap.get(row.player_id);
+                      return <tr key={`${row.player_id}-${idx}`}><td className="px-3 py-2 font-medium">{p?.name || "Unknown player"}</td><td className="px-3 py-2 text-muted-foreground">{(p?.representation_status || "—").replace(/_/g, " ")}</td><td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateRows(rows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td><td className="px-3 py-2"><EditableTextField value={row.notes || ""} editable={editable} onSave={v => updateRows(rows.map((r, i) => i === idx ? { ...r, notes: v } : r))} /></td><td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateRows(rows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td></tr>;
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
 // ---------- Prospect Board (staff-style cards with priority colours) ----------
 const PRIORITY_COLOR = { high: "hsl(0,70%,50%)", medium: "hsl(43,49%,61%)", low: "hsl(140,50%,50%)", null: "hsl(0,0%,40%)" } as any;
 const AGE_GROUP_LABEL = { A: "First Team", B: "U21", C: "U18", D: "U16" } as const;
@@ -2036,6 +2139,7 @@ const InvestorsPortal = () => {
     staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
     overviewSections: OverviewSectionData[]; overviewCards: OverviewCardData[];
     invoices: InvoiceRow[]; taskNotifications: NotificationRow[];
+    projections: ProjectionRow[];
     scoutingReports: any[]; outreachYouth: any[]; outreachPro: any[];
     profiles: ProfileRow[];
     isAdmin: boolean;
@@ -2106,6 +2210,7 @@ const InvestorsPortal = () => {
         })),
         invoices: dd.invoices || [],
         taskNotifications: dd.taskNotifications || [],
+        projections: (dd.projections || []).map((p: any) => ({ ...p, player_rows: Array.isArray(p.player_rows) ? p.player_rows : [] })),
         scoutingReports: dd.scoutingReports || [],
         outreachYouth: dd.outreachYouth || [],
         outreachPro: dd.outreachPro || [],
@@ -2499,6 +2604,7 @@ const InvestorsPortal = () => {
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} players={data.players} />}
+                  {active === "projections" && <Projections projections={data.projections} players={data.players} editable={canEdit} write={writeOp} />}
                   {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} editable={canEdit} onSave={savePlayerFinance} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
