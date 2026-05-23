@@ -298,6 +298,21 @@ const InlineMoneyCell = ({ value, editable, onSave }: { value: number | null; ed
   );
 };
 
+const EditableTextField = ({ value, editable, onSave, multiline = false, placeholder }: {
+  value: string | null | undefined; editable: boolean; onSave: (v: string) => Promise<void> | void;
+  multiline?: boolean; placeholder?: string;
+}) => {
+  const [val, setVal] = useState(value || "");
+  useEffect(() => { setVal(value || ""); }, [value]);
+  const commit = async () => {
+    if (val !== (value || "")) await onSave(val);
+  };
+  if (multiline) {
+    return <Textarea value={val} disabled={!editable} placeholder={placeholder} onChange={e => setVal(e.target.value)} onBlur={commit} />;
+  }
+  return <Input value={val} disabled={!editable} placeholder={placeholder} onChange={e => setVal(e.target.value)} onBlur={commit} />;
+};
+
 const ContractBadge = ({ end }: { end: string | null }) => {
   if (!end) return <span className="text-xs text-muted-foreground">No contract end</span>;
   const months = differenceInMonths(new Date(end), new Date());
