@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders as baseCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = { ...baseCorsHeaders, "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" };
+const responseHeaders = { ...corsHeaders, "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" };
 
 async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
@@ -38,7 +38,7 @@ async function resolveContractUrl(supabase: any, raw: string | null): Promise<st
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: responseHeaders });
   try {
     const body = await req.json().catch(() => ({}));
     const token = body.token || req.headers.get("x-investor-token") || "";
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     const user = await getSessionUser(supabase, token);
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...responseHeaders, "Content-Type": "application/json" },
       });
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -176,10 +176,10 @@ Deno.serve(async (req) => {
       timeItems: timeItems.data || [],
       priorityCategories: priorityCategories.data || [],
       priorityItems: priorityItems.data || [],
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...responseHeaders, "Content-Type": "application/json" },
     });
   }
 });
