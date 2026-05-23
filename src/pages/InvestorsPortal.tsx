@@ -43,7 +43,7 @@ type SectionId =
   | "overview" | "investment"
   | "represented" | "mandated" | "previously"
   | "prospects" | "playerdatabase"
-  | "contracts"
+  | "contracts" | "projections"
   | "spending" | "commission" | "invoices" | "forecast" | "salaryCap"
   | "tasks" | "activity"
   | "outreach" | "clubnetwork"
@@ -132,6 +132,12 @@ interface InvoiceRow {
   amount: number; currency: string; status: string; amount_paid: number | null;
   billing_month: string | null; description: string | null;
 }
+interface ProjectionPlayerRow { player_id: string; income_gbp: number | null; notes?: string | null; }
+interface ProjectionRow {
+  id: string; name: string; scenario: string; notes: string | null;
+  player_rows: ProjectionPlayerRow[]; extra_income_gbp: number; costs_gbp: number;
+  display_order: number; created_at: string; updated_at: string;
+}
 interface DbPlayer {
   id: string; player_name: string; position: string | null; age: number | null;
   current_club: string | null; nationality: string | null; date_of_birth: string | null;
@@ -199,6 +205,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "commission", title: "Commission", icon: TrendingUp },
     { id: "invoices", title: "Invoices", icon: FileText },
     { id: "forecast", title: "Forecast", icon: TrendingUp },
+    { id: "projections", title: "Projections", icon: Target },
     { id: "salaryCap", title: "Salary Cap", icon: Target },
   ]},
   { id: "net", title: "Network", icon: Building2, sections: [
