@@ -1,10 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders as baseCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-};
+const corsHeaders = { ...baseCorsHeaders, "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" };
 
 async function getSessionUser(supabase: any, token: string) {
   if (!token) return null;
@@ -65,7 +62,7 @@ Deno.serve(async (req) => {
       supabase.from("investor_notes").select("*").order("created_at", { ascending: false }),
       supabase.from("players")
         .select("id, name, representation_status, position, nationality, date_of_birth, visible_on_stars_page, image_url, hover_image_url, club, club_logo, league, age, contract_start_date, contract_end_date, current_salary_annual, expected_commission_annual, potential_commission_annual, commission_notes, salary_cap_overrides")
-        .in("representation_status", ["represented", "mandated", "previously_mandated"])
+        .in("representation_status", ["represented", "fuel_for_football", "mandated", "previously_mandated"])
         .order("name"),
       supabase.from("signature_contracts")
         .select("id, title, description, status, created_at, updated_at, owner_signed_at, locked_at, file_url, locked_file_url, completed_pdf_url")
