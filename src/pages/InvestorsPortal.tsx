@@ -1508,14 +1508,14 @@ const Projections = ({ projections, players, editable, write }: {
               <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-3">
                 <Card className="bg-card/60 border-border/60 p-4 space-y-3">
                   <div className="grid md:grid-cols-2 gap-3">
-                    <div><Label>Name</Label><Input value={active.name} disabled={!editable} onChange={e => updateProjection({ name: e.target.value })} /></div>
+                    <div><Label>Name</Label><EditableTextField value={active.name} editable={editable} onSave={v => updateProjection({ name: v || "Untitled projection" })} /></div>
                     <div><Label>Scenario</Label><Select value={active.scenario} disabled={!editable} onValueChange={v => updateProjection({ scenario: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="badly">Badly</SelectItem><SelectItem value="expected">Expected</SelectItem><SelectItem value="better">Better than expected</SelectItem><SelectItem value="custom">Custom</SelectItem></SelectContent></Select></div>
                   </div>
                   <div className="grid md:grid-cols-2 gap-3">
                     <div><Label>Extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
                     <div><Label>Costs</Label><InlineMoneyCell value={active.costs_gbp} editable={editable} onSave={(v) => updateProjection({ costs_gbp: v || 0 })} /></div>
                   </div>
-                  <div><Label>Notes</Label><Textarea value={active.notes || ""} disabled={!editable} onChange={e => updateProjection({ notes: e.target.value })} /></div>
+                  <div><Label>Notes</Label><EditableTextField value={active.notes} editable={editable} multiline onSave={v => updateProjection({ notes: v })} /></div>
                 </Card>
                 <Card className="bg-card/60 border-border/60 p-4 space-y-3">
                   <Label>Add player</Label>
@@ -1529,7 +1529,7 @@ const Projections = ({ projections, players, editable, write }: {
                   <tbody className="divide-y divide-border/40">
                     {rows.length === 0 ? <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No players in this projection.</td></tr> : rows.map((row, idx) => {
                       const p = playerMap.get(row.player_id);
-                      return <tr key={`${row.player_id}-${idx}`}><td className="px-3 py-2 font-medium">{p?.name || "Unknown player"}</td><td className="px-3 py-2 text-muted-foreground">{(p?.representation_status || "—").replace(/_/g, " ")}</td><td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateRows(rows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td><td className="px-3 py-2"><Input value={row.notes || ""} disabled={!editable} onChange={e => updateRows(rows.map((r, i) => i === idx ? { ...r, notes: e.target.value } : r))} /></td><td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateRows(rows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td></tr>;
+                      return <tr key={`${row.player_id}-${idx}`}><td className="px-3 py-2 font-medium">{p?.name || "Unknown player"}</td><td className="px-3 py-2 text-muted-foreground">{(p?.representation_status || "—").replace(/_/g, " ")}</td><td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateRows(rows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td><td className="px-3 py-2"><EditableTextField value={row.notes || ""} editable={editable} onSave={v => updateRows(rows.map((r, i) => i === idx ? { ...r, notes: v } : r))} /></td><td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateRows(rows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td></tr>;
                     })}
                   </tbody>
                 </table>
