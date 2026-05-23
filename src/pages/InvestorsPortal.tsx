@@ -2124,6 +2124,7 @@ const InvestorsPortal = () => {
     staffActivity: StaffActivityRow[]; prospects: ProspectRow[]; spending: SpendingRow[];
     overviewSections: OverviewSectionData[]; overviewCards: OverviewCardData[];
     invoices: InvoiceRow[]; taskNotifications: NotificationRow[];
+    projections: ProjectionRow[];
     scoutingReports: any[]; outreachYouth: any[]; outreachPro: any[];
     profiles: ProfileRow[];
     isAdmin: boolean;
@@ -2194,6 +2195,7 @@ const InvestorsPortal = () => {
         })),
         invoices: dd.invoices || [],
         taskNotifications: dd.taskNotifications || [],
+        projections: (dd.projections || []).map((p: any) => ({ ...p, player_rows: Array.isArray(p.player_rows) ? p.player_rows : [] })),
         scoutingReports: dd.scoutingReports || [],
         outreachYouth: dd.outreachYouth || [],
         outreachPro: dd.outreachPro || [],
@@ -2587,6 +2589,7 @@ const InvestorsPortal = () => {
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} players={data.players} />}
+                  {active === "projections" && <Projections projections={data.projections} players={data.players} editable={canEdit} write={writeOp} />}
                   {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} editable={canEdit} onSave={savePlayerFinance} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
