@@ -16,6 +16,7 @@ interface Settings {
   current_youth_players?: number;
   current_pro_players?: number;
 }
+interface AssignedStaff { staff_id: string; hours: number; }
 interface Allocation {
   id: string;
   time_item_id: string | null;
@@ -25,8 +26,10 @@ interface Allocation {
   day_of_week: string | null;
   days_of_week: string[] | null;
   display_order: number;
+  assigned_staff: AssignedStaff[];
 }
 interface TimeItem { id: string; title: string; category_id: string; }
+export interface CapacityStaffMember { id: string; full_name: string | null; email: string | null; roles: string[]; }
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Mon" }, { key: "tue", label: "Tue" }, { key: "wed", label: "Wed" },
@@ -104,7 +107,7 @@ const Legend = () => (
   </div>
 );
 
-export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boolean; token: string; onChange?: () => void }) => {
+export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }: { unlocked: boolean; token: string; onChange?: () => void; staffMembers?: CapacityStaffMember[] }) => {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [timeItems, setTimeItems] = useState<TimeItem[]>([]);
@@ -112,6 +115,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
   // Local view mode lets read-only viewers flip between week/day/month without saving.
   const [viewMode, setViewMode] = useState<"week" | "day" | "month">("week");
   const [focusedDay, setFocusedDay] = useState<string>("mon");
+  // "all" = combined view; otherwise a single staff_id (filter to their own hours)
+  const [staffFilter, setStaffFilter] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
@@ -124,6 +129,12 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
     setSettings({ ...settingsRow, current_youth_players: settingsRow.current_youth_players ?? 0, current_pro_players: settingsRow.current_pro_players ?? 0 });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
     setAllocations((a.data || []).map((row: any) => ({ ...row, days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [] })));
+    // Normalise assigned_staff
+    setAllocations((a.data || []).map((row: any) => ({
+      ...row,
+      days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
+      assigned_staff: Array.isArray(row.assigned_staff) ? row.assigned_staff : [],
+    })));
     setTimeItems(t.data || []);
     setLoading(false);
   };
