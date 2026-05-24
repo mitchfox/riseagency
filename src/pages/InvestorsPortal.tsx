@@ -2723,7 +2723,7 @@ const InvestorsPortal = () => {
                   )}
                   {active === "capacity" && (
                     <SectionShell icon={Activity} title="Capacity">
-                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} />
+                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} staffMembers={data.staffMembers} />
                     </SectionShell>
                   )}
                   {active === "execNotes" && (
@@ -2743,7 +2743,12 @@ const InvestorsPortal = () => {
                   )}
                   {active === "businessPlan" && (
                     <SectionShell icon={Briefcase} title="Business Plan">
-                      <BusinessPlanSection />
+                      <BusinessPlanSection investor={{
+                        initial: data.businessPlan,
+                        token,
+                        canEdit,
+                        onSaved: refresh,
+                      }} />
                     </SectionShell>
                   )}
                 </div>
