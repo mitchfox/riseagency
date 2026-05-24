@@ -1355,7 +1355,7 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
         </Tabs>
       </div>
 
-      <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
+      <SectionShell icon={Target} title={`Commission cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
         action={editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click any figure or date to edit</Badge> : undefined}
       >
         <div className="grid grid-cols-5 gap-2 mb-4">
@@ -1418,11 +1418,17 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-[11px] text-muted-foreground">
-                      <div className="flex flex-col gap-0.5">
-                        <InlineDateCell value={p.contract_start_date} editable={editable}
-                          onSave={(v) => onSave(p.id, { contract_start_date: v })} />
-                        <InlineDateCell value={p.contract_end_date} editable={editable}
-                          onSave={(v) => onSave(p.id, { contract_end_date: v })} />
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70 w-16 shrink-0">Rep. exp.</span>
+                          <InlineDateCell value={p.contract_start_date} editable={editable}
+                            onSave={(v) => onSave(p.id, { contract_start_date: v })} />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70 w-16 shrink-0">Contract</span>
+                          <InlineDateCell value={p.contract_end_date} editable={editable}
+                            onSave={(v) => onSave(p.id, { contract_end_date: v })} />
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right text-xs tabular-nums">
