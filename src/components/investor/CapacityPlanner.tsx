@@ -445,7 +445,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   <span className="flex-1 truncate">{titleFor(a)}</span>
                   <Input
                     type="number" min={0} step={0.25} className="h-7 w-16 text-right"
-                    key={`${a.id}-${staffFilter}-${hoursFor(a)}`}
+                    key={`${a.id}-${staffFilter}`}
                     defaultValue={hoursFor(a)} disabled={!unlocked}
                     onBlur={(e) => {
                       const v = Number(e.target.value) || 0;
@@ -454,7 +454,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   />
                   <span className="text-xs text-muted-foreground">h/wk</span>
                   {unlocked && (
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => call("deleteCapacityAllocation", { id: a.id })}>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => call("deleteCapacityAllocation", { id: a.id })}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
