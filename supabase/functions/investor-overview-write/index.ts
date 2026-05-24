@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
         return ok();
       }
       case "upsertCapacityAllocation": {
-        const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, days_of_week, display_order } = payload;
+        const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, days_of_week, display_order, assigned_staff } = payload;
         if (!player_type || !["youth","pro","ongoing"].includes(player_type)) return bad("player_type required");
         const row: any = {
           time_item_id: time_item_id || null,
@@ -201,6 +201,11 @@ Deno.serve(async (req) => {
           display_order: display_order ?? 999,
           updated_at: new Date().toISOString(),
         };
+        if (Array.isArray(assigned_staff)) {
+          row.assigned_staff = assigned_staff
+            .filter((s: any) => s && s.staff_id)
+            .map((s: any) => ({ staff_id: String(s.staff_id), hours: Number(s.hours) || 0 }));
+        }
         if (id) {
           const { error } = await supabase.from("investor_capacity_allocations").update(row).eq("id", id);
           if (error) return bad(error.message, 500);

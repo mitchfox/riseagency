@@ -132,11 +132,21 @@ interface InvoiceRow {
   amount: number; currency: string; status: string; amount_paid: number | null;
   billing_month: string | null; description: string | null;
 }
-interface ProjectionPlayerRow { player_id: string; income_gbp: number | null; notes?: string | null; }
+interface ProjectionPlayerRow { player_id?: string | null; custom_name?: string | null; income_gbp: number | null; notes?: string | null; }
+interface ProjectionExtraRow { label: string; income_gbp: number | null; notes?: string | null; }
 interface ProjectionRow {
   id: string; name: string; scenario: string; notes: string | null;
-  player_rows: ProjectionPlayerRow[]; extra_income_gbp: number; costs_gbp: number;
+  player_rows: ProjectionPlayerRow[]; extra_income_rows: ProjectionExtraRow[];
+  extra_income_gbp: number; costs_gbp: number;
   display_order: number; created_at: string; updated_at: string;
+}
+interface StaffMember { id: string; email: string | null; full_name: string | null; roles: string[]; }
+interface BusinessPlanRow {
+  id: string;
+  executive_summary: string | null; business_description: string | null; markets: string | null;
+  swot_strengths: string | null; swot_weaknesses: string | null; swot_opportunities: string | null;
+  swot_threats: string | null; management_personnel: string | null; products_services: string | null;
+  marketing: string | null; financial_plan: string | null;
 }
 interface DbPlayer {
   id: string; player_name: string; position: string | null; age: number | null;
@@ -206,7 +216,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "invoices", title: "Invoices", icon: FileText },
     { id: "forecast", title: "Forecast", icon: TrendingUp },
     { id: "projections", title: "Projections", icon: Target },
-    { id: "salaryCap", title: "Salary Cap", icon: Target },
+    { id: "salaryCap", title: "Commission Cap", icon: Target },
   ]},
   { id: "net", title: "Network", icon: Building2, sections: [
     { id: "clubnetwork", title: "Club Network", icon: Building2 },
@@ -1345,7 +1355,7 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
         </Tabs>
       </div>
 
-      <SectionShell icon={Target} title={`Salary cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
+      <SectionShell icon={Target} title={`Commission cap — ${mode === "guaranteed" ? "contract-locked income" : mode === "expected" ? "expected income (assumes retention + upside)" : "potential income (mandate upside, not guaranteed)"}`}
         action={editable ? <Badge variant="outline" className="border-primary text-primary text-[10px]">Click any figure or date to edit</Badge> : undefined}
       >
         <div className="grid grid-cols-5 gap-2 mb-4">
@@ -1408,11 +1418,17 @@ const SalaryCap = ({ players, invoices, editable, onSave }: {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-[11px] text-muted-foreground">
-                      <div className="flex flex-col gap-0.5">
-                        <InlineDateCell value={p.contract_start_date} editable={editable}
-                          onSave={(v) => onSave(p.id, { contract_start_date: v })} />
-                        <InlineDateCell value={p.contract_end_date} editable={editable}
-                          onSave={(v) => onSave(p.id, { contract_end_date: v })} />
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70 w-16 shrink-0">Rep. exp.</span>
+                          <InlineDateCell value={p.contract_start_date} editable={editable}
+                            onSave={(v) => onSave(p.id, { contract_start_date: v })} />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase tracking-widest text-muted-foreground/70 w-16 shrink-0">Contract</span>
+                          <InlineDateCell value={p.contract_end_date} editable={editable}
+                            onSave={(v) => onSave(p.id, { contract_end_date: v })} />
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right text-xs tabular-nums">
@@ -1472,17 +1488,29 @@ const Projections = ({ projections, players, editable, write }: {
   const playerMap = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const availablePlayers = players.filter(p => ["represented", "fuel_for_football", "mandated", "previously_mandated"].includes(p.representation_status || ""));
   const rows = Array.isArray(active?.player_rows) ? active!.player_rows : [];
+  const extraRows = Array.isArray(active?.extra_income_rows) ? active!.extra_income_rows : [];
   const playerIncome = rows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
-  const total = playerIncome + Number(active?.extra_income_gbp || 0) - Number(active?.costs_gbp || 0);
+  const extraRowsIncome = extraRows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
+  const legacyExtra = Number(active?.extra_income_gbp || 0);
+  const total = playerIncome + extraRowsIncome + legacyExtra - Number(active?.costs_gbp || 0);
   const updateProjection = (patch: Partial<ProjectionRow>) => active && write("update", "investor_projections", { id: active.id, patch });
   const updateRows = (nextRows: ProjectionPlayerRow[]) => updateProjection({ player_rows: nextRows });
+  const updateExtraRows = (nextRows: ProjectionExtraRow[]) => updateProjection({ extra_income_rows: nextRows });
   const addProjection = () => write("insert", "investor_projections", {
-    row: { name: "New projection", scenario: "expected", player_rows: [], display_order: projections.length },
+    row: { name: "New projection", scenario: "expected", player_rows: [], extra_income_rows: [], display_order: projections.length },
   });
   const addPlayer = (playerId: string) => {
     if (!active || !playerId || rows.some(r => r.player_id === playerId)) return;
     const p = playerMap.get(playerId);
-    updateRows([...rows, { player_id: playerId, income_gbp: p?.expected_commission_annual ?? 0, notes: "" }]);
+    updateRows([...rows, { player_id: playerId, custom_name: null, income_gbp: p?.expected_commission_annual ?? 0, notes: "" }]);
+  };
+  const addCustomPlayer = () => {
+    if (!active) return;
+    updateRows([...rows, { player_id: null, custom_name: "New player", income_gbp: 0, notes: "" }]);
+  };
+  const addExtraIncome = () => {
+    if (!active) return;
+    updateExtraRows([...extraRows, { label: "Club Mandate", income_gbp: 0, notes: "" }]);
   };
   return (
     <SectionShell icon={Target} title="Projections" action={editable ? <Button size="sm" onClick={addProjection} className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add projection</Button> : undefined}>
@@ -1501,7 +1529,7 @@ const Projections = ({ projections, players, editable, write }: {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Stat label="Player income" value={gbp(playerIncome)} />
-                <Stat label="Extra income" value={gbp(active.extra_income_gbp)} />
+                <Stat label="Extra income" value={gbp(extraRowsIncome + legacyExtra)} />
                 <Stat label="Costs" value={gbp(active.costs_gbp)} />
                 <Stat label="Projected result" value={gbp(total)} />
               </div>
@@ -1512,14 +1540,20 @@ const Projections = ({ projections, players, editable, write }: {
                     <div><Label>Scenario</Label><Select value={active.scenario} disabled={!editable} onValueChange={v => updateProjection({ scenario: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="badly">Badly</SelectItem><SelectItem value="expected">Expected</SelectItem><SelectItem value="better">Better than expected</SelectItem><SelectItem value="custom">Custom</SelectItem></SelectContent></Select></div>
                   </div>
                   <div className="grid md:grid-cols-2 gap-3">
-                    <div><Label>Extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
+                    <div><Label>Misc. extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
                     <div><Label>Costs</Label><InlineMoneyCell value={active.costs_gbp} editable={editable} onSave={(v) => updateProjection({ costs_gbp: v || 0 })} /></div>
                   </div>
                   <div><Label>Notes</Label><EditableTextField value={active.notes} editable={editable} multiline onSave={v => updateProjection({ notes: v })} /></div>
                 </Card>
                 <Card className="bg-card/60 border-border/60 p-4 space-y-3">
-                  <Label>Add player</Label>
+                  <Label>Add represented player</Label>
                   <Select disabled={!editable} onValueChange={addPlayer} value=""><SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger><SelectContent>{availablePlayers.filter(p => !rows.some(r => r.player_id === p.id)).map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select>
+                  {editable && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={addCustomPlayer}><Plus className="w-3.5 h-3.5 mr-1" />Custom player</Button>
+                      <Button size="sm" variant="outline" onClick={addExtraIncome}><Plus className="w-3.5 h-3.5 mr-1" />Non-player income</Button>
+                    </div>
+                  )}
                   {editable && <Button variant="destructive" size="sm" onClick={() => active && write("delete", "investor_projections", { id: active.id })}><Trash2 className="w-4 h-4 mr-1" />Delete projection</Button>}
                 </Card>
               </div>
@@ -1527,10 +1561,39 @@ const Projections = ({ projections, players, editable, write }: {
                 <table className="w-full min-w-[760px] text-sm">
                   <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left px-3 py-2">Player</th><th className="text-left px-3 py-2">Status</th><th className="text-right px-3 py-2">Income</th><th className="text-left px-3 py-2">Notes</th><th /></tr></thead>
                   <tbody className="divide-y divide-border/40">
-                    {rows.length === 0 ? <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No players in this projection.</td></tr> : rows.map((row, idx) => {
-                      const p = playerMap.get(row.player_id);
-                      return <tr key={`${row.player_id}-${idx}`}><td className="px-3 py-2 font-medium">{p?.name || "Unknown player"}</td><td className="px-3 py-2 text-muted-foreground">{(p?.representation_status || "—").replace(/_/g, " ")}</td><td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateRows(rows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td><td className="px-3 py-2"><EditableTextField value={row.notes || ""} editable={editable} onSave={v => updateRows(rows.map((r, i) => i === idx ? { ...r, notes: v } : r))} /></td><td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateRows(rows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td></tr>;
-                    })}
+                    {rows.length === 0 && extraRows.length === 0 ? <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">No rows in this projection.</td></tr> : (
+                      <>
+                        {rows.map((row, idx) => {
+                          const p = row.player_id ? playerMap.get(row.player_id) : null;
+                          const isCustom = !row.player_id;
+                          const displayName = p?.name || row.custom_name || "Custom player";
+                          return (
+                            <tr key={`pr-${idx}`}>
+                              <td className="px-3 py-2 font-medium">
+                                {isCustom
+                                  ? <EditableTextField value={row.custom_name || ""} editable={editable} onSave={v => updateRows(rows.map((r, i) => i === idx ? { ...r, custom_name: v || "Custom player" } : r))} />
+                                  : displayName}
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">{isCustom ? "Custom" : ((p?.representation_status || "—").replace(/_/g, " "))}</td>
+                              <td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateRows(rows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td>
+                              <td className="px-3 py-2"><EditableTextField value={row.notes || ""} editable={editable} onSave={v => updateRows(rows.map((r, i) => i === idx ? { ...r, notes: v } : r))} /></td>
+                              <td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateRows(rows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td>
+                            </tr>
+                          );
+                        })}
+                        {extraRows.map((row, idx) => (
+                          <tr key={`ex-${idx}`} className="bg-muted/10">
+                            <td className="px-3 py-2 font-medium">
+                              <EditableTextField value={row.label || ""} editable={editable} onSave={v => updateExtraRows(extraRows.map((r, i) => i === idx ? { ...r, label: v || "Income" } : r))} />
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground italic">Non-player income</td>
+                            <td className="px-3 py-2 text-right"><InlineMoneyCell value={row.income_gbp} editable={editable} onSave={(v) => updateExtraRows(extraRows.map((r, i) => i === idx ? { ...r, income_gbp: v } : r))} /></td>
+                            <td className="px-3 py-2"><EditableTextField value={row.notes || ""} editable={editable} onSave={v => updateExtraRows(extraRows.map((r, i) => i === idx ? { ...r, notes: v } : r))} /></td>
+                            <td className="px-3 py-2 text-right">{editable && <Button size="icon" variant="ghost" onClick={() => updateExtraRows(extraRows.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>}</td>
+                          </tr>
+                        ))}
+                      </>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -2150,6 +2213,8 @@ const InvestorsPortal = () => {
     timeItems: OpsItem[];
     priorityCategories: OpsCategory[];
     priorityItems: OpsItem[];
+    businessPlan: BusinessPlanRow | null;
+    staffMembers: StaffMember[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -2210,7 +2275,11 @@ const InvestorsPortal = () => {
         })),
         invoices: dd.invoices || [],
         taskNotifications: dd.taskNotifications || [],
-        projections: (dd.projections || []).map((p: any) => ({ ...p, player_rows: Array.isArray(p.player_rows) ? p.player_rows : [] })),
+        projections: (dd.projections || []).map((p: any) => ({
+          ...p,
+          player_rows: Array.isArray(p.player_rows) ? p.player_rows : [],
+          extra_income_rows: Array.isArray(p.extra_income_rows) ? p.extra_income_rows : [],
+        })),
         scoutingReports: dd.scoutingReports || [],
         outreachYouth: dd.outreachYouth || [],
         outreachPro: dd.outreachPro || [],
@@ -2223,6 +2292,8 @@ const InvestorsPortal = () => {
         timeItems: (dd.timeItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
         priorityCategories: dd.priorityCategories || [],
         priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
+        businessPlan: dd.businessPlan || null,
+        staffMembers: dd.staffMembers || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -2652,7 +2723,7 @@ const InvestorsPortal = () => {
                   )}
                   {active === "capacity" && (
                     <SectionShell icon={Activity} title="Capacity">
-                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} />
+                      <CapacityPlanner unlocked={canEdit} token={token} onChange={refresh} staffMembers={data.staffMembers} />
                     </SectionShell>
                   )}
                   {active === "execNotes" && (
@@ -2672,7 +2743,12 @@ const InvestorsPortal = () => {
                   )}
                   {active === "businessPlan" && (
                     <SectionShell icon={Briefcase} title="Business Plan">
-                      <BusinessPlanSection />
+                      <BusinessPlanSection investor={{
+                        initial: data.businessPlan,
+                        token,
+                        canEdit,
+                        onSaved: refresh,
+                      }} />
                     </SectionShell>
                   )}
                 </div>

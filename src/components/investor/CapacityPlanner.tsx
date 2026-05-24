@@ -16,6 +16,7 @@ interface Settings {
   current_youth_players?: number;
   current_pro_players?: number;
 }
+interface AssignedStaff { staff_id: string; hours: number; }
 interface Allocation {
   id: string;
   time_item_id: string | null;
@@ -25,8 +26,10 @@ interface Allocation {
   day_of_week: string | null;
   days_of_week: string[] | null;
   display_order: number;
+  assigned_staff: AssignedStaff[];
 }
 interface TimeItem { id: string; title: string; category_id: string; }
+export interface CapacityStaffMember { id: string; full_name: string | null; email: string | null; roles: string[]; }
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Mon" }, { key: "tue", label: "Tue" }, { key: "wed", label: "Wed" },
@@ -104,7 +107,7 @@ const Legend = () => (
   </div>
 );
 
-export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boolean; token: string; onChange?: () => void }) => {
+export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }: { unlocked: boolean; token: string; onChange?: () => void; staffMembers?: CapacityStaffMember[] }) => {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [timeItems, setTimeItems] = useState<TimeItem[]>([]);
@@ -112,6 +115,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
   // Local view mode lets read-only viewers flip between week/day/month without saving.
   const [viewMode, setViewMode] = useState<"week" | "day" | "month">("week");
   const [focusedDay, setFocusedDay] = useState<string>("mon");
+  // "all" = combined view; otherwise a single staff_id (filter to their own hours)
+  const [staffFilter, setStaffFilter] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
@@ -123,7 +128,11 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
     const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
     setSettings({ ...settingsRow, current_youth_players: settingsRow.current_youth_players ?? 0, current_pro_players: settingsRow.current_pro_players ?? 0 });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
-    setAllocations((a.data || []).map((row: any) => ({ ...row, days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [] })));
+    setAllocations((a.data || []).map((row: any) => ({
+      ...row,
+      days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
+      assigned_staff: Array.isArray(row.assigned_staff) ? row.assigned_staff : [],
+    })));
     setTimeItems(t.data || []);
     setLoading(false);
   };
@@ -137,11 +146,22 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
     return true;
   };
 
+  // Hours for an allocation depend on whether we are filtering by a specific staff member.
+  const hoursFor = (a: Allocation): number => {
+    if (staffFilter === "all") return Number(a.hours_per_week || 0);
+    const entry = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
+    return entry ? Number(entry.hours || 0) : 0;
+  };
+  // Filter allocations to those the current staff member is assigned to (or all).
+  const visibleAllocations = staffFilter === "all"
+    ? allocations
+    : allocations.filter(a => (a.assigned_staff || []).some(s => s.staff_id === staffFilter));
+
   // Allocation total counts each multi-day allocation just once for combined weekly load.
   const totals = useMemo(() => {
-    const youth = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const pro = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const ongoing = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const youth = visibleAllocations.filter(a => a.player_type === "youth").reduce((s, a) => s + hoursFor(a), 0);
+    const pro = visibleAllocations.filter(a => a.player_type === "pro").reduce((s, a) => s + hoursFor(a), 0);
+    const ongoing = visibleAllocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + hoursFor(a), 0);
     const maxWeek = settings?.weekly_hours_total || 40;
     const maxMonth = settings?.monthly_hours_total || 160;
     // Effective free capacity = total weekly limit minus ongoing tasks that aren't tied to a player.
@@ -149,16 +169,70 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
     const playersYouth = youth > 0 ? Math.floor(free / youth) : 0;
     const playersPro = pro > 0 ? Math.floor(free / pro) : 0;
     return { youth, pro, ongoing, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro + ongoing };
-  }, [allocations, settings]);
+  }, [allocations, settings, staffFilter]);
 
   // Per-day load: an allocation contributes its hours_per_week to each day it covers.
   const loadForDay = (dayKey: string) =>
-    allocations.reduce((sum, a) => {
+    visibleAllocations.reduce((sum, a) => {
       const days = (a.days_of_week && a.days_of_week.length > 0)
         ? a.days_of_week
         : (a.day_of_week ? [a.day_of_week] : []);
-      return days.includes(dayKey) ? sum + Number(a.hours_per_week || 0) : sum;
+      return days.includes(dayKey) ? sum + hoursFor(a) : sum;
     }, 0);
+
+  // Save handlers --------------------------------------------------------------
+  // Edit hours from current view: in "all" view, edit hours_per_week directly;
+  // in staff view, update the staff's share and recompute hours_per_week.
+  const saveAllocationHours = async (a: Allocation, value: number) => {
+    if (!unlocked) return;
+    let next = { ...a };
+    if (staffFilter === "all") {
+      next.hours_per_week = value;
+    } else {
+      const existing = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
+      const updated = existing
+        ? (a.assigned_staff || []).map(s => s.staff_id === staffFilter ? { ...s, hours: value } : s)
+        : [...(a.assigned_staff || []), { staff_id: staffFilter, hours: value }];
+      next.assigned_staff = updated;
+      next.hours_per_week = updated.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+    }
+    await call("upsertCapacityAllocation", {
+      id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
+      player_type: next.player_type, hours_per_week: next.hours_per_week,
+      day_of_week: next.day_of_week, days_of_week: next.days_of_week,
+      assigned_staff: next.assigned_staff,
+    });
+  };
+
+  // Toggle a staff member on/off for an allocation. Equally splits the existing
+  // hours across all currently assigned members; manual edits override afterwards.
+  const toggleStaffAssignment = async (a: Allocation, staffId: string) => {
+    if (!unlocked) return;
+    const has = (a.assigned_staff || []).some(s => s.staff_id === staffId);
+    let nextStaff: AssignedStaff[];
+    if (has) {
+      nextStaff = (a.assigned_staff || []).filter(s => s.staff_id !== staffId);
+    } else {
+      nextStaff = [...(a.assigned_staff || []), { staff_id: staffId, hours: 0 }];
+    }
+    // Equal split of total task hours as a starting point
+    const total = Number(a.hours_per_week || 0);
+    if (nextStaff.length > 0) {
+      const share = total / nextStaff.length;
+      nextStaff = nextStaff.map(s => ({ ...s, hours: Number(share.toFixed(2)) }));
+    }
+    await call("upsertCapacityAllocation", {
+      id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
+      player_type: a.player_type, hours_per_week: total,
+      day_of_week: a.day_of_week, days_of_week: a.days_of_week,
+      assigned_staff: nextStaff,
+    });
+  };
+
+  const staffLabel = (id: string): string => {
+    const s = staffMembers.find(m => m.id === id);
+    return s ? (s.full_name || s.email || "Staff") : "Staff";
+  };
 
   const titleFor = (a: Allocation): string => {
     if (a.custom_label) return a.custom_label;
@@ -196,6 +270,20 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
               <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
               <SelectContent>{DAYS.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
             </Select>
+          )}
+          {staffMembers.length > 0 && (
+            <>
+              <span className="ml-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground">Staff</span>
+              <Select value={staffFilter} onValueChange={setStaffFilter}>
+                <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All staff (totals)</SelectItem>
+                  {staffMembers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.full_name || s.email || "Staff"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
           )}
         </div>
         {mode === "week" ? (
@@ -342,18 +430,27 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
                 {pt === "youth" ? "Youth Player" : pt === "pro" ? "Pro Player" : "Ongoing Tasks"}
               </h3>
               {unlocked && (
-                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", { ...p, player_type: pt })} />
+                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", {
+                  ...p,
+                  player_type: pt,
+                  // Auto-assign to current staff filter (and put all hours on them)
+                  assigned_staff: staffFilter !== "all" ? [{ staff_id: staffFilter, hours: p.hours_per_week }] : [],
+                })} />
               )}
             </div>
             <ul className="space-y-1.5">
-              {allocations.filter(a => a.player_type === pt).map(a => (
+              {visibleAllocations.filter(a => a.player_type === pt).map(a => (
                 <li key={a.id} className="rounded border border-border/60 bg-card/40 px-2.5 py-1.5 text-sm space-y-1.5">
                   <div className="flex items-center gap-2">
                   <span className="flex-1 truncate">{titleFor(a)}</span>
                   <Input
                     type="number" min={0} step={0.25} className="h-7 w-16 text-right"
-                    defaultValue={a.hours_per_week} disabled={!unlocked}
-                    onBlur={(e) => unlocked && Number(e.target.value) !== a.hours_per_week && call("upsertCapacityAllocation", { id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt, hours_per_week: Number(e.target.value), day_of_week: a.day_of_week, days_of_week: a.days_of_week })}
+                    key={`${a.id}-${staffFilter}-${hoursFor(a)}`}
+                    defaultValue={hoursFor(a)} disabled={!unlocked}
+                    onBlur={(e) => {
+                      const v = Number(e.target.value) || 0;
+                      if (v !== hoursFor(a)) saveAllocationHours(a, v);
+                    }}
                   />
                   <span className="text-xs text-muted-foreground">h/wk</span>
                   {unlocked && (
@@ -362,6 +459,32 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
                     </Button>
                   )}
                   </div>
+                  {/* Staff assignment chips (admins + marketeers) */}
+                  {staffMembers.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Staff</span>
+                      {staffMembers.map(s => {
+                        const entry = (a.assigned_staff || []).find(x => x.staff_id === s.id);
+                        const active = !!entry;
+                        return (
+                          <button
+                            key={s.id} type="button" disabled={!unlocked}
+                            onClick={() => toggleStaffAssignment(a, s.id)}
+                            title={s.full_name || s.email || "Staff"}
+                            className={`h-6 px-2 rounded text-[10px] uppercase tracking-tight border transition ${
+                              active ? "bg-primary/20 border-primary text-primary" : "bg-card/40 border-border text-muted-foreground hover:border-border/80"
+                            } ${unlocked ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                          >
+                            {(s.full_name || s.email || "?").split(" ").map(x => x[0]).join("").slice(0,2).toUpperCase()}
+                            {active ? <span className="ml-1 text-[9px] opacity-80">{Number(entry!.hours || 0).toFixed(1)}h</span> : null}
+                          </button>
+                        );
+                      })}
+                      {(a.assigned_staff || []).length === 0 && (
+                        <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-1">
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Days</span>
                     {DAYS.map(d => {
@@ -378,6 +501,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
                             call("upsertCapacityAllocation", {
                               id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt,
                               hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: Array.from(current),
+                              assigned_staff: a.assigned_staff,
                             });
                           }}
                           className={`h-6 w-7 rounded text-[10px] uppercase tracking-tight border transition ${
@@ -389,7 +513,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange }: { unlocked: boole
                   </div>
                 </li>
               ))}
-              {allocations.filter(a => a.player_type === pt).length === 0 && (
+              {visibleAllocations.filter(a => a.player_type === pt).length === 0 && (
                 <li className="text-xs text-muted-foreground italic py-2">No tasks allocated yet.</li>
               )}
             </ul>

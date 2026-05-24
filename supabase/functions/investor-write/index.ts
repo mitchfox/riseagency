@@ -8,6 +8,7 @@ const ALLOWED_TABLES = new Set([
   "investor_deals",
   "investor_notes",
   "investor_projections",
+  "business_plan",
 ]);
 
 async function getSessionUser(supabase: any, token: string) {
@@ -79,6 +80,11 @@ Deno.serve(async (req) => {
       });
     }
     if (table === "investor_projections" && !user.is_admin) {
+      return new Response(JSON.stringify({ error: "Admin only" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (table === "business_plan" && !user.is_admin) {
       return new Response(JSON.stringify({ error: "Admin only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

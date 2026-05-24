@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems, businessPlan, capacityStaffRoles] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -110,6 +110,8 @@ Deno.serve(async (req) => {
       supabase.from("investor_time_items").select("*").order("display_order", { ascending: true }),
       supabase.from("investor_priority_categories").select("*").order("display_order", { ascending: true }),
       supabase.from("investor_priority_items").select("*").order("display_order", { ascending: true }),
+      supabase.from("business_plan").select("*").order("created_at", { ascending: true }).limit(1).maybeSingle(),
+      supabase.from("user_roles").select("user_id, role").in("role", ["admin", "marketeer"]),
     ]);
 
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
@@ -147,6 +149,23 @@ Deno.serve(async (req) => {
       return a && a.category !== "training" && (a.analysis_type === "pre-match" || a.analysis_type === "post-match");
     });
 
+    // Build staff member list (admins + marketeers) for capacity assignments
+    const staffRoleMap = new Map<string, Set<string>>();
+    (capacityStaffRoles.data || []).forEach((r: any) => {
+      const set = staffRoleMap.get(r.user_id) || new Set<string>();
+      set.add(r.role);
+      staffRoleMap.set(r.user_id, set);
+    });
+    const staffMembers = (profiles.data || [])
+      .filter((p: any) => staffRoleMap.has(p.id))
+      .map((p: any) => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        roles: Array.from(staffRoleMap.get(p.id) || []),
+      }))
+      .sort((a: any, b: any) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
+
     return new Response(JSON.stringify({
       user: { ...user, is_admin: (user as any).is_admin === true },
       activity: activity.data || [],
@@ -176,6 +195,8 @@ Deno.serve(async (req) => {
       timeItems: timeItems.data || [],
       priorityCategories: priorityCategories.data || [],
       priorityItems: priorityItems.data || [],
+      businessPlan: businessPlan.data || null,
+      staffMembers,
     }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
