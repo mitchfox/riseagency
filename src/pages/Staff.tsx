@@ -11,6 +11,7 @@ import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star,
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { KeyboardShortcutsDialog } from "@/components/staff/KeyboardShortcutsDialog";
+import { StaffCommandPalette } from "@/components/staff/StaffCommandPalette";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -197,6 +198,7 @@ const Staff = () => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
   });
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
@@ -399,7 +401,12 @@ const Staff = () => {
 
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setSidebarSearchOpen((open) => !open);
+        setCommandPaletteOpen((open) => !open);
+        return;
+      }
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
         return;
       }
       if (e.key === "?" && !e.metaKey && !e.ctrlKey) {
@@ -1960,6 +1967,16 @@ const Staff = () => {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} visibleSectionIds={visibleSectionIds} />
+
+      {/* Global command palette (Cmd-K / /) */}
+      <StaffCommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        sections={categories.flatMap((c: any) =>
+          c.sections.filter((s: any) => !s.isGroupLabel).map((s: any) => ({ id: s.id, title: s.title, icon: s.icon }))
+        )}
+        onNavigateSection={(sectionId) => handleSectionToggle(sectionId)}
+      />
       
       {/* Grid Picker Dialog for new tabs */}
       <Dialog open={showGridPickerDialog} onOpenChange={setShowGridPickerDialog}>
