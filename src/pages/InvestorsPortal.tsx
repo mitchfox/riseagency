@@ -132,11 +132,21 @@ interface InvoiceRow {
   amount: number; currency: string; status: string; amount_paid: number | null;
   billing_month: string | null; description: string | null;
 }
-interface ProjectionPlayerRow { player_id: string; income_gbp: number | null; notes?: string | null; }
+interface ProjectionPlayerRow { player_id?: string | null; custom_name?: string | null; income_gbp: number | null; notes?: string | null; }
+interface ProjectionExtraRow { label: string; income_gbp: number | null; notes?: string | null; }
 interface ProjectionRow {
   id: string; name: string; scenario: string; notes: string | null;
-  player_rows: ProjectionPlayerRow[]; extra_income_gbp: number; costs_gbp: number;
+  player_rows: ProjectionPlayerRow[]; extra_income_rows: ProjectionExtraRow[];
+  extra_income_gbp: number; costs_gbp: number;
   display_order: number; created_at: string; updated_at: string;
+}
+interface StaffMember { id: string; email: string | null; full_name: string | null; roles: string[]; }
+interface BusinessPlanRow {
+  id: string;
+  executive_summary: string | null; business_description: string | null; markets: string | null;
+  swot_strengths: string | null; swot_weaknesses: string | null; swot_opportunities: string | null;
+  swot_threats: string | null; management_personnel: string | null; products_services: string | null;
+  marketing: string | null; financial_plan: string | null;
 }
 interface DbPlayer {
   id: string; player_name: string; position: string | null; age: number | null;
