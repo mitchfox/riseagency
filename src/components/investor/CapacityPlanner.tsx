@@ -430,7 +430,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
         <div className="rounded-lg border border-border bg-card/30 p-4">
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground"><Users className="h-3.5 w-3.5" /> Youth player capacity</div>
           <div className="mt-1 text-3xl font-semibold text-primary">{totals.playersYouth}</div>
-          <div className="text-xs text-muted-foreground">at {totals.youth.toFixed(1)}h per player / week</div>
+          <div className="text-xs text-muted-foreground">at {totals.youthAll.toFixed(1)}h per player / week (firm total)</div>
           <div className="mt-2 flex items-center gap-2 text-xs">
             <span className="text-muted-foreground uppercase font-bbh tracking-widest">Currently signed</span>
             <Input
@@ -451,7 +451,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
         <div className="rounded-lg border border-border bg-card/30 p-4">
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground"><Users className="h-3.5 w-3.5" /> Pro player capacity</div>
           <div className="mt-1 text-3xl font-semibold text-primary">{totals.playersPro}</div>
-          <div className="text-xs text-muted-foreground">at {totals.pro.toFixed(1)}h per player / week</div>
+          <div className="text-xs text-muted-foreground">at {totals.proAll.toFixed(1)}h per player / week (firm total)</div>
           <div className="mt-2 flex items-center gap-2 text-xs">
             <span className="text-muted-foreground uppercase font-bbh tracking-widest">Currently signed</span>
             <Input
