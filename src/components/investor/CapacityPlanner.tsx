@@ -15,6 +15,7 @@ interface Settings {
   daily_hours: Record<string, number>;
   current_youth_players?: number;
   current_pro_players?: number;
+  staff_weekly_limits?: Record<string, number>;
 }
 interface AssignedStaff { staff_id: string; hours: number; }
 interface Allocation {
@@ -126,7 +127,12 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       (supabase as any).from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
     const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
-    setSettings({ ...settingsRow, current_youth_players: settingsRow.current_youth_players ?? 0, current_pro_players: settingsRow.current_pro_players ?? 0 });
+    setSettings({
+      ...settingsRow,
+      current_youth_players: settingsRow.current_youth_players ?? 0,
+      current_pro_players: settingsRow.current_pro_players ?? 0,
+      staff_weekly_limits: settingsRow.staff_weekly_limits || {},
+    });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
     setAllocations((a.data || []).map((row: any) => ({
       ...row,
@@ -157,19 +163,34 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     ? allocations
     : allocations.filter(a => (a.assigned_staff || []).some(s => s.staff_id === staffFilter));
 
+  // Combined weekly limit = sum of every staff member's individual limit.
+  // Falls back to the legacy single weekly_hours_total when no per-staff values exist.
+  const staffLimits = settings?.staff_weekly_limits || {};
+  const combinedStaffLimit = useMemo(() => {
+    const sum = Object.values(staffLimits).reduce((acc, v) => acc + (Number(v) || 0), 0);
+    return sum > 0 ? sum : (settings?.weekly_hours_total || 0);
+  }, [staffLimits, settings?.weekly_hours_total]);
+
   // Allocation total counts each multi-day allocation just once for combined weekly load.
   const totals = useMemo(() => {
+    // Filter-aware figures drive the batteries (combined view = totals, staff view = that staff's share).
     const youth = visibleAllocations.filter(a => a.player_type === "youth").reduce((s, a) => s + hoursFor(a), 0);
     const pro = visibleAllocations.filter(a => a.player_type === "pro").reduce((s, a) => s + hoursFor(a), 0);
     const ongoing = visibleAllocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + hoursFor(a), 0);
-    const maxWeek = settings?.weekly_hours_total || 40;
+    // Player capacity is always based on combined firm-wide hours, never per-staff slices.
+    const youthAll = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const proAll = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const ongoingAll = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const maxWeek = staffFilter === "all"
+      ? combinedStaffLimit
+      : Number(staffLimits[staffFilter] || 0);
     const maxMonth = settings?.monthly_hours_total || 160;
-    // Effective free capacity = total weekly limit minus ongoing tasks that aren't tied to a player.
-    const free = Math.max(0, maxWeek - ongoing);
-    const playersYouth = youth > 0 ? Math.floor(free / youth) : 0;
-    const playersPro = pro > 0 ? Math.floor(free / pro) : 0;
-    return { youth, pro, ongoing, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro + ongoing };
-  }, [allocations, settings, staffFilter]);
+    // Effective free capacity = combined weekly limit minus combined ongoing tasks.
+    const free = Math.max(0, combinedStaffLimit - ongoingAll);
+    const playersYouth = youthAll > 0 ? Math.floor(free / youthAll) : 0;
+    const playersPro = proAll > 0 ? Math.floor(free / proAll) : 0;
+    return { youth, pro, ongoing, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro + ongoing, youthAll, proAll, ongoingAll };
+  }, [allocations, visibleAllocations, settings, staffFilter, combinedStaffLimit, staffLimits]);
 
   // Per-day load: an allocation contributes its hours_per_week to each day it covers.
   const loadForDay = (dayKey: string) =>
@@ -288,15 +309,44 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
         </div>
         {mode === "week" ? (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground uppercase font-bbh tracking-widest">Weekly limit</span>
-            <Input
-              type="number" min={0} step={1} className="h-8 w-24"
-              value={settings.weekly_hours_total}
-              disabled={!unlocked}
-              onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
-            />
+            <span className="text-muted-foreground uppercase font-bbh tracking-widest">
+              {staffFilter === "all" ? "Combined weekly limit" : "Weekly limit"}
+            </span>
+            {staffFilter === "all" ? (
+              staffMembers.length > 0 ? (
+                <span className="h-8 inline-flex items-center px-3 rounded-md border border-border bg-card/40 text-sm tabular-nums">
+                  {combinedStaffLimit.toFixed(0)}
+                </span>
+              ) : (
+                <Input
+                  type="number" min={0} step={1} className="h-8 w-24"
+                  value={settings.weekly_hours_total}
+                  disabled={!unlocked}
+                  onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
+                  onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
+                />
+              )
+            ) : (
+              <Input
+                key={`limit-${staffFilter}`}
+                type="number" min={0} step={1} className="h-8 w-24"
+                defaultValue={Number(staffLimits[staffFilter] || 0)}
+                disabled={!unlocked}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
+                onBlur={(e) => {
+                  if (!unlocked) return;
+                  const v = Math.max(0, Number(e.target.value) || 0);
+                  if (v === Number(staffLimits[staffFilter] || 0)) return;
+                  call("upsertCapacitySettings", { staff_weekly_limits: { [staffFilter]: v } });
+                }}
+              />
+            )}
             <span>hours</span>
+            {staffFilter === "all" && staffMembers.length > 0 && (
+              <span className="text-[10px] text-muted-foreground italic">
+                sum of each staff member's limit
+              </span>
+            )}
           </div>
         ) : mode === "month" ? (
           <div className="flex items-center gap-2 text-xs">
