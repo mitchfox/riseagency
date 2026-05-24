@@ -271,6 +271,20 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               <SelectContent>{DAYS.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
             </Select>
           )}
+          {staffMembers.length > 0 && (
+            <>
+              <span className="ml-2 text-xs uppercase tracking-widest font-bbh text-muted-foreground">Staff</span>
+              <Select value={staffFilter} onValueChange={setStaffFilter}>
+                <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All staff (totals)</SelectItem>
+                  {staffMembers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.full_name || s.email || "Staff"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
         {mode === "week" ? (
           <div className="flex items-center gap-2 text-xs">
