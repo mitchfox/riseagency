@@ -430,18 +430,27 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                 {pt === "youth" ? "Youth Player" : pt === "pro" ? "Pro Player" : "Ongoing Tasks"}
               </h3>
               {unlocked && (
-                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", { ...p, player_type: pt })} />
+                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", {
+                  ...p,
+                  player_type: pt,
+                  // Auto-assign to current staff filter (and put all hours on them)
+                  assigned_staff: staffFilter !== "all" ? [{ staff_id: staffFilter, hours: p.hours_per_week }] : [],
+                })} />
               )}
             </div>
             <ul className="space-y-1.5">
-              {allocations.filter(a => a.player_type === pt).map(a => (
+              {visibleAllocations.filter(a => a.player_type === pt).map(a => (
                 <li key={a.id} className="rounded border border-border/60 bg-card/40 px-2.5 py-1.5 text-sm space-y-1.5">
                   <div className="flex items-center gap-2">
                   <span className="flex-1 truncate">{titleFor(a)}</span>
                   <Input
                     type="number" min={0} step={0.25} className="h-7 w-16 text-right"
-                    defaultValue={a.hours_per_week} disabled={!unlocked}
-                    onBlur={(e) => unlocked && Number(e.target.value) !== a.hours_per_week && call("upsertCapacityAllocation", { id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt, hours_per_week: Number(e.target.value), day_of_week: a.day_of_week, days_of_week: a.days_of_week })}
+                    key={`${a.id}-${staffFilter}-${hoursFor(a)}`}
+                    defaultValue={hoursFor(a)} disabled={!unlocked}
+                    onBlur={(e) => {
+                      const v = Number(e.target.value) || 0;
+                      if (v !== hoursFor(a)) saveAllocationHours(a, v);
+                    }}
                   />
                   <span className="text-xs text-muted-foreground">h/wk</span>
                   {unlocked && (
@@ -450,6 +459,32 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                     </Button>
                   )}
                   </div>
+                  {/* Staff assignment chips (admins + marketeers) */}
+                  {staffMembers.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Staff</span>
+                      {staffMembers.map(s => {
+                        const entry = (a.assigned_staff || []).find(x => x.staff_id === s.id);
+                        const active = !!entry;
+                        return (
+                          <button
+                            key={s.id} type="button" disabled={!unlocked}
+                            onClick={() => toggleStaffAssignment(a, s.id)}
+                            title={s.full_name || s.email || "Staff"}
+                            className={`h-6 px-2 rounded text-[10px] uppercase tracking-tight border transition ${
+                              active ? "bg-primary/20 border-primary text-primary" : "bg-card/40 border-border text-muted-foreground hover:border-border/80"
+                            } ${unlocked ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                          >
+                            {(s.full_name || s.email || "?").split(" ").map(x => x[0]).join("").slice(0,2).toUpperCase()}
+                            {active ? <span className="ml-1 text-[9px] opacity-80">{Number(entry!.hours || 0).toFixed(1)}h</span> : null}
+                          </button>
+                        );
+                      })}
+                      {(a.assigned_staff || []).length === 0 && (
+                        <span className="text-[10px] text-muted-foreground italic">Unassigned</span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-1">
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Days</span>
                     {DAYS.map(d => {
@@ -466,6 +501,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                             call("upsertCapacityAllocation", {
                               id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt,
                               hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: Array.from(current),
+                              assigned_staff: a.assigned_staff,
                             });
                           }}
                           className={`h-6 w-7 rounded text-[10px] uppercase tracking-tight border transition ${
@@ -477,7 +513,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   </div>
                 </li>
               ))}
-              {allocations.filter(a => a.player_type === pt).length === 0 && (
+              {visibleAllocations.filter(a => a.player_type === pt).length === 0 && (
                 <li className="text-xs text-muted-foreground italic py-2">No tasks allocated yet.</li>
               )}
             </ul>
