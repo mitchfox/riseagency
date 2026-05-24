@@ -1967,6 +1967,16 @@ const Staff = () => {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} visibleSectionIds={visibleSectionIds} />
+
+      {/* Global command palette (Cmd-K / /) */}
+      <StaffCommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        sections={categories.flatMap((c: any) =>
+          c.sections.filter((s: any) => !s.isGroupLabel).map((s: any) => ({ id: s.id, title: s.title, icon: s.icon }))
+        )}
+        onNavigateSection={(sectionId) => handleSectionToggle(sectionId)}
+      />
       
       {/* Grid Picker Dialog for new tabs */}
       <Dialog open={showGridPickerDialog} onOpenChange={setShowGridPickerDialog}>
