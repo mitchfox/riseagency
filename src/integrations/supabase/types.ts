@@ -2410,6 +2410,7 @@ export type Database = {
           mode: string
           monthly_hours_total: number
           singleton: boolean
+          staff_weekly_limits: Json
           updated_at: string
           weekly_hours_total: number
         }
@@ -2422,6 +2423,7 @@ export type Database = {
           mode?: string
           monthly_hours_total?: number
           singleton?: boolean
+          staff_weekly_limits?: Json
           updated_at?: string
           weekly_hours_total?: number
         }
@@ -2434,6 +2436,7 @@ export type Database = {
           mode?: string
           monthly_hours_total?: number
           singleton?: boolean
+          staff_weekly_limits?: Json
           updated_at?: string
           weekly_hours_total?: number
         }

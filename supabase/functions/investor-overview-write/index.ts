@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       }
       // ---------- Capacity ----------
       case "upsertCapacitySettings": {
-        const { mode, weekly_hours_total, daily_hours, monthly_hours_total, current_youth_players, current_pro_players } = payload;
+        const { mode, weekly_hours_total, daily_hours, monthly_hours_total, current_youth_players, current_pro_players, staff_weekly_limits } = payload;
         const row: any = {};
         if (mode) row.mode = mode === "day" ? "day" : mode === "month" ? "month" : "week";
         if (weekly_hours_total != null) row.weekly_hours_total = Number(weekly_hours_total);
@@ -179,6 +179,25 @@ Deno.serve(async (req) => {
         if (current_pro_players != null) row.current_pro_players = Math.max(0, parseInt(String(current_pro_players)) || 0);
         row.updated_at = new Date().toISOString();
         const { data: existing } = await supabase.from("investor_capacity_settings").select("id").limit(1).maybeSingle();
+        // Per-staff weekly limits: deep-merge with existing record so we can update a single staff member.
+        if (staff_weekly_limits && typeof staff_weekly_limits === "object") {
+          const sanitized: Record<string, number> = {};
+          for (const [k, v] of Object.entries(staff_weekly_limits)) {
+            const n = Number(v);
+            if (Number.isFinite(n) && n >= 0) sanitized[k] = n;
+          }
+          if (existing?.id) {
+            const { data: cur } = await supabase
+              .from("investor_capacity_settings")
+              .select("staff_weekly_limits")
+              .eq("id", existing.id)
+              .maybeSingle();
+            const merged = { ...(cur?.staff_weekly_limits || {}), ...sanitized };
+            row.staff_weekly_limits = merged;
+          } else {
+            row.staff_weekly_limits = sanitized;
+          }
+        }
         if (existing?.id) {
           const { error } = await supabase.from("investor_capacity_settings").update(row).eq("id", existing.id);
           if (error) return bad(error.message, 500);
