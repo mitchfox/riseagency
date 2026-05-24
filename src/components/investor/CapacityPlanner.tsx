@@ -336,45 +336,55 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
           )}
         </div>
         {mode === "week" ? (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground uppercase font-bbh tracking-widest">
-              {staffFilter === "all" ? "Combined weekly limit" : "Weekly limit"}
-            </span>
-            {staffFilter === "all" ? (
-              staffMembers.length > 0 ? (
-                <span className="h-8 inline-flex items-center px-3 rounded-md border border-border bg-card/40 text-sm tabular-nums">
-                  {combinedStaffLimit.toFixed(0)}
-                </span>
+          <div className="flex items-center gap-3 text-xs">
+            {/* Contribution (h/wk) — always read-only, derived from allocations */}
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground uppercase font-bbh tracking-widest">
+                {staffFilter === "all" ? "Combined h/wk" : "h/wk"}
+              </span>
+              <span className="h-8 inline-flex items-center px-3 rounded-md border border-border bg-card/40 text-sm tabular-nums">
+                {(staffFilter === "all" ? combinedContribution : contributionFor(staffFilter)).toFixed(1)}
+              </span>
+            </div>
+            {/* Weekly limit — editable per staff, read-only sum in "all" */}
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground uppercase font-bbh tracking-widest">
+                {staffFilter === "all" ? "Combined limit" : "Limit"}
+              </span>
+              {staffFilter === "all" ? (
+                staffMembers.length > 0 ? (
+                  <span
+                    className="h-8 inline-flex items-center px-3 rounded-md border border-border bg-card/40 text-sm tabular-nums"
+                    title="Sum of each staff member's individual weekly limit"
+                  >
+                    {combinedStaffLimit.toFixed(0)}
+                  </span>
+                ) : (
+                  <Input
+                    type="number" min={0} step={1} className="h-8 w-24"
+                    value={settings.weekly_hours_total}
+                    disabled={!unlocked}
+                    onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
+                    onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
+                  />
+                )
               ) : (
                 <Input
+                  key={`limit-${staffFilter}-${Number(staffLimits[staffFilter] || 0)}`}
                   type="number" min={0} step={1} className="h-8 w-24"
-                  value={settings.weekly_hours_total}
+                  defaultValue={Number(staffLimits[staffFilter] || 0)}
                   disabled={!unlocked}
-                  onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
-                  onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
+                  onBlur={(e) => {
+                    if (!unlocked) return;
+                    const v = Math.max(0, Number(e.target.value) || 0);
+                    if (v === Number(staffLimits[staffFilter] || 0)) return;
+                    saveStaffWeeklyLimit(staffFilter, v);
+                  }}
                 />
-              )
-            ) : (
-              <Input
-                key={`limit-${staffFilter}`}
-                type="number" min={0} step={1} className="h-8 w-24"
-                defaultValue={Number(staffLimits[staffFilter] || 0)}
-                disabled={!unlocked}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
-                onBlur={(e) => {
-                  if (!unlocked) return;
-                  const v = Math.max(0, Number(e.target.value) || 0);
-                  if (v === Number(staffLimits[staffFilter] || 0)) return;
-                  saveStaffWeeklyLimit(staffFilter, v);
-                }}
-              />
-            )}
-            <span>hours</span>
-            {staffFilter === "all" && staffMembers.length > 0 && (
-              <span className="text-[10px] text-muted-foreground italic">
-                sum of each staff member's limit
-              </span>
-            )}
+              )}
+              <span>hours</span>
+            </div>
           </div>
         ) : mode === "month" ? (
           <div className="flex items-center gap-2 text-xs">
