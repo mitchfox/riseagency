@@ -354,7 +354,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   if (!unlocked) return;
                   const v = Math.max(0, Number(e.target.value) || 0);
                   if (v === Number(staffLimits[staffFilter] || 0)) return;
-                  call("upsertCapacitySettings", { staff_weekly_limits: { [staffFilter]: v } });
+                  saveStaffWeeklyLimit(staffFilter, v);
                 }}
               />
             )}
