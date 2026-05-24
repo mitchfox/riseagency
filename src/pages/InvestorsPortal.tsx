@@ -2213,6 +2213,8 @@ const InvestorsPortal = () => {
     timeItems: OpsItem[];
     priorityCategories: OpsCategory[];
     priorityItems: OpsItem[];
+    businessPlan: BusinessPlanRow | null;
+    staffMembers: StaffMember[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -2273,7 +2275,11 @@ const InvestorsPortal = () => {
         })),
         invoices: dd.invoices || [],
         taskNotifications: dd.taskNotifications || [],
-        projections: (dd.projections || []).map((p: any) => ({ ...p, player_rows: Array.isArray(p.player_rows) ? p.player_rows : [] })),
+        projections: (dd.projections || []).map((p: any) => ({
+          ...p,
+          player_rows: Array.isArray(p.player_rows) ? p.player_rows : [],
+          extra_income_rows: Array.isArray(p.extra_income_rows) ? p.extra_income_rows : [],
+        })),
         scoutingReports: dd.scoutingReports || [],
         outreachYouth: dd.outreachYouth || [],
         outreachPro: dd.outreachPro || [],
@@ -2286,6 +2292,8 @@ const InvestorsPortal = () => {
         timeItems: (dd.timeItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
         priorityCategories: dd.priorityCategories || [],
         priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
+        businessPlan: dd.businessPlan || null,
+        staffMembers: dd.staffMembers || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
