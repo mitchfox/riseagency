@@ -181,12 +181,23 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     : allocations.filter(a => (a.assigned_staff || []).some(s => s.staff_id === staffFilter));
 
   // Combined weekly limit = sum of every staff member's individual limit.
-  // Falls back to the legacy single weekly_hours_total when no per-staff values exist.
   const staffLimits = settings?.staff_weekly_limits || {};
   const combinedStaffLimit = useMemo(() => {
-    const sum = Object.values(staffLimits).reduce((acc, v) => acc + (Number(v) || 0), 0);
-    return sum > 0 ? sum : (settings?.weekly_hours_total || 0);
-  }, [staffLimits, settings?.weekly_hours_total]);
+    if (staffMembers.length === 0) return settings?.weekly_hours_total || 0;
+    return staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
+  }, [staffLimits, staffMembers, settings?.weekly_hours_total]);
+
+  // Per-staff CONTRIBUTION = sum of that staff's assigned hours across every allocation.
+  // Sum of every staff's contribution == total hours_per_week across all allocations.
+  const contributionFor = (staffId: string): number =>
+    allocations.reduce((sum, a) => {
+      const entry = (a.assigned_staff || []).find(s => s.staff_id === staffId);
+      return sum + (entry ? Number(entry.hours || 0) : 0);
+    }, 0);
+  const combinedContribution = useMemo(
+    () => allocations.reduce((s, a) => s + Number(a.hours_per_week || 0), 0),
+    [allocations],
+  );
 
   // Allocation total counts each multi-day allocation just once for combined weekly load.
   const totals = useMemo(() => {
