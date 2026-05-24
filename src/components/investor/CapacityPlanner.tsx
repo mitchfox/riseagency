@@ -146,11 +146,22 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     return true;
   };
 
+  // Hours for an allocation depend on whether we are filtering by a specific staff member.
+  const hoursFor = (a: Allocation): number => {
+    if (staffFilter === "all") return Number(a.hours_per_week || 0);
+    const entry = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
+    return entry ? Number(entry.hours || 0) : 0;
+  };
+  // Filter allocations to those the current staff member is assigned to (or all).
+  const visibleAllocations = staffFilter === "all"
+    ? allocations
+    : allocations.filter(a => (a.assigned_staff || []).some(s => s.staff_id === staffFilter));
+
   // Allocation total counts each multi-day allocation just once for combined weekly load.
   const totals = useMemo(() => {
-    const youth = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const pro = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const ongoing = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const youth = visibleAllocations.filter(a => a.player_type === "youth").reduce((s, a) => s + hoursFor(a), 0);
+    const pro = visibleAllocations.filter(a => a.player_type === "pro").reduce((s, a) => s + hoursFor(a), 0);
+    const ongoing = visibleAllocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + hoursFor(a), 0);
     const maxWeek = settings?.weekly_hours_total || 40;
     const maxMonth = settings?.monthly_hours_total || 160;
     // Effective free capacity = total weekly limit minus ongoing tasks that aren't tied to a player.
@@ -158,16 +169,70 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const playersYouth = youth > 0 ? Math.floor(free / youth) : 0;
     const playersPro = pro > 0 ? Math.floor(free / pro) : 0;
     return { youth, pro, ongoing, maxWeek, maxMonth, playersYouth, playersPro, total: youth + pro + ongoing };
-  }, [allocations, settings]);
+  }, [allocations, settings, staffFilter]);
 
   // Per-day load: an allocation contributes its hours_per_week to each day it covers.
   const loadForDay = (dayKey: string) =>
-    allocations.reduce((sum, a) => {
+    visibleAllocations.reduce((sum, a) => {
       const days = (a.days_of_week && a.days_of_week.length > 0)
         ? a.days_of_week
         : (a.day_of_week ? [a.day_of_week] : []);
-      return days.includes(dayKey) ? sum + Number(a.hours_per_week || 0) : sum;
+      return days.includes(dayKey) ? sum + hoursFor(a) : sum;
     }, 0);
+
+  // Save handlers --------------------------------------------------------------
+  // Edit hours from current view: in "all" view, edit hours_per_week directly;
+  // in staff view, update the staff's share and recompute hours_per_week.
+  const saveAllocationHours = async (a: Allocation, value: number) => {
+    if (!unlocked) return;
+    let next = { ...a };
+    if (staffFilter === "all") {
+      next.hours_per_week = value;
+    } else {
+      const existing = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
+      const updated = existing
+        ? (a.assigned_staff || []).map(s => s.staff_id === staffFilter ? { ...s, hours: value } : s)
+        : [...(a.assigned_staff || []), { staff_id: staffFilter, hours: value }];
+      next.assigned_staff = updated;
+      next.hours_per_week = updated.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+    }
+    await call("upsertCapacityAllocation", {
+      id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
+      player_type: next.player_type, hours_per_week: next.hours_per_week,
+      day_of_week: next.day_of_week, days_of_week: next.days_of_week,
+      assigned_staff: next.assigned_staff,
+    });
+  };
+
+  // Toggle a staff member on/off for an allocation. Equally splits the existing
+  // hours across all currently assigned members; manual edits override afterwards.
+  const toggleStaffAssignment = async (a: Allocation, staffId: string) => {
+    if (!unlocked) return;
+    const has = (a.assigned_staff || []).some(s => s.staff_id === staffId);
+    let nextStaff: AssignedStaff[];
+    if (has) {
+      nextStaff = (a.assigned_staff || []).filter(s => s.staff_id !== staffId);
+    } else {
+      nextStaff = [...(a.assigned_staff || []), { staff_id: staffId, hours: 0 }];
+    }
+    // Equal split of total task hours as a starting point
+    const total = Number(a.hours_per_week || 0);
+    if (nextStaff.length > 0) {
+      const share = total / nextStaff.length;
+      nextStaff = nextStaff.map(s => ({ ...s, hours: Number(share.toFixed(2)) }));
+    }
+    await call("upsertCapacityAllocation", {
+      id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
+      player_type: a.player_type, hours_per_week: total,
+      day_of_week: a.day_of_week, days_of_week: a.days_of_week,
+      assigned_staff: nextStaff,
+    });
+  };
+
+  const staffLabel = (id: string): string => {
+    const s = staffMembers.find(m => m.id === id);
+    return s ? (s.full_name || s.email || "Staff") : "Staff";
+  };
 
   const titleFor = (a: Allocation): string => {
     if (a.custom_label) return a.custom_label;
