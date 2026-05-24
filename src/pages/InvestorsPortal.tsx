@@ -216,7 +216,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "invoices", title: "Invoices", icon: FileText },
     { id: "forecast", title: "Forecast", icon: TrendingUp },
     { id: "projections", title: "Projections", icon: Target },
-    { id: "salaryCap", title: "Salary Cap", icon: Target },
+    { id: "salaryCap", title: "Commission Cap", icon: Target },
   ]},
   { id: "net", title: "Network", icon: Building2, sections: [
     { id: "clubnetwork", title: "Club Network", icon: Building2 },
