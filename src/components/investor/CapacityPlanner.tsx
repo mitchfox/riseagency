@@ -532,7 +532,7 @@ const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAd
   const [days, setDays] = useState<string[]>([]);
 
   if (!open) {
-    return <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setOpen(true)}><Plus className="h-3.5 w-3.5 mr-1" />Add</Button>;
+    return <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => setOpen(true)}><Plus className="h-3.5 w-3.5 mr-1" />Add</Button>;
   }
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -554,14 +554,14 @@ const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAd
           );
         })}
       </div>
-      <Button size="sm" className="h-7 px-2" onClick={async () => {
+      <Button type="button" size="sm" className="h-7 px-2" onClick={async () => {
         const okSave = await onAdd({
           time_item_id: taskId || null, custom_label: taskId ? null : (custom || "Untitled"),
           hours_per_week: Number(hours) || 0, day_of_week: null, days_of_week: days,
         });
         if (okSave) { setOpen(false); setTaskId(""); setCustom(""); setHours("1"); setDays([]); }
       }}>Save</Button>
-      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setOpen(false)}>Cancel</Button>
+      <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={() => setOpen(false)}>Cancel</Button>
     </div>
   );
 };
