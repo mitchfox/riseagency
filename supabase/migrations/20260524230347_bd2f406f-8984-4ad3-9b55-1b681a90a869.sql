@@ -1,0 +1,1 @@
+ALTER TABLE public.investor_capacity_settings ADD COLUMN IF NOT EXISTS staff_weekly_limits jsonb NOT NULL DEFAULT '{}'::jsonb;
