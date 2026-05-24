@@ -271,11 +271,16 @@ const PlayerDetail = () => {
         if (player.highlighted_match.analysis_id && report.id === player.highlighted_match.analysis_id) {
           return true;
         }
-        // Fallback to opponent name matching
+        // Fallback: opponent + date match. Two fixtures vs the same
+        // opponent on different dates must not collapse onto each other.
         if (!report.opponent) return false;
         const reportOpponent = report.opponent.toLowerCase().trim();
         const highlightOpponent = String(player.highlighted_match.away_team || "").toLowerCase().trim();
-        return reportOpponent === highlightOpponent;
+        if (reportOpponent !== highlightOpponent) return false;
+        const reportDate = String((report as any).analysis_date || "").slice(0, 10);
+        const highlightDate = String(player.highlighted_match.match_date || "").slice(0, 10);
+        if (!reportDate || !highlightDate) return false;
+        return reportDate === highlightDate;
       })
     : null;
   

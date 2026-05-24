@@ -414,12 +414,12 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
     <div className="absolute inset-0 pointer-events-none"
       style={{ backgroundImage: `url(${smudgedMarble})`, backgroundSize: "cover", backgroundPosition: "center" }} />
     <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/30 via-transparent to-black/50" />
-    <div className="relative px-5 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <Icon className="w-4 h-4 text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
-        <h2 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{title}</h2>
+    <div className="relative px-3 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <Icon className="w-4 h-4 text-primary drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] shrink-0" />
+        <h2 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] break-words">{title}</h2>
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   </div>
 );
@@ -427,7 +427,7 @@ const MarbleHeader = ({ icon: Icon, title, action }: { icon: any; title: string;
 const SectionShell = ({ icon, title, children, action }: { icon: any; title: string; children: React.ReactNode; action?: React.ReactNode }) => (
   <Card className="bg-card/80 border-border/60 overflow-hidden backdrop-blur-sm">
     <MarbleHeader icon={icon} title={title} action={action} />
-    <div className="p-5">{children}</div>
+    <div className="p-3 sm:p-5">{children}</div>
   </Card>
 );
 
