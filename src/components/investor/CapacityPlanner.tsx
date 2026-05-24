@@ -128,8 +128,6 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
     setSettings({ ...settingsRow, current_youth_players: settingsRow.current_youth_players ?? 0, current_pro_players: settingsRow.current_pro_players ?? 0 });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
-    setAllocations((a.data || []).map((row: any) => ({ ...row, days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [] })));
-    // Normalise assigned_staff
     setAllocations((a.data || []).map((row: any) => ({
       ...row,
       days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
