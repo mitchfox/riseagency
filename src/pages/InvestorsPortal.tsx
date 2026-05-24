@@ -1168,6 +1168,14 @@ const Forecast = ({ spending, invoices, players }: {
 };
 
 // ---------- Inline editable cells for Salary Cap ----------
+const getDateUrgencyClass = (value: string | null): string => {
+  if (!value) return "";
+  const days = Math.floor((new Date(value).getTime() - Date.now()) / 86400000);
+  if (days < 0) return "text-destructive font-semibold";
+  if (days <= 30) return "text-destructive font-semibold";
+  if (days <= 90) return "text-amber-500 font-semibold";
+  return "";
+};
 const InlineDateCell = ({ value, editable, onSave }: { value: string | null; editable: boolean; onSave: (v: string | null) => Promise<void> | void }) => {
   const [edit, setEdit] = useState(false);
   const [val, setVal] = useState(value ?? "");
@@ -1184,10 +1192,11 @@ const InlineDateCell = ({ value, editable, onSave }: { value: string | null; edi
         onBlur={commit} className="h-7 w-[140px] text-[11px]" />
     );
   }
+  const urgency = getDateUrgencyClass(value);
   return (
     <button type="button" onClick={() => editable && setEdit(true)}
-      className={`text-[11px] tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${value == null ? "text-muted-foreground" : ""}`}
-      title={editable ? "Click to edit" : undefined}>
+      className={`text-[11px] tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"} ${value == null ? "text-muted-foreground" : urgency}`}
+      title={editable ? "Click to edit · red <30d · amber <90d" : undefined}>
       {value ? format(new Date(value), "d MMM yyyy") : "—"}
     </button>
   );
