@@ -2352,6 +2352,7 @@ export type Database = {
       }
       investor_capacity_allocations: {
         Row: {
+          assigned_staff: Json
           created_at: string
           custom_label: string | null
           day_of_week: string | null
@@ -2364,6 +2365,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_staff?: Json
           created_at?: string
           custom_label?: string | null
           day_of_week?: string | null
@@ -2376,6 +2378,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_staff?: Json
           created_at?: string
           custom_label?: string | null
           day_of_week?: string | null
@@ -2692,6 +2695,7 @@ export type Database = {
           created_at: string
           display_order: number
           extra_income_gbp: number
+          extra_income_rows: Json
           id: string
           name: string
           notes: string | null
@@ -2704,6 +2708,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           extra_income_gbp?: number
+          extra_income_rows?: Json
           id?: string
           name?: string
           notes?: string | null
@@ -2716,6 +2721,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           extra_income_gbp?: number
+          extra_income_rows?: Json
           id?: string
           name?: string
           notes?: string | null
