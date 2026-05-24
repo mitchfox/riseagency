@@ -119,8 +119,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   // "all" = combined view; otherwise a single staff_id (filter to their own hours)
   const [staffFilter, setStaffFilter] = useState<string>("all");
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const [s, a, t] = await Promise.all([
       (supabase as any).from("investor_capacity_settings").select("*").maybeSingle(),
       (supabase as any).from("investor_capacity_allocations").select("*").order("display_order"),
@@ -140,16 +140,33 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       assigned_staff: Array.isArray(row.assigned_staff) ? row.assigned_staff : [],
     })));
     setTimeItems(t.data || []);
-    setLoading(false);
+    if (showLoading) setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  const call = async (action: string, payload: any) => {
+  // `silent` keeps the component mounted and inputs stable after save.
+  const call = async (action: string, payload: any, opts: { silent?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
-    await load();
-    onChange?.();
+    await load(false);
+    if (!opts.silent) onChange?.();
     return true;
+  };
+
+  // Dedicated handler: optimistic local update of a single staff member's weekly limit.
+  const saveStaffWeeklyLimit = async (staffId: string, hours: number) => {
+    if (!unlocked || !settings) return;
+    const v = Math.max(0, Number(hours) || 0);
+    const nextLimits = { ...(settings.staff_weekly_limits || {}), [staffId]: v };
+    setSettings({ ...settings, staff_weekly_limits: nextLimits });
+    const { data, error } = await invokeEdgeFunction("investor-overview-write", {
+      body: { token, action: "upsertCapacitySettings", payload: { staff_weekly_limits: { [staffId]: v } } },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Save failed");
+      // Revert on failure
+      await load(false);
+    }
   };
 
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
