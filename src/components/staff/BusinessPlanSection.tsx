@@ -117,13 +117,27 @@ type Row = {
   financial_plan: string | null;
 };
 
-export const BusinessPlanSection = () => {
+export interface BusinessPlanInvestorProps {
+  initial: Row | null;
+  token: string;
+  canEdit: boolean;
+  onSaved?: () => void;
+}
+
+export const BusinessPlanSection = (props: { investor?: BusinessPlanInvestorProps } = {}) => {
+  const investor = props.investor;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [row, setRow] = useState<Row | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (investor) {
+      setRow(investor.initial);
+      setDraft(investor.initial ? toDraft(investor.initial) : toDraft({} as Row));
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -161,23 +175,42 @@ export const BusinessPlanSection = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [investor?.initial?.id]);
 
   const handleBlurSave = async (field: Field["key"]) => {
-    if (!row) return;
     const next = draft[field] ?? "";
-    if ((row[field] ?? "") === next) return;
+    if (row && (row[field] ?? "") === next) return;
     setSaving(field);
-    const { error } = await supabase
-      .from("business_plan")
-      .update({ [field]: next })
-      .eq("id", row.id);
+    let error: any = null;
+    if (investor) {
+      if (!investor.canEdit) { setSaving(null); return; }
+      // Create row server-side if missing, else update
+      if (!row?.id) {
+        const { data, error: insErr } = await supabase.functions.invoke("investor-write", {
+          body: { token: investor.token, op: "insert", table: "business_plan", row: { [field]: next } },
+        });
+        error = insErr || (data as any)?.error;
+        if (!error && (data as any)?.data) {
+          setRow((data as any).data as Row);
+        }
+      } else {
+        const { data, error: updErr } = await supabase.functions.invoke("investor-write", {
+          body: { token: investor.token, op: "update", table: "business_plan", id: row.id, row: { [field]: next } },
+        });
+        error = updErr || (data as any)?.error;
+      }
+      investor.onSaved?.();
+    } else {
+      if (!row) return;
+      const res = await supabase.from("business_plan").update({ [field]: next }).eq("id", row.id);
+      error = res.error;
+    }
     setSaving(null);
     if (error) {
-      toast.error("Failed to save");
+      toast.error(typeof error === "string" ? error : (error?.message || "Failed to save"));
       return;
     }
-    setRow({ ...row, [field]: next });
+    setRow(prev => ({ ...(prev || ({} as Row)), [field]: next } as Row));
   };
 
   return (
@@ -188,19 +221,19 @@ export const BusinessPlanSection = () => {
             Business Plan
           </h2>
           <p className="text-sm text-muted-foreground">
-            The eight-part business plan. Changes save when you click outside a field.
+            The eight-part business plan. {investor && !investor.canEdit ? "Unlock admin mode to edit." : "Changes save when you click outside a field."}
           </p>
         </div>
       </div>
 
-      {loading && (
+      {loading && !investor && (
         <div className="flex items-center justify-center py-16 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           Loading business plan…
         </div>
       )}
 
-      {!loading && row && (
+      {!loading && (
         <div className="space-y-6">
           {SECTIONS.map((section) => (
             <Card key={section.number} className="border-2 border-border/60 bg-card/60">
@@ -242,6 +275,7 @@ export const BusinessPlanSection = () => {
                       onBlur={() => handleBlurSave(field.key)}
                       placeholder="Type your response here…"
                       className="resize-y"
+                      disabled={investor ? !investor.canEdit : false}
                     />
                   </div>
                 ))}
