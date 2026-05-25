@@ -52,6 +52,18 @@ type SectionId =
   | "execNotes" | "execScripts" | "execWorkflow"
   | "businessPlan" | "timeline";
 
+interface TimelineRow {
+  id: string;
+  kind: "event" | "income" | "expense" | "transfer_window";
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  amount_gbp: number | null;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
   nationality: string | null; date_of_birth: string | null; image_url: string | null;
