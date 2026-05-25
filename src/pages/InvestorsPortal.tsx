@@ -2447,6 +2447,7 @@ const InvestorsPortal = () => {
     staffMembers: StaffMember[];
     forecast: ForecastRow[];
     forecastSettings: ForecastSettingsRow | null;
+    timeline: TimelineRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
