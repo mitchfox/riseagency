@@ -2461,13 +2461,15 @@ const Timeline = ({ rows, editable, token, onChange }: {
   onChange: (next: TimelineRow[]) => void;
 }) => {
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState<{ kind: TimelineRow["kind"]; title: string; start_date: string; end_date: string; amount_gbp: string; notes: string }>(
-    { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" }
+  const [draft, setDraft] = useState<{ kind: TimelineRow["kind"]; title: string; start_date: string; end_date: string; amount_gbp: string; notes: string; goal: string }>(
+    { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "", goal: "" }
   );
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<TimelineRow | null>(null);
   const [zoom, setZoom] = useState(3); // px per day
   const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [scrubX, setScrubX] = useState<number | null>(null);
 
   const sorted = useMemo(
     () => [...rows].sort((a, b) => a.start_date.localeCompare(b.start_date)),
@@ -2500,6 +2502,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
   }, [sorted]);
 
   const dayToX = (d: Date) => Math.round((d.getTime() - rangeStart.getTime()) / 86400000) * zoom;
+  const xToDate = (x: number) => new Date(rangeStart.getTime() + (x / zoom) * 86400000);
   const width = totalDays * zoom;
 
   // Cumulative investor net balance series (one point per event with a delta)
@@ -2515,36 +2518,33 @@ const Timeline = ({ rows, editable, token, onChange }: {
     return points;
   }, [sorted, zoom, rangeStart]);
 
-  const totals = useMemo(() => {
-    let invested = 0, recouped = 0, expected = 0;
-    const today = new Date();
+  // Totals up to a given cut-off date (null = whole timeline)
+  const computeTotals = (cutoff: Date | null) => {
+    let invested = 0;     // all investor outlay (planned + actual)
+    let recouped = 0;     // investor 50% share already received
+    let expectedGross = 0; // TOTAL gross of all income/deal entries (not just 50%)
     for (const r of sorted) {
-      const d = investorDelta(r);
-      const isPast = new Date(r.start_date) <= today;
-      if (d < 0 && isPast) invested += -d;
-      else if (d > 0 && isPast) recouped += d;
-      else if (d > 0 && !isPast) expected += d;
+      const d = new Date(r.start_date);
+      const within = !cutoff || d <= cutoff;
+      const amt = Number(r.amount_gbp || 0);
+      if (r.kind === "investment" && within) invested += amt;
+      if ((r.kind === "income" || r.kind === "deal") && within) recouped += amt * INVESTOR_SHARE;
+      if (r.kind === "income" || r.kind === "deal") expectedGross += amt;
     }
-    return { invested, recouped, expected, net: recouped - invested };
-  }, [sorted]);
+    return { invested, recouped, expected: expectedGross, net: invested - recouped };
+  };
+  const totals = useMemo(() => computeTotals(null), [sorted]);
+  const scrubDate = scrubX != null ? xToDate(scrubX) : null;
+  const scrubTotals = useMemo(() => scrubDate ? computeTotals(scrubDate) : null, [scrubDate, sorted]);
 
-  // Lay out nodes into lanes to avoid overlap
-  const laneHeight = 44;
-  const laneCount = 4;
+  // One lane per entry — never overlap, regardless of date proximity or kind.
+  const laneHeight = 32;
   const placed = useMemo(() => {
-    const lanes: { until: number }[] = Array.from({ length: laneCount }, () => ({ until: -Infinity }));
     return sorted
       .filter(r => r.kind !== "transfer_window")
-      .map(r => {
-        const x = dayToX(new Date(r.start_date));
-        let lane = 0;
-        for (let i = 0; i < laneCount; i++) {
-          if (lanes[i].until + 8 < x) { lane = i; lanes[i].until = x + 140; break; }
-          if (i === laneCount - 1) { lane = i; lanes[i].until = x + 140; }
-        }
-        return { row: r, x, lane };
-      });
+      .map((r, i) => ({ row: r, x: dayToX(new Date(r.start_date)), lane: i }));
   }, [sorted, zoom, rangeStart]);
+  const laneCount = Math.max(4, placed.length);
 
   const windows = sorted.filter(r => r.kind === "transfer_window");
   const todayX = dayToX(new Date());
@@ -2585,7 +2585,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
       };
       const saved = await invoke("insert", { row });
       if (saved) onChange([...rows, saved as TimelineRow]);
-      setDraft({ kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" });
+      setDraft({ kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "", goal: "" });
       setAdding(false);
       toast.success("Added");
     } catch (e: any) {
