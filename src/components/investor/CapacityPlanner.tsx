@@ -47,6 +47,14 @@ const cleanAssignedStaff = (assigned: AssignedStaff[] = []) =>
     .filter(s => s?.staff_id)
     .map(s => ({ staff_id: s.staff_id, hours: Math.max(0, roundHours(Number(s.hours) || 0)) }));
 
+interface CapacityAllocationPayload {
+  time_item_id: string | null;
+  custom_label: string | null;
+  hours_per_week: number;
+  day_of_week: string | null;
+  days_of_week: string[];
+}
+
 const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
   const ids = staffIds.filter(Boolean);
   const target = Math.max(0, roundHours(total));
@@ -236,7 +244,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const staffLimits = settings?.staff_weekly_limits || {};
   const combinedStaffLimit = useMemo(() => {
     if (staffMembers.length === 0) return settings?.weekly_hours_total || 0;
-    return staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
+    const savedTotal = staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
+    return savedTotal > 0 ? savedTotal : (settings?.weekly_hours_total || 0);
   }, [staffLimits, staffMembers, settings?.weekly_hours_total]);
 
   // Per-staff CONTRIBUTION = sum of that staff's assigned hours across every allocation.
@@ -286,7 +295,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   // in staff view, update the staff's share and recompute hours_per_week.
   const saveAllocationHours = async (a: Allocation, value: number) => {
     if (!unlocked) return;
-    let next = { ...a };
+    const next = { ...a };
     if (staffFilter === "all") {
       const fallbackStaffIds = defaultAssignmentStaffIds();
       next.assigned_staff = reconcileAssignedStaff(value, a.assigned_staff || [], fallbackStaffIds);
@@ -333,7 +342,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     return limited.length > 0 ? limited : staffMembers.map(s => s.id);
   };
 
-  const addAllocation = async (pt: Allocation["player_type"], p: any) => {
+  const addAllocation = async (pt: Allocation["player_type"], p: CapacityAllocationPayload) => {
     const total = Math.max(0, roundHours(Number(p.hours_per_week) || 0));
     const assigned_staff = staffFilter !== "all"
       ? [{ staff_id: staffFilter, hours: total }]
