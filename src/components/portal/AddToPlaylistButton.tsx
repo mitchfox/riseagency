@@ -50,13 +50,19 @@ export const AddToPlaylistButton = ({
   const [newName, setNewName] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // Fallback: portal player sessions store their email locally.
+  const resolvedPlayerEmail = playerEmail
+    || (typeof window !== "undefined"
+      ? (localStorage.getItem("player_email") || sessionStorage.getItem("player_email") || undefined)
+      : undefined);
+
   useEffect(() => {
     if (!open || !playerId) return;
     setLoading(true);
     (async () => {
       try {
         const { data, error } = await invokeEdgeFunction("playlist-manage", {
-          body: { action: "listForPlayer", playerId, playerEmail, makerUsername, starredOnly },
+          body: { action: "listForPlayer", playerId, playerEmail: resolvedPlayerEmail, makerUsername, starredOnly },
         });
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
         setPlaylists((data as any).playlists || []);
@@ -67,13 +73,13 @@ export const AddToPlaylistButton = ({
         setLoading(false);
       }
     })();
-  }, [open, playerId, playerEmail, makerUsername, starredOnly]);
+  }, [open, playerId, resolvedPlayerEmail, makerUsername, starredOnly]);
 
   const addTo = async (pl: Playlist) => {
     setBusyId(pl.id);
     try {
       const { data, error } = await invokeEdgeFunction("playlist-manage", {
-        body: { action: "addClip", playlistId: pl.id, playerEmail, makerUsername, clip },
+        body: { action: "addClip", playlistId: pl.id, playerEmail: resolvedPlayerEmail, makerUsername, clip },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
       if ((data as any).alreadyPresent) {
@@ -97,7 +103,7 @@ export const AddToPlaylistButton = ({
     setBusyId("__create__");
     try {
       const { data, error } = await invokeEdgeFunction("playlist-manage", {
-        body: { action: "create", playerId, name: trimmed, playerEmail, makerUsername, clip, isFavourite: starredOnly },
+        body: { action: "create", playerId, name: trimmed, playerEmail: resolvedPlayerEmail, makerUsername, clip, isFavourite: starredOnly },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
       toast.success(`Created “${trimmed}” and added “${clip.name}”`);
