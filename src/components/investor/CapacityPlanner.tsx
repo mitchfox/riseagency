@@ -37,6 +37,50 @@ const DAYS: { key: string; label: string }[] = [
   { key: "thu", label: "Thu" }, { key: "fri", label: "Fri" }, { key: "sat", label: "Sat" }, { key: "sun", label: "Sun" },
 ];
 
+const roundHours = (value: number) => Math.round((Number(value) || 0) * 100) / 100;
+
+const sumAssignedHours = (assigned: AssignedStaff[] = []) =>
+  assigned.reduce((sum, s) => sum + (Number(s.hours) || 0), 0);
+
+const cleanAssignedStaff = (assigned: AssignedStaff[] = []) =>
+  assigned
+    .filter(s => s?.staff_id)
+    .map(s => ({ staff_id: s.staff_id, hours: Math.max(0, roundHours(Number(s.hours) || 0)) }));
+
+const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
+  const ids = staffIds.filter(Boolean);
+  const target = Math.max(0, roundHours(total));
+  if (ids.length === 0 || target === 0) return ids.map(staff_id => ({ staff_id, hours: 0 }));
+  const base = roundHours(target / ids.length);
+  let used = 0;
+  return ids.map((staff_id, index) => {
+    const hours = index === ids.length - 1 ? roundHours(target - used) : base;
+    used = roundHours(used + hours);
+    return { staff_id, hours };
+  });
+};
+
+const reconcileAssignedStaff = (total: number, current: AssignedStaff[] = [], fallbackStaffIds: string[] = []) => {
+  const target = Math.max(0, roundHours(total));
+  const cleaned = cleanAssignedStaff(current);
+  const ids = cleaned.length > 0 ? cleaned.map(s => s.staff_id) : fallbackStaffIds;
+  const currentTotal = sumAssignedHours(cleaned);
+  if (ids.length === 0) return [];
+  if (currentTotal <= 0) return splitHoursEvenly(target, ids);
+  let used = 0;
+  return cleaned.map((s, index) => {
+    const hours = index === cleaned.length - 1 ? roundHours(target - used) : roundHours((s.hours / currentTotal) * target);
+    used = roundHours(used + hours);
+    return { staff_id: s.staff_id, hours };
+  });
+};
+
+const allocationTotal = (allocation: Allocation) => {
+  const assigned = cleanAssignedStaff(allocation.assigned_staff || []);
+  const assignedTotal = sumAssignedHours(assigned);
+  return assigned.length > 0 ? assignedTotal : Number(allocation.hours_per_week || 0);
+};
+
 // Vertical liquid battery — animated, with wave at the top of the fill.
 const LiquidBattery = ({ used, max, label, size = "lg" }: { used: number; max: number; label: string; size?: "lg" | "sm" }) => {
   const pct = Math.max(0, Math.min(100, max > 0 ? (used / max) * 100 : 0));
