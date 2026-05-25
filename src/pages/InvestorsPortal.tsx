@@ -54,7 +54,7 @@ type SectionId =
 
 interface TimelineRow {
   id: string;
-  kind: "event" | "income" | "expense" | "transfer_window";
+  kind: "event" | "income" | "expense" | "transfer_window" | "investment" | "deal";
   title: string;
   start_date: string;
   end_date: string | null;
