@@ -248,6 +248,19 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     else if (typeof saved === "object") setSettings(normalizeSettingsRow(saved));
   };
 
+  const saveSettingsPatch = async (patch: Partial<Settings>) => {
+    if (!unlocked || !settings) return false;
+    const previous = settings;
+    setSettings({ ...settings, ...patch, staff_weekly_limits: settings.staff_weekly_limits || {} });
+    const saved = await call("upsertCapacitySettings", patch as CapacityActionPayload);
+    if (!saved) {
+      setSettings(previous);
+      return false;
+    }
+    if (typeof saved === "object") setSettings(normalizeSettingsRow(saved));
+    return true;
+  };
+
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
   const hoursFor = (a: Allocation): number => {
     if (staffFilter === "all") return allocationTotal(a);
