@@ -288,14 +288,16 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     if (!unlocked) return;
     let next = { ...a };
     if (staffFilter === "all") {
-      next.hours_per_week = value;
+      const fallbackStaffIds = staffMembers.filter(s => Number(staffLimits[s.id]) > 0).map(s => s.id);
+      next.assigned_staff = reconcileAssignedStaff(value, a.assigned_staff || [], fallbackStaffIds.length > 0 ? fallbackStaffIds : staffMembers.map(s => s.id));
+      next.hours_per_week = next.assigned_staff.length > 0 ? sumAssignedHours(next.assigned_staff) : Math.max(0, roundHours(value));
     } else {
       const existing = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
       const updated = existing
         ? (a.assigned_staff || []).map(s => s.staff_id === staffFilter ? { ...s, hours: value } : s)
         : [...(a.assigned_staff || []), { staff_id: staffFilter, hours: value }];
-      next.assigned_staff = updated;
-      next.hours_per_week = updated.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+      next.assigned_staff = cleanAssignedStaff(updated);
+      next.hours_per_week = sumAssignedHours(next.assigned_staff);
     }
     await call("upsertCapacityAllocation", {
       id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
@@ -316,12 +318,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     } else {
       nextStaff = [...(a.assigned_staff || []), { staff_id: staffId, hours: 0 }];
     }
-    // Equal split of total task hours as a starting point
-    const total = Number(a.hours_per_week || 0);
-    if (nextStaff.length > 0) {
-      const share = total / nextStaff.length;
-      nextStaff = nextStaff.map(s => ({ ...s, hours: Number(share.toFixed(2)) }));
-    }
+    const total = allocationTotal(a);
+    nextStaff = splitHoursEvenly(total, nextStaff.map(s => s.staff_id));
     await call("upsertCapacityAllocation", {
       id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
       player_type: a.player_type, hours_per_week: total,
