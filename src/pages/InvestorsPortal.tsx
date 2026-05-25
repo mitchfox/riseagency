@@ -198,6 +198,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "overview", title: "Overview", icon: LayoutDashboard },
     { id: "investment", title: "Investment", icon: Sparkles },
     { id: "businessPlan", title: "Business Plan", icon: Briefcase },
+    { id: "timeline", title: "Timeline", icon: CalendarRange },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "All Tasks", icon: CheckSquare },
