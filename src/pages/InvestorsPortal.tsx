@@ -140,6 +140,18 @@ interface ProjectionRow {
   extra_income_gbp: number; costs_gbp: number;
   display_order: number; created_at: string; updated_at: string;
 }
+interface ForecastRow {
+  id: string;
+  kind: "revenue" | "spend" | "extra_income" | "extra_expense";
+  month: string; // 'YYYY-MM-DD' first of month
+  label: string | null;
+  amount_gbp: number;
+  notes: string | null;
+}
+interface ForecastSettingsRow {
+  id: string;
+  planned_monthly_spend_gbp: number;
+}
 interface StaffMember { id: string; email: string | null; full_name: string | null; roles: string[]; }
 interface BusinessPlanRow {
   id: string;
