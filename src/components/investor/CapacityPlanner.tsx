@@ -427,7 +427,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const mode = viewMode;
   const persistMode = (next: "week" | "day" | "month") => {
     setViewMode(next);
-    if (unlocked) call("upsertCapacitySettings", { mode: next });
+    if (unlocked) saveSettingsPatch({ mode: next });
   };
 
   return (
@@ -496,7 +496,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                     value={settings.weekly_hours_total}
                     disabled={!unlocked}
                     onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
-                    onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
+                    onBlur={(e) => unlocked && saveSettingsPatch({ weekly_hours_total: Number(e.target.value) || 0 })}
                   />
                 )
               ) : (
@@ -525,7 +525,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               value={settings.monthly_hours_total}
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, monthly_hours_total: Number(e.target.value) || 0 })}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { monthly_hours_total: Number(e.target.value) || 0 })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ monthly_hours_total: Number(e.target.value) || 0 })}
             />
             <span>hours</span>
           </div>
@@ -539,7 +539,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   value={settings.daily_hours[d.key] ?? 0}
                   disabled={!unlocked}
                   onChange={(e) => setSettings({ ...settings, daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
-                  onBlur={(e) => unlocked && call("upsertCapacitySettings", { daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
+                  onBlur={(e) => unlocked && saveSettingsPatch({ daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
                 />
               </label>
             ))}
@@ -608,7 +608,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_youth_players ?? 0) > totals.playersYouth) ? "text-destructive" : "text-muted-foreground"}`}>
               {totals.playersYouth - (settings.current_youth_players ?? 0) >= 0
@@ -629,7 +629,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_pro_players ?? 0) > totals.playersPro) ? "text-destructive" : "text-muted-foreground"}`}>
               {totals.playersPro - (settings.current_pro_players ?? 0) >= 0
