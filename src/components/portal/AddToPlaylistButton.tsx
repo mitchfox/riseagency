@@ -61,6 +61,7 @@ export const AddToPlaylistButton = ({
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
         setPlaylists((data as any).playlists || []);
       } catch (e: any) {
+        console.error("[AddToPlaylistButton] list failed", e);
         toast.error(e?.message || "Could not load playlists");
       } finally {
         setLoading(false);
@@ -76,13 +77,14 @@ export const AddToPlaylistButton = ({
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
       if ((data as any).alreadyPresent) {
-        toast.info(`Already in ${pl.name}`);
+        toast.info(`Already in “${pl.name}”`);
       } else {
-        toast.success(`Added to ${pl.name}`);
+        toast.success(`Added “${clip.name}” to ${pl.name}`);
         onAdded?.();
       }
       setOpen(false);
     } catch (e: any) {
+      console.error("[AddToPlaylistButton] addClip failed", e);
       toast.error(e?.message || "Could not add to playlist");
     } finally {
       setBusyId(null);
@@ -98,12 +100,13 @@ export const AddToPlaylistButton = ({
         body: { action: "create", playerId, name: trimmed, playerEmail, makerUsername, clip, isFavourite: starredOnly },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
-      toast.success(`Created “${trimmed}” and added clip`);
+      toast.success(`Created “${trimmed}” and added “${clip.name}”`);
       setNewName("");
       setCreating(false);
       setOpen(false);
       onAdded?.();
     } catch (e: any) {
+      console.error("[AddToPlaylistButton] create failed", e);
       toast.error(e?.message || "Could not create playlist");
     } finally {
       setBusyId(null);
@@ -111,19 +114,27 @@ export const AddToPlaylistButton = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           size={size}
           variant="ghost"
           className={className}
           title={starredOnly ? "Add to a starred playlist" : "Add to playlist"}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpen((v) => !v);
+          }}
         >
           <ListPlus className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-2" onClick={(e) => e.stopPropagation()}>
+      <PopoverContent
+        className="w-72 p-2 z-[200]"
+        onClick={(e) => e.stopPropagation()}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="text-xs uppercase tracking-widest text-muted-foreground px-2 py-1">
           {starredOnly ? "Add to starred playlist" : "Add to playlist"}
         </div>
