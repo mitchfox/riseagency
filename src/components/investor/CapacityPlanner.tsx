@@ -178,22 +178,30 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       staff_weekly_limits: settingsRow.staff_weekly_limits || {},
     });
     setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
-    setAllocations((a.data || []).map((row: any) => ({
-      ...row,
-      days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
-      assigned_staff: Array.isArray(row.assigned_staff) ? row.assigned_staff : [],
-    })));
+    const loadedStaffLimits = settingsRow.staff_weekly_limits || {};
+    const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
+    const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
+    setAllocations((a.data || []).map((row: any) => {
+      const assigned = cleanAssignedStaff(Array.isArray(row.assigned_staff) ? row.assigned_staff : []);
+      const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
+      return {
+        ...row,
+        hours_per_week: reconciled.length > 0 ? sumAssignedHours(reconciled) : Number(row.hours_per_week || 0),
+        days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
+        assigned_staff: reconciled,
+      };
+    }));
     setTimeItems(t.data || []);
     if (showLoading) setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  // `silent` keeps the component mounted and inputs stable after save.
-  const call = async (action: string, payload: any, opts: { silent?: boolean } = {}) => {
+  // Capacity owns its own refresh so saves do not remount the wider portal.
+  const call = async (action: string, payload: any, opts: { notifyParent?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
     await load(false);
-    if (!opts.silent) onChange?.();
+    if (opts.notifyParent) onChange?.();
     return true;
   };
 
