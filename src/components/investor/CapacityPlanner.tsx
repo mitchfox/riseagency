@@ -56,7 +56,43 @@ interface CapacityAllocationPayload {
 }
 
 type CapacityActionPayload = Record<string, unknown>;
-type CapacityFunctionResult = { error?: string } | null;
+type CapacityFunctionResult = { ok?: boolean; error?: string; row?: unknown } | null;
+
+const cleanStaffLimits = (limits: unknown): Record<string, number> => {
+  if (!limits || typeof limits !== "object" || Array.isArray(limits)) return {};
+  return Object.entries(limits as Record<string, unknown>).reduce<Record<string, number>>((acc, [staffId, value]) => {
+    const hours = Number(value);
+    if (staffId && Number.isFinite(hours) && hours >= 0) acc[staffId] = roundHours(hours);
+    return acc;
+  }, {});
+};
+
+const normalizeAllocationRow = (row: any): Allocation => {
+  const playerType: Allocation["player_type"] = row?.player_type === "pro" || row?.player_type === "ongoing" ? row.player_type : "youth";
+  const assigned = cleanAssignedStaff(Array.isArray(row?.assigned_staff) ? row.assigned_staff : []);
+  return {
+    id: String(row?.id || crypto.randomUUID()),
+    time_item_id: row?.time_item_id || null,
+    custom_label: row?.custom_label || null,
+    player_type: playerType,
+    display_order: Number(row?.display_order ?? 999),
+    hours_per_week: assigned.length > 0 ? sumAssignedHours(assigned) : roundHours(Number(row?.hours_per_week) || 0),
+    days_of_week: Array.isArray(row?.days_of_week) ? row.days_of_week : [],
+    day_of_week: row?.day_of_week || null,
+    assigned_staff: assigned,
+  };
+};
+
+const normalizeSettingsRow = (row: any): Settings => ({
+  id: String(row?.id || ""),
+  mode: row?.mode === "day" || row?.mode === "month" ? row.mode : "week",
+  weekly_hours_total: Number(row?.weekly_hours_total ?? 40),
+  monthly_hours_total: Number(row?.monthly_hours_total ?? 160),
+  daily_hours: row?.daily_hours && typeof row.daily_hours === "object" ? row.daily_hours : { mon: 8, tue: 8, wed: 8, thu: 8, fri: 8, sat: 0, sun: 0 },
+  current_youth_players: Math.max(0, Number(row?.current_youth_players ?? 0) || 0),
+  current_pro_players: Math.max(0, Number(row?.current_pro_players ?? 0) || 0),
+  staff_weekly_limits: cleanStaffLimits(row?.staff_weekly_limits),
+});
 
 const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
   const ids = staffIds.filter(Boolean);
@@ -181,46 +217,23 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       supabase.from("investor_capacity_allocations").select("*").order("display_order"),
       supabase.from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
-    const settingsRow = (s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } }) as Settings;
-    setSettings({
-      ...settingsRow,
-      current_youth_players: settingsRow.current_youth_players ?? 0,
-      current_pro_players: settingsRow.current_pro_players ?? 0,
-      staff_weekly_limits: settingsRow.staff_weekly_limits || {},
-    });
+    const settingsRow = normalizeSettingsRow(s.data || null);
+    setSettings(settingsRow);
     setViewMode((prev) => prev || settingsRow.mode || "week");
-    const loadedStaffLimits = settingsRow.staff_weekly_limits || {};
-    const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
-    const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
-    setAllocations((a.data || []).map((row) => {
-      const playerType: Allocation["player_type"] = row.player_type === "pro" || row.player_type === "ongoing" ? row.player_type : "youth";
-      const assigned = cleanAssignedStaff((Array.isArray(row.assigned_staff) ? row.assigned_staff : []) as unknown as AssignedStaff[]);
-      const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
-      return {
-        id: row.id,
-        time_item_id: row.time_item_id,
-        custom_label: row.custom_label,
-        player_type: playerType,
-        display_order: row.display_order,
-        hours_per_week: reconciled.length > 0 ? sumAssignedHours(reconciled) : Number(row.hours_per_week || 0),
-        days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
-        day_of_week: row.day_of_week,
-        assigned_staff: reconciled,
-      };
-    }));
+    setAllocations((a.data || []).map(normalizeAllocationRow));
     setTimeItems(t.data || []);
     if (showLoading) setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
   // Capacity owns its own refresh so saves do not remount the wider portal.
-  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean } = {}) => {
+  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean; refresh?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     const result = data as CapacityFunctionResult;
     if (error || result?.error) { toast.error(result?.error || error?.message || "Save failed"); return false; }
-    await load(false);
+    if (opts.refresh) await load(false);
     if (opts.notifyParent) onChange?.();
-    return true;
+    return result?.row ?? true;
   };
 
   // Dedicated handler: optimistic local update of a single staff member's weekly limit.
@@ -228,16 +241,24 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     if (!unlocked || !settings) return;
     const v = Math.max(0, Number(hours) || 0);
     const nextLimits = { ...(settings.staff_weekly_limits || {}), [staffId]: v };
+    const previous = settings;
     setSettings({ ...settings, staff_weekly_limits: nextLimits });
-    const { data, error } = await invokeEdgeFunction("investor-overview-write", {
-      body: { token, action: "upsertCapacitySettings", payload: { staff_weekly_limits: { [staffId]: v } } },
-    });
-    const result = data as CapacityFunctionResult;
-    if (error || result?.error) {
-      toast.error(result?.error || error?.message || "Save failed");
-      // Revert on failure
-      await load(false);
+    const saved = await call("upsertCapacitySettings", { staff_weekly_limits: { [staffId]: v } });
+    if (!saved) setSettings(previous);
+    else if (typeof saved === "object") setSettings(normalizeSettingsRow(saved));
+  };
+
+  const saveSettingsPatch = async (patch: Partial<Settings>) => {
+    if (!unlocked || !settings) return false;
+    const previous = settings;
+    setSettings({ ...settings, ...patch, staff_weekly_limits: settings.staff_weekly_limits || {} });
+    const saved = await call("upsertCapacitySettings", patch as CapacityActionPayload);
+    if (!saved) {
+      setSettings(previous);
+      return false;
     }
+    if (typeof saved === "object") setSettings(normalizeSettingsRow(saved));
+    return true;
   };
 
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
@@ -255,8 +276,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const staffLimits = settings?.staff_weekly_limits || {};
   const combinedStaffLimit = useMemo(() => {
     if (staffMembers.length === 0) return settings?.weekly_hours_total || 0;
-    const savedTotal = staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
-    return savedTotal > 0 ? savedTotal : (settings?.weekly_hours_total || 0);
+    return staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
   }, [staffLimits, staffMembers, settings?.weekly_hours_total]);
 
   // Per-staff CONTRIBUTION = sum of that staff's assigned hours across every allocation.
@@ -319,12 +339,16 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       next.assigned_staff = cleanAssignedStaff(updated);
       next.hours_per_week = sumAssignedHours(next.assigned_staff);
     }
-    await call("upsertCapacityAllocation", {
+    const previous = allocations;
+    setAllocations(prev => prev.map(item => item.id === a.id ? next : item));
+    const saved = await call("upsertCapacityAllocation", {
       id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
       player_type: next.player_type, hours_per_week: next.hours_per_week,
       day_of_week: next.day_of_week, days_of_week: next.days_of_week,
       assigned_staff: next.assigned_staff,
     });
+    if (!saved) setAllocations(previous);
+    else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
   };
 
   // Toggle a staff member on/off for an allocation. Equally splits the existing
@@ -340,12 +364,17 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     }
     const total = allocationTotal(a);
     nextStaff = splitHoursEvenly(total, nextStaff.map(s => s.staff_id));
-    await call("upsertCapacityAllocation", {
+    const nextAllocation = { ...a, assigned_staff: nextStaff, hours_per_week: total };
+    const previous = allocations;
+    setAllocations(prev => prev.map(item => item.id === a.id ? nextAllocation : item));
+    const saved = await call("upsertCapacityAllocation", {
       id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
       player_type: a.player_type, hours_per_week: total,
       day_of_week: a.day_of_week, days_of_week: a.days_of_week,
       assigned_staff: nextStaff,
     });
+    if (!saved) setAllocations(previous);
+    else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
   };
 
   const defaultAssignmentStaffIds = () => {
@@ -358,12 +387,26 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const assigned_staff = staffFilter !== "all"
       ? [{ staff_id: staffFilter, hours: total }]
       : splitHoursEvenly(total, defaultAssignmentStaffIds());
-    return call("upsertCapacityAllocation", {
+    const saved = await call("upsertCapacityAllocation", {
       ...p,
       player_type: pt,
       hours_per_week: assigned_staff.length > 0 ? sumAssignedHours(assigned_staff) : total,
       assigned_staff,
     });
+    if (!saved) return false;
+    if (typeof saved === "object") {
+      const next = normalizeAllocationRow(saved);
+      setAllocations(prev => [...prev.filter(item => item.id !== next.id), next].sort((x, y) => x.display_order - y.display_order));
+    }
+    return true;
+  };
+
+  const deleteAllocation = async (id: string) => {
+    if (!unlocked) return;
+    const previous = allocations;
+    setAllocations(prev => prev.filter(item => item.id !== id));
+    const saved = await call("deleteCapacityAllocation", { id });
+    if (!saved) setAllocations(previous);
   };
 
   const staffLabel = (id: string): string => {
@@ -384,7 +427,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const mode = viewMode;
   const persistMode = (next: "week" | "day" | "month") => {
     setViewMode(next);
-    if (unlocked) call("upsertCapacitySettings", { mode: next });
+    if (unlocked) saveSettingsPatch({ mode: next });
   };
 
   return (
@@ -453,7 +496,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                     value={settings.weekly_hours_total}
                     disabled={!unlocked}
                     onChange={(e) => setSettings({ ...settings, weekly_hours_total: Number(e.target.value) || 0 })}
-                    onBlur={(e) => unlocked && call("upsertCapacitySettings", { weekly_hours_total: Number(e.target.value) || 0 })}
+                    onBlur={(e) => unlocked && saveSettingsPatch({ weekly_hours_total: Number(e.target.value) || 0 })}
                   />
                 )
               ) : (
@@ -482,7 +525,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               value={settings.monthly_hours_total}
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, monthly_hours_total: Number(e.target.value) || 0 })}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { monthly_hours_total: Number(e.target.value) || 0 })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ monthly_hours_total: Number(e.target.value) || 0 })}
             />
             <span>hours</span>
           </div>
@@ -496,7 +539,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   value={settings.daily_hours[d.key] ?? 0}
                   disabled={!unlocked}
                   onChange={(e) => setSettings({ ...settings, daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
-                  onBlur={(e) => unlocked && call("upsertCapacitySettings", { daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
+                  onBlur={(e) => unlocked && saveSettingsPatch({ daily_hours: { ...settings.daily_hours, [d.key]: Number(e.target.value) || 0 } })}
                 />
               </label>
             ))}
@@ -565,7 +608,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ current_youth_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_youth_players ?? 0) > totals.playersYouth) ? "text-destructive" : "text-muted-foreground"}`}>
               {totals.playersYouth - (settings.current_youth_players ?? 0) >= 0
@@ -586,7 +629,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
               disabled={!unlocked}
               onChange={(e) => setSettings({ ...settings, current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
-              onBlur={(e) => unlocked && call("upsertCapacitySettings", { current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
+              onBlur={(e) => unlocked && saveSettingsPatch({ current_pro_players: Math.max(0, parseInt(e.target.value) || 0) })}
             />
             <span className={`text-[11px] ${((settings.current_pro_players ?? 0) > totals.playersPro) ? "text-destructive" : "text-muted-foreground"}`}>
               {totals.playersPro - (settings.current_pro_players ?? 0) >= 0
@@ -625,7 +668,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   />
                   <span className="text-xs text-muted-foreground">h/wk</span>
                   {unlocked && (
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => call("deleteCapacityAllocation", { id: a.id })}>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteAllocation(a.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
@@ -669,10 +712,17 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                             if (!unlocked) return;
                             const current = new Set<string>(a.days_of_week || (a.day_of_week ? [a.day_of_week] : []));
                             if (current.has(d.key)) current.delete(d.key); else current.add(d.key);
+                            const nextDays = Array.from(current);
+                            const nextAllocation = { ...a, day_of_week: null, days_of_week: nextDays };
+                            const previous = allocations;
+                            setAllocations(prev => prev.map(item => item.id === a.id ? nextAllocation : item));
                             call("upsertCapacityAllocation", {
                               id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt,
-                              hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: Array.from(current),
+                              hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: nextDays,
                               assigned_staff: a.assigned_staff,
+                            }).then((saved) => {
+                              if (!saved) setAllocations(previous);
+                              else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
                             });
                           }}
                           className={`h-6 w-7 rounded text-[10px] uppercase tracking-tight border transition ${
