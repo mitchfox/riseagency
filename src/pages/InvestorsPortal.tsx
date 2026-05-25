@@ -54,7 +54,7 @@ type SectionId =
 
 interface TimelineRow {
   id: string;
-  kind: "event" | "income" | "expense" | "transfer_window";
+  kind: "event" | "income" | "expense" | "transfer_window" | "investment" | "deal";
   title: string;
   start_date: string;
   end_date: string | null;
@@ -2427,12 +2427,31 @@ const ClubNetworkView = ({ rows }: { rows: ClubContactRow[] }) => {
 };
 
 // ---------- Timeline ----------
-const TIMELINE_KINDS: { value: TimelineRow["kind"]; label: string; tone: string }[] = [
-  { value: "event", label: "Event", tone: "bg-muted/40 border-border/50 text-foreground" },
-  { value: "income", label: "Income", tone: "bg-emerald-500/10 border-emerald-500/40 text-emerald-200" },
-  { value: "expense", label: "Expense", tone: "bg-rose-500/10 border-rose-500/40 text-rose-200" },
-  { value: "transfer_window", label: "Transfer Window", tone: "bg-primary/15 border-primary/50 text-primary" },
+const INVESTOR_SHARE = 0.5;
+const TIMELINE_KINDS: {
+  value: TimelineRow["kind"];
+  label: string;
+  dot: string;          // tailwind bg for the node dot
+  ring: string;         // tailwind ring colour
+  badge: string;        // chip background
+  band?: string;        // optional full-height band background (for ranges)
+}[] = [
+  { value: "event",           label: "Milestone",       dot: "bg-foreground",      ring: "ring-foreground/30",  badge: "bg-muted/60 text-foreground border-border/60" },
+  { value: "investment",      label: "Investment In",   dot: "bg-sky-400",         ring: "ring-sky-400/40",     badge: "bg-sky-500/15 text-sky-200 border-sky-500/40" },
+  { value: "expense",         label: "Expense",         dot: "bg-rose-400",        ring: "ring-rose-400/40",    badge: "bg-rose-500/15 text-rose-200 border-rose-500/40" },
+  { value: "income",          label: "Income",          dot: "bg-emerald-400",     ring: "ring-emerald-400/40", badge: "bg-emerald-500/15 text-emerald-200 border-emerald-500/40" },
+  { value: "deal",            label: "Deal Completed",  dot: "bg-primary",         ring: "ring-primary/50",     badge: "bg-primary/20 text-primary border-primary/50" },
+  { value: "transfer_window", label: "Transfer Window", dot: "bg-primary/70",      ring: "ring-primary/30",     badge: "bg-primary/10 text-primary border-primary/40", band: "bg-primary/5 border-x border-primary/20" },
 ];
+const kindMeta = (k: string) => TIMELINE_KINDS.find(x => x.value === k) || TIMELINE_KINDS[0];
+
+// Investor net delta for a row (positive = recouped to investor, negative = invested by investor)
+const investorDelta = (r: TimelineRow): number => {
+  if (!r.amount_gbp) return 0;
+  if (r.kind === "investment") return -Number(r.amount_gbp);
+  if (r.kind === "income" || r.kind === "deal") return Number(r.amount_gbp) * INVESTOR_SHARE;
+  return 0;
+};
 
 const Timeline = ({ rows, editable, token, onChange }: {
   rows: TimelineRow[];
@@ -2445,17 +2464,102 @@ const Timeline = ({ rows, editable, token, onChange }: {
     { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" }
   );
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<TimelineRow | null>(null);
+  const [zoom, setZoom] = useState(3); // px per day
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const grouped = useMemo(() => {
-    const sorted = [...rows].sort((a, b) => a.start_date.localeCompare(b.start_date));
-    const map = new Map<string, TimelineRow[]>();
+  const sorted = useMemo(
+    () => [...rows].sort((a, b) => a.start_date.localeCompare(b.start_date)),
+    [rows]
+  );
+
+  // Compute date range with sensible padding around today
+  const { rangeStart, rangeEnd, totalDays, months } = useMemo(() => {
+    const today = new Date();
+    let min = new Date(today); min.setDate(min.getDate() - 60);
+    let max = new Date(today); max.setDate(max.getDate() + 180);
     for (const r of sorted) {
-      const key = r.start_date.slice(0, 7);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(r);
+      const s = new Date(r.start_date);
+      const e = r.end_date ? new Date(r.end_date) : s;
+      if (s < min) min = s;
+      if (e > max) max = e;
     }
-    return Array.from(map.entries());
-  }, [rows]);
+    // snap to month start/end + 1 month pad
+    const start = new Date(min.getFullYear(), min.getMonth() - 1, 1);
+    const end = new Date(max.getFullYear(), max.getMonth() + 2, 1);
+    const total = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000));
+    const ms: { date: Date; days: number }[] = [];
+    let cur = new Date(start);
+    while (cur < end) {
+      const next = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+      ms.push({ date: new Date(cur), days: Math.round((next.getTime() - cur.getTime()) / 86400000) });
+      cur = next;
+    }
+    return { rangeStart: start, rangeEnd: end, totalDays: total, months: ms };
+  }, [sorted]);
+
+  const dayToX = (d: Date) => Math.round((d.getTime() - rangeStart.getTime()) / 86400000) * zoom;
+  const width = totalDays * zoom;
+
+  // Cumulative investor net balance series (one point per event with a delta)
+  const series = useMemo(() => {
+    let cum = 0;
+    const points: { x: number; y: number; date: string; delta: number; title: string }[] = [];
+    for (const r of sorted) {
+      const d = investorDelta(r);
+      if (d === 0) continue;
+      cum += d;
+      points.push({ x: dayToX(new Date(r.start_date)), y: cum, date: r.start_date, delta: d, title: r.title });
+    }
+    return points;
+  }, [sorted, zoom, rangeStart]);
+
+  const totals = useMemo(() => {
+    let invested = 0, recouped = 0, expected = 0;
+    const today = new Date();
+    for (const r of sorted) {
+      const d = investorDelta(r);
+      const isPast = new Date(r.start_date) <= today;
+      if (d < 0 && isPast) invested += -d;
+      else if (d > 0 && isPast) recouped += d;
+      else if (d > 0 && !isPast) expected += d;
+    }
+    return { invested, recouped, expected, net: recouped - invested };
+  }, [sorted]);
+
+  // Lay out nodes into lanes to avoid overlap
+  const laneHeight = 44;
+  const laneCount = 4;
+  const placed = useMemo(() => {
+    const lanes: { until: number }[] = Array.from({ length: laneCount }, () => ({ until: -Infinity }));
+    return sorted
+      .filter(r => r.kind !== "transfer_window")
+      .map(r => {
+        const x = dayToX(new Date(r.start_date));
+        let lane = 0;
+        for (let i = 0; i < laneCount; i++) {
+          if (lanes[i].until + 8 < x) { lane = i; lanes[i].until = x + 140; break; }
+          if (i === laneCount - 1) { lane = i; lanes[i].until = x + 140; }
+        }
+        return { row: r, x, lane };
+      });
+  }, [sorted, zoom, rangeStart]);
+
+  const windows = sorted.filter(r => r.kind === "transfer_window");
+  const todayX = dayToX(new Date());
+
+  // Path for cumulative line
+  const seriesPath = useMemo(() => {
+    if (series.length === 0) return "";
+    const maxAbs = Math.max(1, ...series.map(p => Math.abs(p.y)));
+    const h = 80;
+    const mid = h / 2;
+    const pts = [{ x: 0, y: 0 }, ...series, { x: width, y: series[series.length - 1].y }];
+    return pts.map((p, i) => {
+      const y = mid - (p.y / maxAbs) * (mid - 6);
+      return `${i === 0 ? "M" : "L"} ${p.x} ${y}`;
+    }).join(" ");
+  }, [series, width]);
 
   const invoke = async (op: "insert" | "update" | "delete", body: any) => {
     const { data: r, error } = await supabase.functions.invoke("investor-write", {
@@ -2492,6 +2596,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
     try {
       const saved = await invoke("update", { id, row: patch });
       onChange(rows.map(r => r.id === id ? { ...r, ...(saved || patch) } : r));
+      setSelected(s => s && s.id === id ? { ...s, ...(saved || patch) } : s);
     } catch (e: any) { toast.error(e.message || "Save failed"); }
   };
 
@@ -2499,17 +2604,64 @@ const Timeline = ({ rows, editable, token, onChange }: {
     try {
       await invoke("delete", { id });
       onChange(rows.filter(r => r.id !== id));
+      setSelected(s => s && s.id === id ? null : s);
     } catch (e: any) { toast.error(e.message || "Delete failed"); }
   };
 
+  const scrollToToday = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: Math.max(0, todayX - el.clientWidth / 3), behavior: "smooth" });
+  };
+
+  useEffect(() => { scrollToToday(); /* eslint-disable-next-line */ }, []);
+
+  // Drag-to-scroll
+  useEffect(() => {
+    const el = scrollRef.current; if (!el) return;
+    let isDown = false, startX = 0, startScroll = 0;
+    const down = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest("[data-node]")) return;
+      isDown = true; startX = e.pageX; startScroll = el.scrollLeft;
+      el.style.cursor = "grabbing";
+    };
+    const move = (e: MouseEvent) => { if (!isDown) return; el.scrollLeft = startScroll - (e.pageX - startX); };
+    const up = () => { isDown = false; el.style.cursor = "grab"; };
+    el.addEventListener("mousedown", down);
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => { el.removeEventListener("mousedown", down); window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+  }, []);
+
+  const kpiCard = (label: string, value: string, tone: string) => (
+    <div className={`rounded-lg border px-3 py-2 ${tone}`}>
+      <div className="text-[10px] uppercase tracking-widest opacity-70 font-bbh">{label}</div>
+      <div className="text-sm font-bold font-mono mt-0.5">{value}</div>
+    </div>
+  );
+
   return (
     <SectionShell icon={CalendarRange} title={`Timeline (${rows.length})`} action={
-      editable && (
-        <Button size="sm" variant={adding ? "secondary" : "default"} onClick={() => setAdding(a => !a)}>
-          <Plus className="w-3.5 h-3.5 mr-1" /> {adding ? "Cancel" : "Add entry"}
-        </Button>
-      )
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="ghost" onClick={() => setZoom(z => Math.max(1, z - 1))}>−</Button>
+        <span className="text-xs text-muted-foreground font-mono w-10 text-center">{zoom}px/d</span>
+        <Button size="sm" variant="ghost" onClick={() => setZoom(z => Math.min(12, z + 1))}>+</Button>
+        <Button size="sm" variant="ghost" onClick={scrollToToday}>Today</Button>
+        {editable && (
+          <Button size="sm" variant={adding ? "secondary" : "default"} onClick={() => setAdding(a => !a)}>
+            <Plus className="w-3.5 h-3.5 mr-1" /> {adding ? "Cancel" : "Add entry"}
+          </Button>
+        )}
+      </div>
     }>
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+        {kpiCard("Invested by you", gbp(totals.invested), "bg-sky-500/10 border-sky-500/30 text-sky-100")}
+        {kpiCard("Recouped (your 50%)", gbp(totals.recouped), "bg-emerald-500/10 border-emerald-500/30 text-emerald-100")}
+        {kpiCard("Expected (upcoming)", gbp(totals.expected), "bg-primary/10 border-primary/30 text-primary")}
+        {kpiCard("Net position", `${totals.net >= 0 ? "+" : "−"}${gbp(Math.abs(totals.net))}`, totals.net >= 0 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-100" : "bg-rose-500/10 border-rose-500/30 text-rose-100")}
+      </div>
+
       {adding && editable && (
         <Card className="bg-card/60 border-border/60 p-3 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
@@ -2522,72 +2674,229 @@ const Timeline = ({ rows, editable, token, onChange }: {
             {draft.kind === "transfer_window" ? (
               <Input className="h-9" type="date" placeholder="End" value={draft.end_date} onChange={e => setDraft(d => ({ ...d, end_date: e.target.value }))} />
             ) : (
-              <Input className="h-9" type="number" placeholder="£ amount (optional)" value={draft.amount_gbp} onChange={e => setDraft(d => ({ ...d, amount_gbp: e.target.value }))} />
+              <Input className="h-9" type="number" placeholder={draft.kind === "investment" ? "£ invested" : draft.kind === "income" || draft.kind === "deal" ? "£ gross (you get 50%)" : "£ amount (optional)"} value={draft.amount_gbp} onChange={e => setDraft(d => ({ ...d, amount_gbp: e.target.value }))} />
             )}
             <Button size="sm" disabled={busy} onClick={handleAdd}>Save</Button>
           </div>
           <Input className="h-9 mt-2" placeholder="Notes (optional)" value={draft.notes} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
+          {(draft.kind === "income" || draft.kind === "deal") && draft.amount_gbp && !isNaN(Number(draft.amount_gbp)) && (
+            <div className="text-xs text-emerald-300 mt-2 font-mono">
+              Your share (50%): {gbp(Number(draft.amount_gbp) * INVESTOR_SHARE)}
+            </div>
+          )}
         </Card>
       )}
 
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-muted-foreground">
+        {TIMELINE_KINDS.map(k => (
+          <div key={k.value} className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${k.dot}`} />
+            <span>{k.label}</span>
+          </div>
+        ))}
+        <span className="ml-auto opacity-60">Drag to pan · click any node for details</span>
+      </div>
+
       {rows.length === 0 ? (
-        <div className="text-sm text-muted-foreground text-center py-8">No entries yet.</div>
+        <div className="text-sm text-muted-foreground text-center py-12 border border-dashed border-border/40 rounded-lg">
+          No entries yet. Add a milestone, investment, deal, or transfer window to begin the journey.
+        </div>
       ) : (
-        <div className="space-y-5">
-          {grouped.map(([month, items]) => (
-            <div key={month}>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-bbh mb-2">
-                {format(new Date(month + "-01"), "MMMM yyyy")}
+        <div
+          ref={scrollRef}
+          className="relative overflow-x-auto overflow-y-hidden rounded-lg border border-border/40 bg-gradient-to-b from-background/40 to-background/80 select-none"
+          style={{ cursor: "grab" }}
+        >
+          <div className="relative" style={{ width: `${width}px`, height: `${laneCount * laneHeight + 180}px` }}>
+            {/* Month grid */}
+            {months.map((m, i) => {
+              const x = dayToX(m.date);
+              const isQuarter = m.date.getMonth() % 3 === 0;
+              return (
+                <div key={i} className="absolute top-0 bottom-0" style={{ left: `${x}px`, width: `${m.days * zoom}px` }}>
+                  <div className={`absolute top-0 bottom-0 left-0 border-l ${isQuarter ? "border-border/40" : "border-border/15"}`} />
+                  <div className={`absolute top-1 left-1 text-[10px] font-bbh uppercase tracking-widest ${isQuarter ? "text-foreground/70" : "text-muted-foreground/50"}`}>
+                    {format(m.date, m.date.getMonth() === 0 ? "MMM yyyy" : "MMM")}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Transfer window bands */}
+            {windows.map(r => {
+              const x1 = dayToX(new Date(r.start_date));
+              const x2 = dayToX(new Date(r.end_date || r.start_date));
+              return (
+                <button
+                  key={r.id}
+                  data-node
+                  onClick={() => setSelected(r)}
+                  className="absolute top-6 bottom-24 bg-primary/8 border-x-2 border-primary/40 hover:bg-primary/15 transition-colors group"
+                  style={{ left: `${x1}px`, width: `${Math.max(2, x2 - x1)}px` }}
+                  title={r.title}
+                >
+                  <div className="absolute top-1 left-1 right-1 text-[10px] font-bbh uppercase tracking-widest text-primary truncate text-left">
+                    {r.title}
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Today marker */}
+            {todayX >= 0 && todayX <= width && (
+              <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: `${todayX}px` }}>
+                <div className="absolute top-0 bottom-0 w-px bg-primary/80" />
+                <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[9px] font-bold uppercase tracking-widest">
+                  Today
+                </div>
               </div>
-              <div className="space-y-2">
-                {items.map(r => {
-                  const tone = TIMELINE_KINDS.find(k => k.value === r.kind)?.tone || "";
-                  return (
-                    <Card key={r.id} className={`p-3 border ${tone}`}>
-                      <div className="flex items-start gap-3">
-                        <div className="text-xs font-mono w-20 shrink-0 pt-1">
-                          {format(new Date(r.start_date), "dd MMM")}
-                          {r.end_date && <div className="opacity-70">→ {format(new Date(r.end_date), "dd MMM")}</div>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          {editable ? (
-                            <Input
-                              defaultValue={r.title}
-                              className="h-7 bg-transparent border-0 px-0 text-sm font-semibold focus-visible:ring-1"
-                              onBlur={e => { if (e.target.value !== r.title) handlePatch(r.id, { title: e.target.value }); }}
-                            />
-                          ) : (
-                            <div className="text-sm font-semibold">{r.title}</div>
-                          )}
-                          <div className="flex items-center gap-3 mt-1 text-xs opacity-80">
-                            <span className="uppercase tracking-wider">{TIMELINE_KINDS.find(k => k.value === r.kind)?.label}</span>
-                            {r.amount_gbp != null && <span className="font-mono">{gbp(r.amount_gbp)}</span>}
-                          </div>
-                          {editable ? (
-                            <Input
-                              defaultValue={r.notes || ""}
-                              placeholder="Notes"
-                              className="h-7 bg-transparent border-0 px-0 text-xs opacity-80 focus-visible:ring-1 mt-1"
-                              onBlur={e => { if ((e.target.value || null) !== r.notes) handlePatch(r.id, { notes: e.target.value || null }); }}
-                            />
-                          ) : r.notes ? (
-                            <div className="text-xs opacity-80 mt-1">{r.notes}</div>
-                          ) : null}
-                        </div>
-                        {editable && (
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(r.id)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
+            )}
+
+            {/* Event nodes */}
+            {placed.map(({ row: r, x, lane }) => {
+              const m = kindMeta(r.kind);
+              const delta = investorDelta(r);
+              const top = 24 + lane * laneHeight;
+              return (
+                <button
+                  key={r.id}
+                  data-node
+                  onClick={() => setSelected(r)}
+                  className="absolute group flex items-center gap-1.5 hover:z-10"
+                  style={{ left: `${x}px`, top: `${top}px`, transform: "translateX(-6px)" }}
+                >
+                  <div className={`w-3 h-3 rounded-full ${m.dot} ring-4 ${m.ring} shadow-md group-hover:scale-125 transition-transform`} />
+                  <div className={`px-2 py-0.5 rounded border text-[10px] whitespace-nowrap ${m.badge} max-w-[160px] truncate font-medium`}>
+                    {r.title}
+                    {delta !== 0 && (
+                      <span className="ml-1 font-mono opacity-90">
+                        {delta > 0 ? "+" : "−"}{gbp(Math.abs(delta))}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Cumulative net balance chart */}
+            {series.length > 0 && (
+              <div className="absolute left-0 right-0 bottom-0" style={{ width: `${width}px`, height: "120px" }}>
+                <div className="absolute top-0 left-2 text-[10px] uppercase tracking-widest text-muted-foreground font-bbh">
+                  Your cumulative net position (50% share)
+                </div>
+                <svg width={width} height={120} className="block">
+                  <line x1={0} y1={56} x2={width} y2={56} stroke="hsl(var(--border))" strokeDasharray="2,4" />
+                  {seriesPath && (
+                    <>
+                      <path d={`${seriesPath} L ${width} 56 L 0 56 Z`} fill="hsl(var(--primary) / 0.12)" />
+                      <path d={seriesPath} fill="none" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    </>
+                  )}
+                  {series.map((p, i) => {
+                    const maxAbs = Math.max(1, ...series.map(s => Math.abs(s.y)));
+                    const y = 40 - (p.y / maxAbs) * 34;
+                    return <circle key={i} cx={p.x} cy={y} r={3} fill={p.delta > 0 ? "hsl(142 70% 50%)" : "hsl(200 90% 60%)"} stroke="hsl(var(--background))" strokeWidth={1.5} />;
+                  })}
+                </svg>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       )}
+
+      {/* Detail / edit dialog */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-2xl">
+          {selected && (() => {
+            const m = kindMeta(selected.kind);
+            const delta = investorDelta(selected);
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${m.dot}`} />
+                    <Badge variant="outline" className={m.badge}>{m.label}</Badge>
+                  </div>
+                  <DialogTitle className="text-xl">{selected.title}</DialogTitle>
+                  <DialogDescription>
+                    {format(new Date(selected.start_date), "EEEE, d MMMM yyyy")}
+                    {selected.end_date && ` → ${format(new Date(selected.end_date), "d MMMM yyyy")}`}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3">
+                  {selected.amount_gbp != null && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-md border border-border/50 p-3">
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Gross amount</div>
+                        <div className="text-lg font-bold font-mono">{gbp(selected.amount_gbp)}</div>
+                      </div>
+                      {delta !== 0 && (
+                        <div className={`rounded-md border p-3 ${delta > 0 ? "border-emerald-500/40 bg-emerald-500/5" : "border-sky-500/40 bg-sky-500/5"}`}>
+                          <div className="text-[10px] uppercase tracking-widest opacity-70">
+                            {delta > 0 ? "Your payout (50%)" : "Your outlay"}
+                          </div>
+                          <div className="text-lg font-bold font-mono">
+                            {delta > 0 ? "+" : "−"}{gbp(Math.abs(delta))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {editable ? (
+                    <>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Title</Label>
+                        <Input defaultValue={selected.title}
+                          onBlur={e => { if (e.target.value !== selected.title) handlePatch(selected.id, { title: e.target.value }); }} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Kind</Label>
+                          <Select value={selected.kind} onValueChange={(v: any) => handlePatch(selected.id, { kind: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{TIMELINE_KINDS.map(k => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Amount (£)</Label>
+                          <Input type="number" defaultValue={selected.amount_gbp ?? ""}
+                            onBlur={e => {
+                              const v = e.target.value === "" ? null : Number(e.target.value);
+                              if (v !== selected.amount_gbp) handlePatch(selected.id, { amount_gbp: v });
+                            }} />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Start</Label>
+                          <Input type="date" defaultValue={selected.start_date}
+                            onBlur={e => { if (e.target.value !== selected.start_date) handlePatch(selected.id, { start_date: e.target.value }); }} />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">End (optional)</Label>
+                          <Input type="date" defaultValue={selected.end_date ?? ""}
+                            onBlur={e => { const v = e.target.value || null; if (v !== selected.end_date) handlePatch(selected.id, { end_date: v }); }} />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Notes</Label>
+                        <Textarea defaultValue={selected.notes ?? ""}
+                          onBlur={e => { const v = e.target.value || null; if (v !== selected.notes) handlePatch(selected.id, { notes: v }); }} />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)}>
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                        </Button>
+                      </div>
+                    </>
+                  ) : selected.notes ? (
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.notes}</div>
+                  ) : null}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </SectionShell>
   );
 };
