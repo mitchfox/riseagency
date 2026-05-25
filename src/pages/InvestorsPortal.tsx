@@ -196,6 +196,7 @@ const CATEGORIES: CategoryDef[] = [
   { id: "dash", title: "Dashboard", icon: LayoutDashboard, sections: [
     { id: "overview", title: "Overview", icon: LayoutDashboard },
     { id: "investment", title: "Investment", icon: Sparkles },
+    { id: "businessPlan", title: "Business Plan", icon: Briefcase },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "All Tasks", icon: CheckSquare },
@@ -210,7 +211,6 @@ const CATEGORIES: CategoryDef[] = [
     { id: "execNotes", title: "Thought Wall", icon: Sparkles },
     { id: "execScripts", title: "Scripts", icon: FileText },
     { id: "execWorkflow", title: "Workflow", icon: Network },
-    { id: "businessPlan", title: "Business Plan", icon: Briefcase },
   ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
