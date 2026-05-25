@@ -37,6 +37,61 @@ const DAYS: { key: string; label: string }[] = [
   { key: "thu", label: "Thu" }, { key: "fri", label: "Fri" }, { key: "sat", label: "Sat" }, { key: "sun", label: "Sun" },
 ];
 
+const roundHours = (value: number) => Math.round((Number(value) || 0) * 100) / 100;
+
+const sumAssignedHours = (assigned: AssignedStaff[] = []) =>
+  assigned.reduce((sum, s) => sum + (Number(s.hours) || 0), 0);
+
+const cleanAssignedStaff = (assigned: AssignedStaff[] = []) =>
+  assigned
+    .filter(s => s?.staff_id)
+    .map(s => ({ staff_id: s.staff_id, hours: Math.max(0, roundHours(Number(s.hours) || 0)) }));
+
+interface CapacityAllocationPayload {
+  time_item_id: string | null;
+  custom_label: string | null;
+  hours_per_week: number;
+  day_of_week: string | null;
+  days_of_week: string[];
+}
+
+type CapacityActionPayload = Record<string, unknown>;
+type CapacityFunctionResult = { error?: string } | null;
+
+const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
+  const ids = staffIds.filter(Boolean);
+  const target = Math.max(0, roundHours(total));
+  if (ids.length === 0 || target === 0) return ids.map(staff_id => ({ staff_id, hours: 0 }));
+  const base = roundHours(target / ids.length);
+  let used = 0;
+  return ids.map((staff_id, index) => {
+    const hours = index === ids.length - 1 ? roundHours(target - used) : base;
+    used = roundHours(used + hours);
+    return { staff_id, hours };
+  });
+};
+
+const reconcileAssignedStaff = (total: number, current: AssignedStaff[] = [], fallbackStaffIds: string[] = []) => {
+  const target = Math.max(0, roundHours(total));
+  const cleaned = cleanAssignedStaff(current);
+  const ids = cleaned.length > 0 ? cleaned.map(s => s.staff_id) : fallbackStaffIds;
+  const currentTotal = sumAssignedHours(cleaned);
+  if (ids.length === 0) return [];
+  if (currentTotal <= 0) return splitHoursEvenly(target, ids);
+  let used = 0;
+  return cleaned.map((s, index) => {
+    const hours = index === cleaned.length - 1 ? roundHours(target - used) : roundHours((s.hours / currentTotal) * target);
+    used = roundHours(used + hours);
+    return { staff_id: s.staff_id, hours };
+  });
+};
+
+const allocationTotal = (allocation: Allocation) => {
+  const assigned = cleanAssignedStaff(allocation.assigned_staff || []);
+  const assignedTotal = sumAssignedHours(assigned);
+  return assigned.length > 0 ? assignedTotal : Number(allocation.hours_per_week || 0);
+};
+
 // Vertical liquid battery — animated, with wave at the top of the fill.
 const LiquidBattery = ({ used, max, label, size = "lg" }: { used: number; max: number; label: string; size?: "lg" | "sm" }) => {
   const pct = Math.max(0, Math.min(100, max > 0 ? (used / max) * 100 : 0));
@@ -122,34 +177,49 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     const [s, a, t] = await Promise.all([
-      (supabase as any).from("investor_capacity_settings").select("*").maybeSingle(),
-      (supabase as any).from("investor_capacity_allocations").select("*").order("display_order"),
-      (supabase as any).from("investor_time_items").select("id, title, category_id").order("display_order"),
+      supabase.from("investor_capacity_settings").select("*").maybeSingle(),
+      supabase.from("investor_capacity_allocations").select("*").order("display_order"),
+      supabase.from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
-    const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
+    const settingsRow = (s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } }) as Settings;
     setSettings({
       ...settingsRow,
       current_youth_players: settingsRow.current_youth_players ?? 0,
       current_pro_players: settingsRow.current_pro_players ?? 0,
       staff_weekly_limits: settingsRow.staff_weekly_limits || {},
     });
-    setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
-    setAllocations((a.data || []).map((row: any) => ({
-      ...row,
-      days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
-      assigned_staff: Array.isArray(row.assigned_staff) ? row.assigned_staff : [],
-    })));
+    setViewMode((prev) => prev || settingsRow.mode || "week");
+    const loadedStaffLimits = settingsRow.staff_weekly_limits || {};
+    const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
+    const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
+    setAllocations((a.data || []).map((row) => {
+      const playerType: Allocation["player_type"] = row.player_type === "pro" || row.player_type === "ongoing" ? row.player_type : "youth";
+      const assigned = cleanAssignedStaff((Array.isArray(row.assigned_staff) ? row.assigned_staff : []) as unknown as AssignedStaff[]);
+      const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
+      return {
+        id: row.id,
+        time_item_id: row.time_item_id,
+        custom_label: row.custom_label,
+        player_type: playerType,
+        display_order: row.display_order,
+        hours_per_week: reconciled.length > 0 ? sumAssignedHours(reconciled) : Number(row.hours_per_week || 0),
+        days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
+        day_of_week: row.day_of_week,
+        assigned_staff: reconciled,
+      };
+    }));
     setTimeItems(t.data || []);
     if (showLoading) setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  // `silent` keeps the component mounted and inputs stable after save.
-  const call = async (action: string, payload: any, opts: { silent?: boolean } = {}) => {
+  // Capacity owns its own refresh so saves do not remount the wider portal.
+  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
-    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
+    const result = data as CapacityFunctionResult;
+    if (error || result?.error) { toast.error(result?.error || error?.message || "Save failed"); return false; }
     await load(false);
-    if (!opts.silent) onChange?.();
+    if (opts.notifyParent) onChange?.();
     return true;
   };
 
@@ -162,8 +232,9 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const { data, error } = await invokeEdgeFunction("investor-overview-write", {
       body: { token, action: "upsertCapacitySettings", payload: { staff_weekly_limits: { [staffId]: v } } },
     });
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || error?.message || "Save failed");
+    const result = data as CapacityFunctionResult;
+    if (error || result?.error) {
+      toast.error(result?.error || error?.message || "Save failed");
       // Revert on failure
       await load(false);
     }
@@ -171,7 +242,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
 
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
   const hoursFor = (a: Allocation): number => {
-    if (staffFilter === "all") return Number(a.hours_per_week || 0);
+    if (staffFilter === "all") return allocationTotal(a);
     const entry = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
     return entry ? Number(entry.hours || 0) : 0;
   };
@@ -184,7 +255,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const staffLimits = settings?.staff_weekly_limits || {};
   const combinedStaffLimit = useMemo(() => {
     if (staffMembers.length === 0) return settings?.weekly_hours_total || 0;
-    return staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
+    const savedTotal = staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
+    return savedTotal > 0 ? savedTotal : (settings?.weekly_hours_total || 0);
   }, [staffLimits, staffMembers, settings?.weekly_hours_total]);
 
   // Per-staff CONTRIBUTION = sum of that staff's assigned hours across every allocation.
@@ -195,7 +267,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       return sum + (entry ? Number(entry.hours || 0) : 0);
     }, 0);
   const combinedContribution = useMemo(
-    () => allocations.reduce((s, a) => s + Number(a.hours_per_week || 0), 0),
+    () => allocations.reduce((s, a) => s + allocationTotal(a), 0),
     [allocations],
   );
 
@@ -206,9 +278,9 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const pro = visibleAllocations.filter(a => a.player_type === "pro").reduce((s, a) => s + hoursFor(a), 0);
     const ongoing = visibleAllocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + hoursFor(a), 0);
     // Player capacity is always based on combined firm-wide hours, never per-staff slices.
-    const youthAll = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const proAll = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const ongoingAll = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const youthAll = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + allocationTotal(a), 0);
+    const proAll = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + allocationTotal(a), 0);
+    const ongoingAll = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + allocationTotal(a), 0);
     const maxWeek = staffFilter === "all"
       ? combinedStaffLimit
       : Number(staffLimits[staffFilter] || 0);
@@ -234,16 +306,18 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   // in staff view, update the staff's share and recompute hours_per_week.
   const saveAllocationHours = async (a: Allocation, value: number) => {
     if (!unlocked) return;
-    let next = { ...a };
+    const next = { ...a };
     if (staffFilter === "all") {
-      next.hours_per_week = value;
+      const fallbackStaffIds = defaultAssignmentStaffIds();
+      next.assigned_staff = reconcileAssignedStaff(value, a.assigned_staff || [], fallbackStaffIds);
+      next.hours_per_week = next.assigned_staff.length > 0 ? sumAssignedHours(next.assigned_staff) : Math.max(0, roundHours(value));
     } else {
       const existing = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
       const updated = existing
         ? (a.assigned_staff || []).map(s => s.staff_id === staffFilter ? { ...s, hours: value } : s)
         : [...(a.assigned_staff || []), { staff_id: staffFilter, hours: value }];
-      next.assigned_staff = updated;
-      next.hours_per_week = updated.reduce((sum, s) => sum + Number(s.hours || 0), 0);
+      next.assigned_staff = cleanAssignedStaff(updated);
+      next.hours_per_week = sumAssignedHours(next.assigned_staff);
     }
     await call("upsertCapacityAllocation", {
       id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
@@ -264,17 +338,31 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     } else {
       nextStaff = [...(a.assigned_staff || []), { staff_id: staffId, hours: 0 }];
     }
-    // Equal split of total task hours as a starting point
-    const total = Number(a.hours_per_week || 0);
-    if (nextStaff.length > 0) {
-      const share = total / nextStaff.length;
-      nextStaff = nextStaff.map(s => ({ ...s, hours: Number(share.toFixed(2)) }));
-    }
+    const total = allocationTotal(a);
+    nextStaff = splitHoursEvenly(total, nextStaff.map(s => s.staff_id));
     await call("upsertCapacityAllocation", {
       id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
       player_type: a.player_type, hours_per_week: total,
       day_of_week: a.day_of_week, days_of_week: a.days_of_week,
       assigned_staff: nextStaff,
+    });
+  };
+
+  const defaultAssignmentStaffIds = () => {
+    const limited = staffMembers.filter(s => Number(staffLimits[s.id]) > 0).map(s => s.id);
+    return limited.length > 0 ? limited : staffMembers.map(s => s.id);
+  };
+
+  const addAllocation = async (pt: Allocation["player_type"], p: CapacityAllocationPayload) => {
+    const total = Math.max(0, roundHours(Number(p.hours_per_week) || 0));
+    const assigned_staff = staffFilter !== "all"
+      ? [{ staff_id: staffFilter, hours: total }]
+      : splitHoursEvenly(total, defaultAssignmentStaffIds());
+    return call("upsertCapacityAllocation", {
+      ...p,
+      player_type: pt,
+      hours_per_week: assigned_staff.length > 0 ? sumAssignedHours(assigned_staff) : total,
+      assigned_staff,
     });
   };
 
@@ -306,7 +394,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
           <span className="text-xs uppercase tracking-widest font-bbh text-muted-foreground">View</span>
-          <Select value={mode} onValueChange={(v) => persistMode(v as any)}>
+          <Select value={mode} onValueChange={(v) => persistMode(v as "week" | "day" | "month")}>
             <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Week</SelectItem>
@@ -518,12 +606,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                 {pt === "youth" ? "Youth Player" : pt === "pro" ? "Pro Player" : "Ongoing Tasks"}
               </h3>
               {unlocked && (
-                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", {
-                  ...p,
-                  player_type: pt,
-                  // Auto-assign to current staff filter (and put all hours on them)
-                  assigned_staff: staffFilter !== "all" ? [{ staff_id: staffFilter, hours: p.hours_per_week }] : [],
-                })} />
+                <AddAllocationInline timeItems={timeItems} onAdd={(p) => addAllocation(pt, p)} />
               )}
             </div>
             <ul className="space-y-1.5">
@@ -612,7 +695,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   );
 };
 
-const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAdd: (p: any) => Promise<boolean> }) => {
+const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAdd: (p: CapacityAllocationPayload) => Promise<boolean> }) => {
   const [open, setOpen] = useState(false);
   const [taskId, setTaskId] = useState<string>("");
   const [custom, setCustom] = useState("");
