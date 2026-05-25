@@ -193,12 +193,18 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
     const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
     setAllocations((a.data || []).map((row) => {
-      const assigned = cleanAssignedStaff(Array.isArray(row.assigned_staff) ? row.assigned_staff : []);
+      const playerType: Allocation["player_type"] = row.player_type === "pro" || row.player_type === "ongoing" ? row.player_type : "youth";
+      const assigned = cleanAssignedStaff((Array.isArray(row.assigned_staff) ? row.assigned_staff : []) as unknown as AssignedStaff[]);
       const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
       return {
-        ...row,
+        id: row.id,
+        time_item_id: row.time_item_id,
+        custom_label: row.custom_label,
+        player_type: playerType,
+        display_order: row.display_order,
         hours_per_week: reconciled.length > 0 ? sumAssignedHours(reconciled) : Number(row.hours_per_week || 0),
         days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
+        day_of_week: row.day_of_week,
         assigned_staff: reconciled,
       };
     }));
@@ -226,8 +232,9 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const { data, error } = await invokeEdgeFunction("investor-overview-write", {
       body: { token, action: "upsertCapacitySettings", payload: { staff_weekly_limits: { [staffId]: v } } },
     });
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || error?.message || "Save failed");
+    const result = data as CapacityFunctionResult;
+    if (error || result?.error) {
+      toast.error(result?.error || error?.message || "Save failed");
       // Revert on failure
       await load(false);
     }
@@ -387,7 +394,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
           <span className="text-xs uppercase tracking-widest font-bbh text-muted-foreground">View</span>
-          <Select value={mode} onValueChange={(v) => persistMode(v as any)}>
+          <Select value={mode} onValueChange={(v) => persistMode(v as "week" | "day" | "month")}>
             <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="week">Week</SelectItem>
