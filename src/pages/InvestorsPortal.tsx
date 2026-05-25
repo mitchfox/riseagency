@@ -2658,10 +2658,22 @@ const Timeline = ({ rows, editable, token, onChange }: {
     }>
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-        {kpiCard("Invested by you", gbp(totals.invested), "bg-sky-500/10 border-sky-500/30 text-sky-100")}
-        {kpiCard("Recouped (your 50%)", gbp(totals.recouped), "bg-emerald-500/10 border-emerald-500/30 text-emerald-100")}
-        {kpiCard("Expected (upcoming)", gbp(totals.expected), "bg-primary/10 border-primary/30 text-primary")}
-        {kpiCard("Net position", `${totals.net >= 0 ? "+" : "−"}${gbp(Math.abs(totals.net))}`, totals.net >= 0 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-100" : "bg-rose-500/10 border-rose-500/30 text-rose-100")}
+        {kpiCard(
+          scrubDate ? `Invested by ${format(scrubDate, "d MMM yyyy")}` : "Invested by you",
+          gbp((scrubTotals ?? totals).invested),
+          "bg-sky-500/10 border-sky-500/30 text-sky-100",
+        )}
+        {kpiCard(
+          scrubDate ? "Recouped so far" : "Recouped (off expected)",
+          `${gbp((scrubTotals ?? totals).recouped)}${totals.expected > 0 ? ` / ${gbp(totals.expected * INVESTOR_SHARE)}` : ""}`,
+          "bg-emerald-500/10 border-emerald-500/30 text-emerald-100",
+        )}
+        {kpiCard("Expected (gross total)", gbp(totals.expected), "bg-primary/10 border-primary/30 text-primary")}
+        {kpiCard(
+          "Net position (owed)",
+          (() => { const n = (scrubTotals ?? totals).net; return `${n >= 0 ? "" : "+"}${gbp(Math.abs(n))}`; })(),
+          (scrubTotals ?? totals).net <= 0 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-100" : "bg-rose-500/10 border-rose-500/30 text-rose-100",
+        )}
       </div>
 
       {adding && editable && (
@@ -2681,6 +2693,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
             <Button size="sm" disabled={busy} onClick={handleAdd}>Save</Button>
           </div>
           <Input className="h-9 mt-2" placeholder="Notes (optional)" value={draft.notes} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
+          <Input className="h-9 mt-2" placeholder="Goal / what should be completed by this point (optional)" value={draft.goal} onChange={e => setDraft(d => ({ ...d, goal: e.target.value }))} />
           {(draft.kind === "income" || draft.kind === "deal") && draft.amount_gbp && !isNaN(Number(draft.amount_gbp)) && (
             <div className="text-xs text-emerald-300 mt-2 font-mono">
               Your share (50%): {gbp(Number(draft.amount_gbp) * INVESTOR_SHARE)}
