@@ -2561,7 +2561,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
                           )}
                           <div className="flex items-center gap-3 mt-1 text-xs opacity-80">
                             <span className="uppercase tracking-wider">{TIMELINE_KINDS.find(k => k.value === r.kind)?.label}</span>
-                            {r.amount_gbp != null && <span className="font-mono">{fmtGBP(r.amount_gbp)}</span>}
+                            {r.amount_gbp != null && <span className="font-mono">{gbp(r.amount_gbp)}</span>}
                           </div>
                           {editable ? (
                             <Input
