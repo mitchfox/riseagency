@@ -215,7 +215,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
 
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
   const hoursFor = (a: Allocation): number => {
-    if (staffFilter === "all") return Number(a.hours_per_week || 0);
+    if (staffFilter === "all") return allocationTotal(a);
     const entry = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
     return entry ? Number(entry.hours || 0) : 0;
   };
@@ -239,7 +239,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       return sum + (entry ? Number(entry.hours || 0) : 0);
     }, 0);
   const combinedContribution = useMemo(
-    () => allocations.reduce((s, a) => s + Number(a.hours_per_week || 0), 0),
+    () => allocations.reduce((s, a) => s + allocationTotal(a), 0),
     [allocations],
   );
 
@@ -250,9 +250,9 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const pro = visibleAllocations.filter(a => a.player_type === "pro").reduce((s, a) => s + hoursFor(a), 0);
     const ongoing = visibleAllocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + hoursFor(a), 0);
     // Player capacity is always based on combined firm-wide hours, never per-staff slices.
-    const youthAll = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const proAll = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
-    const ongoingAll = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + Number(a.hours_per_week || 0), 0);
+    const youthAll = allocations.filter(a => a.player_type === "youth").reduce((s, a) => s + allocationTotal(a), 0);
+    const proAll = allocations.filter(a => a.player_type === "pro").reduce((s, a) => s + allocationTotal(a), 0);
+    const ongoingAll = allocations.filter(a => a.player_type === "ongoing").reduce((s, a) => s + allocationTotal(a), 0);
     const maxWeek = staffFilter === "all"
       ? combinedStaffLimit
       : Number(staffLimits[staffFilter] || 0);
