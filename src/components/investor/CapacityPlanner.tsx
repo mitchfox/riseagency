@@ -263,8 +263,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const staffLimits = settings?.staff_weekly_limits || {};
   const combinedStaffLimit = useMemo(() => {
     if (staffMembers.length === 0) return settings?.weekly_hours_total || 0;
-    const savedTotal = staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
-    return savedTotal > 0 ? savedTotal : (settings?.weekly_hours_total || 0);
+    return staffMembers.reduce((acc, s) => acc + (Number(staffLimits[s.id]) || 0), 0);
   }, [staffLimits, staffMembers, settings?.weekly_hours_total]);
 
   // Per-staff CONTRIBUTION = sum of that staff's assigned hours across every allocation.
