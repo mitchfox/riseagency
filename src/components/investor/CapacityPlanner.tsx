@@ -55,6 +55,9 @@ interface CapacityAllocationPayload {
   days_of_week: string[];
 }
 
+type CapacityActionPayload = Record<string, unknown>;
+type CapacityFunctionResult = { error?: string } | null;
+
 const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
   const ids = staffIds.filter(Boolean);
   const target = Math.max(0, roundHours(total));
@@ -174,22 +177,22 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   const load = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     const [s, a, t] = await Promise.all([
-      (supabase as any).from("investor_capacity_settings").select("*").maybeSingle(),
-      (supabase as any).from("investor_capacity_allocations").select("*").order("display_order"),
-      (supabase as any).from("investor_time_items").select("id, title, category_id").order("display_order"),
+      supabase.from("investor_capacity_settings").select("*").maybeSingle(),
+      supabase.from("investor_capacity_allocations").select("*").order("display_order"),
+      supabase.from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
-    const settingsRow = s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } };
+    const settingsRow = (s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } }) as Settings;
     setSettings({
       ...settingsRow,
       current_youth_players: settingsRow.current_youth_players ?? 0,
       current_pro_players: settingsRow.current_pro_players ?? 0,
       staff_weekly_limits: settingsRow.staff_weekly_limits || {},
     });
-    setViewMode((prev) => prev || (settingsRow.mode as any) || "week");
+    setViewMode((prev) => prev || settingsRow.mode || "week");
     const loadedStaffLimits = settingsRow.staff_weekly_limits || {};
     const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
     const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
-    setAllocations((a.data || []).map((row: any) => {
+    setAllocations((a.data || []).map((row) => {
       const assigned = cleanAssignedStaff(Array.isArray(row.assigned_staff) ? row.assigned_staff : []);
       const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
       return {
@@ -205,9 +208,10 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   useEffect(() => { load(); }, []);
 
   // Capacity owns its own refresh so saves do not remount the wider portal.
-  const call = async (action: string, payload: any, opts: { notifyParent?: boolean } = {}) => {
+  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
-    if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message || "Save failed"); return false; }
+    const result = data as CapacityFunctionResult;
+    if (error || result?.error) { toast.error(result?.error || error?.message || "Save failed"); return false; }
     await load(false);
     if (opts.notifyParent) onChange?.();
     return true;
