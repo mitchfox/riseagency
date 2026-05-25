@@ -995,7 +995,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                           return effectiveR90 != null ? (
                             <button 
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); isPlayableReport(analysis) ? handleClipsClick(analysis) : undefined; }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isPlayableReport(analysis)) return;
+                setSelectedReportId(analysis.id);
+                setReportDialogOpen(true);
+              }}
                               className="px-3 py-1 rounded text-white text-sm font-bold border-2 border-transparent hover:border-[hsl(var(--gold))] transition-colors duration-200 disabled:pointer-events-none"
                               style={{ backgroundColor: getR90Color(effectiveR90) }}
                               disabled={!isPlayableReport(analysis)}
