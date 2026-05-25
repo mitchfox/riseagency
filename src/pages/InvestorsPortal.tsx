@@ -2921,15 +2921,30 @@ const Timeline = ({ rows, editable, token, onChange }: {
                         <Textarea defaultValue={selected.notes ?? ""}
                           onBlur={e => { const v = e.target.value || null; if (v !== selected.notes) handlePatch(selected.id, { notes: v }); }} />
                       </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Goal / what should be completed by this point</Label>
+                        <Textarea defaultValue={selected.goal ?? ""}
+                          onBlur={e => { const v = e.target.value || null; if (v !== selected.goal) handlePatch(selected.id, { goal: v }); }} />
+                      </div>
                       <div className="flex justify-end">
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)}>
                           <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
                         </Button>
                       </div>
                     </>
-                  ) : selected.notes ? (
-                    <div className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.notes}</div>
-                  ) : null}
+                  ) : (
+                    <>
+                      {selected.goal && (
+                        <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Goal by this point</div>
+                          <div className="text-sm whitespace-pre-wrap">{selected.goal}</div>
+                        </div>
+                      )}
+                      {selected.notes && (
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.notes}</div>
+                      )}
+                    </>
+                  )}
                 </div>
               </>
             );
