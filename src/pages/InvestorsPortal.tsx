@@ -2582,6 +2582,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
         end_date: draft.kind === "transfer_window" && draft.end_date ? draft.end_date : null,
         amount_gbp: draft.amount_gbp === "" ? null : Number(draft.amount_gbp),
         notes: draft.notes.trim() || null,
+        goal: draft.goal.trim() || null,
       };
       const saved = await invoke("insert", { row });
       if (saved) onChange([...rows, saved as TimelineRow]);
