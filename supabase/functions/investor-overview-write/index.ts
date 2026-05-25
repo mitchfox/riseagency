@@ -198,14 +198,17 @@ Deno.serve(async (req) => {
             row.staff_weekly_limits = sanitized;
           }
         }
+        let savedSettings: any = null;
         if (existing?.id) {
-          const { error } = await supabase.from("investor_capacity_settings").update(row).eq("id", existing.id);
+          const { data, error } = await supabase.from("investor_capacity_settings").update(row).eq("id", existing.id).select().single();
           if (error) return bad(error.message, 500);
+          savedSettings = data;
         } else {
-          const { error } = await supabase.from("investor_capacity_settings").insert({ singleton: true, ...row });
+          const { data, error } = await supabase.from("investor_capacity_settings").insert({ singleton: true, ...row }).select().single();
           if (error) return bad(error.message, 500);
+          savedSettings = data;
         }
-        return ok();
+        return ok({ row: savedSettings });
       }
       case "upsertCapacityAllocation": {
         const { id, time_item_id, custom_label, player_type, hours_per_week, day_of_week, days_of_week, display_order, assigned_staff } = payload;
@@ -226,9 +229,9 @@ Deno.serve(async (req) => {
             .map((s: any) => ({ staff_id: String(s.staff_id), hours: Number(s.hours) || 0 }));
         }
         if (id) {
-          const { error } = await supabase.from("investor_capacity_allocations").update(row).eq("id", id);
+          const { data, error } = await supabase.from("investor_capacity_allocations").update(row).eq("id", id).select().single();
           if (error) return bad(error.message, 500);
-          return ok();
+          return ok({ row: data });
         }
         const { data, error } = await supabase.from("investor_capacity_allocations").insert(row).select().single();
         if (error) return bad(error.message, 500);
