@@ -56,7 +56,43 @@ interface CapacityAllocationPayload {
 }
 
 type CapacityActionPayload = Record<string, unknown>;
-type CapacityFunctionResult = { error?: string } | null;
+type CapacityFunctionResult = { ok?: boolean; error?: string; row?: unknown } | null;
+
+const cleanStaffLimits = (limits: unknown): Record<string, number> => {
+  if (!limits || typeof limits !== "object" || Array.isArray(limits)) return {};
+  return Object.entries(limits as Record<string, unknown>).reduce<Record<string, number>>((acc, [staffId, value]) => {
+    const hours = Number(value);
+    if (staffId && Number.isFinite(hours) && hours >= 0) acc[staffId] = roundHours(hours);
+    return acc;
+  }, {});
+};
+
+const normalizeAllocationRow = (row: any): Allocation => {
+  const playerType: Allocation["player_type"] = row?.player_type === "pro" || row?.player_type === "ongoing" ? row.player_type : "youth";
+  const assigned = cleanAssignedStaff(Array.isArray(row?.assigned_staff) ? row.assigned_staff : []);
+  return {
+    id: String(row?.id || crypto.randomUUID()),
+    time_item_id: row?.time_item_id || null,
+    custom_label: row?.custom_label || null,
+    player_type: playerType,
+    display_order: Number(row?.display_order ?? 999),
+    hours_per_week: assigned.length > 0 ? sumAssignedHours(assigned) : roundHours(Number(row?.hours_per_week) || 0),
+    days_of_week: Array.isArray(row?.days_of_week) ? row.days_of_week : [],
+    day_of_week: row?.day_of_week || null,
+    assigned_staff: assigned,
+  };
+};
+
+const normalizeSettingsRow = (row: any): Settings => ({
+  id: String(row?.id || ""),
+  mode: row?.mode === "day" || row?.mode === "month" ? row.mode : "week",
+  weekly_hours_total: Number(row?.weekly_hours_total ?? 40),
+  monthly_hours_total: Number(row?.monthly_hours_total ?? 160),
+  daily_hours: row?.daily_hours && typeof row.daily_hours === "object" ? row.daily_hours : { mon: 8, tue: 8, wed: 8, thu: 8, fri: 8, sat: 0, sun: 0 },
+  current_youth_players: Math.max(0, Number(row?.current_youth_players ?? 0) || 0),
+  current_pro_players: Math.max(0, Number(row?.current_pro_players ?? 0) || 0),
+  staff_weekly_limits: cleanStaffLimits(row?.staff_weekly_limits),
+});
 
 const splitHoursEvenly = (total: number, staffIds: string[]): AssignedStaff[] => {
   const ids = staffIds.filter(Boolean);
