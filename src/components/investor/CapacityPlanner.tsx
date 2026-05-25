@@ -241,16 +241,11 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     if (!unlocked || !settings) return;
     const v = Math.max(0, Number(hours) || 0);
     const nextLimits = { ...(settings.staff_weekly_limits || {}), [staffId]: v };
+    const previous = settings;
     setSettings({ ...settings, staff_weekly_limits: nextLimits });
-    const { data, error } = await invokeEdgeFunction("investor-overview-write", {
-      body: { token, action: "upsertCapacitySettings", payload: { staff_weekly_limits: { [staffId]: v } } },
-    });
-    const result = data as CapacityFunctionResult;
-    if (error || result?.error) {
-      toast.error(result?.error || error?.message || "Save failed");
-      // Revert on failure
-      await load(false);
-    }
+    const saved = await call("upsertCapacitySettings", { staff_weekly_limits: { [staffId]: v } });
+    if (!saved) setSettings(previous);
+    else if (typeof saved === "object") setSettings(normalizeSettingsRow(saved));
   };
 
   // Hours for an allocation depend on whether we are filtering by a specific staff member.
@@ -332,12 +327,16 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       next.assigned_staff = cleanAssignedStaff(updated);
       next.hours_per_week = sumAssignedHours(next.assigned_staff);
     }
-    await call("upsertCapacityAllocation", {
+    const previous = allocations;
+    setAllocations(prev => prev.map(item => item.id === a.id ? next : item));
+    const saved = await call("upsertCapacityAllocation", {
       id: next.id, time_item_id: next.time_item_id, custom_label: next.custom_label,
       player_type: next.player_type, hours_per_week: next.hours_per_week,
       day_of_week: next.day_of_week, days_of_week: next.days_of_week,
       assigned_staff: next.assigned_staff,
     });
+    if (!saved) setAllocations(previous);
+    else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
   };
 
   // Toggle a staff member on/off for an allocation. Equally splits the existing
@@ -353,12 +352,17 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     }
     const total = allocationTotal(a);
     nextStaff = splitHoursEvenly(total, nextStaff.map(s => s.staff_id));
-    await call("upsertCapacityAllocation", {
+    const nextAllocation = { ...a, assigned_staff: nextStaff, hours_per_week: total };
+    const previous = allocations;
+    setAllocations(prev => prev.map(item => item.id === a.id ? nextAllocation : item));
+    const saved = await call("upsertCapacityAllocation", {
       id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label,
       player_type: a.player_type, hours_per_week: total,
       day_of_week: a.day_of_week, days_of_week: a.days_of_week,
       assigned_staff: nextStaff,
     });
+    if (!saved) setAllocations(previous);
+    else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
   };
 
   const defaultAssignmentStaffIds = () => {
@@ -371,12 +375,26 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     const assigned_staff = staffFilter !== "all"
       ? [{ staff_id: staffFilter, hours: total }]
       : splitHoursEvenly(total, defaultAssignmentStaffIds());
-    return call("upsertCapacityAllocation", {
+    const saved = await call("upsertCapacityAllocation", {
       ...p,
       player_type: pt,
       hours_per_week: assigned_staff.length > 0 ? sumAssignedHours(assigned_staff) : total,
       assigned_staff,
     });
+    if (!saved) return false;
+    if (typeof saved === "object") {
+      const next = normalizeAllocationRow(saved);
+      setAllocations(prev => [...prev.filter(item => item.id !== next.id), next].sort((x, y) => x.display_order - y.display_order));
+    }
+    return true;
+  };
+
+  const deleteAllocation = async (id: string) => {
+    if (!unlocked) return;
+    const previous = allocations;
+    setAllocations(prev => prev.filter(item => item.id !== id));
+    const saved = await call("deleteCapacityAllocation", { id });
+    if (!saved) setAllocations(previous);
   };
 
   const staffLabel = (id: string): string => {
