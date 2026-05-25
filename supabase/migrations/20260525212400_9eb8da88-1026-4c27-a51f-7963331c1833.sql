@@ -1,0 +1,1 @@
+ALTER TABLE public.investor_timeline ADD COLUMN IF NOT EXISTS goal text;
