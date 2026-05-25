@@ -3094,7 +3094,15 @@ const InvestorsPortal = () => {
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
-                  {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
+                  {active === "clubnetwork" && <ClubNetworkView rows={data.clubContacts} />}
+                  {active === "timeline" && (
+                    <Timeline
+                      rows={data.timeline}
+                      editable={canEdit}
+                      token={token}
+                      onChange={(next) => setData(d => d ? { ...d, timeline: next } : d)}
+                    />
+                  )}
                   {active === "timeManagement" && (
                     <SectionShell icon={Clock} title="Time Management" action={
                       data.isAdmin ? (
