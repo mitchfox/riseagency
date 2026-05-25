@@ -2236,6 +2236,8 @@ const InvestorsPortal = () => {
     priorityItems: OpsItem[];
     businessPlan: BusinessPlanRow | null;
     staffMembers: StaffMember[];
+    forecast: ForecastRow[];
+    forecastSettings: ForecastSettingsRow | null;
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
