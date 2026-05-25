@@ -217,46 +217,23 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       supabase.from("investor_capacity_allocations").select("*").order("display_order"),
       supabase.from("investor_time_items").select("id, title, category_id").order("display_order"),
     ]);
-    const settingsRow = (s.data || { id: "", mode: "week", weekly_hours_total: 40, monthly_hours_total: 160, daily_hours: { mon:8,tue:8,wed:8,thu:8,fri:8,sat:0,sun:0 } }) as Settings;
-    setSettings({
-      ...settingsRow,
-      current_youth_players: settingsRow.current_youth_players ?? 0,
-      current_pro_players: settingsRow.current_pro_players ?? 0,
-      staff_weekly_limits: settingsRow.staff_weekly_limits || {},
-    });
+    const settingsRow = normalizeSettingsRow(s.data || null);
+    setSettings(settingsRow);
     setViewMode((prev) => prev || settingsRow.mode || "week");
-    const loadedStaffLimits = settingsRow.staff_weekly_limits || {};
-    const defaultStaffIds = staffMembers.filter(s => Number(loadedStaffLimits[s.id]) > 0).map(s => s.id);
-    const fallbackStaffIds = defaultStaffIds.length > 0 ? defaultStaffIds : staffMembers.map(s => s.id);
-    setAllocations((a.data || []).map((row) => {
-      const playerType: Allocation["player_type"] = row.player_type === "pro" || row.player_type === "ongoing" ? row.player_type : "youth";
-      const assigned = cleanAssignedStaff((Array.isArray(row.assigned_staff) ? row.assigned_staff : []) as unknown as AssignedStaff[]);
-      const reconciled = assigned.length > 0 ? assigned : splitHoursEvenly(Number(row.hours_per_week || 0), fallbackStaffIds);
-      return {
-        id: row.id,
-        time_item_id: row.time_item_id,
-        custom_label: row.custom_label,
-        player_type: playerType,
-        display_order: row.display_order,
-        hours_per_week: reconciled.length > 0 ? sumAssignedHours(reconciled) : Number(row.hours_per_week || 0),
-        days_of_week: Array.isArray(row.days_of_week) ? row.days_of_week : [],
-        day_of_week: row.day_of_week,
-        assigned_staff: reconciled,
-      };
-    }));
+    setAllocations((a.data || []).map(normalizeAllocationRow));
     setTimeItems(t.data || []);
     if (showLoading) setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
   // Capacity owns its own refresh so saves do not remount the wider portal.
-  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean } = {}) => {
+  const call = async (action: string, payload: CapacityActionPayload, opts: { notifyParent?: boolean; refresh?: boolean } = {}) => {
     const { data, error } = await invokeEdgeFunction("investor-overview-write", { body: { token, action, payload } });
     const result = data as CapacityFunctionResult;
     if (error || result?.error) { toast.error(result?.error || error?.message || "Save failed"); return false; }
-    await load(false);
+    if (opts.refresh) await load(false);
     if (opts.notifyParent) onChange?.();
-    return true;
+    return result?.row ?? true;
   };
 
   // Dedicated handler: optimistic local update of a single staff member's weekly limit.
