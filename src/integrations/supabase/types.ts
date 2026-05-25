@@ -2475,6 +2475,60 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_forecast: {
+        Row: {
+          amount_gbp: number
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          month: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_gbp?: number
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          month: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_gbp?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          month?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_forecast_settings: {
+        Row: {
+          created_at: string
+          id: string
+          planned_monthly_spend_gbp: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          planned_monthly_spend_gbp?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          planned_monthly_spend_gbp?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_notes: {
         Row: {
           body: string
