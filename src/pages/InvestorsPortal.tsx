@@ -2723,7 +2723,18 @@ const Timeline = ({ rows, editable, token, onChange }: {
           className="relative overflow-x-auto overflow-y-hidden rounded-lg border border-border/40 bg-gradient-to-b from-background/40 to-background/80 select-none"
           style={{ cursor: "grab" }}
         >
-          <div className="relative" style={{ width: `${width}px`, height: `${laneCount * laneHeight + 180}px` }}>
+          <div
+            ref={trackRef}
+            className="relative"
+            style={{ width: `${width}px`, height: `${laneCount * laneHeight + 200}px` }}
+            onMouseMove={(e) => {
+              const rect = trackRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              const x = e.clientX - rect.left;
+              if (x >= 0 && x <= width) setScrubX(x);
+            }}
+            onMouseLeave={() => setScrubX(null)}
+          >
             {/* Month grid */}
             {months.map((m, i) => {
               const x = dayToX(m.date);
@@ -2738,7 +2749,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
               );
             })}
 
-            {/* Transfer window bands */}
+            {/* Transfer window bands — full-height translucent backgrounds for the date range */}
             {windows.map(r => {
               const x1 = dayToX(new Date(r.start_date));
               const x2 = dayToX(new Date(r.end_date || r.start_date));
@@ -2747,12 +2758,12 @@ const Timeline = ({ rows, editable, token, onChange }: {
                   key={r.id}
                   data-node
                   onClick={() => setSelected(r)}
-                  className="absolute top-6 bottom-24 bg-primary/8 border-x-2 border-primary/40 hover:bg-primary/15 transition-colors group"
+                  className="absolute top-0 bottom-0 bg-primary/10 hover:bg-primary/20 border-x border-primary/30 transition-colors group"
                   style={{ left: `${x1}px`, width: `${Math.max(2, x2 - x1)}px` }}
                   title={r.title}
                 >
-                  <div className="absolute top-1 left-1 right-1 text-[10px] font-bbh uppercase tracking-widest text-primary truncate text-left">
-                    {r.title}
+                  <div className="absolute top-5 left-1 right-1 text-[10px] font-bbh uppercase tracking-widest text-primary/90 truncate text-left pointer-events-none">
+                    {r.title} · Transfer window
                   </div>
                 </button>
               );
@@ -2768,26 +2779,39 @@ const Timeline = ({ rows, editable, token, onChange }: {
               </div>
             )}
 
+            {/* Scrubber — vertical line + date bubble follows the cursor */}
+            {scrubX != null && (
+              <div className="absolute top-0 bottom-0 pointer-events-none z-20" style={{ left: `${scrubX}px` }}>
+                <div className="absolute top-0 bottom-0 w-px bg-foreground/60" />
+                <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-foreground text-background text-[10px] font-bold uppercase tracking-widest font-mono whitespace-nowrap">
+                  {scrubDate ? format(scrubDate, "d MMM yyyy") : ""}
+                </div>
+              </div>
+            )}
+
             {/* Event nodes */}
             {placed.map(({ row: r, x, lane }) => {
               const m = kindMeta(r.kind);
               const delta = investorDelta(r);
-              const top = 24 + lane * laneHeight;
+              const top = 28 + lane * laneHeight;
               return (
                 <button
                   key={r.id}
                   data-node
                   onClick={() => setSelected(r)}
-                  className="absolute group flex items-center gap-1.5 hover:z-10"
+                  className="absolute group flex items-center gap-1.5 hover:z-30 z-10"
                   style={{ left: `${x}px`, top: `${top}px`, transform: "translateX(-6px)" }}
                 >
                   <div className={`w-3 h-3 rounded-full ${m.dot} ring-4 ${m.ring} shadow-md group-hover:scale-125 transition-transform`} />
-                  <div className={`px-2 py-0.5 rounded border text-[10px] whitespace-nowrap ${m.badge} max-w-[160px] truncate font-medium`}>
+                  <div className={`px-2 py-0.5 rounded border text-[10px] whitespace-nowrap ${m.badge} max-w-[200px] truncate font-medium`}>
                     {r.title}
                     {delta !== 0 && (
                       <span className="ml-1 font-mono opacity-90">
                         {delta > 0 ? "+" : "−"}{gbp(Math.abs(delta))}
                       </span>
+                    )}
+                    {r.goal && (
+                      <span className="ml-1 opacity-60 italic">· {r.goal}</span>
                     )}
                   </div>
                 </button>
