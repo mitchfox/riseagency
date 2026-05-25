@@ -656,7 +656,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                   />
                   <span className="text-xs text-muted-foreground">h/wk</span>
                   {unlocked && (
-                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => call("deleteCapacityAllocation", { id: a.id })}>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteAllocation(a.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
@@ -700,10 +700,17 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                             if (!unlocked) return;
                             const current = new Set<string>(a.days_of_week || (a.day_of_week ? [a.day_of_week] : []));
                             if (current.has(d.key)) current.delete(d.key); else current.add(d.key);
+                            const nextDays = Array.from(current);
+                            const nextAllocation = { ...a, day_of_week: null, days_of_week: nextDays };
+                            const previous = allocations;
+                            setAllocations(prev => prev.map(item => item.id === a.id ? nextAllocation : item));
                             call("upsertCapacityAllocation", {
                               id: a.id, time_item_id: a.time_item_id, custom_label: a.custom_label, player_type: pt,
-                              hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: Array.from(current),
+                              hours_per_week: a.hours_per_week, day_of_week: null, days_of_week: nextDays,
                               assigned_staff: a.assigned_staff,
+                            }).then((saved) => {
+                              if (!saved) setAllocations(previous);
+                              else if (typeof saved === "object") setAllocations(prev => prev.map(item => item.id === a.id ? normalizeAllocationRow(saved) : item));
                             });
                           }}
                           className={`h-6 w-7 rounded text-[10px] uppercase tracking-tight border transition ${
