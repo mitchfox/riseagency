@@ -2927,6 +2927,42 @@ export type Database = {
           },
         ]
       }
+      investor_timeline: {
+        Row: {
+          amount_gbp: number | null
+          created_at: string
+          end_date: string | null
+          id: string
+          kind: string
+          notes: string | null
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount_gbp?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          start_date: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_gbp?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_users: {
         Row: {
           created_at: string

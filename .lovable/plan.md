@@ -1,46 +1,36 @@
-## Changes
+## 1. New "Timeline" section in Dashboard
 
-### 1. Projections — remove costs
-- Drop the `Costs` stat, `Costs` input, and the cost subtraction from `total` in the `Projections` component.
-- Result becomes pure revenue (player income + extra income).
-- Add a header line: **"18-month projection window: 1 June 2026 → 31 December 2027"**.
-- Leave existing data in `costs_gbp` column untouched in DB; just stop rendering/using it.
+Add a Timeline section right after Business Plan in the `dash` category for tracking key dates, income, expenses, and transfer window periods on a single chronological view.
 
-### 2. Forecast — Expected vs Real tabs
-Replace the current single Forecast view with a tabbed layout:
+**Database** — new migration:
+- `investor_timeline` table: `id`, `kind` (text: `event` | `income` | `expense` | `transfer_window`), `title`, `start_date` (date), `end_date` (date, nullable — only used for transfer windows / multi-day spans), `amount_gbp` (numeric, nullable), `notes` (text), `created_at`, `updated_at`.
+- RLS: deny direct access; all reads/writes go through edge functions (same pattern as `investor_forecast`).
 
-**Tab "Expected" (default)**
-- Pulls totals from the currently selected (or default "expected" scenario) Projection row: `playerIncome + extraRowsIncome + legacyExtra`.
-- Uses fixed 19-month timeline: Jun 2026 → Dec 2027 (the user said 18 months Jun 1 2026 – Dec 31 2027; that's 19 calendar months — clarify in question below).
-- **Revenue table** (month-by-month): initially distributes the projection total evenly across all months. Each cell is inline-editable; edits are persisted as monthly overrides.
-- **Spend table** (month-by-month): initial baseline = a single "Planned monthly investment" figure (new editable setting, defaults to current avg actual monthly spend rounded). Each month inline-editable.
-- "Add row" buttons under both tables to add custom one-off income or expense lines (label + month + amount + notes), persisted alongside.
-- Cumulative net chart redrawn from the edited monthly figures.
+**Edge functions**:
+- `investor-data`: fetch `investor_timeline` ordered by `start_date asc` and return as `timeline`.
+- `investor-write`: add `investor_timeline` to `ALLOWED_TABLES`.
 
-**Tab "Real"**
-- Exactly the existing 12-month actual spend vs invoice-paid revenue chart + cumulative chart (current behaviour, unchanged).
+**UI** (`src/pages/InvestorsPortal.tsx`):
+- Add `"timeline"` to `SectionId` union and to the `dash` category after `businessPlan`.
+- New `Timeline` component:
+  - Chronological list grouped by month, colour-coded by `kind` (event = neutral, income = green, expense = red, transfer_window = gold band spanning start→end).
+  - "Add entry" inline form: kind selector, title, start date, optional end date (only enabled for `transfer_window`), optional amount, notes. Save calls `investor-write` insert.
+  - Each row inline-editable (blur-to-save) and deletable.
+- **No page reload**: after every insert/update/delete, update local `timeline` state in place (push/replace/filter). Do not call any refetch-and-reload pattern. Follows the same `setData(d => ({ ...d, timeline: [...] }))` approach already used elsewhere on the page.
 
-**Persistence (new table)** `investor_forecast`:
-- `id`, `kind` ('revenue' | 'spend' | 'extra_income' | 'extra_expense'), `month` (date, first of month), `label` (nullable, for extras), `amount_gbp`, `notes`, timestamps.
-- Plus a singleton `investor_forecast_settings` row with `planned_monthly_spend_gbp`.
-- Add to `ALLOWED_TABLES` in `investor-write` edge function (or extend `investor-overview-write` similarly).
-- RLS: investor session via edge function only (same pattern as existing investor tables).
+## 2. Network section showing staff's club network
 
-### 3. Move Business Plan to Dashboard
-- In `CATEGORIES`, remove `businessPlan` from `exec` group.
-- Add it to `dash` group right after `investment`:
-  ```
-  { id: "dash", ... sections: [ overview, investment, businessPlan ] }
-  ```
-- Wiring (`{active === "businessPlan" && <BusinessPlanSection ... />}`) already exists, just stays.
+The current `clubnetwork` section renders `<ClubNetworkManagement />`, which queries `club_network_contacts` directly via the supabase client. Investor users are not Supabase-authenticated (custom investor session), so RLS returns zero rows and the list looks empty.
 
-### Files
-- `src/pages/InvestorsPortal.tsx` — Projections cleanup + header; new tabbed Forecast component; CATEGORIES reorder.
-- `supabase/functions/investor-write/index.ts` — allow new forecast tables.
-- New migration — `investor_forecast` + `investor_forecast_settings` tables with RLS.
+Fix: render the existing `ClubNetworkView` component (already defined at line 2363) and feed it `data.clubContacts` — which the `investor-data` edge function already loads via the service role. Read-only view is appropriate since investors aren't managing the network.
 
-## One clarification needed
-The window "1 June 2026 → 31 December 2027" spans 19 calendar months, not 18. Should I:
-- (a) use **Jun 2026 – Dec 2027 (19 months)**, or
-- (b) use **Jul 2026 – Dec 2027 (18 months)**, or
-- (c) use **Jun 2026 – Nov 2027 (18 months)**?
+Change at line 2915:
+```tsx
+{active === "clubnetwork" && <ClubNetworkView rows={data.clubContacts} />}
+```
+
+## Files touched
+- New migration: `investor_timeline` table + RLS.
+- `supabase/functions/investor-data/index.ts` — fetch timeline.
+- `supabase/functions/investor-write/index.ts` — allow `investor_timeline`.
+- `src/pages/InvestorsPortal.tsx` — new `Timeline` component + section wiring + Network fix. All state updates done in-place, no `window.location.reload()` or full refetch.
