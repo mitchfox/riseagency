@@ -1,31 +1,46 @@
-## Plan: capacity saves and totals
+## Changes
 
-### What I’ll fix
-1. **Stop reloads from losing new tasks**
-   - When adding a Youth Player, Pro Player, or Ongoing Task allocation, the UI will insert the saved row returned by the backend into local state immediately.
-   - Reload will show the same rows because the backend save will return the real stored row, including its id, hours, days, and assigned staff.
+### 1. Projections — remove costs
+- Drop the `Costs` stat, `Costs` input, and the cost subtraction from `total` in the `Projections` component.
+- Result becomes pure revenue (player income + extra income).
+- Add a header line: **"18-month projection window: 1 June 2026 → 31 December 2027"**.
+- Leave existing data in `costs_gbp` column untouched in DB; just stop rendering/using it.
 
-2. **Stop staff limits resetting to 0**
-   - Staff weekly limits will be treated as their own persistent setting and never recalculated from task assignments.
-   - Adding or editing a task will not overwrite `staff_weekly_limits`.
-   - “All staff” weekly limit will be the sum of every individual staff member’s saved weekly limit.
+### 2. Forecast — Expected vs Real tabs
+Replace the current single Forecast view with a tabbed layout:
 
-3. **Fix broken assignment logic**
-   - New tasks added in a staff view will assign all task hours to that staff member.
-   - New tasks added in All Staff will keep the task total and distribute it only for contribution display, without touching weekly limits.
-   - Existing tasks with missing `assigned_staff` will be displayed safely, but the loader will not fake assignments that look saved and then disappear.
+**Tab "Expected" (default)**
+- Pulls totals from the currently selected (or default "expected" scenario) Projection row: `playerIncome + extraRowsIncome + legacyExtra`.
+- Uses fixed 19-month timeline: Jun 2026 → Dec 2027 (the user said 18 months Jun 1 2026 – Dec 31 2027; that's 19 calendar months — clarify in question below).
+- **Revenue table** (month-by-month): initially distributes the projection total evenly across all months. Each cell is inline-editable; edits are persisted as monthly overrides.
+- **Spend table** (month-by-month): initial baseline = a single "Planned monthly investment" figure (new editable setting, defaults to current avg actual monthly spend rounded). Each month inline-editable.
+- "Add row" buttons under both tables to add custom one-off income or expense lines (label + month + amount + notes), persisted alongside.
+- Cumulative net chart redrawn from the edited monthly figures.
 
-4. **Keep player capacity based on firm totals**
-   - Youth player capacity and Pro player capacity will always use combined firm-wide totals.
-   - The bars will still respect the current staff filter for individual workload views.
+**Tab "Real"**
+- Exactly the existing 12-month actual spend vs invoice-paid revenue chart + cumulative chart (current behaviour, unchanged).
 
-5. **Make save feedback reliable**
-   - Each save path will update local state optimistically and only roll back if the backend returns an error.
-   - I’ll avoid parent portal refreshes for capacity edits, so the capacity component does not remount and wipe draft state.
+**Persistence (new table)** `investor_forecast`:
+- `id`, `kind` ('revenue' | 'spend' | 'extra_income' | 'extra_expense'), `month` (date, first of month), `label` (nullable, for extras), `amount_gbp`, `notes`, timestamps.
+- Plus a singleton `investor_forecast_settings` row with `planned_monthly_spend_gbp`.
+- Add to `ALLOWED_TABLES` in `investor-write` edge function (or extend `investor-overview-write` similarly).
+- RLS: investor session via edge function only (same pattern as existing investor tables).
 
-### Technical details
-- Update `CapacityPlanner.tsx` so `call()` can return the saved backend row and no longer blindly reloads after every capacity edit.
-- Update add/edit/delete handlers to mutate `allocations` and `settings` locally after successful saves.
-- Adjust `load()` so empty `assigned_staff` stays empty unless a task is being actively edited or created.
-- Update `supabase/functions/investor-overview-write/index.ts` so capacity allocation saves return the inserted or updated row, and settings saves return the saved settings row.
-- After implementation, verify by checking the database rows for capacity settings and allocations, and by confirming the recent saved rows survive reload logic.
+### 3. Move Business Plan to Dashboard
+- In `CATEGORIES`, remove `businessPlan` from `exec` group.
+- Add it to `dash` group right after `investment`:
+  ```
+  { id: "dash", ... sections: [ overview, investment, businessPlan ] }
+  ```
+- Wiring (`{active === "businessPlan" && <BusinessPlanSection ... />}`) already exists, just stays.
+
+### Files
+- `src/pages/InvestorsPortal.tsx` — Projections cleanup + header; new tabbed Forecast component; CATEGORIES reorder.
+- `supabase/functions/investor-write/index.ts` — allow new forecast tables.
+- New migration — `investor_forecast` + `investor_forecast_settings` tables with RLS.
+
+## One clarification needed
+The window "1 June 2026 → 31 December 2027" spans 19 calendar months, not 18. Should I:
+- (a) use **Jun 2026 – Dec 2027 (19 months)**, or
+- (b) use **Jul 2026 – Dec 2027 (18 months)**, or
+- (c) use **Jun 2026 – Nov 2027 (18 months)**?

@@ -140,6 +140,18 @@ interface ProjectionRow {
   extra_income_gbp: number; costs_gbp: number;
   display_order: number; created_at: string; updated_at: string;
 }
+interface ForecastRow {
+  id: string;
+  kind: "revenue" | "spend" | "extra_income" | "extra_expense";
+  month: string; // 'YYYY-MM-DD' first of month
+  label: string | null;
+  amount_gbp: number;
+  notes: string | null;
+}
+interface ForecastSettingsRow {
+  id: string;
+  planned_monthly_spend_gbp: number;
+}
 interface StaffMember { id: string; email: string | null; full_name: string | null; roles: string[]; }
 interface BusinessPlanRow {
   id: string;
@@ -184,6 +196,7 @@ const CATEGORIES: CategoryDef[] = [
   { id: "dash", title: "Dashboard", icon: LayoutDashboard, sections: [
     { id: "overview", title: "Overview", icon: LayoutDashboard },
     { id: "investment", title: "Investment", icon: Sparkles },
+    { id: "businessPlan", title: "Business Plan", icon: Briefcase },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "All Tasks", icon: CheckSquare },
@@ -198,7 +211,6 @@ const CATEGORIES: CategoryDef[] = [
     { id: "execNotes", title: "Thought Wall", icon: Sparkles },
     { id: "execScripts", title: "Scripts", icon: FileText },
     { id: "execWorkflow", title: "Workflow", icon: Network },
-    { id: "businessPlan", title: "Business Plan", icon: Briefcase },
   ]},
   { id: "roster", title: "Roster", icon: UserCheck, sections: [
     { id: "represented", title: "Represented", icon: UserCheck },
@@ -1070,12 +1082,124 @@ const InvoicesView = ({ rows, players }: { rows: InvoiceRow[]; players: PlayerRo
   );
 };
 
-// ---------- Forecast: investment spend & long-term projection ----------
-const Forecast = ({ spending, invoices, players }: {
-  spending: SpendingRowExt[]; invoices: InvoiceRow[]; players: PlayerRow[];
+// ---------- Forecast: Expected (projection-based, editable) + Real (actual 12mo) ----------
+
+// 19 months: 1 June 2026 → 31 December 2027
+const FORECAST_MONTHS: { key: string; label: string }[] = (() => {
+  const out: { key: string; label: string }[] = [];
+  for (let i = 0; i < 19; i++) {
+    const d = new Date(2026, 5 + i, 1); // June = month index 5
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+    out.push({ key, label: format(d, "MMM yy") });
+  }
+  return out;
+})();
+
+const InlineMonthAmountCell = ({ value, editable, onSave }: { value: number; editable: boolean; onSave: (v: number) => void | Promise<void> }) => {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState(String(value || 0));
+  useEffect(() => { setVal(String(value || 0)); }, [value]);
+  const commit = async () => {
+    const next = Number(val);
+    if (!Number.isNaN(next) && next !== Number(value || 0)) await onSave(next);
+    setEdit(false);
+  };
+  if (edit && editable) {
+    return (
+      <Input type="number" value={val} autoFocus onChange={e => setVal(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); } if (e.key === "Escape") { setEdit(false); setVal(String(value || 0)); } }}
+        onFocus={e => e.currentTarget.select()}
+        onBlur={commit} className="h-7 w-[110px] text-[11px] text-right tabular-nums" />
+    );
+  }
+  return (
+    <button type="button" onClick={() => editable && setEdit(true)}
+      className={`text-[11px] tabular-nums ${editable ? "hover:bg-primary/10 px-1 rounded transition-colors" : "cursor-default"}`}>
+      {gbp(Number(value || 0))}
+    </button>
+  );
+};
+
+const Forecast = ({ spending, invoices, projections, forecast, forecastSettings, editable, write }: {
+  spending: SpendingRowExt[]; invoices: InvoiceRow[];
+  projections: ProjectionRow[]; forecast: ForecastRow[]; forecastSettings: ForecastSettingsRow | null;
+  editable: boolean;
+  write: (op: string, table: string, payload: any) => Promise<void>;
 }) => {
-  // Last 12 months: spend vs revenue
-  const months: { key: string; label: string; spend: number; revenue: number; net: number }[] = useMemo(() => {
+  const [tab, setTab] = useState("expected");
+
+  // ----- Expected source: prefer "expected" scenario projection, fall back to first -----
+  const expectedProjection = useMemo(() => {
+    return projections.find(p => p.scenario === "expected") || projections[0] || null;
+  }, [projections]);
+
+  const projectionRevenue = useMemo(() => {
+    if (!expectedProjection) return 0;
+    const pr = (expectedProjection.player_rows || []).reduce((s, r) => s + Number(r.income_gbp || 0), 0);
+    const ex = (expectedProjection.extra_income_rows || []).reduce((s, r) => s + Number(r.income_gbp || 0), 0);
+    return pr + ex + Number(expectedProjection.extra_income_gbp || 0);
+  }, [expectedProjection]);
+
+  const plannedMonthlySpend = Number(forecastSettings?.planned_monthly_spend_gbp || 0);
+  const evenMonthlyRevenue = projectionRevenue / FORECAST_MONTHS.length;
+
+  // Index forecast rows by kind + month
+  const overrideMap = useMemo(() => {
+    const map = new Map<string, ForecastRow>();
+    forecast.forEach(f => {
+      if (f.kind === "revenue" || f.kind === "spend") {
+        map.set(`${f.kind}::${f.month.slice(0, 10)}`, f);
+      }
+    });
+    return map;
+  }, [forecast]);
+
+  const extraIncomes = forecast.filter(f => f.kind === "extra_income");
+  const extraExpenses = forecast.filter(f => f.kind === "extra_expense");
+
+  const getMonthAmount = (kind: "revenue" | "spend", monthKey: string): number => {
+    const ov = overrideMap.get(`${kind}::${monthKey}`);
+    if (ov) return Number(ov.amount_gbp || 0);
+    return kind === "revenue" ? evenMonthlyRevenue : plannedMonthlySpend;
+  };
+
+  const upsertMonth = async (kind: "revenue" | "spend", monthKey: string, amount: number) => {
+    const ov = overrideMap.get(`${kind}::${monthKey}`);
+    if (ov) {
+      await write("update", "investor_forecast", { id: ov.id, patch: { amount_gbp: amount } });
+    } else {
+      await write("insert", "investor_forecast", { row: { kind, month: monthKey, amount_gbp: amount } });
+    }
+  };
+
+  const addExtraLine = async (kind: "extra_income" | "extra_expense") => {
+    await write("insert", "investor_forecast", {
+      row: { kind, month: FORECAST_MONTHS[0].key, label: kind === "extra_income" ? "Extra income" : "Extra expense", amount_gbp: 0 },
+    });
+  };
+
+  // Compute totals + cumulative net for chart
+  const monthlySeries = useMemo(() => {
+    return FORECAST_MONTHS.map(m => {
+      const rev = getMonthAmount("revenue", m.key)
+        + extraIncomes.filter(e => e.month.slice(0, 10) === m.key).reduce((s, e) => s + Number(e.amount_gbp || 0), 0);
+      const spend = getMonthAmount("spend", m.key)
+        + extraExpenses.filter(e => e.month.slice(0, 10) === m.key).reduce((s, e) => s + Number(e.amount_gbp || 0), 0);
+      return { key: m.key, label: m.label, revenue: rev, spend, net: rev - spend };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overrideMap, extraIncomes, extraExpenses, evenMonthlyRevenue, plannedMonthlySpend]);
+
+  const cumulative = useMemo(() => {
+    let c = 0;
+    return monthlySeries.map(m => { c += m.net; return { label: m.label, cumulative: Math.round(c) }; });
+  }, [monthlySeries]);
+
+  const totalRev = monthlySeries.reduce((s, m) => s + m.revenue, 0);
+  const totalSpend = monthlySeries.reduce((s, m) => s + m.spend, 0);
+
+  // ----- Real (existing actual behaviour) -----
+  const realMonths = useMemo(() => {
     const out: any[] = [];
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
@@ -1089,80 +1213,174 @@ const Forecast = ({ spending, invoices, players }: {
     out.forEach(m => { m.net = m.revenue - m.spend; });
     return out;
   }, [spending, invoices]);
-
-  const totalSpend12 = months.reduce((s, m) => s + m.spend, 0);
-  const totalRev12 = months.reduce((s, m) => s + m.revenue, 0);
-  const avgMonthlySpend = totalSpend12 / 12;
-  const avgMonthlyRev = totalRev12 / 12;
-
-  // 24-month forward projection: revenue grows linearly with represented commission ramp
-  const represented = players.filter(p =>
-    p.representation_status === "represented" ||
-    p.representation_status === "fuel_for_football" ||
-    p.representation_status === "mandated" ||
-    p.representation_status === "previously_mandated",
-  );
-  const annualCommissionForecast = represented.reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
-  const monthlyForecastRev = annualCommissionForecast / 12;
-
-  const projection = useMemo(() => {
-    const out: any[] = [];
-    let cumulativeNet = 0;
-    months.forEach(m => { cumulativeNet += m.net; out.push({ label: m.label, cumulative: Math.round(cumulativeNet), kind: "actual" }); });
-    // 24 months forward
-    const now = new Date();
-    for (let i = 1; i <= 24; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const projectedRev = monthlyForecastRev;
-      const projectedSpend = avgMonthlySpend;
-      cumulativeNet += (projectedRev - projectedSpend);
-      out.push({ label: format(d, "MMM yy"), cumulative: Math.round(cumulativeNet), kind: "projected" });
-    }
-    return out;
-  }, [months, monthlyForecastRev, avgMonthlySpend]);
+  const realSpend12 = realMonths.reduce((s, m) => s + m.spend, 0);
+  const realRev12 = realMonths.reduce((s, m) => s + m.revenue, 0);
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Spend (12mo)" value={gbp(totalSpend12)} sub={`Avg ${gbp(avgMonthlySpend)}/mo`} />
-        <Stat label="Revenue (12mo)" value={gbp(totalRev12)} sub={`Avg ${gbp(avgMonthlyRev)}/mo`} />
-        <Stat label="Forecast revenue / yr" value={gbp(annualCommissionForecast)} sub={`${represented.length} live players`} />
-        <Stat label="Projected runway" value={projection[projection.length - 1].cumulative >= 0 ? "Positive" : "Negative"} sub="24mo cumulative net" />
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="expected">Expected</TabsTrigger>
+          <TabsTrigger value="real">Real</TabsTrigger>
+        </TabsList>
 
-      <SectionShell icon={TrendingUp} title="Monthly spend vs revenue — last 12 months">
-        <div style={{ width: "100%", height: 280 }}>
-          <ResponsiveContainer>
-            <BarChart data={months}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                formatter={(v: any) => gbp(Number(v))} />
-              <Bar dataKey="spend" name="Spend" fill="hsl(0, 70%, 50%)" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </SectionShell>
+        <TabsContent value="expected" className="mt-4 space-y-4">
+          <div className="text-xs text-muted-foreground border border-border/40 rounded-md px-3 py-2 bg-muted/20">
+            Forecast window: <span className="text-foreground font-medium">1 June 2026 → 31 December 2027</span> (19 months).
+            Revenue baseline comes from the {expectedProjection ? <>"{expectedProjection.name}" projection</> : "projections section"} (split evenly across months unless overridden).
+            Spend baseline comes from the planned monthly investment below.
+          </div>
 
-      <SectionShell icon={TrendingUp} title="Cumulative net position — actual + 24-month projection">
-        <div style={{ width: "100%", height: 300 }}>
-          <ResponsiveContainer>
-            <LineChart data={projection}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={2} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                formatter={(v: any) => gbp(Number(v))} />
-              <Line type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          Projection assumes current average monthly spend continues and live-player commission ramps at the per-player figures recorded in Commission.
-        </p>
-      </SectionShell>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Stat label="Projected revenue" value={gbp(totalRev)} sub={`${expectedProjection ? expectedProjection.name : "no projection"}`} />
+            <Stat label="Projected spend" value={gbp(totalSpend)} sub={`${gbp(plannedMonthlySpend)}/mo baseline`} />
+            <Stat label="Net" value={gbp(totalRev - totalSpend)} />
+            <Stat label="Months" value={String(FORECAST_MONTHS.length)} sub="Jun 26 – Dec 27" />
+          </div>
+
+          <SectionShell icon={TrendingUp} title="Planned monthly investment">
+            <div className="flex items-center gap-3">
+              <Label className="text-xs">Baseline spend / month</Label>
+              <InlineMoneyCell
+                value={plannedMonthlySpend}
+                editable={editable}
+                onSave={async (v) => {
+                  if (forecastSettings) {
+                    await write("update", "investor_forecast_settings", { id: forecastSettings.id, patch: { planned_monthly_spend_gbp: Number(v || 0) } });
+                  } else {
+                    await write("insert", "investor_forecast_settings", { row: { planned_monthly_spend_gbp: Number(v || 0) } });
+                  }
+                }}
+              />
+              <span className="text-xs text-muted-foreground">Applied to every month in the window unless overridden in the spend table.</span>
+            </div>
+          </SectionShell>
+
+          <SectionShell icon={TrendingUp} title="Monthly revenue & spend (editable)">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1100px] text-sm">
+                <thead className="bg-muted/30 text-xs text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-3 py-2 sticky left-0 bg-muted/30">Type</th>
+                    {FORECAST_MONTHS.map(m => <th key={m.key} className="text-right px-2 py-2">{m.label}</th>)}
+                    <th className="text-right px-3 py-2">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  <tr>
+                    <td className="px-3 py-2 font-medium sticky left-0 bg-card">Revenue</td>
+                    {FORECAST_MONTHS.map(m => (
+                      <td key={m.key} className="px-2 py-2 text-right">
+                        <InlineMonthAmountCell value={getMonthAmount("revenue", m.key)} editable={editable} onSave={(v) => upsertMonth("revenue", m.key, v)} />
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums">{gbp(monthlySeries.reduce((s, m) => s + Number(getMonthAmount("revenue", m.key)), 0))}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 font-medium sticky left-0 bg-card">Spend</td>
+                    {FORECAST_MONTHS.map(m => (
+                      <td key={m.key} className="px-2 py-2 text-right">
+                        <InlineMonthAmountCell value={getMonthAmount("spend", m.key)} editable={editable} onSave={(v) => upsertMonth("spend", m.key, v)} />
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums">{gbp(monthlySeries.reduce((s, m) => s + Number(getMonthAmount("spend", m.key)), 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </SectionShell>
+
+          <SectionShell icon={Plus} title="Extra income (one-off lines)" action={editable ? <Button size="sm" onClick={() => addExtraLine("extra_income")}><Plus className="w-4 h-4 mr-1" />Add</Button> : undefined}>
+            <ExtraLinesTable rows={extraIncomes} editable={editable} write={write} />
+          </SectionShell>
+          <SectionShell icon={Plus} title="Extra expenses (one-off lines)" action={editable ? <Button size="sm" onClick={() => addExtraLine("extra_expense")}><Plus className="w-4 h-4 mr-1" />Add</Button> : undefined}>
+            <ExtraLinesTable rows={extraExpenses} editable={editable} write={write} />
+          </SectionShell>
+
+          <SectionShell icon={TrendingUp} title="Cumulative net position">
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <LineChart data={cumulative}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} formatter={(v: any) => gbp(Number(v))} />
+                  <Line type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionShell>
+        </TabsContent>
+
+        <TabsContent value="real" className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <Stat label="Spend (last 12mo)" value={gbp(realSpend12)} sub={`Avg ${gbp(realSpend12 / 12)}/mo`} />
+            <Stat label="Revenue (last 12mo)" value={gbp(realRev12)} sub={`Avg ${gbp(realRev12 / 12)}/mo`} />
+            <Stat label="Net" value={gbp(realRev12 - realSpend12)} />
+          </div>
+
+          <SectionShell icon={TrendingUp} title="Monthly spend vs revenue — last 12 months (actual)">
+            <div style={{ width: "100%", height: 280 }}>
+              <ResponsiveContainer>
+                <BarChart data={realMonths}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => gbpAxis(Number(v))} width={70} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} formatter={(v: any) => gbp(Number(v))} />
+                  <Bar dataKey="spend" name="Spend" fill="hsl(0, 70%, 50%)" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionShell>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const ExtraLinesTable = ({ rows, editable, write }: {
+  rows: ForecastRow[]; editable: boolean;
+  write: (op: string, table: string, payload: any) => Promise<void>;
+}) => {
+  if (rows.length === 0) return <div className="text-center py-4 text-xs text-muted-foreground">No lines yet.</div>;
+  return (
+    <div className="overflow-x-auto rounded border border-border/40">
+      <table className="w-full min-w-[640px] text-sm">
+        <thead className="bg-muted/30 text-xs text-muted-foreground">
+          <tr>
+            <th className="text-left px-3 py-2">Label</th>
+            <th className="text-left px-3 py-2">Month</th>
+            <th className="text-right px-3 py-2">Amount</th>
+            <th className="text-left px-3 py-2">Notes</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/40">
+          {rows.map(r => (
+            <tr key={r.id}>
+              <td className="px-3 py-2">
+                <EditableTextField value={r.label || ""} editable={editable} onSave={v => write("update", "investor_forecast", { id: r.id, patch: { label: v } })} />
+              </td>
+              <td className="px-3 py-2">
+                <Select value={r.month.slice(0, 10)} disabled={!editable} onValueChange={v => write("update", "investor_forecast", { id: r.id, patch: { month: v } })}>
+                  <SelectTrigger className="h-7 w-[120px] text-[11px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>{FORECAST_MONTHS.map(m => <SelectItem key={m.key} value={m.key}>{m.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </td>
+              <td className="px-3 py-2 text-right">
+                <InlineMoneyCell value={Number(r.amount_gbp || 0)} editable={editable} onSave={v => write("update", "investor_forecast", { id: r.id, patch: { amount_gbp: Number(v || 0) } })} />
+              </td>
+              <td className="px-3 py-2">
+                <EditableTextField value={r.notes || ""} editable={editable} onSave={v => write("update", "investor_forecast", { id: r.id, patch: { notes: v } })} />
+              </td>
+              <td className="px-3 py-2 text-right">
+                {editable && <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_forecast", { id: r.id })}><Trash2 className="w-4 h-4" /></Button>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
@@ -1501,7 +1719,7 @@ const Projections = ({ projections, players, editable, write }: {
   const playerIncome = rows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
   const extraRowsIncome = extraRows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
   const legacyExtra = Number(active?.extra_income_gbp || 0);
-  const total = playerIncome + extraRowsIncome + legacyExtra - Number(active?.costs_gbp || 0);
+  const total = playerIncome + extraRowsIncome + legacyExtra;
   const updateProjection = (patch: Partial<ProjectionRow>) => active && write("update", "investor_projections", { id: active.id, patch });
   const updateRows = (nextRows: ProjectionPlayerRow[]) => updateProjection({ player_rows: nextRows });
   const updateExtraRows = (nextRows: ProjectionExtraRow[]) => updateProjection({ extra_income_rows: nextRows });
@@ -1523,6 +1741,9 @@ const Projections = ({ projections, players, editable, write }: {
   };
   return (
     <SectionShell icon={Target} title="Projections" action={editable ? <Button size="sm" onClick={addProjection} className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add projection</Button> : undefined}>
+      <div className="mb-3 text-xs text-muted-foreground border border-border/40 rounded-md px-3 py-2 bg-muted/20">
+        Projection window: <span className="text-foreground font-medium">1 June 2026 → 31 December 2027</span> (19 months)
+      </div>
       {projections.length === 0 ? (
         <div className="text-center py-10 text-sm text-muted-foreground">No projections yet.</div>
       ) : (
@@ -1536,11 +1757,10 @@ const Projections = ({ projections, players, editable, write }: {
           </div>
           {active && (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Stat label="Player income" value={gbp(playerIncome)} />
                 <Stat label="Extra income" value={gbp(extraRowsIncome + legacyExtra)} />
-                <Stat label="Costs" value={gbp(active.costs_gbp)} />
-                <Stat label="Projected result" value={gbp(total)} />
+                <Stat label="Projected revenue" value={gbp(total)} />
               </div>
               <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-3">
                 <Card className="bg-card/60 border-border/60 p-4 space-y-3">
@@ -1548,9 +1768,8 @@ const Projections = ({ projections, players, editable, write }: {
                     <div><Label>Name</Label><EditableTextField value={active.name} editable={editable} onSave={v => updateProjection({ name: v || "Untitled projection" })} /></div>
                     <div><Label>Scenario</Label><Select value={active.scenario} disabled={!editable} onValueChange={v => updateProjection({ scenario: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="badly">Badly</SelectItem><SelectItem value="expected">Expected</SelectItem><SelectItem value="better">Better than expected</SelectItem><SelectItem value="custom">Custom</SelectItem></SelectContent></Select></div>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-3">
+                  <div className="grid md:grid-cols-1 gap-3">
                     <div><Label>Misc. extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
-                    <div><Label>Costs</Label><InlineMoneyCell value={active.costs_gbp} editable={editable} onSave={(v) => updateProjection({ costs_gbp: v || 0 })} /></div>
                   </div>
                   <div><Label>Notes</Label><EditableTextField value={active.notes} editable={editable} multiline onSave={v => updateProjection({ notes: v })} /></div>
                 </Card>
@@ -2224,6 +2443,8 @@ const InvestorsPortal = () => {
     priorityItems: OpsItem[];
     businessPlan: BusinessPlanRow | null;
     staffMembers: StaffMember[];
+    forecast: ForecastRow[];
+    forecastSettings: ForecastSettingsRow | null;
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -2303,6 +2524,8 @@ const InvestorsPortal = () => {
         priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
         businessPlan: dd.businessPlan || null,
         staffMembers: dd.staffMembers || [],
+        forecast: dd.forecast || [],
+        forecastSettings: dd.forecastSettings || null,
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -2683,7 +2906,7 @@ const InvestorsPortal = () => {
                   {active === "spending" && <Spending rows={data.spending} write={writeOp} token={token} onRefresh={refresh} />}
                   {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
-                  {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} players={data.players} />}
+                  {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} projections={data.projections} forecast={data.forecast} forecastSettings={data.forecastSettings} editable={canEdit} write={writeOp} />}
                   {active === "projections" && <Projections projections={data.projections} players={data.players} editable={canEdit} write={writeOp} />}
                   {active === "salaryCap" && <SalaryCap players={data.players} invoices={data.invoices} editable={canEdit} onSave={savePlayerFinance} />}
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}

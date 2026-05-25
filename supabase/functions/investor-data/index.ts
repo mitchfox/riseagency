@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems, businessPlan, capacityStaffRoles] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems, businessPlan, capacityStaffRoles, forecast, forecastSettings] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -112,6 +112,8 @@ Deno.serve(async (req) => {
       supabase.from("investor_priority_items").select("*").order("display_order", { ascending: true }),
       supabase.from("business_plan").select("*").order("created_at", { ascending: true }).limit(1).maybeSingle(),
       supabase.from("user_roles").select("user_id, role").in("role", ["admin", "marketeer"]),
+      supabase.from("investor_forecast").select("*").order("month", { ascending: true }),
+      supabase.from("investor_forecast_settings").select("*").order("created_at", { ascending: true }).limit(1).maybeSingle(),
     ]);
 
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
@@ -197,6 +199,8 @@ Deno.serve(async (req) => {
       priorityItems: priorityItems.data || [],
       businessPlan: businessPlan.data || null,
       staffMembers,
+      forecast: forecast.data || [],
+      forecastSettings: forecastSettings.data || null,
     }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
