@@ -60,6 +60,7 @@ interface TimelineRow {
   end_date: string | null;
   amount_gbp: number | null;
   notes: string | null;
+  goal: string | null;
   created_at?: string;
   updated_at?: string;
 }
