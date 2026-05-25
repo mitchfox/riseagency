@@ -2317,6 +2317,8 @@ const InvestorsPortal = () => {
         priorityItems: (dd.priorityItems || []).map((i: any) => ({ ...i, highlights: Array.isArray(i.highlights) ? i.highlights : [] })),
         businessPlan: dd.businessPlan || null,
         staffMembers: dd.staffMembers || [],
+        forecast: dd.forecast || [],
+        forecastSettings: dd.forecastSettings || null,
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
