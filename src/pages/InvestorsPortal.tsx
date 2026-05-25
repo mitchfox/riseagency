@@ -1513,7 +1513,7 @@ const Projections = ({ projections, players, editable, write }: {
   const playerIncome = rows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
   const extraRowsIncome = extraRows.reduce((s, r) => s + Number(r.income_gbp || 0), 0);
   const legacyExtra = Number(active?.extra_income_gbp || 0);
-  const total = playerIncome + extraRowsIncome + legacyExtra - Number(active?.costs_gbp || 0);
+  const total = playerIncome + extraRowsIncome + legacyExtra;
   const updateProjection = (patch: Partial<ProjectionRow>) => active && write("update", "investor_projections", { id: active.id, patch });
   const updateRows = (nextRows: ProjectionPlayerRow[]) => updateProjection({ player_rows: nextRows });
   const updateExtraRows = (nextRows: ProjectionExtraRow[]) => updateProjection({ extra_income_rows: nextRows });
@@ -1535,6 +1535,9 @@ const Projections = ({ projections, players, editable, write }: {
   };
   return (
     <SectionShell icon={Target} title="Projections" action={editable ? <Button size="sm" onClick={addProjection} className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add projection</Button> : undefined}>
+      <div className="mb-3 text-xs text-muted-foreground border border-border/40 rounded-md px-3 py-2 bg-muted/20">
+        Projection window: <span className="text-foreground font-medium">1 June 2026 → 31 December 2027</span> (19 months)
+      </div>
       {projections.length === 0 ? (
         <div className="text-center py-10 text-sm text-muted-foreground">No projections yet.</div>
       ) : (
@@ -1548,11 +1551,10 @@ const Projections = ({ projections, players, editable, write }: {
           </div>
           {active && (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Stat label="Player income" value={gbp(playerIncome)} />
                 <Stat label="Extra income" value={gbp(extraRowsIncome + legacyExtra)} />
-                <Stat label="Costs" value={gbp(active.costs_gbp)} />
-                <Stat label="Projected result" value={gbp(total)} />
+                <Stat label="Projected revenue" value={gbp(total)} />
               </div>
               <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-3">
                 <Card className="bg-card/60 border-border/60 p-4 space-y-3">
@@ -1560,9 +1562,8 @@ const Projections = ({ projections, players, editable, write }: {
                     <div><Label>Name</Label><EditableTextField value={active.name} editable={editable} onSave={v => updateProjection({ name: v || "Untitled projection" })} /></div>
                     <div><Label>Scenario</Label><Select value={active.scenario} disabled={!editable} onValueChange={v => updateProjection({ scenario: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="badly">Badly</SelectItem><SelectItem value="expected">Expected</SelectItem><SelectItem value="better">Better than expected</SelectItem><SelectItem value="custom">Custom</SelectItem></SelectContent></Select></div>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-3">
+                  <div className="grid md:grid-cols-1 gap-3">
                     <div><Label>Misc. extra income</Label><InlineMoneyCell value={active.extra_income_gbp} editable={editable} onSave={(v) => updateProjection({ extra_income_gbp: v || 0 })} /></div>
-                    <div><Label>Costs</Label><InlineMoneyCell value={active.costs_gbp} editable={editable} onSave={(v) => updateProjection({ costs_gbp: v || 0 })} /></div>
                   </div>
                   <div><Label>Notes</Label><EditableTextField value={active.notes} editable={editable} multiline onSave={v => updateProjection({ notes: v })} /></div>
                 </Card>
