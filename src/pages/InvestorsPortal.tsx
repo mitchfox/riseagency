@@ -20,6 +20,7 @@ import {
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
   Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle, Clock, ListOrdered,
+  CalendarRange,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -49,7 +50,19 @@ type SectionId =
   | "outreach" | "clubnetwork"
   | "timeManagement" | "priorities" | "capacity"
   | "execNotes" | "execScripts" | "execWorkflow"
-  | "businessPlan";
+  | "businessPlan" | "timeline";
+
+interface TimelineRow {
+  id: string;
+  kind: "event" | "income" | "expense" | "transfer_window";
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  amount_gbp: number | null;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
@@ -197,6 +210,7 @@ const CATEGORIES: CategoryDef[] = [
     { id: "overview", title: "Overview", icon: LayoutDashboard },
     { id: "investment", title: "Investment", icon: Sparkles },
     { id: "businessPlan", title: "Business Plan", icon: Briefcase },
+    { id: "timeline", title: "Timeline", icon: CalendarRange },
   ]},
   { id: "act", title: "Activity", icon: Activity, sections: [
     { id: "tasks", title: "All Tasks", icon: CheckSquare },
@@ -2412,6 +2426,172 @@ const ClubNetworkView = ({ rows }: { rows: ClubContactRow[] }) => {
   );
 };
 
+// ---------- Timeline ----------
+const TIMELINE_KINDS: { value: TimelineRow["kind"]; label: string; tone: string }[] = [
+  { value: "event", label: "Event", tone: "bg-muted/40 border-border/50 text-foreground" },
+  { value: "income", label: "Income", tone: "bg-emerald-500/10 border-emerald-500/40 text-emerald-200" },
+  { value: "expense", label: "Expense", tone: "bg-rose-500/10 border-rose-500/40 text-rose-200" },
+  { value: "transfer_window", label: "Transfer Window", tone: "bg-primary/15 border-primary/50 text-primary" },
+];
+
+const Timeline = ({ rows, editable, token, onChange }: {
+  rows: TimelineRow[];
+  editable: boolean;
+  token: string;
+  onChange: (next: TimelineRow[]) => void;
+}) => {
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState<{ kind: TimelineRow["kind"]; title: string; start_date: string; end_date: string; amount_gbp: string; notes: string }>(
+    { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" }
+  );
+  const [busy, setBusy] = useState(false);
+
+  const grouped = useMemo(() => {
+    const sorted = [...rows].sort((a, b) => a.start_date.localeCompare(b.start_date));
+    const map = new Map<string, TimelineRow[]>();
+    for (const r of sorted) {
+      const key = r.start_date.slice(0, 7);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    return Array.from(map.entries());
+  }, [rows]);
+
+  const invoke = async (op: "insert" | "update" | "delete", body: any) => {
+    const { data: r, error } = await supabase.functions.invoke("investor-write", {
+      body: { token, op, table: "investor_timeline", ...body },
+    });
+    if (error) throw error;
+    if ((r as any)?.error) throw new Error((r as any).error);
+    return (r as any)?.data;
+  };
+
+  const handleAdd = async () => {
+    if (!draft.title.trim() || !draft.start_date) { toast.error("Title and start date required"); return; }
+    setBusy(true);
+    try {
+      const row: any = {
+        kind: draft.kind,
+        title: draft.title.trim(),
+        start_date: draft.start_date,
+        end_date: draft.kind === "transfer_window" && draft.end_date ? draft.end_date : null,
+        amount_gbp: draft.amount_gbp === "" ? null : Number(draft.amount_gbp),
+        notes: draft.notes.trim() || null,
+      };
+      const saved = await invoke("insert", { row });
+      if (saved) onChange([...rows, saved as TimelineRow]);
+      setDraft({ kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" });
+      setAdding(false);
+      toast.success("Added");
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally { setBusy(false); }
+  };
+
+  const handlePatch = async (id: string, patch: Partial<TimelineRow>) => {
+    try {
+      const saved = await invoke("update", { id, row: patch });
+      onChange(rows.map(r => r.id === id ? { ...r, ...(saved || patch) } : r));
+    } catch (e: any) { toast.error(e.message || "Save failed"); }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await invoke("delete", { id });
+      onChange(rows.filter(r => r.id !== id));
+    } catch (e: any) { toast.error(e.message || "Delete failed"); }
+  };
+
+  return (
+    <SectionShell icon={CalendarRange} title={`Timeline (${rows.length})`} action={
+      editable && (
+        <Button size="sm" variant={adding ? "secondary" : "default"} onClick={() => setAdding(a => !a)}>
+          <Plus className="w-3.5 h-3.5 mr-1" /> {adding ? "Cancel" : "Add entry"}
+        </Button>
+      )
+    }>
+      {adding && editable && (
+        <Card className="bg-card/60 border-border/60 p-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+            <Select value={draft.kind} onValueChange={(v: any) => setDraft(d => ({ ...d, kind: v }))}>
+              <SelectTrigger className="h-9 md:col-span-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{TIMELINE_KINDS.map(k => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input className="h-9 md:col-span-2" placeholder="Title" value={draft.title} onChange={e => setDraft(d => ({ ...d, title: e.target.value }))} />
+            <Input className="h-9" type="date" value={draft.start_date} onChange={e => setDraft(d => ({ ...d, start_date: e.target.value }))} />
+            {draft.kind === "transfer_window" ? (
+              <Input className="h-9" type="date" placeholder="End" value={draft.end_date} onChange={e => setDraft(d => ({ ...d, end_date: e.target.value }))} />
+            ) : (
+              <Input className="h-9" type="number" placeholder="£ amount (optional)" value={draft.amount_gbp} onChange={e => setDraft(d => ({ ...d, amount_gbp: e.target.value }))} />
+            )}
+            <Button size="sm" disabled={busy} onClick={handleAdd}>Save</Button>
+          </div>
+          <Input className="h-9 mt-2" placeholder="Notes (optional)" value={draft.notes} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
+        </Card>
+      )}
+
+      {rows.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-8">No entries yet.</div>
+      ) : (
+        <div className="space-y-5">
+          {grouped.map(([month, items]) => (
+            <div key={month}>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-bbh mb-2">
+                {format(new Date(month + "-01"), "MMMM yyyy")}
+              </div>
+              <div className="space-y-2">
+                {items.map(r => {
+                  const tone = TIMELINE_KINDS.find(k => k.value === r.kind)?.tone || "";
+                  return (
+                    <Card key={r.id} className={`p-3 border ${tone}`}>
+                      <div className="flex items-start gap-3">
+                        <div className="text-xs font-mono w-20 shrink-0 pt-1">
+                          {format(new Date(r.start_date), "dd MMM")}
+                          {r.end_date && <div className="opacity-70">→ {format(new Date(r.end_date), "dd MMM")}</div>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {editable ? (
+                            <Input
+                              defaultValue={r.title}
+                              className="h-7 bg-transparent border-0 px-0 text-sm font-semibold focus-visible:ring-1"
+                              onBlur={e => { if (e.target.value !== r.title) handlePatch(r.id, { title: e.target.value }); }}
+                            />
+                          ) : (
+                            <div className="text-sm font-semibold">{r.title}</div>
+                          )}
+                          <div className="flex items-center gap-3 mt-1 text-xs opacity-80">
+                            <span className="uppercase tracking-wider">{TIMELINE_KINDS.find(k => k.value === r.kind)?.label}</span>
+                            {r.amount_gbp != null && <span className="font-mono">{gbp(r.amount_gbp)}</span>}
+                          </div>
+                          {editable ? (
+                            <Input
+                              defaultValue={r.notes || ""}
+                              placeholder="Notes"
+                              className="h-7 bg-transparent border-0 px-0 text-xs opacity-80 focus-visible:ring-1 mt-1"
+                              onBlur={e => { if ((e.target.value || null) !== r.notes) handlePatch(r.id, { notes: e.target.value || null }); }}
+                            />
+                          ) : r.notes ? (
+                            <div className="text-xs opacity-80 mt-1">{r.notes}</div>
+                          ) : null}
+                        </div>
+                        {editable && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(r.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionShell>
+  );
+};
+
 // ---------- Main ----------
 const InvestorsPortal = () => {
   const { user, token, loading: authLoading, signIn, signOut } = useInvestorSession();
@@ -2445,6 +2625,7 @@ const InvestorsPortal = () => {
     staffMembers: StaffMember[];
     forecast: ForecastRow[];
     forecastSettings: ForecastSettingsRow | null;
+    timeline: TimelineRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -2526,6 +2707,7 @@ const InvestorsPortal = () => {
         staffMembers: dd.staffMembers || [],
         forecast: dd.forecast || [],
         forecastSettings: dd.forecastSettings || null,
+        timeline: dd.timeline || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -2912,7 +3094,15 @@ const InvestorsPortal = () => {
                   {active === "tasks" && <TasksView rows={data.tasks} profiles={data.profiles} />}
                   {active === "activity" && <ActivityFeed rows={data.staffActivity} taskNotifications={data.taskNotifications} profiles={data.profiles} />}
                   {active === "outreach" && <OutreachView youth={data.outreachYouth} pro={data.outreachPro} />}
-                  {active === "clubnetwork" && <ClubNetworkManagement isAdmin={false} userRole="Trust Network" />}
+                  {active === "clubnetwork" && <ClubNetworkView rows={data.clubContacts} />}
+                  {active === "timeline" && (
+                    <Timeline
+                      rows={data.timeline}
+                      editable={canEdit}
+                      token={token}
+                      onChange={(next) => setData(d => d ? { ...d, timeline: next } : d)}
+                    />
+                  )}
                   {active === "timeManagement" && (
                     <SectionShell icon={Clock} title="Time Management" action={
                       data.isAdmin ? (
