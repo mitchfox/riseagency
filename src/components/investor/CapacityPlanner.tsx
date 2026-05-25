@@ -586,12 +586,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
                 {pt === "youth" ? "Youth Player" : pt === "pro" ? "Pro Player" : "Ongoing Tasks"}
               </h3>
               {unlocked && (
-                <AddAllocationInline timeItems={timeItems} onAdd={(p) => call("upsertCapacityAllocation", {
-                  ...p,
-                  player_type: pt,
-                  // Auto-assign to current staff filter (and put all hours on them)
-                  assigned_staff: staffFilter !== "all" ? [{ staff_id: staffFilter, hours: p.hours_per_week }] : [],
-                })} />
+                <AddAllocationInline timeItems={timeItems} onAdd={(p) => addAllocation(pt, p)} />
               )}
             </div>
             <ul className="space-y-1.5">
