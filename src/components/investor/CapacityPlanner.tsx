@@ -684,7 +684,7 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
   );
 };
 
-const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAdd: (p: any) => Promise<boolean> }) => {
+const AddAllocationInline = ({ timeItems, onAdd }: { timeItems: TimeItem[]; onAdd: (p: CapacityAllocationPayload) => Promise<boolean> }) => {
   const [open, setOpen] = useState(false);
   const [taskId, setTaskId] = useState<string>("");
   const [custom, setCustom] = useState("");
