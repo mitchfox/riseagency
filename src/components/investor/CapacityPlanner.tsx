@@ -288,8 +288,8 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
     if (!unlocked) return;
     let next = { ...a };
     if (staffFilter === "all") {
-      const fallbackStaffIds = staffMembers.filter(s => Number(staffLimits[s.id]) > 0).map(s => s.id);
-      next.assigned_staff = reconcileAssignedStaff(value, a.assigned_staff || [], fallbackStaffIds.length > 0 ? fallbackStaffIds : staffMembers.map(s => s.id));
+      const fallbackStaffIds = defaultAssignmentStaffIds();
+      next.assigned_staff = reconcileAssignedStaff(value, a.assigned_staff || [], fallbackStaffIds);
       next.hours_per_week = next.assigned_staff.length > 0 ? sumAssignedHours(next.assigned_staff) : Math.max(0, roundHours(value));
     } else {
       const existing = (a.assigned_staff || []).find(s => s.staff_id === staffFilter);
@@ -325,6 +325,24 @@ export const CapacityPlanner = ({ unlocked, token, onChange, staffMembers = [] }
       player_type: a.player_type, hours_per_week: total,
       day_of_week: a.day_of_week, days_of_week: a.days_of_week,
       assigned_staff: nextStaff,
+    });
+  };
+
+  const defaultAssignmentStaffIds = () => {
+    const limited = staffMembers.filter(s => Number(staffLimits[s.id]) > 0).map(s => s.id);
+    return limited.length > 0 ? limited : staffMembers.map(s => s.id);
+  };
+
+  const addAllocation = async (pt: Allocation["player_type"], p: any) => {
+    const total = Math.max(0, roundHours(Number(p.hours_per_week) || 0));
+    const assigned_staff = staffFilter !== "all"
+      ? [{ staff_id: staffFilter, hours: total }]
+      : splitHoursEvenly(total, defaultAssignmentStaffIds());
+    return call("upsertCapacityAllocation", {
+      ...p,
+      player_type: pt,
+      hours_per_week: assigned_staff.length > 0 ? sumAssignedHours(assigned_staff) : total,
+      assigned_staff,
     });
   };
 
