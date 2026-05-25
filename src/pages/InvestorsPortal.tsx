@@ -20,6 +20,7 @@ import {
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
   Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle, Clock, ListOrdered,
+  CalendarRange,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -49,7 +50,7 @@ type SectionId =
   | "outreach" | "clubnetwork"
   | "timeManagement" | "priorities" | "capacity"
   | "execNotes" | "execScripts" | "execWorkflow"
-  | "businessPlan";
+  | "businessPlan" | "timeline";
 
 interface PlayerRow {
   id: string; name: string; representation_status: string | null; position: string | null;
