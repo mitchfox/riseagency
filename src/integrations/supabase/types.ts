@@ -2932,6 +2932,7 @@ export type Database = {
           amount_gbp: number | null
           created_at: string
           end_date: string | null
+          goal: string | null
           id: string
           kind: string
           notes: string | null
@@ -2943,6 +2944,7 @@ export type Database = {
           amount_gbp?: number | null
           created_at?: string
           end_date?: string | null
+          goal?: string | null
           id?: string
           kind?: string
           notes?: string | null
@@ -2954,6 +2956,7 @@ export type Database = {
           amount_gbp?: number | null
           created_at?: string
           end_date?: string | null
+          goal?: string | null
           id?: string
           kind?: string
           notes?: string | null

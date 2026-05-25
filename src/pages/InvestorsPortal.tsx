@@ -60,6 +60,7 @@ interface TimelineRow {
   end_date: string | null;
   amount_gbp: number | null;
   notes: string | null;
+  goal: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -2460,13 +2461,15 @@ const Timeline = ({ rows, editable, token, onChange }: {
   onChange: (next: TimelineRow[]) => void;
 }) => {
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState<{ kind: TimelineRow["kind"]; title: string; start_date: string; end_date: string; amount_gbp: string; notes: string }>(
-    { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" }
+  const [draft, setDraft] = useState<{ kind: TimelineRow["kind"]; title: string; start_date: string; end_date: string; amount_gbp: string; notes: string; goal: string }>(
+    { kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "", goal: "" }
   );
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<TimelineRow | null>(null);
   const [zoom, setZoom] = useState(3); // px per day
   const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [scrubX, setScrubX] = useState<number | null>(null);
 
   const sorted = useMemo(
     () => [...rows].sort((a, b) => a.start_date.localeCompare(b.start_date)),
@@ -2499,6 +2502,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
   }, [sorted]);
 
   const dayToX = (d: Date) => Math.round((d.getTime() - rangeStart.getTime()) / 86400000) * zoom;
+  const xToDate = (x: number) => new Date(rangeStart.getTime() + (x / zoom) * 86400000);
   const width = totalDays * zoom;
 
   // Cumulative investor net balance series (one point per event with a delta)
@@ -2514,36 +2518,33 @@ const Timeline = ({ rows, editable, token, onChange }: {
     return points;
   }, [sorted, zoom, rangeStart]);
 
-  const totals = useMemo(() => {
-    let invested = 0, recouped = 0, expected = 0;
-    const today = new Date();
+  // Totals up to a given cut-off date (null = whole timeline)
+  const computeTotals = (cutoff: Date | null) => {
+    let invested = 0;     // all investor outlay (planned + actual)
+    let recouped = 0;     // investor 50% share already received
+    let expectedGross = 0; // TOTAL gross of all income/deal entries (not just 50%)
     for (const r of sorted) {
-      const d = investorDelta(r);
-      const isPast = new Date(r.start_date) <= today;
-      if (d < 0 && isPast) invested += -d;
-      else if (d > 0 && isPast) recouped += d;
-      else if (d > 0 && !isPast) expected += d;
+      const d = new Date(r.start_date);
+      const within = !cutoff || d <= cutoff;
+      const amt = Number(r.amount_gbp || 0);
+      if (r.kind === "investment" && within) invested += amt;
+      if ((r.kind === "income" || r.kind === "deal") && within) recouped += amt * INVESTOR_SHARE;
+      if (r.kind === "income" || r.kind === "deal") expectedGross += amt;
     }
-    return { invested, recouped, expected, net: recouped - invested };
-  }, [sorted]);
+    return { invested, recouped, expected: expectedGross, net: invested - recouped };
+  };
+  const totals = useMemo(() => computeTotals(null), [sorted]);
+  const scrubDate = scrubX != null ? xToDate(scrubX) : null;
+  const scrubTotals = useMemo(() => scrubDate ? computeTotals(scrubDate) : null, [scrubDate, sorted]);
 
-  // Lay out nodes into lanes to avoid overlap
-  const laneHeight = 44;
-  const laneCount = 4;
+  // One lane per entry — never overlap, regardless of date proximity or kind.
+  const laneHeight = 32;
   const placed = useMemo(() => {
-    const lanes: { until: number }[] = Array.from({ length: laneCount }, () => ({ until: -Infinity }));
     return sorted
       .filter(r => r.kind !== "transfer_window")
-      .map(r => {
-        const x = dayToX(new Date(r.start_date));
-        let lane = 0;
-        for (let i = 0; i < laneCount; i++) {
-          if (lanes[i].until + 8 < x) { lane = i; lanes[i].until = x + 140; break; }
-          if (i === laneCount - 1) { lane = i; lanes[i].until = x + 140; }
-        }
-        return { row: r, x, lane };
-      });
+      .map((r, i) => ({ row: r, x: dayToX(new Date(r.start_date)), lane: i }));
   }, [sorted, zoom, rangeStart]);
+  const laneCount = Math.max(4, placed.length);
 
   const windows = sorted.filter(r => r.kind === "transfer_window");
   const todayX = dayToX(new Date());
@@ -2581,10 +2582,11 @@ const Timeline = ({ rows, editable, token, onChange }: {
         end_date: draft.kind === "transfer_window" && draft.end_date ? draft.end_date : null,
         amount_gbp: draft.amount_gbp === "" ? null : Number(draft.amount_gbp),
         notes: draft.notes.trim() || null,
+        goal: draft.goal.trim() || null,
       };
       const saved = await invoke("insert", { row });
       if (saved) onChange([...rows, saved as TimelineRow]);
-      setDraft({ kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "" });
+      setDraft({ kind: "event", title: "", start_date: format(new Date(), "yyyy-MM-dd"), end_date: "", amount_gbp: "", notes: "", goal: "" });
       setAdding(false);
       toast.success("Added");
     } catch (e: any) {
@@ -2656,10 +2658,22 @@ const Timeline = ({ rows, editable, token, onChange }: {
     }>
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-        {kpiCard("Invested by you", gbp(totals.invested), "bg-sky-500/10 border-sky-500/30 text-sky-100")}
-        {kpiCard("Recouped (your 50%)", gbp(totals.recouped), "bg-emerald-500/10 border-emerald-500/30 text-emerald-100")}
-        {kpiCard("Expected (upcoming)", gbp(totals.expected), "bg-primary/10 border-primary/30 text-primary")}
-        {kpiCard("Net position", `${totals.net >= 0 ? "+" : "−"}${gbp(Math.abs(totals.net))}`, totals.net >= 0 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-100" : "bg-rose-500/10 border-rose-500/30 text-rose-100")}
+        {kpiCard(
+          scrubDate ? `Invested by ${format(scrubDate, "d MMM yyyy")}` : "Invested by you",
+          gbp((scrubTotals ?? totals).invested),
+          "bg-sky-500/10 border-sky-500/30 text-sky-100",
+        )}
+        {kpiCard(
+          scrubDate ? "Recouped so far" : "Recouped (off expected)",
+          `${gbp((scrubTotals ?? totals).recouped)}${totals.expected > 0 ? ` / ${gbp(totals.expected * INVESTOR_SHARE)}` : ""}`,
+          "bg-emerald-500/10 border-emerald-500/30 text-emerald-100",
+        )}
+        {kpiCard("Expected (gross total)", gbp(totals.expected), "bg-primary/10 border-primary/30 text-primary")}
+        {kpiCard(
+          "Net position (owed)",
+          (() => { const n = (scrubTotals ?? totals).net; return `${n >= 0 ? "" : "+"}${gbp(Math.abs(n))}`; })(),
+          (scrubTotals ?? totals).net <= 0 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-100" : "bg-rose-500/10 border-rose-500/30 text-rose-100",
+        )}
       </div>
 
       {adding && editable && (
@@ -2679,6 +2693,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
             <Button size="sm" disabled={busy} onClick={handleAdd}>Save</Button>
           </div>
           <Input className="h-9 mt-2" placeholder="Notes (optional)" value={draft.notes} onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))} />
+          <Input className="h-9 mt-2" placeholder="Goal / what should be completed by this point (optional)" value={draft.goal} onChange={e => setDraft(d => ({ ...d, goal: e.target.value }))} />
           {(draft.kind === "income" || draft.kind === "deal") && draft.amount_gbp && !isNaN(Number(draft.amount_gbp)) && (
             <div className="text-xs text-emerald-300 mt-2 font-mono">
               Your share (50%): {gbp(Number(draft.amount_gbp) * INVESTOR_SHARE)}
@@ -2708,7 +2723,18 @@ const Timeline = ({ rows, editable, token, onChange }: {
           className="relative overflow-x-auto overflow-y-hidden rounded-lg border border-border/40 bg-gradient-to-b from-background/40 to-background/80 select-none"
           style={{ cursor: "grab" }}
         >
-          <div className="relative" style={{ width: `${width}px`, height: `${laneCount * laneHeight + 180}px` }}>
+          <div
+            ref={trackRef}
+            className="relative"
+            style={{ width: `${width}px`, height: `${laneCount * laneHeight + 200}px` }}
+            onMouseMove={(e) => {
+              const rect = trackRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              const x = e.clientX - rect.left;
+              if (x >= 0 && x <= width) setScrubX(x);
+            }}
+            onMouseLeave={() => setScrubX(null)}
+          >
             {/* Month grid */}
             {months.map((m, i) => {
               const x = dayToX(m.date);
@@ -2723,7 +2749,7 @@ const Timeline = ({ rows, editable, token, onChange }: {
               );
             })}
 
-            {/* Transfer window bands */}
+            {/* Transfer window bands — full-height translucent backgrounds for the date range */}
             {windows.map(r => {
               const x1 = dayToX(new Date(r.start_date));
               const x2 = dayToX(new Date(r.end_date || r.start_date));
@@ -2732,12 +2758,12 @@ const Timeline = ({ rows, editable, token, onChange }: {
                   key={r.id}
                   data-node
                   onClick={() => setSelected(r)}
-                  className="absolute top-6 bottom-24 bg-primary/8 border-x-2 border-primary/40 hover:bg-primary/15 transition-colors group"
+                  className="absolute top-0 bottom-0 bg-primary/10 hover:bg-primary/20 border-x border-primary/30 transition-colors group"
                   style={{ left: `${x1}px`, width: `${Math.max(2, x2 - x1)}px` }}
                   title={r.title}
                 >
-                  <div className="absolute top-1 left-1 right-1 text-[10px] font-bbh uppercase tracking-widest text-primary truncate text-left">
-                    {r.title}
+                  <div className="absolute top-5 left-1 right-1 text-[10px] font-bbh uppercase tracking-widest text-primary/90 truncate text-left pointer-events-none">
+                    {r.title} · Transfer window
                   </div>
                 </button>
               );
@@ -2753,26 +2779,39 @@ const Timeline = ({ rows, editable, token, onChange }: {
               </div>
             )}
 
+            {/* Scrubber — vertical line + date bubble follows the cursor */}
+            {scrubX != null && (
+              <div className="absolute top-0 bottom-0 pointer-events-none z-20" style={{ left: `${scrubX}px` }}>
+                <div className="absolute top-0 bottom-0 w-px bg-foreground/60" />
+                <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-foreground text-background text-[10px] font-bold uppercase tracking-widest font-mono whitespace-nowrap">
+                  {scrubDate ? format(scrubDate, "d MMM yyyy") : ""}
+                </div>
+              </div>
+            )}
+
             {/* Event nodes */}
             {placed.map(({ row: r, x, lane }) => {
               const m = kindMeta(r.kind);
               const delta = investorDelta(r);
-              const top = 24 + lane * laneHeight;
+              const top = 28 + lane * laneHeight;
               return (
                 <button
                   key={r.id}
                   data-node
                   onClick={() => setSelected(r)}
-                  className="absolute group flex items-center gap-1.5 hover:z-10"
+                  className="absolute group flex items-center gap-1.5 hover:z-30 z-10"
                   style={{ left: `${x}px`, top: `${top}px`, transform: "translateX(-6px)" }}
                 >
                   <div className={`w-3 h-3 rounded-full ${m.dot} ring-4 ${m.ring} shadow-md group-hover:scale-125 transition-transform`} />
-                  <div className={`px-2 py-0.5 rounded border text-[10px] whitespace-nowrap ${m.badge} max-w-[160px] truncate font-medium`}>
+                  <div className={`px-2 py-0.5 rounded border text-[10px] whitespace-nowrap ${m.badge} max-w-[200px] truncate font-medium`}>
                     {r.title}
                     {delta !== 0 && (
                       <span className="ml-1 font-mono opacity-90">
                         {delta > 0 ? "+" : "−"}{gbp(Math.abs(delta))}
                       </span>
+                    )}
+                    {r.goal && (
+                      <span className="ml-1 opacity-60 italic">· {r.goal}</span>
                     )}
                   </div>
                 </button>
@@ -2882,15 +2921,30 @@ const Timeline = ({ rows, editable, token, onChange }: {
                         <Textarea defaultValue={selected.notes ?? ""}
                           onBlur={e => { const v = e.target.value || null; if (v !== selected.notes) handlePatch(selected.id, { notes: v }); }} />
                       </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Goal / what should be completed by this point</Label>
+                        <Textarea defaultValue={selected.goal ?? ""}
+                          onBlur={e => { const v = e.target.value || null; if (v !== selected.goal) handlePatch(selected.id, { goal: v }); }} />
+                      </div>
                       <div className="flex justify-end">
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(selected.id)}>
                           <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
                         </Button>
                       </div>
                     </>
-                  ) : selected.notes ? (
-                    <div className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.notes}</div>
-                  ) : null}
+                  ) : (
+                    <>
+                      {selected.goal && (
+                        <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                          <div className="text-[10px] uppercase tracking-widest text-primary/80 mb-1">Goal by this point</div>
+                          <div className="text-sm whitespace-pre-wrap">{selected.goal}</div>
+                        </div>
+                      )}
+                      {selected.notes && (
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap">{selected.notes}</div>
+                      )}
+                    </>
+                  )}
                 </div>
               </>
             );
