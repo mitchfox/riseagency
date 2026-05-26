@@ -1418,6 +1418,20 @@ const Staff = () => {
               <ExternalLink className="h-4 w-4" />
             </Button>
             {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+            {(isAdmin || !permissionManagedRole || canView('schedule')) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Open Schedule"
+                onClick={() => {
+                  if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                    setExpandedSection('schedule');
+                  }
+                }}
+              >
+                <Calendar className="h-4 w-4" />
+              </Button>
+            )}
             {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
             </>

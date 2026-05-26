@@ -7278,6 +7278,7 @@ export type Database = {
           staff_id: string
           start_time: string
           updated_at: string
+          visible_to_players: boolean
         }
         Insert: {
           availability_date?: string
@@ -7288,6 +7289,7 @@ export type Database = {
           staff_id: string
           start_time: string
           updated_at?: string
+          visible_to_players?: boolean
         }
         Update: {
           availability_date?: string
@@ -7298,6 +7300,7 @@ export type Database = {
           staff_id?: string
           start_time?: string
           updated_at?: string
+          visible_to_players?: boolean
         }
         Relationships: []
       }
@@ -7492,6 +7495,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_personal_schedule_items: {
+        Row: {
+          created_at: string
+          done_at: string | null
+          end_time: string
+          id: string
+          lane: number
+          notes: string | null
+          scheduled_date: string
+          start_time: string
+          task_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done_at?: string | null
+          end_time?: string
+          id?: string
+          lane?: number
+          notes?: string | null
+          scheduled_date: string
+          start_time?: string
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          done_at?: string | null
+          end_time?: string
+          id?: string
+          lane?: number
+          notes?: string | null
+          scheduled_date?: string
+          start_time?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_personal_schedule_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "staff_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_player_assignments: {
         Row: {

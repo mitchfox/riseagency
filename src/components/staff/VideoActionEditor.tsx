@@ -356,10 +356,16 @@ export const VideoActionEditor = ({
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="R90..."
+                  id={`r90-search-${realIndex}`}
                   className="h-7 md:h-8 text-xs w-20 md:w-36"
                 />
                 <Button
-                  onClick={() => openR90Viewer(realIndex)}
+                  onClick={() => {
+                    const el = document.getElementById(`r90-search-${realIndex}`) as HTMLInputElement | null;
+                    el?.focus();
+                    if (!searchFilter.trim()) setSearchFilter(" ");
+                    openR90Viewer(realIndex);
+                  }}
                   size="sm"
                   variant="ghost"
                   className="h-7 md:h-8 text-xs shrink-0 px-2"
