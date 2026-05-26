@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ScoreDropdownProps {
@@ -58,10 +58,10 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const applyNegativePrefix = () => {
-    setLocalValue((prev) => {
-      const stripped = String(prev ?? "").replace(/-/g, "");
-      return stripped ? `-${stripped}` : "-";
-    });
+    const stripped = String(localValue ?? "").replace(/-/g, "");
+    const next = stripped ? `-${stripped}` : "-";
+    setLocalValue(next);
+    if (next !== "-" && next !== String(value ?? "")) onChange(next);
   };
 
   useEffect(() => {
@@ -110,6 +110,14 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           disabled={disabled}
           className={`pr-6 ${inputClassName}`}
         />
+        <button
+          type="button"
+          className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          title="Make negative"
+          onMouseDown={(e) => { e.preventDefault(); applyNegativePrefix(); inputRef.current?.focus(); }}
+        >
+          <Minus className="h-3 w-3" />
+        </button>
         <button
           type="button"
           className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
