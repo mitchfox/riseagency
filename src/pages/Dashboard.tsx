@@ -212,7 +212,8 @@ const Dashboard = () => {
         setOperatingProfileStatus("in_progress");
       } else {
         setOperatingProfileStatus("none");
-        setOperatingProfileOpen(true);
+        // Do NOT auto-open the full dialog. The reminder banner is the
+        // only entry point — players open it manually when ready.
       }
     })();
     return () => { cancelled = true; };
