@@ -17,6 +17,7 @@ import { NewsFeed } from "./NewsFeed";
 import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
 import { checkAndFireConfetti } from "@/lib/confetti";
+import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
 const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
