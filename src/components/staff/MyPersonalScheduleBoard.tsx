@@ -293,7 +293,7 @@ export const MyPersonalScheduleBoard = () => {
       <div className={`grid gap-3 transition-[grid-template-columns] duration-300 ${tasksOpen ? "grid-cols-[240px_1fr]" : "grid-cols-[44px_1fr]"}`}>
         {/* My Tasks rail — collapsed by default */}
         <div
-          className="relative rounded-lg border border-primary/20 bg-gradient-to-b from-background/60 to-background/30 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] h-[560px] overflow-hidden"
+          className="relative rounded-lg border border-primary/20 bg-gradient-to-b from-background/60 to-background/30 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden"
         >
           <button
             type="button"
