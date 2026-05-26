@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { Trash2, Plus, Clock, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { StaffSchedule } from "./StaffSchedule";
+import { MyPersonalScheduleBoard } from "./MyPersonalScheduleBoard";
+import { Switch } from "@/components/ui/switch";
 
 interface AvailabilitySlot {
   id: string;
@@ -15,12 +17,14 @@ interface AvailabilitySlot {
   start_time: string;
   end_time: string;
   notes: string | null;
+  visible_to_players?: boolean | null;
 }
 
 export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isScheduleOpen, setIsScheduleOpen] = useState(true);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isPersonalOpen, setIsPersonalOpen] = useState(true);
   const [isCurrentAvailabilityOpen, setIsCurrentAvailabilityOpen] = useState(true);
   
   // Get next 7 days for default date
