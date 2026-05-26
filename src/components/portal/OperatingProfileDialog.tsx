@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Check, GripVertical } fr
 import { toast } from "sonner";
 import { Question } from "./operatingProfileQuestions";
 import { useTranslatedOperatingProfile } from "./useTranslatedOperatingProfile";
+import { t } from "@/lib/portalTranslations";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
@@ -23,6 +24,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmitted?: () => void;
+  portalLanguage?: string | null;
 }
 
 type Answers = Record<string, any>;
@@ -124,12 +126,12 @@ const MultiInput = ({ q, value, onChange, labelFor }: { q: Question; value: stri
   );
 };
 
-export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitted }: Props) => {
+export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitted, portalLanguage }: Props) => {
   const [answers, setAnswers] = useState<Answers>({});
   const [stepIdx, setStepIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const { sections, labelFor } = useTranslatedOperatingProfile();
+  const { sections, labelFor } = useTranslatedOperatingProfile(portalLanguage);
 
   useEffect(() => {
     if (!open || !playerId) return;
@@ -202,7 +204,7 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
         <Textarea
           value={answers[q.id] || ""}
           onChange={(e) => setAnswer(q.id, e.target.value)}
-          placeholder="Write as much or as little as you'd like..."
+          placeholder={t(portalLanguage, "op_profile_text_placeholder")}
           rows={3}
         />
       );
@@ -229,12 +231,12 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Player Operating Profile</DialogTitle>
+          <DialogTitle>{t(portalLanguage, "op_profile_title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Section {stepIdx + 1} of {sections.length} — {current.title}</span>
+            <span>{t(portalLanguage, "op_profile_section_of")} {stepIdx + 1} / {sections.length} — {current.title}</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
@@ -253,19 +255,19 @@ export const OperatingProfileDialog = ({ playerId, open, onOpenChange, onSubmitt
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
           <Button type="button" variant="ghost" onClick={() => persist(false)} disabled={saving}>
-            Save &amp; continue later
+            {t(portalLanguage, "op_profile_save_continue")}
           </Button>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" onClick={goBack} disabled={stepIdx === 0}>
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+              <ChevronLeft className="h-4 w-4 mr-1" /> {t(portalLanguage, "op_profile_back")}
             </Button>
             {stepIdx < sections.length - 1 ? (
               <Button type="button" onClick={goNext}>
-                Next <ChevronRight className="h-4 w-4 ml-1" />
+                {t(portalLanguage, "op_profile_next")} <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <Button type="button" onClick={() => persist(true)} disabled={saving} className="bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,55%)]">
-                <Check className="h-4 w-4 mr-1" /> Submit
+                <Check className="h-4 w-4 mr-1" /> {t(portalLanguage, "op_profile_submit")}
               </Button>
             )}
           </div>
