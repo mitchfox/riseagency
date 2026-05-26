@@ -8,6 +8,7 @@ import { extractAnalysisIdFromSlug } from "@/lib/urlHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * Standalone shared performance report page (/performance-report/:slug).
@@ -21,6 +22,7 @@ const PerformanceReport = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
   // The example Cristiano Ronaldo report is linked from /representation
   // with ?lang=xx so the visitor sees it in the language they were
   // already browsing. URL param wins over the global language context.
@@ -109,7 +111,7 @@ const PerformanceReport = () => {
         description="RISE Football Agency performance report"
       />
       <div className="print:hidden">
-        <Header />
+        {!isMobile && <Header />}
       </div>
 
       <main className="min-h-[60vh] flex items-center justify-center px-4 py-8">
@@ -136,7 +138,7 @@ const PerformanceReport = () => {
       )}
 
       <div className="print:hidden">
-        <Footer />
+        {!isMobile && <Footer />}
       </div>
     </div>
   );
