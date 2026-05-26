@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { OPERATING_PROFILE_SECTIONS, Section } from "./operatingProfileQuestions";
+import { normalizePortalLanguage } from "@/lib/portalTranslations";
 
 type LangCode = "en" | "es" | "pt" | "fr" | "de" | "it" | "pl" | "cs" | "ru" | "tr" | "hr" | "no";
 
@@ -54,8 +55,6 @@ async function translateBatch(texts: string[]): Promise<Array<Record<string, str
   if (error) throw error;
   return (data?.translations as Array<Record<string, string>>) || [];
 }
-
-import { normalizePortalLanguage } from "@/lib/portalTranslations";
 
 export function useTranslatedOperatingProfile(portalLanguageOverride?: string | null) {
   const { language } = useLanguage();
