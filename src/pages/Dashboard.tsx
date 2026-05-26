@@ -1568,6 +1568,14 @@ const Dashboard = () => {
           has_seen_welcome_modal: localWelcomeSeen,
         });
       }
+      // Bump login counter (session-scoped, so we only count once per tab open)
+      try {
+        const sessionKey = `player_login_bumped_${playerId}`;
+        if (!sessionStorage.getItem(sessionKey)) {
+          sessionStorage.setItem(sessionKey, "1");
+          await (supabase as any).rpc("bump_player_portal_login", { _player_id: playerId });
+        }
+      } catch {}
     } catch (error) {
       console.error("Error fetching portal settings:", error);
     }

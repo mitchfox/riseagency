@@ -1,58 +1,65 @@
 # Plan
 
-Five distinct pieces of work. Each section lists what to build and the key files.
+A focused pass across staff scheduling, portal localisation, and the performance report editor.
 
-## 1. Czech portal translations parity with French
+## 1. Automatic availability from My Schedule
 
-**Problem:** Most of the portal renders in English for players whose `portal_language = 'cs'`, while `fr` works fine. Cause is missing rows in the `czech` column of `public.translations`.
+- Treat 09:00–21:00 across the next 7 days as the default "available" window for every staff member.
+- Compute busy blocks from each staff's `staff_personal_schedule_items` (and any all-day items) for that user, then subtract them from the default window per day.
+- Replace the player portal `CoachAvailability.tsx` data source: instead of relying on rows in `staff_availability` flagged `visible_to_players`, call a new RPC `get_player_visible_availability(_player_id)` that:
+  - Resolves which staff the player belongs to (existing player→staff link).
+  - Returns free 09:00–21:00 slices minus that staff's personal schedule items for the next 7 days.
+  - Returns only start/end ranges — never task titles, notes, or item types, so players never see what staff are doing.
+- Keep the manual `staff_availability` rows as optional overrides (admin-set or holidays) but stop requiring staff to add them.
 
-**Approach:**
-- Audit: for every row in `public.translations` where `french` is non-null and non-empty, find rows where `czech` is null/empty and capture the `english` source.
-- Bulk-translate the gap (machine translation via the existing AI gateway helper used for other locales, with UK-English-aware football terminology rules from the localization memory).
-- Write the results back via `supabase--insert` UPDATEs in chunks. No schema change.
-- Spot-check headings on Dashboard, AnalysisViewer, Highlights, Operating Profile, Offer page for a `cs` player.
+## 2. Collapse Availability Hours card
 
-**Out of scope:** changing how `usePlayerLanguageTranslations` resolves keys (already works for `fr`).
+- In `StaffAvailabilityManagement.tsx`, wrap the "Your Availability Hours" card in a `Collapsible` defaulting to closed. The auto rules in step 1 make this card optional, so it stays out of the way.
 
-## 2. Schedule shortcut in staff header
+## 3. Staff header — Players quick-open shortcut
 
-- In `src/pages/Staff.tsx`, add a small icon button (Calendar icon) immediately to the left of `<StaffNotificationsDropdown />` at line ~1421.
-- Click sets `expandedSection` to `'schedule'` (or `'marketingschedule'` if that tab is currently the open one — preserve whichever schedule tab is already open; otherwise default to `'schedule'`).
-- Same permission gate as the existing Schedule sidebar entry.
+- Add a new icon button in `Staff.tsx` header, immediately left of the schedule/calendar icon (which itself sits left of notifications).
+- Clicking opens a widescreen dialog (`PlayerPortalQuickOpenDialog`) reusing the same quick-open row component used in Player Management.
+- Order: most-used portal first. Sort by total logins per player, descending. Source = count of `player_portal_logins` (or equivalent existing login-tracking table) grouped by player_id. If no dedicated table exists, derive from `player_portal_settings.last_login` ordering as fallback and add a `login_count` column via migration.
 
-## 3. Personal Schedule under Team Schedule
+## 4. My Schedule redesign + behaviour
 
-In `src/components/staff/StaffAvailabilityManagement.tsx`:
-- Default `isScheduleOpen` (Team Schedule) to `false` (currently `true`).
-- Add a new collapsible **My Schedule** section, default open, rendering a per-user planner tied to `auth.uid()`.
+- Collapse the "My Tasks" rail by default (expand on click), still draggable when expanded.
+- Each task card gets a "Repeat weekly" toggle. New column `recurring_weekly boolean` and `recurrence_group_id uuid` on `staff_personal_schedule_items`.
+  - When toggled on: clone the item forward for the next N weeks (cap 12) sharing the same `recurrence_group_id`.
+  - Deleting a single instance only deletes that row. A separate "Delete series" affordance removes all rows with the same `recurrence_group_id`.
+- Visual redesign of `MyPersonalScheduleBoard.tsx`:
+  - Glassy, glossy aesthetic — translucent card surfaces with backdrop blur, subtle Rise Gold accent borders, soft inner highlights. All via semantic tokens / existing dark theme.
+  - Increase task text contrast and size so titles are clearly legible (no faded text on faded glass).
+  - "Now" awareness: a live time marker line across today's column, and the current hour's tasks get a Rise Gold glow + "Now" pill so the user sees what they should be working on. Updates every minute.
 
-New planner component `src/components/staff/MyPersonalScheduleBoard.tsx`:
-- Week view (7 day columns, hour rows) covering the current week with prev/next week nav.
-- Left rail lists items from the existing My Tasks store (open tasks for the signed-in user, fetched the same way `FocusedTasksSection` / the My Tasks system does).
-- Drag a task card onto a day/time slot to schedule it; persist to a new table `public.staff_personal_schedule_items` (columns: `id`, `user_id`, `task_id` nullable, `title`, `notes`, `scheduled_date`, `start_time`, `end_time`, `done_at` nullable, timestamps). Migration includes GRANTs and RLS scoped to `auth.uid() = user_id`.
-- Inline "quick log to My Tasks" icon on each scheduled item that creates a row in the existing My Tasks table (reuse the same insert path the My Tasks UI uses).
-- "Mark done" toggle sets `done_at`; rendered items with `done_at` set get `opacity-50` and a strikethrough so completed work fades on the day it sat in.
-- Items render across multiple lanes per day so overlapping entries do not stack on top of each other (mirrors the timeline lane logic).
+## 5. Operating Profile popup + portal lines — translations & first-run rule
 
-## 4. Availability hours auto-sync to player portal
+- In `Dashboard.tsx`, suppress the Operating Profile reminder when the player has never opened the portal before (use the same flag that controls the intro popup, e.g. `player_portal_settings.has_seen_welcome_modal = false`). Only show it from the second session onward, and only if not already submitted.
+- Add translation keys for all strings in `OperatingProfileReminder.tsx` and the Operating Profile modal itself (titles, descriptions, button labels, question prompts, completion states).
+- Add Czech values for every new key in `portalTranslations.ts` (and any other supported languages already populated for these strings).
 
-- Current `staff_availability` is for staff-internal scheduling. Reuse the same rows: anything the staff member marks as availability becomes visible to players assigned to them.
-- In `StaffAvailabilityManagement`, surface a "Visible to my players" toggle per slot (new boolean column `visible_to_players` on `staff_availability`, default `true`). Migration adds the column.
-- Player portal: extend the existing Coach Availability widget (`src/components/CoachAvailability.tsx`) to read the assigned staff member's `staff_availability` rows where `visible_to_players = true` and the date is `>= today`. No realtime needed; standard fetch on mount + on portal navigation.
-- Free-time computation: any time inside an availability slot that does not collide with a personal-schedule item (step 3) is shown as "free" on the player side. Server side helper RPC `get_player_visible_availability(_staff_id uuid)` to keep the join simple and RLS-safe.
+## 6. Czech translation gaps
 
-## 5. Video Action Editor fixes (`src/components/staff/VideoActionEditor.tsx` + `ScoreDropdown.tsx`)
+Add Czech (`cs`) translations for the strings still leaking English in the portal:
 
-**a) Minus button must prepend `-`:**
-- `ScoreDropdown` already has `applyNegativePrefix`, but it only fires from the `-` key. Expose an explicit minus button next to the input (or accept the existing minus button source in the editor — confirm location during build) so that pressing it inserts `-` at index 0 of the current value, stripping any existing `-`. Empty input becomes `-` so the next typed digit is negative.
-- Push the change through `onChange` immediately so parent state reflects the negative value without needing blur.
+- `"No active program schedule"` and surrounding programme empty-state copy.
+- Action descriptions, action notes, and the performance report overview — wire these through the existing AI translation path used for French reports (`reportTranslations.ts` / report translation edge function). Ensure the Czech locale is included in the trigger list so reports are auto-translated on view if no `cs` translation exists yet.
+- Comparison data stat labels (all metric names + units in the comparison screen).
+- All aphorisms.
+- Date formatting: switch the Czech locale month formatter from hard-coded `en-GB` to `cs-CZ` via `getReportLocale` / `toLocaleDateString` so "Apr 24" renders as "dub 24".
+- POST button (Post-Match) label — add `post_match_short` key with `cs` value.
 
-**b) R90 search icon must work:**
-- The `Search` button currently calls `openR90Viewer(realIndex)` which opens the viewer, but the actual filter input above only filters scores already loaded. Wire the button to (i) focus the `searchFilter` input, and (ii) trigger the existing database lookup used elsewhere (the cached score loader in `ScoreDropdown` / `playerActionFrequency`) so results populate even when the input is empty. Ensure the search input itself filters against the same dataset (currently it only filters cached entries — extend to query Supabase when cache is empty).
+## 7. Performance Report edit — mobile chrome hidden
+
+- In `PerformanceReport.tsx` and the in-portal editor route, when the report is in edit mode AND viewport width < `md`, hide the staff `Header` and `Footer`. Use a `useIsMobile` + edit-mode check and conditionally render. Desktop is unchanged.
 
 ## Technical notes
 
-- Migrations needed: `staff_personal_schedule_items` table + GRANTs + RLS; `staff_availability.visible_to_players` column; `get_player_visible_availability` RPC.
-- No edits to `src/integrations/supabase/{client,types}.ts` (auto-generated).
-- All new UI uses semantic tokens (`bg-card`, `text-foreground`, Rise Gold accents already in `index.css`).
-- UK English copy throughout; no em dashes.
+- **Migrations needed**:
+  - `staff_personal_schedule_items` → add `recurring_weekly boolean default false`, `recurrence_group_id uuid`.
+  - New RPC `get_player_visible_availability(_player_id uuid)` — SECURITY DEFINER, returns `(date, start_time, end_time)[]`. Grant to `authenticated`.
+  - Optional: `player_portal_logins` table or `login_count` on `player_portal_settings` if not already tracked.
+- **Files most likely touched**: `StaffAvailabilityManagement.tsx`, `MyPersonalScheduleBoard.tsx` (heavy redesign), `CoachAvailability.tsx`, `Staff.tsx` (header), new `PlayerPortalQuickOpenDialog.tsx`, `Dashboard.tsx`, `OperatingProfileReminder.tsx`, operating profile modal, `portalTranslations.ts` (large `csExtended` additions), `reportTranslations.ts`, performance report edit pages.
+- All new UI uses semantic tokens — no raw hex outside the existing Rise Gold variable.
+- UK English throughout, no em dashes.

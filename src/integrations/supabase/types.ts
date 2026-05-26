@@ -5076,6 +5076,8 @@ export type Database = {
           hero_focal_points: Json | null
           hero_images: Json | null
           id: string
+          last_login_at: string | null
+          login_count: number
           music_tracks: Json | null
           player_id: string
           representation_subtitle_secondary: string | null
@@ -5120,6 +5122,8 @@ export type Database = {
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string
+          last_login_at?: string | null
+          login_count?: number
           music_tracks?: Json | null
           player_id: string
           representation_subtitle_secondary?: string | null
@@ -5164,6 +5168,8 @@ export type Database = {
           hero_focal_points?: Json | null
           hero_images?: Json | null
           id?: string
+          last_login_at?: string | null
+          login_count?: number
           music_tracks?: Json | null
           player_id?: string
           representation_subtitle_secondary?: string | null
@@ -7504,6 +7510,8 @@ export type Database = {
           id: string
           lane: number
           notes: string | null
+          recurrence_group_id: string | null
+          recurring_weekly: boolean
           scheduled_date: string
           start_time: string
           task_id: string | null
@@ -7518,6 +7526,8 @@ export type Database = {
           id?: string
           lane?: number
           notes?: string | null
+          recurrence_group_id?: string | null
+          recurring_weekly?: boolean
           scheduled_date: string
           start_time?: string
           task_id?: string | null
@@ -7532,6 +7542,8 @@ export type Database = {
           id?: string
           lane?: number
           notes?: string | null
+          recurrence_group_id?: string | null
+          recurring_weekly?: boolean
           scheduled_date?: string
           start_time?: string
           task_id?: string | null
@@ -8373,6 +8385,10 @@ export type Database = {
         Args: { new_value: string }
         Returns: undefined
       }
+      bump_player_portal_login: {
+        Args: { _player_id: string }
+        Returns: undefined
+      }
       can_manage_player_profile_settings: { Args: never; Returns: boolean }
       check_enum_value_exists: {
         Args: { enum_name: string; value_name: string }
@@ -8387,6 +8403,17 @@ export type Database = {
         }[]
       }
       get_player_name_by_email: { Args: { _email: string }; Returns: string }
+      get_player_visible_availability: {
+        Args: { _player_id: string }
+        Returns: {
+          availability_date: string
+          end_time: string
+          source: string
+          staff_id: string
+          staff_name: string
+          start_time: string
+        }[]
+      }
       get_shared_spq_report: {
         Args: { _share_slug: string }
         Returns: {
@@ -8410,6 +8437,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_players_by_portal_logins: {
+        Args: never
+        Returns: {
+          email: string
+          id: string
+          image_url: string
+          last_login_at: string
+          login_count: number
+          name: string
+        }[]
       }
       mark_welcome_seen: { Args: { _player_id: string }; Returns: undefined }
       replace_player_hudl_visibility: {
