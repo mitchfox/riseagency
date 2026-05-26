@@ -8323,6 +8323,13 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_video_analyses: { Args: never; Returns: undefined }
+      get_operating_profile_status: {
+        Args: { _player_id: string }
+        Returns: {
+          has_any: boolean
+          submitted_at: string
+        }[]
+      }
       get_player_name_by_email: { Args: { _email: string }; Returns: string }
       get_shared_spq_report: {
         Args: { _share_slug: string }

@@ -192,22 +192,26 @@ const Dashboard = () => {
     if (!welcomeSeen) return;
     let cancelled = false;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("player_operating_profile")
-        .select("submitted_at, answers")
-        .eq("player_id", playerData.id)
-        .maybeSingle();
+      const { data, error } = await (supabase as any)
+        .rpc("get_operating_profile_status", { _player_id: playerData.id });
       if (cancelled) return;
+      // If the lookup fails for any reason, do NOT show the popup — better to
+      // skip than to nag a player who has already completed it.
+      if (error) {
+        setOperatingProfileChecked(true);
+        setOperatingProfileStatus("done");
+        return;
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      const submittedAt = row?.submitted_at ?? null;
+      const hasAny = !!row?.has_any;
       setOperatingProfileChecked(true);
-      const hasAny = data?.answers && typeof data.answers === "object" && Object.keys(data.answers).length > 0;
-      if (data?.submitted_at) {
+      if (submittedAt) {
         setOperatingProfileStatus("done");
       } else if (hasAny) {
         setOperatingProfileStatus("in_progress");
       } else {
         setOperatingProfileStatus("none");
-      }
-      if (!data?.submitted_at && !hasAny) {
         setOperatingProfileOpen(true);
       }
     })();
