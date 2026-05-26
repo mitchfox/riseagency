@@ -1,65 +1,60 @@
-# Plan
+## Investigation — what is already in place vs what is actually broken
 
-A focused pass across staff scheduling, portal localisation, and the performance report editor.
+I went through every item from your last two messages and checked the current files. Most of the wiring landed, but several pieces are silently inert or are still hardcoded, which is why on Ondrej's portal and on your schedule it looks like nothing happened. Breakdown:
 
-## 1. Automatic availability from My Schedule
+### Already shipped and verified in code
 
-- Treat 09:00–21:00 across the next 7 days as the default "available" window for every staff member.
-- Compute busy blocks from each staff's `staff_personal_schedule_items` (and any all-day items) for that user, then subtract them from the default window per day.
-- Replace the player portal `CoachAvailability.tsx` data source: instead of relying on rows in `staff_availability` flagged `visible_to_players`, call a new RPC `get_player_visible_availability(_player_id)` that:
-  - Resolves which staff the player belongs to (existing player→staff link).
-  - Returns free 09:00–21:00 slices minus that staff's personal schedule items for the next 7 days.
-  - Returns only start/end ranges — never task titles, notes, or item types, so players never see what staff are doing.
-- Keep the manual `staff_availability` rows as optional overrides (admin-set or holidays) but stop requiring staff to add them.
+- Portal quick-open uses `?staff_login=...` (`PlayerPortalQuickOpenDialog.tsx`).
+- `OperatingProfileDialog` and `OperatingProfileReminder` both call `t(portalLanguage, ...)` and `Dashboard.tsx` passes `playerData.portal_language` to both.
+- `useTranslatedOperatingProfile` accepts a `portalLanguageOverride` and uses it before falling back to context.
+- `get_player_visible_availability` RPC is filtered to `lower(full_name) LIKE 'jolon%'`.
+- `MyPersonalScheduleBoard` has a 9 AM – 9 PM grid, `image_url`, `Repeat` toggle, weekly cloning, "Now" marker.
+- `HighlightCompiler` exposes `moveClipTo`/`onReorder`; `HighlightReelPlayer` has the `#` reorder input and the `AddToPlaylistButton`.
+- `PerformanceReport.tsx` hides `Header` and `Footer` when `isMobile`.
+- `AnalysisDataTab` formats dates via `dateLocale(playerData?.portal_language)`.
+- `Hub.tsx` uses `t(portalLanguage, "no_active_program_schedule")`.
 
-## 2. Collapse Availability Hours card
+### Real bugs found
 
-- In `StaffAvailabilityManagement.tsx`, wrap the "Your Availability Hours" card in a `Collapsible` defaulting to closed. The auto rules in step 1 make this card optional, so it stays out of the way.
+1. **Operating Profile auto-opens unprompted.** `Dashboard.tsx` lines 213–215 set `setOperatingProfileOpen(true)` whenever the player has seen the welcome modal but has not answered anything. You asked for the reminder banner only — the full modal should never pop on its own. Fix: drop the auto-open; let the banner be the only entry point.
 
-## 3. Staff header — Players quick-open shortcut
+2. **My Schedule action buttons are invisible.** Recurring, image, log, delete buttons sit under `opacity-0 group-hover:opacity-100`. On touch and at a glance you can't see them. Fix: make the row of buttons always visible (subtle), and put a persistent Repeat pill on the card when recurring is on.
 
-- Add a new icon button in `Staff.tsx` header, immediately left of the schedule/calendar icon (which itself sits left of notifications).
-- Clicking opens a widescreen dialog (`PlayerPortalQuickOpenDialog`) reusing the same quick-open row component used in Player Management.
-- Order: most-used portal first. Sort by total logins per player, descending. Source = count of `player_portal_logins` (or equivalent existing login-tracking table) grouped by player_id. If no dedicated table exists, derive from `player_portal_settings.last_login` ordering as fallback and add a `login_count` column via migration.
+3. **Task cards are too short to read.** Title uses `text-xs` + `line-clamp-2` and minimum height defaults to ~30 min. Fix: bump font sizes, drop the line clamp, raise the minimum rendered height (e.g. 50 px), and prefer wrapping over truncating. Also widen the hour gutter from 48 px and label every hour clearly (currently shaved off the top of each row).
 
-## 4. My Schedule redesign + behaviour
+4. **`useTranslatedOperatingProfile` only kicks in when `LanguageContext.language` matches.** Override works but the staff/portal context defaults to `en` and the hook only triggers when `effectiveLanguage` changes — verified working. No fix needed beyond #1 above, but I want to double-check on Ondrej's portal post-fix that the cache key for `cs` is populated (clearing `localStorage` once may be required if a stale `en` map was cached).
 
-- Collapse the "My Tasks" rail by default (expand on click), still draggable when expanded.
-- Each task card gets a "Repeat weekly" toggle. New column `recurring_weekly boolean` and `recurrence_group_id uuid` on `staff_personal_schedule_items`.
-  - When toggled on: clone the item forward for the next N weeks (cap 12) sharing the same `recurrence_group_id`.
-  - Deleting a single instance only deletes that row. A separate "Delete series" affordance removes all rows with the same `recurrence_group_id`.
-- Visual redesign of `MyPersonalScheduleBoard.tsx`:
-  - Glassy, glossy aesthetic — translucent card surfaces with backdrop blur, subtle Rise Gold accent borders, soft inner highlights. All via semantic tokens / existing dark theme.
-  - Increase task text contrast and size so titles are clearly legible (no faded text on faded glass).
-  - "Now" awareness: a live time marker line across today's column, and the current hour's tasks get a Rise Gold glow + "Now" pill so the user sees what they should be working on. Updates every minute.
+5. **POST (Post-Match) button is hardcoded.** No translation key exists. Add `post_match_short` ("POST" / "POZÁP" or "POZ") to `portalTranslations.ts` and wire wherever the badge is rendered (search for the literal string in `Hub.tsx` and elsewhere — current grep didn't surface it, so the badge text lives in another component I need to locate).
 
-## 5. Operating Profile popup + portal lines — translations & first-run rule
+6. **Database-sourced content is still English on Czech portal.** Action descriptions, action notes, performance report overview, comparison/stats labels, and aphorisms are stored in the DB in English. They need on-the-fly translation, the same pattern `useTranslatedOperatingProfile` uses (cache-then-`ai-translate-batch`). I'll add a small reusable `useAutoTranslateStrings(strings, lang)` and apply it to:
+   - action `description` and `notes` in the performance report view
+   - the performance report overview paragraph
+   - comparison stat labels in the comparisons section
+   - `coaching_aphorisms` text in `Dashboard.tsx` (fetch then translate)
 
-- In `Dashboard.tsx`, suppress the Operating Profile reminder when the player has never opened the portal before (use the same flag that controls the intro popup, e.g. `player_portal_settings.has_seen_welcome_modal = false`). Only show it from the second session onward, and only if not already submitted.
-- Add translation keys for all strings in `OperatingProfileReminder.tsx` and the Operating Profile modal itself (titles, descriptions, button labels, question prompts, completion states).
-- Add Czech values for every new key in `portalTranslations.ts` (and any other supported languages already populated for these strings).
+7. **Czech month names not always applied.** `AnalysisDataTab` is fixed, but other date renders still use bare `toLocaleDateString()` or `format(..., "MMM d")` from `date-fns`. I'll grep all `toLocaleDateString(` and `format(.*MMM` callers in portal-rendered components and route them through `formatDate(..., playerData?.portal_language)`.
 
-## 6. Czech translation gaps
+8. **Coach Availability dialog itself still uses English `EEEE (dd/MM)` via `date-fns/format`.** Switch to localized format.
 
-Add Czech (`cs`) translations for the strings still leaking English in the portal:
+## Plan
 
-- `"No active program schedule"` and surrounding programme empty-state copy.
-- Action descriptions, action notes, and the performance report overview — wire these through the existing AI translation path used for French reports (`reportTranslations.ts` / report translation edge function). Ensure the Czech locale is included in the trigger list so reports are auto-translated on view if no `cs` translation exists yet.
-- Comparison data stat labels (all metric names + units in the comparison screen).
-- All aphorisms.
-- Date formatting: switch the Czech locale month formatter from hard-coded `en-GB` to `cs-CZ` via `getReportLocale` / `toLocaleDateString` so "Apr 24" renders as "dub 24".
-- POST button (Post-Match) label — add `post_match_short` key with `cs` value.
+1. Remove the auto-open of the Operating Profile modal in `Dashboard.tsx`; keep only the reminder banner.
+2. `MyPersonalScheduleBoard.tsx`:
+   - Always-visible compact action row on each card (Repeat / Image / Log / Delete).
+   - Persistent Repeat badge on recurring cards.
+   - Widen hour gutter to 64 px, render every hour label aligned to its line, bigger font.
+   - Card text → `text-sm` for title, remove `line-clamp-2`, raise min rendered height to 50 px.
+3. `CoachAvailability.tsx`: replace `format(dateObj, "EEEE (dd/MM)")` with localized formatter.
+4. Add `post_match_short` key (and Czech value) and localize the POST badge wherever it renders.
+5. Create `src/hooks/useAutoTranslateStrings.ts` (cache + `ai-translate-batch`), then apply to:
+   - performance report action description / notes
+   - performance report overview text
+   - comparison stat labels
+   - aphorism text in `Dashboard.tsx`
+6. Sweep remaining `toLocaleDateString(` / `format(date, "MMM d")` in portal-facing components and switch to `formatDate(date, playerData?.portal_language)`.
 
-## 7. Performance Report edit — mobile chrome hidden
+### Files to touch
 
-- In `PerformanceReport.tsx` and the in-portal editor route, when the report is in edit mode AND viewport width < `md`, hide the staff `Header` and `Footer`. Use a `useIsMobile` + edit-mode check and conditionally render. Desktop is unchanged.
+`src/pages/Dashboard.tsx`, `src/components/staff/MyPersonalScheduleBoard.tsx`, `src/components/CoachAvailability.tsx`, `src/components/dashboard/Hub.tsx`, `src/components/portal/PerformanceReportView*.tsx` (find on action description/notes/overview), `src/components/portal/ComparisonsTab*.tsx` (find), `src/hooks/useAutoTranslateStrings.ts` (new), `src/lib/portalTranslations.ts`.
 
-## Technical notes
-
-- **Migrations needed**:
-  - `staff_personal_schedule_items` → add `recurring_weekly boolean default false`, `recurrence_group_id uuid`.
-  - New RPC `get_player_visible_availability(_player_id uuid)` — SECURITY DEFINER, returns `(date, start_time, end_time)[]`. Grant to `authenticated`.
-  - Optional: `player_portal_logins` table or `login_count` on `player_portal_settings` if not already tracked.
-- **Files most likely touched**: `StaffAvailabilityManagement.tsx`, `MyPersonalScheduleBoard.tsx` (heavy redesign), `CoachAvailability.tsx`, `Staff.tsx` (header), new `PlayerPortalQuickOpenDialog.tsx`, `Dashboard.tsx`, `OperatingProfileReminder.tsx`, operating profile modal, `portalTranslations.ts` (large `csExtended` additions), `reportTranslations.ts`, performance report edit pages.
-- All new UI uses semantic tokens — no raw hex outside the existing Rise Gold variable.
-- UK English throughout, no em dashes.
+No database migrations required.
