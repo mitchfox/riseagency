@@ -363,6 +363,16 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
     updateClips([...accepted, ...pending]);
   };
 
+  const moveClipTo = (fromIdx: number, toIdx: number) => {
+    const accepted = clips.filter(c => c.status === "accepted");
+    const pending = clips.filter(c => c.status === "pending");
+    if (fromIdx < 0 || fromIdx >= accepted.length) return;
+    const clamped = Math.max(0, Math.min(accepted.length - 1, toIdx));
+    const [moved] = accepted.splice(fromIdx, 1);
+    accepted.splice(clamped, 0, moved);
+    updateClips([...accepted, ...pending]);
+  };
+
   const movePendingClip = (index: number, direction: "up" | "down") => {
     const accepted = clips.filter(c => c.status === "accepted");
     const pending = clips.filter(c => c.status === "pending");
