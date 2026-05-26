@@ -25,7 +25,8 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
   const [loading, setLoading] = useState(true);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isPersonalOpen, setIsPersonalOpen] = useState(true);
-  const [isCurrentAvailabilityOpen, setIsCurrentAvailabilityOpen] = useState(true);
+  const [isCurrentAvailabilityOpen, setIsCurrentAvailabilityOpen] = useState(false);
+  const [isAvailabilityCardOpen, setIsAvailabilityCardOpen] = useState(false);
   
   // Get next 7 days for default date
   const getDefaultDate = () => {
@@ -185,15 +186,29 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
         </Card>
       </Collapsible>
 
-      {/* Availability Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Your Availability Hours
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      {/* Availability Management — collapsed by default; auto windows cover most cases */}
+      <Collapsible open={isAvailabilityCardOpen} onOpenChange={setIsAvailabilityCardOpen}>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Your Availability Hours
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    (auto 9am–9pm minus your schedule)
+                  </span>
+                </CardTitle>
+                {isAvailabilityCardOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-6">
           {/* Add New Availability */}
           <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
             <h3 className="font-semibold">Add Availability</h3>
@@ -316,8 +331,10 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
               </CollapsibleContent>
             </div>
           </Collapsible>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };

@@ -34,29 +34,20 @@ export const CoachAvailability = ({ open, onOpenChange, portalLanguage }: CoachA
   const fetchAvailability = async () => {
     try {
       setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-      const { data: availabilityData, error: availabilityError } = await supabase
-        .from("staff_availability")
-        .select(`id, availability_date, start_time, end_time, notes, staff_id`)
-        .gte("availability_date", today)
-        .eq("visible_to_players", true)
-        .order("availability_date")
-        .order("start_time");
-
-      if (availabilityError) throw availabilityError;
-
-      const staffIds = [...new Set(availabilityData?.map(a => a.staff_id) || [])];
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", staffIds);
-
-      const combinedData = availabilityData?.map(slot => ({
-        ...slot,
-        staff_name: profilesData?.find(p => p.id === slot.staff_id)?.full_name || "Jolon"
-      })) || [];
-
-      setAvailability(combinedData);
+      // Pull the auto-calculated 09:00–21:00 free windows minus busy blocks.
+      // The RPC purposefully omits item titles/notes so players never see what staff are doing.
+      const { data, error } = await (supabase as any)
+        .rpc("get_player_visible_availability", { _player_id: null });
+      if (error) throw error;
+      const mapped: AvailabilitySlot[] = (data || []).map((row: any, idx: number) => ({
+        id: `${row.staff_id}_${row.availability_date}_${row.start_time}_${idx}`,
+        availability_date: row.availability_date,
+        start_time: row.start_time,
+        end_time: row.end_time,
+        notes: null,
+        staff_name: row.staff_name || "Coach",
+      }));
+      setAvailability(mapped);
     } catch (error) {
       console.error("Error fetching availability:", error);
     } finally {
