@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { toTitleCase } from '@/lib/titleCase';
 import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
+import { useAutoTranslateStrings } from '@/hooks/useAutoTranslateStrings';
 
 interface ClipAction {
   id: string;
@@ -83,6 +84,13 @@ export const ClippedActionsPlayer = ({
     () => sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url),
     [clips]
   );
+
+  // Auto-translate action descriptions + notes to the player's portal language
+  const translatableStrings = useMemo(
+    () => sortedClips.flatMap((c) => [c.action_description, c.notes || null]).filter((s): s is string => !!s),
+    [sortedClips]
+  );
+  const { translate: trText } = useAutoTranslateStrings(translatableStrings, language);
 
   // Deduplicate + categorise
   const categorisedClips = useMemo(() => {
@@ -211,7 +219,7 @@ export const ClippedActionsPlayer = ({
               <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
               {currentClip.action_description && (
                 <div className="mt-1 text-white/85 text-xs leading-snug">
-                  <p className="line-clamp-2">{currentClip.action_description}</p>
+                  <p className="line-clamp-2">{trText(currentClip.action_description)}</p>
                 </div>
               )}
             </div>

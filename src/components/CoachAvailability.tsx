@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
-import { format } from "date-fns";
 import { t } from "@/lib/portalTranslations";
+import { dateLocale } from "@/lib/dateLocale";
 
 interface AvailabilitySlot {
   id: string;
@@ -84,7 +84,11 @@ export const CoachAvailability = ({ open, onOpenChange, portalLanguage }: CoachA
             {Array.from(new Set(availability.map(s => s.availability_date))).map((date) => {
               const dateSlots = availability.filter(slot => slot.availability_date === date);
               const dateObj = new Date(date + 'T00:00:00');
-              const formattedDate = format(dateObj, "EEEE (dd/MM)");
+              const formattedDate = dateObj.toLocaleDateString(dateLocale(portalLanguage), {
+                weekday: "long",
+                day: "2-digit",
+                month: "2-digit",
+              });
 
               return (
                 <div key={date} className="border border-border rounded-lg p-3">
