@@ -344,7 +344,7 @@ export const MyPersonalScheduleBoard = () => {
           return (
             <div className="rounded-lg border border-white/10 bg-gradient-to-b from-background/55 to-background/25 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden">
               {/* day header */}
-              <div className="grid" style={{ gridTemplateColumns: `48px repeat(7, minmax(0,1fr))` }}>
+              <div className="grid" style={{ gridTemplateColumns: `64px repeat(7, minmax(0,1fr))` }}>
                 <div />
                 {weekDays.map((d, idx) => {
                   const key = fmtDate(d);
@@ -369,16 +369,16 @@ export const MyPersonalScheduleBoard = () => {
               </div>
 
               {/* timeline body */}
-              <div className="relative grid" style={{ gridTemplateColumns: `48px repeat(7, minmax(0,1fr))`, height: totalHeight }}>
+              <div className="relative grid" style={{ gridTemplateColumns: `64px repeat(7, minmax(0,1fr))`, height: totalHeight }}>
                 {/* hour gutter */}
-                <div className="relative border-t border-white/5">
-                  {HOURS.slice(0, -1).map((h, i) => (
+                <div className="relative border-t border-white/5 border-r border-white/10 bg-background/30">
+                  {HOURS.map((h, i) => (
                     <div
                       key={h}
-                      className="absolute left-0 right-0 text-[10px] font-medium text-muted-foreground/70 px-1.5"
-                      style={{ top: i * HOUR_PX + 2 }}
+                      className="absolute left-0 right-0 text-[11px] font-semibold text-foreground/70 px-1.5 -translate-y-1/2"
+                      style={{ top: i * HOUR_PX }}
                     >
-                      {h <= 12 ? `${h} ${h === 12 ? "PM" : "AM"}` : `${h - 12} PM`}
+                      {h <= 12 ? `${h}${h === 12 ? "PM" : "AM"}` : `${h - 12}PM`}
                     </div>
                   ))}
                 </div>
@@ -420,7 +420,7 @@ export const MyPersonalScheduleBoard = () => {
                       {/* items */}
                       {dayItems.map((it) => {
                         const top = Math.max(0, toMin(it.start_time) / 60 * HOUR_PX);
-                        const heightMin = Math.max(30, toMin(it.end_time) - toMin(it.start_time));
+                        const heightMin = Math.max(50, toMin(it.end_time) - toMin(it.start_time));
                         const height = heightMin / 60 * HOUR_PX - 2;
                         const current = isCurrent(it);
                         return (
@@ -453,23 +453,25 @@ export const MyPersonalScheduleBoard = () => {
                                 {it.done_at && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                               </button>
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-foreground leading-tight line-clamp-2" title={it.title}>{it.title}</div>
-                                <div className="text-[10px] text-foreground/60 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
+                                <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
                                   <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
                                   {it.recurring_weekly && (
-                                    <Repeat className="h-2.5 w-2.5 text-primary" />
+                                    <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
+                                      <Repeat className="h-2.5 w-2.5" /> weekly
+                                    </span>
                                   )}
                                   {current && (
                                     <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
                                   )}
                                 </div>
                               </div>
-                              <div className="opacity-0 group-hover:opacity-100 flex flex-col gap-1">
+                              <div className="flex flex-col gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                                 <button
                                   type="button"
                                   onClick={() => toggleRecurring(it)}
                                   title={it.recurring_weekly ? "Stop weekly repeat" : "Repeat weekly"}
-                                  className={it.recurring_weekly ? "text-primary" : "text-muted-foreground hover:text-primary"}
+                                  className={`h-5 w-5 flex items-center justify-center rounded ${it.recurring_weekly ? "bg-primary/30 text-primary" : "bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"}`}
                                 >
                                   <Repeat className="h-3 w-3" />
                                 </button>
@@ -477,7 +479,7 @@ export const MyPersonalScheduleBoard = () => {
                                   type="button"
                                   onClick={() => setImage(it)}
                                   title="Set image"
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
                                 >
                                   <ImageIcon className="h-3 w-3" />
                                 </button>
@@ -485,7 +487,7 @@ export const MyPersonalScheduleBoard = () => {
                                   type="button"
                                   onClick={() => quickLogToTasks(it)}
                                   title="Log to My Tasks"
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
                                 >
                                   <ClipboardList className="h-3 w-3" />
                                 </button>
@@ -493,7 +495,7 @@ export const MyPersonalScheduleBoard = () => {
                                   type="button"
                                   onClick={() => removeItem(it.id)}
                                   title="Remove"
-                                  className="text-muted-foreground hover:text-destructive"
+                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-destructive hover:bg-background/60"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </button>
