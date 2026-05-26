@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toast } from "sonner";
+import { formatDate, dateLocale } from "@/lib/dateLocale";
 
 interface Analysis {
   id: string;
@@ -133,8 +134,8 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
         const isHiddenOrDraft = ['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase());
         return {
           name: isHiddenOrDraft
-            ? new Date(a.analysis_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-            : (a.opponent || new Date(a.analysis_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })),
+            ? formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })
+            : (a.opponent || formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })),
           r90: Number(a.r90_score.toFixed(2)),
         };
       });
@@ -320,7 +321,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             <TableBody>
               {analyses.map(a => (
                 <TableRow key={a.id}>
-                  <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString('en-GB')}</TableCell>
+                  <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString(dateLocale(playerData?.portal_language))}</TableCell>
                   <TableCell className="text-sm font-medium">
                     {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}
                   </TableCell>

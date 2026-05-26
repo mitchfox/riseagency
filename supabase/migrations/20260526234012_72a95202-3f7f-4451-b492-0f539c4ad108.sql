@@ -1,0 +1,1 @@
+ALTER TABLE public.staff_personal_schedule_items ADD COLUMN IF NOT EXISTS image_url text;

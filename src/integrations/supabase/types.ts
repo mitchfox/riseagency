@@ -7508,6 +7508,7 @@ export type Database = {
           done_at: string | null
           end_time: string
           id: string
+          image_url: string | null
           lane: number
           notes: string | null
           recurrence_group_id: string | null
@@ -7524,6 +7525,7 @@ export type Database = {
           done_at?: string | null
           end_time?: string
           id?: string
+          image_url?: string | null
           lane?: number
           notes?: string | null
           recurrence_group_id?: string | null
@@ -7540,6 +7542,7 @@ export type Database = {
           done_at?: string | null
           end_time?: string
           id?: string
+          image_url?: string | null
           lane?: number
           notes?: string | null
           recurrence_group_id?: string | null
