@@ -290,6 +290,16 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
                                 </div>
                               )}
                             </div>
+                            <div className="flex items-center gap-2 mr-2">
+                              <Switch
+                                checked={slot.visible_to_players !== false}
+                                onCheckedChange={() => togglePlayerVisibility(slot)}
+                                id={`vis-${slot.id}`}
+                              />
+                              <Label htmlFor={`vis-${slot.id}`} className="text-xs cursor-pointer">
+                                Visible to my players
+                              </Label>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
