@@ -108,7 +108,7 @@ export const ScoreDropdown = ({ value, onChange, className = "", inputClassName 
           onBlur={() => { if (localValue !== String(value ?? "")) onChange(localValue); setTimeout(() => setDropdownOpen(false), 200); }}
           placeholder="Score"
           disabled={disabled}
-          className={`pr-6 ${inputClassName}`}
+          className={`pr-10 ${inputClassName}`}
         />
         <button
           type="button"
