@@ -52,7 +52,7 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
 
       const { data, error } = await supabase
         .from("staff_availability")
-        .select("*")
+        .select("id, availability_date, start_time, end_time, notes, visible_to_players")
         .eq("staff_id", user.id)
         .order("availability_date")
         .order("start_time");
@@ -80,6 +80,7 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
           start_time: newSlot.start_time,
           end_time: newSlot.end_time,
           notes: newSlot.notes || null,
+          visible_to_players: true,
         });
 
       if (error) throw error;
