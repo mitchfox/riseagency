@@ -39,6 +39,7 @@ export const CoachAvailability = ({ open, onOpenChange, portalLanguage }: CoachA
         .from("staff_availability")
         .select(`id, availability_date, start_time, end_time, notes, staff_id`)
         .gte("availability_date", today)
+        .eq("visible_to_players", true)
         .order("availability_date")
         .order("start_time");
 
