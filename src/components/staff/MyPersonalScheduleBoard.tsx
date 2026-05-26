@@ -306,7 +306,7 @@ export const MyPersonalScheduleBoard = () => {
             {tasksOpen && <ChevronDown className="h-3.5 w-3.5 opacity-60" />}
           </button>
           {tasksOpen && (
-            <div className="px-2 pb-2 h-[calc(100%-2.25rem)] overflow-y-auto">
+            <div className="px-2 pb-2 max-h-[720px] overflow-y-auto">
               {tasks.length === 0 && (
                 <div className="text-xs text-muted-foreground py-2">No open tasks.</div>
               )}
