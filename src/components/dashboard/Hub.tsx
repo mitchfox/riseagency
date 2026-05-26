@@ -640,7 +640,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No active program schedule</p>
+              <p className="text-sm text-muted-foreground">{t(portalLanguage, "no_active_program_schedule")}</p>
             )}
           </CardContent>
         </Card>
