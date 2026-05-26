@@ -928,9 +928,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                                 }}
                                 title="View Post-Match Analysis"
                               >
-                                <Eye className="h-3 w-3" />
-                                POST
-                              </Button>
+                                 <Eye className="h-3 w-3" />
+                                 {t(portalLanguage, "post_match_short")}
+                               </Button>
                             );
                           }
                           // Check tagged post-match
@@ -950,9 +950,9 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                               }}
                               title="View Post-Match Analysis"
                             >
-                              <Eye className="h-3 w-3" />
-                              POST
-                            </Button>
+                               <Eye className="h-3 w-3" />
+                               {t(portalLanguage, "post_match_short")}
+                             </Button>
                           );
                         })()}
                         {/* Full Game Clips button */}
