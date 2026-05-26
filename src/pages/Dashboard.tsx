@@ -1786,6 +1786,7 @@ const Dashboard = () => {
           open={operatingProfileOpen}
           onOpenChange={setOperatingProfileOpen}
           onSubmitted={() => { setOperatingProfileChecked(true); setOperatingProfileStatus("done"); }}
+          portalLanguage={playerData.portal_language}
         />
       )}
       {/* Header with Logo */}
@@ -1807,6 +1808,7 @@ const Dashboard = () => {
           inProgress={operatingProfileStatus === "in_progress"}
           onOpen={() => setOperatingProfileOpen(true)}
           onDismiss={() => setOperatingProfileReminderDismissed(true)}
+          portalLanguage={playerData?.portal_language}
         />
       )}
 
