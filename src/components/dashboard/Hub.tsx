@@ -174,6 +174,12 @@ interface HubProps {
 }
 
 export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSettings, portalLanguage, onNavigateToAnalysis, onNavigateToComparisons, onNavigateToForm, onNavigateToSession, onNavigateToSchedule }: HubProps) => {
+  // Translate aphorism text on the fly for non-English portals
+  const aphorismStrings = React.useMemo(
+    () => [dailyAphorism?.featured_text, dailyAphorism?.body_text, dailyAphorism?.author].filter(Boolean) as string[],
+    [dailyAphorism?.featured_text, dailyAphorism?.body_text, dailyAphorism?.author]
+  );
+  const { translate: trAphorism } = useAutoTranslateStrings(aphorismStrings, portalLanguage);
   const navigate = useNavigate();
   const [clippedAnalysis, setClippedAnalysis] = React.useState<PlayerAnalysis | null>(null);
 
@@ -1064,7 +1070,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg inline-block">
                  <p className="text-[10px] uppercase tracking-wide text-gold/80 mb-2">{t(portalLanguage, "aphorism_of_the_day")}</p>
                  <p className="text-base md:text-xl font-bold text-gold leading-relaxed tracking-wide">
-                   {dailyAphorism.featured_text}
+                   {trAphorism(dailyAphorism.featured_text)}
                  </p>
               </div>
               {dailyAphorism.author && (
@@ -1077,7 +1083,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               {dailyAphorism.body_text && (
                 <div className="bg-black/90 backdrop-blur-sm p-3 rounded-lg max-w-2xl mx-auto">
                   <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                    {dailyAphorism.body_text}
+                    {trAphorism(dailyAphorism.body_text)}
                   </p>
                 </div>
               )}
