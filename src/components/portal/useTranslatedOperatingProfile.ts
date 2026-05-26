@@ -55,14 +55,17 @@ async function translateBatch(texts: string[]): Promise<Array<Record<string, str
   return (data?.translations as Array<Record<string, string>>) || [];
 }
 
-export function useTranslatedOperatingProfile() {
+import { normalizePortalLanguage } from "@/lib/portalTranslations";
+
+export function useTranslatedOperatingProfile(portalLanguageOverride?: string | null) {
   const { language } = useLanguage();
+  const effectiveLanguage = (normalizePortalLanguage(portalLanguageOverride) || language) as LangCode;
   const [sections, setSections] = useState<Section[]>(OPERATING_PROFILE_SECTIONS);
   const [labelFor, setLabelFor] = useState<(s: string) => string>(() => (s: string) => s);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const lang = language as LangCode;
+    const lang = effectiveLanguage as LangCode;
     if (lang === "en") {
       setSections(OPERATING_PROFILE_SECTIONS);
       setLabelFor(() => (s: string) => s);
@@ -115,7 +118,7 @@ export function useTranslatedOperatingProfile() {
         setLoading(false);
       }
     })();
-  }, [language]);
+  }, [effectiveLanguage]);
 
   return { sections, loading, labelFor };
 }
