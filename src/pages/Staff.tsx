@@ -74,6 +74,7 @@ import PressReleasesManagement from "@/components/staff/PressReleasesManagement"
 import { PublicContentManagement } from "@/components/staff/PublicContentManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
+import { PlayerPortalQuickOpenDialog } from "@/components/staff/PlayerPortalQuickOpenDialog";
 import { PlayerBirthdayDialog } from "@/components/staff/PlayerBirthdayDialog";
 import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
 import { Meetings } from "@/components/staff/coaching/Meetings";
@@ -202,6 +203,7 @@ const Staff = () => {
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [portalQuickOpen, setPortalQuickOpen] = useState(false);
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
@@ -1418,6 +1420,16 @@ const Staff = () => {
               <ExternalLink className="h-4 w-4" />
             </Button>
             {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+            {(isAdmin || !permissionManagedRole) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Open a Player Portal"
+                onClick={() => setPortalQuickOpen(true)}
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            )}
             {(isAdmin || !permissionManagedRole || canView('schedule')) && (
               <Button
                 variant="ghost"
@@ -1438,6 +1450,8 @@ const Staff = () => {
           )}
         </div>
       </header>
+
+      <PlayerPortalQuickOpenDialog open={portalQuickOpen} onOpenChange={setPortalQuickOpen} />
 
       <PlayerBirthdayDialog />
 

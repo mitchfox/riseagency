@@ -1134,6 +1134,42 @@ Object.entries(csExtended).forEach(([key, val]) => {
   if (translations.cs) translations.cs[key] = val;
 });
 
+// Operating profile reminder + dialog keys (English fallbacks + Czech)
+const opProfileEn: Record<string, string> = {
+  op_profile_intro_title: "What makes you tick?",
+  op_profile_intro_body: "Help us to know how to provide the best support to you",
+  op_profile_resume_title: "Pick up where you left off",
+  op_profile_resume_body: "Your operating profile is saved. Finish it when you get time.",
+  op_profile_start: "Start",
+  op_profile_continue: "Continue",
+  op_profile_title: "Player Operating Profile",
+  op_profile_section_of: "Section",
+  op_profile_save_continue: "Save and continue later",
+  op_profile_back: "Back",
+  op_profile_next: "Next",
+  op_profile_submit: "Submit",
+  no_active_program_schedule: "No active program schedule",
+  post_match_short: "POST",
+};
+const opProfileCs: Record<string, string> = {
+  op_profile_intro_title: "Co vás pohání?",
+  op_profile_intro_body: "Pomozte nám zjistit, jak vám nejlépe pomoci",
+  op_profile_resume_title: "Pokračujte tam, kde jste skončili",
+  op_profile_resume_body: "Váš profil je uložen. Dokončete jej, až budete mít čas.",
+  op_profile_start: "Začít",
+  op_profile_continue: "Pokračovat",
+  op_profile_title: "Profil hráče",
+  op_profile_section_of: "Sekce",
+  op_profile_save_continue: "Uložit a pokračovat později",
+  op_profile_back: "Zpět",
+  op_profile_next: "Další",
+  op_profile_submit: "Odeslat",
+  no_active_program_schedule: "Žádný aktivní rozvrh programu",
+  post_match_short: "POZÁP",
+};
+Object.entries(opProfileEn).forEach(([k, v]) => { if (translations.en) translations.en[k] = v; });
+Object.entries(opProfileCs).forEach(([k, v]) => { if (translations.cs) translations.cs[k] = v; });
+
 Object.assign(translations.cs, {
   inbox: "Doručená pošta", see_all: "Zobrazit vše", select_item_to_preview: "Vyberte položku k náhledu",
   new_analysis_available: "Nová analýza je k dispozici", view_analysis: "Zobrazit analýzu",

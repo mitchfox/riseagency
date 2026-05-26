@@ -1,14 +1,16 @@
 import { ClipboardList, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/portalTranslations";
 
 interface Props {
   visible: boolean;
   inProgress: boolean;
   onOpen: () => void;
   onDismiss: () => void;
+  portalLanguage?: string | null;
 }
 
-export const OperatingProfileReminder = ({ visible, inProgress, onOpen, onDismiss }: Props) => {
+export const OperatingProfileReminder = ({ visible, inProgress, onOpen, onDismiss, portalLanguage }: Props) => {
   if (!visible) return null;
   return (
     <div className="sticky top-16 z-40 px-3 sm:px-4 pwa-safe-top">
@@ -19,14 +21,18 @@ export const OperatingProfileReminder = ({ visible, inProgress, onOpen, onDismis
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium leading-tight">
-              {inProgress ? "Pick up where you left off" : "What makes you tick?"}
+              {inProgress
+                ? t(portalLanguage, "op_profile_resume_title")
+                : t(portalLanguage, "op_profile_intro_title")}
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              {inProgress ? "Your operating profile is saved — finish it when you get time." : "Help us to know how to provide the best support to you"}
+              {inProgress
+                ? t(portalLanguage, "op_profile_resume_body")
+                : t(portalLanguage, "op_profile_intro_body")}
             </div>
           </div>
           <Button size="sm" className="h-8 bg-[hsl(43,49%,61%)] text-black hover:bg-[hsl(43,49%,55%)]" onClick={onOpen}>
-            {inProgress ? "Continue" : "Start"}
+            {inProgress ? t(portalLanguage, "op_profile_continue") : t(portalLanguage, "op_profile_start")}
           </Button>
           <button
             type="button"
