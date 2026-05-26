@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, ChevronLeft, ChevronRight, Maximize, Minimize, Star } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize, Minimize, Star, Check } from "lucide-react";
 import { AddToPlaylistButton } from "@/components/portal/AddToPlaylistButton";
+import { toast } from "sonner";
 
 const getScoreBgColor = (score: number | null | undefined): string => {
   if (score === null || score === undefined) return 'bg-primary/90';
@@ -54,11 +56,14 @@ interface HighlightReelPlayerProps {
   onClose: () => void;
   /** When supplied, surfaces "Add to playlist" for the current clip. */
   playerId?: string | null;
+  /** When supplied, surfaces the floating # reorder input. Reorders the underlying clip list. */
+  onReorder?: (fromIndex: number, toIndex: number) => void;
 }
 
-export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose, playerId }: HighlightReelPlayerProps) => {
+export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose, playerId, onReorder }: HighlightReelPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [newPosition, setNewPosition] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentClip = clips[currentIndex];
@@ -76,6 +81,21 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose, playe
       document.exitFullscreen();
       setIsFullscreen(false);
     }
+  };
+
+  const handleReorder = () => {
+    if (!onReorder) return;
+    const targetPos = parseInt(newPosition);
+    if (isNaN(targetPos) || targetPos < 1 || targetPos > totalClips) {
+      toast.error(`Please enter a number between 1 and ${totalClips}`);
+      return;
+    }
+    const toIdx = targetPos - 1;
+    if (toIdx === currentIndex) { setNewPosition(""); return; }
+    onReorder(currentIndex, toIdx);
+    setNewPosition("");
+    setCurrentIndex(toIdx);
+    toast.success("Clip reordered");
   };
 
   if (!currentClip) return null;
@@ -125,6 +145,38 @@ export const HighlightReelPlayer = ({ clips, projectName, isOpen, onClose, playe
               crossOrigin="anonymous"
             />
           </div>
+
+          {/* Floating reorder control — only when reorderable */}
+          {onReorder && totalClips > 1 && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-36 md:pb-32">
+              <div className="pointer-events-auto flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-lg px-4 py-3 border-2 border-primary/50 shadow-xl">
+                <span className="text-lg font-bold text-primary whitespace-nowrap">#</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={totalClips}
+                  value={newPosition}
+                  onChange={(e) => setNewPosition(e.target.value)}
+                  placeholder={`1-${totalClips}`}
+                  className="w-24 h-10 text-lg font-semibold text-center"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newPosition) handleReorder();
+                    if (e.key === "Escape") setNewPosition("");
+                  }}
+                />
+                {newPosition && (
+                  <>
+                    <Button onClick={handleReorder} size="sm" className="h-9 px-3">
+                      <Check className="w-5 h-5" />
+                    </Button>
+                    <Button onClick={() => setNewPosition("")} variant="ghost" size="sm" className="h-9 px-3">
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Bar */}
           <div className="bg-background/90 backdrop-blur-sm p-4 flex items-center justify-between gap-2 md:gap-4">
