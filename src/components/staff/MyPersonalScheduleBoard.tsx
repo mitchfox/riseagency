@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, ClipboardList, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Plus, Trash2, ClipboardList, ChevronDown, Repeat, Image as ImageIcon } from "lucide-react";
 
 type Item = {
   id: string;
@@ -16,6 +16,9 @@ type Item = {
   end_time: string;
   lane: number;
   done_at: string | null;
+  recurring_weekly?: boolean;
+  recurrence_group_id?: string | null;
+  image_url?: string | null;
 };
 
 type Task = {
