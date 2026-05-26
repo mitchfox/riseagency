@@ -116,6 +116,17 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
     }
   };
 
+  const togglePlayerVisibility = async (slot: AvailabilitySlot) => {
+    const next = !slot.visible_to_players;
+    const { error } = await supabase
+      .from("staff_availability")
+      .update({ visible_to_players: next })
+      .eq("id", slot.id);
+    if (error) { toast.error("Failed to update visibility"); return; }
+    setAvailabilitySlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, visible_to_players: next } : s)));
+    toast.success(next ? "Visible to your players" : "Hidden from your players");
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading availability...</div>;
   }
@@ -143,6 +154,32 @@ export const StaffAvailabilityManagement = ({ isAdmin }: { isAdmin: boolean }) =
           <CollapsibleContent>
             <CardContent>
               <StaffSchedule isAdmin={isAdmin} />
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* My Schedule — personal weekly planner (open by default) */}
+      <Collapsible open={isPersonalOpen} onOpenChange={setIsPersonalOpen}>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  My Schedule
+                </CardTitle>
+                {isPersonalOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              <MyPersonalScheduleBoard />
             </CardContent>
           </CollapsibleContent>
         </Card>
