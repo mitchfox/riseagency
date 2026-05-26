@@ -40,7 +40,7 @@ export const PlayerPortalQuickOpenDialog = ({ open, onOpenChange }: Props) => {
 
   const openPortal = (email: string | null) => {
     if (!email) return;
-    const url = `/dashboard?email=${encodeURIComponent(email)}`;
+    const url = `${window.location.origin}/portal?staff_login=${encodeURIComponent(email)}`;
     window.open(url, "_blank");
   };
 

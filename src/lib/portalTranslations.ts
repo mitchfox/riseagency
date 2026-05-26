@@ -1150,6 +1150,7 @@ const opProfileEn: Record<string, string> = {
   op_profile_submit: "Submit",
   no_active_program_schedule: "No active program schedule",
   post_match_short: "POST",
+  op_profile_text_placeholder: "Write as much or as little as you'd like...",
 };
 const opProfileCs: Record<string, string> = {
   op_profile_intro_title: "Co vás pohání?",
@@ -1166,6 +1167,7 @@ const opProfileCs: Record<string, string> = {
   op_profile_submit: "Odeslat",
   no_active_program_schedule: "Žádný aktivní rozvrh programu",
   post_match_short: "POZÁP",
+  op_profile_text_placeholder: "Napište tolik, kolik chcete...",
 };
 Object.entries(opProfileEn).forEach(([k, v]) => { if (translations.en) translations.en[k] = v; });
 Object.entries(opProfileCs).forEach(([k, v]) => { if (translations.cs) translations.cs[k] = v; });
