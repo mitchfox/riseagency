@@ -1017,6 +1017,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
         isOpen={reelPlayerOpen}
         onClose={() => setReelPlayerOpen(false)}
         playerId={activeProject.player_id}
+        onReorder={(from, to) => moveClipTo(from, to)}
       />
     </div>
   );
