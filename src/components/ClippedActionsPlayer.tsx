@@ -10,6 +10,7 @@ import { toTitleCase } from '@/lib/titleCase';
 import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
 import { useAutoTranslateStrings } from '@/hooks/useAutoTranslateStrings';
+import { Input } from '@/components/ui/input';
 
 interface ClipAction {
   id: string;
@@ -38,6 +39,14 @@ interface ClippedActionsPlayerProps {
   savingClipId?: string | null;
   /** When provided, shows an Add-to-Playlist button per clip (staff context). */
   playerId?: string;
+  /** Player email — when provided, AddToPlaylist runs in player (not staff) context. */
+  playerEmail?: string;
+  /** "playlist" mode: show flat ordered list with reorder-by-number input. */
+  mode?: 'report' | 'playlist';
+  /** Playlist reorder callback (1-based target position). */
+  onReorderClip?: (fromIndex: number, toPosition: number) => void;
+  /** Remove clip from playlist callback. */
+  onRemoveClip?: (index: number) => void;
 }
 
 const normaliseType = (t: string) => (t || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -68,6 +77,10 @@ export const ClippedActionsPlayer = ({
   onSaveToBest,
   savingClipId,
   playerId,
+  playerEmail,
+  mode = 'report',
+  onReorderClip,
+  onRemoveClip,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -76,13 +89,16 @@ export const ClippedActionsPlayer = ({
   const touchStartY = useRef(0);
   const [showClipList, setShowClipList] = useState(true);
   const clipListRef = useRef<HTMLDivElement>(null);
+  const [movePosById, setMovePosById] = useState<Record<string, string>>({});
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
 
   const sortedClips = useMemo(
-    () => sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url),
-    [clips]
+    () => (mode === 'playlist'
+      ? clips.filter((c) => !!c.video_url)
+      : sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url)),
+    [clips, mode]
   );
 
   // Auto-translate action descriptions + notes to the player's portal language
@@ -94,6 +110,7 @@ export const ClippedActionsPlayer = ({
 
   // Deduplicate + categorise
   const categorisedClips = useMemo(() => {
+    if (mode === 'playlist') return {} as Record<string, typeof sortedClips>;
     const seen = new Map<string, number>();
     const deduped: typeof sortedClips = [];
     for (const clip of sortedClips) {
@@ -113,7 +130,7 @@ export const ClippedActionsPlayer = ({
       categories[cat].push(clip);
     }
     return categories;
-  }, [sortedClips]);
+  }, [sortedClips, mode]);
 
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
