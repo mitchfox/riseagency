@@ -34,7 +34,8 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
   const [benchmarkName, setBenchmarkName] = React.useState("");
   const [visible, setVisible] = React.useState(true);
 
-  const { translate: trLabel } = useAutoTranslateStrings([statLabel].filter(Boolean), portalLanguage);
+  const phraseEn = `Last ${FORM_WINDOW} games avg vs`;
+  const { translate: trAuto } = useAutoTranslateStrings([statLabel, phraseEn].filter(Boolean), portalLanguage);
 
   const benchmarksRef = React.useRef<any[] | null>(null);
   const usedStatsRef = React.useRef<Set<string>>(new Set());
@@ -174,7 +175,7 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
                 transition={{ duration: 0.4 }}
               >
                 <p className="text-xs text-muted-foreground mb-3">
-                  <span className="font-semibold text-foreground">{trLabel(statLabel)}</span> — {t(portalLanguage, "last_n_games_avg_vs").replace("{n}", String(FORM_WINDOW))}{" "}
+                  <span className="font-semibold text-foreground">{trAuto(statLabel)}</span> — {trAuto(phraseEn)}{" "}
                   <span className="font-semibold text-primary">{benchmarkName}</span>
                 </p>
                 <div className="h-[120px]">
