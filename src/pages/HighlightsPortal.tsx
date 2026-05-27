@@ -482,7 +482,7 @@ const HighlightsPortal = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openPlaylistReel(pl.clips, pl.name, 0)}
+                            onClick={() => openPlaylistReel(pl.clips, pl.name, 0, pl.id)}
                             disabled={pl.clips.length === 0}
                           >
                             <Play className="w-4 h-4 mr-1" /> Play all
@@ -535,7 +535,7 @@ const HighlightsPortal = () => {
                                     videoUrl={c.videoUrl}
                                     playerId={selectedPlayer.id}
                                     makerUsername={maker.username}
-                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx)}
+                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx, pl.id)}
                                     onDownload={() =>
                                       downloadOne(
                                         c.videoUrl,
