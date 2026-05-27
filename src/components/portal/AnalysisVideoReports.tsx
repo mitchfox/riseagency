@@ -241,6 +241,7 @@ export const AnalysisVideoReports = ({ analyses, playerId, embedded }: Props) =>
     notes: c.notes,
     clip_start: c.clip_start,
     clip_end: c.clip_end,
+    action_score: c.action_score,
   })), [compilationClips]);
 
   return (

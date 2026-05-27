@@ -11,6 +11,7 @@ import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
 import { useAutoTranslateStrings } from '@/hooks/useAutoTranslateStrings';
 import { Input } from '@/components/ui/input';
+import { getR90Grade } from '@/lib/gradeCalculations';
 
 interface ClipAction {
   id: string;
@@ -23,6 +24,7 @@ interface ClipAction {
   clip_start?: number | null;
   clip_end?: number | null;
   clip_logo_url?: string | null;
+  action_score?: number | null;
 }
 
 interface ClippedActionsPlayerProps {

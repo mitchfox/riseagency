@@ -371,8 +371,10 @@ export const MyPersonalScheduleBoard = () => {
                       {/* items */}
                       {dayItems.map((it) => {
                         const top = Math.max(0, toMin(it.start_time) / 60 * HOUR_PX);
-                        const heightMin = Math.max(72, toMin(it.end_time) - toMin(it.start_time));
-                        const height = heightMin / 60 * HOUR_PX - 2;
+                        const rawHeight = (toMin(it.end_time) - toMin(it.start_time)) / 60 * HOUR_PX - 2;
+                        // Guarantee enough room for the title + time row to always show.
+                        const MIN_CARD_PX = 110;
+                        const height = Math.max(MIN_CARD_PX, rawHeight);
                         const current = isCurrent(it);
                         return (
                           <div
@@ -389,15 +391,9 @@ export const MyPersonalScheduleBoard = () => {
                             }`}
                             style={{ top, height }}
                           >
-                            {it.image_url && (
-                              <div
-                                className="absolute inset-0 opacity-30 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${it.image_url})` }}
-                              />
-                            )}
-                            <div className="relative flex flex-col h-full min-w-0">
-                              <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
-                              <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <div className="relative flex flex-col h-full min-w-0 gap-1">
+                              <div className="text-sm font-semibold text-foreground leading-snug break-words shrink-0" title={it.title}>{it.title}</div>
+                              <div className="text-[11px] text-foreground/70 flex items-center gap-1.5 flex-wrap shrink-0">
                                 <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
                                 {it.recurring_weekly && (
                                   <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
@@ -408,8 +404,17 @@ export const MyPersonalScheduleBoard = () => {
                                   <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
                                 )}
                               </div>
+                              {it.image_url && (
+                                <div
+                                  className="relative rounded-sm overflow-hidden bg-cover bg-center shrink-0"
+                                  style={{
+                                    backgroundImage: `url(${it.image_url})`,
+                                    height: Math.min(90, Math.max(0, height - 70)),
+                                  }}
+                                />
+                              )}
                               {it.notes && (
-                                <div className="text-[11px] text-foreground/60 mt-1 line-clamp-2">{it.notes}</div>
+                                <div className="text-[11px] text-foreground/60 line-clamp-2">{it.notes}</div>
                               )}
                               <button
                                 type="button"
