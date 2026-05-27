@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Trash2, Repeat, Image as ImageIcon, ClipboardList } from "lucide-react";
+import { Trash2, Repeat, Image as ImageIcon, ClipboardList, Upload, X } from "lucide-react";
 
 export type ScheduleItem = {
   id: string;
@@ -44,6 +44,7 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
   const [imageUrl, setImageUrl] = useState<string>("");
   const [recurring, setRecurring] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!item) return;
@@ -168,6 +169,24 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
 
   const isRecurring = !!item.recurring_weekly && !!item.recurrence_group_id;
 
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${item.user_id}/${item.id}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("schedule-images").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("schedule-images").getPublicUrl(path);
+      setImageUrl(data.publicUrl);
+      toast.success("Image uploaded");
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -202,8 +221,24 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="task-image" className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Image URL</Label>
-            <Input id="task-image" placeholder="https://…" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+            <Label className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Image</Label>
+            <div className="flex items-center gap-2">
+              <label className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-white/10 bg-background/50 hover:bg-background/70 cursor-pointer text-sm">
+                <Upload className="h-3.5 w-3.5" /> {uploading ? "Uploading…" : (imageUrl ? "Replace image" : "Upload image")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.currentTarget.value = ""; }}
+                />
+              </label>
+              {imageUrl && (
+                <Button variant="ghost" size="sm" onClick={() => setImageUrl("")} title="Remove image">
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             {imageUrl && (
               <div className="h-24 w-full rounded-md bg-cover bg-center border border-white/10" style={{ backgroundImage: `url(${imageUrl})` }} />
             )}

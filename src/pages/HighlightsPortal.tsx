@@ -198,6 +198,7 @@ const HighlightsPortal = () => {
   const [actionPlayerTitle, setActionPlayerTitle] = useState("");
   const [expandedPlaylists, setExpandedPlaylists] = useState<Set<string>>(new Set());
   const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
+  const [openPlaylistId, setOpenPlaylistId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!maker) return;
@@ -270,6 +271,7 @@ const HighlightsPortal = () => {
     clips: { id?: string; name: string; videoUrl: string }[],
     title: string,
     startIdx = 0,
+    playlistId: string | null = null,
   ) => {
     const list = clips
       .filter((c) => !!c.videoUrl)
@@ -287,6 +289,7 @@ const HighlightsPortal = () => {
     setActionClips(rotated);
     setActionPlayerTitle(title);
     setActionPlayerOpen(true);
+    setOpenPlaylistId(playlistId);
   };
 
   const openActionReel = (acts: ActionRow[], title: string, startIdx = 0) => {
@@ -479,7 +482,7 @@ const HighlightsPortal = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openPlaylistReel(pl.clips, pl.name, 0)}
+                            onClick={() => openPlaylistReel(pl.clips, pl.name, 0, pl.id)}
                             disabled={pl.clips.length === 0}
                           >
                             <Play className="w-4 h-4 mr-1" /> Play all
@@ -532,7 +535,7 @@ const HighlightsPortal = () => {
                                     videoUrl={c.videoUrl}
                                     playerId={selectedPlayer.id}
                                     makerUsername={maker.username}
-                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx)}
+                                    onPlay={() => openPlaylistReel(pl.clips, pl.name, idx, pl.id)}
                                     onDownload={() =>
                                       downloadOne(
                                         c.videoUrl,
@@ -709,10 +712,38 @@ const HighlightsPortal = () => {
 
       <ClippedActionsPlayer
         open={actionPlayerOpen}
-        onOpenChange={(o) => { setActionPlayerOpen(o); if (!o) setActionClips(null); }}
+        onOpenChange={(o) => { setActionPlayerOpen(o); if (!o) { setActionClips(null); setOpenPlaylistId(null); } }}
         clips={actionClips || []}
         title={actionPlayerTitle}
         playerId={selectedPlayerId || undefined}
+        mode={openPlaylistId ? 'playlist' : 'report'}
+        onReorderClip={openPlaylistId ? (fromIdx, toPos) => {
+          const pl = playlists.find(p => p.id === openPlaylistId);
+          if (!pl) return;
+          const ids = pl.clips.map((c, i) => c.id || `idx-${i}`);
+          const fromId = ids[fromIdx];
+          const toId = ids[toPos - 1];
+          if (fromId && toId) {
+            reorderClips(pl, fromId, toId);
+            // rebuild displayed clips
+            const next = arrayMove(pl.clips, fromIdx, toPos - 1);
+            setActionClips(next.map((c, i) => ({
+              id: c.id ?? `c-${i}`,
+              action_number: i + 1,
+              action_type: 'Playlist',
+              action_description: c.name,
+              video_url: c.videoUrl,
+              minute: 0,
+            })));
+          }
+        } : undefined}
+        onRemoveClip={openPlaylistId ? (idx) => {
+          const pl = playlists.find(p => p.id === openPlaylistId);
+          if (pl) {
+            removeClipFromPlaylist(pl, idx);
+            setActionClips((prev) => (prev || []).filter((_, i) => i !== idx));
+          }
+        } : undefined}
       />
     </div>
   );
