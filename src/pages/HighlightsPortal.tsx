@@ -198,6 +198,7 @@ const HighlightsPortal = () => {
   const [actionPlayerTitle, setActionPlayerTitle] = useState("");
   const [expandedPlaylists, setExpandedPlaylists] = useState<Set<string>>(new Set());
   const [expandedReports, setExpandedReports] = useState<Set<string>>(new Set());
+  const [openPlaylistId, setOpenPlaylistId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!maker) return;
@@ -270,6 +271,7 @@ const HighlightsPortal = () => {
     clips: { id?: string; name: string; videoUrl: string }[],
     title: string,
     startIdx = 0,
+    playlistId: string | null = null,
   ) => {
     const list = clips
       .filter((c) => !!c.videoUrl)
@@ -287,6 +289,7 @@ const HighlightsPortal = () => {
     setActionClips(rotated);
     setActionPlayerTitle(title);
     setActionPlayerOpen(true);
+    setOpenPlaylistId(playlistId);
   };
 
   const openActionReel = (acts: ActionRow[], title: string, startIdx = 0) => {
