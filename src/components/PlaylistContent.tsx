@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
-import { PlaylistPlayer } from "./PlaylistPlayer";
+import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
 
 interface Clip {
   id?: string;
@@ -699,13 +699,24 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
 
       {/* Playlist Player */}
       {selectedPlaylist && showPlayer && (
-        <PlaylistPlayer
-          playlistId={selectedPlaylist.id}
-          playlistName={selectedPlaylist.name}
-          clips={selectedPlaylist.clips}
-          isOpen={showPlayer}
-          onClose={() => setShowPlayer(false)}
-          onPlaylistUpdate={fetchPlaylists}
+        <ClippedActionsPlayer
+          open={showPlayer}
+          onOpenChange={(o) => setShowPlayer(o)}
+          title={selectedPlaylist.name}
+          language={playerData?.portal_language || "en"}
+          mode="playlist"
+          playerId={playerData?.id}
+          playerEmail={localStorage.getItem("player_email") || sessionStorage.getItem("player_email") || undefined}
+          onReorderClip={(fromIdx, toPos) => moveClip(fromIdx, toPos)}
+          onRemoveClip={(idx) => removeClipFromPlaylist(idx)}
+          clips={selectedPlaylist.clips.map((c, i) => ({
+            id: c.id || `${selectedPlaylist.id}-${i}`,
+            action_number: i + 1,
+            action_type: "Playlist",
+            action_description: c.name,
+            video_url: c.videoUrl,
+            minute: 0,
+          }))}
         />
       )}
     </div>
