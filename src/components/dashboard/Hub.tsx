@@ -1045,6 +1045,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           playerPosition={playerData.position || "CF"}
           analyses={analyses}
           onSeeAll={onNavigateToComparisons || onNavigateToAnalysis}
+          portalLanguage={portalLanguage}
         />
       )}
 
