@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, ClipboardList, ChevronDown, Repeat, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, ClipboardList, ChevronDown, Repeat } from "lucide-react";
+import { TaskDetailDialog, ScheduleItem } from "./TaskDetailDialog";
 
 type Item = {
   id: string;
@@ -58,6 +59,7 @@ export const MyPersonalScheduleBoard = () => {
   const [newTitle, setNewTitle] = useState("");
   const [tasksOpen, setTasksOpen] = useState(false);
   const [now, setNow] = useState<Date>(() => new Date());
+  const [openItem, setOpenItem] = useState<Item | null>(null);
 
   // Tick every minute for live "Now" marker + current-hour glow
   useEffect(() => {
@@ -144,80 +146,6 @@ export const MyPersonalScheduleBoard = () => {
       .eq("id", id);
     if (error) { toast.error("Failed to remove"); return; }
     setItems((p) => p.filter((i) => i.id !== id));
-  };
-
-  const toggleRecurring = async (item: Item) => {
-    if (!userId) return;
-    if (!item.recurring_weekly) {
-      const groupId = item.recurrence_group_id || item.id;
-      // mark this row and clone 11 weeks forward
-      const { error: upErr } = await supabase
-        .from("staff_personal_schedule_items")
-        .update({ recurring_weekly: true, recurrence_group_id: groupId })
-        .eq("id", item.id);
-      if (upErr) { toast.error("Failed to enable recurring"); return; }
-      const clones = Array.from({ length: 11 }, (_, i) => {
-        const d = new Date(item.scheduled_date + "T00:00:00");
-        d.setDate(d.getDate() + (i + 1) * 7);
-        return {
-          user_id: userId,
-          task_id: item.task_id,
-          title: item.title,
-          notes: item.notes,
-          scheduled_date: fmtDate(d),
-          start_time: item.start_time,
-          end_time: item.end_time,
-          recurring_weekly: true,
-          recurrence_group_id: groupId,
-          image_url: item.image_url ?? null,
-        };
-      });
-      const { error: insErr } = await supabase
-        .from("staff_personal_schedule_items")
-        .insert(clones);
-      if (insErr) { toast.error("Recurring clones failed"); return; }
-      setItems((p) => p.map((i) => i.id === item.id ? { ...i, recurring_weekly: true, recurrence_group_id: groupId } : i));
-      toast.success("Repeats every week for 12 weeks");
-    } else {
-      const groupId = item.recurrence_group_id;
-      if (!groupId) return;
-      const { error } = await supabase
-        .from("staff_personal_schedule_items")
-        .delete()
-        .eq("recurrence_group_id", groupId)
-        .gt("scheduled_date", item.scheduled_date);
-      if (error) { toast.error("Failed to stop recurring"); return; }
-      await supabase
-        .from("staff_personal_schedule_items")
-        .update({ recurring_weekly: false })
-        .eq("id", item.id);
-      setItems((p) => p
-        .filter((i) => !(i.recurrence_group_id === groupId && i.scheduled_date > item.scheduled_date))
-        .map((i) => i.id === item.id ? { ...i, recurring_weekly: false } : i));
-      toast.success("Recurring stopped");
-    }
-  };
-
-  const setImage = async (item: Item) => {
-    const url = window.prompt("Image URL (leave blank to remove)", item.image_url || "");
-    if (url === null) return;
-    const value = url.trim() || null;
-    const { error } = await supabase
-      .from("staff_personal_schedule_items")
-      .update({ image_url: value })
-      .eq("id", item.id);
-    if (error) { toast.error("Failed to update image"); return; }
-    setItems((p) => p.map((i) => i.id === item.id ? { ...i, image_url: value } : i));
-  };
-
-  const toggleDone = async (item: Item) => {
-    const done = !item.done_at;
-    const { error } = await supabase
-      .from("staff_personal_schedule_items")
-      .update({ done_at: done ? new Date().toISOString() : null })
-      .eq("id", item.id);
-    if (error) { toast.error("Failed to update"); return; }
-    setItems((p) => p.map((i) => i.id === item.id ? { ...i, done_at: done ? new Date().toISOString() : null } : i));
   };
 
   const quickLogToTasks = async (item: Item) => {
