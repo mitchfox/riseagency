@@ -892,7 +892,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                       <div className="flex-1">
                         <div className="font-medium text-sm">{analysis.opponent}</div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                          {formatDate(new Date(analysis.analysis_date), portalLanguage, { month: "short", day: "2-digit", year: "numeric" })}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
