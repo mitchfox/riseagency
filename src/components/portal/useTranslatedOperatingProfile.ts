@@ -20,7 +20,7 @@ const colMap: Record<Exclude<LangCode, "en">, string> = {
   no: "norwegian",
 };
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const cacheKey = (lang: LangCode) => `op_profile_translations_${CACHE_VERSION}_${lang}`;
 
 function collectStrings(): string[] {

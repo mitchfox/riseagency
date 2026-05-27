@@ -18,6 +18,7 @@ import { ParallaxHero } from "@/components/portal/ParallaxHero";
 import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection";
 import { checkAndFireConfetti } from "@/lib/confetti";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
+import { formatDate } from "@/lib/dateLocale";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
 const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
@@ -891,7 +892,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                       <div className="flex-1">
                         <div className="font-medium text-sm">{analysis.opponent}</div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(analysis.analysis_date), "MMM dd, yyyy")}
+                          {formatDate(new Date(analysis.analysis_date), portalLanguage, { month: "short", day: "2-digit", year: "numeric" })}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1044,6 +1045,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
           playerPosition={playerData.position || "CF"}
           analyses={analyses}
           onSeeAll={onNavigateToComparisons || onNavigateToAnalysis}
+          portalLanguage={portalLanguage}
         />
       )}
 

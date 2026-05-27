@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, ClipboardList, ChevronDown, Repeat, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, ClipboardList, ChevronDown, Repeat } from "lucide-react";
+import { TaskDetailDialog, ScheduleItem } from "./TaskDetailDialog";
 
 type Item = {
   id: string;
@@ -58,6 +59,7 @@ export const MyPersonalScheduleBoard = () => {
   const [newTitle, setNewTitle] = useState("");
   const [tasksOpen, setTasksOpen] = useState(false);
   const [now, setNow] = useState<Date>(() => new Date());
+  const [openItem, setOpenItem] = useState<Item | null>(null);
 
   // Tick every minute for live "Now" marker + current-hour glow
   useEffect(() => {
@@ -144,80 +146,6 @@ export const MyPersonalScheduleBoard = () => {
       .eq("id", id);
     if (error) { toast.error("Failed to remove"); return; }
     setItems((p) => p.filter((i) => i.id !== id));
-  };
-
-  const toggleRecurring = async (item: Item) => {
-    if (!userId) return;
-    if (!item.recurring_weekly) {
-      const groupId = item.recurrence_group_id || item.id;
-      // mark this row and clone 11 weeks forward
-      const { error: upErr } = await supabase
-        .from("staff_personal_schedule_items")
-        .update({ recurring_weekly: true, recurrence_group_id: groupId })
-        .eq("id", item.id);
-      if (upErr) { toast.error("Failed to enable recurring"); return; }
-      const clones = Array.from({ length: 11 }, (_, i) => {
-        const d = new Date(item.scheduled_date + "T00:00:00");
-        d.setDate(d.getDate() + (i + 1) * 7);
-        return {
-          user_id: userId,
-          task_id: item.task_id,
-          title: item.title,
-          notes: item.notes,
-          scheduled_date: fmtDate(d),
-          start_time: item.start_time,
-          end_time: item.end_time,
-          recurring_weekly: true,
-          recurrence_group_id: groupId,
-          image_url: item.image_url ?? null,
-        };
-      });
-      const { error: insErr } = await supabase
-        .from("staff_personal_schedule_items")
-        .insert(clones);
-      if (insErr) { toast.error("Recurring clones failed"); return; }
-      setItems((p) => p.map((i) => i.id === item.id ? { ...i, recurring_weekly: true, recurrence_group_id: groupId } : i));
-      toast.success("Repeats every week for 12 weeks");
-    } else {
-      const groupId = item.recurrence_group_id;
-      if (!groupId) return;
-      const { error } = await supabase
-        .from("staff_personal_schedule_items")
-        .delete()
-        .eq("recurrence_group_id", groupId)
-        .gt("scheduled_date", item.scheduled_date);
-      if (error) { toast.error("Failed to stop recurring"); return; }
-      await supabase
-        .from("staff_personal_schedule_items")
-        .update({ recurring_weekly: false })
-        .eq("id", item.id);
-      setItems((p) => p
-        .filter((i) => !(i.recurrence_group_id === groupId && i.scheduled_date > item.scheduled_date))
-        .map((i) => i.id === item.id ? { ...i, recurring_weekly: false } : i));
-      toast.success("Recurring stopped");
-    }
-  };
-
-  const setImage = async (item: Item) => {
-    const url = window.prompt("Image URL (leave blank to remove)", item.image_url || "");
-    if (url === null) return;
-    const value = url.trim() || null;
-    const { error } = await supabase
-      .from("staff_personal_schedule_items")
-      .update({ image_url: value })
-      .eq("id", item.id);
-    if (error) { toast.error("Failed to update image"); return; }
-    setItems((p) => p.map((i) => i.id === item.id ? { ...i, image_url: value } : i));
-  };
-
-  const toggleDone = async (item: Item) => {
-    const done = !item.done_at;
-    const { error } = await supabase
-      .from("staff_personal_schedule_items")
-      .update({ done_at: done ? new Date().toISOString() : null })
-      .eq("id", item.id);
-    if (error) { toast.error("Failed to update"); return; }
-    setItems((p) => p.map((i) => i.id === item.id ? { ...i, done_at: done ? new Date().toISOString() : null } : i));
   };
 
   const quickLogToTasks = async (item: Item) => {
@@ -332,7 +260,7 @@ export const MyPersonalScheduleBoard = () => {
 
         {/* Week timeline */}
         {(() => {
-          const HOUR_PX = 60; // each hour row height
+          const HOUR_PX = 80; // each hour row height (taller for readability)
           const START_HOUR = 9;
           const END_HOUR = 21;
           const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
@@ -420,7 +348,7 @@ export const MyPersonalScheduleBoard = () => {
                       {/* items */}
                       {dayItems.map((it) => {
                         const top = Math.max(0, toMin(it.start_time) / 60 * HOUR_PX);
-                        const heightMin = Math.max(50, toMin(it.end_time) - toMin(it.start_time));
+                        const heightMin = Math.max(72, toMin(it.end_time) - toMin(it.start_time));
                         const height = heightMin / 60 * HOUR_PX - 2;
                         const current = isCurrent(it);
                         return (
@@ -428,7 +356,8 @@ export const MyPersonalScheduleBoard = () => {
                             key={it.id}
                             draggable
                             onDragStart={(e) => e.dataTransfer.setData("text/item-id", it.id)}
-                            className={`group absolute left-1 right-1 z-10 rounded-md border p-2 backdrop-blur overflow-hidden transition-all ${
+                            onClick={() => setOpenItem(it)}
+                            className={`group absolute left-1 right-1 z-10 rounded-md border p-2 backdrop-blur overflow-hidden transition-all cursor-pointer ${
                               it.done_at
                                 ? "opacity-40 line-through bg-background/30 border-white/5"
                                 : current
@@ -443,63 +372,22 @@ export const MyPersonalScheduleBoard = () => {
                                 style={{ backgroundImage: `url(${it.image_url})` }}
                               />
                             )}
-                            <div className="relative flex items-start gap-1.5 h-full">
-                              <button
-                                type="button"
-                                onClick={() => toggleDone(it)}
-                                className={`mt-0.5 h-3.5 w-3.5 shrink-0 rounded border flex items-center justify-center ${it.done_at ? "bg-primary border-primary" : "border-muted-foreground/40"}`}
-                                title="Mark done"
-                              >
-                                {it.done_at && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
-                              </button>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
-                                <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                  <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
-                                  {it.recurring_weekly && (
-                                    <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
-                                      <Repeat className="h-2.5 w-2.5" /> weekly
-                                    </span>
-                                  )}
-                                  {current && (
-                                    <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
-                                  )}
-                                </div>
+                            <div className="relative flex flex-col h-full min-w-0">
+                              <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
+                              <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
+                                {it.recurring_weekly && (
+                                  <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
+                                    <Repeat className="h-2.5 w-2.5" /> weekly
+                                  </span>
+                                )}
+                                {current && (
+                                  <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
+                                )}
                               </div>
-                              <div className="flex flex-col gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleRecurring(it)}
-                                  title={it.recurring_weekly ? "Stop weekly repeat" : "Repeat weekly"}
-                                  className={`h-5 w-5 flex items-center justify-center rounded ${it.recurring_weekly ? "bg-primary/30 text-primary" : "bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"}`}
-                                >
-                                  <Repeat className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setImage(it)}
-                                  title="Set image"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
-                                >
-                                  <ImageIcon className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => quickLogToTasks(it)}
-                                  title="Log to My Tasks"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
-                                >
-                                  <ClipboardList className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeItem(it.id)}
-                                  title="Remove"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-destructive hover:bg-background/60"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
+                              {it.notes && (
+                                <div className="text-[11px] text-foreground/60 mt-1 line-clamp-2">{it.notes}</div>
+                              )}
                             </div>
                           </div>
                         );
@@ -515,8 +403,39 @@ export const MyPersonalScheduleBoard = () => {
 
       {loading && <div className="text-xs text-muted-foreground">Loading…</div>}
       <div className="text-[11px] text-muted-foreground">
-        Open the My Tasks rail to drag a task onto a day. Type in the quick-add box and double-click a day to drop it there. Drag items between days to move them. Today's column glows and shows a live "Now" marker.
+        Open the My Tasks rail to drag a task onto a day. Type in the quick-add box and double-click a day to drop it there. Click a card to edit, change time, repeat or delete. Drag items between days to move them.
       </div>
+
+      <TaskDetailDialog
+        item={openItem as ScheduleItem | null}
+        open={!!openItem}
+        onOpenChange={(o) => { if (!o) setOpenItem(null); }}
+        onSaved={(updated, opts) => {
+          setItems((p) => p.map((i) => i.id === updated.id ? { ...i, ...updated } as Item : i));
+          if (opts?.recurrenceChanged) {
+            // Refetch this week so cloned/removed siblings appear
+            if (userId) {
+              supabase
+                .from("staff_personal_schedule_items")
+                .select("*")
+                .eq("user_id", userId)
+                .gte("scheduled_date", fmtDate(weekStart))
+                .lte("scheduled_date", fmtDate(weekEnd))
+                .order("scheduled_date")
+                .order("start_time")
+                .then(({ data }) => { if (data) setItems(data as Item[]); });
+            }
+          }
+        }}
+        onDeleted={(id, opts) => {
+          if (opts?.allFuture && opts.groupId && opts.fromDate) {
+            setItems((p) => p.filter((i) => !(i.recurrence_group_id === opts.groupId && i.scheduled_date >= opts.fromDate!)));
+          } else {
+            setItems((p) => p.filter((i) => i.id !== id));
+          }
+        }}
+        onLogToTasks={(it) => quickLogToTasks(it as Item)}
+      />
     </div>
   );
 };
