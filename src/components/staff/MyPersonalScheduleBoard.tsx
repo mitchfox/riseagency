@@ -166,18 +166,41 @@ export const MyPersonalScheduleBoard = () => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("text/task-id");
     const itemId = e.dataTransfer.getData("text/item-id");
+    // Compute drop time from vertical position within the day column
+    const HOUR_PX_LOCAL = 80;
+    const START_HOUR_LOCAL = 9;
+    const target = e.currentTarget as HTMLDivElement;
+    const rect = target.getBoundingClientRect();
+    const offsetY = Math.max(0, e.clientY - rect.top);
+    const totalMin = Math.round((offsetY / HOUR_PX_LOCAL) * 60 / 15) * 15; // snap to 15 min
+    const hh = START_HOUR_LOCAL + Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    const newStart = `${String(Math.min(21, Math.max(START_HOUR_LOCAL, hh))).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
     if (taskId) {
       const task = tasks.find((t) => t.id === taskId);
-      if (task) await addItem(date, { title: task.title, task_id: task.id });
+      if (task) {
+        const [sh, sm] = newStart.split(":").map(Number);
+        const endTotal = sh * 60 + sm + 60;
+        const newEnd = `${String(Math.floor(endTotal / 60)).padStart(2,"0")}:${String(endTotal % 60).padStart(2,"0")}`;
+        await addItem(date, { title: task.title, task_id: task.id, start_time: newStart, end_time: newEnd });
+      }
     } else if (itemId) {
       const item = items.find((i) => i.id === itemId);
-      if (item && item.scheduled_date !== date) {
+      if (item) {
+        // Preserve duration; reschedule both day and start time
+        const [osh, osm] = item.start_time.slice(0,5).split(":").map(Number);
+        const [oeh, oem] = item.end_time.slice(0,5).split(":").map(Number);
+        const durationMin = (oeh * 60 + oem) - (osh * 60 + osm);
+        const [nsh, nsm] = newStart.split(":").map(Number);
+        const endTotal = nsh * 60 + nsm + Math.max(15, durationMin);
+        const newEnd = `${String(Math.floor(endTotal / 60)).padStart(2,"0")}:${String(endTotal % 60).padStart(2,"0")}`;
+        if (item.scheduled_date === date && item.start_time.slice(0,5) === newStart) return;
         const { error } = await supabase
           .from("staff_personal_schedule_items")
-          .update({ scheduled_date: date })
+          .update({ scheduled_date: date, start_time: newStart + ":00", end_time: newEnd + ":00" })
           .eq("id", itemId);
         if (error) { toast.error("Failed to move"); return; }
-        setItems((p) => p.map((i) => i.id === itemId ? { ...i, scheduled_date: date } : i));
+        setItems((p) => p.map((i) => i.id === itemId ? { ...i, scheduled_date: date, start_time: newStart + ":00", end_time: newEnd + ":00" } : i));
       }
     }
   };
@@ -388,6 +411,14 @@ export const MyPersonalScheduleBoard = () => {
                               {it.notes && (
                                 <div className="text-[11px] text-foreground/60 mt-1 line-clamp-2">{it.notes}</div>
                               )}
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); quickLogToTasks(it); }}
+                                className="mt-auto self-start inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:text-primary/80 px-1.5 py-0.5 rounded border border-primary/30 bg-background/60"
+                                title="Log to My Tasks"
+                              >
+                                <ClipboardList className="h-3 w-3" /> Log
+                              </button>
                             </div>
                           </div>
                         );
