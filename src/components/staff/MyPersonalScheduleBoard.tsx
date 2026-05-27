@@ -260,7 +260,7 @@ export const MyPersonalScheduleBoard = () => {
 
         {/* Week timeline */}
         {(() => {
-          const HOUR_PX = 60; // each hour row height
+          const HOUR_PX = 80; // each hour row height (taller for readability)
           const START_HOUR = 9;
           const END_HOUR = 21;
           const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
@@ -348,7 +348,7 @@ export const MyPersonalScheduleBoard = () => {
                       {/* items */}
                       {dayItems.map((it) => {
                         const top = Math.max(0, toMin(it.start_time) / 60 * HOUR_PX);
-                        const heightMin = Math.max(50, toMin(it.end_time) - toMin(it.start_time));
+                        const heightMin = Math.max(72, toMin(it.end_time) - toMin(it.start_time));
                         const height = heightMin / 60 * HOUR_PX - 2;
                         const current = isCurrent(it);
                         return (
@@ -356,7 +356,8 @@ export const MyPersonalScheduleBoard = () => {
                             key={it.id}
                             draggable
                             onDragStart={(e) => e.dataTransfer.setData("text/item-id", it.id)}
-                            className={`group absolute left-1 right-1 z-10 rounded-md border p-2 backdrop-blur overflow-hidden transition-all ${
+                            onClick={() => setOpenItem(it)}
+                            className={`group absolute left-1 right-1 z-10 rounded-md border p-2 backdrop-blur overflow-hidden transition-all cursor-pointer ${
                               it.done_at
                                 ? "opacity-40 line-through bg-background/30 border-white/5"
                                 : current
@@ -371,63 +372,22 @@ export const MyPersonalScheduleBoard = () => {
                                 style={{ backgroundImage: `url(${it.image_url})` }}
                               />
                             )}
-                            <div className="relative flex items-start gap-1.5 h-full">
-                              <button
-                                type="button"
-                                onClick={() => toggleDone(it)}
-                                className={`mt-0.5 h-3.5 w-3.5 shrink-0 rounded border flex items-center justify-center ${it.done_at ? "bg-primary border-primary" : "border-muted-foreground/40"}`}
-                                title="Mark done"
-                              >
-                                {it.done_at && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
-                              </button>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
-                                <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                  <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
-                                  {it.recurring_weekly && (
-                                    <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
-                                      <Repeat className="h-2.5 w-2.5" /> weekly
-                                    </span>
-                                  )}
-                                  {current && (
-                                    <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
-                                  )}
-                                </div>
+                            <div className="relative flex flex-col h-full min-w-0">
+                              <div className="text-sm font-semibold text-foreground leading-snug break-words" title={it.title}>{it.title}</div>
+                              <div className="text-[11px] text-foreground/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>{it.start_time.slice(0,5)}–{it.end_time.slice(0,5)}</span>
+                                {it.recurring_weekly && (
+                                  <span className="inline-flex items-center gap-0.5 px-1 rounded bg-primary/20 text-primary text-[9px] font-semibold uppercase tracking-wide">
+                                    <Repeat className="h-2.5 w-2.5" /> weekly
+                                  </span>
+                                )}
+                                {current && (
+                                  <span className="text-[9px] font-semibold text-primary uppercase tracking-wide">Now</span>
+                                )}
                               </div>
-                              <div className="flex flex-col gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleRecurring(it)}
-                                  title={it.recurring_weekly ? "Stop weekly repeat" : "Repeat weekly"}
-                                  className={`h-5 w-5 flex items-center justify-center rounded ${it.recurring_weekly ? "bg-primary/30 text-primary" : "bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"}`}
-                                >
-                                  <Repeat className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setImage(it)}
-                                  title="Set image"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
-                                >
-                                  <ImageIcon className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => quickLogToTasks(it)}
-                                  title="Log to My Tasks"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-primary hover:bg-background/60"
-                                >
-                                  <ClipboardList className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeItem(it.id)}
-                                  title="Remove"
-                                  className="h-5 w-5 flex items-center justify-center rounded bg-background/40 text-muted-foreground hover:text-destructive hover:bg-background/60"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
+                              {it.notes && (
+                                <div className="text-[11px] text-foreground/60 mt-1 line-clamp-2">{it.notes}</div>
+                              )}
                             </div>
                           </div>
                         );
