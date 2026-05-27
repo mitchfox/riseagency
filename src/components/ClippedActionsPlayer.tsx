@@ -355,7 +355,98 @@ export const ClippedActionsPlayer = ({
         {/* Clip list table */}
         {showClipList && (
           <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
-            {categoryOrder.filter(cat => categorisedClips[cat]?.length).map(cat => (
+            {mode === 'playlist' ? (
+              <div>
+                <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
+                  Playlist ({sortedClips.length})
+                </div>
+                {sortedClips.map((clip, idx) => {
+                  const posVal = movePosById[clip.id] ?? String(idx + 1);
+                  return (
+                    <div
+                      key={clip.id}
+                      data-active={clip.id === currentClip.id}
+                      className={`w-full px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
+                        clip.id === currentClip.id ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <button
+                        onClick={() => jumpToClip(clip.id)}
+                        className="flex-1 flex items-center gap-3 text-left min-w-0"
+                      >
+                        <span className="text-white/50 w-6 text-right">{idx + 1}</span>
+                        <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
+                        {clip.id === currentClip.id && (
+                          <span className="text-primary text-[10px] font-bold">▶</span>
+                        )}
+                      </button>
+                      {onReorderClip && (
+                        <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 shrink-0">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={sortedClips.length}
+                            value={posVal}
+                            onChange={(e) => setMovePosById((p) => ({ ...p, [clip.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const n = parseInt(posVal, 10);
+                                if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
+                                  onReorderClip(idx, n);
+                                  setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              const n = parseInt(posVal, 10);
+                              if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
+                                onReorderClip(idx, n);
+                              }
+                              setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                            }}
+                            className="w-12 h-6 text-[11px] px-1 bg-white/10 border-white/20 text-white"
+                            title="Type new position then press Enter"
+                          />
+                        </div>
+                      )}
+                      {playerId && clip.video_url && (
+                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                          <AddToPlaylistButton
+                            asStaff={!playerEmail}
+                            playerId={playerId}
+                            playerEmail={playerEmail}
+                            clip={{ name: clip.action_description || `Clip ${idx + 1}`, videoUrl: clip.video_url }}
+                            className="h-6 w-6 text-white/50 hover:text-white"
+                          />
+                        </div>
+                      )}
+                      {onRemoveClip && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-white/50 hover:text-red-400 shrink-0"
+                          title="Remove from playlist"
+                          onClick={(e) => { e.stopPropagation(); onRemoveClip(idx); }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {showDownloads && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-white/50 hover:text-white shrink-0"
+                          title="Download clip"
+                          onClick={(e) => { e.stopPropagation(); onDownloadCurrent?.(clip as any); }}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : categoryOrder.filter(cat => categorisedClips[cat]?.length).map(cat => (
               <div key={cat}>
                 <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
                   {cat} ({categorisedClips[cat].length})
@@ -407,8 +498,9 @@ export const ClippedActionsPlayer = ({
                     {playerId && clip.video_url && (
                       <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                         <AddToPlaylistButton
-                          asStaff
+                          asStaff={!playerEmail}
                           playerId={playerId}
+                          playerEmail={playerEmail}
                           clip={{ name: toTitleCase(clip.action_type) || `Clip ${clip.action_number}`, videoUrl: clip.video_url }}
                           className="h-6 w-6 text-white/50 hover:text-white"
                         />
