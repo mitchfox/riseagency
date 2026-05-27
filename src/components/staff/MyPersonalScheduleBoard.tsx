@@ -403,8 +403,39 @@ export const MyPersonalScheduleBoard = () => {
 
       {loading && <div className="text-xs text-muted-foreground">Loading…</div>}
       <div className="text-[11px] text-muted-foreground">
-        Open the My Tasks rail to drag a task onto a day. Type in the quick-add box and double-click a day to drop it there. Drag items between days to move them. Today's column glows and shows a live "Now" marker.
+        Open the My Tasks rail to drag a task onto a day. Type in the quick-add box and double-click a day to drop it there. Click a card to edit, change time, repeat or delete. Drag items between days to move them.
       </div>
+
+      <TaskDetailDialog
+        item={openItem as ScheduleItem | null}
+        open={!!openItem}
+        onOpenChange={(o) => { if (!o) setOpenItem(null); }}
+        onSaved={(updated, opts) => {
+          setItems((p) => p.map((i) => i.id === updated.id ? { ...i, ...updated } as Item : i));
+          if (opts?.recurrenceChanged) {
+            // Refetch this week so cloned/removed siblings appear
+            if (userId) {
+              supabase
+                .from("staff_personal_schedule_items")
+                .select("*")
+                .eq("user_id", userId)
+                .gte("scheduled_date", fmtDate(weekStart))
+                .lte("scheduled_date", fmtDate(weekEnd))
+                .order("scheduled_date")
+                .order("start_time")
+                .then(({ data }) => { if (data) setItems(data as Item[]); });
+            }
+          }
+        }}
+        onDeleted={(id, opts) => {
+          if (opts?.allFuture && opts.groupId && opts.fromDate) {
+            setItems((p) => p.filter((i) => !(i.recurrence_group_id === opts.groupId && i.scheduled_date >= opts.fromDate!)));
+          } else {
+            setItems((p) => p.filter((i) => i.id !== id));
+          }
+        }}
+        onLogToTasks={(it) => quickLogToTasks(it as Item)}
+      />
     </div>
   );
 };
