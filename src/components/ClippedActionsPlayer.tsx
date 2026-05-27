@@ -11,6 +11,7 @@ import { isFullMatchUrl } from '@/lib/clipVideoUtils';
 import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
 import { useAutoTranslateStrings } from '@/hooks/useAutoTranslateStrings';
 import { Input } from '@/components/ui/input';
+import { getR90Grade } from '@/lib/gradeCalculations';
 
 interface ClipAction {
   id: string;
@@ -23,6 +24,7 @@ interface ClipAction {
   clip_start?: number | null;
   clip_end?: number | null;
   clip_logo_url?: string | null;
+  action_score?: number | null;
 }
 
 interface ClippedActionsPlayerProps {
@@ -233,7 +235,21 @@ export const ClippedActionsPlayer = ({
             </span>
             <div className="min-w-0 flex-1">
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
-              <div className="text-white/70 text-xs truncate">{formatMinute(currentClip.minute)}' • {currentClip.action_type}</div>
+              <div className="text-white/70 text-xs truncate flex items-center gap-1.5">
+                <span>{formatMinute(currentClip.minute)}' • {currentClip.action_type}</span>
+                {currentClip.action_score != null && (() => {
+                  const g = getR90Grade(currentClip.action_score);
+                  return (
+                    <span
+                      className="inline-flex items-center justify-center min-w-[34px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black"
+                      style={{ backgroundColor: g.color }}
+                      title={`R90 ${currentClip.action_score.toFixed(2)} (${g.grade})`}
+                    >
+                      {currentClip.action_score.toFixed(2)}
+                    </span>
+                  );
+                })()}
+              </div>
               {currentClip.action_description && (
                 <div className="mt-1 text-white/85 text-xs leading-snug">
                   <p className="line-clamp-2">{trText(currentClip.action_description)}</p>
@@ -479,6 +495,18 @@ export const ClippedActionsPlayer = ({
                       </span>
                       <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
                       <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
+                      {clip.action_score != null && (() => {
+                        const g = getR90Grade(clip.action_score);
+                        return (
+                          <span
+                            className="inline-flex items-center justify-center min-w-[34px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black shrink-0"
+                            style={{ backgroundColor: g.color }}
+                            title={`R90 ${clip.action_score.toFixed(2)} (${g.grade})`}
+                          >
+                            {clip.action_score.toFixed(2)}
+                          </span>
+                        );
+                      })()}
                       {clip.id === currentClip.id && (
                         <span className="text-primary text-[10px] font-bold">▶</span>
                       )}
