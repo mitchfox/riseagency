@@ -20,7 +20,7 @@ const colMap: Record<Exclude<LangCode, "en">, string> = {
   no: "norwegian",
 };
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const cacheKey = (lang: LangCode) => `op_profile_translations_${CACHE_VERSION}_${lang}`;
 
 function collectStrings(): string[] {
@@ -77,26 +77,33 @@ export function useTranslatedOperatingProfile(portalLanguageOverride?: string | 
       return;
     }
 
-    // Try cache
+    const all = collectStrings();
+
+    // Load cached map (may be partial)
+    let cachedMap: Record<string, string> = {};
     try {
       const raw = localStorage.getItem(cacheKey(lang));
-      if (raw) {
-        const map = JSON.parse(raw) as Record<string, string>;
-        const applied = applyMap(map);
-        setSections(applied.sections);
-        setLabelFor(() => applied.labelFor);
-        return;
-      }
+      if (raw) cachedMap = JSON.parse(raw) as Record<string, string>;
     } catch {}
 
-    const all = collectStrings();
+    // Apply whatever we have immediately so UI isn't stuck in English
+    if (Object.keys(cachedMap).length > 0) {
+      const applied = applyMap(cachedMap);
+      setSections(applied.sections);
+      setLabelFor(() => applied.labelFor);
+    }
+
+    // Identify strings missing from the cache
+    const missing = all.filter((s) => !cachedMap[s]);
+    if (missing.length === 0) return;
+
     const chunks: string[][] = [];
-    for (let i = 0; i < all.length; i += 18) chunks.push(all.slice(i, i + 18));
+    for (let i = 0; i < missing.length; i += 18) chunks.push(missing.slice(i, i + 18));
 
     setLoading(true);
     (async () => {
       try {
-        const map: Record<string, string> = {};
+        const map: Record<string, string> = { ...cachedMap };
         for (const chunk of chunks) {
           const result = await translateBatch(chunk);
           chunk.forEach((src, i) => {
@@ -112,7 +119,6 @@ export function useTranslatedOperatingProfile(portalLanguageOverride?: string | 
         setLabelFor(() => applied.labelFor);
       } catch (e) {
         console.error("Operating profile translation failed", e);
-        setSections(OPERATING_PROFILE_SECTIONS);
       } finally {
         setLoading(false);
       }
