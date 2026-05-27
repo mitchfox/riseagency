@@ -7,6 +7,8 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } fro
 import { AnimatePresence, motion } from "framer-motion";
 import { ALL_METRICS } from "@/components/staff/ComparisonPlayerData";
 import { computeStatAverage } from "@/lib/statAggregation";
+import { t } from "@/lib/portalTranslations";
+import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 
 interface QuickStatsComparisonProps {
   playerId: string;
@@ -14,6 +16,7 @@ interface QuickStatsComparisonProps {
   playerPosition: string;
   analyses: any[];
   onSeeAll?: () => void;
+  portalLanguage?: string | null;
 }
 
 const surname = (name: string) => {
@@ -24,12 +27,14 @@ const surname = (name: string) => {
 /** Pick a random subset of metrics that have data for both player and benchmark */
 const FORM_WINDOW = 5;
 
-export const QuickStatsComparison = ({ playerId, playerName, playerPosition, analyses, onSeeAll }: QuickStatsComparisonProps) => {
+export const QuickStatsComparison = ({ playerId, playerName, playerPosition, analyses, onSeeAll, portalLanguage }: QuickStatsComparisonProps) => {
   const [loading, setLoading] = React.useState(true);
   const [chartData, setChartData] = React.useState<{ name: string; value: number }[] | null>(null);
   const [statLabel, setStatLabel] = React.useState("");
   const [benchmarkName, setBenchmarkName] = React.useState("");
   const [visible, setVisible] = React.useState(true);
+
+  const { translate: trLabel } = useAutoTranslateStrings([statLabel].filter(Boolean), portalLanguage);
 
   const benchmarksRef = React.useRef<any[] | null>(null);
   const usedStatsRef = React.useRef<Set<string>>(new Set());
@@ -134,7 +139,7 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
         <div className="flex items-center justify-between container mx-auto px-4 pr-6">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">Comparisons</CardTitle>
+            <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "comparisons")}</CardTitle>
           </div>
           <div className="flex items-center gap-1">
             {onSeeAll && (
@@ -144,7 +149,7 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
                 onClick={onSeeAll}
                 className="flex items-center gap-1 text-sm text-primary hover:text-black hover:bg-primary h-10"
               >
-                See All
+                {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
@@ -169,7 +174,7 @@ export const QuickStatsComparison = ({ playerId, playerName, playerPosition, ana
                 transition={{ duration: 0.4 }}
               >
                 <p className="text-xs text-muted-foreground mb-3">
-                  <span className="font-semibold text-foreground">{statLabel}</span> — Last {FORM_WINDOW} games avg vs{" "}
+                  <span className="font-semibold text-foreground">{trLabel(statLabel)}</span> — {t(portalLanguage, "last_n_games_avg_vs").replace("{n}", String(FORM_WINDOW))}{" "}
                   <span className="font-semibold text-primary">{benchmarkName}</span>
                 </p>
                 <div className="h-[120px]">
