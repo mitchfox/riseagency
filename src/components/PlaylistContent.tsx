@@ -649,7 +649,23 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{clip.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{clip.name}</p>
+                            {(() => {
+                              const s = scoreFor(clip.videoUrl);
+                              if (s == null) return null;
+                              const g = getR90Grade(s);
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center min-w-[36px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black"
+                                  style={{ backgroundColor: g.color }}
+                                  title={`R90 ${s.toFixed(2)} (${g.grade})`}
+                                >
+                                  {s.toFixed(2)}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           {playingVideo?.url === clip.videoUrl && (
                             <video
                               src={clip.videoUrl}
