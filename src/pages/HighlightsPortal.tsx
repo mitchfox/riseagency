@@ -312,6 +312,7 @@ const HighlightsPortal = () => {
         action_description: c.name,
         video_url: c.videoUrl,
         minute: 0,
+        action_score: scoreByVideoUrl[c.videoUrl] ?? null,
       }));
     if (list.length === 0) { toast.error("No playable clips"); return; }
     const safeIdx = Math.max(0, Math.min(startIdx, list.length - 1));
