@@ -189,6 +189,7 @@ Deno.serve(async (req) => {
             name: String(clip.name || "Clip").slice(0, 200),
             videoUrl: String(clip.videoUrl),
             order: current.length,
+            ...(clip.action_score != null ? { action_score: Number(clip.action_score) } : {}),
           },
         ];
       } else if (action === "removeClip") {
@@ -209,6 +210,7 @@ Deno.serve(async (req) => {
           name: String(c.name || "Clip").slice(0, 200),
           videoUrl: String(c.videoUrl),
           order: i,
+          ...(c.action_score != null ? { action_score: Number(c.action_score) } : {}),
         }));
       }
 
