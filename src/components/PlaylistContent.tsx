@@ -8,12 +8,16 @@ import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video,
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
+import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
+import { getR90Grade } from "@/lib/gradeCalculations";
+import { ArrowDownWideNarrow } from "lucide-react";
 
 interface Clip {
   id?: string;
   name: string;
   videoUrl: string;
   order: number;
+  action_score?: number | null;
 }
 
 interface Playlist {
