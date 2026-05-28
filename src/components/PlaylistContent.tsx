@@ -45,6 +45,12 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
 
+  const actionScores = usePlaylistActionScores(playerData?.id);
+  const scoreFor = (videoUrl: string): number | null => {
+    const s = actionScores[videoUrl];
+    return s == null ? null : s;
+  };
+
   useEffect(() => {
     if (playerData?.id) {
       setIsLoadingPlaylists(true);
