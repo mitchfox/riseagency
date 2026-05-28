@@ -258,6 +258,22 @@ const HighlightsPortal = () => {
       }));
   }, [playlists, selectedPlayerId]);
 
+  // Map videoUrl -> action_score for the selected player (from already-loaded actions)
+  const scoreByVideoUrl = useMemo(() => {
+    if (!selectedPlayerId) return {} as Record<string, number>;
+    const analysisIds = new Set(
+      analyses.filter((a) => a.player_id === selectedPlayerId).map((a) => a.id),
+    );
+    const map: Record<string, number> = {};
+    actions.forEach((a) => {
+      if (!a.video_url || a.action_score == null) return;
+      if (!analysisIds.has(a.analysis_id)) return;
+      const prev = map[a.video_url];
+      if (prev == null || a.action_score > prev) map[a.video_url] = a.action_score;
+    });
+    return map;
+  }, [actions, analyses, selectedPlayerId]);
+
   const playerReports = useMemo(() => {
     if (!selectedPlayerId) return [];
     return analyses
