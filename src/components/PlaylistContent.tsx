@@ -410,6 +410,35 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
     }
   };
 
+  const sortPlaylistByR90 = async () => {
+    if (!selectedPlaylist) return;
+    setSaving(true);
+    try {
+      const sorted = [...selectedPlaylist.clips]
+        .map((c) => ({ ...c, _score: scoreFor(c.videoUrl) ?? 0 }))
+        .sort((a, b) => b._score - a._score)
+        .map(({ _score, ...c }, i) => ({ ...c, order: i }));
+
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      if (!playerEmail) { toast.error("Please log in again"); setSaving(false); return; }
+
+      const { data, error } = await supabase.functions.invoke("update-playlist", {
+        body: { playerEmail, playlistId: selectedPlaylist.id, clips: sorted },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: sorted });
+      setPlaylists(playlists.map((p) => p.id === selectedPlaylist.id ? { ...p, clips: sorted } : p));
+      toast.success("Sorted by R90 (highest first)");
+    } catch (e: any) {
+      console.error("Sort by R90 failed:", e);
+      toast.error("Failed to sort playlist");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (isLoadingPlaylists) {
     return <div className="text-center py-8 text-muted-foreground">Loading playlists...</div>;
   }
