@@ -538,6 +538,15 @@ const HighlightsPortal = () => {
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => sortPlaylistByR90(pl)}
+                            disabled={pl.clips.length === 0}
+                            title="Reorder clips by R90, highest first"
+                          >
+                            <ArrowDownWideNarrow className="w-4 h-4 mr-1" /> R90
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() =>
                               downloadZip(
                                 pl.clips,
