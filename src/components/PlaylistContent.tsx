@@ -783,6 +783,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
             action_description: c.name,
             video_url: c.videoUrl,
             minute: 0,
+            action_score: scoreFor(c.videoUrl),
           }))}
         />
       )}
