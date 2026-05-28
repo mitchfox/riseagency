@@ -566,14 +566,26 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">{selectedPlaylist.name}</h3>
             {selectedPlaylist.clips.length > 0 && (
-              <Button
-                onClick={() => setShowPlayer(true)}
-                size="sm"
-                variant="outline"
-              >
-                <Video className="w-4 h-4 mr-2" />
-                Player
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={sortPlaylistByR90}
+                  size="sm"
+                  variant="outline"
+                  disabled={saving}
+                  title="Reorder clips by R90 score, highest first"
+                >
+                  <ArrowDownWideNarrow className="w-4 h-4 mr-2" />
+                  Sort by R90
+                </Button>
+                <Button
+                  onClick={() => setShowPlayer(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Player
+                </Button>
+              </div>
             )}
           </div>
 
