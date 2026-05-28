@@ -592,6 +592,7 @@ const HighlightsPortal = () => {
                                     videoUrl={c.videoUrl}
                                     playerId={selectedPlayer.id}
                                     makerUsername={maker.username}
+                                    actionScore={scoreByVideoUrl[c.videoUrl] ?? null}
                                     onPlay={() => openPlaylistReel(pl.clips, pl.name, idx, pl.id)}
                                     onDownload={() =>
                                       downloadOne(
