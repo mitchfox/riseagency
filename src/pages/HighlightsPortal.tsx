@@ -25,7 +25,7 @@ import { getR90Grade } from "@/lib/gradeCalculations";
 
 // --- Sortable row for playlist clips (drag-and-drop reorder) ---
 const SortableClipRow = ({
-  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove,
+  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove, actionScore,
 }: {
   id: string;
   idx: number;
@@ -37,6 +37,7 @@ const SortableClipRow = ({
   makerUsername?: string;
   playerEmail?: string;
   playerId: string;
+  actionScore?: number | null;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
@@ -60,6 +61,18 @@ const SortableClipRow = ({
       >
         <span className="text-xs text-muted-foreground w-6 text-right">{idx + 1}</span>
         <span className="truncate">{name}</span>
+        {actionScore != null && (() => {
+          const g = getR90Grade(actionScore);
+          return (
+            <span
+              className="inline-flex items-center justify-center min-w-[36px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black shrink-0"
+              style={{ backgroundColor: g.color }}
+              title={`R90 ${actionScore.toFixed(2)} (${g.grade})`}
+            >
+              {actionScore.toFixed(2)}
+            </span>
+          );
+        })()}
       </button>
       <AddToPlaylistButton
         playerId={playerId}
