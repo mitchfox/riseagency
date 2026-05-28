@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Film, LogOut, Download, Play, ArrowLeft, ChevronDown, ChevronRight, FolderDown, Star, Pencil,
-  GripVertical, Trash2,
+  GripVertical, Trash2, ArrowDownWideNarrow,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -21,10 +21,11 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { UploadsTab } from "@/components/portal/UploadsTab";
+import { getR90Grade } from "@/lib/gradeCalculations";
 
 // --- Sortable row for playlist clips (drag-and-drop reorder) ---
 const SortableClipRow = ({
-  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove,
+  id, idx, name, onPlay, onDownload, makerUsername, playerId, playerEmail, videoUrl, onRemove, actionScore,
 }: {
   id: string;
   idx: number;
@@ -36,6 +37,7 @@ const SortableClipRow = ({
   makerUsername?: string;
   playerEmail?: string;
   playerId: string;
+  actionScore?: number | null;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
@@ -59,6 +61,18 @@ const SortableClipRow = ({
       >
         <span className="text-xs text-muted-foreground w-6 text-right">{idx + 1}</span>
         <span className="truncate">{name}</span>
+        {actionScore != null && (() => {
+          const g = getR90Grade(actionScore);
+          return (
+            <span
+              className="inline-flex items-center justify-center min-w-[36px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black shrink-0"
+              style={{ backgroundColor: g.color }}
+              title={`R90 ${actionScore.toFixed(2)} (${g.grade})`}
+            >
+              {actionScore.toFixed(2)}
+            </span>
+          );
+        })()}
       </button>
       <AddToPlaylistButton
         playerId={playerId}
@@ -244,6 +258,22 @@ const HighlightsPortal = () => {
       }));
   }, [playlists, selectedPlayerId]);
 
+  // Map videoUrl -> action_score for the selected player (from already-loaded actions)
+  const scoreByVideoUrl = useMemo(() => {
+    if (!selectedPlayerId) return {} as Record<string, number>;
+    const analysisIds = new Set(
+      analyses.filter((a) => a.player_id === selectedPlayerId).map((a) => a.id),
+    );
+    const map: Record<string, number> = {};
+    actions.forEach((a) => {
+      if (!a.video_url || a.action_score == null) return;
+      if (!analysisIds.has(a.analysis_id)) return;
+      const prev = map[a.video_url];
+      if (prev == null || a.action_score > prev) map[a.video_url] = a.action_score;
+    });
+    return map;
+  }, [actions, analyses, selectedPlayerId]);
+
   const playerReports = useMemo(() => {
     if (!selectedPlayerId) return [];
     return analyses
@@ -282,6 +312,7 @@ const HighlightsPortal = () => {
         action_description: c.name,
         video_url: c.videoUrl,
         minute: 0,
+        action_score: scoreByVideoUrl[c.videoUrl] ?? null,
       }));
     if (list.length === 0) { toast.error("No playable clips"); return; }
     const safeIdx = Math.max(0, Math.min(startIdx, list.length - 1));
@@ -334,6 +365,23 @@ const HighlightsPortal = () => {
     });
     if (error || (data as any)?.error) {
       toast.error((data as any)?.error || error?.message || "Reorder failed");
+    }
+  };
+
+  const sortPlaylistByR90 = async (pl: PlaylistRow) => {
+    if (!maker) return;
+    const sorted = [...pl.clips]
+      .map((c) => ({ ...c, _score: scoreByVideoUrl[c.videoUrl] ?? 0 }))
+      .sort((a, b) => b._score - a._score)
+      .map(({ _score, ...c }, i) => ({ ...c, order: i }));
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: sorted } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "reorder", playlistId: pl.id, makerUsername: maker.username, clips: sorted },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Sort failed");
+    } else {
+      toast.success("Sorted by R90 (highest first)");
     }
   };
 
@@ -490,6 +538,15 @@ const HighlightsPortal = () => {
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => sortPlaylistByR90(pl)}
+                            disabled={pl.clips.length === 0}
+                            title="Reorder clips by R90, highest first"
+                          >
+                            <ArrowDownWideNarrow className="w-4 h-4 mr-1" /> R90
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() =>
                               downloadZip(
                                 pl.clips,
@@ -535,6 +592,7 @@ const HighlightsPortal = () => {
                                     videoUrl={c.videoUrl}
                                     playerId={selectedPlayer.id}
                                     makerUsername={maker.username}
+                                    actionScore={scoreByVideoUrl[c.videoUrl] ?? null}
                                     onPlay={() => openPlaylistReel(pl.clips, pl.name, idx, pl.id)}
                                     onDownload={() =>
                                       downloadOne(

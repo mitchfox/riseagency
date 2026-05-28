@@ -8,12 +8,16 @@ import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video,
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
+import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
+import { getR90Grade } from "@/lib/gradeCalculations";
+import { ArrowDownWideNarrow } from "lucide-react";
 
 interface Clip {
   id?: string;
   name: string;
   videoUrl: string;
   order: number;
+  action_score?: number | null;
 }
 
 interface Playlist {
@@ -40,6 +44,12 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [targetPosition, setTargetPosition] = useState("");
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
+
+  const actionScores = usePlaylistActionScores(playerData?.id);
+  const scoreFor = (videoUrl: string): number | null => {
+    const s = actionScores[videoUrl];
+    return s == null ? null : s;
+  };
 
   useEffect(() => {
     if (playerData?.id) {
@@ -400,6 +410,35 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
     }
   };
 
+  const sortPlaylistByR90 = async () => {
+    if (!selectedPlaylist) return;
+    setSaving(true);
+    try {
+      const sorted = [...selectedPlaylist.clips]
+        .map((c) => ({ ...c, _score: scoreFor(c.videoUrl) ?? 0 }))
+        .sort((a, b) => b._score - a._score)
+        .map(({ _score, ...c }, i) => ({ ...c, order: i }));
+
+      const playerEmail = localStorage.getItem("player_email") || sessionStorage.getItem("player_email");
+      if (!playerEmail) { toast.error("Please log in again"); setSaving(false); return; }
+
+      const { data, error } = await supabase.functions.invoke("update-playlist", {
+        body: { playerEmail, playlistId: selectedPlaylist.id, clips: sorted },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      setSelectedPlaylist({ ...selectedPlaylist, clips: sorted });
+      setPlaylists(playlists.map((p) => p.id === selectedPlaylist.id ? { ...p, clips: sorted } : p));
+      toast.success("Sorted by R90 (highest first)");
+    } catch (e: any) {
+      console.error("Sort by R90 failed:", e);
+      toast.error("Failed to sort playlist");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (isLoadingPlaylists) {
     return <div className="text-center py-8 text-muted-foreground">Loading playlists...</div>;
   }
@@ -527,14 +566,26 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">{selectedPlaylist.name}</h3>
             {selectedPlaylist.clips.length > 0 && (
-              <Button
-                onClick={() => setShowPlayer(true)}
-                size="sm"
-                variant="outline"
-              >
-                <Video className="w-4 h-4 mr-2" />
-                Player
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={sortPlaylistByR90}
+                  size="sm"
+                  variant="outline"
+                  disabled={saving}
+                  title="Reorder clips by R90 score, highest first"
+                >
+                  <ArrowDownWideNarrow className="w-4 h-4 mr-2" />
+                  Sort by R90
+                </Button>
+                <Button
+                  onClick={() => setShowPlayer(true)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Player
+                </Button>
+              </div>
             )}
           </div>
 
@@ -598,7 +649,23 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{clip.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{clip.name}</p>
+                            {(() => {
+                              const s = scoreFor(clip.videoUrl);
+                              if (s == null) return null;
+                              const g = getR90Grade(s);
+                              return (
+                                <span
+                                  className="inline-flex items-center justify-center min-w-[36px] px-1.5 py-[1px] rounded-full text-[10px] font-bold text-black"
+                                  style={{ backgroundColor: g.color }}
+                                  title={`R90 ${s.toFixed(2)} (${g.grade})`}
+                                >
+                                  {s.toFixed(2)}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           {playingVideo?.url === clip.videoUrl && (
                             <video
                               src={clip.videoUrl}
@@ -716,6 +783,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
             action_description: c.name,
             video_url: c.videoUrl,
             minute: 0,
+            action_score: scoreFor(c.videoUrl),
           }))}
         />
       )}
