@@ -368,6 +368,23 @@ const HighlightsPortal = () => {
     }
   };
 
+  const sortPlaylistByR90 = async (pl: PlaylistRow) => {
+    if (!maker) return;
+    const sorted = [...pl.clips]
+      .map((c) => ({ ...c, _score: scoreByVideoUrl[c.videoUrl] ?? 0 }))
+      .sort((a, b) => b._score - a._score)
+      .map(({ _score, ...c }, i) => ({ ...c, order: i }));
+    setPlaylists((prev) => prev.map((p) => (p.id === pl.id ? { ...p, clips: sorted } : p)));
+    const { data, error } = await supabase.functions.invoke("playlist-manage", {
+      body: { action: "reorder", playlistId: pl.id, makerUsername: maker.username, clips: sorted },
+    });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Sort failed");
+    } else {
+      toast.success("Sorted by R90 (highest first)");
+    }
+  };
+
   const removeClipFromPlaylist = async (pl: PlaylistRow, clipIndex: number) => {
     if (!maker) return;
     if (!window.confirm("Remove this clip from the playlist?")) return;
