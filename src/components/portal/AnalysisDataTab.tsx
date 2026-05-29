@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { computeAllStatAverages, computeStatAverage } from "@/lib/statAggregation";
+import { computeAllStatAverages, computeStatAverage, formatStat } from "@/lib/statAggregation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
-import { User, Calendar, MapPin, Trophy, Pencil, Check, X } from "lucide-react";
+import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag } from "lucide-react";
 import { getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toast } from "sonner";
 import { formatDate, dateLocale } from "@/lib/dateLocale";
+import { effectiveR90, effectiveMinutes } from "@/lib/r90";
 
 interface Analysis {
   id: string;
@@ -25,6 +26,9 @@ interface Analysis {
   striker_stats?: any;
   fixture_stats?: any;
   visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
+  season_final?: boolean | null;
 }
 
 interface Props {
