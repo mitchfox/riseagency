@@ -1,12 +1,13 @@
 /**
  * Per-player season grouping.
  *
- * A player_analysis row flagged season_final = true marks the LAST game
- * of that season for that player. Walking the player's analyses in
- * chronological order, every row up to and including a season_final
- * row belongs to one season; the next row begins the next season. The
- * trailing group (after the most recent season_final) is the current
- * season.
+ * Seasons are user-defined via the player_seasons table. A season is a
+ * named window with an explicit start match and end match (referencing
+ * player_analysis rows). Matches whose date falls between the start and
+ * end match dates (inclusive) belong to that season.
+ *
+ * Matches not covered by any defined season are returned in a trailing
+ * "Unassigned" group so they remain visible.
  */
 
 export interface SeasonAnalysis {
@@ -16,58 +17,102 @@ export interface SeasonAnalysis {
   [key: string]: any;
 }
 
+export interface SeasonRecord {
+  id: string;
+  player_id: string;
+  name: string;
+  start_analysis_id: string | null;
+  end_analysis_id: string | null;
+  sort_order?: number | null;
+}
+
 export interface Season<T extends SeasonAnalysis = SeasonAnalysis> {
   /** Stable id for select inputs */
   id: string;
-  /** Human label, e.g. "Current Season", "Season 1" */
+  /** Human label, e.g. "2025/26" or "Unassigned" */
   label: string;
   /** ISO date of first match in this season (oldest) */
   start: string | null;
   /** ISO date of last match in this season (newest) */
   end: string | null;
-  /** Whether this is the open trailing season (no season_final yet) */
+  /** True for the auto "Unassigned" bucket */
   isCurrent: boolean;
   analyses: T[];
 }
 
 /**
- * Groups analyses into seasons newest-first. Index 0 is always the
- * current/most-recent season.
+ * Build seasons from explicit user records. Returns seasons newest-first
+ * by end date, with an "Unassigned" bucket appended for matches outside
+ * any defined window. Empty seasons are still returned so the user can
+ * see them in selectors.
  */
-export const groupBySeason = <T extends SeasonAnalysis>(analyses: T[]): Season<T>[] => {
-  if (analyses.length === 0) return [];
+export const groupBySeasonRecords = <T extends SeasonAnalysis>(
+  analyses: T[],
+  records: SeasonRecord[]
+): Season<T>[] => {
+  const byId = new Map(analyses.map(a => [a.id, a]));
+  const dateOf = (id: string | null) =>
+    id && byId.get(id) ? String(byId.get(id)!.analysis_date) : null;
 
-  // Sort chronologically (oldest first) so we can split on season_final.
-  const chrono = [...analyses].sort((a, b) =>
-    String(a.analysis_date).localeCompare(String(b.analysis_date))
-  );
+  // Resolve each record to a date window
+  const resolved = records.map(r => {
+    const startDate = dateOf(r.start_analysis_id);
+    const endDate = dateOf(r.end_analysis_id);
+    const lo = startDate && endDate
+      ? (startDate < endDate ? startDate : endDate)
+      : (startDate || endDate);
+    const hi = startDate && endDate
+      ? (startDate < endDate ? endDate : startDate)
+      : (endDate || startDate);
+    return { record: r, lo, hi };
+  });
 
-  const buckets: T[][] = [[]];
-  for (const row of chrono) {
-    buckets[buckets.length - 1].push(row);
-    if (row.season_final) buckets.push([]);
-  }
-  // Drop trailing empty bucket if last row was a season_final
-  if (buckets.length > 1 && buckets[buckets.length - 1].length === 0) {
-    buckets.pop();
-  }
-
-  // Reverse so newest season is first
-  const newestFirst = buckets.reverse();
-  const totalCount = newestFirst.length;
-
-  return newestFirst.map((rows, idx) => {
-    const isCurrent = idx === 0 && !rows[rows.length - 1]?.season_final;
-    const start = rows[0]?.analysis_date ?? null;
-    const end = rows[rows.length - 1]?.analysis_date ?? null;
-    const seasonNumberFromOldest = totalCount - idx;
+  const assigned = new Set<string>();
+  const seasons: Season<T>[] = resolved.map(({ record, lo, hi }) => {
+    const rows = (lo && hi)
+      ? analyses.filter(a => {
+          const d = String(a.analysis_date);
+          return d >= lo && d <= hi;
+        })
+      : [];
+    rows.forEach(r => assigned.add(r.id));
+    const sorted = [...rows].sort((a, b) =>
+      String(a.analysis_date).localeCompare(String(b.analysis_date))
+    );
     return {
-      id: `season-${seasonNumberFromOldest}`,
-      label: isCurrent ? "Current Season" : `Season ${seasonNumberFromOldest}`,
-      start,
-      end,
-      isCurrent,
-      analyses: rows,
+      id: record.id,
+      label: record.name,
+      start: sorted[0]?.analysis_date ?? lo,
+      end: sorted[sorted.length - 1]?.analysis_date ?? hi,
+      isCurrent: false,
+      analyses: sorted,
     };
   });
+
+  // Newest-first by end date
+  seasons.sort((a, b) => String(b.end || "").localeCompare(String(a.end || "")));
+
+  const unassigned = analyses.filter(a => !assigned.has(a.id));
+  if (unassigned.length > 0) {
+    const sorted = [...unassigned].sort((a, b) =>
+      String(a.analysis_date).localeCompare(String(b.analysis_date))
+    );
+    seasons.push({
+      id: "__unassigned__",
+      label: records.length === 0 ? "All Matches" : "Unassigned",
+      start: sorted[0]?.analysis_date ?? null,
+      end: sorted[sorted.length - 1]?.analysis_date ?? null,
+      isCurrent: true,
+      analyses: sorted,
+    });
+  }
+
+  return seasons;
 };
+
+/**
+ * Back-compat shim — returns a single "All Matches" bucket. Callers
+ * should migrate to groupBySeasonRecords once they load season records.
+ */
+export const groupBySeason = <T extends SeasonAnalysis>(analyses: T[]): Season<T>[] =>
+  groupBySeasonRecords(analyses, []);

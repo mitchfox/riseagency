@@ -19,7 +19,7 @@ import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection
 import { checkAndFireConfetti } from "@/lib/confetti";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { formatDate } from "@/lib/dateLocale";
-import { groupBySeason } from "@/lib/seasons";
+import { groupBySeasonRecords, type SeasonRecord } from "@/lib/seasons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
@@ -219,10 +219,29 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   const [postMatchAnalyses, setPostMatchAnalyses] = React.useState<Map<string, { id: string; homeTeam: string; awayTeam: string }>>(new Map());
   const confettiFired = React.useRef(false);
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>("__current__");
+  const [seasonRecords, setSeasonRecords] = React.useState<SeasonRecord[]>([]);
+
+  React.useEffect(() => {
+    const playerId = playerData?.id;
+    if (!playerId) { setSeasonRecords([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("player_seasons")
+        .select("id, player_id, name, start_analysis_id, end_analysis_id, sort_order")
+        .eq("player_id", playerId)
+        .order("sort_order", { ascending: true });
+      if (!cancelled) setSeasonRecords((data || []) as SeasonRecord[]);
+    })();
+    return () => { cancelled = true; };
+  }, [playerData?.id]);
 
   const seasons = React.useMemo(
-    () => groupBySeason(analyses.filter(a => !String(a.id || "").startsWith("fixture-"))),
-    [analyses]
+    () => groupBySeasonRecords(
+      analyses.filter(a => !String(a.id || "").startsWith("fixture-")),
+      seasonRecords
+    ),
+    [analyses, seasonRecords]
   );
   const activeSeason = React.useMemo(
     () => seasons.find(s => s.id === selectedSeasonId) || seasons[0] || null,

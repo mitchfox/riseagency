@@ -5385,6 +5385,54 @@ export type Database = {
         }
         Relationships: []
       }
+      player_seasons: {
+        Row: {
+          created_at: string
+          end_analysis_id: string | null
+          id: string
+          name: string
+          player_id: string
+          sort_order: number
+          start_analysis_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_analysis_id?: string | null
+          id?: string
+          name: string
+          player_id: string
+          sort_order?: number
+          start_analysis_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_analysis_id?: string | null
+          id?: string
+          name?: string
+          player_id?: string
+          sort_order?: number
+          start_analysis_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_seasons_end_analysis_id_fkey"
+            columns: ["end_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "player_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_seasons_start_analysis_id_fkey"
+            columns: ["start_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "player_analysis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_stats: {
         Row: {
           assists: number | null

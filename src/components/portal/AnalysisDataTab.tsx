@@ -15,6 +15,9 @@ import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toast } from "sonner";
 import { formatDate, dateLocale } from "@/lib/dateLocale";
 import { effectiveR90, effectiveMinutes } from "@/lib/r90";
+import { calculateAge } from "@/lib/ageUtils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Plus } from "lucide-react";
 
 interface Analysis {
   id: string;
@@ -83,6 +86,84 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     new Set(analyses.filter(a => a.season_final).map(a => a.id))
   );
   const [savingSeasonFinal, setSavingSeasonFinal] = useState(false);
+
+  // ---- Named seasons (player_seasons) ----
+  interface SeasonRow {
+    id: string;
+    name: string;
+    start_analysis_id: string | null;
+    end_analysis_id: string | null;
+  }
+  const [seasons, setSeasons] = useState<SeasonRow[]>([]);
+  const [newSeasonName, setNewSeasonName] = useState("");
+  const [newSeasonStart, setNewSeasonStart] = useState<string>("");
+  const [newSeasonEnd, setNewSeasonEnd] = useState<string>("");
+  const [savingSeason, setSavingSeason] = useState(false);
+
+  const playerId = playerData?.id;
+
+  const loadSeasons = async () => {
+    if (!playerId) return;
+    const { data } = await supabase
+      .from("player_seasons")
+      .select("id, name, start_analysis_id, end_analysis_id")
+      .eq("player_id", playerId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    setSeasons((data || []) as SeasonRow[]);
+  };
+
+  useEffect(() => {
+    void loadSeasons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerId]);
+
+  const matchOptions = useMemo(() =>
+    [...analyses].sort((a, b) => b.analysis_date.localeCompare(a.analysis_date)),
+    [analyses]
+  );
+  const matchLabel = (a: Analysis) =>
+    `${formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short', year: 'numeric' })}${a.opponent ? ` vs ${a.opponent}` : ''}`;
+
+  const handleAddSeason = async () => {
+    if (!playerId || !newSeasonName.trim()) {
+      toast.error("Season name required");
+      return;
+    }
+    setSavingSeason(true);
+    const { error } = await supabase.from("player_seasons").insert({
+      player_id: playerId,
+      name: newSeasonName.trim(),
+      start_analysis_id: newSeasonStart || null,
+      end_analysis_id: newSeasonEnd || null,
+      sort_order: seasons.length,
+    });
+    if (error) {
+      toast.error("Failed to add season");
+    } else {
+      setNewSeasonName("");
+      setNewSeasonStart("");
+      setNewSeasonEnd("");
+      await loadSeasons();
+      toast.success("Season added");
+    }
+    setSavingSeason(false);
+  };
+
+  const handleUpdateSeason = async (id: string, patch: Partial<SeasonRow>) => {
+    const { error } = await supabase.from("player_seasons").update(patch).eq("id", id);
+    if (error) { toast.error("Failed to update season"); return; }
+    setSeasons(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  };
+
+  const handleDeleteSeason = async (id: string) => {
+    const { error } = await supabase.from("player_seasons").delete().eq("id", id);
+    if (error) { toast.error("Failed to delete season"); return; }
+    setSeasons(prev => prev.filter(s => s.id !== id));
+    toast.success("Season removed");
+  };
+
+  const displayAge = playerData?.age || calculateAge(playerData?.date_of_birth) || null;
 
   useEffect(() => {
     setSeasonFinalIds(new Set(analyses.filter(a => a.season_final).map(a => a.id)));
@@ -311,7 +392,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Age</p>
-              <p className="font-semibold">{playerData?.age || '-'}</p>
+              <p className="font-semibold">{displayAge ?? '-'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Position</p>
@@ -335,27 +416,81 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
           </div>
 
-          {mostRecentAnalysis && (
-            <div className="mt-5 pt-5 border-t border-border/60">
-              <Button
-                type="button"
-                variant={mostRecentIsSeasonFinal ? "secondary" : "outline"}
-                size="sm"
-                disabled={savingSeasonFinal}
-                onClick={toggleSeasonFinal}
-                className="gap-2"
-              >
-                <Flag className="w-4 h-4" />
-                {mostRecentIsSeasonFinal
-                  ? "Unmark final game of season"
-                  : "Set most recent match as final game of season"}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                Defines the boundary between this season and the next. Used by Form and
-                Performance to filter season averages.
-              </p>
+          {/* Named seasons editor */}
+          <div className="mt-5 pt-5 border-t border-border/60 space-y-3">
+            <div className="flex items-center gap-2">
+              <Flag className="w-4 h-4 text-primary" />
+              <h4 className="font-semibold text-sm">Seasons</h4>
             </div>
-          )}
+            <p className="text-xs text-muted-foreground">
+              Name a season (e.g. 2025/26) and pick its first and last match. Used by
+              Form, Performance and Comparisons to scope season averages.
+            </p>
+
+            {seasons.length > 0 && (
+              <div className="space-y-2">
+                {seasons.map(s => (
+                  <div key={s.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center border rounded-md p-2">
+                    <Input
+                      defaultValue={s.name}
+                      onBlur={(e) => { if (e.target.value.trim() && e.target.value !== s.name) handleUpdateSeason(s.id, { name: e.target.value.trim() }); }}
+                      placeholder="Season name"
+                    />
+                    <Select value={s.start_analysis_id || "__none__"} onValueChange={(v) => handleUpdateSeason(s.id, { start_analysis_id: v === "__none__" ? null : v })}>
+                      <SelectTrigger><SelectValue placeholder="First match" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="__none__">— First match —</SelectItem>
+                        {matchOptions.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{matchLabel(a)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={s.end_analysis_id || "__none__"} onValueChange={(v) => handleUpdateSeason(s.id, { end_analysis_id: v === "__none__" ? null : v })}>
+                      <SelectTrigger><SelectValue placeholder="Last match" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="__none__">— Last match —</SelectItem>
+                        {matchOptions.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{matchLabel(a)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSeason(s.id)} title="Delete season">
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+              <Input
+                value={newSeasonName}
+                onChange={(e) => setNewSeasonName(e.target.value)}
+                placeholder="e.g. 2025/26"
+              />
+              <Select value={newSeasonStart || "__none__"} onValueChange={(v) => setNewSeasonStart(v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="First match" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="__none__">— First match —</SelectItem>
+                  {matchOptions.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{matchLabel(a)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={newSeasonEnd || "__none__"} onValueChange={(v) => setNewSeasonEnd(v === "__none__" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Last match" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="__none__">— Last match —</SelectItem>
+                  {matchOptions.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{matchLabel(a)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" onClick={handleAddSeason} disabled={savingSeason} className="gap-1">
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="h-px w-full" style={{ background: "hsl(43, 49%, 61%)" }} />
@@ -396,7 +531,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                 <TableRow key={a.id}>
                   <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString(dateLocale(playerData?.portal_language))}</TableCell>
                   <TableCell className="text-sm font-medium">
-                    {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}
+                    {a.opponent || '-'}
                   </TableCell>
                   <TableCell className="text-sm">{effectiveMinutes(a) ?? '-'}</TableCell>
                   <TableCell>
