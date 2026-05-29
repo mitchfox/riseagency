@@ -302,7 +302,7 @@ export const AthleteCentre = () => {
 
     const { data: analysesData } = await supabase
       .from("player_analysis")
-      .select("id, analysis_date, opponent, r90_score, minutes_played, result, striker_stats, fixture_stats")
+      .select("id, analysis_date, opponent, r90_score, minutes_played, result, striker_stats, fixture_stats, visibility_status, placeholder_raw_score, placeholder_minutes, season_final")
       .eq("player_id", playerId)
       .order("analysis_date", { ascending: false });
 

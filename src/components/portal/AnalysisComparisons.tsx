@@ -80,17 +80,23 @@ export const AnalysisComparisons = ({ analyses, playerData, embedded }: Props) =
       if (!playerData?.id) return;
       const { data } = await supabase
         .from('player_analysis')
-        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats, visibility_status')
+        .select('id, analysis_date, r90_score, minutes_played, opponent, fixture_stats, visibility_status, placeholder_raw_score, placeholder_minutes')
         .eq('player_id', playerData.id)
         .order('analysis_date', { ascending: false })
         .limit(20);
       if (data) {
         // Use ALL reports with fixture_stats for stat comparisons (visibility only affects R90 display)
-        setFixtureAnalyses(data.filter(a => a.fixture_stats != null).map(a => ({
-          ...a,
-          r90_score: a.r90_score ?? 0,
-          fixture_stats: (a.fixture_stats as Record<string, number>) || {},
-        })));
+        setFixtureAnalyses(data.filter(a => a.fixture_stats != null).map((a: any) => {
+          const isHidden = String(a.visibility_status || '').toLowerCase() === 'hidden';
+          const r90 = isHidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0
+            ? (Number(a.placeholder_raw_score) / Number(a.placeholder_minutes)) * 90
+            : (a.r90_score ?? 0);
+          return {
+            ...a,
+            r90_score: r90,
+            fixture_stats: (a.fixture_stats as Record<string, number>) || {},
+          };
+        }));
       }
     };
     fetchFixtureData();

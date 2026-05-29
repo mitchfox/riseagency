@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { computeAllStatAverages, computeStatAverage } from "@/lib/statAggregation";
+import { computeAllStatAverages, computeStatAverage, formatStat } from "@/lib/statAggregation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
-import { User, Calendar, MapPin, Trophy, Pencil, Check, X } from "lucide-react";
+import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag } from "lucide-react";
 import { getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
 import { ZonePerformance } from "@/components/report/ZonePerformance";
 import { toast } from "sonner";
 import { formatDate, dateLocale } from "@/lib/dateLocale";
+import { effectiveR90, effectiveMinutes } from "@/lib/r90";
 
 interface Analysis {
   id: string;
@@ -25,6 +26,9 @@ interface Analysis {
   striker_stats?: any;
   fixture_stats?: any;
   visibility_status?: string;
+  placeholder_raw_score?: number | null;
+  placeholder_minutes?: number | null;
+  season_final?: boolean | null;
 }
 
 interface Props {
@@ -75,6 +79,14 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const [editValue, setEditValue] = useState("");
   const [seasonZoneActions, setSeasonZoneActions] = useState<Array<{ action_number: number; action_score: number; zone?: number | null; zone_details?: { zone: number; sub?: number }[] | null }>>([]);
   const [seasonZoneLoading, setSeasonZoneLoading] = useState(false);
+  const [seasonFinalIds, setSeasonFinalIds] = useState<Set<string>>(
+    new Set(analyses.filter(a => a.season_final).map(a => a.id))
+  );
+  const [savingSeasonFinal, setSavingSeasonFinal] = useState(false);
+
+  useEffect(() => {
+    setSeasonFinalIds(new Set(analyses.filter(a => a.season_final).map(a => a.id)));
+  }, [analyses]);
 
   useEffect(() => {
     const defaultCategory = positionCategories[0]?.category;
@@ -103,11 +115,16 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const seasonAverages = useMemo(() => {
     if (selectedAnalyses.length === 0) return {};
     const result: Record<string, number> = {};
-    
-    const r90Values = selectedAnalyses.filter(a => a.r90_score != null).map(a => a.r90_score);
+
+    // Hidden reports must contribute their HIDDEN R90 / minutes, not the live values.
+    const r90Values = selectedAnalyses
+      .map(a => effectiveR90(a))
+      .filter((v): v is number => v != null);
     if (r90Values.length > 0) result.r90 = r90Values.reduce((s, v) => s + v, 0) / r90Values.length;
 
-    const mins = selectedAnalyses.filter(a => a.minutes_played != null).map(a => a.minutes_played!);
+    const mins = selectedAnalyses
+      .map(a => effectiveMinutes(a))
+      .filter((v): v is number => v != null);
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
     // All metrics from all categories using centralised aggregation
@@ -128,15 +145,16 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
   const r90BarData = useMemo(() => {
     return selectedAnalyses
-      .filter(a => a.r90_score != null)
+      .filter(a => effectiveR90(a) != null)
       .sort((a, b) => a.analysis_date.localeCompare(b.analysis_date))
       .map(a => {
         const isHiddenOrDraft = ['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase());
+        const r90 = effectiveR90(a) ?? 0;
         return {
           name: isHiddenOrDraft
             ? formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })
             : (a.opponent || formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })),
-          r90: Number(a.r90_score.toFixed(2)),
+          r90: Number(r90.toFixed(2)),
         };
       });
   }, [selectedAnalyses]);
@@ -239,6 +257,38 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     setEditValue("");
   };
 
+  // Most recent match (by date) — that's the candidate the staff button toggles
+  // as the season-ending fixture.
+  const mostRecentAnalysis = useMemo(() => {
+    if (analyses.length === 0) return null;
+    return [...analyses].sort((a, b) => b.analysis_date.localeCompare(a.analysis_date))[0];
+  }, [analyses]);
+
+  const mostRecentIsSeasonFinal = mostRecentAnalysis
+    ? seasonFinalIds.has(mostRecentAnalysis.id)
+    : false;
+
+  const toggleSeasonFinal = async () => {
+    if (!mostRecentAnalysis) return;
+    setSavingSeasonFinal(true);
+    const next = !mostRecentIsSeasonFinal;
+    const { error } = await supabase
+      .from("player_analysis")
+      .update({ season_final: next })
+      .eq("id", mostRecentAnalysis.id);
+    if (error) {
+      toast.error("Failed to update season marker");
+    } else {
+      setSeasonFinalIds(prev => {
+        const n = new Set(prev);
+        if (next) n.add(mostRecentAnalysis.id); else n.delete(mostRecentAnalysis.id);
+        return n;
+      });
+      toast.success(next ? "Marked as final game of the season" : "Removed season marker");
+    }
+    setSavingSeasonFinal(false);
+  };
+
   return (
     <Card className={embedded ? "rounded-none border-0 shadow-none" : "w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0"}>
       {!embedded && (
@@ -285,7 +335,30 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
           </div>
 
+          {mostRecentAnalysis && (
+            <div className="mt-5 pt-5 border-t border-border/60">
+              <Button
+                type="button"
+                variant={mostRecentIsSeasonFinal ? "secondary" : "outline"}
+                size="sm"
+                disabled={savingSeasonFinal}
+                onClick={toggleSeasonFinal}
+                className="gap-2"
+              >
+                <Flag className="w-4 h-4" />
+                {mostRecentIsSeasonFinal
+                  ? "Unmark final game of season"
+                  : "Set most recent match as final game of season"}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Defines the boundary between this season and the next. Used by Form and
+                Performance to filter season averages.
+              </p>
+            </div>
+          )}
         </div>
+
+        <div className="h-px w-full" style={{ background: "hsl(43, 49%, 61%)" }} />
 
         {/* Category filter tabs for match data */}
         <div>
@@ -325,15 +398,18 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                   <TableCell className="text-sm font-medium">
                     {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}
                   </TableCell>
-                  <TableCell className="text-sm">{a.minutes_played ?? '-'}</TableCell>
+                  <TableCell className="text-sm">{effectiveMinutes(a) ?? '-'}</TableCell>
                   <TableCell>
-                    {a.r90_score != null ? (
-                      <span className="font-bold text-sm" style={{ color: getR90Color(a.r90_score) }}>
-                        {a.r90_score.toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="font-bold text-sm text-zinc-500">?</span>
-                    )}
+                    {(() => {
+                      const r = effectiveR90(a);
+                      return r != null ? (
+                        <span className="font-bold text-sm" style={{ color: getR90Color(r) }}>
+                          {r.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-sm text-zinc-500">?</span>
+                      );
+                    })()}
                   </TableCell>
                   {currentMetrics.map(m => {
                     const val = getStatValue(a, m.key);
@@ -367,7 +443,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                             onClick={() => handleStartEdit(a.id, m.key, val)}
                             className="group flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                           >
-                            <span>{val != null ? val.toFixed(2) : '-'}</span>
+                            <span>{formatStat(m.key, val)}</span>
                             <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                           </button>
                         )}

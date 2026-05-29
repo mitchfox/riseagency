@@ -39,6 +39,87 @@ export const isPercentageMetric = (key: string): boolean => {
 };
 
 /**
+ * Per-game raw count stat keys that are always whole numbers when
+ * representing a single fixture. Season averages (totals ÷ N) may still
+ * be fractional — pass isAggregate=true to formatStat in that case.
+ * Includes both outfield and GK keys.
+ */
+export const INTEGER_STAT_KEYS = new Set<string>([
+  // Outfield — counts (per-game fixture_stats stores raw counts under these _per90 keys)
+  'goals_per90',
+  'shots_on_target_per90',
+  'created_own_shot_per90',
+  'total_shots_per90',
+  'shots_outside_box_per90',
+  'shots_inside_box_per90',
+  'assists_per90',
+  'key_passes_per90',
+  'progressive_passes_per90',
+  'passes_into_final_3rd_per90',
+  'forward_passes_per90',
+  'passes_in_opp_half_per90',
+  'passes_in_own_half_per90',
+  'accurate_passes_per90',
+  'accurate_long_balls_per90',
+  'accurate_crosses_per90',
+  'successful_dribbles_per90',
+  'dribble_attempts_per90',
+  'progressive_carries_per90',
+  'carries_into_final_3rd_per90',
+  'touches_in_opp_box_per90',
+  'fouls_drawn_per90',
+  'tackles_won_per90',
+  'aerials_won_per90',
+  'duels_won_per90',
+  'clearances_per90',
+  'interceptions_per90',
+  // Goalkeeper — counts
+  'gk_clean_sheets',
+  'gk_goals_conceded',
+  'gk_goals_conceded_inside_box',
+  'gk_goals_conceded_outside_box',
+  'gk_shots_on_target_faced',
+  'gk_saves_made',
+  'gk_shots_on_target_faced_inside_box',
+  'gk_saves_from_inside_box',
+  'gk_shots_on_target_faced_outside_box',
+  'gk_saves_from_outside_box',
+  'gk_touches',
+  'gk_passes_completed',
+  'gk_long_passes_completed',
+  'gk_passes_completed_opp_half',
+  'gk_possession_lost',
+  'gk_clearances',
+  'gk_ball_recoveries',
+  // Legacy aliases also seen in code
+  'clean_sheets',
+  'goals_conceded',
+  'saves',
+]);
+
+/** Returns true if this stat must render as a whole integer per game. */
+export const isIntegerStatKey = (key: string) => INTEGER_STAT_KEYS.has(key);
+
+/**
+ * Format a stat value for display.
+ *  - Per-game integer-only stats render as whole numbers (no decimals).
+ *  - Everything else (percentages, season averages, scores) renders to 2dp.
+ *  - Pass isAggregate=true to force 2dp output even for integer stat keys
+ *    (used when showing a season average for an integer stat).
+ */
+export const formatStat = (
+  key: string,
+  value: number | null | undefined,
+  isAggregate = false,
+): string => {
+  if (value == null || isNaN(value as number)) return '-';
+  if (!isAggregate && INTEGER_STAT_KEYS.has(key)) {
+    return Math.round(value as number).toString();
+  }
+  return (value as number).toFixed(2);
+};
+
+/**
  * Get a stat value from an analysis row, checking fixture_stats then striker_stats.
  * Returns the numeric value or null if not present.
  */

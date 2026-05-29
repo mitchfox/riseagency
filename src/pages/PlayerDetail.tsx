@@ -1494,6 +1494,10 @@ const PlayerDetail = () => {
                       result: r.result,
                       striker_stats: r.striker_stats,
                       fixture_stats: r.fixture_stats,
+                      visibility_status: r.visibility_status,
+                      placeholder_raw_score: r.placeholder_raw_score,
+                      placeholder_minutes: r.placeholder_minutes,
+                      season_final: r.season_final,
                     }))}
                     playerData={player}
                     embedded
