@@ -247,7 +247,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
   const fetchLinkReports = async (playerId: string) => {
     const { data } = await supabase
       .from("player_analysis")
-      .select("id, opponent, analysis_date, r90_score, players!player_analysis_player_id_fkey(name)")
+      .select("id, opponent, analysis_date, r90_score, visibility_status, placeholder_raw_score, placeholder_minutes, minutes_played, players!player_analysis_player_id_fkey(name)")
       .eq("player_id", playerId)
       .order("analysis_date", { ascending: false });
     setLinkReports(data || []);
