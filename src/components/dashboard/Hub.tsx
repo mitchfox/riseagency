@@ -507,7 +507,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   };
 
   // Prepare R90 chart data - showing opponent and result
-  const chartData = analyses
+  const chartData = seasonScopedAnalyses
     .filter(a => getEffectiveR90(a) != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
     .slice(-5)
