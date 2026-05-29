@@ -2806,7 +2806,7 @@ const Dashboard = () => {
                       {(() => {
                         // Get metric value based on selected metric
                         const getMetricValue = (analysis: any) => {
-                          if (selectedFormMetric === "r90") return analysis.r90_score;
+                          if (selectedFormMetric === "r90") return effectiveR90(analysis);
                           if (!analysis.striker_stats) return null;
                           
                           // Special case for progressive passes to turnovers ratio
