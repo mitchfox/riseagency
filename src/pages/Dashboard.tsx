@@ -25,6 +25,7 @@ import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } f
 import { SEO } from "@/components/SEO";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { PlaylistContent } from "@/components/PlaylistContent";
+import { effectiveR90 } from "@/lib/r90";
 import { CoachAvailability } from "@/components/CoachAvailability";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -2805,7 +2806,7 @@ const Dashboard = () => {
                       {(() => {
                         // Get metric value based on selected metric
                         const getMetricValue = (analysis: any) => {
-                          if (selectedFormMetric === "r90") return analysis.r90_score;
+                          if (selectedFormMetric === "r90") return effectiveR90(analysis);
                           if (!analysis.striker_stats) return null;
                           
                           // Special case for progressive passes to turnovers ratio

@@ -19,6 +19,8 @@ import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection
 import { checkAndFireConfetti } from "@/lib/confetti";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { formatDate } from "@/lib/dateLocale";
+import { groupBySeason } from "@/lib/seasons";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
 const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
@@ -158,6 +160,7 @@ interface PlayerAnalysis {
   placeholder_per?: number | null;
   placeholder_sr?: number | null;
   video_url?: string | null;
+  season_final?: boolean | null;
 }
 
 interface HubProps {
@@ -215,6 +218,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
   const [postMatchAnalyses, setPostMatchAnalyses] = React.useState<Map<string, { id: string; homeTeam: string; awayTeam: string }>>(new Map());
   const confettiFired = React.useRef(false);
+  const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>("__current__");
+
+  const seasons = React.useMemo(
+    () => groupBySeason(analyses.filter(a => !String(a.id || "").startsWith("fixture-"))),
+    [analyses]
+  );
+  const activeSeason = React.useMemo(
+    () => seasons.find(s => s.id === selectedSeasonId) || seasons[0] || null,
+    [seasons, selectedSeasonId]
+  );
+  const seasonScopedAnalyses = React.useMemo<PlayerAnalysis[]>(
+    () => (activeSeason ? (activeSeason.analyses as PlayerAnalysis[]) : analyses),
+    [activeSeason, analyses]
+  );
 
   // Fire confetti on personal best R90
   React.useEffect(() => {
@@ -490,7 +507,7 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   };
 
   // Prepare R90 chart data - showing opponent and result
-  const chartData = analyses
+  const chartData = seasonScopedAnalyses
     .filter(a => getEffectiveR90(a) != null)
     .sort((a, b) => new Date(a.analysis_date).getTime() - new Date(b.analysis_date).getTime())
     .slice(-5)
@@ -675,7 +692,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 <TrendingUp className="h-5 w-5" />
                 <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "form")}</CardTitle>
               </div>
-              <Button 
+              <div className="flex items-center gap-2">
+                {seasons.length > 1 && (
+                  <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+                    <SelectTrigger className="h-8 w-[140px] text-xs bg-transparent border-[hsl(43,49%,61%)]/40 text-[hsl(43,49%,61%)]">
+                      <SelectValue placeholder={activeSeason?.label || "Season"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasons.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button
                 variant="ghost" 
                 size="sm"
                 onClick={onNavigateToForm || onNavigateToAnalysis}
@@ -683,7 +713,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               >
                 {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
-              </Button>
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0 pb-0">
