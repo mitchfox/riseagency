@@ -398,15 +398,18 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                   <TableCell className="text-sm font-medium">
                     {['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase()) ? '-' : (a.opponent || '-')}
                   </TableCell>
-                  <TableCell className="text-sm">{a.minutes_played ?? '-'}</TableCell>
+                  <TableCell className="text-sm">{effectiveMinutes(a) ?? '-'}</TableCell>
                   <TableCell>
-                    {a.r90_score != null ? (
-                      <span className="font-bold text-sm" style={{ color: getR90Color(a.r90_score) }}>
-                        {a.r90_score.toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="font-bold text-sm text-zinc-500">?</span>
-                    )}
+                    {(() => {
+                      const r = effectiveR90(a);
+                      return r != null ? (
+                        <span className="font-bold text-sm" style={{ color: getR90Color(r) }}>
+                          {r.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-sm text-zinc-500">?</span>
+                      );
+                    })()}
                   </TableCell>
                   {currentMetrics.map(m => {
                     const val = getStatValue(a, m.key);
@@ -440,7 +443,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                             onClick={() => handleStartEdit(a.id, m.key, val)}
                             className="group flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                           >
-                            <span>{val != null ? val.toFixed(2) : '-'}</span>
+                            <span>{formatStat(m.key, val)}</span>
                             <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                           </button>
                         )}
