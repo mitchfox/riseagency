@@ -335,7 +335,30 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
           </div>
 
+          {mostRecentAnalysis && (
+            <div className="mt-5 pt-5 border-t border-border/60">
+              <Button
+                type="button"
+                variant={mostRecentIsSeasonFinal ? "secondary" : "outline"}
+                size="sm"
+                disabled={savingSeasonFinal}
+                onClick={toggleSeasonFinal}
+                className="gap-2"
+              >
+                <Flag className="w-4 h-4" />
+                {mostRecentIsSeasonFinal
+                  ? "Unmark final game of season"
+                  : "Set most recent match as final game of season"}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Defines the boundary between this season and the next. Used by Form and
+                Performance to filter season averages.
+              </p>
+            </div>
+          )}
         </div>
+
+        <div className="h-px w-full" style={{ background: "hsl(43, 49%, 61%)" }} />
 
         {/* Category filter tabs for match data */}
         <div>
