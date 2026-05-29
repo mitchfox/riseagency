@@ -8,6 +8,7 @@ import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { METRIC_CATEGORIES, ALL_METRICS, GK_METRIC_CATEGORIES, ALL_GK_METRICS, getMetricCategoriesForPosition, getMetricsForPosition, isGoalkeeperPosition } from "@/components/staff/ComparisonPlayerData";
 import { computeAllStatAverages } from "@/lib/statAggregation";
 import { normalizeStatKey } from "@/hooks/useFormGradeConfigs";
+import { effectiveR90 } from "@/lib/r90";
 import blackMarbleBg from "@/assets/black-marble-menu.png";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
