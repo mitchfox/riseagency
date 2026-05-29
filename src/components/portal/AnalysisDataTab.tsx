@@ -79,6 +79,14 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const [editValue, setEditValue] = useState("");
   const [seasonZoneActions, setSeasonZoneActions] = useState<Array<{ action_number: number; action_score: number; zone?: number | null; zone_details?: { zone: number; sub?: number }[] | null }>>([]);
   const [seasonZoneLoading, setSeasonZoneLoading] = useState(false);
+  const [seasonFinalIds, setSeasonFinalIds] = useState<Set<string>>(
+    new Set(analyses.filter(a => a.season_final).map(a => a.id))
+  );
+  const [savingSeasonFinal, setSavingSeasonFinal] = useState(false);
+
+  useEffect(() => {
+    setSeasonFinalIds(new Set(analyses.filter(a => a.season_final).map(a => a.id)));
+  }, [analyses]);
 
   useEffect(() => {
     const defaultCategory = positionCategories[0]?.category;
@@ -247,6 +255,38 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const handleCancelEdit = () => {
     setEditingCell(null);
     setEditValue("");
+  };
+
+  // Most recent match (by date) — that's the candidate the staff button toggles
+  // as the season-ending fixture.
+  const mostRecentAnalysis = useMemo(() => {
+    if (analyses.length === 0) return null;
+    return [...analyses].sort((a, b) => b.analysis_date.localeCompare(a.analysis_date))[0];
+  }, [analyses]);
+
+  const mostRecentIsSeasonFinal = mostRecentAnalysis
+    ? seasonFinalIds.has(mostRecentAnalysis.id)
+    : false;
+
+  const toggleSeasonFinal = async () => {
+    if (!mostRecentAnalysis) return;
+    setSavingSeasonFinal(true);
+    const next = !mostRecentIsSeasonFinal;
+    const { error } = await supabase
+      .from("player_analysis")
+      .update({ season_final: next })
+      .eq("id", mostRecentAnalysis.id);
+    if (error) {
+      toast.error("Failed to update season marker");
+    } else {
+      setSeasonFinalIds(prev => {
+        const n = new Set(prev);
+        if (next) n.add(mostRecentAnalysis.id); else n.delete(mostRecentAnalysis.id);
+        return n;
+      });
+      toast.success(next ? "Marked as final game of the season" : "Removed season marker");
+    }
+    setSavingSeasonFinal(false);
   };
 
   return (
