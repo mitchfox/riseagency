@@ -19,6 +19,8 @@ import { LongTermVisionSection } from "@/components/portal/LongTermVisionSection
 import { checkAndFireConfetti } from "@/lib/confetti";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { formatDate } from "@/lib/dateLocale";
+import { groupBySeason } from "@/lib/seasons";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helper: fetches next fixture for player's club and renders ParallaxHero with countdown
 const ParallaxHeroWithFixture = ({ playerData, marketingImages, imageFocalPoints, portalLanguage }: { playerData: any; marketingImages: string[]; imageFocalPoints: string[]; portalLanguage?: string | null }) => {
@@ -158,6 +160,7 @@ interface PlayerAnalysis {
   placeholder_per?: number | null;
   placeholder_sr?: number | null;
   video_url?: string | null;
+  season_final?: boolean | null;
 }
 
 interface HubProps {
