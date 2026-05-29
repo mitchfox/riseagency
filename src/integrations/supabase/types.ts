@@ -4163,6 +4163,7 @@ export type Database = {
           r90_score: number | null
           report_type: string
           result: string | null
+          season_final: boolean
           show_descriptions: boolean
           striker_stats: Json | null
           team_color: string | null
@@ -4202,6 +4203,7 @@ export type Database = {
           r90_score?: number | null
           report_type?: string
           result?: string | null
+          season_final?: boolean
           show_descriptions?: boolean
           striker_stats?: Json | null
           team_color?: string | null
@@ -4241,6 +4243,7 @@ export type Database = {
           r90_score?: number | null
           report_type?: string
           result?: string | null
+          season_final?: boolean
           show_descriptions?: boolean
           striker_stats?: Json | null
           team_color?: string | null

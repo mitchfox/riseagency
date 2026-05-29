@@ -1,29 +1,80 @@
-Add R90 (action_score) display to all playlist clips across the player portal and staff highlights portal, with a button to permanently reorder any playlist by R90 score (highest first).
+## 1. Integer-only per-game stats
 
-### 1. R90 Lookup Hook
-Create `usePlaylistActionScores(playerId, clips)` that queries `performance_report_actions` for the player, matches `video_url` against clip `videoUrl`s, and returns a lookup map `videoUrl -> action_score`.
+Per-game raw count stats (listed below) are always whole numbers. Strip `.toFixed(2)` so they render as `3` not `3.00` in **every** display: performance reports, portal (Hub, Form, Performance, Data, Comparisons), staff data tab, transfer reports, dashboard. Season averages (totals ÷ N) keep their decimals.
 
-### 2. Player Portal — `PlaylistContent.tsx`
-- Use the hook to fetch action scores for the current player's clips.
-- Build a `videoUrl -> action_score` map.
-- Extend the local `Clip` interface to include `action_score?: number | null`.
-- Render an R90 colour-coded badge next to each clip name using `getR90Grade` (same oval style used in performance reports).
-- Add a **"Sort by R90"** button in the selected-playlist header. When clicked, sort clips by `action_score` descending (treating missing as 0), update local state, and persist via `update-playlist` edge function.
-- Pass `action_score` through to `ClippedActionsPlayer` so the player list also shows the badge.
+**Integer stat keys** (centralised):
+- GK: shots_on_target_faced, saves_made, sot_faced_inside_box, saves_inside_box, sot_faced_outside_box, saves_outside_box, touches, passes_completed, long_passes_completed, passes_completed_opp_half, possession_lost, clearances, ball_recoveries
+- Outfield: goals, shots_on_target, created_own_shot, shots_outside_box, assists, key_passes, progressive_passes, passes_into_final_third, forward_passes, passes_opp_half, passes_own_half, accurate_passes, accurate_long_balls, accurate_crosses, successful_dribbles, dribble_attempts, progressive_carries, carries_into_final_third, tackles_won, aerials_won, duels_won, clearances, interceptions
 
-### 3. Staff Portal — `HighlightsPortal.tsx`
-- Cross-reference existing `actions` array (already loaded) with playlist clips to derive `action_score` for each clip.
-- Pass `action_score` into `SortableClipRow` and display the R90 badge.
-- Add a **"Sort by R90"** button per playlist card header that reorders clips by score descending and persists via `playlist-manage` (action: "reorder").
+I will add a helper in `src/lib/statAggregation.ts`:
+```ts
+export const INTEGER_STAT_KEYS = new Set([...]);
+export const formatStat = (key: string, value: number | null, isAggregate = false) =>
+  value == null ? '-' : (!isAggregate && INTEGER_STAT_KEYS.has(key)) ? Math.round(value).toString() : value.toFixed(2);
+```
+Then replace `val.toFixed(2)` call sites that render per-game stat values with `formatStat(key, val)`. Aggregate/season-average renders pass `isAggregate=true` to keep two decimals. (Key alias map in `statAggregation.ts` is reused so e.g. `clean_sheets`/`gk_clean_sheets` match.)
 
-### 4. `AddToPlaylistButton` & `ClippedActionsPlayer`
-- Update `AddToPlaylistButton` props to accept optional `action_score` and pass it through to the edge function.
-- Update `ClippedActionsPlayer` playlist clip construction in `PlaylistContent.tsx` and `HighlightsPortal.tsx` to include `action_score`.
+Files touched: `AnalysisDataTab.tsx`, `Dashboard.tsx`, `Hub.tsx`, performance report components, `TransferReportView.tsx`, `QuickStatsComparison.tsx`, and any other stat tables.
 
-### 5. Edge Function — `playlist-manage`
-- In `addClip` and `reorder` actions, preserve `action_score` if present on incoming clip objects.
+## 2. Use Hidden R90 everywhere when report is hidden
 
-### Notes
-- Missing scores default to 0 for sorting purposes.
-- The R90 badge uses the existing `getR90Grade` colour system for visual consistency with performance reports.
-- No database schema changes required; scores are looked up dynamically and passed through JSONB.
+Hidden R90 already exists as `placeholder_raw_score / placeholder_minutes * 90` (already used in `Dashboard.tsx` and `Hub.tsx`). I'll centralise it:
+```ts
+// src/lib/r90.ts
+export const effectiveR90 = (a: { visibility_status?: string|null; r90_score?: number|null;
+  placeholder_raw_score?: number|null; placeholder_minutes?: number|null }) => {
+  const hidden = String(a.visibility_status||'').toLowerCase() === 'hidden';
+  if (hidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0) {
+    return (a.placeholder_raw_score / a.placeholder_minutes!) * 90;
+  }
+  return a.r90_score ?? null;
+};
+export const effectiveMinutes = (a) => hidden && placeholder_minutes>0 ? placeholder_minutes : minutes_played;
+```
+Replace direct `r90_score` reads in season averages, R90 bar chart, form, performance graphs, comparisons, transfer reports. Update SELECTs to include `placeholder_raw_score`, `placeholder_minutes` where missing.
+
+## 3. Player Summary fix on staff Data tab
+
+`AnalysisDataTab.tsx` Player Summary is reused by staff and portal. Fix it to:
+- **Season R90** — average of `effectiveR90(a)` (not `r90_score` directly) across selected analyses.
+- **Minutes Played** — sum of `effectiveMinutes(a)`.
+- **Age** — from `playerData.age` (already wired; verify staff caller passes it).
+- **Club** — from `playerData.club`.
+- **Matches** — count of analyses (current behaviour, fine).
+
+Add a "**Set as final game of season**" action button at the bottom of the summary card, then a Rise Gold divider (`<div className="h-px bg-[hsl(43,49%,61%)] my-6" />`) before the Match-by-Match section.
+
+## 4. Season boundary model
+
+New schema:
+```sql
+ALTER TABLE public.player_analysis
+  ADD COLUMN season_final boolean NOT NULL DEFAULT false;
+CREATE INDEX idx_player_analysis_season_final
+  ON public.player_analysis(player_id, analysis_date) WHERE season_final;
+```
+A match flagged `season_final = true` marks the **last game of that season** for the player. Seasons are then derived per-player by walking the analyses ordered by date: everything up to and including a season-final row is one season; the next row starts the next season.
+
+Helper:
+```ts
+// src/lib/seasons.ts
+export const groupBySeason = (analyses) => { /* returns [{label, start, end, analyses[]}] */ };
+```
+Labels: by default `"Season N"` newest-first, or "Current Season" for the open trailing group. (No season-year name needed unless user wants one — happy to extend.)
+
+## 5. Season selector in Form / Performance
+
+In Hub Form widget and Performance graphs, add a small season dropdown sourced from `groupBySeason()`. Default = current season; selecting a past season filters the data window accordingly. Season averages then compute against the selected season's analyses using the integer/hidden-R90 helpers above.
+
+## Technical notes
+
+- One migration: adds `season_final` column + index.
+- Two new utils: `src/lib/r90.ts`, `src/lib/seasons.ts`. Extend `src/lib/statAggregation.ts` with `INTEGER_STAT_KEYS` and `formatStat`.
+- Staff data Player Summary gets the new button which calls a small `update player_analysis set season_final = true where id = ?` (after un-setting any other season_final flag within the same season cluster to keep one final per season — actually allow multiple if user re-marks; simplest is just toggle this row).
+- Toggle behaviour: clicking the button when already final un-marks it.
+- No edge-function changes required.
+
+## Out of scope
+
+- Renaming seasons (auto-labelled).
+- Cross-player season alignment (per-player only, as data is per-player).
