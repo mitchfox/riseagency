@@ -854,7 +854,10 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                 <div className="text-center p-2">
                   <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t(reportLanguage, "raw_score")}</p>
                   <p className="text-base md:text-2xl font-bold">
-                    {actions.length > 0 ? calculateRScore().toFixed(3) : (analysis.r90_score !== null && analysis.minutes_played ? ((analysis.r90_score / 90) * analysis.minutes_played).toFixed(3) : "N/A")}
+                    {actions.length > 0 ? calculateRScore().toFixed(3) : (() => {
+                      const r = effectiveR90(analysis as any);
+                      return r !== null && analysis.minutes_played ? ((r / 90) * analysis.minutes_played).toFixed(3) : "N/A";
+                    })()}
                   </p>
                 </div>
                 <div className="text-center bg-primary text-primary-foreground rounded-lg p-2 md:p-4 relative">
@@ -869,12 +872,12 @@ export const PerformanceReportDialog = ({ open, onOpenChange, analysisId, isPort
                     </button>
                   </div>
                   <p className="text-lg md:text-3xl font-bold">
-                    {analysis.r90_score !== null 
-                      ? analysis.r90_score.toFixed(2)
-                      : analysis.minutes_played && actions.length > 0
-                        ? calculateR90FromActions(analysis.minutes_played).toFixed(2)
-                        : "N/A"
-                    }
+                    {(() => {
+                      const r = effectiveR90(analysis as any);
+                      if (r !== null && r !== undefined) return r.toFixed(2);
+                      if (analysis.minutes_played && actions.length > 0) return calculateR90FromActions(analysis.minutes_played).toFixed(2);
+                      return "N/A";
+                    })()}
                   </p>
                 </div>
                 <div className="text-center p-2">
