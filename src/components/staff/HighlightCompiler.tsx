@@ -20,6 +20,7 @@ import {
 import { HighlightReelPlayer } from "./HighlightReelPlayer";
 import JSZip from "jszip";
 import { format } from "date-fns";
+import { effectiveR90 } from "@/lib/r90";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -949,7 +950,7 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
                         <Card
                           key={report.id}
                           className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
-                          onClick={() => linkReport(report.id, `${(report.players as any)?.name || 'Player'} vs ${report.opponent || 'Unknown'}`, report.r90_score)}
+                          onClick={() => linkReport(report.id, `${(report.players as any)?.name || 'Player'} vs ${report.opponent || 'Unknown'}`, effectiveR90(report as any))}
                         >
                           <div className="flex items-center justify-between">
                             <div>
@@ -957,7 +958,10 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
                               <p className="text-xs text-muted-foreground">{report.analysis_date}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              {report.r90_score != null && <Badge variant="outline" className="text-xs">R90: {report.r90_score.toFixed(2)}</Badge>}
+                              {(() => {
+                                const r = effectiveR90(report as any);
+                                return r != null ? <Badge variant="outline" className="text-xs">R90: {r.toFixed(2)}</Badge> : null;
+                              })()}
                               <Link2 className="h-4 w-4 text-primary" />
                             </div>
                           </div>
