@@ -25,6 +25,7 @@ import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } f
 import { SEO } from "@/components/SEO";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { PlaylistContent } from "@/components/PlaylistContent";
+import { effectiveR90 } from "@/lib/r90";
 import { CoachAvailability } from "@/components/CoachAvailability";
 import { PlayerScoutingReports } from "@/components/PlayerScoutingReports";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
