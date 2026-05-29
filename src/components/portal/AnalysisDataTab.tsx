@@ -107,11 +107,16 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const seasonAverages = useMemo(() => {
     if (selectedAnalyses.length === 0) return {};
     const result: Record<string, number> = {};
-    
-    const r90Values = selectedAnalyses.filter(a => a.r90_score != null).map(a => a.r90_score);
+
+    // Hidden reports must contribute their HIDDEN R90 / minutes, not the live values.
+    const r90Values = selectedAnalyses
+      .map(a => effectiveR90(a))
+      .filter((v): v is number => v != null);
     if (r90Values.length > 0) result.r90 = r90Values.reduce((s, v) => s + v, 0) / r90Values.length;
 
-    const mins = selectedAnalyses.filter(a => a.minutes_played != null).map(a => a.minutes_played!);
+    const mins = selectedAnalyses
+      .map(a => effectiveMinutes(a))
+      .filter((v): v is number => v != null);
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
     // All metrics from all categories using centralised aggregation
@@ -132,15 +137,16 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
   const r90BarData = useMemo(() => {
     return selectedAnalyses
-      .filter(a => a.r90_score != null)
+      .filter(a => effectiveR90(a) != null)
       .sort((a, b) => a.analysis_date.localeCompare(b.analysis_date))
       .map(a => {
         const isHiddenOrDraft = ['hidden', 'draft', 'clipped'].includes(String(a.visibility_status || '').toLowerCase());
+        const r90 = effectiveR90(a) ?? 0;
         return {
           name: isHiddenOrDraft
             ? formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })
             : (a.opponent || formatDate(a.analysis_date, playerData?.portal_language, { day: '2-digit', month: 'short' })),
-          r90: Number(a.r90_score.toFixed(2)),
+          r90: Number(r90.toFixed(2)),
         };
       });
   }, [selectedAnalyses]);
