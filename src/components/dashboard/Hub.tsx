@@ -218,6 +218,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
   const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
   const [postMatchAnalyses, setPostMatchAnalyses] = React.useState<Map<string, { id: string; homeTeam: string; awayTeam: string }>>(new Map());
   const confettiFired = React.useRef(false);
+  const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>("__current__");
+
+  const seasons = React.useMemo(
+    () => groupBySeason(analyses.filter(a => !String(a.id || "").startsWith("fixture-"))),
+    [analyses]
+  );
+  const activeSeason = React.useMemo(
+    () => seasons.find(s => s.id === selectedSeasonId) || seasons[0] || null,
+    [seasons, selectedSeasonId]
+  );
+  const seasonScopedAnalyses = React.useMemo<PlayerAnalysis[]>(
+    () => (activeSeason ? (activeSeason.analyses as PlayerAnalysis[]) : analyses),
+    [activeSeason, analyses]
+  );
 
   // Fire confetti on personal best R90
   React.useEffect(() => {
