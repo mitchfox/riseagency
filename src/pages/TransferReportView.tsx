@@ -694,7 +694,7 @@ const TransferReportView = ({ editMode: externalEditMode, reportOverride, conten
                       const isHidden = hiddenStats[`form_${rpt.id}`];
                       // In view mode skip hidden, in edit mode show greyed out
                       if (isHidden && !isEditing) return null;
-                      const r90Val = rpt.r90_score;
+                      const r90Val = effectiveR90(rpt as any);
                       const r90Grade = r90Val != null ? getFormGrade('r90', r90Val) : null;
                       return (
                         <div key={rpt.id} className={`relative rounded-2xl p-3 flex items-center justify-between transition-opacity ${isHidden ? 'opacity-30' : ''}`} style={{ background: 'rgba(15,15,15,0.8)', border: `1px solid ${RISE_GOLD}1a` }}>
