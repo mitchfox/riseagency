@@ -27,6 +27,7 @@ import { getReportLanguage, getReportLocale, getTranslatedActionField, getTransl
 import { translateActionType, et } from "@/lib/exampleViewerTranslations";
 import { useSharedClipPlayer } from "@/hooks/useSharedClipPlayer";
 import { hasPlayableClip } from "@/lib/clipVideoUtils";
+import { effectiveR90 } from "@/lib/r90";
 import { ShotMapGraphic, hasShotMapData } from "@/components/report/ShotMapGraphic";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 
