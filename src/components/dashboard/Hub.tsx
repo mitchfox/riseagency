@@ -692,7 +692,20 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                 <TrendingUp className="h-5 w-5" />
                 <CardTitle className="font-heading tracking-tight ml-[9px] mt-[1px]">{t(portalLanguage, "form")}</CardTitle>
               </div>
-              <Button 
+              <div className="flex items-center gap-2">
+                {seasons.length > 1 && (
+                  <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+                    <SelectTrigger className="h-8 w-[140px] text-xs bg-transparent border-[hsl(43,49%,61%)]/40 text-[hsl(43,49%,61%)]">
+                      <SelectValue placeholder={activeSeason?.label || "Season"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasons.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button
                 variant="ghost" 
                 size="sm"
                 onClick={onNavigateToForm || onNavigateToAnalysis}
@@ -700,7 +713,8 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               >
                 {t(portalLanguage, "view_all")}
                 <ArrowRight className="h-4 w-4" />
-              </Button>
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0 pb-0">
