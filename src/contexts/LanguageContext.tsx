@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getEnglishPath, getLocalizedPath } from '@/lib/localizedRoutes';
 import { getSubdomainInfo, getLanguageFromSubdomain, isPreviewOrLocalEnvironment, ROLE_SUBDOMAINS } from '@/lib/subdomainUtils';
@@ -394,9 +394,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const isRepresentationRoute = pathname === '/representation' || pathname === '/request-representation';
 
+  // Memoise the provider value so every consumer doesn't re-render on every
+  // parent render — context value identity is what triggers re-renders.
+  const contextValue = useMemo(
+    () => ({ language, translations, t, isLoading, switchLanguage }),
+    [language, translations, t, isLoading, switchLanguage]
+  );
+
   if (isRepresentationRoute) {
     return (
-      <LanguageContext.Provider value={{ language, translations, t, isLoading, switchLanguage }}>
+      <LanguageContext.Provider value={contextValue}>
         {children}
       </LanguageContext.Provider>
     );
@@ -408,7 +415,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <LanguageContext.Provider value={{ language, translations, t, isLoading, switchLanguage }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
