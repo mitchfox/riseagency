@@ -183,6 +183,8 @@ const PRO_COLUMNS: ColumnConfig[] = [
   { key: 'notes', label: 'Notes', defaultVisible: false },
 ];
 
+const DEFAULT_SECTION_CAP = 100;
+
 export const PlayerOutreachPanel = ({ type }: Props) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -201,6 +203,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     notMessaged: true, noResponse: true, responded: true
   });
+  const [sectionCaps, setSectionCaps] = useState<Record<string, number>>({});
 
   // Filters
   const [ageFilter, setAgeFilter] = useState<string>('all');
