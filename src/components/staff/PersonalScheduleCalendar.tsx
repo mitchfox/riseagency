@@ -156,6 +156,38 @@ export const PersonalScheduleCalendar = ({
     }
   };
 
+  const updateEventTime = async (id: string, newStart: string, newEnd: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('staff_calendar_events')
+        .update({ start_time: newStart, end_time: newEnd })
+        .eq('id', id);
+      if (error) throw error;
+      setEvents(prev => prev.map(e => e.id === id ? { ...e, start_time: newStart, end_time: newEnd } : e));
+    } catch (err) {
+      console.error('Error updating event time:', err);
+      toast.error('Failed to move event');
+      fetchEvents();
+    }
+  };
+
+  const openAddAtTime = (date: Date, hour: number, minute = 0) => {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const start = `${pad(hour)}:${pad(minute)}`;
+    const endHour = (hour + 1) % 24;
+    const end = `${pad(endHour)}:${pad(minute)}`;
+    setSelectedDate(date);
+    setNewEvent({
+      title: "",
+      description: "",
+      start_time: start,
+      end_time: end,
+      is_ongoing: false,
+      category: "work",
+    });
+    setShowAddEvent(true);
+  };
+
   const generateCalendarWeeks = () => {
     const today = new Date();
     
