@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format, addDays, startOfWeek, startOfMonth, isSameDay, parseISO, addWeeks, addMonths, getDaysInMonth, getDay } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Clock, X, Maximize2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Clock, X, Maximize2, GripVertical } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarEvent {
