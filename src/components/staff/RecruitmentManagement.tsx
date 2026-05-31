@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { BlurInput } from "@/components/staff/BlurInput";
+import { BlurTextarea } from "@/components/staff/BlurTextarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, MessageSquare, Plus, Trash2, Edit, Sparkles, Copy, UserPlus, MapPin, Mail, Route, Scale } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -434,17 +436,17 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
             </div>
             <div>
               <Label>Message Title</Label>
-              <Input
+              <BlurInput
                 value={templateFormData.message_title}
-                onChange={(e) => setTemplateFormData({ ...templateFormData, message_title: e.target.value })}
+                onCommit={(v) => setTemplateFormData((f) => ({ ...f, message_title: v }))}
                 placeholder="e.g., Spanish Club Introduction Message"
               />
             </div>
             <div>
               <Label>Message Content</Label>
-              <Textarea
+              <BlurTextarea
                 value={templateFormData.message_content}
-                onChange={(e) => setTemplateFormData({ ...templateFormData, message_content: e.target.value })}
+                onCommit={(v) => setTemplateFormData((f) => ({ ...f, message_content: v }))}
                 placeholder="Enter your message template here..."
                 rows={10}
               />
@@ -518,10 +520,9 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
 
             <div className="space-y-2">
               <Label htmlFor="ai-info">Relevant Information</Label>
-              <Textarea
-                id="ai-info"
+              <BlurTextarea
                 value={aiWriterInfo}
-                onChange={(e) => setAiWriterInfo(e.target.value)}
+                onCommit={setAiWriterInfo}
                 placeholder="Provide key details for the message: recipient name, their background, specific points to address, purpose of the message, any personal touches or specific requests..."
                 rows={8}
                 className="resize-none"
@@ -565,10 +566,9 @@ export const RecruitmentManagement = ({ isAdmin, initialTab = 'prospects' }: { i
                     </Button>
                   </div>
                 </div>
-                <Textarea
-                  id="generated-message"
+                <BlurTextarea
                   value={aiGeneratedMessage}
-                  onChange={(e) => setAiGeneratedMessage(e.target.value)}
+                  onCommit={setAiGeneratedMessage}
                   rows={12}
                   className="font-sans"
                 />

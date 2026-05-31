@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { BlurTextarea } from "@/components/staff/BlurTextarea";
 import { Plus, Trash2, StickyNote, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -121,9 +122,9 @@ export const PlayerNotesBoard = ({
 
       {!readOnly && (
         <div className="rounded-md border border-border/50 bg-muted/20 p-2 mb-3">
-          <Textarea
+          <BlurTextarea
             value={draft}
-            onChange={e => setDraft(e.target.value)}
+            onCommit={setDraft}
             placeholder="Quick note: anything you've noticed about this player…"
             rows={compact ? 2 : 3}
             className="resize-none bg-background/60 border-border/40 text-sm"

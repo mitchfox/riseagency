@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { BlurTextarea } from "@/components/staff/BlurTextarea";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Save, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ export const AgentNotesManagement = ({ players, selectedPlayer }: AgentNotesMana
 
   const savePlayerNote = async (playerId: string) => {
     setSaving(playerId);
-    
+
     const { error } = await supabase
       .from("players")
       .update({
@@ -110,10 +111,10 @@ export const AgentNotesManagement = ({ players, selectedPlayer }: AgentNotesMana
                     Save
                   </Button>
                 </div>
-                <Textarea
+                <BlurTextarea
                   placeholder="Add notes for this player that they can see in their portal..."
                   value={playerNotes[player.id] || ""}
-                  onChange={(e) => handleNoteChange(player.id, e.target.value)}
+                  onCommit={(v) => handleNoteChange(player.id, v)}
                   rows={4}
                   className="resize-none"
                 />
