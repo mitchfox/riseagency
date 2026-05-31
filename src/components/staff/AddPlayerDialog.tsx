@@ -8,14 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImageIcon, X, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AddPlayerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   formData: any;
   setFormData: (data: any) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent, data?: any) => void;
   imageFile: File | null;
   imagePreview: string | null;
   clubLogoFile: File | null;
@@ -33,9 +33,9 @@ interface AddPlayerDialogProps {
 export const AddPlayerDialog = ({
   open,
   onOpenChange,
-  formData,
-  setFormData,
-  onSubmit,
+  formData: externalFormData,
+  setFormData: externalSetFormData,
+  onSubmit: externalOnSubmit,
   imageFile,
   imagePreview,
   clubLogoFile,
@@ -49,6 +49,36 @@ export const AddPlayerDialog = ({
   handleHoverImageSelect,
   handleRemoveHoverImage,
 }: AddPlayerDialogProps) => {
+  // Local state mirror so per-keystroke typing does NOT re-render the parent
+  // (which mounts 900+ player rows). On submit we flush back to the parent
+  // and pass the latest data directly via onSubmit so the parent doesn't
+  // need to wait for a re-render to read it.
+  const [formData, setFormData] = useState<any>(externalFormData);
+
+  // Reset local state whenever the dialog opens (parent has just primed
+  // externalFormData with the player being edited, or with empty defaults).
+  useEffect(() => {
+    if (open) setFormData(externalFormData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Sync image-related fields from parent (handleRemoveImage / Logo / Hover
+  // and post-upload URL assignments live in the parent).
+  useEffect(() => {
+    setFormData((prev: any) => ({
+      ...prev,
+      image_url: externalFormData.image_url,
+      club_logo: externalFormData.club_logo,
+      hover_image_url: externalFormData.hover_image_url,
+    }));
+  }, [externalFormData.image_url, externalFormData.club_logo, externalFormData.hover_image_url]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    externalSetFormData(formData);
+    externalOnSubmit(e, formData);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[95vh] w-[98vw] sm:w-[95vw] p-3 sm:p-6">
@@ -56,7 +86,7 @@ export const AddPlayerDialog = ({
           <DialogTitle className="text-base sm:text-lg">Add New Player</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[calc(95vh-100px)] sm:h-[calc(90vh-120px)] pr-2 sm:pr-4">
-          <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <Tabs defaultValue="basic" className="w-full">
               <TabsList className="flex w-full overflow-x-auto overflow-y-hidden scrollbar-hide gap-1 h-auto p-1 bg-muted rounded-md mb-4">
                 <TabsTrigger value="basic" className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2">Basic</TabsTrigger>
