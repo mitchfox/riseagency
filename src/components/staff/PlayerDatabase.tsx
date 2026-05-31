@@ -919,24 +919,24 @@ export const PlayerDatabase = () => {
           {selectedPlayer && editMode && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name} onChange={e => setEditForm({ ...editForm, player_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position} onChange={e => setEditForm({ ...editForm, position: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Name</Label><BlurInput value={editForm.player_name} onCommit={v => setEditForm((f: any) => ({ ...f, player_name: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><BlurInput value={editForm.position} onCommit={v => setEditForm((f: any) => ({ ...f, position: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality} onChange={e => setEditForm({ ...editForm, nationality: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club} onChange={e => setEditForm({ ...editForm, current_club: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><BlurInput value={editForm.nationality} onCommit={v => setEditForm((f: any) => ({ ...f, nationality: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><BlurInput value={editForm.current_club} onCommit={v => setEditForm((f: any) => ({ ...f, current_club: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle} onChange={e => setEditForm({ ...editForm, ig_handle: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><BlurInput value={editForm.ig_handle} onCommit={v => setEditForm((f: any) => ({ ...f, ig_handle: v }))} /></div>
               </div>
               {selectedPlayer.source === 'youth_outreach' && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name} onChange={e => setEditForm({ ...editForm, parents_name: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact} onChange={e => setEditForm({ ...editForm, parent_contact: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={editForm.parents_name} onCommit={v => setEditForm((f: any) => ({ ...f, parents_name: v }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
                 </div>
               )}
-              <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} rows={2} /></div>
+              <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={v => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
                 <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
