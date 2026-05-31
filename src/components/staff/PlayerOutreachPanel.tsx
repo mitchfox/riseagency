@@ -791,14 +791,11 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search name, club, nationality..." value={searchQuery} onChange={e => {
-          const v = e.target.value;
-          // Use local ref-based debounce for performance
-          setSearchQuery(v);
-        }} className="pl-10 h-9" />
-      </div>
+      <StaffSearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search name, club, nationality..."
+      />
 
       {/* Active filter indicators */}
       {hasActiveFilters && (
