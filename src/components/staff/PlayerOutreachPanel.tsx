@@ -836,25 +836,25 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Player Name *</Label><Input value={formData.player_name} onChange={e => setFormData({ ...formData, player_name: e.target.value })} required /></div>
-              <div className="space-y-2"><Label>IG Handle</Label><Input value={formData.ig_handle} onChange={e => setFormData({ ...formData, ig_handle: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Player Name *</Label><BlurInput value={formData.player_name} onCommit={v => setFormData((f: any) => ({ ...f, player_name: v }))} /></div>
+              <div className="space-y-2"><Label>IG Handle</Label><BlurInput value={formData.ig_handle} onCommit={v => setFormData((f: any) => ({ ...f, ig_handle: v }))} /></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Current Club</Label><Input value={formData.current_club} onChange={e => setFormData({ ...formData, current_club: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Current Club</Label><BlurInput value={formData.current_club} onCommit={v => setFormData((f: any) => ({ ...f, current_club: v }))} /></div>
               <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={formData.date_of_birth} onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Position</Label><Input value={formData.position} onChange={e => setFormData({ ...formData, position: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Nationality</Label><Input value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Position</Label><BlurInput value={formData.position} onCommit={v => setFormData((f: any) => ({ ...f, position: v }))} /></div>
+              <div className="space-y-2"><Label>Nationality</Label><BlurInput value={formData.nationality} onCommit={v => setFormData((f: any) => ({ ...f, nationality: v }))} /></div>
             </div>
             {isYouth && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Parent's Name</Label><Input value={formData.parents_name} onChange={e => setFormData({ ...formData, parents_name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Parent Contact (IG)</Label><Input value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Parent's Name</Label><BlurInput value={formData.parents_name} onCommit={v => setFormData((f: any) => ({ ...f, parents_name: v }))} /></div>
+                <div className="space-y-2"><Label>Parent Contact (IG)</Label><BlurInput value={formData.parent_contact} onCommit={v => setFormData((f: any) => ({ ...f, parent_contact: v }))} /></div>
               </div>
             )}
-            <div className="space-y-2"><Label>Initial Message</Label><Textarea value={formData.initial_message} onChange={e => setFormData({ ...formData, initial_message: e.target.value })} rows={3} /></div>
-            <div className="space-y-2"><Label>Notes</Label><Textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} /></div>
+            <div className="space-y-2"><Label>Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={3} /></div>
+            <div className="space-y-2"><Label>Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label>Messaged</Label></div>
               <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label>Response</Label></div>
