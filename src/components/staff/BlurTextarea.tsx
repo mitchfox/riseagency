@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-interface BlurInputProps {
-  value: string | null | undefined;
+interface BlurTextareaProps {
+  value: string;
   onCommit: (value: string) => void;
   placeholder?: string;
   className?: string;
-  type?: string;
+  rows?: number;
 }
 
 /**
- * Input that keeps local state and only commits the value on blur,
- * preventing letter-by-letter updates that cause lag.
+ * Textarea that keeps local state and only commits on blur, so the parent
+ * tree (and large sibling lists) don't re-render on every keystroke.
  */
-export const BlurInput = ({ value, onCommit, placeholder, className, type }: BlurInputProps) => {
+export const BlurTextarea = ({ value, onCommit, placeholder, className, rows }: BlurTextareaProps) => {
   const [local, setLocal] = useState(value ?? "");
 
   useEffect(() => {
@@ -21,19 +21,19 @@ export const BlurInput = ({ value, onCommit, placeholder, className, type }: Blu
   }, [value]);
 
   const handleBlur = useCallback(() => {
-    if (local !== (value ?? "")) {
+    if (local !== value) {
       onCommit(local);
     }
   }, [local, value, onCommit]);
 
   return (
-    <Input
-      type={type}
+    <Textarea
       value={local}
       onChange={(e) => setLocal(e.target.value)}
       onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
+      rows={rows}
     />
   );
 };

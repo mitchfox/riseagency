@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BlurInput } from '@/components/staff/BlurInput';
+import { BlurTextarea } from '@/components/staff/BlurTextarea';
+import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -211,6 +214,8 @@ export const PlayerDatabase = () => {
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  // Defer the heavy filter pipeline so typing stays responsive.
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
@@ -406,8 +411,8 @@ export const PlayerDatabase = () => {
       if (isScoped) {
         if (!allowedIds || !allowedIds.has(player.id)) return false;
       }
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+      if (deferredSearchQuery) {
+        const query = deferredSearchQuery.toLowerCase();
         if (!player.player_name.toLowerCase().includes(query) && !player.current_club?.toLowerCase().includes(query) && !player.position?.toLowerCase().includes(query)) return false;
       }
       if (ageFilter !== 'all') {
@@ -453,7 +458,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, searchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -721,10 +726,11 @@ export const PlayerDatabase = () => {
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
-      </div>
+      <StaffSearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search by name, club, position..."
+      />
 
       <div className="rounded-lg border border-border/60 bg-card/60 p-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -913,24 +919,24 @@ export const PlayerDatabase = () => {
           {selectedPlayer && editMode && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name} onChange={e => setEditForm({ ...editForm, player_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position} onChange={e => setEditForm({ ...editForm, position: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Name</Label><BlurInput value={editForm.player_name} onCommit={v => setEditForm((f: any) => ({ ...f, player_name: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><BlurInput value={editForm.position} onCommit={v => setEditForm((f: any) => ({ ...f, position: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality} onChange={e => setEditForm({ ...editForm, nationality: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club} onChange={e => setEditForm({ ...editForm, current_club: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><BlurInput value={editForm.nationality} onCommit={v => setEditForm((f: any) => ({ ...f, nationality: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><BlurInput value={editForm.current_club} onCommit={v => setEditForm((f: any) => ({ ...f, current_club: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle} onChange={e => setEditForm({ ...editForm, ig_handle: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><BlurInput value={editForm.ig_handle} onCommit={v => setEditForm((f: any) => ({ ...f, ig_handle: v }))} /></div>
               </div>
               {selectedPlayer.source === 'youth_outreach' && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name} onChange={e => setEditForm({ ...editForm, parents_name: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact} onChange={e => setEditForm({ ...editForm, parent_contact: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={editForm.parents_name} onCommit={v => setEditForm((f: any) => ({ ...f, parents_name: v }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
                 </div>
               )}
-              <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} rows={2} /></div>
+              <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={v => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
                 <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>

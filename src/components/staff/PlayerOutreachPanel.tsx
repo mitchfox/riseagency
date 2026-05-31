@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -7,6 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BlurInput } from '@/components/staff/BlurInput';
+import { BlurTextarea } from '@/components/staff/BlurTextarea';
+import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -192,6 +195,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [detailItem, setDetailItem] = useState<any>(null);
   const [detailEditMode, setDetailEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [sortField, setSortField] = useState<SortField>('player_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -423,8 +427,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const sortAndFilter = (items: any[]): any[] => {
     let result = items;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (deferredSearchQuery) {
+      const q = deferredSearchQuery.toLowerCase();
       result = result.filter(d =>
         d.player_name?.toLowerCase().includes(q) ||
         d.current_club?.toLowerCase().includes(q) ||
@@ -787,14 +791,11 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search name, club, nationality..." value={searchQuery} onChange={e => {
-          const v = e.target.value;
-          // Use local ref-based debounce for performance
-          setSearchQuery(v);
-        }} className="pl-10 h-9" />
-      </div>
+      <StaffSearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search name, club, nationality..."
+      />
 
       {/* Active filter indicators */}
       {hasActiveFilters && (
@@ -835,25 +836,25 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Player Name *</Label><Input value={formData.player_name} onChange={e => setFormData({ ...formData, player_name: e.target.value })} required /></div>
-              <div className="space-y-2"><Label>IG Handle</Label><Input value={formData.ig_handle} onChange={e => setFormData({ ...formData, ig_handle: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Player Name *</Label><BlurInput value={formData.player_name} onCommit={v => setFormData((f: any) => ({ ...f, player_name: v }))} /></div>
+              <div className="space-y-2"><Label>IG Handle</Label><BlurInput value={formData.ig_handle} onCommit={v => setFormData((f: any) => ({ ...f, ig_handle: v }))} /></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Current Club</Label><Input value={formData.current_club} onChange={e => setFormData({ ...formData, current_club: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Current Club</Label><BlurInput value={formData.current_club} onCommit={v => setFormData((f: any) => ({ ...f, current_club: v }))} /></div>
               <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={formData.date_of_birth} onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Position</Label><Input value={formData.position} onChange={e => setFormData({ ...formData, position: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Nationality</Label><Input value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Position</Label><BlurInput value={formData.position} onCommit={v => setFormData((f: any) => ({ ...f, position: v }))} /></div>
+              <div className="space-y-2"><Label>Nationality</Label><BlurInput value={formData.nationality} onCommit={v => setFormData((f: any) => ({ ...f, nationality: v }))} /></div>
             </div>
             {isYouth && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Parent's Name</Label><Input value={formData.parents_name} onChange={e => setFormData({ ...formData, parents_name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Parent Contact (IG)</Label><Input value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Parent's Name</Label><BlurInput value={formData.parents_name} onCommit={v => setFormData((f: any) => ({ ...f, parents_name: v }))} /></div>
+                <div className="space-y-2"><Label>Parent Contact (IG)</Label><BlurInput value={formData.parent_contact} onCommit={v => setFormData((f: any) => ({ ...f, parent_contact: v }))} /></div>
               </div>
             )}
-            <div className="space-y-2"><Label>Initial Message</Label><Textarea value={formData.initial_message} onChange={e => setFormData({ ...formData, initial_message: e.target.value })} rows={3} /></div>
-            <div className="space-y-2"><Label>Notes</Label><Textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} /></div>
+            <div className="space-y-2"><Label>Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={3} /></div>
+            <div className="space-y-2"><Label>Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label>Messaged</Label></div>
               <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label>Response</Label></div>
@@ -913,25 +914,25 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           {detailItem && detailEditMode && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={formData.player_name} onChange={e => setFormData({ ...formData, player_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={formData.position} onChange={e => setFormData({ ...formData, position: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Name</Label><BlurInput value={formData.player_name} onCommit={v => setFormData((f: any) => ({ ...f, player_name: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><BlurInput value={formData.position} onCommit={v => setFormData((f: any) => ({ ...f, position: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={formData.current_club} onChange={e => setFormData({ ...formData, current_club: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><BlurInput value={formData.nationality} onCommit={v => setFormData((f: any) => ({ ...f, nationality: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><BlurInput value={formData.current_club} onCommit={v => setFormData((f: any) => ({ ...f, current_club: v }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs">DOB</Label><Input type="date" value={formData.date_of_birth} onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={formData.ig_handle} onChange={e => setFormData({ ...formData, ig_handle: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><BlurInput value={formData.ig_handle} onCommit={v => setFormData((f: any) => ({ ...f, ig_handle: v }))} /></div>
               </div>
               {isYouth && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={formData.parents_name} onChange={e => setFormData({ ...formData, parents_name: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={formData.parent_contact} onChange={e => setFormData({ ...formData, parent_contact: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={formData.parents_name} onCommit={v => setFormData((f: any) => ({ ...f, parents_name: v }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={formData.parent_contact} onCommit={v => setFormData((f: any) => ({ ...f, parent_contact: v }))} /></div>
                 </div>
               )}
-              <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={2} /></div>
-              <div className="space-y-1"><Label className="text-xs">Initial Message</Label><Textarea value={formData.initial_message} onChange={e => setFormData({ ...formData, initial_message: e.target.value })} rows={2} /></div>
+              <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
+              <div className="space-y-1"><Label className="text-xs">Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={2} /></div>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label className="text-xs">Messaged</Label></div>
                 <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label className="text-xs">Response</Label></div>
