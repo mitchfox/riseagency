@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo, type ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BlurInput } from '@/components/staff/BlurInput';
+import { BlurTextarea } from '@/components/staff/BlurTextarea';
+import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
