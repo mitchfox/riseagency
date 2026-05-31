@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { format, addDays, startOfWeek, startOfMonth, isSameDay, parseISO, addWeeks, addMonths, getDaysInMonth, getDay } from "date-fns";
 import { Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Clock, X, Maximize2, GripVertical } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScheduleDayGrid } from "./ScheduleDayGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarEvent {
