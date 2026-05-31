@@ -51,13 +51,13 @@ export const AgentNotesManagement = ({ players, selectedPlayer }: AgentNotesMana
     }));
   };
 
-  const savePlayerNote = async (playerId: string, noteOverride?: string) => {
+  const savePlayerNote = async (playerId: string) => {
     setSaving(playerId);
-    const valueToSave = noteOverride !== undefined ? noteOverride : (playerNotes[playerId] || "");
+
     const { error } = await supabase
       .from("players")
       .update({
-        agent_notes: valueToSave
+        agent_notes: playerNotes[playerId] || ""
       })
       .eq("id", playerId);
 
