@@ -1,80 +1,55 @@
-## 1. Integer-only per-game stats
+## Mobile typing lag — multi-front investigation
 
-Per-game raw count stats (listed below) are always whole numbers. Strip `.toFixed(2)` so they render as `3` not `3.00` in **every** display: performance reports, portal (Hub, Form, Performance, Data, Comparisons), staff data tab, transfer reports, dashboard. Season averages (totals ÷ N) keep their decimals.
+The lag isn't one bug, it's a stack of compounding causes. Each keystroke in `PlayerDatabase`, `PlayerOutreachPanel`, edit dialogs, and similar staff pages re-runs work that on a phone CPU adds up to 100–400ms per keypress. Plan attacks every plausible avenue, then verifies.
 
-**Integer stat keys** (centralised):
-- GK: shots_on_target_faced, saves_made, sot_faced_inside_box, saves_inside_box, sot_faced_outside_box, saves_outside_box, touches, passes_completed, long_passes_completed, passes_completed_opp_half, possession_lost, clearances, ball_recoveries
-- Outfield: goals, shots_on_target, created_own_shot, shots_outside_box, assists, key_passes, progressive_passes, passes_into_final_third, forward_passes, passes_opp_half, passes_own_half, accurate_passes, accurate_long_balls, accurate_crosses, successful_dribbles, dribble_attempts, progressive_carries, carries_into_final_third, tackles_won, aerials_won, duels_won, clearances, interceptions
+### Confirmed hot spots (from code read)
 
-I will add a helper in `src/lib/statAggregation.ts`:
-```ts
-export const INTEGER_STAT_KEYS = new Set([...]);
-export const formatStat = (key: string, value: number | null, isAggregate = false) =>
-  value == null ? '-' : (!isAggregate && INTEGER_STAT_KEYS.has(key)) ? Math.round(value).toString() : value.toFixed(2);
-```
-Then replace `val.toFixed(2)` call sites that render per-game stat values with `formatStat(key, val)`. Aggregate/season-average renders pass `isAggregate=true` to keep two decimals. (Key alias map in `statAggregation.ts` is reused so e.g. `clean_sheets`/`gk_clean_sheets` match.)
+1. **Un-debounced search drives full-list re-filter.** `PlayerDatabase.tsx` line 726 and `PlayerOutreachPanel.tsx` line 792 wire the search `Input` directly to `setSearchQuery`. This invalidates `filteredAndSortedPlayers` (a useMemo over up to ~1000 players running `.filter().sort()` plus nationality/club lookups) on **every keystroke**. The comment on line 794 even says "Use local ref-based debounce" — but the debounce was never implemented.
+2. **Edit dialogs spread the entire form on each character.** Every `<Input onChange={e => setFormData({ ...formData, x: e.target.value })}>` re-renders the entire panel (table rows + grouped sections). With 900+ rows mounted underneath the dialog, each keystroke re-renders thousands of nodes.
+3. **No list virtualisation.** Tables render every visible row directly; combined with cause #2, the diff cost dominates the input latency.
+4. **`spellCheck` + `lang="en-GB"` forced on every Input/Textarea** (`src/components/ui/input.tsx`, `textarea.tsx`). Mobile Safari/Chrome run grammar/suggestion passes per keystroke. Heavy on long textareas (notes/messages).
+5. **Translation context churn.** Console shows `[Translation] Loaded 1789 translations` firing 3× per page load. If the LanguageContext re-publishes on any state change, every input update cascades into a context broadcast.
+6. **Global mouse / xray / transition contexts** wrap the app — verify none of them subscribe to input state.
+7. **Dialog content un-memoised.** The Radix Dialog stays mounted with portal; large sibling content still re-renders.
 
-Files touched: `AnalysisDataTab.tsx`, `Dashboard.tsx`, `Hub.tsx`, performance report components, `TransferReportView.tsx`, `QuickStatsComparison.tsx`, and any other stat tables.
+### Fix plan (ordered by impact)
 
-## 2. Use Hidden R90 everywhere when report is hidden
+**Phase 1 — eliminate per-keystroke list re-renders (biggest win)**
+- Replace the raw search `<Input>` in `PlayerDatabase.tsx` and `PlayerOutreachPanel.tsx` with the existing `StaffSearchInput` (already has 300ms internal debounce).
+- Extract the heavy table render into a memoised child component that only depends on `players` + the debounced `searchQuery` + filters, wrapped in `React.memo`. Use `useDeferredValue(searchQuery)` so typing stays interactive even on first keystroke.
 
-Hidden R90 already exists as `placeholder_raw_score / placeholder_minutes * 90` (already used in `Dashboard.tsx` and `Hub.tsx`). I'll centralise it:
-```ts
-// src/lib/r90.ts
-export const effectiveR90 = (a: { visibility_status?: string|null; r90_score?: number|null;
-  placeholder_raw_score?: number|null; placeholder_minutes?: number|null }) => {
-  const hidden = String(a.visibility_status||'').toLowerCase() === 'hidden';
-  if (hidden && a.placeholder_raw_score != null && (a.placeholder_minutes ?? 0) > 0) {
-    return (a.placeholder_raw_score / a.placeholder_minutes!) * 90;
-  }
-  return a.r90_score ?? null;
-};
-export const effectiveMinutes = (a) => hidden && placeholder_minutes>0 ? placeholder_minutes : minutes_played;
-```
-Replace direct `r90_score` reads in season averages, R90 bar chart, form, performance graphs, comparisons, transfer reports. Update SELECTs to include `placeholder_raw_score`, `placeholder_minutes` where missing.
+**Phase 2 — isolate dialog form state**
+- Pull the Add/Edit form into its own component (`<PlayerEditForm value onSubmit />`) with internal `useState`. Parent only receives the final object on save. This prevents the 900-row sibling tree re-rendering per character.
+- Alternative if extraction is too invasive: swap form `<Input>`s for `BlurInput` (already exists in `src/components/staff/BlurInput.tsx`) so the parent only updates on blur.
 
-## 3. Player Summary fix on staff Data tab
+**Phase 3 — quiet the input primitives on mobile**
+- In `src/components/ui/input.tsx` and `textarea.tsx`, make `spellCheck`/`lang` opt-in rather than defaulted-on for non-text fields, and gate spellCheck off for fields with `data-fast` or for short single-line fields where suggestions aren't useful (name, club, IG handle). Keep it on for long-form notes/messages only.
+- Add `autoCorrect`, `autoCapitalize`, `autoComplete` sensible defaults so iOS Safari doesn't run name-suggestion lookups (`autoComplete="off"` on filter/search; `autoCapitalize="words"` for name fields, `"none"` for handles).
 
-`AnalysisDataTab.tsx` Player Summary is reused by staff and portal. Fix it to:
-- **Season R90** — average of `effectiveR90(a)` (not `r90_score` directly) across selected analyses.
-- **Minutes Played** — sum of `effectiveMinutes(a)`.
-- **Age** — from `playerData.age` (already wired; verify staff caller passes it).
-- **Club** — from `playerData.club`.
-- **Matches** — count of analyses (current behaviour, fine).
+**Phase 4 — virtualise long tables**
+- Add `@tanstack/react-virtual` to the player tables in `PlayerDatabase` and `PlayerOutreachPanel` (>50 visible rows). This caps render cost regardless of list size.
 
-Add a "**Set as final game of season**" action button at the bottom of the summary card, then a Rise Gold divider (`<div className="h-px bg-[hsl(43,49%,61%)] my-6" />`) before the Match-by-Match section.
+**Phase 5 — translation/context audit**
+- Confirm `LanguageContext` value is wrapped in `useMemo`; if it currently constructs a new object each render, every consumer re-renders on every parent re-render. Wrap the provider value and split the context into `state` + `setters` if needed.
+- Investigate why `[Translation] Loaded 1789 translations` runs 3× per load (StrictMode duplicate is 2, third is a real refetch) — possibly a missing effect dep.
 
-## 4. Season boundary model
+**Phase 6 — broader sweep**
+- Apply the same `StaffSearchInput`/`BlurInput`/memoisation pattern to other places the user mentioned ("etc."): `RecruitmentManagement`, `TransfermarktShortlist`, `ClubRatings`, `AgentNotesManagement`, `PlayerNotesBoard`, and any other staff page with an `Input` driving a filtered list.
+- Run `rg "onChange.*setFormData\\(\\{ \\.\\.\\.formData" src/components/staff/` and convert those hotspots.
 
-New schema:
-```sql
-ALTER TABLE public.player_analysis
-  ADD COLUMN season_final boolean NOT NULL DEFAULT false;
-CREATE INDEX idx_player_analysis_season_final
-  ON public.player_analysis(player_id, analysis_date) WHERE season_final;
-```
-A match flagged `season_final = true` marks the **last game of that season** for the player. Seasons are then derived per-player by walking the analyses ordered by date: everything up to and including a season-final row is one season; the next row starts the next season.
+**Phase 7 — verify**
+- Reproduce in mobile preview (375×812) with React DevTools profiler on a typical typing burst. Targets: keystroke commit <50ms, no commit >100ms.
+- Sanity-check production build (dev mode includes StrictMode double-render that inflates timings).
+- Test on real iOS Safari via the published URL — input lag often disappears once dev overlays are gone.
 
-Helper:
-```ts
-// src/lib/seasons.ts
-export const groupBySeason = (analyses) => { /* returns [{label, start, end, analyses[]}] */ };
-```
-Labels: by default `"Season N"` newest-first, or "Current Season" for the open trailing group. (No season-year name needed unless user wants one — happy to extend.)
+### Technical notes
 
-## 5. Season selector in Form / Performance
+- `useDeferredValue` is preferred over manual debounce for filtering: it keeps the input controlled and responsive while the expensive list lags one frame behind.
+- `React.memo` on the row component only helps if props are stable — pass primitives or memoised callbacks.
+- For Dialog forms, uncontrolled inputs with `defaultValue` + a `ref` (or `react-hook-form`) avoid the parent re-render entirely; this is the gold-standard fix for dialogs.
+- Mobile spellcheck cost is well documented; defaulting it off for short fields is standard practice.
 
-In Hub Form widget and Performance graphs, add a small season dropdown sourced from `groupBySeason()`. Default = current season; selecting a past season filters the data window accordingly. Season averages then compute against the selected season's analyses using the integer/hidden-R90 helpers above.
+### Out of scope
+- No DB/schema changes. No backend touched. No design/visual changes.
 
-## Technical notes
-
-- One migration: adds `season_final` column + index.
-- Two new utils: `src/lib/r90.ts`, `src/lib/seasons.ts`. Extend `src/lib/statAggregation.ts` with `INTEGER_STAT_KEYS` and `formatStat`.
-- Staff data Player Summary gets the new button which calls a small `update player_analysis set season_final = true where id = ?` (after un-setting any other season_final flag within the same season cluster to keep one final per season — actually allow multiple if user re-marks; simplest is just toggle this row).
-- Toggle behaviour: clicking the button when already final un-marks it.
-- No edge-function changes required.
-
-## Out of scope
-
-- Renaming seasons (auto-labelled).
-- Cross-player season alignment (per-player only, as data is per-player).
+Order: Phase 1+2 are the 80/20. Phase 3 helps long-form notes specifically. Phases 4–6 finish the job for scale and consistency.
