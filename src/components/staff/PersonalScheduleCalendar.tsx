@@ -416,7 +416,6 @@ export const PersonalScheduleCalendar = ({
             const currentDayDate = getCurrentDayDate();
             const dayEvents = getEventsForDay(currentDayDate)
               .sort((a, b) => (a.start_time || '23:59').localeCompare(b.start_time || '23:59'));
-            const highlightedEventId = getMostRecentOrCurrentEvent(dayEvents);
             const isToday = isSameDay(currentDayDate, new Date());
 
             return (
@@ -449,83 +448,15 @@ export const PersonalScheduleCalendar = ({
                   </div>
                 </div>
 
-                {/* Events List */}
-                {dayEvents.length === 0 ? (
-                  <div 
-                    className="p-6 text-center rounded-lg border"
-                    style={{ backgroundColor: 'hsl(0, 0%, 10%)', borderColor: 'rgba(255, 255, 255, 0.1)' }}
-                  >
-                    <Calendar className="h-10 w-10 mx-auto mb-2 text-muted-foreground opacity-50" />
-                    <p className="text-muted-foreground">No events scheduled for this day</p>
-                    <Button 
-                      onClick={() => { setSelectedDate(currentDayDate); setShowAddEvent(true); }}
-                      size="sm" 
-                      className="mt-3"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Event
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {dayEvents.map((event) => {
-                      const isHighlighted = event.id === highlightedEventId && isToday;
-                      
-                      return (
-                        <div 
-                          key={event.id}
-                          className={`p-3 rounded-lg group relative transition-all ${isHighlighted ? 'ring-2 ring-offset-2 ring-offset-background ring-[hsl(43,49%,61%)]' : ''}`}
-                          style={{ 
-                            backgroundColor: getCategoryColor(event.category),
-                            color: 'hsl(0, 0%, 0%)'
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <div className="font-bold text-sm flex items-center gap-2">
-                                {event.is_ongoing && <span className="text-[10px]">🔄</span>}
-                                {event.title}
-                                {isHighlighted && (
-                                  <span 
-                                    className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                                    style={{ backgroundColor: 'hsl(43, 49%, 61%)', color: 'hsl(0, 0%, 0%)' }}
-                                  >
-                                    {isToday && event.start_time && event.end_time && format(new Date(), 'HH:mm') >= event.start_time && format(new Date(), 'HH:mm') <= event.end_time ? 'NOW' : 'CURRENT'}
-                                  </span>
-                                )}
-                              </div>
-                              {event.start_time && (
-                                <div className="text-xs opacity-75 flex items-center gap-1 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  {event.start_time}{event.end_time && ` - ${event.end_time}`}
-                                </div>
-                              )}
-                              {event.description && (
-                                <div className="text-xs opacity-60 mt-1">{event.description}</div>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => deleteEvent(event.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {/* Quick Add Button */}
-                    <Button 
-                      onClick={() => { setSelectedDate(currentDayDate); setShowAddEvent(true); }}
-                      variant="outline" 
-                      className="w-full mt-2"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Event
-                    </Button>
-                  </div>
-                )}
+                <ScheduleDayGrid
+                  date={currentDayDate}
+                  events={dayEvents}
+                  getCategoryColor={getCategoryColor}
+                  onAddAtTime={openAddAtTime}
+                  onUpdateTime={updateEventTime}
+                  onDelete={deleteEvent}
+                  isFullscreen={isFullscreen}
+                />
               </div>
             );
           })()}
