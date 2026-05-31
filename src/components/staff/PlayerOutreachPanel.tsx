@@ -195,6 +195,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [detailItem, setDetailItem] = useState<any>(null);
   const [detailEditMode, setDetailEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [sortField, setSortField] = useState<SortField>('player_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -426,8 +427,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const sortAndFilter = (items: any[]): any[] => {
     let result = items;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (deferredSearchQuery) {
+      const q = deferredSearchQuery.toLowerCase();
       result = result.filter(d =>
         d.player_name?.toLowerCase().includes(q) ||
         d.current_club?.toLowerCase().includes(q) ||
