@@ -1060,12 +1060,15 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setFormData({ ...formData, hover_image_url: "" });
   };
 
-  const handleAddPlayer = async (e: React.FormEvent) => {
+  const handleAddPlayer = async (e: React.FormEvent, submittedData?: any) => {
     e.preventDefault();
+    // AddPlayerDialog now owns its own local state and passes the latest
+    // values directly so we don't read stale `formData` from React state.
+    const fd = submittedData ?? formData;
 
     try {
       // Upload image if selected
-      let finalImageUrl = formData.image_url;
+      let finalImageUrl = fd.image_url;
       if (imageFile) {
         const imageFileName = `${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const { error: imageError } = await supabase.storage
@@ -1087,7 +1090,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       // Upload club logo if selected
-      let finalClubLogoUrl = formData.club_logo;
+      let finalClubLogoUrl = fd.club_logo;
       if (clubLogoFile) {
         const logoFileName = `${Date.now()}_logo_${clubLogoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const { error: logoError } = await supabase.storage
@@ -1109,7 +1112,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       // Upload hover image if selected
-      let finalHoverImageUrl = formData.hover_image_url;
+      let finalHoverImageUrl = fd.hover_image_url;
       if (hoverImageFile) {
         const hoverFileName = `${Date.now()}_hover_${hoverImageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const { error: hoverError } = await supabase.storage
@@ -1130,35 +1133,35 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         finalHoverImageUrl = publicUrl;
       }
 
-      const bioJSON = reconstructBioJSON();
+      const bioJSON = reconstructBioJSON(undefined, fd);
       const { data: { user: _currentUser } } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from("players")
         .insert({
-          name: formData.name,
-          email: formData.email || null,
-          position: formData.position,
-          club: formData.club || null,
+          name: fd.name,
+          email: fd.email || null,
+          position: fd.position,
+          club: fd.club || null,
           club_logo: finalClubLogoUrl || null,
-          league: formData.league || null,
-          age: calculateAge(formatDateForDb(formData.dateOfBirth) || null) || formData.age || 0,
-          nationality: formData.nationality,
+          league: fd.league || null,
+          age: calculateAge(formatDateForDb(fd.dateOfBirth) || null) || fd.age || 0,
+          nationality: fd.nationality,
           bio: bioJSON,
           image_url: finalImageUrl || null,
           hover_image_url: finalHoverImageUrl || null,
-          representation_status: formData.representation_status || 'other',
-          has_representation_offer: formData.has_representation_offer,
-          visible_on_stars_page: formData.visible_on_stars_page,
-          links: formData.links.length > 0 ? formData.links : null,
-          date_of_birth: formatDateForDb(formData.dateOfBirth) || null,
+          representation_status: fd.representation_status || 'other',
+          has_representation_offer: fd.has_representation_offer,
+          visible_on_stars_page: fd.visible_on_stars_page,
+          links: fd.links.length > 0 ? fd.links : null,
+          date_of_birth: formatDateForDb(fd.dateOfBirth) || null,
           created_by: _currentUser?.id || null,
         } as any);
 
       if (error) throw error;
 
       toast.success("Player added successfully");
-      logActivity({ action: 'created', entityType: 'player', entityName: formData.name });
+      logActivity({ action: 'created', entityType: 'player', entityName: fd.name });
       setIsAddPlayerDialogOpen(false);
       setImageFile(null);
       setImagePreview(null);
