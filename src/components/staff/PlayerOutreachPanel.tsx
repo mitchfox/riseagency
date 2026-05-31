@@ -619,6 +619,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const renderTableSection = (items: any[], title: string, sectionKey: string) => {
     const sorted = sortAndFilter(items);
     const isOpen = expandedSections[sectionKey] !== false;
+    const cap = sectionCaps[sectionKey] ?? DEFAULT_SECTION_CAP;
+    const visible = sorted.slice(0, cap);
+    const remaining = sorted.length - visible.length;
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(sectionKey)}>
         <div className="border rounded-lg overflow-hidden mb-4">
@@ -643,7 +646,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sorted.map(item => (
+                      {visible.map(item => (
                         <TableRow key={item.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openDetail(item)}>
                           {orderedVisibleKeys.map(key => renderCell(key, item))}
                           <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
@@ -659,7 +662,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
                 {/* Mobile Cards */}
                 <div className="lg:hidden">
-                  {sorted.map(item => {
+                  {visible.map(item => {
                     const age = calculateAge(item.date_of_birth);
                     return (
                       <div key={item.id} className="p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/20" onClick={() => openDetail(item)}>
@@ -712,6 +715,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                     );
                   })}
                 </div>
+                {remaining > 0 && (
+                  <div className="p-3 border-t flex justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSectionCaps(prev => ({ ...prev, [sectionKey]: cap + DEFAULT_SECTION_CAP }))}
+                    >
+                      Load more ({remaining} remaining)
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </CollapsibleContent>
