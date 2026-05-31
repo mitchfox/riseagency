@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -7,6 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BlurInput } from '@/components/staff/BlurInput';
+import { BlurTextarea } from '@/components/staff/BlurTextarea';
+import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
