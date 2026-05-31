@@ -771,35 +771,35 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
-  const reconstructBioJSON = (customTacticalSchemes?: any[]) => {
+  const reconstructBioJSON = (customTacticalSchemes?: any[], fd: any = formData) => {
     const bio: any = {
-      bio: formData.bioText, // Use 'bio' key to match existing structure
-      dateOfBirth: formData.dateOfBirth || undefined,
-      number: formData.number || undefined,
-      whatsapp: formData.whatsapp || undefined,
-      currentClub: formData.club || undefined,
-      currentClubLogo: formData.club_logo || undefined,
+      bio: fd.bioText, // Use 'bio' key to match existing structure
+      dateOfBirth: fd.dateOfBirth || undefined,
+      number: fd.number || undefined,
+      whatsapp: fd.whatsapp || undefined,
+      currentClub: fd.club || undefined,
+      currentClubLogo: fd.club_logo || undefined,
     };
 
-    if (formData.externalLinks.length > 0) {
-      bio.externalLinks = formData.externalLinks;
+    if (fd.externalLinks.length > 0) {
+      bio.externalLinks = fd.externalLinks;
     }
 
-    if (formData.strengths.length > 0) {
-      bio.strengthsAndPlayStyle = formData.strengths;
+    if (fd.strengths.length > 0) {
+      bio.strengthsAndPlayStyle = fd.strengths;
     }
 
-    const schemesToUse = customTacticalSchemes || formData.tacticalSchemes;
+    const schemesToUse = customTacticalSchemes || fd.tacticalSchemes;
     if (schemesToUse.length > 0) {
       bio.schemeHistory = schemesToUse; // Use 'schemeHistory' to match existing structure
     }
 
-    if (formData.seasonStats.length > 0) {
-      bio.seasonStats = formData.seasonStats;
+    if (fd.seasonStats.length > 0) {
+      bio.seasonStats = fd.seasonStats;
     }
 
-    if (formData.topStats.length > 0) {
-      bio.topStats = formData.topStats;
+    if (fd.topStats.length > 0) {
+      bio.topStats = fd.topStats;
     }
 
     // Remove undefined fields
