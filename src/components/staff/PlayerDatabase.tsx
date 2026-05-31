@@ -726,10 +726,11 @@ export const PlayerDatabase = () => {
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search by name, club, position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
-      </div>
+      <StaffSearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search by name, club, position..."
+      />
 
       <div className="rounded-lg border border-border/60 bg-card/60 p-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
