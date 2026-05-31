@@ -57,14 +57,14 @@ export const DeclareInterestPlayerDialog = ({ open, onOpenChange, starsOnly = fa
       .from('players')
       .select('id, name, position, image_url')
       .order('name');
-    
+
     if (starsOnly) {
       query = query.eq('visible_on_stars_page', true);
     }
-    
-    // Exclude scouted and fuel_for_football players from public-facing lists
-    query = query.not('representation_status', 'in', '("scouted","fuel_for_football")');
-    
+
+    // Only show currently represented (mandated) players in the public Declare Interest flow
+    query = query.eq('representation_status', 'represented');
+
     const { data, error } = await query;
     
     if (!error && data) {
