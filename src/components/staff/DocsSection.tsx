@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, FileText, Trash2, Edit2, Save, FolderPlus, Folder, Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, ArrowLeft, X } from "lucide-react";
+import { Plus, FileText, Trash2, Edit2, Save, FolderPlus, Folder, Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, ArrowLeft, X, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -38,6 +38,7 @@ export const DocsSection = () => {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [filterFolder, setFilterFolder] = useState<string>("all");
   const [newFolderName, setNewFolderName] = useState("");
+  const [aiProcessing, setAiProcessing] = useState(false);
 
   useEffect(() => {
     fetchDocs();
@@ -217,6 +218,35 @@ export const DocsSection = () => {
     setContent(newContent);
   };
 
+  const handleAiImage = async (file: File) => {
+    if (!file) return;
+    setAiProcessing(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1] || '');
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke('ai-doc-from-image', {
+        body: { imageBase64: base64, mimeType: file.type, currentContent: content },
+      });
+      if (error) throw error;
+      const markdown = (data as any)?.markdown?.trim();
+      if (!markdown) throw new Error('No content returned');
+      setContent(prev => prev ? `${prev}\n\n${markdown}` : markdown);
+      toast.success('AI added image content to document');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Failed to read image');
+    } finally {
+      setAiProcessing(false);
+    }
+  };
+
   const filteredDocs = filterFolder === "all"
     ? docs
     : filterFolder === "unfiled"
@@ -325,6 +355,22 @@ export const DocsSection = () => {
                 <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => applyFormat("number")}>
                   <ListOrdered className="w-4 h-4" />
                 </Button>
+                <div className="w-px bg-border mx-1" />
+                <label className={`inline-flex items-center gap-1.5 h-8 px-2 rounded-md text-sm cursor-pointer hover:bg-muted ${aiProcessing ? 'opacity-60 pointer-events-none' : ''}`} title="Upload an image and let AI add it to the doc">
+                  {aiProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-risegold" />}
+                  <span className="text-xs font-medium">{aiProcessing ? 'Reading…' : 'Add by AI'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={aiProcessing}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleAiImage(f);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
               </div>
 
               <textarea
