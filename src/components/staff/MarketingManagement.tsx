@@ -18,6 +18,7 @@ import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { HomepageVideoManager } from "./HomepageVideoManager";
 import { MarketingResources } from './marketing/MarketingResources';
+import { MarketingStrategy } from './marketing/MarketingStrategy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GalleryItem {
