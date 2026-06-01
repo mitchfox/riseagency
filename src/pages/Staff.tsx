@@ -204,6 +204,8 @@ const Staff = () => {
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const logoPressTimerRef = useRef<number | null>(null);
+  const logoLongPressFiredRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
   
   // Role permissions from database
