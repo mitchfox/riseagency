@@ -127,10 +127,32 @@ Deno.serve(async (req) => {
     }).slice(0, 200);
 
     // Sign contract URLs server-side so the iframe can actually load private PDFs
-    const contractsResolved = await Promise.all((contracts.data || []).map(async (c: any) => ({
-      ...c,
-      resolved_file_url: await resolveContractUrl(supabase, c.completed_pdf_url || c.locked_file_url || c.file_url),
-    })));
+    // Prefer the latest counterparty-signed PDF (with signatures embedded) so signed contracts always
+    // show the signatures when viewed in the investor portal.
+    const contractIds = (contracts.data || []).map((c: any) => c.id);
+    const latestSignedByContract: Record<string, string | null> = {};
+    if (contractIds.length > 0) {
+      const { data: subs } = await supabase
+        .from("signature_submissions")
+        .select("contract_id, signed_pdf_url, signed_at")
+        .in("contract_id", contractIds)
+        .not("signed_pdf_url", "is", null)
+        .order("signed_at", { ascending: false });
+      for (const s of (subs || []) as any[]) {
+        if (!latestSignedByContract[s.contract_id]) {
+          latestSignedByContract[s.contract_id] = s.signed_pdf_url;
+        }
+      }
+    }
+    const contractsResolved = await Promise.all((contracts.data || []).map(async (c: any) => {
+      const signed = latestSignedByContract[c.id] || null;
+      const source = signed || c.completed_pdf_url || c.locked_file_url || c.file_url;
+      return {
+        ...c,
+        has_signed_pdf: !!signed,
+        resolved_file_url: await resolveContractUrl(supabase, source),
+      };
+    }));
 
     const linkedAnalysisIds = [...new Set((playerAnalyses.data || []).map((row: any) => row.analysis_writer_id).filter(Boolean))];
     const linkedAnalyses = linkedAnalysisIds.length > 0

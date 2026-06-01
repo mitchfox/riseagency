@@ -18,6 +18,7 @@ import { VideoPreviewCard } from "./VideoPreviewCard";
 import { PlaylistManager } from "@/components/PlaylistManager";
 import { HomepageVideoManager } from "./HomepageVideoManager";
 import { MarketingResources } from './marketing/MarketingResources';
+import { MarketingStrategy } from './marketing/MarketingStrategy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GalleryItem {
@@ -443,6 +444,19 @@ export const MarketingManagement = ({ isAdmin, isMarketeer }: { isAdmin: boolean
           </AccordionTrigger>
           <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
             <MarketingResources canManage={canManage} />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* STRATEGY Section */}
+        <AccordionItem value="strategy" className="border rounded-lg">
+          <AccordionTrigger className="px-3 sm:px-4 py-2 sm:py-3 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <List className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <span className="text-base sm:text-lg font-semibold">STRATEGY</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
+            <MarketingStrategy canManage={canManage} />
           </AccordionContent>
         </AccordionItem>
 
