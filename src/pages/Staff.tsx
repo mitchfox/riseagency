@@ -1434,40 +1434,80 @@ const Staff = () => {
 
           {/* Right side: home + music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Home"
-              onClick={() => window.open('/', '_blank')}
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-            {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
-            {(isAdmin || !permissionManagedRole) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Open a Player Portal"
-                onClick={() => setPortalQuickOpen(true)}
-              >
-                <Users className="h-4 w-4" />
-              </Button>
+            {isMobile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" title="Menu">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" side="bottom" className="w-56">
+                  <DropdownMenuItem onClick={() => window.open('/', '_blank')}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> Home
+                  </DropdownMenuItem>
+                  {(isAdmin || !permissionManagedRole) && (
+                    <DropdownMenuItem onClick={() => setPortalQuickOpen(true)}>
+                      <Users className="h-4 w-4 mr-2" /> Open a Player Portal
+                    </DropdownMenuItem>
+                  )}
+                  {(isAdmin || !permissionManagedRole || canView('schedule')) && (
+                    <DropdownMenuItem onClick={() => {
+                      if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                        setExpandedSection('schedule');
+                      }
+                    }}>
+                      <Calendar className="h-4 w-4 mr-2" /> Schedule
+                    </DropdownMenuItem>
+                  )}
+                  {((isAdmin || !permissionManagedRole || canView('header_music')) || (user && (isAdmin || !permissionManagedRole || canView('header_notifications')))) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="flex items-center justify-around px-1 py-1">
+                        {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+                        {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
+                      </div>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Home"
+                  onClick={() => window.open('/', '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+                {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+                {(isAdmin || !permissionManagedRole) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Open a Player Portal"
+                    onClick={() => setPortalQuickOpen(true)}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
+                {(isAdmin || !permissionManagedRole || canView('schedule')) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Open Schedule"
+                    onClick={() => {
+                      if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                        setExpandedSection('schedule');
+                      }
+                    }}
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                )}
+                {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
+              </>
             )}
-            {(isAdmin || !permissionManagedRole || canView('schedule')) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Open Schedule"
-                onClick={() => {
-                  if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
-                    setExpandedSection('schedule');
-                  }
-                }}
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-            )}
-            {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
             </>
           )}
