@@ -7,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, FileText, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Upload, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+const createSlug = (title: string): string =>
+  title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim();
 
 interface PressRelease {
   id: string;
@@ -271,6 +274,16 @@ const PressReleasesManagement = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
+                    {release.is_published && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Open public article"
+                        onClick={() => window.open(`https://www.risefootballagency.com/press-releases/${createSlug(release.title)}`, '_blank', 'noopener,noreferrer')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(release)}>
                       <Pencil className="h-4 w-4" />
                     </Button>

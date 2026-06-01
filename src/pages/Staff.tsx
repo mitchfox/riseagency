@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { KeyboardShortcutsDialog } from "@/components/staff/KeyboardShortcutsDialog";
@@ -203,6 +204,8 @@ const Staff = () => {
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const logoPressTimerRef = useRef<number | null>(null);
+  const logoLongPressFiredRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
   
   // Role permissions from database
@@ -1216,13 +1219,33 @@ const Staff = () => {
           {/* Centre logo — clickable to collapse/expand */}
           <div
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
-            onClick={() => setHeaderCollapsed(prev => !prev)}
-            title={headerCollapsed ? 'Show header' : 'Hide header'}
+            onPointerDown={() => {
+              logoLongPressFiredRef.current = false;
+              if (logoPressTimerRef.current) window.clearTimeout(logoPressTimerRef.current);
+              logoPressTimerRef.current = window.setTimeout(() => {
+                logoLongPressFiredRef.current = true;
+                if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                  setExpandedSection('schedule');
+                }
+              }, 500);
+            }}
+            onPointerUp={() => {
+              if (logoPressTimerRef.current) { window.clearTimeout(logoPressTimerRef.current); logoPressTimerRef.current = null; }
+              if (!logoLongPressFiredRef.current) {
+                setHeaderCollapsed(prev => !prev);
+              }
+            }}
+            onPointerLeave={() => {
+              if (logoPressTimerRef.current) { window.clearTimeout(logoPressTimerRef.current); logoPressTimerRef.current = null; }
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            title={headerCollapsed ? 'Tap to show header — hold to open My Tasks' : 'Tap to hide header — hold to open My Tasks'}
           >
             <img
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200`}
+              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200 select-none`}
+              draggable={false}
             />
           </div>
 
@@ -1411,40 +1434,80 @@ const Staff = () => {
 
           {/* Right side: home + music + notifications — always far right */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Home"
-              onClick={() => window.open('/', '_blank')}
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-            {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
-            {(isAdmin || !permissionManagedRole) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Open a Player Portal"
-                onClick={() => setPortalQuickOpen(true)}
-              >
-                <Users className="h-4 w-4" />
-              </Button>
+            {isMobile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" title="Menu">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" side="bottom" className="w-56">
+                  <DropdownMenuItem onClick={() => window.open('/', '_blank')}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> Home
+                  </DropdownMenuItem>
+                  {(isAdmin || !permissionManagedRole) && (
+                    <DropdownMenuItem onClick={() => setPortalQuickOpen(true)}>
+                      <Users className="h-4 w-4 mr-2" /> Open a Player Portal
+                    </DropdownMenuItem>
+                  )}
+                  {(isAdmin || !permissionManagedRole || canView('schedule')) && (
+                    <DropdownMenuItem onClick={() => {
+                      if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                        setExpandedSection('schedule');
+                      }
+                    }}>
+                      <Calendar className="h-4 w-4 mr-2" /> Schedule
+                    </DropdownMenuItem>
+                  )}
+                  {((isAdmin || !permissionManagedRole || canView('header_music')) || (user && (isAdmin || !permissionManagedRole || canView('header_notifications')))) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="flex items-center justify-around px-1 py-1">
+                        {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+                        {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
+                      </div>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Home"
+                  onClick={() => window.open('/', '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+                {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+                {(isAdmin || !permissionManagedRole) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Open a Player Portal"
+                    onClick={() => setPortalQuickOpen(true)}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
+                {(isAdmin || !permissionManagedRole || canView('schedule')) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Open Schedule"
+                    onClick={() => {
+                      if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                        setExpandedSection('schedule');
+                      }
+                    }}
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                )}
+                {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
+              </>
             )}
-            {(isAdmin || !permissionManagedRole || canView('schedule')) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Open Schedule"
-                onClick={() => {
-                  if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
-                    setExpandedSection('schedule');
-                  }
-                }}
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-            )}
-            {user && (isAdmin || !permissionManagedRole || canView('header_notifications')) && <StaffNotificationsDropdown userId={user.id} />}
           </div>
             </>
           )}
