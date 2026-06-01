@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Trash2, Repeat, Image as ImageIcon, ClipboardList, Upload, X } from "lucide-react";
 
 export type ScheduleItem = {
-  id: string;
+  id: string; // empty string when creating a new draft item
   user_id: string;
   task_id: string | null;
   title: string;
@@ -59,12 +59,70 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
 
   if (!item) return null;
 
+  const isNew = !item.id;
+
   const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
 
   const handleSave = async () => {
     if (!item) return;
     setSaving(true);
     try {
+      // ---------- CREATE PATH ----------
+      if (isNew) {
+        const insertPayload: any = {
+          user_id: item.user_id,
+          task_id: item.task_id ?? null,
+          title: title.trim() || "Untitled",
+          notes: notes || null,
+          scheduled_date: date,
+          start_time: start + ":00",
+          end_time: end + ":00",
+          image_url: imageUrl.trim() || null,
+        };
+        const { data, error } = await supabase
+          .from("staff_personal_schedule_items")
+          .insert(insertPayload)
+          .select()
+          .single();
+        if (error || !data) throw error || new Error("Insert failed");
+        let created = data as ScheduleItem;
+
+        // Optional recurrence on creation
+        if (recurring) {
+          const groupId = created.id;
+          await supabase
+            .from("staff_personal_schedule_items")
+            .update({ recurring_weekly: true, recurrence_group_id: groupId })
+            .eq("id", groupId);
+          const baseDate = new Date(date + "T00:00:00");
+          const clones = Array.from({ length: 11 }, (_, i) => {
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + (i + 1) * 7);
+            return {
+              user_id: item.user_id,
+              task_id: item.task_id,
+              title: insertPayload.title,
+              notes: insertPayload.notes,
+              scheduled_date: fmtDate(d),
+              start_time: insertPayload.start_time,
+              end_time: insertPayload.end_time,
+              recurring_weekly: true,
+              recurrence_group_id: groupId,
+              image_url: insertPayload.image_url,
+            };
+          });
+          await supabase.from("staff_personal_schedule_items").insert(clones);
+          created = { ...created, recurring_weekly: true, recurrence_group_id: groupId };
+        }
+
+        toast.success("Added");
+        onSaved(created, { recurrenceChanged: true });
+        onOpenChange(false);
+        setSaving(false);
+        return;
+      }
+
+      // ---------- UPDATE PATH ----------
       const recurrenceChanged = !!item.recurring_weekly !== recurring;
       const updates: any = {
         title: title.trim() || "Untitled",
@@ -141,7 +199,7 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
   };
 
   const handleDelete = async (allFuture: boolean) => {
-    if (!item) return;
+    if (!item || isNew) { onOpenChange(false); return; }
     const groupId = item.recurrence_group_id;
     try {
       if (allFuture && groupId) {
@@ -174,7 +232,8 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `${item.user_id}/${item.id}-${Date.now()}.${ext}`;
+      const idPart = item.id || "draft";
+      const path = `${item.user_id}/${idPart}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("schedule-images").upload(path, file, { upsert: true, contentType: file.type });
       if (error) throw error;
       const { data } = supabase.storage.from("schedule-images").getPublicUrl(path);
@@ -189,9 +248,9 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl w-[95vw]">
         <DialogHeader>
-          <DialogTitle>Edit task</DialogTitle>
+          <DialogTitle>{isNew ? "Add task" : "Edit task"}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -266,10 +325,12 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
 
         <DialogFooter className="flex flex-wrap items-center justify-between gap-2 sm:justify-between">
           <div className="flex flex-wrap gap-2">
-            <Button variant="destructive" size="sm" onClick={() => handleDelete(false)}>
-              <Trash2 className="h-4 w-4 mr-1" /> Delete
-            </Button>
-            {isRecurring && (
+            {!isNew && (
+              <Button variant="destructive" size="sm" onClick={() => handleDelete(false)}>
+                <Trash2 className="h-4 w-4 mr-1" /> Delete
+              </Button>
+            )}
+            {!isNew && isRecurring && (
               <Button variant="outline" size="sm" onClick={() => handleDelete(true)}>
                 Delete this & all future
               </Button>
@@ -277,7 +338,7 @@ export const TaskDetailDialog = ({ item, open, onOpenChange, onSaved, onDeleted,
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>Save</Button>
+            <Button onClick={handleSave} disabled={saving}>{isNew ? "Add" : "Save"}</Button>
           </div>
         </DialogFooter>
       </DialogContent>
