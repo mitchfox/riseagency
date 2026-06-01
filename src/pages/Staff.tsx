@@ -1219,13 +1219,33 @@ const Staff = () => {
           {/* Centre logo — clickable to collapse/expand */}
           <div
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 cursor-pointer"
-            onClick={() => setHeaderCollapsed(prev => !prev)}
-            title={headerCollapsed ? 'Show header' : 'Hide header'}
+            onPointerDown={() => {
+              logoLongPressFiredRef.current = false;
+              if (logoPressTimerRef.current) window.clearTimeout(logoPressTimerRef.current);
+              logoPressTimerRef.current = window.setTimeout(() => {
+                logoLongPressFiredRef.current = true;
+                if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
+                  setExpandedSection('schedule');
+                }
+              }, 500);
+            }}
+            onPointerUp={() => {
+              if (logoPressTimerRef.current) { window.clearTimeout(logoPressTimerRef.current); logoPressTimerRef.current = null; }
+              if (!logoLongPressFiredRef.current) {
+                setHeaderCollapsed(prev => !prev);
+              }
+            }}
+            onPointerLeave={() => {
+              if (logoPressTimerRef.current) { window.clearTimeout(logoPressTimerRef.current); logoPressTimerRef.current = null; }
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            title={headerCollapsed ? 'Tap to show header — hold to open My Tasks' : 'Tap to hide header — hold to open My Tasks'}
           >
             <img
               src={theme === 'light' ? '/RISEBlack.png' : '/RISEWhite.png'}
               alt="RISE"
-              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200`}
+              className={`${headerCollapsed ? 'h-6' : 'h-9'} w-auto transition-all duration-200 select-none`}
+              draggable={false}
             />
           </div>
 
