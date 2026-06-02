@@ -578,7 +578,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
             {selectedPlaylist.clips.length > 0 && (
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={sortPlaylistByR90}
+                  onClick={() => setConfirmSortOpen(true)}
                   size="sm"
                   variant="outline"
                   disabled={saving}
