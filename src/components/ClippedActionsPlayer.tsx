@@ -418,6 +418,14 @@ export const ClippedActionsPlayer = ({
                         className="flex-1 flex items-center gap-3 text-left min-w-0"
                       >
                         <span className="text-white/50 w-6 text-right">{idx + 1}</span>
+                        {clip.clip_logo_url && (
+                          <img
+                            src={clip.clip_logo_url}
+                            alt=""
+                            className="w-4 h-4 object-contain shrink-0"
+                            loading="lazy"
+                          />
+                        )}
                         <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
                         {clip.id === currentClip.id && (
                           <span className="text-primary text-[10px] font-bold">▶</span>
