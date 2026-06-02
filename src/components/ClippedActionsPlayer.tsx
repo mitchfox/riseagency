@@ -252,6 +252,14 @@ export const ClippedActionsPlayer = ({
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
             </span>
+            {currentClip.clip_logo_url && (
+              <img
+                src={currentClip.clip_logo_url}
+                alt="Club logo"
+                className="w-7 h-7 object-contain shrink-0 mt-0.5"
+                loading="lazy"
+              />
+            )}
             <div className="min-w-0 flex-1">
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
               <div className="text-white/70 text-xs truncate flex items-center gap-1.5">
