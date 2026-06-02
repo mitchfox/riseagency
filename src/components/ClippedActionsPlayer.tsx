@@ -104,17 +104,13 @@ export const ClippedActionsPlayer = ({
     [clips, mode]
   );
 
-  // When the clip list reorders (e.g. user moved a clip), keep currentIndex
-  // pointing at the clip the user was actually on so the highlighted row,
-  // counter, and "▶" marker all stay in sync without remounting the player.
+  // Keep currentIndex inside bounds when the list shrinks from outside.
   useEffect(() => {
-    const trackedId = currentClipIdRef.current;
-    if (!trackedId) return;
-    const newIdx = sortedClips.findIndex((c) => c.id === trackedId);
-    if (newIdx >= 0 && newIdx !== currentIndex) {
-      setCurrentIndex(newIdx);
+    if (sortedClips.length === 0) return;
+    if (currentIndex > sortedClips.length - 1) {
+      setCurrentIndex(sortedClips.length - 1);
     }
-  }, [sortedClips]);
+  }, [sortedClips.length, currentIndex]);
 
   // Auto-translate action descriptions + notes to the player's portal language
   const translatableStrings = useMemo(
@@ -161,6 +157,10 @@ export const ClippedActionsPlayer = ({
   const stopFn = player.stop;
   const clipError = player.clipError;
 
+  // Only react to open/close transitions. Depending on `stopFn`, `onOpenChange`
+  // or `sortedClips.length` here used to re-fire on every parent re-render,
+  // snapping the viewer back to clip #1 whenever the parent reshuffled the
+  // clips array (e.g. after async metadata loaded).
   useEffect(() => {
     if (open) {
       if (sortedClips.length === 0) {
@@ -169,10 +169,13 @@ export const ClippedActionsPlayer = ({
         return;
       }
       setCurrentIndex(0);
+      currentClipIdRef.current = sortedClips[0]?.id ?? null;
     } else {
       stopFn();
+      currentClipIdRef.current = null;
     }
-  }, [open, onOpenChange, stopFn, sortedClips.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   useEffect(() => {
     if (!open || !currentClip) return;
@@ -231,7 +234,28 @@ export const ClippedActionsPlayer = ({
 
   const jumpToClip = (clipId: string) => {
     const idx = sortedClips.findIndex(c => c.id === clipId);
-    if (idx >= 0) setCurrentIndex(idx);
+    if (idx >= 0) jumpToIndex(idx);
+  };
+  const jumpToIndex = (idx: number) => {
+    if (idx < 0 || idx >= sortedClips.length) return;
+    setCurrentIndex(idx);
+    const target = sortedClips[idx];
+    if (target?.id) currentClipIdRef.current = target.id;
+  };
+
+  // Reorder helper that fires the parent callback AND keeps currentIndex
+  // visually consistent with the move, so the highlighted row, "N/Total"
+  // counter, and "▶" marker all update without remounting the player.
+  const reorderAndFollow = (fromIdx: number, toPos: number) => {
+    if (!onReorderClip) return;
+    const toIdx = Math.max(0, Math.min(sortedClips.length - 1, toPos - 1));
+    onReorderClip(fromIdx, toPos);
+    setCurrentIndex((prev) => {
+      if (fromIdx === prev) return toIdx;
+      if (fromIdx < prev && toIdx >= prev) return prev - 1;
+      if (fromIdx > prev && toIdx <= prev) return prev + 1;
+      return prev;
+    });
   };
 
   const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
@@ -404,17 +428,19 @@ export const ClippedActionsPlayer = ({
                   Playlist ({sortedClips.length})
                 </div>
                 {sortedClips.map((clip, idx) => {
-                  const posVal = movePosById[clip.id] ?? String(idx + 1);
+                  const moveKey = `${clip.id}#${idx}`;
+                  const posVal = movePosById[moveKey] ?? String(idx + 1);
+                  const isActive = idx === currentIndex;
                   return (
                     <div
-                      key={clip.id}
-                      data-active={clip.id === currentClip.id}
+                      key={moveKey}
+                      data-active={isActive}
                       className={`w-full px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
-                        clip.id === currentClip.id ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                        isActive ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
                       }`}
                     >
                       <button
-                        onClick={() => jumpToClip(clip.id)}
+                        onClick={() => jumpToIndex(idx)}
                         className="flex-1 flex items-center gap-3 text-left min-w-0"
                       >
                         <span className="text-white/50 w-6 text-right">{idx + 1}</span>
@@ -427,7 +453,7 @@ export const ClippedActionsPlayer = ({
                           />
                         )}
                         <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
-                        {clip.id === currentClip.id && (
+                        {isActive && (
                           <span className="text-primary text-[10px] font-bold">▶</span>
                         )}
                       </button>
@@ -438,22 +464,22 @@ export const ClippedActionsPlayer = ({
                             min={1}
                             max={sortedClips.length}
                             value={posVal}
-                            onChange={(e) => setMovePosById((p) => ({ ...p, [clip.id]: e.target.value }))}
+                            onChange={(e) => setMovePosById((p) => ({ ...p, [moveKey]: e.target.value }))}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 const n = parseInt(posVal, 10);
                                 if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                  onReorderClip(idx, n);
-                                  setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                                  reorderAndFollow(idx, n);
+                                  setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                                 }
                               }
                             }}
                             onBlur={() => {
                               const n = parseInt(posVal, 10);
                               if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                onReorderClip(idx, n);
+                                reorderAndFollow(idx, n);
                               }
-                              setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                              setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                             }}
                             className="w-12 h-6 text-[11px] px-1 bg-white/10 border-white/20 text-white"
                             title="Type new position then press Enter"
