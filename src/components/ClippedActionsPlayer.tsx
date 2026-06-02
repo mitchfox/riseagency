@@ -104,17 +104,13 @@ export const ClippedActionsPlayer = ({
     [clips, mode]
   );
 
-  // When the clip list reorders (e.g. user moved a clip), keep currentIndex
-  // pointing at the clip the user was actually on so the highlighted row,
-  // counter, and "▶" marker all stay in sync without remounting the player.
+  // Keep currentIndex inside bounds when the list shrinks from outside.
   useEffect(() => {
-    const trackedId = currentClipIdRef.current;
-    if (!trackedId) return;
-    const newIdx = sortedClips.findIndex((c) => c.id === trackedId);
-    if (newIdx >= 0 && newIdx !== currentIndex) {
-      setCurrentIndex(newIdx);
+    if (sortedClips.length === 0) return;
+    if (currentIndex > sortedClips.length - 1) {
+      setCurrentIndex(sortedClips.length - 1);
     }
-  }, [sortedClips]);
+  }, [sortedClips.length, currentIndex]);
 
   // Auto-translate action descriptions + notes to the player's portal language
   const translatableStrings = useMemo(
