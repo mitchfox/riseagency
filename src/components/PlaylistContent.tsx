@@ -796,16 +796,41 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
           onReorderClip={(fromIdx, toPos) => moveClip(fromIdx, toPos)}
           onRemoveClip={(idx) => removeClipFromPlaylist(idx)}
           clips={selectedPlaylist.clips.map((c, i) => ({
-            id: c.id || `${selectedPlaylist.id}-${i}`,
+            id: c.id || `clip-${c.videoUrl}`,
             action_number: i + 1,
             action_type: "Playlist",
             action_description: c.name,
             video_url: c.videoUrl,
             minute: 0,
             action_score: scoreFor(c.videoUrl),
+            clip_logo_url: logoFor(c.videoUrl),
           }))}
         />
       )}
+
+      <AlertDialog open={confirmSortOpen} onOpenChange={setConfirmSortOpen}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reorder by R90 score?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This rewrites the order of every clip in this playlist, highest R90 first. You can't undo it in one click.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive sm:min-w-[140px]"
+            >
+              No, keep order
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => sortPlaylistByR90()}
+              className="bg-green-600 hover:bg-green-700 text-white sm:min-w-[140px]"
+            >
+              Yes, reorder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
