@@ -469,7 +469,7 @@ export const ClippedActionsPlayer = ({
                               if (e.key === 'Enter') {
                                 const n = parseInt(posVal, 10);
                                 if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                  onReorderClip(idx, n);
+                                  reorderAndFollow(idx, n);
                                   setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                                 }
                               }
@@ -477,7 +477,7 @@ export const ClippedActionsPlayer = ({
                             onBlur={() => {
                               const n = parseInt(posVal, 10);
                               if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                onReorderClip(idx, n);
+                                reorderAndFollow(idx, n);
                               }
                               setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                             }}
