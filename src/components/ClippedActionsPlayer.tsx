@@ -161,6 +161,10 @@ export const ClippedActionsPlayer = ({
   const stopFn = player.stop;
   const clipError = player.clipError;
 
+  // Only react to open/close transitions. Depending on `stopFn`, `onOpenChange`
+  // or `sortedClips.length` here used to re-fire on every parent re-render,
+  // snapping the viewer back to clip #1 whenever the parent reshuffled the
+  // clips array (e.g. after async metadata loaded).
   useEffect(() => {
     if (open) {
       if (sortedClips.length === 0) {
@@ -169,10 +173,13 @@ export const ClippedActionsPlayer = ({
         return;
       }
       setCurrentIndex(0);
+      currentClipIdRef.current = sortedClips[0]?.id ?? null;
     } else {
       stopFn();
+      currentClipIdRef.current = null;
     }
-  }, [open, onOpenChange, stopFn, sortedClips.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   useEffect(() => {
     if (!open || !currentClip) return;
