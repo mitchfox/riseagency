@@ -238,7 +238,13 @@ export const ClippedActionsPlayer = ({
 
   const jumpToClip = (clipId: string) => {
     const idx = sortedClips.findIndex(c => c.id === clipId);
-    if (idx >= 0) setCurrentIndex(idx);
+    if (idx >= 0) jumpToIndex(idx);
+  };
+  const jumpToIndex = (idx: number) => {
+    if (idx < 0 || idx >= sortedClips.length) return;
+    setCurrentIndex(idx);
+    const target = sortedClips[idx];
+    if (target?.id) currentClipIdRef.current = target.id;
   };
 
   const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
