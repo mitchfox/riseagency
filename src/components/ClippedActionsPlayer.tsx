@@ -92,6 +92,7 @@ export const ClippedActionsPlayer = ({
   const [showClipList, setShowClipList] = useState(true);
   const clipListRef = useRef<HTMLDivElement>(null);
   const [movePosById, setMovePosById] = useState<Record<string, string>>({});
+  const currentClipIdRef = useRef<string | null>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -102,6 +103,18 @@ export const ClippedActionsPlayer = ({
       : sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url)),
     [clips, mode]
   );
+
+  // When the clip list reorders (e.g. user moved a clip), keep currentIndex
+  // pointing at the clip the user was actually on so the highlighted row,
+  // counter, and "▶" marker all stay in sync without remounting the player.
+  useEffect(() => {
+    const trackedId = currentClipIdRef.current;
+    if (!trackedId) return;
+    const newIdx = sortedClips.findIndex((c) => c.id === trackedId);
+    if (newIdx >= 0 && newIdx !== currentIndex) {
+      setCurrentIndex(newIdx);
+    }
+  }, [sortedClips]);
 
   // Auto-translate action descriptions + notes to the player's portal language
   const translatableStrings = useMemo(
@@ -137,6 +150,12 @@ export const ClippedActionsPlayer = ({
   const currentClip = sortedClips[currentIndex];
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
   const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange && !isFullMatchUrl(currentClip.video_url);
+
+  // Track the id of the clip currently playing so we can re-locate it after a
+  // reorder (see the sortedClips effect above).
+  useEffect(() => {
+    if (currentClip?.id) currentClipIdRef.current = currentClip.id;
+  }, [currentClip?.id]);
 
   const playClipFn = player.playClip;
   const stopFn = player.stop;
@@ -233,6 +252,14 @@ export const ClippedActionsPlayer = ({
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
             </span>
+            {currentClip.clip_logo_url && (
+              <img
+                src={currentClip.clip_logo_url}
+                alt="Club logo"
+                className="w-7 h-7 object-contain shrink-0 mt-0.5"
+                loading="lazy"
+              />
+            )}
             <div className="min-w-0 flex-1">
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
               <div className="text-white/70 text-xs truncate flex items-center gap-1.5">
@@ -391,6 +418,14 @@ export const ClippedActionsPlayer = ({
                         className="flex-1 flex items-center gap-3 text-left min-w-0"
                       >
                         <span className="text-white/50 w-6 text-right">{idx + 1}</span>
+                        {clip.clip_logo_url && (
+                          <img
+                            src={clip.clip_logo_url}
+                            alt=""
+                            className="w-4 h-4 object-contain shrink-0"
+                            loading="lazy"
+                          />
+                        )}
                         <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
                         {clip.id === currentClip.id && (
                           <span className="text-primary text-[10px] font-bold">▶</span>

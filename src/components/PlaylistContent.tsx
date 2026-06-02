@@ -11,6 +11,16 @@ import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
 import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { ArrowDownWideNarrow } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Clip {
   id?: string;
@@ -44,12 +54,12 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [targetPosition, setTargetPosition] = useState("");
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [confirmSortOpen, setConfirmSortOpen] = useState(false);
 
-  const actionScores = usePlaylistActionScores(playerData?.id);
-  const scoreFor = (videoUrl: string): number | null => {
-    const s = actionScores[videoUrl];
-    return s == null ? null : s;
-  };
+  const clipMeta = usePlaylistActionScores(playerData?.id);
+  const scoreFor = (videoUrl: string): number | null => clipMeta[videoUrl]?.score ?? null;
+  const logoFor = (videoUrl: string): string | null => clipMeta[videoUrl]?.clubLogoUrl ?? null;
+  const opponentFor = (videoUrl: string): string | null => clipMeta[videoUrl]?.opponent ?? null;
 
   useEffect(() => {
     if (playerData?.id) {
@@ -568,7 +578,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
             {selectedPlaylist.clips.length > 0 && (
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={sortPlaylistByR90}
+                  onClick={() => setConfirmSortOpen(true)}
                   size="sm"
                   variant="outline"
                   disabled={saving}
@@ -648,6 +658,15 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
+                        {logoFor(clip.videoUrl) && (
+                          <img
+                            src={logoFor(clip.videoUrl) as string}
+                            alt={opponentFor(clip.videoUrl) || "Club logo"}
+                            title={opponentFor(clip.videoUrl) || undefined}
+                            className="w-5 h-5 object-contain mt-0.5 shrink-0"
+                            loading="lazy"
+                          />
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-sm">{clip.name}</p>
@@ -777,16 +796,41 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
           onReorderClip={(fromIdx, toPos) => moveClip(fromIdx, toPos)}
           onRemoveClip={(idx) => removeClipFromPlaylist(idx)}
           clips={selectedPlaylist.clips.map((c, i) => ({
-            id: c.id || `${selectedPlaylist.id}-${i}`,
+            id: c.id || `clip-${c.videoUrl}`,
             action_number: i + 1,
             action_type: "Playlist",
             action_description: c.name,
             video_url: c.videoUrl,
             minute: 0,
             action_score: scoreFor(c.videoUrl),
+            clip_logo_url: logoFor(c.videoUrl),
           }))}
         />
       )}
+
+      <AlertDialog open={confirmSortOpen} onOpenChange={setConfirmSortOpen}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reorder by R90 score?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This rewrites the order of every clip in this playlist, highest R90 first. You can't undo it in one click.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive sm:min-w-[140px]"
+            >
+              No, keep order
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => sortPlaylistByR90()}
+              className="bg-green-600 hover:bg-green-700 text-white sm:min-w-[140px]"
+            >
+              Yes, reorder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
