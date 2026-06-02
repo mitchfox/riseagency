@@ -11,6 +11,16 @@ import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
 import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { ArrowDownWideNarrow } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Clip {
   id?: string;
@@ -44,12 +54,12 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [targetPosition, setTargetPosition] = useState("");
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
+  const [confirmSortOpen, setConfirmSortOpen] = useState(false);
 
-  const actionScores = usePlaylistActionScores(playerData?.id);
-  const scoreFor = (videoUrl: string): number | null => {
-    const s = actionScores[videoUrl];
-    return s == null ? null : s;
-  };
+  const clipMeta = usePlaylistActionScores(playerData?.id);
+  const scoreFor = (videoUrl: string): number | null => clipMeta[videoUrl]?.score ?? null;
+  const logoFor = (videoUrl: string): string | null => clipMeta[videoUrl]?.clubLogoUrl ?? null;
+  const opponentFor = (videoUrl: string): string | null => clipMeta[videoUrl]?.opponent ?? null;
 
   useEffect(() => {
     if (playerData?.id) {
