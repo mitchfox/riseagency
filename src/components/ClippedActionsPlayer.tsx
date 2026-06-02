@@ -92,6 +92,7 @@ export const ClippedActionsPlayer = ({
   const [showClipList, setShowClipList] = useState(true);
   const clipListRef = useRef<HTMLDivElement>(null);
   const [movePosById, setMovePosById] = useState<Record<string, string>>({});
+  const currentClipIdRef = useRef<string | null>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -102,6 +103,18 @@ export const ClippedActionsPlayer = ({
       : sortReportActionsChronologically(clips).filter((clip) => !!clip.video_url)),
     [clips, mode]
   );
+
+  // When the clip list reorders (e.g. user moved a clip), keep currentIndex
+  // pointing at the clip the user was actually on so the highlighted row,
+  // counter, and "▶" marker all stay in sync without remounting the player.
+  useEffect(() => {
+    const trackedId = currentClipIdRef.current;
+    if (!trackedId) return;
+    const newIdx = sortedClips.findIndex((c) => c.id === trackedId);
+    if (newIdx >= 0 && newIdx !== currentIndex) {
+      setCurrentIndex(newIdx);
+    }
+  }, [sortedClips]);
 
   // Auto-translate action descriptions + notes to the player's portal language
   const translatableStrings = useMemo(
