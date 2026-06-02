@@ -658,6 +658,15 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
+                        {logoFor(clip.videoUrl) && (
+                          <img
+                            src={logoFor(clip.videoUrl) as string}
+                            alt={opponentFor(clip.videoUrl) || "Club logo"}
+                            title={opponentFor(clip.videoUrl) || undefined}
+                            className="w-5 h-5 object-contain mt-0.5 shrink-0"
+                            loading="lazy"
+                          />
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-sm">{clip.name}</p>
