@@ -151,6 +151,12 @@ export const ClippedActionsPlayer = ({
   const hasTimeRange = currentClip?.clip_start != null && currentClip?.clip_end != null && currentClip.clip_end > currentClip.clip_start;
   const isStandaloneClip = !!currentClip?.video_url && !hasTimeRange && !isFullMatchUrl(currentClip.video_url);
 
+  // Track the id of the clip currently playing so we can re-locate it after a
+  // reorder (see the sortedClips effect above).
+  useEffect(() => {
+    if (currentClip?.id) currentClipIdRef.current = currentClip.id;
+  }, [currentClip?.id]);
+
   const playClipFn = player.playClip;
   const stopFn = player.stop;
   const clipError = player.clipError;
