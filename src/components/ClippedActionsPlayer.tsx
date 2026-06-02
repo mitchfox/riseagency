@@ -417,17 +417,19 @@ export const ClippedActionsPlayer = ({
                   Playlist ({sortedClips.length})
                 </div>
                 {sortedClips.map((clip, idx) => {
-                  const posVal = movePosById[clip.id] ?? String(idx + 1);
+                  const moveKey = `${clip.id}#${idx}`;
+                  const posVal = movePosById[moveKey] ?? String(idx + 1);
+                  const isActive = idx === currentIndex;
                   return (
                     <div
-                      key={clip.id}
-                      data-active={clip.id === currentClip.id}
+                      key={moveKey}
+                      data-active={isActive}
                       className={`w-full px-4 py-2 flex items-center gap-3 text-xs transition-colors border-b border-border/10 ${
-                        clip.id === currentClip.id ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                        isActive ? 'bg-primary/20 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
                       }`}
                     >
                       <button
-                        onClick={() => jumpToClip(clip.id)}
+                        onClick={() => jumpToIndex(idx)}
                         className="flex-1 flex items-center gap-3 text-left min-w-0"
                       >
                         <span className="text-white/50 w-6 text-right">{idx + 1}</span>
@@ -440,7 +442,7 @@ export const ClippedActionsPlayer = ({
                           />
                         )}
                         <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
-                        {clip.id === currentClip.id && (
+                        {isActive && (
                           <span className="text-primary text-[10px] font-bold">▶</span>
                         )}
                       </button>
@@ -451,13 +453,13 @@ export const ClippedActionsPlayer = ({
                             min={1}
                             max={sortedClips.length}
                             value={posVal}
-                            onChange={(e) => setMovePosById((p) => ({ ...p, [clip.id]: e.target.value }))}
+                            onChange={(e) => setMovePosById((p) => ({ ...p, [moveKey]: e.target.value }))}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 const n = parseInt(posVal, 10);
                                 if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
                                   onReorderClip(idx, n);
-                                  setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                                  setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                                 }
                               }
                             }}
@@ -466,7 +468,7 @@ export const ClippedActionsPlayer = ({
                               if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
                                 onReorderClip(idx, n);
                               }
-                              setMovePosById((p) => { const c = { ...p }; delete c[clip.id]; return c; });
+                              setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
                             }}
                             className="w-12 h-6 text-[11px] px-1 bg-white/10 border-white/20 text-white"
                             title="Type new position then press Enter"
