@@ -243,6 +243,21 @@ export const ClippedActionsPlayer = ({
     if (target?.id) currentClipIdRef.current = target.id;
   };
 
+  // Reorder helper that fires the parent callback AND keeps currentIndex
+  // visually consistent with the move, so the highlighted row, "N/Total"
+  // counter, and "▶" marker all update without remounting the player.
+  const reorderAndFollow = (fromIdx: number, toPos: number) => {
+    if (!onReorderClip) return;
+    const toIdx = Math.max(0, Math.min(sortedClips.length - 1, toPos - 1));
+    onReorderClip(fromIdx, toPos);
+    setCurrentIndex((prev) => {
+      if (fromIdx === prev) return toIdx;
+      if (fromIdx < prev && toIdx >= prev) return prev - 1;
+      if (fromIdx > prev && toIdx <= prev) return prev + 1;
+      return prev;
+    });
+  };
+
   const categoryOrder = ['Key Actions', 'Offensive', 'Defensive', 'Other'];
 
   return (
