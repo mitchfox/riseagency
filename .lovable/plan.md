@@ -1,45 +1,52 @@
-## Goals
+## Scope
+All changes target the portal Highlights → Playlists flow. Two files:
+- `src/components/PlaylistContent.tsx` (playlist list + clip rows)
+- `src/components/ClippedActionsPlayer.tsx` (the playlist player dialog)
 
-1. After reordering a clip inside the playlist player, the list numbering and active highlight must update instantly — no need to close and reopen.
-2. Each clip in playlists (list rows + in‑player rows) shows the club logo of the match (from the performance report it came from) so the source game is recognisable at a glance.
-3. Sorting a playlist by R90 score now requires a clear Yes/No confirmation so it can’t be triggered by accident.
+No backend, no business logic changes — purely UI/UX.
 
-## 1. Smooth in‑player reorder
+## Changes
 
-Root cause: in `src/components/PlaylistContent.tsx` the clips handed to `ClippedActionsPlayer` use index‑based ids (`${selectedPlaylist.id}-${i}`). When `moveClip` rewrites the array, every clip’s `id` shifts with its new index, so the player’s internal `currentIndex` stays put while the underlying clip identity changes. The active row, "▶" marker, and `1/N` counter all end up pointing at the wrong clip until the dialog is re‑mounted.
+### 1. Mobile clip-row layout (PlaylistContent.tsx)
+The current row uses a single flex line with #, logo, title, R90 chip and four action buttons (Hash / Play / Download / Trash). On a 390px viewport the Trash button overflows.
+- Restructure each clip row as two stacked rows on mobile and a single row on `sm:` and up.
+  - Top row: `#index`, club logo, name, R90 chip (wrap allowed).
+  - Bottom row (mobile only): right‑aligned action button cluster (Hash / Play / Download / Trash) inside `flex-wrap`.
+- Reduce icon button size to `h-8 w-8` and tighten gaps to `gap-1` on mobile.
+- Add `min-w-0` and `truncate` to the name container so long names can't push buttons off‑screen.
+- Same restructuring applied to the "moving clip" inline editor row so the input + tick + X stay on screen.
 
-Fixes:
-- Generate stable clip ids in `PlaylistContent.tsx` from the videoUrl (e.g. `c.id || hash(videoUrl)`), so the same clip keeps the same id across reorders.
-- In `src/components/ClippedActionsPlayer.tsx`, when `onReorderClip` is called, optimistically move `currentIndex` to the new target position if the moved clip was the currently playing one, and otherwise re‑resolve `currentIndex` from the currently playing clip’s stable id whenever the `clips` prop changes (track previous `currentClip.id` in a ref and re‑find it in `sortedClips`).
-- Clear `movePosById` for the moved clip immediately on submit so the typed number doesn’t linger as stale text.
+### 2. Collapsible "Add clips to playlist"
+- Wrap the existing Add‑clips block (label + checklist + Add button) in a `Collapsible` from `@/components/ui/collapsible`, defaulting to **closed**.
+- Trigger button shows "Add clips to playlist (N available)" with a chevron, matching the rest of the portal's outline button style.
+- State stored in a local `useState` so it persists per render but resets on remount; remembers nothing across sessions (matches existing patterns).
 
-Result: numbers in the left column, the highlighted row, and the `N/Total` counter all reflect the new order the moment the user confirms a move.
+### 3. Auto‑scroll to selected playlist
+- Add a `selectedPlaylistRef` (`useRef<HTMLDivElement>`) attached to the "Selected Playlist Content" section.
+- In a `useEffect` that depends on `selectedPlaylist?.id`, call `ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })` after a small `requestAnimationFrame` so the layout has expanded.
 
-## 2. Match club logo on clips and in player
+### 4. "Player" button styling
+- In the selected playlist header (line ~590), change the Player button from `variant="outline"` to a custom class: `bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 border-transparent`. Keep the Video icon. This makes it visibly the primary action vs the Sort‑by‑R90 outline button next to it.
 
-Extend the existing lookup hook so callers get a `videoUrl → { score, clubLogoUrl, opponent }` map.
+### 5. Tapping the currently playing clip restarts it (ClippedActionsPlayer.tsx)
+- `jumpToIndex` currently no‑ops when `idx === currentIndex`. Change behaviour so tapping the active clip:
+  - Calls `player.seekToRatio(0)` when `hasTimeRange`, OR
+  - For standalone clips, finds the `<video>` element (use a `videoRef`) and resets `currentTime = 0; play()`.
+- Apply to both the playlist‑mode list and the report‑mode `jumpToClip` (consistent UX).
 
-- Rework `src/hooks/usePlaylistActionScores.ts` (or add a sibling `usePlaylistClipMeta.ts`) to also `select id, club_logo_url, opponent` on `player_analysis`, then join via `analysis_id` on `performance_report_actions`. Return `Record<videoUrl, { score: number|null; clubLogoUrl: string|null; opponent: string|null }>`.
-- In `PlaylistContent.tsx`, render a small 16–20px club crest next to each clip row in the playlist edit list, and pass `club_logo_url` + `opponent` through the clip objects sent to `ClippedActionsPlayer` (add optional fields to the clip interface).
-- In `ClippedActionsPlayer.tsx`, in playlist mode show the same small crest at the left of each row (before the number) and a slightly larger crest in the now‑playing header area beside the clip title.
-- Fallback: when no logo is found, leave the slot empty (no placeholder square) so the row stays clean.
+### 6. Confirm tick / X next to the position input
+- In the playlist clip‑list rows, when `movePosById[moveKey]` is set AND the value differs from `idx + 1`, render two adjacent buttons: a green check (`Check` icon, `bg-green-600 text-white`) that commits the reorder via `reorderAndFollow`, and a red X (`bg-red-600 text-white`) that clears the pending value.
+- Keep existing Enter‑to‑commit and blur‑to‑commit behaviour so the recent reorder fixes still work — the new buttons just expose the same `reorderAndFollow` path explicitly so the action is obvious on touch devices.
 
-## 3. Confirm before R90 sort
+### 7. Player layout: tighter header, wider video, smaller clip list
+- Reduce header padding and gaps: `px-4 py-2` → `px-3 py-1.5`, drop the `mt-1` above `action_description`, change `line-clamp-2` to `line-clamp-1` so the description block is one line.
+- Reduce Controls‑above‑video block from `py-2` → `py-1` and shrink icon buttons to `h-8 w-8`.
+- Resize the clip list at the bottom from `max-h-[35vh]` to `max-h-[22vh]` (≈4 rows visible at the existing row height) on all breakpoints; keep `overflow-y-auto` so scrolling still works.
+- Video container already uses `flex-1` so the saved vertical space automatically expands the video. For desktop/tablet width, change the active `video` element from `object-contain` (which letterboxes) to `object-contain w-full h-full` — current state already covers width, but additionally remove side padding by ensuring the parent `<div className="flex-1 …">` has no horizontal padding (it already doesn't) and set the video to `max-w-none`. Net effect: the video fills the dialog width up to its native aspect ratio.
 
-In `PlaylistContent.tsx`:
-- Replace the direct `onClick={sortPlaylistByR90}` with an `AlertDialog` (shadcn) trigger.
-- Dialog copy: title "Reorder by R90 score?", body "This rewrites the order of every clip in this playlist. You can’t undo it in one click."
-- Buttons: Cancel (red, `bg-destructive text-destructive-foreground`) on the left, Confirm (green, custom `bg-green-600 hover:bg-green-700 text-white`) on the right — large, full‑width on mobile so they’re hard to miss.
-- Only call `sortPlaylistByR90` on Confirm; close dialog either way.
+## Technical notes
 
-## Files touched
-
-- `src/components/PlaylistContent.tsx` — stable clip ids, club logo column, R90 confirm dialog, pass logo/opponent through to player.
-- `src/components/ClippedActionsPlayer.tsx` — re‑resolve `currentIndex` from stable clip id when `clips` change, show club crest in playlist row + header, clear stale move input.
-- `src/hooks/usePlaylistActionScores.ts` — return per‑clip metadata (score + club logo + opponent), keeping current `scoreFor` callers working via a thin adapter.
-
-## Out of scope
-
-- Server‑side playlist schema changes (logo lookup stays a client join against existing tables).
-- Drag‑and‑drop reordering — only the "type new position" flow is being polished.
-- Staff `HighlightReelPlayer` is untouched; this change is scoped to the portal playlist experience the user described.
+- All buttons use existing tokens (`hsl(var(--gold))`, `bg-green-600`, `bg-red-600` are pre‑existing Tailwind utilities used elsewhere in this project; gold is the project's primary accent token).
+- The reorder confirm tick reuses `reorderAndFollow`, which was added in the recent reorder‑sync fix, so the per‑clip currentIndex tracking continues to work.
+- The "restart current clip" behaviour relies on `player.seekToRatio(0)` from `useSharedClipPlayer` for clipped video and a new `videoRef` for the standalone `<video>` element rendered in the dialog.
+- No changes to playlist data shape, edge functions, or `usePlaylistActionScores`.

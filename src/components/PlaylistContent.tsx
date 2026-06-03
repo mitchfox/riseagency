@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil, Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
 import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { ArrowDownWideNarrow } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,8 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
   const [confirmSortOpen, setConfirmSortOpen] = useState(false);
+  const [showAddClips, setShowAddClips] = useState(false);
+  const selectedPlaylistRef = useRef<HTMLDivElement | null>(null);
 
   const clipMeta = usePlaylistActionScores(playerData?.id);
   const scoreFor = (videoUrl: string): number | null => clipMeta[videoUrl]?.score ?? null;
@@ -67,6 +70,15 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       fetchPlaylists();
     }
   }, [playerData?.id]);
+
+  // Auto-scroll the selected playlist section into view when a playlist opens.
+  useEffect(() => {
+    if (!selectedPlaylist?.id) return;
+    const id = requestAnimationFrame(() => {
+      selectedPlaylistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selectedPlaylist?.id]);
 
   const fetchPlaylists = async () => {
     if (!playerData?.id) {
