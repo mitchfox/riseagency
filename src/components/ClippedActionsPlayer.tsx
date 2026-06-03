@@ -435,7 +435,7 @@ export const ClippedActionsPlayer = ({
 
         {/* Clip list table */}
         {showClipList && (
-          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
+          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[22vh]">
             {mode === 'playlist' ? (
               <div>
                 <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
@@ -488,16 +488,43 @@ export const ClippedActionsPlayer = ({
                                 }
                               }
                             }}
-                            onBlur={() => {
-                              const n = parseInt(posVal, 10);
-                              if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                reorderAndFollow(idx, n);
-                              }
-                              setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
-                            }}
                             className="w-12 h-6 text-[11px] px-1 bg-white/10 border-white/20 text-white"
-                            title="Type new position then press Enter"
+                            title="Type new position then confirm with the green tick"
                           />
+                          {(() => {
+                            const n = parseInt(posVal, 10);
+                            const pending = !isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1;
+                            if (!pending) return null;
+                            return (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 bg-green-600 hover:bg-green-700 text-white shrink-0"
+                                  title="Confirm reorder"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    reorderAndFollow(idx, n);
+                                    setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
+                                  }}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 bg-red-600 hover:bg-red-700 text-white shrink-0"
+                                  title="Cancel"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                       {playerId && clip.video_url && (
