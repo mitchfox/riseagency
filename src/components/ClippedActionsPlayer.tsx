@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, DownloadCloud, Star } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, DownloadCloud, Star, Check } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
@@ -93,6 +93,7 @@ export const ClippedActionsPlayer = ({
   const clipListRef = useRef<HTMLDivElement>(null);
   const [movePosById, setMovePosById] = useState<Record<string, string>>({});
   const currentClipIdRef = useRef<string | null>(null);
+  const standaloneVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -238,6 +239,18 @@ export const ClippedActionsPlayer = ({
   };
   const jumpToIndex = (idx: number) => {
     if (idx < 0 || idx >= sortedClips.length) return;
+    // Tapping the already-active clip restarts it from the beginning.
+    if (idx === currentIndex) {
+      if (hasTimeRange) {
+        try { player.seekToRatio(0); } catch {}
+      } else if (standaloneVideoRef.current) {
+        try {
+          standaloneVideoRef.current.currentTime = 0;
+          standaloneVideoRef.current.play().catch(() => {});
+        } catch {}
+      }
+      return;
+    }
     setCurrentIndex(idx);
     const target = sortedClips[idx];
     if (target?.id) currentClipIdRef.current = target.id;
