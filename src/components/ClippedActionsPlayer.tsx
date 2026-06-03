@@ -284,7 +284,7 @@ export const ClippedActionsPlayer = ({
         <DialogTitle className="sr-only">{t(language, "full_match_video")}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 pt-[calc(env(safe-area-inset-top)+12px)] md:pt-2 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-3 py-1.5 pt-[calc(env(safe-area-inset-top)+8px)] md:pt-1.5 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
@@ -315,8 +315,8 @@ export const ClippedActionsPlayer = ({
                 })()}
               </div>
               {currentClip.action_description && (
-                <div className="mt-1 text-white/85 text-xs leading-snug">
-                  <p className="line-clamp-2">{trText(currentClip.action_description)}</p>
+                <div className="text-white/85 text-xs leading-snug">
+                  <p className="line-clamp-1">{trText(currentClip.action_description)}</p>
                 </div>
               )}
             </div>
@@ -327,15 +327,15 @@ export const ClippedActionsPlayer = ({
         </div>
 
         {/* Controls - above video */}
-        <div className="bg-black/90 border-b border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
+        <div className="bg-black/90 border-b border-border/30 px-3 py-1 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={handlePrevious} disabled={currentIndex === 0}>
               <SkipBack className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={player.togglePlayPause}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={player.togglePlayPause}>
               {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
