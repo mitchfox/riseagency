@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, DownloadCloud, Star } from 'lucide-react';
+import { X, SkipBack, SkipForward, Play, Pause, Loader2, ChevronUp, ChevronDown, Download, DownloadCloud, Star, Check } from 'lucide-react';
 import { t } from '@/lib/portalTranslations';
 import { sortReportActionsChronologically } from '@/lib/reportActionHelpers';
 import { useSharedClipPlayer, type SharedClipPlayerState } from '@/hooks/useSharedClipPlayer';
@@ -93,6 +93,7 @@ export const ClippedActionsPlayer = ({
   const clipListRef = useRef<HTMLDivElement>(null);
   const [movePosById, setMovePosById] = useState<Record<string, string>>({});
   const currentClipIdRef = useRef<string | null>(null);
+  const standaloneVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const localPlayer = useSharedClipPlayer();
   const player = providedPlayer ?? localPlayer;
@@ -238,6 +239,18 @@ export const ClippedActionsPlayer = ({
   };
   const jumpToIndex = (idx: number) => {
     if (idx < 0 || idx >= sortedClips.length) return;
+    // Tapping the already-active clip restarts it from the beginning.
+    if (idx === currentIndex) {
+      if (hasTimeRange) {
+        try { player.seekToRatio(0); } catch {}
+      } else if (standaloneVideoRef.current) {
+        try {
+          standaloneVideoRef.current.currentTime = 0;
+          standaloneVideoRef.current.play().catch(() => {});
+        } catch {}
+      }
+      return;
+    }
     setCurrentIndex(idx);
     const target = sortedClips[idx];
     if (target?.id) currentClipIdRef.current = target.id;
@@ -271,7 +284,7 @@ export const ClippedActionsPlayer = ({
         <DialogTitle className="sr-only">{t(language, "full_match_video")}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 pt-[calc(env(safe-area-inset-top)+12px)] md:pt-2 bg-black/80 border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-3 py-1.5 pt-[calc(env(safe-area-inset-top)+8px)] md:pt-1.5 bg-black/80 border-b border-border/30 shrink-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0">
               {currentIndex + 1}/{sortedClips.length}
@@ -302,8 +315,8 @@ export const ClippedActionsPlayer = ({
                 })()}
               </div>
               {currentClip.action_description && (
-                <div className="mt-1 text-white/85 text-xs leading-snug">
-                  <p className="line-clamp-2">{trText(currentClip.action_description)}</p>
+                <div className="text-white/85 text-xs leading-snug">
+                  <p className="line-clamp-1">{trText(currentClip.action_description)}</p>
                 </div>
               )}
             </div>
@@ -314,15 +327,15 @@ export const ClippedActionsPlayer = ({
         </div>
 
         {/* Controls - above video */}
-        <div className="bg-black/90 border-b border-border/30 px-4 py-2 flex items-center justify-between shrink-0">
+        <div className="bg-black/90 border-b border-border/30 px-3 py-1 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handlePrevious} disabled={currentIndex === 0}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={handlePrevious} disabled={currentIndex === 0}>
               <SkipBack className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-10 w-10" onClick={player.togglePlayPause}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={player.togglePlayPause}>
               {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 h-8 w-8" onClick={handleNext} disabled={currentIndex === sortedClips.length - 1}>
               <SkipForward className="h-5 w-5" />
             </Button>
           </div>
@@ -368,6 +381,7 @@ export const ClippedActionsPlayer = ({
           {isStandaloneClip && (
             <video
               key={currentClip.id}
+              ref={standaloneVideoRef}
               src={currentClip.video_url}
               className="w-full h-full object-contain cursor-pointer"
               preload="auto"
@@ -421,7 +435,7 @@ export const ClippedActionsPlayer = ({
 
         {/* Clip list table */}
         {showClipList && (
-          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[35vh]">
+          <div ref={clipListRef} className="bg-black/95 border-t border-border/30 overflow-y-auto shrink-0 max-h-[22vh]">
             {mode === 'playlist' ? (
               <div>
                 <div className="sticky top-0 bg-black/90 px-4 py-1.5 text-[10px] uppercase tracking-wider text-primary font-semibold border-b border-border/20">
@@ -474,16 +488,43 @@ export const ClippedActionsPlayer = ({
                                 }
                               }
                             }}
-                            onBlur={() => {
-                              const n = parseInt(posVal, 10);
-                              if (!isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1) {
-                                reorderAndFollow(idx, n);
-                              }
-                              setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
-                            }}
                             className="w-12 h-6 text-[11px] px-1 bg-white/10 border-white/20 text-white"
-                            title="Type new position then press Enter"
+                            title="Type new position then confirm with the green tick"
                           />
+                          {(() => {
+                            const n = parseInt(posVal, 10);
+                            const pending = !isNaN(n) && n >= 1 && n <= sortedClips.length && n !== idx + 1;
+                            if (!pending) return null;
+                            return (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 bg-green-600 hover:bg-green-700 text-white shrink-0"
+                                  title="Confirm reorder"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    reorderAndFollow(idx, n);
+                                    setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
+                                  }}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 bg-red-600 hover:bg-red-700 text-white shrink-0"
+                                  title="Cancel"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMovePosById((p) => { const c = { ...p }; delete c[moveKey]; return c; });
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                       {playerId && clip.video_url && (

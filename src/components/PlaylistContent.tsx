@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil } from "lucide-react";
+import { Plus, X, Save, ChevronUp, ChevronDown, List, Play, Trash2, Hash, Video, Download, Star, Copy, Pencil, Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import JSZip from "jszip";
 import { ClippedActionsPlayer } from "./ClippedActionsPlayer";
 import { usePlaylistActionScores } from "@/hooks/usePlaylistActionScores";
 import { getR90Grade } from "@/lib/gradeCalculations";
 import { ArrowDownWideNarrow } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,8 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
   const [confirmSortOpen, setConfirmSortOpen] = useState(false);
+  const [showAddClips, setShowAddClips] = useState(false);
+  const selectedPlaylistRef = useRef<HTMLDivElement | null>(null);
 
   const clipMeta = usePlaylistActionScores(playerData?.id);
   const scoreFor = (videoUrl: string): number | null => clipMeta[videoUrl]?.score ?? null;
@@ -67,6 +70,15 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
       fetchPlaylists();
     }
   }, [playerData?.id]);
+
+  // Auto-scroll the selected playlist section into view when a playlist opens.
+  useEffect(() => {
+    if (!selectedPlaylist?.id) return;
+    const id = requestAnimationFrame(() => {
+      selectedPlaylistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selectedPlaylist?.id]);
 
   const fetchPlaylists = async () => {
     if (!playerData?.id) {
@@ -572,7 +584,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
 
       {/* Selected Playlist Content */}
       {selectedPlaylist && (
-        <div className="space-y-4 border-t pt-4">
+        <div ref={selectedPlaylistRef} className="space-y-4 border-t pt-4 scroll-mt-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">{selectedPlaylist.name}</h3>
             {selectedPlaylist.clips.length > 0 && (
@@ -590,7 +602,7 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                 <Button
                   onClick={() => setShowPlayer(true)}
                   size="sm"
-                  variant="outline"
+                  className="bg-[hsl(var(--gold))] text-black hover:bg-[hsl(var(--gold))]/90 border-transparent"
                 >
                   <Video className="w-4 h-4 mr-2" />
                   Player
@@ -601,49 +613,59 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
 
           {/* Add Clips Section */}
           {availableClips.length > 0 && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Add clips to playlist:</Label>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {availableClips.map((clip) => {
-                  const isInPlaylist = selectedPlaylist.clips.some(c => c.videoUrl === clip.videoUrl);
-                  return (
-                    <div key={clip.videoUrl} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`clip-${clip.videoUrl}`}
-                        checked={selectedClips.has(clip.videoUrl)}
-                        onCheckedChange={(checked) => {
-                          const newSelected = new Set(selectedClips);
-                          if (checked) {
-                            newSelected.add(clip.videoUrl);
-                          } else {
-                            newSelected.delete(clip.videoUrl);
-                          }
-                          setSelectedClips(newSelected);
-                        }}
-                        disabled={isInPlaylist}
-                      />
-                      <Label
-                        htmlFor={`clip-${clip.videoUrl}`}
-                        className={`flex-1 cursor-pointer ${isInPlaylist ? 'text-muted-foreground line-through' : ''}`}
-                      >
-                        {clip.name}
-                        {isInPlaylist && <span className="ml-2 text-xs">(Already in playlist)</span>}
-                      </Label>
-                    </div>
-                  );
-                })}
-              </div>
-              {selectedClips.size > 0 && (
-                <Button
-                  onClick={addClipsToPlaylist}
-                  disabled={saving}
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add {selectedClips.size} clip{selectedClips.size !== 1 ? 's' : ''}
+            <Collapsible open={showAddClips} onOpenChange={setShowAddClips}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add clips to playlist ({availableClips.length} available)
+                  </span>
+                  {showAddClips ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </Button>
-              )}
-            </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 pt-3">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {availableClips.map((clip) => {
+                    const isInPlaylist = selectedPlaylist.clips.some(c => c.videoUrl === clip.videoUrl);
+                    return (
+                      <div key={clip.videoUrl} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`clip-${clip.videoUrl}`}
+                          checked={selectedClips.has(clip.videoUrl)}
+                          onCheckedChange={(checked) => {
+                            const newSelected = new Set(selectedClips);
+                            if (checked) {
+                              newSelected.add(clip.videoUrl);
+                            } else {
+                              newSelected.delete(clip.videoUrl);
+                            }
+                            setSelectedClips(newSelected);
+                          }}
+                          disabled={isInPlaylist}
+                        />
+                        <Label
+                          htmlFor={`clip-${clip.videoUrl}`}
+                          className={`flex-1 cursor-pointer ${isInPlaylist ? 'text-muted-foreground line-through' : ''}`}
+                        >
+                          {clip.name}
+                          {isInPlaylist && <span className="ml-2 text-xs">(Already in playlist)</span>}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedClips.size > 0 && (
+                  <Button
+                    onClick={addClipsToPlaylist}
+                    disabled={saving}
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add {selectedClips.size} clip{selectedClips.size !== 1 ? 's' : ''}
+                  </Button>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
           {/* Playlist Clips */}
@@ -655,8 +677,8 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
               <div className="space-y-2">
                 {selectedPlaylist.clips.map((clip, index) => (
                   <div key={clip.id || clip.videoUrl} className="border rounded-lg p-3 bg-card">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
                         <span className="text-sm text-muted-foreground mt-1">#{index + 1}</span>
                         {logoFor(clip.videoUrl) && (
                           <img
@@ -667,9 +689,9 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                             loading="lazy"
                           />
                         )}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{clip.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm break-words">{clip.name}</p>
                             {(() => {
                               const s = scoreFor(clip.videoUrl);
                               if (s == null) return null;
@@ -695,9 +717,9 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap justify-end shrink-0 self-end sm:self-start">
                         {movingClipId === clip.videoUrl ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 flex-wrap">
                             <Input
                               type="number"
                               min="1"
@@ -714,18 +736,20 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                                   moveClip(index, pos);
                                 }
                               }}
-                              size="sm"
-                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 bg-green-600 hover:bg-green-700 text-white"
+                              title="Confirm move"
                             >
-                              <Save className="w-4 h-4" />
+                              <Check className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => {
                                 setMovingClipId(null);
                                 setTargetPosition("");
                               }}
-                              size="sm"
-                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 bg-red-600 hover:bg-red-700 text-white"
+                              title="Cancel"
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -737,8 +761,9 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                                 setMovingClipId(clip.videoUrl);
                                 setTargetPosition((index + 1).toString());
                               }}
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="h-8 w-8"
                               title="Move to position"
                             >
                               <Hash className="w-4 h-4" />
@@ -749,24 +774,27 @@ export const PlaylistContent = ({ playerData, availableClips }: PlaylistContentP
                                   ? null 
                                   : { url: clip.videoUrl, name: clip.name }
                               )}
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="h-8 w-8"
                               title="Play clip"
                             >
                               <Play className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => downloadClip(clip, index)}
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="h-8 w-8"
                               title="Download clip"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => removeClipFromPlaylist(index)}
-                              size="sm"
+                              size="icon"
                               variant="ghost"
+                              className="h-8 w-8"
                               title="Remove from playlist"
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
