@@ -381,6 +381,7 @@ export const ClippedActionsPlayer = ({
           {isStandaloneClip && (
             <video
               key={currentClip.id}
+              ref={standaloneVideoRef}
               src={currentClip.video_url}
               className="w-full h-full object-contain cursor-pointer"
               preload="auto"
