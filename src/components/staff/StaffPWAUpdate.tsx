@@ -10,6 +10,15 @@ export const StaffPWAUpdate = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    // Never run SW update/reload logic inside the Lovable preview iframe —
+    // HMR + ephemeral service workers there cause controllerchange to fire
+    // and reload the staff page on every tab switch.
+    const hostname = window.location.hostname;
+    const isLovablePreview = hostname.startsWith('id-preview--') ||
+      window.location.search.includes('__lovable_token') ||
+      window.self !== window.top;
+    if (isLovablePreview) return;
+
     // Check for service worker updates
     if ('serviceWorker' in navigator) {
       // Listen for service worker updates

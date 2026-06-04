@@ -497,9 +497,12 @@ const SignContract = () => {
     if (!contract) return;
     setExporting(true);
     try {
+      // Always include any signature/value already saved on the field (owner OR counterparty)
+      // plus any in-progress values entered in this session. This ensures already-signed
+      // signatures appear on the print-out instead of being blanked.
       const fieldData = fields.map(f => ({
         ...f,
-        value: f.signer_party === 'owner' ? (fieldValues[f.id] || f.value || undefined) : undefined,
+        value: fieldValues[f.id] || f.value || undefined,
       }));
       await printSignedContractPDF(resolvedFileUrl || contract.file_url, fieldData);
     } catch (e) {
