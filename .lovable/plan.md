@@ -1,29 +1,70 @@
-# Remove the broken split path — upload 4 GB files as a single object
+## 1. Contract print — include existing signatures
 
-## Root cause recap
+Problem: when printing a contract from the staff side, signature images already saved on `signature_fields` aren't drawn on the PDF.
 
-`splitAndUpload` binary-slices the file into 1 GB chunks. Only chunk 1 is a valid MP4; chunks 2+ are header-less byte tails so the `<video>` shows grey. The 1.8 GB `needsHybridUpload` gate is what diverts large files into this broken path. Files under 1.8 GB already go through the normal single-object TUS path and play fine — there is no reason 4 GB files cannot do the same. Supabase Storage's resumable TUS endpoint already supports objects far beyond 4 GB; the existing TUS uploader in `VideoAnalysis.tsx` resumes, retries, and reports progress.
+Fix in `src/lib/pdfExport.ts` / wherever `printSignedContractPDF` is called: when building the `fields` array, hydrate each field's `value` from the latest `signature_submissions` / `signature_fields.value` so existing signature data URLs are passed in. Verify the print path (not just the download path) merges the same source. No schema changes.
 
-## Changes
+## 2. Video analysis — 413 on 3.5GB upload
 
-### 1. `src/components/staff/coaching/VideoAnalysis.tsx`
-- Delete the `if (needsHybridUpload(currentFile)) { ... continue; }` block (lines ~568–628).
-- Remove the `splitAndUpload`, `needsHybridUpload`, `SplitUploadProgress` imports and the `showHybridModal`, `hybridProgress`, `hybridAbortRef` state plus the modal JSX that renders them.
-- Every file — regardless of size — flows through the existing single TUS upload (the block starting at line 630). That same code path is what already works for the user's 1–2 GB uploads.
+Root cause: Supabase Storage's default per-object size cap rejects the file before TUS can finish. We removed the splitter last turn, so single-file uploads now hit the platform ceiling.
 
-### 2. `src/lib/videoSplitUpload.ts`
-- Delete the file. Nothing else in the codebase imports it (only `VideoAnalysis.tsx` did).
+Fix: raise the `analysis-videos` bucket's `file_size_limit` to 6 GB (6442450944 bytes) via migration on `storage.buckets`. Keep the existing TUS upload code as-is (6 MiB chunks, retries). Add a client-side pre-check that rejects > 6 GB with a clear message instead of letting TUS fail.
 
-### 3. Existing already-split videos
-- Leave `group_id` / `part_number` / `total_parts` columns and the Prev/Next "Part N of M" UI in place so the user can still click through historical broken uploads if needed, but no new rows will ever be created with those values set.
-- No migration, no data backfill — the user said treat this like the 1–2 GB files that already work, so we simply stop producing more split rows.
+## 3. Staff tab reload inside Lovable preview
 
-## Technical notes
+Each tab click is triggering a full reload only inside the iframe. Likely culprit: `VersionManager.initialize` or a route guard re-running on tab change. `VersionManager` already short-circuits in preview, so investigate:
+- `src/pages/Home.tsx` preview redirect to `/staff` firing on every navigation
+- any `window.location.replace` or `window.location.href = ...` in staff tab handlers / `useSubdomainRouter`
+- `_refresh=` query reappearing
 
-- The single TUS path uses 6 MiB chunks with `retryDelays: [0, 3000, 5000, 10000, 20000]`, `uploadDataDuringCreation: false`, and `removeFingerprintOnSuccess: true`. That is already configured to survive long uploads and resume after network blips, which is what makes multi-GB uploads reliable.
-- `chunkSize` here is the TUS PATCH chunk size, not file splitting — the file is still stored as one object in `analysis-videos`.
-- No new tables, no new buckets, no edge functions, no toasts, no fallbacks.
+Switch to `useNavigate` / `<Link>` everywhere a tab click currently sets `window.location`. Guard the preview redirect in `Home.tsx` so it doesn't fire when already on a staff route.
+
+## 4. Investor Portal — Real Finances screenshot upload + AI parse
+
+UI on the existing Real Finances tab:
+- "Upload receipt/screenshot" button → uploads to existing `receipt-uploads` private bucket
+- Thumbnail list of uploaded screenshots, each with a "Parse with AI" button
+- After parsing, an inline form pre-fills: date, time, amount, item bought, location, plus an empty notes field (user fills notes manually)
+- "Add to expenses" saves into the existing `expenses` (or `investor_spending`) table and the screenshot row gets a `parsed_at` / `expense_id` link so it shows as Done
+
+New edge function `parse-receipt-image` calling Lovable AI Gateway (`google/gemini-3-flash-preview`) with the image and a JSON schema returning `{ date, time, amount, item, location }`. No new secrets — uses `LOVABLE_API_KEY`.
+
+Schema: new `investor_receipts` table (id, user_id, image_path, parsed_data jsonb, expense_id nullable, created_at). RLS scoped to investor users; GRANTs for authenticated + service_role.
+
+## 5. Mandate tracker on staff network map
+
+Connect the **Google Maps Platform** connector (Lovable-managed) — it routes Geocoding, Places, Routes, and the browser Maps JS API through a gateway with the workspace's key. This will let us recalibrate club coordinates by geocoding club name + country instead of relying on whatever stored lat/lng is currently wrong.
+
+New `staff_mandates` table:
+- `id`, `club_name`, `club_country`, `lat`, `lng` (geocoded once on save)
+- `agent_name`, `agent_firm`
+- `player_ids` (uuid[] referencing players)
+- `mandate_type` (buy/sell/loan)
+- `status` (active/expired/closed)
+- `start_date`, `end_date`
+- `notes`
+- standard timestamps + RLS for staff/admin only
+
+UI:
+- New "Mandates" section under staff network area with CRUD form (club autocomplete via Places API new, agent text, player multi-select)
+- New map layer toggle on the existing network map that pins active mandates with a distinct gold marker, popover showing agent + players + status
+- Geocoding done in edge function `geocode-club` via Google Maps gateway, lat/lng cached on the row
+
+## Files / migrations
+
+```text
+new   supabase/functions/parse-receipt-image/index.ts
+new   supabase/functions/geocode-club/index.ts
+new   migration: bump analysis-videos file_size_limit; create investor_receipts; create staff_mandates
+edit  src/lib/pdfExport.ts + caller (hydrate signatures into print)
+edit  src/components/staff/coaching/VideoAnalysis.tsx (6GB pre-check + clearer error)
+edit  src/pages/Home.tsx + staff nav handlers (stop window.location reloads in preview)
+new   src/components/investor/ReceiptUploader.tsx
+new   src/components/staff/MandateTracker.tsx + map layer integration
+```
 
 ## Out of scope
-- Reassembly UI for legacy split rows (per your instruction).
-- Server-side transcoding.
+
+- Reassembly UI for older split videos (legacy rows untouched)
+- Changing finance reporting/analytics aggregation
+- Backfilling existing club coordinates beyond what mandate creation triggers

@@ -27,6 +27,14 @@ export const StaffPWAInstall = () => {
   }, []);
 
   useEffect(() => {
+    // Skip all PWA install + SW listeners inside the Lovable preview iframe to
+    // avoid spurious reloads when switching staff tabs.
+    const hostname = window.location.hostname;
+    const isLovablePreview = hostname.startsWith('id-preview--') ||
+      window.location.search.includes('__lovable_token') ||
+      window.self !== window.top;
+    if (isLovablePreview) return;
+
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
