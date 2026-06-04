@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type SyntheticEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as tus from 'tus-js-client';
-import { needsHybridUpload, splitAndUpload, type SplitUploadProgress } from "@/lib/videoSplitUpload";
-import { LargeVideoProcessingModal } from "./LargeVideoProcessingModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -146,11 +144,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Hybrid upload (large files)
-  const [hybridProgress, setHybridProgress] = useState<SplitUploadProgress | null>(null);
-  const [showHybridModal, setShowHybridModal] = useState(false);
-  const hybridAbortRef = useRef<AbortController | null>(null);
 
   // Annotation form
   const [annotationText, setAnnotationText] = useState("");
