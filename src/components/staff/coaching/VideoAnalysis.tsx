@@ -3361,17 +3361,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         )}
       </div>
 
-      {/* Large video processing modal */}
-      <LargeVideoProcessingModal
-        open={showHybridModal}
-        progress={hybridProgress}
-        onCancel={() => {
-          hybridAbortRef.current?.abort();
-          setShowHybridModal(false);
-          setHybridProgress(null);
-          setCreating(false);
-        }}
-      />
       <R90RatingsViewer
         open={r90ViewerOpen}
         onOpenChange={(o) => { setR90ViewerOpen(o); if (!o) setR90ViewerSearch(undefined); }}
