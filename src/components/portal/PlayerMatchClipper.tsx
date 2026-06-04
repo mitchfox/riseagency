@@ -724,17 +724,6 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
         </div>
       )}
 
-      {/* Large video processing modal */}
-      <LargeVideoProcessingModal
-        open={showHybridModal}
-        progress={hybridProgress}
-        onCancel={() => {
-          hybridAbortRef.current?.abort();
-          setShowHybridModal(false);
-          setHybridProgress(null);
-          setCreating(false);
-        }}
-      />
     </div>
   );
 };
