@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as tus from 'tus-js-client';
 import { supabase } from "@/integrations/supabase/client";
-import { needsHybridUpload, splitAndUpload, type SplitUploadProgress } from "@/lib/videoSplitUpload";
-import { LargeVideoProcessingModal } from "@/components/staff/coaching/LargeVideoProcessingModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,11 +93,6 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Hybrid upload (large files)
-  const [hybridProgress, setHybridProgress] = useState<SplitUploadProgress | null>(null);
-  const [showHybridModal, setShowHybridModal] = useState(false);
-  const hybridAbortRef = useRef<AbortController | null>(null);
-
   // Sync
   const [showTimestampOverride, setShowTimestampOverride] = useState(false);
   const [overrideMinute, setOverrideMinute] = useState("");
@@ -142,61 +135,6 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
 
     if (uploadFile.size > MAX_VIDEO_UPLOAD_BYTES) {
       toast.error("This file exceeds the 50GB upload limit");
-      return;
-    }
-
-    // Route large files through hybrid compress + split flow
-    if (needsHybridUpload(uploadFile)) {
-      setCreating(true);
-      setShowHybridModal(true);
-      const abortController = new AbortController();
-      hybridAbortRef.current = abortController;
-
-      try {
-        const result = await splitAndUpload(uploadFile, {
-          onProgress: setHybridProgress,
-          abortSignal: abortController.signal,
-        });
-
-        // For each part, tell the edge function about it
-        for (const part of result.parts) {
-          const fnResult = await callFunction({
-            action: 'createFromStorage',
-            playerEmail,
-            storagePath: part.storagePath,
-            title: result.parts.length > 1 ? `${newTitle} (Part ${part.partNumber})` : newTitle,
-            opponent: newOpponent || null,
-            matchDate: newMatchDate || null,
-          });
-
-          if (fnResult.data && part.partNumber === 1) {
-            const entry: VideoEntry = {
-              ...fnResult.data,
-              clips: [],
-              match_minute_offset: 0,
-              second_half_offset: null,
-              second_half_video_time: null,
-            };
-            setVideos(prev => [entry, ...prev]);
-            setSelectedVideo(entry);
-          }
-        }
-
-        setShowUpload(false);
-        setNewTitle("");
-        setUploadFile(null);
-        setNewOpponent("");
-        setNewMatchDate("");
-        toast.success(result.parts.length > 1 ? `Video uploaded as ${result.parts.length} parts` : "Video uploaded");
-      } catch (err: any) {
-        if (err.message !== 'Cancelled') {
-          toast.error(err.message || "Failed to process large video");
-        }
-      }
-      setShowHybridModal(false);
-      setHybridProgress(null);
-      hybridAbortRef.current = null;
-      setCreating(false);
       return;
     }
 
@@ -786,17 +724,6 @@ export const PlayerMatchClipper = ({ playerId, playerEmail }: PlayerMatchClipper
         </div>
       )}
 
-      {/* Large video processing modal */}
-      <LargeVideoProcessingModal
-        open={showHybridModal}
-        progress={hybridProgress}
-        onCancel={() => {
-          hybridAbortRef.current?.abort();
-          setShowHybridModal(false);
-          setHybridProgress(null);
-          setCreating(false);
-        }}
-      />
     </div>
   );
 };

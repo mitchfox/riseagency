@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, type SyntheticEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as tus from 'tus-js-client';
-import { needsHybridUpload, splitAndUpload, type SplitUploadProgress } from "@/lib/videoSplitUpload";
-import { LargeVideoProcessingModal } from "./LargeVideoProcessingModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -146,11 +144,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Hybrid upload (large files)
-  const [hybridProgress, setHybridProgress] = useState<SplitUploadProgress | null>(null);
-  const [showHybridModal, setShowHybridModal] = useState(false);
-  const hybridAbortRef = useRef<AbortController | null>(null);
 
   // Annotation form
   const [annotationText, setAnnotationText] = useState("");
@@ -562,69 +555,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
         if (toastId) {
           toast.loading(`Uploading ${fi + 1}/${filesToUpload.length}: ${currentFile.name}`, { id: toastId });
-        }
-
-        // Route large files through hybrid flow
-        if (needsHybridUpload(currentFile)) {
-          setShowHybridModal(true);
-          const abortController = new AbortController();
-          hybridAbortRef.current = abortController;
-
-          let firstInserted: VideoAnalysisEntry | null = null;
-
-          const result = await splitAndUpload(currentFile, {
-            onProgress: setHybridProgress,
-            abortSignal: abortController.signal,
-            onPartUploaded: async (part, totalParts, groupId) => {
-              const row: any = {
-                title: fileTitle,
-                video_url: part.publicUrl,
-                opponent: newOpponent || null,
-                match_date: newMatchDate || null,
-                created_by: userId || null,
-                annotations: [],
-                clips: [],
-                auto_delete_at: null,
-                match_minute_offset: 0,
-                group_id: totalParts > 1 ? groupId : null,
-                part_number: totalParts > 1 ? part.partNumber : null,
-                total_parts: totalParts > 1 ? totalParts : null,
-              };
-              if (newPlayerId && newPlayerId !== "none") row.player_id = newPlayerId;
-
-              const { data: inserted, error: insertError } = await supabase
-                .from("video_analyses")
-                .insert(row)
-                .select()
-                .single();
-
-              if (insertError) throw insertError;
-
-              if (inserted) {
-                const entry: VideoAnalysisEntry = {
-                  ...inserted,
-                  annotations: [] as Annotation[],
-                  clips: [] as Clip[],
-                  match_minute_offset: 0,
-                  second_half_offset: (inserted as any).second_half_offset ?? null,
-                  second_half_video_time: (inserted as any).second_half_video_time ?? null,
-                  part_number: (inserted as any).part_number ?? null,
-                  group_id: (inserted as any).group_id ?? null,
-                  total_parts: (inserted as any).total_parts ?? null,
-                };
-                setVideos(prev => [entry, ...prev]);
-                if (!firstInserted) {
-                  firstInserted = entry;
-                  lastEntry = entry;
-                }
-              }
-            },
-          });
-
-          setShowHybridModal(false);
-          setHybridProgress(null);
-          hybridAbortRef.current = null;
-          continue;
         }
 
         // Normal TUS upload
@@ -3431,17 +3361,6 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         )}
       </div>
 
-      {/* Large video processing modal */}
-      <LargeVideoProcessingModal
-        open={showHybridModal}
-        progress={hybridProgress}
-        onCancel={() => {
-          hybridAbortRef.current?.abort();
-          setShowHybridModal(false);
-          setHybridProgress(null);
-          setCreating(false);
-        }}
-      />
       <R90RatingsViewer
         open={r90ViewerOpen}
         onOpenChange={(o) => { setR90ViewerOpen(o); if (!o) setR90ViewerSearch(undefined); }}
