@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { FileText, CheckCircle, Loader2, Download, PenTool, Upload, AlertCircle, ExternalLink, Lock, Printer } from "lucide-react";
 import { PDFDocumentViewer, FieldPosition } from "@/components/staff/PDFDocumentViewer";
-import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, AuditLogData } from "@/lib/pdfExport";
+import { downloadSignedContractPDF, exportSignedContractPDF, printSignedContractPDF, downloadProofOfMandatePDF, AuditLogData } from "@/lib/pdfExport";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
@@ -22,6 +22,7 @@ interface SignatureContract {
   status: string;
   owner_field_values: Record<string, string> | null;
   view_password: string | null;
+  is_mandate?: boolean | null;
 }
 
 const SignContract = () => {
