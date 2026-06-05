@@ -837,6 +837,12 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   {hasCounterpartyFields ? 'Signed by both parties' : 'Completed'}
                 </Badge>
               )}
+              {contract.is_mandate && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+                  <Briefcase className="h-3 w-3 mr-1" />
+                  Mandate
+                </Badge>
+              )}
             </div>
             {contract.description && (
               <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
@@ -847,6 +853,13 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             <p className="text-xs text-muted-foreground">
               Created: {new Date(contract.created_at).toLocaleDateString()}
             </p>
+            <label className="mt-3 inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Switch
+                checked={!!contract.is_mandate}
+                onCheckedChange={(v) => toggleMandate(contract, !!v)}
+              />
+              <span>Mark as Mandate (lets the other party download Proof of Mandate after signing)</span>
+            </label>
           </div>
           
           <div className="flex flex-wrap gap-2">
