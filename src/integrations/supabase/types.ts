@@ -1593,7 +1593,10 @@ export type Database = {
           id: string
           message: string
           name: string
+          position_tags: string[]
+          scope: string
           subject: string
+          target_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1601,7 +1604,10 @@ export type Database = {
           id?: string
           message: string
           name: string
+          position_tags?: string[]
+          scope?: string
           subject: string
+          target_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1609,10 +1615,21 @@ export type Database = {
           id?: string
           message?: string
           name?: string
+          position_tags?: string[]
+          scope?: string
           subject?: string
+          target_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exec_support_items: {
         Row: {
@@ -5073,6 +5090,10 @@ export type Database = {
           current_club: string | null
           date_of_birth: string | null
           first_response_at: string | null
+          fit_score: number | null
+          fit_score_breakdown: Json | null
+          fit_score_target_id: string | null
+          fit_score_updated_at: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
@@ -5094,6 +5115,10 @@ export type Database = {
           current_club?: string | null
           date_of_birth?: string | null
           first_response_at?: string | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
@@ -5115,6 +5140,10 @@ export type Database = {
           current_club?: string | null
           date_of_birth?: string | null
           first_response_at?: string | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
@@ -5129,7 +5158,15 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "player_outreach_pro_fit_score_target_id_fkey"
+            columns: ["fit_score_target_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_outreach_youth: {
         Row: {
@@ -5139,6 +5176,10 @@ export type Database = {
           current_club: string | null
           date_of_birth: string | null
           first_response_at: string | null
+          fit_score: number | null
+          fit_score_breakdown: Json | null
+          fit_score_target_id: string | null
+          fit_score_updated_at: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
@@ -5163,6 +5204,10 @@ export type Database = {
           current_club?: string | null
           date_of_birth?: string | null
           first_response_at?: string | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
@@ -5187,6 +5232,10 @@ export type Database = {
           current_club?: string | null
           date_of_birth?: string | null
           first_response_at?: string | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
@@ -5204,7 +5253,15 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "player_outreach_youth_fit_score_target_id_fkey"
+            columns: ["fit_score_target_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_portal_settings: {
         Row: {
@@ -5729,6 +5786,10 @@ export type Database = {
           date_of_birth: string | null
           email: string | null
           expected_commission_annual: number | null
+          fit_score: number | null
+          fit_score_breakdown: Json | null
+          fit_score_target_id: string | null
+          fit_score_updated_at: string | null
           has_representation_offer: boolean
           highlighted_match: Json | null
           highlights: Json | null
@@ -5777,6 +5838,10 @@ export type Database = {
           date_of_birth?: string | null
           email?: string | null
           expected_commission_annual?: number | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
@@ -5825,6 +5890,10 @@ export type Database = {
           date_of_birth?: string | null
           email?: string | null
           expected_commission_annual?: number | null
+          fit_score?: number | null
+          fit_score_breakdown?: Json | null
+          fit_score_target_id?: string | null
+          fit_score_updated_at?: string | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
@@ -5856,7 +5925,15 @@ export type Database = {
           updated_at?: string | null
           visible_on_stars_page?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "players_fit_score_target_id_fkey"
+            columns: ["fit_score_target_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       playlists: {
         Row: {
@@ -6421,11 +6498,43 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_scoring_settings: {
+        Row: {
+          age_sweet_spot_band: number
+          ai_nudge_enabled: boolean
+          fit_score_threshold: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+          weights: Json
+        }
+        Insert: {
+          age_sweet_spot_band?: number
+          ai_nudge_enabled?: boolean
+          fit_score_threshold?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
+        }
+        Update: {
+          age_sweet_spot_band?: number
+          ai_nudge_enabled?: boolean
+          fit_score_threshold?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
+        }
+        Relationships: []
+      }
       recruitment_targets: {
         Row: {
           active: boolean
           countries_of_club: string[]
           created_at: string
+          default_email_template_id: string | null
+          default_whatsapp_template_id: string | null
           id: string
           max_age: number | null
           max_club_rating: string | null
@@ -6444,6 +6553,8 @@ export type Database = {
           active?: boolean
           countries_of_club?: string[]
           created_at?: string
+          default_email_template_id?: string | null
+          default_whatsapp_template_id?: string | null
           id?: string
           max_age?: number | null
           max_club_rating?: string | null
@@ -6462,6 +6573,8 @@ export type Database = {
           active?: boolean
           countries_of_club?: string[]
           created_at?: string
+          default_email_template_id?: string | null
+          default_whatsapp_template_id?: string | null
           id?: string
           max_age?: number | null
           max_club_rating?: string | null
@@ -6476,7 +6589,22 @@ export type Database = {
           scope?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_targets_default_email_template_id_fkey"
+            columns: ["default_email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruitment_targets_default_whatsapp_template_id_fkey"
+            columns: ["default_whatsapp_template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_quick_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       representation_visitors: {
         Row: {
@@ -8556,7 +8684,10 @@ export type Database = {
           created_at: string | null
           id: string
           message_content: string
+          position_tags: string[]
+          scope: string
           show_on_investor_portal: boolean
+          target_id: string | null
           title: string
           updated_at: string | null
         }
@@ -8565,7 +8696,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_content: string
+          position_tags?: string[]
+          scope?: string
           show_on_investor_portal?: boolean
+          target_id?: string | null
           title: string
           updated_at?: string | null
         }
@@ -8574,11 +8708,22 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_content?: string
+          position_tags?: string[]
+          scope?: string
           show_on_investor_portal?: boolean
+          target_id?: string | null
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_quick_messages_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
