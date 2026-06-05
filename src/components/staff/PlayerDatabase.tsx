@@ -236,6 +236,7 @@ export const PlayerDatabase = () => {
   const [editForm, setEditForm] = useState<any>({});
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [minFit, setMinFit] = useState<number>(0);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -243,6 +244,8 @@ export const PlayerDatabase = () => {
   const settings = useTableSettings('player-database', DB_COLUMNS);
   const dragScrollRef = useHorizontalDragScroll();
   const { getHeaderProps, ResizeHandle } = useResizableColumns('player-database');
+  const { targets } = useRecruitmentTargets();
+  const { settings: scoringSettings } = useScoringSettings();
 
   useEffect(() => { fetchAllPlayers(); }, []);
 
