@@ -503,6 +503,7 @@ export const PlayerDatabase = () => {
     setDobTo('');
     setBirthMonthFilter('all');
     setBirthdayFilterOffset(null);
+    setMinFit(0);
   };
 
   const activeBirthdayLabel = birthdayFilterOffset !== null
