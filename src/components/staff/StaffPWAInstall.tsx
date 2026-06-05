@@ -227,7 +227,7 @@ export const StaffPWAInstall = () => {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Push notifications support (coming soon)</span>
+                <span>Push notifications support</span>
               </li>
             </ul>
           </CardContent>

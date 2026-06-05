@@ -228,7 +228,7 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
               <CardContent className="pt-6">
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Detailed invoice reports coming soon</p>
+                  <p>No invoice data available for the selected period.</p>
                 </div>
               </CardContent>
             </Card>
@@ -239,7 +239,7 @@ export const FinancialReports = ({ isAdmin }: { isAdmin: boolean }) => {
               <CardContent className="pt-6">
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Cash flow charts coming soon</p>
+                  <p>No cash flow data available for the selected period.</p>
                 </div>
               </CardContent>
             </Card>
