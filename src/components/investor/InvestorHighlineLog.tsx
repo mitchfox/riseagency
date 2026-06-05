@@ -33,8 +33,18 @@ export const InvestorHighlineLog = ({ updates, token, unlocked, onChanged }: Pro
   const [body, setBody] = useState("");
   const [achievedOn, setAchievedOn] = useState(() => new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
+  // Locally-tracked rows so newly-saved updates appear instantly even while
+  // the slow investor-data refresh is still in flight.
+  const [localAdded, setLocalAdded] = useState<InvestorUpdateRow[]>([]);
+  const [localDeleted, setLocalDeleted] = useState<Set<string>>(new Set());
 
-  const latest = updates[0];
+  const merged = [
+    ...localAdded.filter(u => !updates.some(x => x.id === u.id)),
+    ...updates,
+  ]
+    .filter(u => !localDeleted.has(u.id))
+    .sort((a, b) => (a.achieved_on < b.achieved_on ? 1 : a.achieved_on > b.achieved_on ? -1 : (a.created_at < b.created_at ? 1 : -1)));
+  const latest = merged[0];
 
   const save = async () => {
     if (!token || !title.trim()) { toast.error("Add a title"); return; }
@@ -46,8 +56,13 @@ export const InvestorHighlineLog = ({ updates, token, unlocked, onChanged }: Pro
       const serverError = (data as any)?.error;
       if (serverError) throw new Error(serverError + ((data as any).details ? ` — ${(data as any).details}` : ""));
       if (error) throw new Error(error.message || "Request failed");
+      const saved = (data as any)?.data as InvestorUpdateRow | undefined;
+      if (saved && saved.id) {
+        setLocalAdded(prev => [saved, ...prev.filter(u => u.id !== saved.id)]);
+      }
       setTitle(""); setBody(""); setAdding(false);
       toast.success("Update logged");
+      // Fire the background refresh but do not block the UI on it.
       onChanged();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
     finally { setSaving(false); }
@@ -62,6 +77,8 @@ export const InvestorHighlineLog = ({ updates, token, unlocked, onChanged }: Pro
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+      setLocalDeleted(prev => { const next = new Set(prev); next.add(id); return next; });
+      setLocalAdded(prev => prev.filter(u => u.id !== id));
       toast.success("Deleted");
       onChanged();
     } catch (e: any) { toast.error(e.message || "Delete failed"); }
@@ -129,10 +146,10 @@ export const InvestorHighlineLog = ({ updates, token, unlocked, onChanged }: Pro
           )}
 
           <div className="space-y-2">
-            {updates.length === 0 && (
+            {merged.length === 0 && (
               <div className="text-sm text-muted-foreground italic py-6 text-center">No updates yet.</div>
             )}
-            {updates.map(u => (
+            {merged.map(u => (
               <Card key={u.id} className="p-3 group">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
