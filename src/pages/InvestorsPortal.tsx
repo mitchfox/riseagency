@@ -932,9 +932,70 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
           <DialogTrigger asChild>
             <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add expense</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleReceiptUpload(f); }}
+              />
+              <div className="rounded-md border border-dashed border-border/60 p-3 flex flex-wrap items-center gap-2 bg-muted/20">
+                <Button type="button" size="sm" variant="outline" disabled={parsing} onClick={() => fileInputRef.current?.click()}>
+                  {parsing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Camera className="w-4 h-4 mr-1" />}
+                  {parsing ? "Reading…" : "Upload receipt / screenshot"}
+                </Button>
+                <span className="text-xs text-muted-foreground">One image can contain multiple items — we'll detect each and let you review before saving.</span>
+              </div>
+
+              {parsedItems.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-bbh">Detected items ({parsedItems.length})</div>
+                  <div className="space-y-2">
+                    {parsedItems.map((p, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end rounded border border-border/40 p-2 bg-card/40">
+                        <div className="col-span-12 sm:col-span-3"><Label className="text-xs">Date</Label>
+                          <Input type="date" value={p.spend_date} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, spend_date: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-6 sm:col-span-2"><Label className="text-xs">Category</Label>
+                          <Select value={p.category} onValueChange={(v) => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, category: v } : it))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-6 sm:col-span-3"><Label className="text-xs">Vendor</Label>
+                          <Input value={p.vendor} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, vendor: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-8 sm:col-span-2"><Label className="text-xs">Amount £</Label>
+                          <Input type="number" step="0.01" value={p.amount} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, amount: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-4 sm:col-span-1 flex items-end justify-end">
+                          <Button size="icon" variant="ghost" onClick={() => setParsedItems(items => items.filter((_, i) => i !== idx))}>
+                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                          </Button>
+                        </div>
+                        <div className="col-span-12"><Label className="text-xs">Notes</Label>
+                          <Input value={p.notes} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, notes: e.target.value } : it))} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input type="checkbox" checked={isPersonalNew} onChange={e => setIsPersonalNew(e.target.checked)} />
+                    Mark all as personal spending
+                  </label>
+                  <div className="flex gap-2">
+                    <Button className="bg-primary text-primary-foreground" disabled={savingAll} onClick={saveParsedItems}>
+                      {savingAll ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                      Save {parsedItems.length} item{parsedItems.length === 1 ? "" : "s"}
+                    </Button>
+                    <Button variant="outline" onClick={() => setParsedItems([])}>Discard</Button>
+                  </div>
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Date</Label><Input type="date" value={spend_date} onChange={(e) => setDate(e.target.value)} /></div>
                 <div><Label>Category</Label>
@@ -956,6 +1017,8 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                 await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes, is_personal: isPersonalNew } });
                 setVendor(""); setAmount(""); setNotes(""); setIsPersonalNew(false); setAddOpen(false);
               }}>Save</Button>
+              </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
