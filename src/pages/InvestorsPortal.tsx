@@ -33,6 +33,7 @@ import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
 import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { BusinessPlanSection } from "@/components/staff/BusinessPlanSection";
 import { InvestorHighlineLog } from "@/components/investor/InvestorHighlineLog";
+import { FitScoreBadge } from "@/components/staff/recruitment/FitScoreBadge";
 import { sortPlayersByRepresentation } from "@/lib/playerSorting";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
