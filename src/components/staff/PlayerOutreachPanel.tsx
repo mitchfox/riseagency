@@ -256,7 +256,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           national_team: row.national_team,
           star_of_team: row.star_of_team,
           previous_serious_injury: row.previous_serious_injury,
-        } as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights);
+          agent_name: row.agent_name,
+          agent_status: row.agent_status,
+        } as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights,
+           scoringSettings.position_adjacency_factor, scoringSettings.league_strength_weight);
         map[row.id] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch { map[row.id] = 0; }
     }
