@@ -45,6 +45,7 @@ interface ClubRating {
   club_name: string;
   first_team_rating: string;
   academy_rating: string;
+  country?: string | null;
 }
 
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
@@ -290,13 +291,18 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         supabase.from(tableName).select('*').order('created_at', { ascending: false }),
         supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
         supabase.from('club_map_positions').select('club_name, country'),
-        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating')
+        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating, country')
       ]);
       if (dataResult.error) throw dataResult.error;
 
       const countryMap: Record<string, string> = {};
       clubsResult.data?.forEach(club => {
         if (club.club_name && club.country) countryMap[club.club_name.toLowerCase()] = club.country;
+      });
+      ratingsResult.data?.forEach((club: any) => {
+        if (club.club_name && club.country && club.country !== 'Unknown') {
+          countryMap[normalizeClubName(club.club_name)] = club.country;
+        }
       });
 
       let outreachData = dataResult.data || [];
@@ -628,6 +634,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 star_of_team: item.star_of_team,
                 previous_serious_injury: item.previous_serious_injury,
               }}
+              cachedScore={fitScoreById[item.id] ?? null}
             />
           </TableCell>
         );

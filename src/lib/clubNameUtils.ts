@@ -87,11 +87,17 @@ export const findClubRating = (
   if (!clubName || ratings.length === 0) return null;
   const normalized = canonicalClubName(clubName);
   if (!normalized) return null;
+  const rank = (rating: string | null | undefined) => {
+    const match = rating?.toUpperCase().match(/^R(\d)$/);
+    return match ? Number(match[1]) : 99;
+  };
+  let best: string | null = null;
   for (const rating of ratings) {
     const normRating = canonicalClubName(rating.club_name);
     if (normRating === normalized || normRating.includes(normalized) || normalized.includes(normRating)) {
-      return isYouth ? rating.academy_rating : rating.first_team_rating;
+      const value = isYouth ? rating.academy_rating : rating.first_team_rating;
+      if (value && (!best || rank(value) < rank(best))) best = value;
     }
   }
-  return null;
+  return best;
 };
