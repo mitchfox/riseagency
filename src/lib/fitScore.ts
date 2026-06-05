@@ -35,6 +35,8 @@ export type BonusWeights = {
   previous_serious_injury: number; // typically negative
   top_club: number;
   parent_approval: number;
+  agent_unrepresented: number;     // free / family agent => boost
+  agent_top_agency: number;        // represented by big agency => deduction (negative)
 };
 
 export const DEFAULT_BONUS_WEIGHTS: BonusWeights = {
@@ -43,6 +45,8 @@ export const DEFAULT_BONUS_WEIGHTS: BonusWeights = {
   previous_serious_injury: -10,
   top_club: 5,
   parent_approval: 5,
+  agent_unrepresented: 8,
+  agent_top_agency: -12,
 };
 
 export interface RecruitmentTargetLite {
@@ -84,6 +88,9 @@ export interface PlayerLike {
   national_team?: boolean | null;
   star_of_team?: boolean | null;
   previous_serious_injury?: string | null;
+  // Agent / representation
+  agent_status?: string | null;   // 'unrepresented' | 'family' | 'represented' | 'top_agency' | 'unknown'
+  agent_name?: string | null;
 }
 
 export interface ScoreBreakdown {
