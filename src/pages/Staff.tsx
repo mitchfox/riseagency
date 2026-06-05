@@ -317,12 +317,20 @@ const Staff = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const setStaffSectionParams = (updates: Record<string, string | null>, options?: { replace?: boolean }) => {
-    const nextParams = new URLSearchParams(window.location.search);
+  const createStaffSearchParams = (updates: Record<string, string | null>) => {
+    const nextParams = new URLSearchParams();
+    new URLSearchParams(window.location.search).forEach((value, key) => {
+      if (key.startsWith('__lovable')) nextParams.set(key, value);
+    });
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === '') nextParams.delete(key);
       else nextParams.set(key, value);
     });
+    return nextParams;
+  };
+
+  const setStaffSectionParams = (updates: Record<string, string | null>, options?: { replace?: boolean }) => {
+    const nextParams = createStaffSearchParams(updates);
     setSearchParams(nextParams, options);
   };
 
@@ -1569,9 +1577,7 @@ const Staff = () => {
                           
                           // Navigate with player ID if it's a player search result
                           if (result.type === 'player') {
-                            const nextParams = new URLSearchParams(window.location.search);
-                            nextParams.set('section', result.sectionId);
-                            nextParams.set('player', result.id);
+                            const nextParams = createStaffSearchParams({ section: result.sectionId, player: result.id });
                             navigate(`/staff?${nextParams.toString()}`);
                             toast.success(`Opening ${result.title} in ${result.section}`);
                           } else {
