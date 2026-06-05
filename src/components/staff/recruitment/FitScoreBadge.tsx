@@ -19,15 +19,12 @@ export const FitScoreBadge = ({ player, scope, size = "sm", className, cachedSco
   const { settings } = useScoringSettings();
 
   const computed = useMemo(() => {
-    if (typeof cachedScore === "number" && cachedScore > 0 && cachedBreakdown) {
-      return {
-        total: cachedScore,
-        reasons: cachedBreakdown.reasons || [],
-        target_name: cachedBreakdown.target_name ?? null,
-      };
-    }
     const r = computeFitScore(player, targets, settings.weights, settings.age_sweet_spot_band, scope, settings.bonus_weights);
-    return { total: r.total, reasons: r.reasons, target_name: r.target_name };
+    return {
+      total: typeof cachedScore === "number" ? cachedScore : r.total,
+      reasons: cachedBreakdown?.reasons || r.reasons,
+      target_name: cachedBreakdown?.target_name ?? r.target_name,
+    };
   }, [player, targets, settings, scope, cachedScore, cachedBreakdown]);
 
   const total = Math.max(0, Math.min(100, Math.round(computed.total)));

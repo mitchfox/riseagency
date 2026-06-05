@@ -45,6 +45,7 @@ interface ClubRating {
   club_name: string;
   first_team_rating: string;
   academy_rating: string;
+  country?: string | null;
 }
 
 const ClubRatingBadge = ({ rating }: { rating: string | null }) => {
@@ -224,8 +225,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [dobTo, setDobTo] = useState('');
   const [minFit, setMinFit] = useState<number>(0);
 
-  // Reset pagination when filters/search/sort change
-  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir, minFit]);
+  // Reset pagination when the result set changes, but keep the current page when only the order changes.
+  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, minFit]);
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
@@ -238,17 +239,29 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const fitScoreById = useMemo(() => {
     const map: Record<string, number> = {};
     for (const row of data) {
-      if (typeof row.fit_score === 'number' && row.fit_score > 0) {
-        map[row.id] = row.fit_score;
-        continue;
-      }
       try {
-        const r = computeFitScore(row as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights);
+        const r = computeFitScore({
+          position: row.position,
+          age: calculateAge(row.date_of_birth) ?? row.age ?? null,
+          date_of_birth: row.date_of_birth,
+          nationality: row.nationality,
+          current_club: row.current_club,
+          club_country: findClubCountry(row.current_club, clubCountryMap),
+          club_first_team_rating: findClubRatingUtil(row.current_club, clubRatings, type === 'youth') as any,
+          messaged: row.messaged,
+          response_received: row.response_received,
+          response_status: row.response_status,
+          parent_approval: row.parent_approval,
+          last_contact_at: row.last_contact_at,
+          national_team: row.national_team,
+          star_of_team: row.star_of_team,
+          previous_serious_injury: row.previous_serious_injury,
+        } as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights);
         map[row.id] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch { map[row.id] = 0; }
     }
     return map;
-  }, [data, targets, scoringSettings, type]);
+  }, [data, targets, scoringSettings, type, clubCountryMap, clubRatings]);
   const { getHeaderProps, ResizeHandle } = useResizableColumns(`outreach-panel-${type}`);
   const isYouth = type === 'youth';
 
@@ -278,13 +291,18 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         supabase.from(tableName).select('*').order('created_at', { ascending: false }),
         supabase.from('recruitment_age_rules').select('country, country_code, min_contact_age'),
         supabase.from('club_map_positions').select('club_name, country'),
-        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating')
+        supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating, country')
       ]);
       if (dataResult.error) throw dataResult.error;
 
       const countryMap: Record<string, string> = {};
       clubsResult.data?.forEach(club => {
         if (club.club_name && club.country) countryMap[club.club_name.toLowerCase()] = club.country;
+      });
+      ratingsResult.data?.forEach((club: any) => {
+        if (club.club_name && club.country && club.country !== 'Unknown') {
+          countryMap[normalizeClubName(club.club_name)] = club.country;
+        }
       });
 
       let outreachData = dataResult.data || [];
@@ -601,7 +619,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               scope={type}
               player={{
                 position: item.position,
-                age: calculateAge(item.date_of_birth),
+                age: calculateAge(item.date_of_birth) ?? item.age ?? null,
                 date_of_birth: item.date_of_birth,
                 nationality: item.nationality,
                 current_club: item.current_club,
@@ -612,9 +630,11 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 response_status: item.response_status,
                 parent_approval: item.parent_approval,
                 last_contact_at: item.last_contact_at,
+                national_team: item.national_team,
+                star_of_team: item.star_of_team,
+                previous_serious_injury: item.previous_serious_injury,
               }}
-              cachedScore={item.fit_score ?? null}
-              cachedBreakdown={item.fit_score_breakdown ?? null}
+              cachedScore={fitScoreById[item.id] ?? null}
             />
           </TableCell>
         );
