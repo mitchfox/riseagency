@@ -14,6 +14,8 @@ export interface ScoringSettingsRow {
   age_sweet_spot_band: number;
   ai_nudge_enabled: boolean;
   fit_score_threshold: number;
+  position_adjacency_factor: number;
+  league_strength_weight: number;
 }
 
 const DEFAULT_SETTINGS: ScoringSettingsRow = {
@@ -22,6 +24,8 @@ const DEFAULT_SETTINGS: ScoringSettingsRow = {
   age_sweet_spot_band: 2,
   ai_nudge_enabled: true,
   fit_score_threshold: 60,
+  position_adjacency_factor: 0.5,
+  league_strength_weight: 10,
 };
 
 let cachedSettings: ScoringSettingsRow | null = null;
@@ -52,7 +56,7 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
   inflightSettings = (async () => {
     const { data } = await (supabase as any)
       .from("recruitment_scoring_settings")
-      .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold")
+      .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight")
       .eq("id", "singleton")
       .maybeSingle();
     const merged: ScoringSettingsRow = {
@@ -60,6 +64,8 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
       ...(data || {}),
       weights: { ...DEFAULT_WEIGHTS, ...((data?.weights) || {}) },
       bonus_weights: { ...DEFAULT_BONUS_WEIGHTS, ...((data?.bonus_weights) || {}) },
+      position_adjacency_factor: Number(data?.position_adjacency_factor ?? 0.5),
+      league_strength_weight: Number(data?.league_strength_weight ?? 10),
     };
     cachedSettings = merged;
     writeSession(SS_KEY_SETTINGS, merged);

@@ -28,6 +28,8 @@ const BONUS_LABELS: Record<keyof BonusWeights, { label: string; help: string; mi
   previous_serious_injury: { label: "Previous serious injury", help: "ACL or similar long-term injury history. Typically a deduction.", min: -25, max: 5 },
   top_club: { label: "Top-tier club (R1)", help: "Automatically applied when the player's club is rated R1.", min: 0, max: 20 },
   parent_approval: { label: "Parent approval (youth)", help: "Extra confidence boost when parents have signed off.", min: 0, max: 15 },
+  agent_unrepresented: { label: "Unrepresented / family agent", help: "Boost when the player has no agent or is represented by a family member.", min: 0, max: 20 },
+  agent_top_agency: { label: "Top-tier agency", help: "Deduction when the player is represented by a major agency (CAA, Wasserman, GestiFute, etc.). Typically negative.", min: -25, max: 5 },
 };
 
 export const ScoringSettings = () => {
@@ -36,6 +38,8 @@ export const ScoringSettings = () => {
   const [ageBand, setAgeBand] = useState(2);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [threshold, setThreshold] = useState(60);
+  const [adjacencyFactor, setAdjacencyFactor] = useState(0.5);
+  const [leagueStrengthWeight, setLeagueStrengthWeight] = useState(10);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -43,7 +47,7 @@ export const ScoringSettings = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("recruitment_scoring_settings")
-        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold")
+        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight")
         .eq("id", "singleton")
         .maybeSingle();
       if (data) {
@@ -52,6 +56,8 @@ export const ScoringSettings = () => {
         setAgeBand(data.age_sweet_spot_band ?? 2);
         setAiEnabled(!!data.ai_nudge_enabled);
         setThreshold(data.fit_score_threshold ?? 60);
+        setAdjacencyFactor(Number(data.position_adjacency_factor ?? 0.5));
+        setLeagueStrengthWeight(data.league_strength_weight ?? 10);
       }
       setLoading(false);
     })();
@@ -69,6 +75,8 @@ export const ScoringSettings = () => {
         age_sweet_spot_band: ageBand,
         ai_nudge_enabled: aiEnabled,
         fit_score_threshold: threshold,
+        position_adjacency_factor: adjacencyFactor,
+        league_strength_weight: leagueStrengthWeight,
       })
       .eq("id", "singleton");
     if (error) {
@@ -86,6 +94,8 @@ export const ScoringSettings = () => {
     setAgeBand(2);
     setAiEnabled(true);
     setThreshold(60);
+    setAdjacencyFactor(0.5);
+    setLeagueStrengthWeight(10);
   };
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading scoring settings…</div>;
@@ -172,6 +182,22 @@ export const ScoringSettings = () => {
             <Label className="text-xs">"Strong match" threshold</Label>
             <Input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value) || 0)} />
             <p className="text-[11px] text-muted-foreground">Scores above this highlight in green across recruitment views.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Position adjacency credit</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[Math.round(adjacencyFactor * 100)]} min={0} max={100} step={5} onValueChange={(v) => setAdjacencyFactor(v[0] / 100)} />
+              <Badge variant="outline" className="text-[10px] shrink-0">{Math.round(adjacencyFactor * 100)}%</Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Partial position credit for nearby roles (CB↔LB, CDM↔CM, LW↔RW, etc.). 0% = exact match only.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">League strength weight</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[leagueStrengthWeight]} min={0} max={25} step={1} onValueChange={(v) => setLeagueStrengthWeight(v[0])} />
+              <Badge variant="outline" className="text-[10px] shrink-0">{leagueStrengthWeight}</Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Extra points for top-five leagues (full), tier-2 leagues (60%). 0 disables the multiplier.</p>
           </div>
         </div>
         <div className="flex items-center justify-between pt-2 border-t border-border">

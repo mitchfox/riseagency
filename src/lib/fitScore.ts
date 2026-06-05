@@ -35,6 +35,8 @@ export type BonusWeights = {
   previous_serious_injury: number; // typically negative
   top_club: number;
   parent_approval: number;
+  agent_unrepresented: number;     // free / family agent => boost
+  agent_top_agency: number;        // represented by big agency => deduction (negative)
 };
 
 export const DEFAULT_BONUS_WEIGHTS: BonusWeights = {
@@ -43,6 +45,8 @@ export const DEFAULT_BONUS_WEIGHTS: BonusWeights = {
   previous_serious_injury: -10,
   top_club: 5,
   parent_approval: 5,
+  agent_unrepresented: 8,
+  agent_top_agency: -12,
 };
 
 export interface RecruitmentTargetLite {
@@ -84,6 +88,9 @@ export interface PlayerLike {
   national_team?: boolean | null;
   star_of_team?: boolean | null;
   previous_serious_injury?: string | null;
+  // Agent / representation
+  agent_status?: string | null;   // 'unrepresented' | 'family' | 'represented' | 'top_agency' | 'unknown'
+  agent_name?: string | null;
 }
 
 export interface ScoreBreakdown {
@@ -97,6 +104,51 @@ export interface ScoreBreakdown {
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
 import { countryTier, isEliteClub } from "./countryClubTiers";
+
+const TOP_AGENCIES = [
+  "caa stellar", "caa base", "wasserman", "roof", "stellar group",
+  "gestifute", "jorge mendes", "pini zahavi", "raiola", "one football agency",
+  "icm stellar", "base soccer", "unique sports", "roc nation",
+  "key sports", "p&p sport management", "epic sports", "epic management",
+  "you first sports", "sem", "soccer entertainment management",
+];
+
+export const classifyAgentStatusFromName = (
+  name?: string | null,
+  fallback?: string | null,
+): "unrepresented" | "family" | "represented" | "top_agency" | "unknown" => {
+  const status = (fallback || "").toLowerCase().trim();
+  if (status === "no_agent" || status === "unrepresented" || status === "free") return "unrepresented";
+  if (status === "family_agent" || status === "family") return "family";
+  const n = (name || "").toLowerCase().trim();
+  if (!n) {
+    if (status === "represented") return "represented";
+    if (status === "top_agency") return "top_agency";
+    return "unknown";
+  }
+  if (TOP_AGENCIES.some(a => n.includes(a))) return "top_agency";
+  return "represented";
+};
+
+// Position adjacency — partial credit when player's position is close to the target's
+const ADJACENCY: Record<string, string[]> = {
+  GK: [],
+  CB: ["LB", "RB", "CDM"],
+  LB: ["CB", "LWB", "LM"],
+  RB: ["CB", "RWB", "RM"],
+  LWB: ["LB", "LM", "LW"],
+  RWB: ["RB", "RM", "RW"],
+  CDM: ["CM", "CB"],
+  CM: ["CDM", "CAM", "LM", "RM"],
+  CAM: ["CM", "CF", "LW", "RW"],
+  LM: ["LW", "CM", "LB", "LWB"],
+  RM: ["RW", "CM", "RB", "RWB"],
+  LW: ["LM", "RW", "CAM", "CF", "LWB"],
+  RW: ["RM", "LW", "CAM", "CF", "RWB"],
+  CF: ["CAM", "LW", "RW"],
+};
+const isAdjacent = (pos: string, target: string) =>
+  pos !== target && (ADJACENCY[pos]?.includes(target) || ADJACENCY[target]?.includes(pos) || false);
 
 const normalisePosLocal = (raw?: string | null): string => {
   if (!raw) return "";
@@ -143,6 +195,7 @@ const scoreAgainstTarget = (
   target: RecruitmentTargetLite,
   weights: ScoringWeights,
   ageBand: number,
+  adjacencyFactor: number,
 ): { score: number; reasons: string[]; components: Record<string, number>; maxComponents: Record<string, number> } => {
   const components: Record<string, number> = {};
   const maxComponents: Record<string, number> = {
@@ -158,9 +211,14 @@ const scoreAgainstTarget = (
   // Position match
   const pos = normalisePosLocal(player.position);
   if (target.positions.length > 0) {
-    if (pos && target.positions.map(p => normalisePosLocal(p)).includes(pos)) {
+    const targetPositions = target.positions.map(p => normalisePosLocal(p));
+    if (pos && targetPositions.includes(pos)) {
       components.position = weights.position;
       reasons.push(`+${weights.position} position match (${pos})`);
+    } else if (pos && targetPositions.some(tp => isAdjacent(pos, tp))) {
+      const partial = Math.round(weights.position * Math.max(0, Math.min(1, adjacencyFactor)));
+      components.position = partial;
+      reasons.push(`+${partial} adjacent position (${pos})`);
     } else {
       components.position = 0;
     }
@@ -279,6 +337,8 @@ export const computeFitScore = (
   ageBand = 2,
   scope?: "youth" | "pro",
   bonusWeights: BonusWeights = DEFAULT_BONUS_WEIGHTS,
+  adjacencyFactor = 0.5,
+  leagueStrengthWeight = 0,
 ): ScoreBreakdown => {
   const candidates = targets.filter(t => t.active && (scope ? t.scope === scope || t.scope === "both" : true));
   if (candidates.length === 0) {
@@ -287,7 +347,7 @@ export const computeFitScore = (
   let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget>; effectiveWeights: ScoringWeights } | null = null;
   for (const t of candidates) {
     const effectiveWeights: ScoringWeights = { ...weights, ...(t.weights_override || {}) } as ScoringWeights;
-    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand);
+    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand, adjacencyFactor);
     if (!best || res.score > best.res.score) best = { target: t, res, effectiveWeights };
   }
   if (!best) return { total: 0, reasons: [], components: {}, target_id: null, target_name: null };
@@ -319,11 +379,35 @@ export const computeFitScore = (
   if (player.parent_approval) bonuses.push({ key: "parent_approval", value: bonusEff.parent_approval, reason: `${signed(bonusEff.parent_approval)} parent approval` });
 
   const bonusSum = bonuses.reduce((s, b) => s + b.value, 0);
-  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum), 0, 100);
+
+  // League strength multiplier — extra points based on country tier of the player's club country.
+  let leagueStrengthBonus = 0;
+  const playerCountry = player.club_country || "";
+  if (leagueStrengthWeight > 0 && playerCountry) {
+    const tier = countryTier(playerCountry);
+    const factor = tier === 1 ? 1 : tier === 2 ? 0.6 : 0;
+    leagueStrengthBonus = Math.round(leagueStrengthWeight * factor);
+  }
+
+  // Agent / representation
+  const agentStatus = classifyAgentStatusFromName(player.agent_name, player.agent_status);
+  let agentBonus = 0;
+  let agentReason = "";
+  if (agentStatus === "unrepresented" || agentStatus === "family") {
+    agentBonus = bonusEff.agent_unrepresented;
+    if (agentBonus !== 0) agentReason = `${signed(agentBonus)} ${agentStatus === "family" ? "family agent" : "unrepresented"}`;
+  } else if (agentStatus === "top_agency") {
+    agentBonus = bonusEff.agent_top_agency;
+    if (agentBonus !== 0) agentReason = `${signed(agentBonus)} top-tier agency (${player.agent_name || ""})`;
+  }
+
+  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus), 0, 100);
 
   const reasons = [...best.res.reasons];
   if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
   for (const b of bonuses) reasons.push(b.reason);
+  if (leagueStrengthBonus > 0) reasons.push(`+${leagueStrengthBonus} league strength (${playerCountry})`);
+  if (agentReason) reasons.push(agentReason);
 
   return {
     total,
@@ -332,6 +416,8 @@ export const computeFitScore = (
       ...best.res.components,
       ai_nudge: Math.round(aiScaled),
       ...Object.fromEntries(bonuses.map(b => [b.key, b.value])),
+      league_strength: leagueStrengthBonus,
+      agent: agentBonus,
     },
     target_id: best.target.id,
     target_name: best.target.name,
