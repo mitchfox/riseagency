@@ -33,7 +33,7 @@ import { toTitleCase } from "@/lib/titleCase";
 const languageColumnMap: Record<string, string> = {
   'en': 'english', 'es': 'spanish', 'pt': 'portuguese', 'fr': 'french',
   'de': 'german', 'it': 'italian', 'pl': 'polish', 'cs': 'czech',
-  'ru': 'russian', 'tr': 'turkish',
+  'ru': 'russian', 'tr': 'turkish', 'hr': 'croatian', 'no': 'norwegian',
 };
 
 const PlayerDetail = () => {
@@ -246,6 +246,9 @@ const PlayerDetail = () => {
   const sponsorsLabel = usePlayerProfileLabel('sponsors');
   const sponsorOpportunitiesLabel = usePlayerProfileLabel('sponsorOpportunities');
   const reachOutLabel = usePlayerProfileLabel('reachOut');
+  const seeMoreLabel = usePlayerProfileLabel('seeMore');
+  const noStatsAvailableLabel = usePlayerProfileLabel('noStatsAvailable');
+  const viewFullSeasonReportLabel = usePlayerProfileLabel('viewFullSeasonReport');
 
   // Debug: Log the current language
   console.log('PlayerDetail - Current language:', language);
@@ -734,10 +737,10 @@ const PlayerDetail = () => {
                   <p className="text-foreground/60 font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                     {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.name
                       ? dbHighlights[currentVideoType].name
-                      : t('player.highlights', 'Highlights')}
+                      : highlightsLabel}
                   </p>
                   <p className="text-xs md:text-sm text-muted-foreground">
-                    {t('player.coming_soon', 'Coming Soon')}
+                    {comingSoonLabel}
                   </p>
                 </div>
               )}
@@ -857,7 +860,7 @@ const PlayerDetail = () => {
                       onClick={() => setMobileVisibleRows(r => r + 1)}
                       className="mt-2 w-full text-xs font-bebas uppercase tracking-wider text-[hsl(var(--gold))] border border-[hsl(var(--gold))]/40 rounded py-1.5 hover:bg-[hsl(var(--gold))]/10"
                     >
-                      See more ({remaining})
+                      {seeMoreLabel} ({remaining})
                     </button>
                   )}
                 </div>
@@ -1149,7 +1152,7 @@ const PlayerDetail = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No stats data available yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{noStatsAvailableLabel}</p>
                 )}
               </div>
             </div>
@@ -1168,7 +1171,7 @@ const PlayerDetail = () => {
                       size="sm"
                       className="ml-2 gap-1.5 font-bebas uppercase tracking-wider border-primary/40 hover:bg-primary hover:text-primary-foreground"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" /> View Full Season Report
+                      <BarChart3 className="h-3.5 w-3.5" /> {viewFullSeasonReportLabel}
                     </Button>
                   )}
                 </h2>
@@ -1253,7 +1256,7 @@ const PlayerDetail = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No stats data available yet</p>
+                      <p className="text-sm text-muted-foreground text-center py-4">{noStatsAvailableLabel}</p>
                     )}
                   </div>
                 </div>

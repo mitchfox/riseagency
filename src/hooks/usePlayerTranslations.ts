@@ -386,8 +386,8 @@ export const seasonStatTranslations: Record<string, Record<string, string>> = {
 
 // Scheme history label translations
 export const schemeHistoryLabels: Record<string, Record<string, string>> = {
-  'CURRENT CLUB': { es: 'CLUB ACTUAL', pt: 'CLUBE ATUAL', fr: 'CLUB ACTUEL', de: 'AKTUELLER VEREIN', it: 'CLUB ATTUALE', pl: 'OBECNY KLUB', cs: 'AKTUÁLNÍ KLUB', ru: 'ТЕКУЩИЙ КЛУБ', tr: 'MEVCUT KULÜP' },
-  'MATCHES': { es: 'PARTIDOS', pt: 'PARTIDAS', fr: 'MATCHS', de: 'SPIELE', it: 'PARTITE', pl: 'MECZE', cs: 'ZÁPASY', ru: 'МАТЧИ', tr: 'MAÇLAR' },
+  'CURRENT CLUB': { es: 'CLUB ACTUAL', pt: 'CLUBE ATUAL', fr: 'CLUB ACTUEL', de: 'AKTUELLER VEREIN', it: 'CLUB ATTUALE', pl: 'OBECNY KLUB', cs: 'AKTUÁLNÍ KLUB', ru: 'ТЕКУЩИЙ КЛУБ', tr: 'MEVCUT KULÜP', hr: 'TRENUTNI KLUB', no: 'NÅVÆRENDE KLUBB' },
+  'MATCHES': { es: 'PARTIDOS', pt: 'PARTIDAS', fr: 'MATCHS', de: 'SPIELE', it: 'PARTITE', pl: 'MECZE', cs: 'ZÁPASY', ru: 'МАТЧИ', tr: 'MAÇLAR', hr: 'UTAKMICE', no: 'KAMPER' },
 };
 
 // "In Numbers" stat label translations
@@ -768,6 +768,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Životopis',
     ru: 'Биография',
     tr: 'Biyografi',
+    hr: 'Biografija',
+    no: 'Biografi',
   },
   readMore: {
     en: 'Read More',
@@ -780,6 +782,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Číst více',
     ru: 'Читать далее',
     tr: 'Daha fazla oku',
+    hr: 'Pročitaj više',
+    no: 'Les mer',
   },
   externalLinks: {
     en: 'External Links',
@@ -792,6 +796,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Externí odkazy',
     ru: 'Внешние ссылки',
     tr: 'Dış bağlantılar',
+    hr: 'Vanjske poveznice',
+    no: 'Eksterne lenker',
   },
   inNumbers: {
     en: 'In Numbers',
@@ -804,6 +810,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'V číslech',
     ru: 'В цифрах',
     tr: 'Rakamlarla',
+    hr: 'U brojkama',
+    no: 'I tall',
   },
   seasonStats: {
     en: 'Season Stats',
@@ -816,6 +824,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Statistiky sezóny',
     ru: 'Статистика сезона',
     tr: 'Sezon istatistikleri',
+    hr: 'Statistika sezone',
+    no: 'Sesongstatistikk',
   },
   strengths: {
     en: 'Strengths',
@@ -828,6 +838,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Silné stránky',
     ru: 'Сильные стороны',
     tr: 'Güçlü yönler',
+    hr: 'Snage',
+    no: 'Styrker',
   },
   tacticalFormations: {
     en: 'Tactical Formations',
@@ -840,6 +852,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Taktické formace',
     ru: 'Тактические построения',
     tr: 'Taktik dizilişler',
+    hr: 'Taktičke formacije',
+    no: 'Taktiske formasjoner',
   },
   schemeHistory: {
     en: 'Scheme History',
@@ -852,6 +866,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Historie schémat',
     ru: 'История схем',
     tr: 'Şema geçmişi',
+    hr: 'Povijest shema',
+    no: 'Skjemahistorikk',
   },
   performanceReports: {
     en: 'Performance Reports',
@@ -864,6 +880,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Výkonnostní zprávy',
     ru: 'Отчёты о результатах',
     tr: 'Performans raporları',
+    hr: 'Izvještaji o učinku',
+    no: 'Prestasjonsrapporter',
   },
   recentMatches: {
     en: 'Recent Matches',
@@ -876,6 +894,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Nedávné zápasy',
     ru: 'Последние матчи',
     tr: 'Son maçlar',
+    hr: 'Nedavne utakmice',
+    no: 'Nylige kamper',
   },
   backToStars: {
     en: 'Back to Stars',
@@ -888,6 +908,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Zpět k hvězdám',
     ru: 'Назад к звёздам',
     tr: 'Yıldızlara dön',
+    hr: 'Natrag na zvijezde',
+    no: 'Tilbake til stjerner',
   },
   enquirePlayer: {
     en: 'Enquire About This Player',
@@ -900,6 +922,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Dotaz na tohoto hráče',
     ru: 'Узнать об этом игроке',
     tr: 'Bu oyuncu hakkında bilgi al',
+    hr: 'Upit o ovom igraču',
+    no: 'Spør om denne spilleren',
   },
   loadingPlayer: {
     en: 'Loading player...',
@@ -912,6 +936,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Načítání hráče...',
     ru: 'Загрузка игрока...',
     tr: 'Oyuncu yükleniyor...',
+    hr: 'Učitavanje igrača...',
+    no: 'Laster spiller...',
   },
   playerNotFound: {
     en: 'Player Not Found',
@@ -924,6 +950,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Hráč nenalezen',
     ru: 'Игрок не найден',
     tr: 'Oyuncu bulunamadı',
+    hr: 'Igrač nije pronađen',
+    no: 'Spiller ikke funnet',
   },
   backToDirectory: {
     en: 'Back to Directory',
@@ -936,6 +964,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Zpět do adresáře',
     ru: 'Назад к каталогу',
     tr: 'Dizine dön',
+    hr: 'Natrag na imenik',
+    no: 'Tilbake til oversikt',
   },
   highlights: {
     en: 'Highlights',
@@ -948,6 +978,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Sestřihy',
     ru: 'Лучшие моменты',
     tr: 'Öne çıkanlar',
+    hr: 'Najbolji trenuci',
+    no: 'Høydepunkter',
   },
   comingSoon: {
     en: 'Coming Soon',
@@ -960,6 +992,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Již brzy',
     ru: 'Скоро',
     tr: 'Yakında',
+    hr: 'Uskoro',
+    no: 'Kommer snart',
   },
   strengthsPlayStyle: {
     en: 'Strengths & Play Style',
@@ -972,6 +1006,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Silné stránky a styl hry',
     ru: 'Сильные стороны и стиль игры',
     tr: 'Güçlü yönler ve oyun tarzı',
+    hr: 'Snage i stil igre',
+    no: 'Styrker og spillestil',
   },
   getInTouch: {
     en: 'Get In Touch',
@@ -984,6 +1020,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Kontaktujte nás',
     ru: 'Свяжитесь с нами',
     tr: 'İletişime geçin',
+    hr: 'Kontaktirajte nas',
+    no: 'Ta kontakt',
   },
   clubsAgents: {
     en: 'Clubs & Agents',
@@ -996,6 +1034,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Kluby a agenti',
     ru: 'Клубы и агенты',
     tr: 'Kulüpler ve ajanlar',
+    hr: 'Klubovi i agenti',
+    no: 'Klubber og agenter',
   },
   interestedInSigning: {
     en: "Interested in signing this player? Let's discuss opportunities.",
@@ -1008,6 +1048,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Máte zájem o tohoto hráče? Pojďme probrat možnosti.',
     ru: 'Заинтересованы в этом игроке? Давайте обсудим возможности.',
     tr: 'Bu oyuncuyu transfer etmek ister misiniz? Fırsatları tartışalım.',
+    hr: 'Zainteresirani za potpisivanje ovog igrača? Razgovarajmo o mogućnostima.',
+    no: 'Interessert i å signere denne spilleren? La oss diskutere muligheter.',
   },
   media: {
     en: 'Media',
@@ -1020,6 +1062,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Média',
     ru: 'СМИ',
     tr: 'Medya',
+    hr: 'Mediji',
+    no: 'Media',
   },
   pressInquiries: {
     en: 'Press inquiries and interview requests welcome.',
@@ -1032,6 +1076,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Dotazy tisku a žádosti o rozhovory vítány.',
     ru: 'Приветствуются запросы от прессы и заявки на интервью.',
     tr: 'Basın soruları ve röportaj talepleri memnuniyetle karşılanır.',
+    hr: 'Upiti tiska i zahtjevi za intervju su dobrodošli.',
+    no: 'Pressehenvendelser og intervjuforespørsler er velkomne.',
   },
   contact: {
     en: 'Contact',
@@ -1044,6 +1090,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Kontakt',
     ru: 'Связаться',
     tr: 'İletişim',
+    hr: 'Kontakt',
+    no: 'Kontakt',
   },
   sponsors: {
     en: 'Sponsors',
@@ -1056,6 +1104,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Sponzoři',
     ru: 'Спонсоры',
     tr: 'Sponsorlar',
+    hr: 'Sponzori',
+    no: 'Sponsorer',
   },
   sponsorOpportunities: {
     en: 'Explore partnership and sponsorship opportunities.',
@@ -1068,6 +1118,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Prozkoumejte možnosti partnerství a sponzorství.',
     ru: 'Изучите возможности партнёрства и спонсорства.',
     tr: 'Ortaklık ve sponsorluk fırsatlarını keşfedin.',
+    hr: 'Istražite mogućnosti partnerstva i sponzorstva.',
+    no: 'Utforsk partnerskaps- og sponsormuligheter.',
   },
   reachOut: {
     en: 'Reach Out',
@@ -1080,6 +1132,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Ozvěte se',
     ru: 'Связаться',
     tr: 'İletişime geçin',
+    hr: 'Javite se',
+    no: 'Ta kontakt',
   },
   readActionReport: {
     en: 'Read Action Report',
@@ -1092,6 +1146,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Přečíst zprávu o akci',
     ru: 'Читать отчёт о действиях',
     tr: 'Eylem raporunu oku',
+    hr: 'Pročitaj izvještaj o akciji',
+    no: 'Les handlingsrapport',
   },
   watchFullMatch: {
     en: 'Watch Full Match',
@@ -1104,6 +1160,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Sledovat celý zápas',
     ru: 'Смотреть полный матч',
     tr: 'Tüm maçı izle',
+    hr: 'Gledaj cijelu utakmicu',
+    no: 'Se hele kampen',
   },
   highlightedPerformance: {
     en: 'Highlighted Performance',
@@ -1116,6 +1174,8 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Zvýrazněný výkon',
     ru: 'Выделенное выступление',
     tr: 'Öne çıkan performans',
+    hr: 'Istaknuti učinak',
+    no: 'Fremhevet prestasjon',
   },
   performanceMetrics: {
     en: 'Performance Metrics',
@@ -1128,6 +1188,50 @@ export const playerProfileLabels: Record<string, Record<string, string>> = {
     cs: 'Výkonnostní metriky',
     ru: 'Показатели производительности',
     tr: 'Performans metrikleri',
+    hr: 'Metrike učinka',
+    no: 'Prestasjonsmålinger',
+  },
+  seeMore: {
+    en: 'See more',
+    es: 'Ver más',
+    pt: 'Ver mais',
+    fr: 'Voir plus',
+    de: 'Mehr anzeigen',
+    it: 'Mostra di più',
+    pl: 'Zobacz więcej',
+    cs: 'Zobrazit více',
+    ru: 'Показать ещё',
+    tr: 'Daha fazla',
+    hr: 'Prikaži više',
+    no: 'Vis mer',
+  },
+  noStatsAvailable: {
+    en: 'No stats data available yet',
+    es: 'Aún no hay datos de estadísticas',
+    pt: 'Ainda não há dados estatísticos disponíveis',
+    fr: 'Aucune statistique disponible pour le moment',
+    de: 'Noch keine Statistikdaten verfügbar',
+    it: 'Nessun dato statistico ancora disponibile',
+    pl: 'Brak dostępnych statystyk',
+    cs: 'Statistická data zatím nejsou k dispozici',
+    ru: 'Статистика пока недоступна',
+    tr: 'Henüz istatistik verisi yok',
+    hr: 'Statistički podaci još nisu dostupni',
+    no: 'Ingen statistikkdata tilgjengelig ennå',
+  },
+  viewFullSeasonReport: {
+    en: 'View Full Season Report',
+    es: 'Ver informe completo de temporada',
+    pt: 'Ver relatório completo da temporada',
+    fr: 'Voir le rapport complet de la saison',
+    de: 'Vollständigen Saisonbericht ansehen',
+    it: 'Visualizza il report completo della stagione',
+    pl: 'Zobacz pełny raport sezonu',
+    cs: 'Zobrazit kompletní zprávu sezóny',
+    ru: 'Просмотреть полный отчёт сезона',
+    tr: 'Tam sezon raporunu görüntüle',
+    hr: 'Pogledaj cijeli izvještaj sezone',
+    no: 'Vis full sesongrapport',
   },
 };
 
