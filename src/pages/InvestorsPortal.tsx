@@ -1216,6 +1216,9 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                       onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
                       {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
                     </Button>
+                    <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
+                      <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
                   </td>
                 </tr>
