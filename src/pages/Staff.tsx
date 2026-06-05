@@ -317,6 +317,15 @@ const Staff = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const setStaffSectionParams = (updates: Record<string, string | null>, options?: { replace?: boolean }) => {
+    const nextParams = new URLSearchParams(window.location.search);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '') nextParams.delete(key);
+      else nextParams.set(key, value);
+    });
+    setSearchParams(nextParams, options);
+  };
+
   // Restore tabs and active section from localStorage / URL on mount
   useEffect(() => {
     if (!isStaff) return;
@@ -364,7 +373,7 @@ const Staff = () => {
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     setExpandedSection(finalSection as any);
-    setSearchParams({ section: finalSection }, { replace: true });
+    setStaffSectionParams({ section: finalSection }, { replace: true });
 
     // Expand parent category
     const cats = buildCategories();
@@ -476,7 +485,7 @@ const Staff = () => {
     // Always navigate to the section - never toggle off by clicking the same one
     playSectionSwitch();
     setExpandedSection(section as any);
-    setSearchParams({ section });
+    setStaffSectionParams({ section });
     // Persist active tab for session restoration
     localStorage.setItem('staff_active_tab', section);
     // Update tabs - use functional update pattern to avoid stale reads
