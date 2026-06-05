@@ -195,6 +195,7 @@ const scoreAgainstTarget = (
   target: RecruitmentTargetLite,
   weights: ScoringWeights,
   ageBand: number,
+  adjacencyFactor: number,
 ): { score: number; reasons: string[]; components: Record<string, number>; maxComponents: Record<string, number> } => {
   const components: Record<string, number> = {};
   const maxComponents: Record<string, number> = {
@@ -210,9 +211,14 @@ const scoreAgainstTarget = (
   // Position match
   const pos = normalisePosLocal(player.position);
   if (target.positions.length > 0) {
-    if (pos && target.positions.map(p => normalisePosLocal(p)).includes(pos)) {
+    const targetPositions = target.positions.map(p => normalisePosLocal(p));
+    if (pos && targetPositions.includes(pos)) {
       components.position = weights.position;
       reasons.push(`+${weights.position} position match (${pos})`);
+    } else if (pos && targetPositions.some(tp => isAdjacent(pos, tp))) {
+      const partial = Math.round(weights.position * Math.max(0, Math.min(1, adjacencyFactor)));
+      components.position = partial;
+      reasons.push(`+${partial} adjacent position (${pos})`);
     } else {
       components.position = 0;
     }
