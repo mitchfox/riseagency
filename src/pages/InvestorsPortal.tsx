@@ -1029,6 +1029,9 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
             <Button variant="outline" size="sm" onClick={() => setConnectOpen(true)}>
               <Building2 className="w-3.5 h-3.5 mr-1" />Bank accounts
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setManageCatsOpen(true)}>
+              <Pencil className="w-3.5 h-3.5 mr-1" />Categories
+            </Button>
           </div>
         </div>
       </Tabs>
