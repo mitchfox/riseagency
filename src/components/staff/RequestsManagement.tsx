@@ -189,7 +189,7 @@ export const RequestsManagement = () => {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
-            <Link to="/agent-requests" target="_blank">
+            <Link to="/agent-requests" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">View Public Page</span>
               <span className="sm:hidden">View</span>
