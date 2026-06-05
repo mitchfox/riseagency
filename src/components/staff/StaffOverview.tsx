@@ -488,11 +488,18 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
   const navigateToPlayer = (playerId: string, tab: string) => {
     // Use navigate for reliable cross-component navigation
-    navigate(`/staff?section=players&player=${playerId}&tab=${tab}`);
+    const params = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key.startsWith('__lovable')) params.set(key, value);
+    });
+    params.set('section', 'players');
+    params.set('player', playerId);
+    params.set('tab', tab);
+    navigate(`/staff?${params.toString()}`);
   };
 
   const navigateToGoalsTasks = () => {
-    navigate('/staff?section=visionboard');
+    navigateToSection('visionboard');
   };
 
   const handleQuickAddTask = async () => {
