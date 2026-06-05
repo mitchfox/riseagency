@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNightMode } from "@/hooks/useNightMode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
