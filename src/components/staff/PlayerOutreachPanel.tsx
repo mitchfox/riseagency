@@ -613,7 +613,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               scope={type}
               player={{
                 position: item.position,
-                age: calculateAge(item.date_of_birth),
+                age: calculateAge(item.date_of_birth) ?? item.age ?? null,
                 date_of_birth: item.date_of_birth,
                 nationality: item.nationality,
                 current_club: item.current_club,
@@ -624,9 +624,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 response_status: item.response_status,
                 parent_approval: item.parent_approval,
                 last_contact_at: item.last_contact_at,
+                national_team: item.national_team,
+                star_of_team: item.star_of_team,
+                previous_serious_injury: item.previous_serious_injury,
               }}
-              cachedScore={item.fit_score ?? null}
-              cachedBreakdown={item.fit_score_breakdown ?? null}
             />
           </TableCell>
         );
