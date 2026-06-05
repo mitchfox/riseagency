@@ -7125,6 +7125,7 @@ export type Database = {
           signed_pdf_url: string | null
           signer_email: string
           signer_name: string
+          submission_type: string
           user_agent: string | null
         }
         Insert: {
@@ -7140,6 +7141,7 @@ export type Database = {
           signed_pdf_url?: string | null
           signer_email: string
           signer_name: string
+          submission_type?: string
           user_agent?: string | null
         }
         Update: {
@@ -7155,6 +7157,7 @@ export type Database = {
           signed_pdf_url?: string | null
           signer_email?: string
           signer_name?: string
+          submission_type?: string
           user_agent?: string | null
         }
         Relationships: [
