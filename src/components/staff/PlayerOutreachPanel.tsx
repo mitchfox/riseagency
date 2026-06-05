@@ -268,7 +268,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setAgeRules(rulesResult.data || []);
       setClubCountryMap(countryMap);
       setClubRatings(ratingsResult.data || []);
+      setData(outreachData);
+      setLoading(false);
 
+      // Auto-move 18+ youth → pro AFTER first paint so the table is not blocked.
       if (isYouth) {
         const toMove = outreachData.filter(item => {
           if (!item.date_of_birth) return false;
@@ -276,27 +279,27 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           return age !== null && age >= 18;
         });
         if (toMove.length > 0) {
-          for (const item of toMove) {
-            await supabase.from('player_outreach_pro').insert({
-              player_name: item.player_name, ig_handle: item.ig_handle,
-              current_club: item.current_club, date_of_birth: item.date_of_birth,
-              messaged: item.messaged, response_received: item.response_received,
-              initial_message: item.initial_message, notes: item.notes,
-              age: 18, position: item.position, nationality: item.nationality
-            });
-            await supabase.from('player_outreach_youth').delete().eq('id', item.id);
-          }
-          toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
-          const { data: refreshed } = await supabase.from('player_outreach_youth')
-            .select('*').order('created_at', { ascending: false });
-          outreachData = refreshed || [];
+          (async () => {
+            try {
+              await Promise.all(toMove.map(item =>
+                supabase.from('player_outreach_pro').insert({
+                  player_name: item.player_name, ig_handle: item.ig_handle,
+                  current_club: item.current_club, date_of_birth: item.date_of_birth,
+                  messaged: item.messaged, response_received: item.response_received,
+                  initial_message: item.initial_message, notes: item.notes,
+                  age: 18, position: item.position, nationality: item.nationality
+                }).then(() => supabase.from('player_outreach_youth').delete().eq('id', item.id))
+              ));
+              toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
+              setData(prev => prev.filter(d => !toMove.some(m => m.id === d.id)));
+            } catch (e) { /* ignore background move errors */ }
+          })();
         }
       }
-      setData(outreachData);
+      return;
     } catch (error) {
       console.error(`Error fetching ${type} outreach:`, error);
       toast.error(`Failed to load ${type} outreach data`);
-    } finally {
       setLoading(false);
     }
   };
