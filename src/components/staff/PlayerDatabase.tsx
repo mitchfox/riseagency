@@ -65,7 +65,7 @@ interface ClubRating {
   academy_rating: string;
 }
 
-type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth';
+type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth' | 'fit_score';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
