@@ -931,6 +931,26 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           }}>
             <Plus className="w-3.5 h-3.5 mr-1" /> Add
           </Button>
+          <Button size="sm" variant="outline" onClick={async () => {
+            const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
+            const targets = data.filter((d: any) => (d.transfermarkt_url || '').trim().length > 0);
+            if (targets.length === 0) { toast.info('No rows have a Transfermarkt URL yet'); return; }
+            const t = toast.loading(`Refreshing agents for ${targets.length} player(s)…`);
+            try {
+              const { data: res, error } = await supabase.functions.invoke('parse-transfermarkt-profile', {
+                body: { items: targets.map((d: any) => ({ id: d.id, url: d.transfermarkt_url })) },
+              });
+              if (error) throw error;
+              const updates = (res?.results || []) as Array<{ id: string; agent_name: string | null; agent_status: string | null }>;
+              await Promise.all(updates.map(u => supabase.from(tableName).update({ agent_name: u.agent_name, agent_status: u.agent_status }).eq('id', u.id)));
+              toast.success(`Updated ${updates.length} player(s)`, { id: t });
+              fetchData();
+            } catch (e: any) {
+              toast.error(e?.message || 'Refresh failed', { id: t });
+            }
+          }}>
+            <Search className="w-3.5 h-3.5 mr-1" /> Refresh Agents (TM)
+          </Button>
         </div>
       </div>
 
@@ -1087,6 +1107,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="space-y-1">
                 <Label className="text-xs">Previous Serious Injury (e.g. ACL 2023)</Label>
                 <BlurInput value={formData.previous_serious_injury} onCommit={v => setFormData((f: any) => ({ ...f, previous_serious_injury: v }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs">Transfermarkt URL</Label><BlurInput value={formData.transfermarkt_url || ''} onCommit={v => setFormData((f: any) => ({ ...f, transfermarkt_url: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Agent / Agency</Label><BlurInput value={formData.agent_name || ''} onCommit={v => setFormData((f: any) => ({ ...f, agent_name: v }))} /></div>
               </div>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label className="text-xs">Messaged</Label></div>
