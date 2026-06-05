@@ -1217,6 +1217,7 @@ const Staff = () => {
 
       {/* Header with Logo - always visible */}
        <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? 'h-10' : ''}`}>
+        {isNight && <div className="staff-night-glow" aria-hidden="true" />}
         <div className={`flex items-center ${headerCollapsed ? 'h-10' : 'h-16'} px-4 relative`}>
           {/* Centre logo — clickable to collapse/expand */}
           <div
