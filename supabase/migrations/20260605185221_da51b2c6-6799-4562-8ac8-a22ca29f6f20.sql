@@ -1,0 +1,1 @@
+ALTER TABLE public.players ALTER COLUMN age DROP NOT NULL;

@@ -266,7 +266,7 @@ export const OutreachTargetsManager = () => {
         <Collapsible open={wOpen} onOpenChange={(v) => setWeightsOpen(prev => ({ ...prev, [key]: v }))}>
           <CollapsibleTrigger asChild>
             <button type="button" className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide py-2 px-2 rounded hover:bg-muted/40">
-              <span className="flex items-center gap-2"><Sliders className="h-3.5 w-3.5 text-primary" /> Scoring weights for this target {d.weights_override ? <Badge variant="outline" className="text-[10px]">Custom</Badge> : <Badge variant="outline" className="text-[10px]">Using global</Badge>}</span>
+              <span className="flex items-center gap-2"><Sliders className="h-3.5 w-3.5 text-primary" /> Tune how this target is scored {d.weights_override ? <Badge variant="outline" className="text-[10px]">Tuned</Badge> : <Badge variant="outline" className="text-[10px]">Default</Badge>}</span>
               {wOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
           </CollapsibleTrigger>
@@ -277,7 +277,7 @@ export const OutreachTargetsManager = () => {
                   checked={!!d.weights_override}
                   onCheckedChange={(v) => updateDraft(key, { weights_override: v ? { ...baseWeights } : null })}
                 />
-                <Label className="text-xs">Override global weights</Label>
+                <Label className="text-xs">Tune scoring for this target</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
@@ -304,7 +304,7 @@ export const OutreachTargetsManager = () => {
                     />
                   </div>
                 ))}
-                <p className="text-[10px] text-muted-foreground">Players are scored against every target and take the highest. Tuning here only affects this target's score.</p>
+                <p className="text-[10px] text-muted-foreground">Every player is scored as a ratio against every active target and keeps their best fit. Tuning here only changes how this target weights each component, so the player you actually want still rises to the top.</p>
               </div>
             )}
           </CollapsibleContent>

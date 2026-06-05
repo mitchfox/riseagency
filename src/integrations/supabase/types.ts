@@ -5830,7 +5830,7 @@ export type Database = {
       }
       players: {
         Row: {
-          age: number
+          age: number | null
           agent_notes: string | null
           bio: string | null
           category: string | null
@@ -5887,7 +5887,7 @@ export type Database = {
           visible_on_stars_page: boolean | null
         }
         Insert: {
-          age: number
+          age?: number | null
           agent_notes?: string | null
           bio?: string | null
           category?: string | null
@@ -5944,7 +5944,7 @@ export type Database = {
           visible_on_stars_page?: boolean | null
         }
         Update: {
-          age?: number
+          age?: number | null
           agent_notes?: string | null
           bio?: string | null
           category?: string | null

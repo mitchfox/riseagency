@@ -96,6 +96,8 @@ export interface ScoreBreakdown {
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
+import { countryTier, isEliteClub } from "./countryClubTiers";
+
 const normalisePosLocal = (raw?: string | null): string => {
   if (!raw) return "";
   const s = raw.trim().toLowerCase();
@@ -205,19 +207,29 @@ const scoreAgainstTarget = (
   const cc = (player.club_country || "").toLowerCase().trim();
   if (target.countries_of_club.length > 0) {
     if (cc && target.countries_of_club.map(n => n.toLowerCase()).includes(cc)) {
-      components.club_country = weights.club_country;
-      reasons.push(`+${weights.club_country} club country fit`);
+      // Country still fits the target, but tier it: tier 1 = full, tier 2 = 80%, tier 3 = 60%.
+      const tier = countryTier(cc);
+      const tierFactor = tier === 1 ? 1 : tier === 2 ? 0.8 : 0.6;
+      const awarded = Math.round(weights.club_country * tierFactor);
+      components.club_country = awarded;
+      const label = tier === 1 ? "tier-1 country" : tier === 2 ? "tier-2 country" : "country in target";
+      reasons.push(`+${awarded} ${label}`);
     } else {
       components.club_country = 0;
     }
   } else {
-    components.club_country = weights.club_country * 0.5;
+    // No country constraint — still reward tier-1/2 countries proportionally.
+    const tier = countryTier(cc);
+    const factor = tier === 1 ? 0.9 : tier === 2 ? 0.7 : 0.4;
+    components.club_country = Math.round(weights.club_country * factor);
   }
 
   // Club rating (R1 highest → numerically lowest)
   const playerRating = ratingValue(player.club_first_team_rating);
   const minR = ratingValue(target.min_club_rating);
   const maxR = ratingValue(target.max_club_rating);
+  const clubName = player.club || player.current_club || null;
+  const elite = isEliteClub(clubName);
   if (playerRating !== null && (minR !== null || maxR !== null)) {
     const lo = maxR ?? playerRating; // higher tier = lower number, so "min rating" in UI = best, becomes upper bound on number
     const hi = minR ?? playerRating;
@@ -229,6 +241,16 @@ const scoreAgainstTarget = (
     }
   } else {
     components.club_rating = playerRating !== null ? weights.club_rating * 0.5 : 0;
+  }
+  // Elite super-club nudge: never breaks the per-component cap, but pushes
+  // borderline R1s up so Real Madrid scores above a generic R1 side.
+  if (elite) {
+    const boosted = Math.min(weights.club_rating, Math.round((components.club_rating || 0) + weights.club_rating * 0.15));
+    if (boosted > (components.club_rating || 0)) {
+      const delta = boosted - (components.club_rating || 0);
+      components.club_rating = boosted;
+      reasons.push(`+${delta} elite super-club`);
+    }
   }
 
   // Outreach signal
