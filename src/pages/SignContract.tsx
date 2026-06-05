@@ -55,6 +55,12 @@ const SignContract = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
+  // Hand-signed upload state
+  const manualUploadInputRef = useRef<HTMLInputElement>(null);
+  const [manualFile, setManualFile] = useState<File | null>(null);
+  const [manualUploading, setManualUploading] = useState(false);
+  const [manualUploaded, setManualUploaded] = useState(false);
+
   // Detect mobile for optimized rendering
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
