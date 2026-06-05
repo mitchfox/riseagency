@@ -11,6 +11,7 @@ import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, I
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { FitScoreBadge } from "./recruitment/FitScoreBadge";
 import {
   DndContext,
   DragOverlay,
