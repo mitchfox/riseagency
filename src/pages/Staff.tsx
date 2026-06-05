@@ -1214,6 +1214,7 @@ const Staff = () => {
           opacity: theme === 'light' ? 0.5 : 0.25,
         }}
       />
+      {isNight && <div className="staff-night-aura" aria-hidden="true" />}
 
       {/* Header with Logo - always visible */}
        <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? 'h-10' : ''}`}>
