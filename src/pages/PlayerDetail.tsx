@@ -33,7 +33,7 @@ import { toTitleCase } from "@/lib/titleCase";
 const languageColumnMap: Record<string, string> = {
   'en': 'english', 'es': 'spanish', 'pt': 'portuguese', 'fr': 'french',
   'de': 'german', 'it': 'italian', 'pl': 'polish', 'cs': 'czech',
-  'ru': 'russian', 'tr': 'turkish',
+  'ru': 'russian', 'tr': 'turkish', 'hr': 'croatian', 'no': 'norwegian',
 };
 
 const PlayerDetail = () => {

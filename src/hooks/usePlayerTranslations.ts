@@ -386,8 +386,8 @@ export const seasonStatTranslations: Record<string, Record<string, string>> = {
 
 // Scheme history label translations
 export const schemeHistoryLabels: Record<string, Record<string, string>> = {
-  'CURRENT CLUB': { es: 'CLUB ACTUAL', pt: 'CLUBE ATUAL', fr: 'CLUB ACTUEL', de: 'AKTUELLER VEREIN', it: 'CLUB ATTUALE', pl: 'OBECNY KLUB', cs: 'AKTUÁLNÍ KLUB', ru: 'ТЕКУЩИЙ КЛУБ', tr: 'MEVCUT KULÜP' },
-  'MATCHES': { es: 'PARTIDOS', pt: 'PARTIDAS', fr: 'MATCHS', de: 'SPIELE', it: 'PARTITE', pl: 'MECZE', cs: 'ZÁPASY', ru: 'МАТЧИ', tr: 'MAÇLAR' },
+  'CURRENT CLUB': { es: 'CLUB ACTUAL', pt: 'CLUBE ATUAL', fr: 'CLUB ACTUEL', de: 'AKTUELLER VEREIN', it: 'CLUB ATTUALE', pl: 'OBECNY KLUB', cs: 'AKTUÁLNÍ KLUB', ru: 'ТЕКУЩИЙ КЛУБ', tr: 'MEVCUT KULÜP', hr: 'TRENUTNI KLUB', no: 'NÅVÆRENDE KLUBB' },
+  'MATCHES': { es: 'PARTIDOS', pt: 'PARTIDAS', fr: 'MATCHS', de: 'SPIELE', it: 'PARTITE', pl: 'MECZE', cs: 'ZÁPASY', ru: 'МАТЧИ', tr: 'MAÇLAR', hr: 'UTAKMICE', no: 'KAMPER' },
 };
 
 // "In Numbers" stat label translations
