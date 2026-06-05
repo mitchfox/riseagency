@@ -6999,6 +6999,7 @@ export type Database = {
           file_name: string
           file_url: string
           id: string
+          is_mandate: boolean
           locked_at: string | null
           locked_fields_snapshot: Json | null
           locked_file_url: string | null
@@ -7019,6 +7020,7 @@ export type Database = {
           file_name: string
           file_url: string
           id?: string
+          is_mandate?: boolean
           locked_at?: string | null
           locked_fields_snapshot?: Json | null
           locked_file_url?: string | null
@@ -7039,6 +7041,7 @@ export type Database = {
           file_name?: string
           file_url?: string
           id?: string
+          is_mandate?: boolean
           locked_at?: string | null
           locked_fields_snapshot?: Json | null
           locked_file_url?: string | null

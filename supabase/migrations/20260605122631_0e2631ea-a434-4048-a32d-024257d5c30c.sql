@@ -1,0 +1,1 @@
+ALTER TABLE public.signature_contracts ADD COLUMN IF NOT EXISTS is_mandate boolean NOT NULL DEFAULT false;
