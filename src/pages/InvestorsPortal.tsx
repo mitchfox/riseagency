@@ -2249,41 +2249,48 @@ const ProspectColumn = ({ stage, items }: { stage: string; items: ProspectRow[] 
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
                           style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}>{p.position}</span>
                   )}
+                  {p.age_group && (
+                    <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bebas tracking-wider"
+                           style={{ color: "hsl(43,49%,70%)", borderColor: "hsl(43,49%,61% / 0.4)", background: "hsl(43,49%,61% / 0.08)" }}>
+                      {AGE_GROUP_LABEL[p.age_group]}
+                    </Badge>
+                  )}
                 </div>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} title={p.priority || "no priority"} />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} title={p.priority || "no priority"} />
+                  <FitScoreBadge
+                    player={{ position: p.position, age: p.age, date_of_birth: p.date_of_birth, nationality: p.nationality, current_club: p.current_club }}
+                    size="sm"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-3 my-1">
-                <Avatar className="h-14 w-14 border-2 shrink-0 rounded-lg" style={{ borderColor: `${color}66` }}>
+                <Avatar className="h-16 w-16 border-2 shrink-0 rounded-lg" style={{ borderColor: `${color}66` }}>
                   <AvatarImage src={p.profile_image_url || ""} alt={p.name} className="object-cover object-top" />
                   <AvatarFallback className="text-xs font-bold rounded-lg" style={{ background: `${color}22`, color }}>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-sm truncate" style={{ color: "hsl(43,49%,75%)" }}>{p.name}</div>
-                  {p.current_club && <div className="text-[10px] text-muted-foreground truncate">{p.current_club}</div>}
+                  {p.current_club && (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {(p as any).club_logo_url && <img src={(p as any).club_logo_url} alt="" className="w-4 h-4 object-contain shrink-0" loading="lazy" />}
+                      <span className="text-[11px] text-foreground/80 truncate font-medium">{p.current_club}</span>
+                    </div>
+                  )}
                   {p.nationality && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <img src={getCountryFlagUrl(p.nationality)} alt="" className="w-4 h-3 object-cover rounded-sm" loading="lazy" />
                       <span className="text-[10px] text-muted-foreground truncate">{p.nationality}</span>
+                      {typeof p.age === "number" && p.age > 0 && <span className="text-[10px] text-muted-foreground/80">· {p.age}y</span>}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center gap-2">
-                  {p.age_group && (
-                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-bebas tracking-wider"
-                           style={{ color: "hsl(43,49%,61%)", borderColor: "hsl(43,49%,61% / 0.3)" }}>
-                      {AGE_GROUP_LABEL[p.age_group]}
-                    </Badge>
-                  )}
-                  {typeof p.age === "number" && p.age > 0 && (
-                    <span className="text-[10px] text-muted-foreground">Age {p.age}</span>
-                  )}
-                </div>
-                {p.projected_revenue != null && Number(p.projected_revenue) > 0 && (
+              {p.projected_revenue != null && Number(p.projected_revenue) > 0 && (
+                <div className="flex items-center justify-end mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                   <span className="text-[10px] font-bbh text-primary">{ccy(Number(p.projected_revenue), p.revenue_currency || "GBP")}</span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         );
