@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Target as TargetIcon, Users, MessageCircle, Reply } from "lucide-react";
+import { Plus, Pencil, Trash2, Target as TargetIcon, Users, MessageCircle, Reply, ChevronDown, ChevronRight, Sliders, X } from "lucide-react";
+import { DEFAULT_WEIGHTS, type ScoringWeights } from "@/lib/fitScore";
+import { invalidateScoringCaches } from "@/hooks/useRecruitmentScoring";
 
 interface Target {
   id: string;
@@ -26,6 +29,8 @@ interface Target {
   priority: number;
   active: boolean;
   notes: string | null;
+  weights_override: Partial<ScoringWeights> | null;
+  ai_nudge_enabled: boolean | null;
 }
 
 interface Counts {
@@ -48,10 +53,22 @@ const emptyTarget = (): Target => ({
   priority: 3,
   active: true,
   notes: null,
+  weights_override: null,
+  ai_nudge_enabled: null,
 });
 
 const parseList = (s: string): string[] =>
   s.split(",").map(t => t.trim()).filter(Boolean);
+
+const WEIGHT_LABELS: Record<keyof ScoringWeights, string> = {
+  position: "Position match",
+  age: "Age fit",
+  nationality: "Nationality",
+  club_country: "Club country",
+  club_rating: "Club rating",
+  outreach: "Outreach traction",
+  ai_nudge: "AI nudge",
+};
 
 const matchesTarget = (row: any, t: Target): boolean => {
   if (t.positions.length && !t.positions.some(p => (row.position || "").toUpperCase() === p.toUpperCase())) return false;
@@ -64,9 +81,12 @@ const matchesTarget = (row: any, t: Target): boolean => {
 export const OutreachTargetsManager = () => {
   const [targets, setTargets] = useState<Target[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Target | null>(null);
-  const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState<Record<string, Counts>>({});
+  const [drafts, setDrafts] = useState<Record<string, Target & { _positions: string; _nationalities: string; _countries_of_club: string }>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [weightsOpen, setWeightsOpen] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+  const [newDraftId, setNewDraftId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -107,32 +127,195 @@ export const OutreachTargetsManager = () => {
     computeCounts();
   }, [targets]);
 
-  const startCreate = () => { setEditing(emptyTarget()); setOpen(true); };
-  const startEdit = (t: Target) => { setEditing({ ...t }); setOpen(true); };
+  const makeDraft = (t: Target) => ({
+    ...t,
+    _positions: (t.positions || []).join(", "),
+    _nationalities: (t.nationalities || []).join(", "),
+    _countries_of_club: (t.countries_of_club || []).join(", "),
+  });
 
-  const save = async () => {
-    if (!editing) return;
-    if (!editing.name.trim()) { toast.error("Name required"); return; }
-    const payload = { ...editing } as any;
-    delete payload.id;
+  const startEdit = (t: Target) => {
+    setDrafts(prev => ({ ...prev, [t.id || "new"]: makeDraft(t) }));
+    setExpanded(prev => ({ ...prev, [t.id || "new"]: true }));
+  };
+
+  const startCreate = () => {
+    const tempId = `new-${Date.now()}`;
+    setNewDraftId(tempId);
+    const t = emptyTarget();
+    setDrafts(prev => ({ ...prev, [tempId]: makeDraft({ ...t, id: tempId }) }));
+    setExpanded(prev => ({ ...prev, [tempId]: true }));
+  };
+
+  const cancelEdit = (key: string) => {
+    setDrafts(prev => { const next = { ...prev }; delete next[key]; return next; });
+    if (key === newDraftId) setNewDraftId(null);
+  };
+
+  const updateDraft = (key: string, patch: Partial<Target> & Partial<{ _positions: string; _nationalities: string; _countries_of_club: string }>) => {
+    setDrafts(prev => ({ ...prev, [key]: { ...prev[key], ...patch } as any }));
+  };
+
+  const save = async (key: string) => {
+    const draft = drafts[key];
+    if (!draft) return;
+    if (!draft.name.trim()) { toast.error("Name required"); return; }
+    setSaving(key);
+    const payload: any = {
+      name: draft.name.trim(),
+      scope: draft.scope,
+      positions: parseList(draft._positions),
+      min_age: draft.min_age,
+      max_age: draft.max_age,
+      nationalities: parseList(draft._nationalities),
+      countries_of_club: parseList(draft._countries_of_club),
+      min_club_rating: draft.min_club_rating,
+      max_club_rating: draft.max_club_rating,
+      priority: draft.priority,
+      active: draft.active,
+      notes: draft.notes,
+      weights_override: draft.weights_override,
+      ai_nudge_enabled: draft.ai_nudge_enabled,
+    };
+    const isNew = key === newDraftId || !targets.find(t => t.id === key);
     let res;
-    if (editing.id) {
-      res = await supabase.from("recruitment_targets").update(payload).eq("id", editing.id);
-    } else {
+    if (isNew) {
       res = await supabase.from("recruitment_targets").insert(payload);
+    } else {
+      res = await supabase.from("recruitment_targets").update(payload).eq("id", key);
     }
-    if (res.error) { toast.error("Save failed"); return; }
+    setSaving(null);
+    if (res.error) {
+      toast.error("Save failed", { description: res.error.message });
+      return;
+    }
     toast.success("Target saved");
-    setOpen(false);
-    setEditing(null);
+    invalidateScoringCaches();
+    cancelEdit(key);
     load();
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this target?")) return;
     const { error } = await supabase.from("recruitment_targets").delete().eq("id", id);
-    if (error) { toast.error("Delete failed"); return; }
+    if (error) { toast.error("Delete failed", { description: error.message }); return; }
+    invalidateScoringCaches();
     load();
+  };
+
+  const renderEditor = (key: string) => {
+    const d = drafts[key];
+    if (!d) return null;
+    const wOpen = !!weightsOpen[key];
+    const baseWeights: ScoringWeights = { ...DEFAULT_WEIGHTS, ...(d.weights_override || {}) };
+    return (
+      <div className="space-y-3 pt-3 border-t border-border mt-3">
+        <div>
+          <Label className="text-xs">Name</Label>
+          <Input value={d.name} onChange={e => updateDraft(key, { name: e.target.value })} placeholder="e.g. U16 centre-backs, Iberia" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Scope</Label>
+            <Select value={d.scope} onValueChange={(v: any) => updateDraft(key, { scope: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Both</SelectItem>
+                <SelectItem value="youth">Youth</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Priority</Label>
+            <Input type="number" min={1} max={5} value={d.priority}
+              onChange={e => updateDraft(key, { priority: parseInt(e.target.value) || 3 })} />
+          </div>
+          <div className="flex items-end gap-2 pb-1">
+            <Switch checked={d.active} onCheckedChange={v => updateDraft(key, { active: v })} />
+            <Label className="text-xs">Active</Label>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Min age</Label>
+            <Input type="number" value={d.min_age ?? ""} onChange={e => updateDraft(key, { min_age: e.target.value === "" ? null : parseInt(e.target.value) })} />
+          </div>
+          <div>
+            <Label className="text-xs">Max age</Label>
+            <Input type="number" value={d.max_age ?? ""} onChange={e => updateDraft(key, { max_age: e.target.value === "" ? null : parseInt(e.target.value) })} />
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs">Positions (comma-separated: GK, CB, RB, LB, CDM, CM, CAM, RW, LW, CF)</Label>
+          <Input value={d._positions} onChange={e => updateDraft(key, { _positions: e.target.value })} placeholder="CB, CDM" />
+        </div>
+        <div>
+          <Label className="text-xs">Nationalities (comma-separated)</Label>
+          <Input value={d._nationalities} onChange={e => updateDraft(key, { _nationalities: e.target.value })} placeholder="Spain, Portugal" />
+        </div>
+        <div>
+          <Label className="text-xs">Club countries (comma-separated)</Label>
+          <Input value={d._countries_of_club} onChange={e => updateDraft(key, { _countries_of_club: e.target.value })} placeholder="England, Germany" />
+        </div>
+        <div>
+          <Label className="text-xs">Notes</Label>
+          <Textarea value={d.notes ?? ""} onChange={e => updateDraft(key, { notes: e.target.value })} rows={2} />
+        </div>
+
+        <Collapsible open={wOpen} onOpenChange={(v) => setWeightsOpen(prev => ({ ...prev, [key]: v }))}>
+          <CollapsibleTrigger asChild>
+            <button type="button" className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide py-2 px-2 rounded hover:bg-muted/40">
+              <span className="flex items-center gap-2"><Sliders className="h-3.5 w-3.5 text-primary" /> Scoring weights for this target {d.weights_override ? <Badge variant="outline" className="text-[10px]">Custom</Badge> : <Badge variant="outline" className="text-[10px]">Using global</Badge>}</span>
+              {wOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2 px-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={!!d.weights_override}
+                  onCheckedChange={(v) => updateDraft(key, { weights_override: v ? { ...baseWeights } : null })}
+                />
+                <Label className="text-xs">Override global weights</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={d.ai_nudge_enabled !== false}
+                  onCheckedChange={(v) => updateDraft(key, { ai_nudge_enabled: v ? null : false })}
+                />
+                <Label className="text-xs">AI nudge</Label>
+              </div>
+            </div>
+            {d.weights_override && (
+              <div className="space-y-2.5">
+                {(Object.keys(WEIGHT_LABELS) as (keyof ScoringWeights)[]).map(wk => (
+                  <div key={wk} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">{WEIGHT_LABELS[wk]}</Label>
+                      <Badge variant="outline" className="text-[10px]">{baseWeights[wk]}</Badge>
+                    </div>
+                    <Slider
+                      value={[baseWeights[wk]]}
+                      min={0}
+                      max={40}
+                      step={1}
+                      onValueChange={(v) => updateDraft(key, { weights_override: { ...baseWeights, [wk]: v[0] } })}
+                    />
+                  </div>
+                ))}
+                <p className="text-[10px] text-muted-foreground">Players are scored against every target and take the highest. Tuning here only affects this target's score.</p>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" size="sm" onClick={() => cancelEdit(key)}>Cancel</Button>
+          <Button size="sm" onClick={() => save(key)} disabled={saving === key}>{saving === key ? "Saving…" : "Save target"}</Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -145,6 +328,16 @@ export const OutreachTargetsManager = () => {
         <Button onClick={startCreate} size="sm"><Plus className="h-4 w-4 mr-1" /> New target</Button>
       </div>
 
+      {newDraftId && drafts[newDraftId] && (
+        <Card className="p-3 border-primary/40">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-wide text-primary">New target</div>
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => cancelEdit(newDraftId)}><X className="h-3.5 w-3.5" /></Button>
+          </div>
+          {renderEditor(newDraftId)}
+        </Card>
+      )}
+
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : targets.length === 0 ? (
@@ -152,9 +345,10 @@ export const OutreachTargetsManager = () => {
           No targets yet. Create one to define the kind of player you want to approach (position, age, nationality), then track how many candidates you've contacted and heard back from.
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="space-y-3">
           {targets.map(t => {
             const c = counts[t.id];
+            const isEditing = !!drafts[t.id];
             return (
               <Card key={t.id} className={`p-3 ${t.active ? "" : "opacity-60"}`}>
                 <div className="flex items-start justify-between gap-2">
@@ -164,6 +358,7 @@ export const OutreachTargetsManager = () => {
                       <Badge variant="outline" className="text-[10px]">P{t.priority}</Badge>
                       <Badge variant="outline" className="text-[10px] capitalize">{t.scope}</Badge>
                       {!t.active && <Badge variant="outline" className="text-[10px]">Paused</Badge>}
+                      {t.weights_override && <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">Custom scoring</Badge>}
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
                       {(t.positions.length > 0) && <div>Positions: {t.positions.join(", ")}</div>}
@@ -175,7 +370,7 @@ export const OutreachTargetsManager = () => {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(t)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => isEditing ? cancelEdit(t.id) : startEdit(t)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => remove(t.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </div>
@@ -195,77 +390,12 @@ export const OutreachTargetsManager = () => {
                     </div>
                   </div>
                 )}
+                {isEditing && renderEditor(t.id)}
               </Card>
             );
           })}
         </div>
       )}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editing?.id ? "Edit target" : "New target"}</DialogTitle></DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Name</Label>
-                <Input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="e.g. U16 centre-backs, Iberia" />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <Label className="text-xs">Scope</Label>
-                  <Select value={editing.scope} onValueChange={(v: any) => setEditing({ ...editing, scope: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="both">Both</SelectItem>
-                      <SelectItem value="youth">Youth</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs">Priority</Label>
-                  <Input type="number" min={1} max={5} value={editing.priority}
-                    onChange={e => setEditing({ ...editing, priority: parseInt(e.target.value) || 3 })} />
-                </div>
-                <div className="flex items-end gap-2 pb-1">
-                  <Switch checked={editing.active} onCheckedChange={v => setEditing({ ...editing, active: v })} />
-                  <Label className="text-xs">Active</Label>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs">Min age</Label>
-                  <Input type="number" value={editing.min_age ?? ""} onChange={e => setEditing({ ...editing, min_age: e.target.value === "" ? null : parseInt(e.target.value) })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Max age</Label>
-                  <Input type="number" value={editing.max_age ?? ""} onChange={e => setEditing({ ...editing, max_age: e.target.value === "" ? null : parseInt(e.target.value) })} />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Positions (comma-separated, use abbreviations: GK, CB, RB, LB, CDM, CM, CAM, RW, LW, CF)</Label>
-                <Input value={editing.positions.join(", ")} onChange={e => setEditing({ ...editing, positions: parseList(e.target.value) })} placeholder="CB, CDM" />
-              </div>
-              <div>
-                <Label className="text-xs">Nationalities (comma-separated)</Label>
-                <Input value={editing.nationalities.join(", ")} onChange={e => setEditing({ ...editing, nationalities: parseList(e.target.value) })} placeholder="Spain, Portugal" />
-              </div>
-              <div>
-                <Label className="text-xs">Club countries (comma-separated)</Label>
-                <Input value={editing.countries_of_club.join(", ")} onChange={e => setEditing({ ...editing, countries_of_club: parseList(e.target.value) })} placeholder="England, Germany" />
-              </div>
-              <div>
-                <Label className="text-xs">Notes</Label>
-                <Textarea value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} rows={2} />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>Save target</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
