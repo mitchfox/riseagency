@@ -337,6 +337,8 @@ export const computeFitScore = (
   ageBand = 2,
   scope?: "youth" | "pro",
   bonusWeights: BonusWeights = DEFAULT_BONUS_WEIGHTS,
+  adjacencyFactor = 0.5,
+  leagueStrengthWeight = 0,
 ): ScoreBreakdown => {
   const candidates = targets.filter(t => t.active && (scope ? t.scope === scope || t.scope === "both" : true));
   if (candidates.length === 0) {
@@ -345,7 +347,7 @@ export const computeFitScore = (
   let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget>; effectiveWeights: ScoringWeights } | null = null;
   for (const t of candidates) {
     const effectiveWeights: ScoringWeights = { ...weights, ...(t.weights_override || {}) } as ScoringWeights;
-    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand);
+    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand, adjacencyFactor);
     if (!best || res.score > best.res.score) best = { target: t, res, effectiveWeights };
   }
   if (!best) return { total: 0, reasons: [], components: {}, target_id: null, target_name: null };
@@ -377,11 +379,35 @@ export const computeFitScore = (
   if (player.parent_approval) bonuses.push({ key: "parent_approval", value: bonusEff.parent_approval, reason: `${signed(bonusEff.parent_approval)} parent approval` });
 
   const bonusSum = bonuses.reduce((s, b) => s + b.value, 0);
-  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum), 0, 100);
+
+  // League strength multiplier — extra points based on country tier of the player's club country.
+  let leagueStrengthBonus = 0;
+  const playerCountry = player.club_country || "";
+  if (leagueStrengthWeight > 0 && playerCountry) {
+    const tier = countryTier(playerCountry);
+    const factor = tier === 1 ? 1 : tier === 2 ? 0.6 : 0;
+    leagueStrengthBonus = Math.round(leagueStrengthWeight * factor);
+  }
+
+  // Agent / representation
+  const agentStatus = classifyAgentStatusFromName(player.agent_name, player.agent_status);
+  let agentBonus = 0;
+  let agentReason = "";
+  if (agentStatus === "unrepresented" || agentStatus === "family") {
+    agentBonus = bonusEff.agent_unrepresented;
+    if (agentBonus !== 0) agentReason = `${signed(agentBonus)} ${agentStatus === "family" ? "family agent" : "unrepresented"}`;
+  } else if (agentStatus === "top_agency") {
+    agentBonus = bonusEff.agent_top_agency;
+    if (agentBonus !== 0) agentReason = `${signed(agentBonus)} top-tier agency (${player.agent_name || ""})`;
+  }
+
+  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus), 0, 100);
 
   const reasons = [...best.res.reasons];
   if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
   for (const b of bonuses) reasons.push(b.reason);
+  if (leagueStrengthBonus > 0) reasons.push(`+${leagueStrengthBonus} league strength (${playerCountry})`);
+  if (agentReason) reasons.push(agentReason);
 
   return {
     total,
@@ -390,6 +416,8 @@ export const computeFitScore = (
       ...best.res.components,
       ai_nudge: Math.round(aiScaled),
       ...Object.fromEntries(bonuses.map(b => [b.key, b.value])),
+      league_strength: leagueStrengthBonus,
+      agent: agentBonus,
     },
     target_id: best.target.id,
     target_name: best.target.name,
