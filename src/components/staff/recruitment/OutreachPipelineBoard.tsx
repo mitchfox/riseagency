@@ -8,12 +8,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNowStrict, parseISO, differenceInCalendarDays } from "date-fns";
-import { ChevronRight, Clock, MoreVertical, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MoreVertical, Search } from "lucide-react";
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
 import { FitScoreBadge } from "./FitScoreBadge";
 import { CreateOfferButton } from "./CreateOfferButton";
 import { TemplatePickerInline } from "./TemplatePickerInline";
+import { StarToggle } from "./StarToggle";
+import { normalisePosition } from "@/lib/positionNormalise";
+import {
+  DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
+  useDraggable, useDroppable,
+} from "@dnd-kit/core";
 
 interface Row {
   id: string;
@@ -32,6 +38,7 @@ interface Row {
   parent_approval?: boolean | null;
   fit_score?: number | null;
   fit_score_breakdown?: any;
+  is_starred?: boolean | null;
 }
 
 const STAGES: { id: string; label: string; tone: string }[] = [
@@ -53,6 +60,22 @@ const stageOf = (r: Row): string => {
   return "not_contacted";
 };
 
+const PAGE_SIZE = 50;
+
+// Map a stage id to the response_status / messaged combo to apply when dropped there.
+const stageToPatch = (stageId: string): any => {
+  switch (stageId) {
+    case "not_contacted":  return { response_status: "none",          messaged: false };
+    case "awaiting_reply": return { response_status: "none",          messaged: true };
+    case "replied":        return { response_status: "replied",       messaged: true, response_received: true };
+    case "interested":     return { response_status: "interested",    messaged: true, response_received: true };
+    case "decision_pending": return {}; // no direct status mapping; keep as-is
+    case "signed":         return { response_status: "signed",        messaged: true, response_received: true };
+    case "lost":           return { response_status: "lost",          messaged: true };
+    default: return {};
+  }
+};
+
 const NEXT_STATUS_OPTIONS = [
   { value: "none", label: "Not contacted" },
   { value: "replied", label: "Replied" },
@@ -68,6 +91,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [query, setQuery] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<Row | null>(null);
+  const [stagePages, setStagePages] = useState<Record<string, number>>({});
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
 
@@ -75,7 +100,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     setLoading(true);
     const { data, error } = await supabase
       .from(table)
-      .select("id,player_name,position,current_club,age,nationality,date_of_birth,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received,parent_approval,fit_score,fit_score_breakdown")
+      .select("id,player_name,position,current_club,age,nationality,date_of_birth,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received,parent_approval,fit_score,fit_score_breakdown,is_starred")
       .order("updated_at", { ascending: false })
       .limit(500);
     if (error) toast.error("Failed to load pipeline");
@@ -84,6 +109,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   };
 
   useEffect(() => { load(); }, [type]);
+  useEffect(() => { setStagePages({}); }, [query, type]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -102,6 +128,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
       const s = stageOf(r);
       (map[s] || (map[s] = [])).push(r);
     });
+    // Not contacted shows starred-only — players we actually want to contact
+    map.not_contacted = (map.not_contacted || []).filter(r => !!r.is_starred);
     // Sort the "replied" column so overdue/oldest follow-ups appear first
     map.replied.sort((a, b) => {
       const ad = a.next_followup_at || a.first_response_at || a.last_contact_at || "";
@@ -120,6 +148,25 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     const { error } = await (supabase.from(table) as any).update(patch).eq("id", row.id);
     if (error) { toast.error("Update failed"); return; }
     setRows(prev => prev.map(r => r.id === row.id ? { ...r, response_status: status, response_received: patch.response_received ?? r.response_received, first_response_at: patch.first_response_at ?? r.first_response_at } : r));
+  };
+
+  const moveToStage = async (rowId: string, stageId: string) => {
+    const patch = stageToPatch(stageId);
+    if (Object.keys(patch).length === 0) return;
+    // Optimistic
+    setRows(prev => prev.map(r => r.id === rowId ? { ...r, ...patch } : r));
+    const { error } = await (supabase.from(table) as any).update(patch).eq("id", rowId);
+    if (error) { toast.error("Move failed"); load(); }
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const targetStage = e.over?.id as string | undefined;
+    const rowId = e.active.id as string | undefined;
+    if (!targetStage || !rowId) return;
+    const row = rows.find(r => r.id === rowId);
+    if (!row) return;
+    if (stageOf(row) === targetStage) return;
+    moveToStage(rowId, targetStage);
   };
 
   const overdueBadge = (r: Row) => {
@@ -144,24 +191,54 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
       {loading ? (
         <div className="text-sm text-muted-foreground py-8 text-center">Loading pipeline…</div>
       ) : (
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3">
           {STAGES.map(stage => {
-            const items = byStage[stage.id] || [];
+            const allItems = byStage[stage.id] || [];
+            const page = stagePages[stage.id] || 0;
+            const totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+            const items = allItems.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+            const setPage = (next: number) =>
+              setStagePages(prev => ({ ...prev, [stage.id]: Math.max(0, Math.min(totalPages - 1, next)) }));
             return (
-              <div key={stage.id} className={`rounded-lg border border-border p-2 ${stage.tone} min-h-[180px] flex flex-col`}>
+              <StageDroppable key={stage.id} stageId={stage.id} className={`rounded-lg border border-border p-2 ${stage.tone} min-h-[180px] flex flex-col`}>
                 <div className="flex items-center justify-between mb-2 px-1">
                   <div className="text-xs font-semibold uppercase tracking-wide">{stage.label}</div>
-                  <Badge variant="outline" className="text-[10px]">{items.length}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{allItems.length}</Badge>
                 </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between gap-1 mb-2 px-1">
+                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allItems.length)} of {allItems.length}</span>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
                 <div className="space-y-2 flex-1">
-                  {items.length === 0 && <div className="text-[11px] text-muted-foreground italic px-1">None</div>}
+                  {allItems.length === 0 && (
+                    <div className="text-[11px] text-muted-foreground italic px-1">
+                      {stage.id === "not_contacted" ? "Star players in the table to queue them here." : "None"}
+                    </div>
+                  )}
                   {items.map(r => (
-                    <Card key={r.id} className="p-2.5 cursor-pointer hover:border-primary/50 transition-colors" onClick={() => { setActiveRow(r); setDrawerOpen(true); }}>
+                    <DraggableCard
+                      key={r.id}
+                      rowId={r.id}
+                      onOpen={() => { setActiveRow(r); setDrawerOpen(true); }}
+                    >
                       <div className="flex items-start justify-between gap-1">
                         <div className="min-w-0">
-                          <div className="font-medium text-sm truncate">{r.player_name}</div>
+                          <div className="font-medium text-sm truncate flex items-center gap-1.5">
+                            <StarToggle id={r.id} table={table as any} initial={!!r.is_starred} size={14}
+                              onChange={next => setRows(prev => prev.map(x => x.id === r.id ? { ...x, is_starred: next } : x))}
+                            />
+                            <span className="truncate">{r.player_name}</span>
+                          </div>
                           <div className="text-[11px] text-muted-foreground truncate">
-                            {[r.position, r.age ? `${r.age}y` : null, r.current_club].filter(Boolean).join(" · ")}
+                            {[normalisePosition(r.position) || null, r.age ? `${r.age}y` : null, r.current_club].filter(Boolean).join(" · ")}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -206,35 +283,39 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                         )}
                         {overdueBadge(r)}
                       </div>
-                      <div className="mt-2 flex items-center gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
-                        <TemplatePickerInline
-                          compact
-                          playerName={r.player_name}
-                          position={r.position}
-                          club={r.current_club}
-                          age={r.age}
-                          scope={type}
-                          preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
-                        />
-                        <CreateOfferButton
-                          source={{
-                            name: r.player_name,
-                            position: r.position,
-                            nationality: r.nationality,
-                            club: r.current_club,
-                            date_of_birth: r.date_of_birth,
-                            age: r.age,
-                          }}
-                          label="Offer link"
-                        />
-                      </div>
-                    </Card>
+                      {/* Offer + template only on starred rows (i.e. players we actually want to contact) */}
+                      {r.is_starred && (
+                        <div className="mt-2 flex items-center gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
+                          <TemplatePickerInline
+                            compact
+                            playerName={r.player_name}
+                            position={r.position}
+                            club={r.current_club}
+                            age={r.age}
+                            scope={type}
+                            preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
+                          />
+                          <CreateOfferButton
+                            source={{
+                              name: r.player_name,
+                              position: r.position,
+                              nationality: r.nationality,
+                              club: r.current_club,
+                              date_of_birth: r.date_of_birth,
+                              age: r.age,
+                            }}
+                            label="Offer link"
+                          />
+                        </div>
+                      )}
+                    </DraggableCard>
                   ))}
                 </div>
-              </div>
+              </StageDroppable>
             );
           })}
         </div>
+        </DndContext>
       )}
 
       <OutreachInteractionDrawer
@@ -246,5 +327,35 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
         onChanged={load}
       />
     </div>
+  );
+};
+
+// --- DnD wrappers ---
+
+const StageDroppable = ({ stageId, className, children }: { stageId: string; className: string; children: React.ReactNode }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: stageId });
+  return (
+    <div ref={setNodeRef} className={`${className} ${isOver ? "ring-2 ring-primary/60" : ""}`}>
+      {children}
+    </div>
+  );
+};
+
+const DraggableCard = ({ rowId, onOpen, children }: { rowId: string; onOpen: () => void; children: React.ReactNode }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: rowId });
+  const style: React.CSSProperties = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
+    : {};
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => { if (!isDragging) onOpen(); }}
+      className={`p-2.5 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors ${isDragging ? "opacity-70 shadow-lg" : ""}`}
+    >
+      {children}
+    </Card>
   );
 };
