@@ -133,6 +133,15 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isMobile = useIsMobile();
 
+  const navigateToSection = (section: string) => {
+    const params = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key.startsWith('__lovable')) params.set(key, value);
+    });
+    params.set('section', section);
+    setSearchParams(params);
+  };
+
   // Filter widget configs based on role (hide financial for marketeers)
   const filteredWidgetConfigs = useMemo(() => {
     if (isMarketeer) {
@@ -554,7 +563,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
         return (
           <VisionBoardWidget 
             isExpanded={expandedWidget === "visionboard"} 
-            onNavigate={(section) => setSearchParams({ section })}
+            onNavigate={navigateToSection}
           />
         );
 
@@ -735,7 +744,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "scouting":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'scouting-reports' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('scouting-reports')}>
             {scoutingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : scoutingData.data ? (
@@ -764,7 +773,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "marketing":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'marketing' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('marketing')}>
             {marketingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : marketingData.data ? (
@@ -791,7 +800,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "prospects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'recruitment' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('recruitment')}>
             {prospectsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : prospectsData.data ? (
