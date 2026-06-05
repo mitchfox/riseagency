@@ -100,12 +100,16 @@ Deno.serve(async (req) => {
     else return new Response(JSON.stringify({ error: "Invalid op" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    if (result.error) throw result.error;
+    if (result.error) {
+      return new Response(JSON.stringify({ error: result.error.message, details: result.error.details, hint: (result.error as any).hint, code: (result.error as any).code }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ data: result.data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message, stack: (e as Error).stack }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

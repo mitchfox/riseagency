@@ -187,6 +187,7 @@ const PRO_COLUMNS: ColumnConfig[] = [
 ];
 
 const DEFAULT_SECTION_CAP = 100;
+const PAGE_SIZE = 50;
 
 export const PlayerOutreachPanel = ({ type }: Props) => {
   const [data, setData] = useState<any[]>([]);
@@ -207,6 +208,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     notMessaged: true, noResponse: true, responded: true
   });
   const [sectionCaps, setSectionCaps] = useState<Record<string, number>>({});
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
 
   // Filters
   const [ageFilter, setAgeFilter] = useState<string>('all');
@@ -214,6 +216,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+
+  // Reset pagination when filters/search/sort change
+  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir]);
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
@@ -650,9 +655,26 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const renderTableSection = (items: any[], title: string, sectionKey: string) => {
     const sorted = sortAndFilter(items);
     const isOpen = expandedSections[sectionKey] !== false;
-    const cap = sectionCaps[sectionKey] ?? DEFAULT_SECTION_CAP;
-    const visible = sorted.slice(0, cap);
-    const remaining = sorted.length - visible.length;
+    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+    const rawPage = sectionPages[sectionKey] ?? 0;
+    const page = Math.min(rawPage, totalPages - 1);
+    const start = page * PAGE_SIZE;
+    const visible = sorted.slice(start, start + PAGE_SIZE);
+    const goTo = (p: number) => setSectionPages(prev => ({ ...prev, [sectionKey]: Math.max(0, Math.min(totalPages - 1, p)) }));
+    const Pager = sorted.length > PAGE_SIZE ? (
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted/20 border-b last:border-b-0 last:border-t text-xs">
+        <div className="text-muted-foreground">
+          Showing <span className="font-medium text-foreground">{start + 1}-{Math.min(start + PAGE_SIZE, sorted.length)}</span> of {sorted.length}
+        </div>
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" className="h-7 px-2" disabled={page === 0} onClick={() => goTo(0)}>« First</Button>
+          <Button size="sm" variant="ghost" className="h-7 px-2" disabled={page === 0} onClick={() => goTo(page - 1)}>‹ Prev</Button>
+          <span className="px-2 font-medium">Page {page + 1} / {totalPages}</span>
+          <Button size="sm" variant="ghost" className="h-7 px-2" disabled={page >= totalPages - 1} onClick={() => goTo(page + 1)}>Next ›</Button>
+          <Button size="sm" variant="ghost" className="h-7 px-2" disabled={page >= totalPages - 1} onClick={() => goTo(totalPages - 1)}>Last »</Button>
+        </div>
+      </div>
+    ) : null;
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(sectionKey)}>
         <div className="border rounded-lg overflow-hidden mb-4">
@@ -667,6 +689,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="p-4 text-center text-sm text-muted-foreground">No entries</div>
             ) : (
               <>
+                {Pager}
                 {/* Desktop Table - columns in settings order */}
                 <div ref={dragScrollRef} className="hidden lg:block overflow-x-auto cursor-grab active:cursor-grabbing">
                   <Table className="table-fixed">
@@ -746,17 +769,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                     );
                   })}
                 </div>
-                {remaining > 0 && (
-                  <div className="p-3 border-t flex justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSectionCaps(prev => ({ ...prev, [sectionKey]: cap + DEFAULT_SECTION_CAP }))}
-                    >
-                      Load more ({remaining} remaining)
-                    </Button>
-                  </div>
-                )}
+                {Pager}
               </>
             )}
           </CollapsibleContent>

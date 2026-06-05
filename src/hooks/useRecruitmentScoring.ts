@@ -47,7 +47,7 @@ const fetchTargets = async (): Promise<RecruitmentTargetLite[]> => {
   inflightTargets = (async () => {
     const { data } = await supabase
       .from("recruitment_targets")
-      .select("id,name,scope,positions,min_age,max_age,nationalities,countries_of_club,min_club_rating,max_club_rating,priority,active")
+      .select("id,name,scope,positions,min_age,max_age,nationalities,countries_of_club,min_club_rating,max_club_rating,priority,active,weights_override,ai_nudge_enabled")
       .eq("active", true);
     cachedTargets = ((data as any) || []) as RecruitmentTargetLite[];
     return cachedTargets;

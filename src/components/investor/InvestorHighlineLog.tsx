@@ -43,8 +43,9 @@ export const InvestorHighlineLog = ({ updates, token, unlocked, onChanged }: Pro
       const { data, error } = await supabase.functions.invoke("investor-write", {
         body: { token, op: "insert", table: "investor_updates", row: { title: title.trim(), body: body.trim() || null, achieved_on: achievedOn } },
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const serverError = (data as any)?.error;
+      if (serverError) throw new Error(serverError + ((data as any).details ? ` — ${(data as any).details}` : ""));
+      if (error) throw new Error(error.message || "Request failed");
       setTitle(""); setBody(""); setAdding(false);
       toast.success("Update logged");
       onChanged();
