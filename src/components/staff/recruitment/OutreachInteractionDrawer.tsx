@@ -46,6 +46,22 @@ const KIND_ICON: Record<string, any> = {
   note: StickyNote,
 };
 
+// Smart defaults: +3d after message_out, +2d after reply_in, +7d after call/meeting, none on note.
+const autoFollowupDays = (kind: string): number | null => {
+  switch (kind) {
+    case "message_out": return 3;
+    case "reply_in":    return 2;
+    case "call":
+    case "meeting":     return 7;
+    default:            return null;
+  }
+};
+const isoDateInDays = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
 export const OutreachInteractionDrawer = ({ open, onOpenChange, outreachId, outreachType, playerName, onChanged }: Props) => {
   const [items, setItems] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,7 +69,15 @@ export const OutreachInteractionDrawer = ({ open, onOpenChange, outreachId, outr
   const [channel, setChannel] = useState("instagram");
   const [summary, setSummary] = useState("");
   const [followup, setFollowup] = useState<string>("");
+  const [followupTouched, setFollowupTouched] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Auto-prefill follow-up date when interaction type changes (unless user has typed one)
+  useEffect(() => {
+    if (followupTouched) return;
+    const d = autoFollowupDays(kind);
+    setFollowup(d === null ? "" : isoDateInDays(d));
+  }, [kind, followupTouched]);
 
   useEffect(() => {
     if (!open || !outreachId) return;
@@ -64,12 +88,16 @@ export const OutreachInteractionDrawer = ({ open, onOpenChange, outreachId, outr
         .select("id,kind,channel,summary,occurred_at")
         .eq("outreach_type", outreachType)
         .eq("outreach_id", outreachId)
-        .order("occurred_at", { ascending: false });
+        .order("occurred_at", { ascending: false })
+        .limit(50);
       setItems((data as any) || []);
       setLoading(false);
     };
     load();
   }, [open, outreachId, outreachType]);
+
+  // Reset follow-up touched state when the drawer reopens for a different row
+  useEffect(() => { if (open) setFollowupTouched(false); }, [open, outreachId]);
 
   const handleAdd = async () => {
     if (!outreachId) return;
@@ -78,47 +106,60 @@ export const OutreachInteractionDrawer = ({ open, onOpenChange, outreachId, outr
       return;
     }
     setSaving(true);
-    const { data: userRes } = await supabase.auth.getUser();
-    const { error } = await supabase.from("outreach_interactions").insert({
-      outreach_id: outreachId,
-      outreach_type: outreachType,
-      kind,
-      channel,
-      summary: summary.trim() || null,
-      created_by: userRes.user?.id ?? null,
-    });
-    if (error) {
-      toast.error("Failed to log interaction");
-      setSaving(false);
-      return;
-    }
 
-    // Update parent row timestamps + status
-    const now = new Date().toISOString();
-    const table = outreachType === "youth" ? "player_outreach_youth" : "player_outreach_pro";
-    const patch: any = { last_contact_at: now };
-    if (kind === "message_out") patch.messaged = true;
-    if (kind === "reply_in") {
-      patch.response_received = true;
-      patch.response_status = "replied";
-      patch.first_response_at = now; // safe-ish; backfilled rows already have a value
-    }
-    if (followup) patch.next_followup_at = followup;
-    await (supabase.from(table) as any).update(patch).eq("id", outreachId);
-
+    // Optimistic prepend
+    const occurred_at = new Date().toISOString();
+    const tempId = `tmp-${Date.now()}`;
+    const optimistic: Interaction = {
+      id: tempId, kind, channel, summary: summary.trim() || null, occurred_at,
+    };
+    setItems(prev => [optimistic, ...prev]);
+    const savedSummary = summary;
     setSummary("");
-    setFollowup("");
-    toast.success("Interaction logged");
-    onChanged?.();
-    // reload
-    const { data } = await supabase
-      .from("outreach_interactions")
-      .select("id,kind,channel,summary,occurred_at")
-      .eq("outreach_type", outreachType)
-      .eq("outreach_id", outreachId)
-      .order("occurred_at", { ascending: false });
-    setItems((data as any) || []);
-    setSaving(false);
+
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { data: inserted, error } = await supabase
+        .from("outreach_interactions")
+        .insert({
+          outreach_id: outreachId,
+          outreach_type: outreachType,
+          kind,
+          channel,
+          summary: savedSummary.trim() || null,
+          created_by: userRes.user?.id ?? null,
+        })
+        .select("id,kind,channel,summary,occurred_at")
+        .single();
+      if (error) throw error;
+
+      // Swap optimistic for real row
+      if (inserted) {
+        setItems(prev => prev.map(it => it.id === tempId ? (inserted as any) : it));
+      }
+
+      // Parent row patch — fire and forget, don't block
+      const table = outreachType === "youth" ? "player_outreach_youth" : "player_outreach_pro";
+      const patch: any = { last_contact_at: occurred_at };
+      if (kind === "message_out") patch.messaged = true;
+      if (kind === "reply_in") {
+        patch.response_received = true;
+        patch.response_status = "replied";
+        patch.first_response_at = occurred_at;
+      }
+      if (followup) patch.next_followup_at = followup;
+      (supabase.from(table) as any).update(patch).eq("id", outreachId).then(() => onChanged?.());
+
+      toast.success("Interaction logged");
+      // Reset follow-up to next smart default for next entry
+      setFollowupTouched(false);
+    } catch (e: any) {
+      setItems(prev => prev.filter(it => it.id !== tempId));
+      setSummary(savedSummary);
+      toast.error("Failed to log interaction", { description: e?.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -164,8 +205,17 @@ export const OutreachInteractionDrawer = ({ open, onOpenChange, outreachId, outr
           </div>
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Label className="text-xs">Next follow-up (optional)</Label>
-              <Input type="date" value={followup} onChange={e => setFollowup(e.target.value)} />
+              <Label className="text-xs">
+                Next follow-up
+                {!followupTouched && followup && (
+                  <span className="ml-2 text-[10px] text-muted-foreground">auto · clear to skip</span>
+                )}
+              </Label>
+              <Input
+                type="date"
+                value={followup}
+                onChange={e => { setFollowup(e.target.value); setFollowupTouched(true); }}
+              />
             </div>
             <Button onClick={handleAdd} disabled={saving}>Log</Button>
           </div>
