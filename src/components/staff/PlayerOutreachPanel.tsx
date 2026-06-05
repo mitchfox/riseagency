@@ -1003,6 +1003,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 <div><span className="text-muted-foreground text-xs">Messaged</span><p className="font-medium">{detailItem.messaged ? 'Yes' : 'No'}</p></div>
                 <div><span className="text-muted-foreground text-xs">Response</span><p className="font-medium">{detailItem.response_received ? 'Yes' : 'No'}</p></div>
                 {isYouth && <div><span className="text-muted-foreground text-xs">Parent Approval</span><p className="font-medium">{detailItem.parent_approval ? 'Yes' : 'No'}</p></div>}
+                <div><span className="text-muted-foreground text-xs">National Team</span><p className="font-medium">{detailItem.national_team ? 'Yes' : 'No'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Star of Team</span><p className="font-medium">{detailItem.star_of_team ? 'Yes' : 'No'}</p></div>
+                {detailItem.previous_serious_injury && <div className="col-span-2"><span className="text-muted-foreground text-xs">Previous Serious Injury</span><p className="font-medium">{detailItem.previous_serious_injury}</p></div>}
                 {detailItem.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{detailItem.notes}</p></div>}
                 {detailItem.initial_message && <div className="col-span-2"><span className="text-muted-foreground text-xs">Initial Message</span><p className="text-muted-foreground text-sm">{detailItem.initial_message}</p></div>}
               </div>
