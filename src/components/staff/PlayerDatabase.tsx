@@ -572,7 +572,7 @@ export const PlayerDatabase = () => {
     );
     switch (key) {
       case 'avatar': return plainHeader('', 'w-12');
-      case 'fit': return plainHeader('FIT', 'w-12 text-center');
+      case 'fit': return sortableHeader('FIT', 'fit_score', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
       case 'name': return sortableHeader('NAME', 'player_name');
       case 'nationality': return sortableHeader('NAT', 'nationality', 'w-12');
