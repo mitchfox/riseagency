@@ -387,7 +387,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setActiveTab(value);
     
     // Get all current params
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
+    searchParams.forEach((paramValue, key) => {
+      if (key.startsWith('__lovable')) params.set(key, paramValue);
+    });
+    params.set('section', 'players');
     
     // Update the tab param
     params.set('tab', value);
@@ -414,11 +418,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // Preserve URL parameters if requested
       if (preserveSelection && selectedPlayerId) {
         const currentTab = searchParams.get('tab') || activeTab;
-        setSearchParams({ 
-          section: 'players',
-          player: selectedPlayerId,
-          tab: currentTab
+        const params = new URLSearchParams();
+        searchParams.forEach((paramValue, key) => {
+          if (key.startsWith('__lovable')) params.set(key, paramValue);
         });
+        params.set('section', 'players');
+        params.set('player', selectedPlayerId);
+        params.set('tab', currentTab);
+        setSearchParams(params);
       }
       
       // Fetch stats from player_stats table first, then overlay bio seasonStats
