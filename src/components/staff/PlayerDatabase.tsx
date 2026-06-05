@@ -25,6 +25,7 @@ import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './Tab
 import { Switch } from '@/components/ui/switch';
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
+import { FitScoreBadge } from './recruitment/FitScoreBadge';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -123,6 +124,7 @@ const getPositionOrder = (position: string | null): number => {
 
 const DB_COLUMNS: ColumnConfig[] = [
   { key: 'avatar', label: 'Avatar', defaultVisible: true },
+  { key: 'fit', label: 'Fit', defaultVisible: true },
   { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -542,6 +544,7 @@ export const PlayerDatabase = () => {
     );
     switch (key) {
       case 'avatar': return plainHeader('', 'w-12');
+      case 'fit': return plainHeader('FIT', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
       case 'name': return sortableHeader('NAME', 'player_name');
       case 'nationality': return sortableHeader('NAT', 'nationality', 'w-12');
@@ -576,6 +579,25 @@ export const PlayerDatabase = () => {
         );
       case 'eligibility':
         return <TableCell key={key} className="py-1.5"><EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} /></TableCell>;
+      case 'fit':
+        return (
+          <TableCell key={key} className="py-1.5 text-center">
+            <FitScoreBadge
+              player={{
+                position: player.position,
+                age: player.age,
+                date_of_birth: player.date_of_birth,
+                nationality: player.nationality,
+                current_club: player.current_club,
+                club_country: clubCountry,
+                club_first_team_rating: clubRatingVal as any,
+                messaged: player.messaged,
+                response_received: player.response_received,
+              }}
+              scope={player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined}
+            />
+          </TableCell>
+        );
       case 'name':
         return <TableCell key={key} className="font-medium text-sm py-1.5">{player.player_name}</TableCell>;
       case 'nationality':

@@ -32,6 +32,7 @@ import { CapacityPlanner } from "@/components/investor/CapacityPlanner";
 import { ExecutiveSupport } from "@/components/investor/ExecutiveSupport";
 import { OpsBoard, type OpsCategory, type OpsItem } from "@/components/investor/OpsBoard";
 import { BusinessPlanSection } from "@/components/staff/BusinessPlanSection";
+import { InvestorHighlineLog } from "@/components/investor/InvestorHighlineLog";
 import { sortPlayersByRepresentation } from "@/lib/playerSorting";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
@@ -3357,6 +3358,7 @@ const InvestorsPortal = () => {
     forecast: ForecastRow[];
     forecastSettings: ForecastSettingsRow | null;
     timeline: TimelineRow[];
+    updates: { id: string; title: string; body: string | null; achieved_on: string; author_label: string | null; created_at: string }[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -3439,6 +3441,7 @@ const InvestorsPortal = () => {
         forecast: dd.forecast || [],
         forecastSettings: dd.forecastSettings || null,
         timeline: dd.timeline || [],
+        updates: dd.updates || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -3779,6 +3782,14 @@ const InvestorsPortal = () => {
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
         } ${isMobile ? "pb-[70px]" : ""}`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-sans normal-case tracking-normal">
+            {data && (
+              <InvestorHighlineLog
+                updates={data.updates || []}
+                token={token}
+                unlocked={unlocked}
+                onChanged={refresh}
+              />
+            )}
             {loading && !data ? (
               <div className="text-muted-foreground text-center py-12">Loading...</div>
             ) : !data ? null : active ? (

@@ -117,6 +117,13 @@ Deno.serve(async (req) => {
       supabase.from("investor_timeline").select("*").order("start_date", { ascending: true }),
     ]);
 
+    const { data: updatesData } = await supabase
+      .from("investor_updates")
+      .select("*")
+      .order("achieved_on", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(200);
+
     // Dedupe staff activity to one row per (entity_type, entity_id|entity_name) — latest only
     const seen = new Set<string>();
     const dedupActivity = (staffActivity.data || []).filter((e: any) => {
@@ -225,6 +232,7 @@ Deno.serve(async (req) => {
       forecast: forecast.data || [],
       forecastSettings: forecastSettings.data || null,
       timeline: timeline.data || [],
+      updates: updatesData || [],
     }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
