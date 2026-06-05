@@ -1171,7 +1171,7 @@ const PlayerDetail = () => {
                       size="sm"
                       className="ml-2 gap-1.5 font-bebas uppercase tracking-wider border-primary/40 hover:bg-primary hover:text-primary-foreground"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" /> View Full Season Report
+                      <BarChart3 className="h-3.5 w-3.5" /> {viewFullSeasonReportLabel}
                     </Button>
                   )}
                 </h2>
