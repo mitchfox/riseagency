@@ -1033,12 +1033,23 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
         </div>
       </Tabs>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
-        <Stat label="Entries" value={String(filtered.length)} />
-        <Stat label="Categories" value={String(byCategory.length)} />
-        <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
-      </div>
+      {(() => {
+        // Daily average uses ALL-TIME total for the current scope, from 1 June 2026 to today (inclusive).
+        const scopeAllTimeTotal = (scope === "personal" ? personalTotal : businessTotal);
+        const today = new Date();
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysElapsed = Math.max(1, Math.floor((today.getTime() - SPENDING_START_DATE.getTime()) / msPerDay) + 1);
+        const dailyAvg = scopeAllTimeTotal / daysElapsed;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
+            <Stat label="Entries" value={String(filtered.length)} />
+            <Stat label="Categories" value={String(byCategory.length)} />
+            <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
+            <Stat label="Avg / Day (since 1 Jun 2026)" value={gbp(dailyAvg)} sub={`${daysElapsed} day${daysElapsed === 1 ? "" : "s"}`} />
+          </div>
+        );
+      })()}
       <SectionShell icon={Wallet} title={`Spending Tracker — ${scope === "personal" ? "Personal" : "Business"}`} action={
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
