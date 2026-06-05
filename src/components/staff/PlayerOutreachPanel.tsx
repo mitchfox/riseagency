@@ -22,6 +22,8 @@ import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown,
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
+import { StarToggle } from './recruitment/StarToggle';
+import { normalisePosition } from '@/lib/positionNormalise';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
@@ -150,12 +152,13 @@ const EligibilityBadge = ({ item, type, clubCountryMap, ageRules }: {
   );
 };
 
-type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth';
+type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth' | 'fit_score';
 type SortDir = 'asc' | 'desc';
 
 const YOUTH_COLUMNS: ColumnConfig[] = [
-  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'star', label: 'Star', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -172,8 +175,9 @@ const YOUTH_COLUMNS: ColumnConfig[] = [
 ];
 
 const PRO_COLUMNS: ColumnConfig[] = [
-  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'star', label: 'Star', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -216,9 +220,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+  const [minFit, setMinFit] = useState<number>(0);
 
   // Reset pagination when filters/search/sort change
-  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir]);
+  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir, minFit]);
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
@@ -230,12 +235,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
     position: '', nationality: '',
     parents_name: '', parent_contact: '', parent_approval: false,
-    messaged: false, response_received: false, initial_message: '', notes: ''
+    messaged: false, response_received: false, initial_message: '', notes: '',
+    national_team: false, star_of_team: false, previous_serious_injury: ''
   };
   const emptyProForm = {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
     position: '', nationality: '',
-    messaged: false, response_received: false, initial_message: '', notes: ''
+    messaged: false, response_received: false, initial_message: '', notes: '',
+    national_team: false, star_of_team: false, previous_serious_injury: ''
   };
 
   const [formData, setFormData] = useState<any>(isYouth ? emptyYouthForm : emptyProForm);
@@ -263,7 +270,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setAgeRules(rulesResult.data || []);
       setClubCountryMap(countryMap);
       setClubRatings(ratingsResult.data || []);
+      setData(outreachData);
+      setLoading(false);
 
+      // Auto-move 18+ youth → pro AFTER first paint so the table is not blocked.
       if (isYouth) {
         const toMove = outreachData.filter(item => {
           if (!item.date_of_birth) return false;
@@ -271,27 +281,27 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           return age !== null && age >= 18;
         });
         if (toMove.length > 0) {
-          for (const item of toMove) {
-            await supabase.from('player_outreach_pro').insert({
-              player_name: item.player_name, ig_handle: item.ig_handle,
-              current_club: item.current_club, date_of_birth: item.date_of_birth,
-              messaged: item.messaged, response_received: item.response_received,
-              initial_message: item.initial_message, notes: item.notes,
-              age: 18, position: item.position, nationality: item.nationality
-            });
-            await supabase.from('player_outreach_youth').delete().eq('id', item.id);
-          }
-          toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
-          const { data: refreshed } = await supabase.from('player_outreach_youth')
-            .select('*').order('created_at', { ascending: false });
-          outreachData = refreshed || [];
+          (async () => {
+            try {
+              await Promise.all(toMove.map(item =>
+                supabase.from('player_outreach_pro').insert({
+                  player_name: item.player_name, ig_handle: item.ig_handle,
+                  current_club: item.current_club, date_of_birth: item.date_of_birth,
+                  messaged: item.messaged, response_received: item.response_received,
+                  initial_message: item.initial_message, notes: item.notes,
+                  age: 18, position: item.position, nationality: item.nationality
+                }).then(() => supabase.from('player_outreach_youth').delete().eq('id', item.id))
+              ));
+              toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
+              setData(prev => prev.filter(d => !toMove.some(m => m.id === d.id)));
+            } catch (e) { /* ignore background move errors */ }
+          })();
         }
       }
-      setData(outreachData);
+      return;
     } catch (error) {
       console.error(`Error fetching ${type} outreach:`, error);
       toast.error(`Failed to load ${type} outreach data`);
-    } finally {
       setLoading(false);
     }
   };
@@ -350,13 +360,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       parents_name: item.parents_name || '', parent_contact: item.parent_contact || '',
       parent_approval: item.parent_approval || false,
       messaged: item.messaged || false, response_received: item.response_received || false,
-      initial_message: item.initial_message || '', notes: item.notes || ''
+      initial_message: item.initial_message || '', notes: item.notes || '',
+      national_team: !!item.national_team, star_of_team: !!item.star_of_team,
+      previous_serious_injury: item.previous_serious_injury || ''
     } : {
       player_name: item.player_name || '', ig_handle: item.ig_handle || '',
       current_club: item.current_club || '', date_of_birth: item.date_of_birth || '',
       position: item.position || '', nationality: item.nationality || '',
       messaged: item.messaged || false, response_received: item.response_received || false,
-      initial_message: item.initial_message || '', notes: item.notes || ''
+      initial_message: item.initial_message || '', notes: item.notes || '',
+      national_team: !!item.national_team, star_of_team: !!item.star_of_team,
+      previous_serious_injury: item.previous_serious_injury || ''
     });
     setDetailOpen(true);
   };
@@ -474,6 +488,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     if (dobTo) {
       result = result.filter(d => d.date_of_birth && d.date_of_birth <= dobTo);
     }
+    if (minFit > 0) {
+      result = result.filter(d => (d.fit_score ?? 0) >= minFit);
+    }
 
     result = [...result].sort((a, b) => {
       let cmp = 0;
@@ -483,6 +500,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         case 'current_club': cmp = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'nationality': cmp = (a.nationality || 'ZZZ').localeCompare(b.nationality || 'ZZZ'); break;
         case 'date_of_birth': cmp = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
+        case 'fit_score': cmp = (a.fit_score ?? -1) - (b.fit_score ?? -1); break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -495,7 +513,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const hasActiveFilters = ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || dobFrom || dobTo;
   const clearAllFilters = () => {
-    setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setDobFrom(''); setDobTo('');
+    setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setDobFrom(''); setDobTo(''); setMinFit(0);
   };
 
   // Dynamic column rendering based on settings order
@@ -514,8 +532,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       </TableHead>
     );
     switch (key) {
+      case 'star': return plainHeader('★', 'w-8 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
-      case 'fit': return plainHeader('Fit', 'w-12 text-center');
+      case 'fit': return sortableHeader('Fit', 'fit_score', 'w-14 text-center');
       case 'name': return sortableHeader('Name', 'player_name');
       case 'ig': return plainHeader('IG', 'w-12 text-center');
       case 'nationality': return sortableHeader('Nat', 'nationality');
@@ -536,6 +555,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const renderCell = (key: string, item: any): ReactNode => {
     const age = calculateAge(item.date_of_birth);
     switch (key) {
+      case 'star':
+        return (
+          <TableCell key={key} className="py-1.5 text-center" onClick={e => e.stopPropagation()}>
+            <StarToggle
+              id={item.id}
+              table={isYouth ? 'player_outreach_youth' : 'player_outreach_pro'}
+              initial={!!item.is_starred}
+              onChange={next => setData(prev => prev.map(d => d.id === item.id ? { ...d, is_starred: next, starred_at: next ? new Date().toISOString() : null } : d))}
+            />
+          </TableCell>
+        );
       case 'eligibility':
         return (
           <TableCell key={key} className="py-1.5" onClick={e => e.stopPropagation()}>
@@ -587,7 +617,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       case 'position':
         return (
           <TableCell key={key} className="py-1.5">
-            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
+            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{normalisePosition(item.position) || item.position}</Badge> : '-'}
           </TableCell>
         );
       case 'age':
@@ -797,6 +827,15 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="space-y-3 pt-2 border-t">
                 <p className="text-xs text-muted-foreground font-medium">Filters</p>
                 <div className="space-y-2">
+                  <Label className="text-xs">Min Fit ({minFit})</Label>
+                  <input
+                    type="range" min={0} max={100} step={5}
+                    value={minFit}
+                    onChange={e => setMinFit(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label className="text-xs">Age Group</Label>
                   <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
                     <option value="all">All Ages</option>
@@ -964,6 +1003,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 <div><span className="text-muted-foreground text-xs">Messaged</span><p className="font-medium">{detailItem.messaged ? 'Yes' : 'No'}</p></div>
                 <div><span className="text-muted-foreground text-xs">Response</span><p className="font-medium">{detailItem.response_received ? 'Yes' : 'No'}</p></div>
                 {isYouth && <div><span className="text-muted-foreground text-xs">Parent Approval</span><p className="font-medium">{detailItem.parent_approval ? 'Yes' : 'No'}</p></div>}
+                <div><span className="text-muted-foreground text-xs">National Team</span><p className="font-medium">{detailItem.national_team ? 'Yes' : 'No'}</p></div>
+                <div><span className="text-muted-foreground text-xs">Star of Team</span><p className="font-medium">{detailItem.star_of_team ? 'Yes' : 'No'}</p></div>
+                {detailItem.previous_serious_injury && <div className="col-span-2"><span className="text-muted-foreground text-xs">Previous Serious Injury</span><p className="font-medium">{detailItem.previous_serious_injury}</p></div>}
                 {detailItem.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{detailItem.notes}</p></div>}
                 {detailItem.initial_message && <div className="col-span-2"><span className="text-muted-foreground text-xs">Initial Message</span><p className="text-muted-foreground text-sm">{detailItem.initial_message}</p></div>}
               </div>
@@ -991,10 +1033,16 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               )}
               <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
               <div className="space-y-1"><Label className="text-xs">Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={2} /></div>
+              <div className="space-y-1">
+                <Label className="text-xs">Previous Serious Injury (e.g. ACL 2023)</Label>
+                <BlurInput value={formData.previous_serious_injury} onCommit={v => setFormData((f: any) => ({ ...f, previous_serious_injury: v }))} />
+              </div>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label className="text-xs">Messaged</Label></div>
                 <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label className="text-xs">Response</Label></div>
                 {isYouth && <div className="flex items-center space-x-2"><Switch checked={formData.parent_approval} onCheckedChange={v => setFormData({ ...formData, parent_approval: v })} /><Label className="text-xs">Parent Approval</Label></div>}
+                <div className="flex items-center space-x-2"><Switch checked={formData.national_team} onCheckedChange={v => setFormData({ ...formData, national_team: v })} /><Label className="text-xs">National Team</Label></div>
+                <div className="flex items-center space-x-2"><Switch checked={formData.star_of_team} onCheckedChange={v => setFormData({ ...formData, star_of_team: v })} /><Label className="text-xs">Star of Team</Label></div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleDetailSave} className="flex-1">Save</Button>

@@ -29,8 +29,25 @@ let cachedTargets: RecruitmentTargetLite[] | null = null;
 let inflightSettings: Promise<ScoringSettingsRow> | null = null;
 let inflightTargets: Promise<RecruitmentTargetLite[]> | null = null;
 
+const SS_KEY_SETTINGS = "rise.scoring.settings.v1";
+const SS_KEY_TARGETS = "rise.scoring.targets.v1";
+
+const readSession = <T,>(key: string): T | null => {
+  try {
+    if (typeof sessionStorage === "undefined") return null;
+    const raw = sessionStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch { return null; }
+};
+const writeSession = (key: string, value: unknown) => {
+  try { sessionStorage?.setItem(key, JSON.stringify(value)); } catch {}
+};
+
+// Warm caches from sessionStorage on module load for instant first paint.
+if (!cachedSettings) cachedSettings = readSession<ScoringSettingsRow>(SS_KEY_SETTINGS);
+if (!cachedTargets) cachedTargets = readSession<RecruitmentTargetLite[]>(SS_KEY_TARGETS);
+
 const fetchSettings = async (): Promise<ScoringSettingsRow> => {
-  if (cachedSettings) return cachedSettings;
   if (inflightSettings) return inflightSettings;
   inflightSettings = (async () => {
     const { data } = await (supabase as any)
@@ -45,13 +62,13 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
       bonus_weights: { ...DEFAULT_BONUS_WEIGHTS, ...((data?.bonus_weights) || {}) },
     };
     cachedSettings = merged;
+    writeSession(SS_KEY_SETTINGS, merged);
     return merged;
   })();
   return inflightSettings;
 };
 
 const fetchTargets = async (): Promise<RecruitmentTargetLite[]> => {
-  if (cachedTargets) return cachedTargets;
   if (inflightTargets) return inflightTargets;
   inflightTargets = (async () => {
     const { data } = await supabase
@@ -59,6 +76,7 @@ const fetchTargets = async (): Promise<RecruitmentTargetLite[]> => {
       .select("id,name,scope,positions,min_age,max_age,nationalities,countries_of_club,min_club_rating,max_club_rating,priority,active,weights_override,ai_nudge_enabled")
       .eq("active", true);
     cachedTargets = ((data as any) || []) as RecruitmentTargetLite[];
+    writeSession(SS_KEY_TARGETS, cachedTargets);
     return cachedTargets;
   })();
   return inflightTargets;
@@ -69,15 +87,19 @@ export const invalidateScoringCaches = () => {
   cachedTargets = null;
   inflightSettings = null;
   inflightTargets = null;
+  try {
+    sessionStorage?.removeItem(SS_KEY_SETTINGS);
+    sessionStorage?.removeItem(SS_KEY_TARGETS);
+  } catch {}
 };
 
 export const useScoringSettings = () => {
   const [settings, setSettings] = useState<ScoringSettingsRow>(cachedSettings || DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(!cachedSettings);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     let mounted = true;
     fetchSettings().then(s => {
-      if (mounted) { setSettings(s); setLoading(false); }
+      if (mounted) { setSettings(s); }
     });
     return () => { mounted = false; };
   }, []);
@@ -86,11 +108,11 @@ export const useScoringSettings = () => {
 
 export const useRecruitmentTargets = () => {
   const [targets, setTargets] = useState<RecruitmentTargetLite[]>(cachedTargets || []);
-  const [loading, setLoading] = useState(!cachedTargets);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     let mounted = true;
     fetchTargets().then(t => {
-      if (mounted) { setTargets(t); setLoading(false); }
+      if (mounted) { setTargets(t); }
     });
     return () => { mounted = false; };
   }, []);

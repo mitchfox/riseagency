@@ -26,6 +26,7 @@ import { Switch } from '@/components/ui/switch';
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
+import { normalisePosition } from '@/lib/positionNormalise';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -611,7 +612,7 @@ export const PlayerDatabase = () => {
           </TableCell>
         );
       case 'position':
-        return <TableCell key={key} className="text-sm py-1.5"><Badge variant="outline" className="text-[10px] font-medium">{player.position || '-'}</Badge></TableCell>;
+        return <TableCell key={key} className="text-sm py-1.5"><Badge variant="outline" className="text-[10px] font-medium">{normalisePosition(player.position) || player.position || '-'}</Badge></TableCell>;
       case 'age':
         return <TableCell key={key} className="text-sm py-1.5">{player.age || '-'}</TableCell>;
       case 'club':
