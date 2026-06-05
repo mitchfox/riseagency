@@ -1,141 +1,59 @@
-# Representation Offers + AI Fit Score + Template Matching
+## 1. Paginate Youth / Pro outreach tables
 
-## Goals
-1. Turn an outreach prospect into a representation-offer link in **one click** — and also create the link from the Representation Offers page itself.
-2. Make Representation Offers easy to navigate: collapsible status groups + search.
-3. Add an **AI Fit Score (0–100)** that ranks every player/outreach row against our recruitment targets, with admin-controlled weights.
-4. Tag message templates to recruitment targets so the right script (with a one-click copy) appears next to the right player.
+In `PlayerOutreachPanel.tsx`, switch each section from "show all" to fixed pages of 50.
 
----
+- Add `pageSize = 50` and a per-section `page` state.
+- Render only `rows.slice(page*50, page*50+50)`.
+- Show a pagination bar (Prev · "Page X of Y" · Next, with first/last) at the **top and bottom** of each section table, using the existing `ui/pagination` component.
+- Keep the current fetch (single query) but defer expensive cell work (e.g. country/club enrichments) to the visible slice only — most of the perceived slowness is React rendering 500+ rows, not the network call.
+- Reset `page` to 0 when search/filter/sort changes.
 
-## 1. One-click offer creation
+(Server-side range fetching is overkill here — the dataset is bounded and a single query keeps search/sort working without extra round-trips. We can switch to `.range()` later if it grows.)
 
-### From a Player Outreach card
-Add an **"Create offer link"** button on every pipeline / table row.
+## 2. Recruitment Targets: inline + comma fix
 
-What happens behind the scenes:
-- If the outreach row already has a matching `players` record (lookup by case-insensitive name), reuse it.
-- Otherwise insert a minimal `players` row from the outreach fields: `name`, `position`, `age` / `date_of_birth`, `nationality`, `club`. Status defaults to `prospect`.
-- Set `has_representation_offer = true`.
-- Generate the slug, copy `/risewithus/<slug>` to clipboard, toast confirms with "View" + "Open WhatsApp" options.
-- Log an `outreach_interactions` row (`kind: message_out`, channel chosen by the user in a tiny dropdown, summary `Offer link sent`) so the response tracker auto-updates `last_contact_at` and `messaged = true`.
+Replace the dialog in `OutreachTargetsManager.tsx` with an in-page editor.
 
-### From the Representation Offers page
-Add a **"+ Create offer"** primary button at the top that opens a compact dialog:
-- Search existing players (live) → flip `has_representation_offer = true` and copy link.
-- Or "Add new prospect" → tiny inline form (name, position, age, nationality, club) → creates the `players` row + flips the flag + copies link.
+- One expandable card per target. Header shows name + scope + priority + match counts (as today). Clicking "Edit" expands the card inline with all fields visible; no modal.
+- **Comma fix**: store list fields (positions, nationalities, club countries) as **raw strings** in local edit state. Only call `parseList` on Save. This lets the user type `Spain, Portugal` without the comma being eaten mid-typing.
+- "New target" appends a fresh inline card at the top in edit mode.
+- Save button per card; toast on success, reload on success, and surface the actual error message on failure so we know if RLS or grants are blocking.
 
-### From the Prospect Board
-Already supports opening the link — add a "Copy" sibling for parity.
+## 3. Per-target scoring weights
 
-## 2. Smarter Representation Offers UI
+Today `recruitment_scoring_settings` holds one global weights row. Add per-target overrides.
 
-Replace the flat grid with **collapsible status groups** (default-open: "Needs follow-up"; collapsed: "Signed", "Declined"):
+- Migration: add `weights_override jsonb` (nullable) and `ai_nudge_enabled boolean` (nullable) to `recruitment_targets`.
+- Update `scoreAgainstTarget` in `src/lib/fitScore.ts` to accept an optional per-target weight override and merge it over the global weights before scoring. `computeFitScore` already iterates all targets and keeps the highest — that behaviour stays, so the player automatically takes the score from the target they best match.
+- Update `useRecruitmentScoring`/`useRecruitmentTargets` to fetch `weights_override` and pass it through.
+- In the inline target editor, add a collapsible "Scoring weights for this target" panel with the same sliders as `ScoringSettings`, plus a "Use global defaults" toggle that clears the override.
+- Cache invalidation: call `invalidateScoringCaches()` after any target save so badges across Player Database / Player Outreach refresh.
 
-- Needs follow-up (offer sent ≥ 7 days ago, no response logged)
-- Offer sent — awaiting reply
-- Viewed (we can fire a visit hit from the public page into `representation_visitors`)
-- In conversation
-- Signed
-- Declined / paused
+## 4. Saving reliability
 
-Each group header shows a count and a chevron. Sticky search bar above filters across all groups; matching a search auto-expands its group. Add quick filters: position, nationality, target (chip row).
+- Targets and scoring settings currently call `.update(...).eq("id", "singleton")` / `.update(...).eq("id", id)` without surfacing errors. Add explicit error toasts with `error.message`, and after a successful save call `invalidateScoringCaches()` and re-fetch the local list so the UI reflects the saved state immediately.
+- Verify the existing RLS policies allow authenticated staff to write to `recruitment_targets` and `recruitment_scoring_settings`. If a save fails because of policies we will tighten them in the same migration.
 
-Card additions: last-contact relative time, AI fit-score badge, the assigned target name, and the matched message template (with a copy icon — see §4).
+## 5. Investor update "non-2xx" save failure
 
-## 3. AI Fit Score (0–100)
+Two likely causes — fix both:
 
-### Where it shows
-- A Rise-gold circular badge on each card in: Player Outreach (pipeline + table), Representation Offers, Prospect Board, Player Database list.
-- Hover/tap → tooltip lists the top 3 reasons that drove the score ("+25 position match: CB", "+18 age sweet spot", "−10 club rating below target", etc.).
+- `investor-write` was edited to add `investor_updates` to `ALLOWED_TABLES`, but the deployed copy may be stale or the row payload (`title`, `body`, `achieved_on`) may hit a not-null we don't see. We will: (a) redeploy the function, (b) make the function echo the underlying Postgres error in the JSON response so the toast shows a useful message, and (c) in `InvestorHighlineLog.save`, fall back to reading `data.error` even when `error` is null.
+- Confirm the table has the columns we insert into and that the service role can write (it should — service role bypasses the deny-all policy).
 
-### How it's calculated
-Hybrid: deterministic component for explainability + an AI nudge for the soft signals.
+After the fix, retry add-update from the unlocked Investors Portal and confirm the toast says "Update logged".
 
-**Deterministic core (0–80)** — pure formula, runs client-side instantly:
-- Position match vs active targets (0–20)
-- Age fit (0–15, peaks at target midpoint)
-- Nationality fit (0–10)
-- Club country fit (0–5)
-- Club rating fit (R1 highest, 0–15)
-- Outreach signal (0–15): response received, parent approval, recent interaction recency
+## Files touched
 
-**AI nudge (0–20)** — runs on-demand or in batch via a Supabase Edge Function calling Lovable AI (`google/gemini-3-flash-preview`):
-- Inputs: player bio/notes, scouting notes, recent stats summary, message thread summary.
-- Output: `{ ai_bonus: 0–20, reasons: [short bullet, …] }` via the AI SDK `Output.object` API.
-- Cached on the player row; re-runs only when underlying data changes or admin clicks "Recompute".
-
-### Settings (admin-only sub-page)
-New section: **Recruitment → Scoring Settings**
-
-- Sliders for each component weight (must sum to 100; auto-normalised).
-- Target match thresholds: how strict position/age/nationality must be before they count.
-- Toggle to enable/disable the AI nudge globally.
-- "Recompute all" button (queues a batch job).
-
-Stored in a new table `recruitment_scoring_settings` (single row, admin-editable). Score breakdowns stored per player so we can show "why" without recomputing.
-
-### Recruitment Targets
-The existing `recruitment_targets` table already holds the criteria — that's the source of truth. We'll also add a **default_template_id** column to each target (§4) and surface a quick way to set/edit targets from the Scoring Settings page so weights and targets sit side-by-side.
-
-## 4. Template tagging + one-click copy
-
-### Schema additions
-- `whatsapp_quick_messages`: add `target_id` (nullable FK to `recruitment_targets`), `position_tags text[]`, `scope text` ('youth'|'pro'|'both').
-- `email_templates`: same additions.
-- `recruitment_targets`: add `default_whatsapp_template_id`, `default_email_template_id`.
-
-### Matching logic
-When rendering an outreach / offer card:
-1. Find the best matching target for the player (highest fit score above a threshold).
-2. Use that target's default template; if none, fall back to the template whose `target_id` matches; then `position_tags` overlap; then `scope` match.
-3. Render the template preview with merge fields filled in (`{name}`, `{position}`, `{club}`, `{age}`, `{offer_link}`).
-4. **Copy** button next to the preview puts the resolved text on the clipboard. Optional **WhatsApp** button opens `https://wa.me/?text=…` pre-filled when a phone/parent contact is available.
-
-### Templates UI
-Extend the existing Quick Messages / Email Templates editors with:
-- Target dropdown (multi-select of recruitment targets)
-- Position chips
-- Scope toggle (Youth / Pro / Both)
-- "Used by N targets as default" badge
-
----
-
-## Technical sketch
-
-```text
-recruitment_targets ───┐
-                       ├─ default_whatsapp_template_id ─ whatsapp_quick_messages
-                       └─ default_email_template_id    ─ email_templates
-recruitment_scoring_settings (single row, admin) ─┐
-players / player_outreach_* rows ─────────────────┴─ fit_score (0-100) + breakdown JSON
-```
-
-Migrations (one batch):
-1. ALTER `whatsapp_quick_messages` and `email_templates`: add `target_id`, `position_tags`, `scope`.
-2. ALTER `recruitment_targets`: add `default_whatsapp_template_id`, `default_email_template_id`.
-3. CREATE `recruitment_scoring_settings` (single row enforced via unique constraint on a fixed key).
-4. ALTER `players`, `player_outreach_youth`, `player_outreach_pro`: add `fit_score int`, `fit_score_breakdown jsonb`, `fit_score_updated_at timestamptz`.
-5. Edge function `compute-fit-score` (Lovable AI, `google/gemini-3-flash-preview`) — called per-player or batched.
-
-Frontend:
-- `src/lib/fitScore.ts` — pure deterministic scorer (shared by every list view).
-- `useFitScore` hook — reads cached score, falls back to deterministic core if not yet computed.
-- `FitScoreBadge` component (Rise-gold ring, click → breakdown popover).
-- `src/components/staff/recruitment/CreateOfferButton.tsx` — promote-to-offer flow (reused by outreach + offers page).
-- `src/components/staff/recruitment/TemplatePickerInline.tsx` — auto-matches template, shows preview + copy.
-- Refactor `RepresentationOffers.tsx`: add collapsible groups, search, filters, fit badge, template picker, "+ Create offer" dialog.
-- New `src/components/staff/recruitment/ScoringSettings.tsx` mounted under Recruitment.
-
-## Rollout
-1. Migrations + edge function scaffolding.
-2. Deterministic fit score + badge live across all surfaces.
-3. Create-offer flow from outreach + offers page.
-4. Representation Offers collapsible groups + search + filters.
-5. Template tagging + inline copy.
-6. AI nudge component of the score (optional toggle on by default).
-7. Scoring Settings admin page.
+- `src/components/staff/PlayerOutreachPanel.tsx` — pagination (50/page, top+bottom).
+- `src/components/staff/recruitment/OutreachTargetsManager.tsx` — inline editor, raw-string list inputs, per-target weight sliders, error surfacing.
+- `src/components/staff/recruitment/ScoringSettings.tsx` — minor: shared weight-slider sub-component pulled out so the target editor can reuse it.
+- `src/lib/fitScore.ts` + `src/hooks/useRecruitmentScoring.ts` — per-target weight override plumbing.
+- `supabase/migrations/<new>.sql` — add `weights_override jsonb`, `ai_nudge_enabled boolean` to `recruitment_targets`.
+- `supabase/functions/investor-write/index.ts` — better error payload; redeploy.
+- `src/components/investor/InvestorHighlineLog.tsx` — surface the server error message in the toast.
 
 ## Out of scope
-- Auto-sending the message via WhatsApp / IG APIs (we copy, you paste).
-- Tracking opens of the offer link beyond what `representation_visitors` already records.
+
+- Server-side pagination / virtualised tables (only if the dataset grows past a few thousand).
+- Reworking the fit-score AI nudge — only the weights plumbing changes.

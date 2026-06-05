@@ -6561,6 +6561,7 @@ export type Database = {
       recruitment_targets: {
         Row: {
           active: boolean
+          ai_nudge_enabled: boolean | null
           countries_of_club: string[]
           created_at: string
           default_email_template_id: string | null
@@ -6578,9 +6579,11 @@ export type Database = {
           priority: number
           scope: string
           updated_at: string
+          weights_override: Json | null
         }
         Insert: {
           active?: boolean
+          ai_nudge_enabled?: boolean | null
           countries_of_club?: string[]
           created_at?: string
           default_email_template_id?: string | null
@@ -6598,9 +6601,11 @@ export type Database = {
           priority?: number
           scope?: string
           updated_at?: string
+          weights_override?: Json | null
         }
         Update: {
           active?: boolean
+          ai_nudge_enabled?: boolean | null
           countries_of_club?: string[]
           created_at?: string
           default_email_template_id?: string | null
@@ -6618,6 +6623,7 @@ export type Database = {
           priority?: number
           scope?: string
           updated_at?: string
+          weights_override?: Json | null
         }
         Relationships: [
           {
