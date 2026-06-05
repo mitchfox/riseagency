@@ -549,7 +549,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
                 nationality: item.nationality,
                 current_club: item.current_club,
                 club_country: findClubCountry(item.current_club, clubCountryMap),
-                club_first_team_rating: findClubRating(item.current_club, clubRatings, type === 'youth') as any,
+                club_first_team_rating: findClubRatingUtil(item.current_club, clubRatings, type === 'youth') as any,
                 messaged: item.messaged,
                 response_received: item.response_received,
                 response_status: item.response_status,
