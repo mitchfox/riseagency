@@ -317,10 +317,10 @@ const Staff = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const createStaffSearchParams = (updates: Record<string, string | null>) => {
+  const createStaffSearchParams = (updates: Record<string, string | null>, options?: { preservePlayer?: boolean }) => {
     const nextParams = new URLSearchParams();
     new URLSearchParams(window.location.search).forEach((value, key) => {
-      if (key.startsWith('__lovable')) nextParams.set(key, value);
+      if (key.startsWith('__lovable') || (options?.preservePlayer && key === 'player')) nextParams.set(key, value);
     });
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === '') nextParams.delete(key);
@@ -329,8 +329,8 @@ const Staff = () => {
     return nextParams;
   };
 
-  const setStaffSectionParams = (updates: Record<string, string | null>, options?: { replace?: boolean }) => {
-    const nextParams = createStaffSearchParams(updates);
+  const setStaffSectionParams = (updates: Record<string, string | null>, options?: { replace?: boolean; preservePlayer?: boolean }) => {
+    const nextParams = createStaffSearchParams(updates, options);
     setSearchParams(nextParams, options);
   };
 
