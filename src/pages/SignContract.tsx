@@ -520,6 +520,51 @@ const SignContract = () => {
     }
   };
 
+  const handleManualUpload = async () => {
+    if (!contract || !manualFile) return;
+    if (!signerInfo.name.trim() || !signerInfo.email.trim()) {
+      toast.error('Please enter your name and email above first');
+      return;
+    }
+    if (manualFile.size > 20 * 1024 * 1024) {
+      toast.error('File too large (max 20MB)');
+      return;
+    }
+    setManualUploading(true);
+    try {
+      const buf = await manualFile.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+      }
+      const base64 = btoa(binary);
+      const { data, error } = await supabase.functions.invoke('submit-manual-signed-copy', {
+        body: {
+          contract_id: contract.id,
+          signer_name: signerInfo.name.trim(),
+          signer_email: signerInfo.email.trim().toLowerCase(),
+          file_base64: base64,
+          file_name: manualFile.name,
+          file_mime: manualFile.type || 'application/octet-stream',
+          user_agent: navigator.userAgent,
+        },
+      });
+      if (error || (data && (data as any).error)) {
+        throw new Error(((data as any)?.error as string) || error?.message || 'Upload failed');
+      }
+      setManualUploaded(true);
+      setManualFile(null);
+      toast.success('Signed copy received. Thank you.');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Failed to upload signed copy');
+    } finally {
+      setManualUploading(false);
+    }
+  };
+
   const handleVerifyPassword = () => {
     if (!contract || !passwordInput.trim()) {
       toast.error('Please enter a password');
