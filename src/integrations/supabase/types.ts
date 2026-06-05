@@ -5115,6 +5115,8 @@ export type Database = {
       player_outreach_pro: {
         Row: {
           age: number | null
+          agent_name: string | null
+          agent_status: string | null
           assigned_to: string | null
           created_at: string | null
           current_club: string | null
@@ -5141,10 +5143,13 @@ export type Database = {
           response_status: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team: boolean
           starred_at: string | null
+          transfermarkt_url: string | null
           updated_at: string | null
         }
         Insert: {
           age?: number | null
+          agent_name?: string | null
+          agent_status?: string | null
           assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
@@ -5171,10 +5176,13 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team?: boolean
           starred_at?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string | null
         }
         Update: {
           age?: number | null
+          agent_name?: string | null
+          agent_status?: string | null
           assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
@@ -5201,6 +5209,7 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team?: boolean
           starred_at?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -5216,6 +5225,8 @@ export type Database = {
       player_outreach_youth: {
         Row: {
           age: number | null
+          agent_name: string | null
+          agent_status: string | null
           assigned_to: string | null
           created_at: string | null
           current_club: string | null
@@ -5245,10 +5256,13 @@ export type Database = {
           response_status: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team: boolean
           starred_at: string | null
+          transfermarkt_url: string | null
           updated_at: string | null
         }
         Insert: {
           age?: number | null
+          agent_name?: string | null
+          agent_status?: string | null
           assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
@@ -5278,10 +5292,13 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team?: boolean
           starred_at?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string | null
         }
         Update: {
           age?: number | null
+          agent_name?: string | null
+          agent_status?: string | null
           assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
@@ -5311,6 +5328,7 @@ export type Database = {
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
           star_of_team?: boolean
           starred_at?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -6580,6 +6598,8 @@ export type Database = {
           bonus_weights: Json
           fit_score_threshold: number
           id: string
+          league_strength_weight: number
+          position_adjacency_factor: number
           updated_at: string
           updated_by: string | null
           weights: Json
@@ -6590,6 +6610,8 @@ export type Database = {
           bonus_weights?: Json
           fit_score_threshold?: number
           id?: string
+          league_strength_weight?: number
+          position_adjacency_factor?: number
           updated_at?: string
           updated_by?: string | null
           weights?: Json
@@ -6600,6 +6622,8 @@ export type Database = {
           bonus_weights?: Json
           fit_score_threshold?: number
           id?: string
+          league_strength_weight?: number
+          position_adjacency_factor?: number
           updated_at?: string
           updated_by?: string | null
           weights?: Json
