@@ -526,8 +526,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       </TableHead>
     );
     switch (key) {
+      case 'star': return plainHeader('★', 'w-8 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
-      case 'fit': return plainHeader('Fit', 'w-12 text-center');
+      case 'fit': return sortableHeader('Fit', 'fit_score', 'w-14 text-center');
       case 'name': return sortableHeader('Name', 'player_name');
       case 'ig': return plainHeader('IG', 'w-12 text-center');
       case 'nationality': return sortableHeader('Nat', 'nationality');
@@ -548,6 +549,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const renderCell = (key: string, item: any): ReactNode => {
     const age = calculateAge(item.date_of_birth);
     switch (key) {
+      case 'star':
+        return (
+          <TableCell key={key} className="py-1.5 text-center" onClick={e => e.stopPropagation()}>
+            <StarToggle
+              id={item.id}
+              table={isYouth ? 'player_outreach_youth' : 'player_outreach_pro'}
+              initial={!!item.is_starred}
+              onChange={next => setData(prev => prev.map(d => d.id === item.id ? { ...d, is_starred: next, starred_at: next ? new Date().toISOString() : null } : d))}
+            />
+          </TableCell>
+        );
       case 'eligibility':
         return (
           <TableCell key={key} className="py-1.5" onClick={e => e.stopPropagation()}>
@@ -599,7 +611,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       case 'position':
         return (
           <TableCell key={key} className="py-1.5">
-            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{item.position}</Badge> : '-'}
+            {item.position ? <Badge variant="outline" className="text-[10px] px-1 py-0">{normalisePosition(item.position) || item.position}</Badge> : '-'}
           </TableCell>
         );
       case 'age':
