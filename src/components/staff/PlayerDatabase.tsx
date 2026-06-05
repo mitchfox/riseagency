@@ -27,6 +27,8 @@ import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { normalisePosition } from '@/lib/positionNormalise';
+import { computeFitScore } from '@/lib/fitScore';
+import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -65,7 +67,7 @@ interface ClubRating {
   academy_rating: string;
 }
 
-type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth';
+type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth' | 'fit_score';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
@@ -234,6 +236,7 @@ export const PlayerDatabase = () => {
   const [editForm, setEditForm] = useState<any>({});
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [minFit, setMinFit] = useState<number>(0);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -241,6 +244,8 @@ export const PlayerDatabase = () => {
   const settings = useTableSettings('player-database', DB_COLUMNS);
   const dragScrollRef = useHorizontalDragScroll();
   const { getHeaderProps, ResizeHandle } = useResizableColumns('player-database');
+  const { targets } = useRecruitmentTargets();
+  const { settings: scoringSettings } = useScoringSettings();
 
   useEffect(() => { fetchAllPlayers(); }, []);
 
@@ -410,6 +415,26 @@ export const PlayerDatabase = () => {
   };
 
   const filteredAndSortedPlayers = useMemo(() => {
+    const fitFor = (player: PlayerData) => {
+      try {
+        const clubCountry = findClubCountry(player.current_club, clubCountryMap);
+        const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
+        const r = computeFitScore(
+          {
+            position: player.position,
+            age: player.age,
+            date_of_birth: player.date_of_birth,
+            nationality: player.nationality,
+            current_club: player.current_club,
+            club_country: clubCountry,
+            club_first_team_rating: clubRatingVal as any,
+          } as any,
+          targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band,
+          player.source === 'youth_outreach' ? 'youth' : 'pro', scoringSettings.bonus_weights,
+        );
+        return Math.max(0, Math.min(100, Math.round(r.total)));
+      } catch { return 0; }
+    };
     let result = players.filter(player => {
       if (isScoped) {
         if (!allowedIds || !allowedIds.has(player.id)) return false;
@@ -440,6 +465,7 @@ export const PlayerDatabase = () => {
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
+      if (minFit > 0 && fitFor(player) < minFit) return false;
       return true;
     });
 
@@ -453,6 +479,7 @@ export const PlayerDatabase = () => {
         case 'current_club': comparison = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'report_count': comparison = a.report_count - b.report_count; break;
         case 'date_of_birth': comparison = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
+        case 'fit_score': comparison = fitFor(a) - fitFor(b); break;
         case 'created_at':
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -461,7 +488,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, targets, scoringSettings, clubCountryMap, clubRatings]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -476,6 +503,7 @@ export const PlayerDatabase = () => {
     setDobTo('');
     setBirthMonthFilter('all');
     setBirthdayFilterOffset(null);
+    setMinFit(0);
   };
 
   const activeBirthdayLabel = birthdayFilterOffset !== null
@@ -545,7 +573,7 @@ export const PlayerDatabase = () => {
     );
     switch (key) {
       case 'avatar': return plainHeader('', 'w-12');
-      case 'fit': return plainHeader('FIT', 'w-12 text-center');
+      case 'fit': return sortableHeader('FIT', 'fit_score', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
       case 'name': return sortableHeader('NAME', 'player_name');
       case 'nationality': return sortableHeader('NAT', 'nationality', 'w-12');
@@ -685,6 +713,14 @@ export const PlayerDatabase = () => {
           filters={
             <div className="space-y-3 pt-2 border-t">
               <p className="text-xs text-muted-foreground font-medium">Filters</p>
+              <div className="space-y-2">
+                <Label className="text-xs">Min Fit ({minFit})</Label>
+                <input
+                  type="range" min={0} max={100} value={minFit}
+                  onChange={e => setMinFit(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label className="text-xs">Age Group</Label>
                 <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">

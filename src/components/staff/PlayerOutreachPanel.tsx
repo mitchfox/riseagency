@@ -24,6 +24,8 @@ import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './Tab
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { StarToggle } from './recruitment/StarToggle';
 import { normalisePosition } from '@/lib/positionNormalise';
+import { computeFitScore } from '@/lib/fitScore';
+import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
@@ -228,6 +230,25 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
   const dragScrollRef = useHorizontalDragScroll();
+  const { targets } = useRecruitmentTargets();
+  const { settings: scoringSettings } = useScoringSettings();
+
+  // Pre-compute fit score per row so sorting/filtering by Fit applies across ALL pages,
+  // not just the rows the FitScoreBadge has lazily rendered.
+  const fitScoreById = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const row of data) {
+      if (typeof row.fit_score === 'number' && row.fit_score > 0) {
+        map[row.id] = row.fit_score;
+        continue;
+      }
+      try {
+        const r = computeFitScore(row as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights);
+        map[row.id] = Math.max(0, Math.min(100, Math.round(r.total)));
+      } catch { map[row.id] = 0; }
+    }
+    return map;
+  }, [data, targets, scoringSettings, type]);
   const { getHeaderProps, ResizeHandle } = useResizableColumns(`outreach-panel-${type}`);
   const isYouth = type === 'youth';
 
@@ -489,7 +510,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       result = result.filter(d => d.date_of_birth && d.date_of_birth <= dobTo);
     }
     if (minFit > 0) {
-      result = result.filter(d => (d.fit_score ?? 0) >= minFit);
+      result = result.filter(d => (fitScoreById[d.id] ?? 0) >= minFit);
     }
 
     result = [...result].sort((a, b) => {
@@ -500,7 +521,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         case 'current_club': cmp = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'nationality': cmp = (a.nationality || 'ZZZ').localeCompare(b.nationality || 'ZZZ'); break;
         case 'date_of_birth': cmp = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
-        case 'fit_score': cmp = (a.fit_score ?? -1) - (b.fit_score ?? -1); break;
+        case 'fit_score': cmp = (fitScoreById[a.id] ?? -1) - (fitScoreById[b.id] ?? -1); break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
