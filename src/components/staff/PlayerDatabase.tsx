@@ -439,6 +439,8 @@ export const PlayerDatabase = () => {
           targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band,
           player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined,
           scoringSettings.bonus_weights,
+          scoringSettings.position_adjacency_factor,
+          scoringSettings.league_strength_weight,
         );
         map[`${player.source}-${player.id}`] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch {
