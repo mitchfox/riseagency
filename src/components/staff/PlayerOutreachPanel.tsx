@@ -510,7 +510,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       result = result.filter(d => d.date_of_birth && d.date_of_birth <= dobTo);
     }
     if (minFit > 0) {
-      result = result.filter(d => (d.fit_score ?? 0) >= minFit);
+      result = result.filter(d => (fitScoreById[d.id] ?? 0) >= minFit);
     }
 
     result = [...result].sort((a, b) => {
@@ -521,7 +521,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         case 'current_club': cmp = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'nationality': cmp = (a.nationality || 'ZZZ').localeCompare(b.nationality || 'ZZZ'); break;
         case 'date_of_birth': cmp = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
-        case 'fit_score': cmp = (a.fit_score ?? -1) - (b.fit_score ?? -1); break;
+        case 'fit_score': cmp = (fitScoreById[a.id] ?? -1) - (fitScoreById[b.id] ?? -1); break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
