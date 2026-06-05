@@ -31,6 +31,7 @@ export const StaffPWAInstall = () => {
     // avoid spurious reloads when switching staff tabs.
     const hostname = window.location.hostname;
     const isLovablePreview = hostname.startsWith('id-preview--') ||
+      hostname.includes('lovableproject.com') ||
       window.location.search.includes('__lovable_token') ||
       window.self !== window.top;
     if (isLovablePreview) return;

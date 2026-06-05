@@ -134,7 +134,13 @@ const _originalError = toast.error.bind(toast);
 
 // Register service worker with update detection - wrapped in try-catch to prevent console errors
 const isLovablePreviewEnv = window.location.hostname.startsWith('id-preview--') ||
-                             window.location.search.includes('__lovable_token');
+                             window.location.hostname.includes('lovableproject.com') ||
+                             window.location.search.includes('__lovable_token') ||
+                             window.self !== window.top;
+
+if (isLovablePreviewEnv) {
+  document.querySelectorAll<HTMLLinkElement>('link[rel="manifest"]').forEach((link) => link.remove());
+}
 
 // If a SW was previously installed, remove it in Lovable preview to prevent reload loops
 if (isLovablePreviewEnv && 'serviceWorker' in navigator) {

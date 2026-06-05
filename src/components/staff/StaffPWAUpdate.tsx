@@ -15,6 +15,7 @@ export const StaffPWAUpdate = () => {
     // and reload the staff page on every tab switch.
     const hostname = window.location.hostname;
     const isLovablePreview = hostname.startsWith('id-preview--') ||
+      hostname.includes('lovableproject.com') ||
       window.location.search.includes('__lovable_token') ||
       window.self !== window.top;
     if (isLovablePreview) return;

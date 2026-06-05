@@ -133,6 +133,15 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isMobile = useIsMobile();
 
+  const navigateToSection = (section: string) => {
+    const params = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key.startsWith('__lovable')) params.set(key, value);
+    });
+    params.set('section', section);
+    setSearchParams(params);
+  };
+
   // Filter widget configs based on role (hide financial for marketeers)
   const filteredWidgetConfigs = useMemo(() => {
     if (isMarketeer) {
@@ -479,11 +488,18 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
   const navigateToPlayer = (playerId: string, tab: string) => {
     // Use navigate for reliable cross-component navigation
-    navigate(`/staff?section=players&player=${playerId}&tab=${tab}`);
+    const params = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key.startsWith('__lovable')) params.set(key, value);
+    });
+    params.set('section', 'players');
+    params.set('player', playerId);
+    params.set('tab', tab);
+    navigate(`/staff?${params.toString()}`);
   };
 
   const navigateToGoalsTasks = () => {
-    navigate('/staff?section=visionboard');
+    navigateToSection('visionboard');
   };
 
   const handleQuickAddTask = async () => {
@@ -554,7 +570,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
         return (
           <VisionBoardWidget 
             isExpanded={expandedWidget === "visionboard"} 
-            onNavigate={(section) => setSearchParams({ section })}
+            onNavigate={navigateToSection}
           />
         );
 
@@ -735,7 +751,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "scouting":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'scouting-reports' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('scouting-reports')}>
             {scoutingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : scoutingData.data ? (
@@ -764,7 +780,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "marketing":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'marketing' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('marketing')}>
             {marketingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : marketingData.data ? (
@@ -791,7 +807,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "prospects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'recruitment' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('recruitment')}>
             {prospectsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : prospectsData.data ? (
@@ -822,7 +838,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "analytics":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analysis' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('analysis')}>
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-primary/10 rounded text-center">
                 <div className="text-lg font-bold text-primary">{reportsData.data?.total || 0}</div>
@@ -838,7 +854,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "reports":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'player-analysis' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('player-analysis')}>
             {reportsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : reportsData.data ? (
@@ -862,7 +878,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "outreach":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'outreach' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('outreach')}>
             {outreachData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : outreachData.data ? (
@@ -889,7 +905,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "coaching":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'coaching' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('coaching')}>
             {coachingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : coachingData.data ? (
@@ -918,7 +934,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "notifications":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'overview' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('overview')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               No new notifications
@@ -947,7 +963,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "sitevisits":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'visitors' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('visitors')}>
             {siteVisitsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : siteVisitsData.data ? (
@@ -979,7 +995,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "newplayers":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'players' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('players')}>
             {newPlayersData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : newPlayersData.data ? (
@@ -1006,7 +1022,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "invoices":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'invoices' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('invoices')}>
             {invoicesData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : invoicesData.data ? (
@@ -1037,7 +1053,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "documents":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'documents' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('documents')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Access recent documents
@@ -1053,7 +1069,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "deadlines":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track upcoming deadlines
@@ -1063,7 +1079,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "projects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View active projects
@@ -1082,7 +1098,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "milestones":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Milestone className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track key milestones
@@ -1092,7 +1108,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "workflows":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Workflow className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage active workflows
@@ -1105,7 +1121,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "sprints":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track sprint progress
@@ -1115,7 +1131,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "velocity":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Monitor team velocity
@@ -1131,7 +1147,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "backlog":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <ListTodo className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View task backlog
@@ -1141,7 +1157,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "automations":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage automations
@@ -1151,7 +1167,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "achievements":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Trophy className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View achievements and wins

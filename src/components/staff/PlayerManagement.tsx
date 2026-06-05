@@ -387,7 +387,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     setActiveTab(value);
     
     // Get all current params
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
+    searchParams.forEach((paramValue, key) => {
+      if (key.startsWith('__lovable')) params.set(key, paramValue);
+    });
+    params.set('section', 'players');
     
     // Update the tab param
     params.set('tab', value);
@@ -414,11 +418,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       // Preserve URL parameters if requested
       if (preserveSelection && selectedPlayerId) {
         const currentTab = searchParams.get('tab') || activeTab;
-        setSearchParams({ 
-          section: 'players',
-          player: selectedPlayerId,
-          tab: currentTab
+        const params = new URLSearchParams();
+        searchParams.forEach((paramValue, key) => {
+          if (key.startsWith('__lovable')) params.set(key, paramValue);
         });
+        params.set('section', 'players');
+        params.set('player', selectedPlayerId);
+        params.set('tab', currentTab);
+        setSearchParams(params);
       }
       
       // Fetch stats from player_stats table first, then overlay bio seasonStats
@@ -2112,7 +2119,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       variant="default"
                                       size="sm"
                                       onClick={() => {
-                                        navigate(`/staff?section=analysis`);
+                                        const params = new URLSearchParams();
+                                        new URLSearchParams(window.location.search).forEach((value, key) => {
+                                          if (key.startsWith('__lovable')) params.set(key, value);
+                                        });
+                                        params.set('section', 'analysis');
+                                        navigate(`/staff?${params.toString()}`);
                                         // Small delay to let section load, then trigger edit
                                         setTimeout(() => {
                                           window.dispatchEvent(new CustomEvent('edit-analysis', { detail: { id: analysis.id, type: analysis.analysis_type } }));

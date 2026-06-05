@@ -124,6 +124,15 @@ interface ActivityLogEntry {
 
 export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: boolean; userId?: string }) => {
   const navigate = useNavigate();
+  const navigateToStaffSection = (section: string, extras: Record<string, string> = {}) => {
+    const params = new URLSearchParams();
+    new URLSearchParams(window.location.search).forEach((value, key) => {
+      if (key.startsWith('__lovable')) params.set(key, value);
+    });
+    params.set('section', section);
+    Object.entries(extras).forEach(([key, value]) => params.set(key, value));
+    navigate(`/staff?${params.toString()}`);
+  };
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleTaskItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -716,7 +725,7 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               {isScheduleTask ? (
                 <Button variant="ghost" size="icon" className="h-5 w-5"
-                  onClick={() => navigate(`/staff?section=marketingschedule&scheduleItem=${task.scheduleItem.id}`)} title="Edit">
+                  onClick={() => navigateToStaffSection('marketingschedule', { scheduleItem: task.scheduleItem.id })} title="Edit">
                   <Pencil className="h-2.5 w-2.5" />
                 </Button>
               ) : (

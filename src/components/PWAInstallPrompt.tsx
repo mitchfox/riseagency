@@ -18,6 +18,13 @@ export const PWAInstallPrompt = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const hostname = window.location.hostname;
+    const isLovablePreview = hostname.startsWith('id-preview--') ||
+      hostname.includes('lovableproject.com') ||
+      window.location.search.includes('__lovable_token') ||
+      window.self !== window.top;
+    if (isLovablePreview) return;
+
     // Detect iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(iOS);
