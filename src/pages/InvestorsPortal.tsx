@@ -2496,16 +2496,41 @@ const PlayerDatabaseSection = ({ scouting, youth, pro }: { scouting: any[]; yout
   );
 };
 
-const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, matchAnalyses, setActive }: {
+const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications, spending, prospects, invoices, profiles, playerAnalyses, matchAnalyses, projections, forecast, forecastSettings, updates, token, unlocked, onRefresh, setActive }: {
   players: PlayerRow[]; contracts: ContractRow[]; tasks: TaskRow[]; staffActivity: StaffActivityRow[];
   taskNotifications: NotificationRow[]; spending: SpendingRow[]; prospects: ProspectRow[]; invoices: InvoiceRow[];
-  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; matchAnalyses: any[]; setActive: (s: SectionId) => void;
+  profiles: ProfileRow[]; playerAnalyses: PlayerAnalysisRow[]; matchAnalyses: any[];
+  projections: ProjectionRow[]; forecast: ForecastRow[]; forecastSettings: ForecastSettingsRow | null;
+  updates: any[]; token: string | null; unlocked: boolean; onRefresh: () => void;
+  setActive: (s: SectionId) => void;
 }) => {
   const represented = players.filter(p => p.representation_status === "represented").length;
   const mandated = players.filter(p => p.representation_status === "mandated").length;
-  const commission = players
-    .filter(p => p.representation_status === "represented" || p.representation_status === "mandated")
-    .reduce((s, p) => s + Number(p.expected_commission_annual || 0), 0);
+  // Forecast-derived projected annual revenue: prefer "expected" projection split across the forecast window,
+  // honour per-month overrides + extra income rows, then scale to a per-year figure.
+  const forecastAnnual = useMemo(() => {
+    const expected = projections.find(p => p.scenario === "expected") || projections[0] || null;
+    const baseRevenue = expected
+      ? (expected.player_rows || []).reduce((s, r) => s + Number(r.income_gbp || 0), 0)
+        + (expected.extra_income_rows || []).reduce((s, r) => s + Number(r.income_gbp || 0), 0)
+        + Number(expected.extra_income_gbp || 0)
+      : 0;
+    const months = FORECAST_MONTHS.length || 1;
+    const evenMonthly = baseRevenue / months;
+    const overrideMap = new Map<string, number>();
+    const extraByMonth = new Map<string, number>();
+    forecast.forEach(f => {
+      const k = (f.month || "").slice(0, 10);
+      if (f.kind === "revenue") overrideMap.set(k, Number(f.amount_gbp || 0));
+      else if (f.kind === "extra_income") extraByMonth.set(k, (extraByMonth.get(k) || 0) + Number(f.amount_gbp || 0));
+    });
+    const total = FORECAST_MONTHS.reduce((s, m) => {
+      const rev = overrideMap.has(m.key) ? overrideMap.get(m.key)! : evenMonthly;
+      return s + rev + (extraByMonth.get(m.key) || 0);
+    }, 0);
+    return (total / months) * 12;
+  }, [projections, forecast]);
+  const plannedMonthlySpend = Number(forecastSettings?.planned_monthly_spend_gbp || 0);
   const last12Cutoff = new Date(); last12Cutoff.setFullYear(last12Cutoff.getFullYear() - 1);
   const realRevenue = invoices.filter(i => new Date(i.invoice_date) >= last12Cutoff).reduce((s, i) => s + Number(i.amount_paid || 0), 0);
   const thisMonth = new Date().toISOString().slice(0, 7);
@@ -2515,11 +2540,12 @@ const Overview = ({ players, contracts, tasks, staffActivity, taskNotifications,
   const fixtures = useMemo(() => buildFixtureFeed(playerAnalyses || [], matchAnalyses || [], playerById), [playerAnalyses, matchAnalyses, playerById]);
   return (
     <div className="space-y-4">
+      <InvestorHighlineLog updates={updates} token={token} unlocked={unlocked} onChanged={onRefresh} />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <button onClick={() => setActive("commission")} className="text-left"><Stat label="Real Revenue (12mo)" value={gbp(realRevenue)} sub={`Forecast: ${gbp(commission)}/yr`} /></button>
+        <button onClick={() => setActive("forecast")} className="text-left"><Stat label="Real Revenue (12mo)" value={gbp(realRevenue)} sub={`Forecast: ${gbp(forecastAnnual)}/yr`} /></button>
         <button onClick={() => setActive("represented")} className="text-left"><Stat label="Represented" value={String(represented)} sub={`${mandated} mandated`} /></button>
         <button onClick={() => setActive("prospects")} className="text-left"><Stat label="Prospects" value={String(prospects.length)} sub="In pipeline" /></button>
-        <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub="Running total" /></button>
+        <button onClick={() => setActive("spending")} className="text-left"><Stat label="This Month Spend" value={gbp(monthlySpend)} sub={plannedMonthlySpend ? `${gbp(plannedMonthlySpend)}/mo planned` : "Running total"} /></button>
       </div>
       <PlayerFeed fixtures={fixtures} />
       <ActivityFeed rows={staffActivity.slice(0, 30)} taskNotifications={taskNotifications.slice(0, 50)} profiles={profiles} />
