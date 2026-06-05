@@ -155,3 +155,6 @@ verify_jwt = false
 
 [functions.investor-write]
 verify_jwt = false
+
+[functions.submit-manual-signed-copy]
+verify_jwt = false
