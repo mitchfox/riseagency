@@ -563,6 +563,33 @@ const SignContract = () => {
               Print
             </Button>
           </div>
+          {contract?.is_mandate && (
+            <div className="mt-3 flex justify-center">
+              <Button
+                onClick={async () => {
+                  if (!contract) return;
+                  setExporting(true);
+                  try {
+                    const fieldData = fields.map(f => ({ ...f, value: fieldValues[f.id] || f.value || undefined }));
+                    const filename = `${contract.title.replace(/[^a-z0-9]/gi, '_')}_proof_of_mandate.pdf`;
+                    await downloadProofOfMandatePDF(resolvedFileUrl || contract.file_url, fieldData, filename, auditData ?? undefined);
+                    toast.success('Proof of Mandate downloaded');
+                  } catch (e) {
+                    console.error(e);
+                    toast.error('Failed to download Proof of Mandate');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                disabled={exporting}
+                size="lg"
+                variant="secondary"
+              >
+                {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                Download Proof of Mandate
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
