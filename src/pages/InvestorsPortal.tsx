@@ -3798,7 +3798,7 @@ const InvestorsPortal = () => {
                   />
                 )}
                 <div key={active}>
-                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} matchAnalyses={data.matchAnalyses || []} setActive={(section) => {
+                  {active === "overview" && <Overview players={data.players} contracts={data.contracts} tasks={data.tasks} staffActivity={data.staffActivity} taskNotifications={data.taskNotifications} spending={data.spending} prospects={data.prospects} invoices={data.invoices} profiles={data.profiles} playerAnalyses={data.playerAnalyses || []} matchAnalyses={data.matchAnalyses || []} projections={data.projections || []} forecast={data.forecast || []} forecastSettings={data.forecastSettings || null} updates={data.updates || []} token={token} unlocked={unlocked} onRefresh={refresh} setActive={(section) => {
                     const parent = CATEGORIES.find(c => c.sections.some(s => s.id === section));
                     handleSectionClick(section, parent?.id || "dash");
                   }} />}
