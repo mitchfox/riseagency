@@ -415,6 +415,26 @@ export const PlayerDatabase = () => {
   };
 
   const filteredAndSortedPlayers = useMemo(() => {
+    const fitFor = (player: PlayerData) => {
+      try {
+        const clubCountry = findClubCountry(player.current_club, clubCountryMap);
+        const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
+        const r = computeFitScore(
+          {
+            position: player.position,
+            age: player.age,
+            date_of_birth: player.date_of_birth,
+            nationality: player.nationality,
+            current_club: player.current_club,
+            club_country: clubCountry,
+            club_first_team_rating: clubRatingVal as any,
+          } as any,
+          targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band,
+          player.source === 'youth_outreach' ? 'youth' : 'pro', scoringSettings.bonus_weights,
+        );
+        return Math.max(0, Math.min(100, Math.round(r.total)));
+      } catch { return 0; }
+    };
     let result = players.filter(player => {
       if (isScoped) {
         if (!allowedIds || !allowedIds.has(player.id)) return false;
@@ -445,6 +465,7 @@ export const PlayerDatabase = () => {
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
+      if (minFit > 0 && fitFor(player) < minFit) return false;
       return true;
     });
 
@@ -458,6 +479,7 @@ export const PlayerDatabase = () => {
         case 'current_club': comparison = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'report_count': comparison = a.report_count - b.report_count; break;
         case 'date_of_birth': comparison = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
+        case 'fit_score': comparison = fitFor(a) - fitFor(b); break;
         case 'created_at':
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -466,7 +488,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, targets, scoringSettings, clubCountryMap, clubRatings]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
