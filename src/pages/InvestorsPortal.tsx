@@ -1253,6 +1253,109 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit expense dialog */}
+      <Dialog open={!!editingRow} onOpenChange={(o) => { if (!o) setEditingRow(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Edit expense</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Date</Label><Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} /></div>
+              <div><Label>Category</Label>
+                <Select value={editCat} onValueChange={setEditCat}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div><Label>Vendor</Label><Input value={editVendor} onChange={(e) => setEditVendor(e.target.value)} /></div>
+            <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} /></div>
+            <div><Label>Notes</Label><Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} /></div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" checked={editPersonal} onChange={e => setEditPersonal(e.target.checked)} />
+              Personal spending
+            </label>
+            <div className="flex gap-2">
+              <Button className="bg-primary text-primary-foreground" disabled={editSaving} onClick={saveEdit}>
+                {editSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                Save changes
+              </Button>
+              <Button variant="outline" onClick={() => setEditingRow(null)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage categories dialog */}
+      <Dialog open={manageCatsOpen} onOpenChange={setManageCatsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage categories</DialogTitle>
+            <DialogDescription>
+              Add new categories or rename existing ones. Renaming re-tags every existing entry in that category.
+              The four default categories (tools, travel, staff, misc) cannot be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="New category name (lowercase)"
+                value={newCatInput}
+                onChange={(e) => setNewCatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addCustomCategory(); }}
+              />
+              <Button onClick={addCustomCategory} className="bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-1" />Add
+              </Button>
+            </div>
+            <div className="rounded border border-border/40 divide-y divide-border/40 max-h-[50vh] overflow-y-auto">
+              {categories.map(c => {
+                const isDefault = SPENDING_CATEGORIES_DEFAULT.includes(c);
+                const count = rows.filter(r => r.category === c).length;
+                return (
+                  <div key={c} className="flex items-center gap-2 px-3 py-2">
+                    {renamingCat === c ? (
+                      <>
+                        <Input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") commitRename(c); if (e.key === "Escape") setRenamingCat(null); }}
+                          autoFocus
+                          className="h-8"
+                        />
+                        <Button size="sm" onClick={() => commitRename(c)}><Check className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => setRenamingCat(null)}><X className="w-4 h-4" /></Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="outline" className="border-primary/40 text-primary capitalize">{c}</Badge>
+                        {isDefault && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">default</span>}
+                        <span className="text-xs text-muted-foreground ml-auto">{count} entr{count === 1 ? "y" : "ies"}</span>
+                        <Button size="icon" variant="ghost" title="Rename" onClick={() => { setRenamingCat(c); setRenameValue(c); }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title={isDefault ? "Default categories can't be removed" : "Remove from list"}
+                          disabled={isDefault}
+                          onClick={() => removeCustomCategory(c)}
+                        >
+                          <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Removing a custom category from this list does not delete or re-tag any entries already saved under it.
+              The category will still appear in the list automatically until those entries are re-categorised or deleted.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
