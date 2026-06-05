@@ -235,12 +235,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
     position: '', nationality: '',
     parents_name: '', parent_contact: '', parent_approval: false,
-    messaged: false, response_received: false, initial_message: '', notes: ''
+    messaged: false, response_received: false, initial_message: '', notes: '',
+    national_team: false, star_of_team: false, previous_serious_injury: ''
   };
   const emptyProForm = {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
     position: '', nationality: '',
-    messaged: false, response_received: false, initial_message: '', notes: ''
+    messaged: false, response_received: false, initial_message: '', notes: '',
+    national_team: false, star_of_team: false, previous_serious_injury: ''
   };
 
   const [formData, setFormData] = useState<any>(isYouth ? emptyYouthForm : emptyProForm);
