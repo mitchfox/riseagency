@@ -1015,7 +1015,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "invoices":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'invoices' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('invoices')}>
             {invoicesData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : invoicesData.data ? (
@@ -1046,7 +1046,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "documents":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'documents' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('documents')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Access recent documents
@@ -1062,7 +1062,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "deadlines":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track upcoming deadlines
@@ -1072,7 +1072,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "projects":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View active projects
@@ -1091,7 +1091,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "milestones":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Milestone className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track key milestones
