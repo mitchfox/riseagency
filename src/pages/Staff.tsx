@@ -1103,7 +1103,7 @@ const Staff = () => {
 
     setExpandedSection(fallbackSection as any);
     setExpandedCategory(fallbackCategory);
-    setSearchParams({ section: fallbackSection }, { replace: true });
+    setStaffSectionParams({ section: fallbackSection }, { replace: true });
     localStorage.setItem('staff_active_tab', fallbackSection);
   }, [categories, expandedSection, isStaff, permissionsLoading, setSearchParams, visibleSectionIds]);
 
@@ -1569,7 +1569,10 @@ const Staff = () => {
                           
                           // Navigate with player ID if it's a player search result
                           if (result.type === 'player') {
-                            navigate(`/staff?section=${result.sectionId}&player=${result.id}`);
+                            const nextParams = new URLSearchParams(window.location.search);
+                            nextParams.set('section', result.sectionId);
+                            nextParams.set('player', result.id);
+                            navigate(`/staff?${nextParams.toString()}`);
                             toast.success(`Opening ${result.title} in ${result.section}`);
                           } else {
                             toast.success(`Opening ${result.section}`);
@@ -1867,7 +1870,7 @@ const Staff = () => {
                       onCategoryClick={() => {
                         setExpandedCategory(parentCat.id);
                         setExpandedSection(null);
-                        setSearchParams({});
+                        setStaffSectionParams({ section: null });
                       }}
                     />
                   );
