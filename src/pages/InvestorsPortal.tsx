@@ -197,7 +197,22 @@ const gbpAxis = (v: number) => {
   return `${sign}£${Math.round(n)}`;
 };
 
-const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
+const SPENDING_CATEGORIES_DEFAULT = ["tools", "travel", "staff", "misc"];
+const SPENDING_CATEGORIES_LS_KEY = "investorsSpendingCategories.v1";
+const SPENDING_START_DATE = new Date("2026-06-01T00:00:00Z");
+const loadCustomCategories = (): string[] => {
+  try {
+    const raw = localStorage.getItem(SPENDING_CATEGORIES_LS_KEY);
+    if (!raw) return [];
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter(x => typeof x === "string") : [];
+  } catch { return []; }
+};
+const saveCustomCategories = (list: string[]) => {
+  try { localStorage.setItem(SPENDING_CATEGORIES_LS_KEY, JSON.stringify(list)); } catch {}
+};
+// Back-compat constant used elsewhere
+const SPENDING_CATEGORIES = SPENDING_CATEGORIES_DEFAULT;
 
 interface CategoryDef {
   id: string;
@@ -785,6 +800,103 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
   const [savingAll, setSavingAll] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Custom categories (persisted to localStorage, merged with defaults + categories already used in DB rows)
+  const [customCats, setCustomCats] = useState<string[]>(() => loadCustomCategories());
+  const [manageCatsOpen, setManageCatsOpen] = useState(false);
+  const [newCatInput, setNewCatInput] = useState("");
+  const [renamingCat, setRenamingCat] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  // Edit-row dialog state
+  const [editingRow, setEditingRow] = useState<SpendingRowExt | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editCat, setEditCat] = useState("");
+  const [editVendor, setEditVendor] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editPersonal, setEditPersonal] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Categories shown in selects: defaults + custom + any category already present in DB rows.
+  const categories = useMemo(() => {
+    const present = rows.map(r => (r.category || "").toLowerCase()).filter(Boolean);
+    const merged = Array.from(new Set([
+      ...SPENDING_CATEGORIES_DEFAULT,
+      ...customCats.map(c => c.toLowerCase()),
+      ...present,
+    ]));
+    return merged.sort();
+  }, [customCats, rows]);
+
+  const openEdit = (r: SpendingRowExt) => {
+    setEditingRow(r);
+    setEditDate(r.spend_date.slice(0, 10));
+    setEditCat(r.category);
+    setEditVendor(r.vendor || "");
+    setEditAmount(String(r.amount_gbp ?? ""));
+    setEditNotes(r.notes || "");
+    setEditPersonal(!!r.is_personal);
+  };
+  const saveEdit = async () => {
+    if (!editingRow) return;
+    if (!editAmount || isNaN(Number(editAmount))) { toast.error("Enter a valid amount"); return; }
+    setEditSaving(true);
+    try {
+      await write("update", "investor_spending", {
+        id: editingRow.id,
+        patch: {
+          spend_date: editDate,
+          category: editCat,
+          vendor: editVendor,
+          amount_gbp: Number(editAmount),
+          notes: editNotes,
+          is_personal: editPersonal,
+        },
+      });
+      toast.success("Expense updated");
+      setEditingRow(null);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const addCustomCategory = () => {
+    const v = newCatInput.trim().toLowerCase();
+    if (!v) return;
+    if (categories.includes(v)) { toast.info("Category already exists"); setNewCatInput(""); return; }
+    const next = Array.from(new Set([...customCats, v]));
+    setCustomCats(next); saveCustomCategories(next); setNewCatInput("");
+  };
+  const removeCustomCategory = (c: string) => {
+    if (SPENDING_CATEGORIES_DEFAULT.includes(c)) { toast.error("Default categories cannot be removed"); return; }
+    const next = customCats.filter(x => x !== c);
+    setCustomCats(next); saveCustomCategories(next);
+  };
+  const commitRename = async (oldName: string) => {
+    const v = renameValue.trim().toLowerCase();
+    if (!v || v === oldName) { setRenamingCat(null); return; }
+    if (categories.includes(v)) { toast.error("That category already exists"); return; }
+    try {
+      // Re-tag every row currently using oldName for this scope
+      const affected = rows.filter(r => r.category === oldName);
+      for (const r of affected) {
+        await write("update", "investor_spending", { id: r.id, patch: { category: v } });
+      }
+      const nextCustom = customCats.includes(oldName)
+        ? Array.from(new Set([...customCats.filter(x => x !== oldName), v]))
+        : Array.from(new Set([...customCats, v]));
+      setCustomCats(nextCustom); saveCustomCategories(nextCustom);
+      setRenamingCat(null); setRenameValue("");
+      toast.success(`Renamed to ${v} (${affected.length} entries updated)`);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Rename failed");
+    }
+  };
+
   const handleReceiptUpload = async (file: File) => {
     if (!file) return;
     setParsing(true);
@@ -807,7 +919,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
         toast.error("Could not read any items from that image");
         return;
       }
-      const allowed = SPENDING_CATEGORIES;
+      const allowed = categories;
       const mapped = raw.map((it: any) => {
         const c = String(it?.category || "").toLowerCase();
         return {
@@ -917,16 +1029,30 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
             <Button variant="outline" size="sm" onClick={() => setConnectOpen(true)}>
               <Building2 className="w-3.5 h-3.5 mr-1" />Bank accounts
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setManageCatsOpen(true)}>
+              <Pencil className="w-3.5 h-3.5 mr-1" />Categories
+            </Button>
           </div>
         </div>
       </Tabs>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
-        <Stat label="Entries" value={String(filtered.length)} />
-        <Stat label="Categories" value={String(byCategory.length)} />
-        <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
-      </div>
+      {(() => {
+        // Daily average uses ALL-TIME total for the current scope, from 1 June 2026 to today (inclusive).
+        const scopeAllTimeTotal = (scope === "personal" ? personalTotal : businessTotal);
+        const today = new Date();
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const daysElapsed = Math.max(1, Math.floor((today.getTime() - SPENDING_START_DATE.getTime()) / msPerDay) + 1);
+        const dailyAvg = scopeAllTimeTotal / daysElapsed;
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Stat label={`Filtered Total (${scope})`} value={gbp(total)} />
+            <Stat label="Entries" value={String(filtered.length)} />
+            <Stat label="Categories" value={String(byCategory.length)} />
+            <Stat label="Avg / Entry" value={gbp(filtered.length ? total / filtered.length : 0)} />
+            <Stat label="Avg / Day (since 1 Jun 2026)" value={gbp(dailyAvg)} sub={`${daysElapsed} day${daysElapsed === 1 ? "" : "s"}`} />
+          </div>
+        );
+      })()}
       <SectionShell icon={Wallet} title={`Spending Tracker — ${scope === "personal" ? "Personal" : "Business"}`} action={
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
@@ -962,7 +1088,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                         <div className="col-span-6 sm:col-span-2"><Label className="text-xs">Category</Label>
                           <Select value={p.category} onValueChange={(v) => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, category: v } : it))}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                            <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
                         <div className="col-span-6 sm:col-span-3"><Label className="text-xs">Vendor</Label>
@@ -1001,7 +1127,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                 <div><Label>Category</Label>
                   <Select value={cat} onValueChange={setCat}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
@@ -1090,6 +1216,9 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                       onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
                       {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
                     </Button>
+                    <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
+                      <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
                   </td>
                 </tr>
@@ -1120,6 +1249,109 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
             <p className="text-xs text-muted-foreground">
               Once linked, new transactions appear here for review. Approving a transaction moves it into Spending under
               the selected scope.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit expense dialog */}
+      <Dialog open={!!editingRow} onOpenChange={(o) => { if (!o) setEditingRow(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Edit expense</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Date</Label><Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} /></div>
+              <div><Label>Category</Label>
+                <Select value={editCat} onValueChange={setEditCat}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div><Label>Vendor</Label><Input value={editVendor} onChange={(e) => setEditVendor(e.target.value)} /></div>
+            <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} /></div>
+            <div><Label>Notes</Label><Textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} /></div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" checked={editPersonal} onChange={e => setEditPersonal(e.target.checked)} />
+              Personal spending
+            </label>
+            <div className="flex gap-2">
+              <Button className="bg-primary text-primary-foreground" disabled={editSaving} onClick={saveEdit}>
+                {editSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                Save changes
+              </Button>
+              <Button variant="outline" onClick={() => setEditingRow(null)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage categories dialog */}
+      <Dialog open={manageCatsOpen} onOpenChange={setManageCatsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage categories</DialogTitle>
+            <DialogDescription>
+              Add new categories or rename existing ones. Renaming re-tags every existing entry in that category.
+              The four default categories (tools, travel, staff, misc) cannot be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="New category name (lowercase)"
+                value={newCatInput}
+                onChange={(e) => setNewCatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addCustomCategory(); }}
+              />
+              <Button onClick={addCustomCategory} className="bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4 mr-1" />Add
+              </Button>
+            </div>
+            <div className="rounded border border-border/40 divide-y divide-border/40 max-h-[50vh] overflow-y-auto">
+              {categories.map(c => {
+                const isDefault = SPENDING_CATEGORIES_DEFAULT.includes(c);
+                const count = rows.filter(r => r.category === c).length;
+                return (
+                  <div key={c} className="flex items-center gap-2 px-3 py-2">
+                    {renamingCat === c ? (
+                      <>
+                        <Input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") commitRename(c); if (e.key === "Escape") setRenamingCat(null); }}
+                          autoFocus
+                          className="h-8"
+                        />
+                        <Button size="sm" onClick={() => commitRename(c)}><Check className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => setRenamingCat(null)}><X className="w-4 h-4" /></Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="outline" className="border-primary/40 text-primary capitalize">{c}</Badge>
+                        {isDefault && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">default</span>}
+                        <span className="text-xs text-muted-foreground ml-auto">{count} entr{count === 1 ? "y" : "ies"}</span>
+                        <Button size="icon" variant="ghost" title="Rename" onClick={() => { setRenamingCat(c); setRenameValue(c); }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title={isDefault ? "Default categories can't be removed" : "Remove from list"}
+                          disabled={isDefault}
+                          onClick={() => removeCustomCategory(c)}
+                        >
+                          <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Removing a custom category from this list does not delete or re-tag any entries already saved under it.
+              The category will still appear in the list automatically until those entries are re-categorised or deleted.
             </p>
           </div>
         </DialogContent>
