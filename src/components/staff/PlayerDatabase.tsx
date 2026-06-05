@@ -417,8 +417,9 @@ export const PlayerDatabase = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
-  const filteredAndSortedPlayers = useMemo(() => {
-    const fitFor = (player: PlayerData) => {
+  const fitScoreByRowKey = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const player of players) {
       try {
         const clubCountry = findClubCountry(player.current_club, clubCountryMap);
         const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
@@ -431,13 +432,24 @@ export const PlayerDatabase = () => {
             current_club: player.current_club,
             club_country: clubCountry,
             club_first_team_rating: clubRatingVal as any,
+            messaged: player.messaged,
+            response_received: player.response_received,
+            parent_approval: player.parent_approval,
           } as any,
           targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band,
-          player.source === 'youth_outreach' ? 'youth' : 'pro', scoringSettings.bonus_weights,
+          player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined,
+          scoringSettings.bonus_weights,
         );
-        return Math.max(0, Math.min(100, Math.round(r.total)));
-      } catch { return 0; }
-    };
+        map[`${player.source}-${player.id}`] = Math.max(0, Math.min(100, Math.round(r.total)));
+      } catch {
+        map[`${player.source}-${player.id}`] = 0;
+      }
+    }
+    return map;
+  }, [players, targets, scoringSettings, clubCountryMap, clubRatings]);
+
+  const filteredAndSortedPlayers = useMemo(() => {
+    const fitFor = (player: PlayerData) => fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0;
     let result = players.filter(player => {
       if (isScoped) {
         if (!allowedIds || !allowedIds.has(player.id)) return false;
@@ -491,7 +503,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, targets, scoringSettings, clubCountryMap, clubRatings]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
