@@ -177,7 +177,7 @@ export async function exportSignedContractPDF(
         jspdf.setFontSize(fontSize);
         jspdf.setTextColor(0, 0, 0);
 
-        const textY = y + (height + fontSize * 0.35) / 2;
+        const textY = y + height / 2 + fontSize * 0.35;
         if (field.field_type === 'date') {
           // Horizontally centre date values
           const textWidth = jspdf.getTextWidth(value);
