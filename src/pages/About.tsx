@@ -51,7 +51,7 @@ const About = () => {
             <div className="max-w-6xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                  {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
+                  OUR <span className="text-primary">{t('about.our_story', 'STORY').replace(/^our\s+/i, '')}</span>
                 </h2>
               </ScrollReveal>
               <ScrollReveal delay={0.1}>
