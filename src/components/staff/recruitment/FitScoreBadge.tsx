@@ -19,7 +19,10 @@ export const FitScoreBadge = ({ player, scope, size = "sm", className, cachedSco
   const { settings } = useScoringSettings();
 
   const computed = useMemo(() => {
-    const r = computeFitScore(player, targets, settings.weights, settings.age_sweet_spot_band, scope, settings.bonus_weights);
+    const r = computeFitScore(
+      player, targets, settings.weights, settings.age_sweet_spot_band, scope, settings.bonus_weights,
+      settings.position_adjacency_factor, settings.league_strength_weight,
+    );
     return {
       total: typeof cachedScore === "number" ? cachedScore : r.total,
       reasons: cachedBreakdown?.reasons || r.reasons,
