@@ -3782,14 +3782,6 @@ const InvestorsPortal = () => {
           sidebarCollapsed ? "ml-0" : isMobile ? "ml-14" : "ml-14 md:ml-24"
         } ${isMobile ? "pb-[70px]" : ""}`}>
           <div className="container mx-auto px-3 md:px-6 py-4 md:py-6 font-sans normal-case tracking-normal">
-            {data && (
-              <InvestorHighlineLog
-                updates={data.updates || []}
-                token={token}
-                unlocked={unlocked}
-                onChanged={refresh}
-              />
-            )}
             {loading && !data ? (
               <div className="text-muted-foreground text-center py-12">Loading...</div>
             ) : !data ? null : active ? (
