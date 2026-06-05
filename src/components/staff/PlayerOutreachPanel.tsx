@@ -821,6 +821,15 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               <div className="space-y-3 pt-2 border-t">
                 <p className="text-xs text-muted-foreground font-medium">Filters</p>
                 <div className="space-y-2">
+                  <Label className="text-xs">Min Fit ({minFit})</Label>
+                  <input
+                    type="range" min={0} max={100} step={5}
+                    value={minFit}
+                    onChange={e => setMinFit(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label className="text-xs">Age Group</Label>
                   <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
                     <option value="all">All Ages</option>
