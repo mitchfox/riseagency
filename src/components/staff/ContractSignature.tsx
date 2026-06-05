@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy, Lock } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy, Lock, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
@@ -26,6 +27,7 @@ interface SignatureContract {
   owner_field_values: Record<string, string> | null;
   completed_pdf_url: string | null;
   view_password: string | null;
+  is_mandate?: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -708,6 +710,21 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
   };
 
+  const toggleMandate = async (contract: SignatureContract, next: boolean) => {
+    // Optimistic local update
+    setContracts(prev => prev.map(c => c.id === contract.id ? { ...c, is_mandate: next } : c));
+    const { error } = await supabase
+      .from('signature_contracts')
+      .update({ is_mandate: next })
+      .eq('id', contract.id);
+    if (error) {
+      toast.error('Failed to update mandate flag');
+      setContracts(prev => prev.map(c => c.id === contract.id ? { ...c, is_mandate: !next } : c));
+      return;
+    }
+    toast.success(next ? 'Marked as Mandate' : 'Mandate flag removed');
+  };
+
   // Check if all owner fields are filled
   const areAllOwnerFieldsFilled = () => {
     const ownerFields = fields.filter(f => f.signer_party === 'owner');
@@ -820,6 +837,12 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                   {hasCounterpartyFields ? 'Signed by both parties' : 'Completed'}
                 </Badge>
               )}
+              {contract.is_mandate && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+                  <Briefcase className="h-3 w-3 mr-1" />
+                  Mandate
+                </Badge>
+              )}
             </div>
             {contract.description && (
               <p className="text-sm text-muted-foreground mt-1">{contract.description}</p>
@@ -830,6 +853,13 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
             <p className="text-xs text-muted-foreground">
               Created: {new Date(contract.created_at).toLocaleDateString()}
             </p>
+            <label className="mt-3 inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+              <Switch
+                checked={!!contract.is_mandate}
+                onCheckedChange={(v) => toggleMandate(contract, !!v)}
+              />
+              <span>Mark as Mandate (lets the other party download Proof of Mandate after signing)</span>
+            </label>
           </div>
           
           <div className="flex flex-wrap gap-2">

@@ -223,6 +223,110 @@ export async function downloadSignedContractPDF(
 }
 
 /**
+ * Export only the first and last page of the signed contract — used for
+ * "Proof of Mandate" downloads where the signing parties just need evidence
+ * of who signed (page 1 = parties / cover, last page = signatures).
+ */
+export async function exportProofOfMandatePDF(
+  pdfUrl: string,
+  fields: FieldData[],
+  audit?: AuditLogData,
+): Promise<Blob> {
+  const loadingTask = pdfjs.getDocument(pdfUrl);
+  const pdf = await loadingTask.promise;
+  const numPages = pdf.numPages;
+
+  const firstPage = await pdf.getPage(1);
+  const viewport = firstPage.getViewport({ scale: 2 });
+  const isLandscape = viewport.width > viewport.height;
+  const jspdf = new jsPDF({
+    orientation: isLandscape ? 'landscape' : 'portrait',
+    unit: 'pt',
+    format: [viewport.width, viewport.height],
+  });
+
+  const pagesToRender = numPages === 1 ? [1] : [1, numPages];
+
+  for (let i = 0; i < pagesToRender.length; i++) {
+    const pageNum = pagesToRender[i];
+    if (i > 0) {
+      jspdf.addPage([viewport.width, viewport.height], isLandscape ? 'landscape' : 'portrait');
+    }
+
+    const page = await pdf.getPage(pageNum);
+    const pageViewport = page.getViewport({ scale: 2 });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = pageViewport.width;
+    canvas.height = pageViewport.height;
+    const context = canvas.getContext('2d');
+    if (!context) continue;
+
+    await page.render({ canvasContext: context, viewport: pageViewport }).promise;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    jspdf.addImage(imgData, 'JPEG', 0, 0, pageViewport.width, pageViewport.height);
+
+    const pageFields = fields.filter(f => f.page_number === pageNum && f.value);
+    for (const field of pageFields) {
+      const x = (field.x_position / 100) * pageViewport.width;
+      const y = (field.y_position / 100) * pageViewport.height;
+      const width = (field.width / 100) * pageViewport.width;
+      const height = (field.height / 100) * pageViewport.height;
+
+      if (field.field_type === 'signature' && field.value?.startsWith('data:image')) {
+        try {
+          jspdf.addImage(field.value, 'PNG', x, y, width, height);
+        } catch (e) {
+          console.error('Error adding signature image:', e);
+        }
+      } else if (field.value) {
+        const value = String(field.value);
+        const padding = 6;
+        const maxByHeight = height * 0.75;
+        const maxByWidth = value.length > 0
+          ? (width - padding * 2) / (value.length * 0.5)
+          : maxByHeight;
+        const fontSize = Math.max(8, Math.min(maxByHeight, maxByWidth, 24));
+        jspdf.setFontSize(fontSize);
+        jspdf.setTextColor(0, 0, 0);
+        const textY = y + height / 2 + fontSize * 0.35;
+        if (field.field_type === 'date') {
+          const textWidth = jspdf.getTextWidth(value);
+          jspdf.text(value, x + (width - textWidth) / 2, textY);
+        } else {
+          jspdf.text(value, x + padding, textY);
+        }
+      }
+    }
+
+    canvas.remove();
+  }
+
+  if (audit) {
+    appendAuditPage(jspdf, viewport.width, viewport.height, audit);
+  }
+
+  return jspdf.output('blob');
+}
+
+export async function downloadProofOfMandatePDF(
+  pdfUrl: string,
+  fields: FieldData[],
+  filename: string = 'proof-of-mandate.pdf',
+  audit?: AuditLogData,
+): Promise<void> {
+  const blob = await exportProofOfMandatePDF(pdfUrl, fields, audit);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Open the PDF blob in a new tab and trigger the browser's print dialog
  */
 export async function printSignedContractPDF(
