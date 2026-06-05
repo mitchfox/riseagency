@@ -710,6 +710,21 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
     }
   };
 
+  const toggleMandate = async (contract: SignatureContract, next: boolean) => {
+    // Optimistic local update
+    setContracts(prev => prev.map(c => c.id === contract.id ? { ...c, is_mandate: next } : c));
+    const { error } = await supabase
+      .from('signature_contracts')
+      .update({ is_mandate: next })
+      .eq('id', contract.id);
+    if (error) {
+      toast.error('Failed to update mandate flag');
+      setContracts(prev => prev.map(c => c.id === contract.id ? { ...c, is_mandate: !next } : c));
+      return;
+    }
+    toast.success(next ? 'Marked as Mandate' : 'Mandate flag removed');
+  };
+
   // Check if all owner fields are filled
   const areAllOwnerFieldsFilled = () => {
     const ownerFields = fields.filter(f => f.signer_party === 'owner');
