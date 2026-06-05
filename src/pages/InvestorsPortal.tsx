@@ -20,7 +20,7 @@ import {
   Network, TrendingUp, LogOut, Search, Plus, Trash2, Lock, Unlock, Calendar, Target,
   ChevronLeft, ChevronRight, ExternalLink, FileText, Pencil, Check, Bell, RefreshCw,
   Building2, Users, Film, PlayCircle, X, Star, Briefcase, UserCircle, Clock, ListOrdered,
-  CalendarRange,
+  CalendarRange, Camera, Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
@@ -780,6 +780,79 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
   const [isPersonalNew, setIsPersonalNew] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
   const [bankBusy, setBankBusy] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parsedItems, setParsedItems] = useState<Array<{ spend_date: string; category: string; vendor: string; amount: string; notes: string }>>([]);
+  const [savingAll, setSavingAll] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleReceiptUpload = async (file: File) => {
+    if (!file) return;
+    setParsing(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-receipt-image", {
+        body: { imageBase64: dataUrl },
+      });
+      if (error) throw error;
+      const parsed: any = (data as any)?.parsed || {};
+      const raw: any[] = Array.isArray(parsed?.items)
+        ? parsed.items
+        : (parsed && (parsed.amount || parsed.item || parsed.vendor)) ? [parsed] : [];
+      if (raw.length === 0) {
+        toast.error("Could not read any items from that image");
+        return;
+      }
+      const allowed = SPENDING_CATEGORIES;
+      const mapped = raw.map((it: any) => {
+        const c = String(it?.category || "").toLowerCase();
+        return {
+          spend_date: it?.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date) ? it.date : new Date().toISOString().slice(0, 10),
+          category: allowed.includes(c) ? c : "misc",
+          vendor: String(it?.vendor || it?.location || "").slice(0, 120),
+          amount: it?.amount != null ? String(it.amount) : "",
+          notes: [it?.item, it?.location, it?.time ? `at ${it.time}` : null].filter(Boolean).join(" — "),
+        };
+      });
+      setParsedItems(mapped);
+      toast.success(`Found ${mapped.length} item${mapped.length === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to parse image");
+    } finally {
+      setParsing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const saveParsedItems = async () => {
+    const valid = parsedItems.filter(p => p.amount && !isNaN(Number(p.amount)));
+    if (valid.length === 0) { toast.error("Add an amount to at least one row"); return; }
+    setSavingAll(true);
+    try {
+      for (const p of valid) {
+        await write("insert", "investor_spending", { row: {
+          spend_date: p.spend_date,
+          category: p.category,
+          vendor: p.vendor,
+          amount_gbp: Number(p.amount),
+          notes: p.notes,
+          is_personal: isPersonalNew,
+        }});
+      }
+      toast.success(`Saved ${valid.length} expense${valid.length === 1 ? "" : "s"}`);
+      setParsedItems([]);
+      setAddOpen(false);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save");
+    } finally {
+      setSavingAll(false);
+    }
+  };
 
   const scoped = useMemo(
     () => rows.filter(r => (scope === "personal" ? !!r.is_personal : !r.is_personal)),
@@ -859,9 +932,70 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
           <DialogTrigger asChild>
             <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add expense</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleReceiptUpload(f); }}
+              />
+              <div className="rounded-md border border-dashed border-border/60 p-3 flex flex-wrap items-center gap-2 bg-muted/20">
+                <Button type="button" size="sm" variant="outline" disabled={parsing} onClick={() => fileInputRef.current?.click()}>
+                  {parsing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Camera className="w-4 h-4 mr-1" />}
+                  {parsing ? "Reading…" : "Upload receipt / screenshot"}
+                </Button>
+                <span className="text-xs text-muted-foreground">One image can contain multiple items — we'll detect each and let you review before saving.</span>
+              </div>
+
+              {parsedItems.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-bbh">Detected items ({parsedItems.length})</div>
+                  <div className="space-y-2">
+                    {parsedItems.map((p, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end rounded border border-border/40 p-2 bg-card/40">
+                        <div className="col-span-12 sm:col-span-3"><Label className="text-xs">Date</Label>
+                          <Input type="date" value={p.spend_date} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, spend_date: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-6 sm:col-span-2"><Label className="text-xs">Category</Label>
+                          <Select value={p.category} onValueChange={(v) => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, category: v } : it))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-6 sm:col-span-3"><Label className="text-xs">Vendor</Label>
+                          <Input value={p.vendor} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, vendor: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-8 sm:col-span-2"><Label className="text-xs">Amount £</Label>
+                          <Input type="number" step="0.01" value={p.amount} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, amount: e.target.value } : it))} />
+                        </div>
+                        <div className="col-span-4 sm:col-span-1 flex items-end justify-end">
+                          <Button size="icon" variant="ghost" onClick={() => setParsedItems(items => items.filter((_, i) => i !== idx))}>
+                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                          </Button>
+                        </div>
+                        <div className="col-span-12"><Label className="text-xs">Notes</Label>
+                          <Input value={p.notes} onChange={e => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, notes: e.target.value } : it))} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input type="checkbox" checked={isPersonalNew} onChange={e => setIsPersonalNew(e.target.checked)} />
+                    Mark all as personal spending
+                  </label>
+                  <div className="flex gap-2">
+                    <Button className="bg-primary text-primary-foreground" disabled={savingAll} onClick={saveParsedItems}>
+                      {savingAll ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                      Save {parsedItems.length} item{parsedItems.length === 1 ? "" : "s"}
+                    </Button>
+                    <Button variant="outline" onClick={() => setParsedItems([])}>Discard</Button>
+                  </div>
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Date</Label><Input type="date" value={spend_date} onChange={(e) => setDate(e.target.value)} /></div>
                 <div><Label>Category</Label>
@@ -883,6 +1017,8 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                 await write("insert", "investor_spending", { row: { spend_date, category: cat, vendor, amount_gbp: Number(amount), notes, is_personal: isPersonalNew } });
                 setVendor(""); setAmount(""); setNotes(""); setIsPersonalNew(false); setAddOpen(false);
               }}>Save</Button>
+              </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
