@@ -11,6 +11,7 @@ import { Plus, Trash2, GripVertical, MapPin, Shield, UserPlus, Pencil, Upload, I
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { FitScoreBadge } from "./recruitment/FitScoreBadge";
 import {
   DndContext,
   DragOverlay,
@@ -144,19 +145,37 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
                 {prospect.position}
               </span>
             )}
+            <Badge
+              variant="outline"
+              className="text-[9px] h-4 px-1.5 font-bebas tracking-wider"
+              style={{ color: 'hsl(43, 49%, 70%)', borderColor: 'hsl(43, 49%, 61% / 0.4)', background: 'hsl(43, 49%, 61% / 0.08)' }}
+              title="Team level"
+            >
+              {ageGroupLabelMap[prospect.age_group]}
+            </Badge>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <div
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: priorityColor }}
               title={`${prospect.priority || 'No'} priority`}
+            />
+            <FitScoreBadge
+              player={{
+                position: prospect.position,
+                age: prospect.age,
+                date_of_birth: prospect.date_of_birth,
+                nationality: prospect.nationality,
+                current_club: prospect.current_club,
+              }}
+              size="sm"
             />
           </div>
         </div>
 
         {/* Centre: avatar + name */}
         <div className="flex items-center gap-3 my-1">
-          <Avatar className="h-14 w-14 border-2 shrink-0 rounded-lg" style={{ borderColor: `${priorityColor}66` }}>
+          <Avatar className="h-16 w-16 border-2 shrink-0 rounded-lg" style={{ borderColor: `${priorityColor}66` }}>
             <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} className="object-cover object-top" />
             <AvatarFallback
               className="text-xs font-bold rounded-lg"
@@ -170,17 +189,22 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
               {prospect.name}
             </div>
             {prospect.current_club && (
-              <div className="flex items-center gap-1 mt-0.5">
-                {prospect.club_logo_url && <img src={prospect.club_logo_url} alt="Club logo" className="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" />}
-                <Shield className="w-3 h-3 text-muted-foreground/60 shrink-0" />
-                <span className="text-[10px] text-muted-foreground truncate">{prospect.current_club}</span>
+              <div className="flex items-center gap-1.5 mt-1">
+                {prospect.club_logo_url ? (
+                  <img src={prospect.club_logo_url} alt="" className="w-5 h-5 object-contain shrink-0" loading="lazy" />
+                ) : (
+                  <Shield className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+                )}
+                <span className="text-[11px] text-foreground/80 truncate font-medium">{prospect.current_club}</span>
               </div>
             )}
             {prospect.nationality && (
-              <div className="flex items-center gap-1 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 <img src={getCountryFlagUrl(prospect.nationality)} alt={prospect.nationality} className="w-4 h-3 object-cover rounded-sm shrink-0" loading="lazy" />
-                <MapPin className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span className="text-[10px] text-muted-foreground truncate">{prospect.nationality}</span>
+                {typeof prospect.age === 'number' && prospect.age > 0 && (
+                  <span className="text-[10px] text-muted-foreground/80">· {prospect.age}y</span>
+                )}
               </div>
             )}
           </div>
@@ -188,18 +212,7 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
 
         {/* Bottom: age group + age + actions */}
         <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="text-[10px] h-5 px-1.5 font-bebas tracking-wider"
-              style={{ color: 'hsl(43, 49%, 61%)', borderColor: 'hsl(43, 49%, 61% / 0.3)' }}
-            >
-              {ageGroupLabelMap[prospect.age_group]}
-            </Badge>
-            {typeof prospect.age === 'number' && prospect.age > 0 && (
-              <span className="text-[10px] text-muted-foreground">Age {prospect.age}</span>
-            )}
-          </div>
+          <div className="flex items-center gap-2" />
           <div className="flex items-center gap-1">
             {prospect.player_email && (
               <Button
