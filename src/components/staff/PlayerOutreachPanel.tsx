@@ -220,9 +220,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+  const [minFit, setMinFit] = useState<number>(0);
 
   // Reset pagination when filters/search/sort change
-  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir]);
+  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir, minFit]);
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
