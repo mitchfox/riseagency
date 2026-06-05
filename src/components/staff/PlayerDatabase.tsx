@@ -405,8 +405,11 @@ export const PlayerDatabase = () => {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection(field === 'created_at' ? 'desc' : 'asc');
+      // Fit and date-added default to highest/newest first; the rest go A→Z.
+      setSortDirection(field === 'created_at' || field === 'fit_score' ? 'desc' : 'asc');
     }
+    // Snap the visible window back to the top so page 1 reflects the new order.
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   const getSortIcon = (field: SortField) => {

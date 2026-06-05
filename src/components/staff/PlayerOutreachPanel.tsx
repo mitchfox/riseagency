@@ -462,7 +462,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDir('asc');
+      // Fit should default to highest-first; everything else stays alphabetical/ascending.
+      setSortDir(field === 'fit_score' ? 'desc' : 'asc');
     }
   };
 
