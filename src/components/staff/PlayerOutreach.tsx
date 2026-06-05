@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Users, Search, Star, LayoutGrid, Target as TargetIcon, Table as TableIcon } from "lucide-react";
+import { Users, Search, Star, LayoutGrid, Target as TargetIcon, Table as TableIcon, Sliders } from "lucide-react";
 import { PlayerOutreachPanel } from "./PlayerOutreachPanel";
 import { TransfermarktScraper } from "./TransfermarktScraper";
 import { TransfermarktShortlist } from "./TransfermarktShortlist";
 import { OutreachPipelineBoard } from "./recruitment/OutreachPipelineBoard";
 import { OutreachTargetsManager } from "./recruitment/OutreachTargetsManager";
+import { ScoringSettings } from "./recruitment/ScoringSettings";
 
 export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
-  const [view, setView] = useState<"pipeline" | "table" | "targets">("pipeline");
+  const [view, setView] = useState<"pipeline" | "table" | "targets" | "scoring">("pipeline");
   const [scraperVisible, setScraperVisible] = useState(false);
 
   return (
@@ -36,15 +37,18 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       <TransfermarktScraper visible={scraperVisible} onClose={() => setScraperVisible(false)} />
 
       <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 sm:w-auto sm:inline-grid">
           <TabsTrigger value="pipeline" className="gap-2"><LayoutGrid className="h-3.5 w-3.5" /> Pipeline</TabsTrigger>
           <TabsTrigger value="targets" className="gap-2"><TargetIcon className="h-3.5 w-3.5" /> Targets</TabsTrigger>
           <TabsTrigger value="table" className="gap-2"><TableIcon className="h-3.5 w-3.5" /> Table</TabsTrigger>
+          <TabsTrigger value="scoring" className="gap-2"><Sliders className="h-3.5 w-3.5" /> Scoring</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {view === "targets" ? (
         <OutreachTargetsManager />
+      ) : view === "scoring" ? (
+        <ScoringSettings />
       ) : (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">

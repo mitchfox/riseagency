@@ -1,116 +1,141 @@
-# Recruitment & Player Outreach — Major Upgrade Plan
+# Representation Offers + AI Fit Score + Template Matching
 
 ## Goals
-1. Filter outreach by **strategic targets** (who we actually want to sign).
-2. Never let a **responder** go cold — surface and chase replies relentlessly.
-3. Move outreach from a flat list into a **pipeline** with stages, owners and next-action dates.
-
-## Quick-fix housekeeping (shipped now)
-- "Coming soon" copy removed from Financial Reports and Staff PWA install panels.
-- Note: 700+ `console.log` and 300+ hardcoded colour-class sweeps remain queued — these are mechanical and best run in a dedicated cleanup pass so they don't bury the recruitment changes in a giant diff.
+1. Turn an outreach prospect into a representation-offer link in **one click** — and also create the link from the Representation Offers page itself.
+2. Make Representation Offers easy to navigate: collapsible status groups + search.
+3. Add an **AI Fit Score (0–100)** that ranks every player/outreach row against our recruitment targets, with admin-controlled weights.
+4. Tag message templates to recruitment targets so the right script (with a one-click copy) appears next to the right player.
 
 ---
 
-## 1. Target Lists ("who we want")
+## 1. One-click offer creation
 
-New table `recruitment_targets` capturing the agency's strategic intake plan:
+### From a Player Outreach card
+Add an **"Create offer link"** button on every pipeline / table row.
 
-- `name`, `scope` (`youth` | `pro` | `both`)
-- `positions text[]` (e.g. CB, CF) — uses our standard abbreviations
-- `min_age` / `max_age`
-- `nationalities text[]`, `countries_of_club text[]`
-- `min_club_rating` (R1–R5), `max_club_rating`
-- `priority` (1–5), `active` boolean, `notes`
-- `owner_user_id` (who's driving this target)
+What happens behind the scenes:
+- If the outreach row already has a matching `players` record (lookup by case-insensitive name), reuse it.
+- Otherwise insert a minimal `players` row from the outreach fields: `name`, `position`, `age` / `date_of_birth`, `nationality`, `club`. Status defaults to `prospect`.
+- Set `has_representation_offer = true`.
+- Generate the slug, copy `/risewithus/<slug>` to clipboard, toast confirms with "View" + "Open WhatsApp" options.
+- Log an `outreach_interactions` row (`kind: message_out`, channel chosen by the user in a tiny dropdown, summary `Offer link sent`) so the response tracker auto-updates `last_contact_at` and `messaged = true`.
 
-UI: a "Targets" tab inside Player Outreach. Each target is a saved filter you can:
-- One-click apply to either outreach table.
-- See a live count of "matches not yet contacted" vs "matches contacted" vs "matches responded".
+### From the Representation Offers page
+Add a **"+ Create offer"** primary button at the top that opens a compact dialog:
+- Search existing players (live) → flip `has_representation_offer = true` and copy link.
+- Or "Add new prospect" → tiny inline form (name, position, age, nationality, club) → creates the `players` row + flips the flag + copies link.
 
-Filtering logic: a player row matches a target if **all** non-null criteria match. Players inherit target tags so a single outreach row can belong to multiple targets.
+### From the Prospect Board
+Already supports opening the link — add a "Copy" sibling for parity.
 
-## 2. Response-driven follow-up
+## 2. Smarter Representation Offers UI
 
-Today `response_received` is just a boolean — invisible the moment you scroll past it. Replace with a structured **response tracker**:
+Replace the flat grid with **collapsible status groups** (default-open: "Needs follow-up"; collapsed: "Signed", "Declined"):
 
-Add to `player_outreach_youth` / `player_outreach_pro`:
-- `response_status` enum: `none`, `replied`, `interested`, `not_interested`, `signed`, `lost`
-- `first_response_at timestamptz`
-- `last_contact_at timestamptz`
-- `next_followup_at date` (defaults to last_contact_at + 7 days when a reply lands)
-- `assigned_to uuid` (staff member chasing)
+- Needs follow-up (offer sent ≥ 7 days ago, no response logged)
+- Offer sent — awaiting reply
+- Viewed (we can fire a visit hit from the public page into `representation_visitors`)
+- In conversation
+- Signed
+- Declined / paused
 
-New table `outreach_interactions` (one row per touch — message sent, reply received, call, meeting):
-- `outreach_id`, `outreach_type` ('youth'|'pro'), `kind` ('message_out'|'reply_in'|'call'|'meeting'|'note'), `channel` ('instagram'|'whatsapp'|'email'|'phone'|'in_person'), `summary`, `occurred_at`, `created_by`.
+Each group header shows a count and a chevron. Sticky search bar above filters across all groups; matching a search auto-expands its group. Add quick filters: position, nationality, target (chip row).
 
-This gives us a true contact history per player and unblocks the follow-up board below.
+Card additions: last-contact relative time, AI fit-score badge, the assigned target name, and the matched message template (with a copy icon — see §4).
 
-## 3. Pipeline view (replaces the flat table as the default)
+## 3. AI Fit Score (0–100)
 
-Kanban-style board with columns:
-1. **Targets — not contacted** (matches a target, zero interactions)
-2. **Contacted — awaiting reply**
-3. **Replied — needs follow-up** ⬅ the most important column
-4. **In conversation**
-5. **Decision pending** (parent approval for youth / club permission for pro)
-6. **Won / Signed**
-7. **Lost / Cold**
+### Where it shows
+- A Rise-gold circular badge on each card in: Player Outreach (pipeline + table), Representation Offers, Prospect Board, Player Database list.
+- Hover/tap → tooltip lists the top 3 reasons that drove the score ("+25 position match: CB", "+18 age sweet spot", "−10 club rating below target", etc.).
 
-Cards show: photo, name, age, position, club + rating badge, last contact (relative time), next follow-up due, owner avatar. Drag between columns updates `response_status` + writes an interaction row.
+### How it's calculated
+Hybrid: deterministic component for explainability + an AI nudge for the soft signals.
 
-Existing table view stays as an alternate density toggle for power users.
+**Deterministic core (0–80)** — pure formula, runs client-side instantly:
+- Position match vs active targets (0–20)
+- Age fit (0–15, peaks at target midpoint)
+- Nationality fit (0–10)
+- Club country fit (0–5)
+- Club rating fit (R1 highest, 0–15)
+- Outreach signal (0–15): response received, parent approval, recent interaction recency
 
-## 4. "Needs follow-up today" dashboard widget
+**AI nudge (0–20)** — runs on-demand or in batch via a Supabase Edge Function calling Lovable AI (`google/gemini-3-flash-preview`):
+- Inputs: player bio/notes, scouting notes, recent stats summary, message thread summary.
+- Output: `{ ai_bonus: 0–20, reasons: [short bullet, …] }` via the AI SDK `Output.object` API.
+- Cached on the player row; re-runs only when underlying data changes or admin clicks "Recompute".
 
-On the staff home / My Tasks:
-- Count and list of outreach rows where `response_status = 'replied'` AND (`next_followup_at <= today` OR `last_contact_at < now() - 3 days`).
-- Same widget for "Targets with zero outreach this week" so cold target lists get worked.
-- Both link straight into the pipeline pre-filtered.
+### Settings (admin-only sub-page)
+New section: **Recruitment → Scoring Settings**
 
-## 5. Reminders & nudges
+- Sliders for each component weight (must sum to 100; auto-normalised).
+- Target match thresholds: how strict position/age/nationality must be before they count.
+- Toggle to enable/disable the AI nudge globally.
+- "Recompute all" button (queues a batch job).
 
-- Daily 08:00 staff notification (existing `staff_notification_events` pipeline): "X players replied and are awaiting your follow-up", "Y target slots not contacted this week".
-- Per-row "Snooze" → sets `next_followup_at` (today+1/3/7/custom).
-- Overdue rows get a subtle Rise Gold border in the pipeline.
+Stored in a new table `recruitment_scoring_settings` (single row, admin-editable). Score breakdowns stored per player so we can show "why" without recomputing.
 
-## 6. Smaller polish bundled in
+### Recruitment Targets
+The existing `recruitment_targets` table already holds the criteria — that's the source of truth. We'll also add a **default_template_id** column to each target (§4) and surface a quick way to set/edit targets from the Scoring Settings page so weights and targets sit side-by-side.
 
-- Saved column-presets per user on the outreach table.
-- Bulk actions: assign owner, set next-followup, tag with target.
-- CSV export filtered to current view.
-- IG handle click already opens Instagram — add WhatsApp deep-link from `parent_contact` / phone.
-- Surface `recruitment_age_rules` inline: if a youth player's country has `min_contact_age` and they're below it, show a clear "not yet contactable — eligible {date}" badge instead of just colour.
+## 4. Template tagging + one-click copy
+
+### Schema additions
+- `whatsapp_quick_messages`: add `target_id` (nullable FK to `recruitment_targets`), `position_tags text[]`, `scope text` ('youth'|'pro'|'both').
+- `email_templates`: same additions.
+- `recruitment_targets`: add `default_whatsapp_template_id`, `default_email_template_id`.
+
+### Matching logic
+When rendering an outreach / offer card:
+1. Find the best matching target for the player (highest fit score above a threshold).
+2. Use that target's default template; if none, fall back to the template whose `target_id` matches; then `position_tags` overlap; then `scope` match.
+3. Render the template preview with merge fields filled in (`{name}`, `{position}`, `{club}`, `{age}`, `{offer_link}`).
+4. **Copy** button next to the preview puts the resolved text on the clipboard. Optional **WhatsApp** button opens `https://wa.me/?text=…` pre-filled when a phone/parent contact is available.
+
+### Templates UI
+Extend the existing Quick Messages / Email Templates editors with:
+- Target dropdown (multi-select of recruitment targets)
+- Position chips
+- Scope toggle (Youth / Pro / Both)
+- "Used by N targets as default" badge
 
 ---
 
 ## Technical sketch
 
 ```text
-recruitment_targets ──┐
-                      ├── (matched at query time) ── player_outreach_youth / _pro
-outreach_interactions ┘            │
-                                   └── pipeline view (groups by response_status)
-                                   └── follow-up widget (filters by next_followup_at)
+recruitment_targets ───┐
+                       ├─ default_whatsapp_template_id ─ whatsapp_quick_messages
+                       └─ default_email_template_id    ─ email_templates
+recruitment_scoring_settings (single row, admin) ─┐
+players / player_outreach_* rows ─────────────────┴─ fit_score (0-100) + breakdown JSON
 ```
 
-Migrations (single batch, fully GRANT-ed + RLS for staff/admin):
-1. `recruitment_targets` table
-2. ALTER outreach tables to add `response_status`, `first_response_at`, `last_contact_at`, `next_followup_at`, `assigned_to`
-3. `outreach_interactions` table
-4. Backfill: any row with `response_received = true` → `response_status = 'replied'`, `first_response_at = updated_at`
+Migrations (one batch):
+1. ALTER `whatsapp_quick_messages` and `email_templates`: add `target_id`, `position_tags`, `scope`.
+2. ALTER `recruitment_targets`: add `default_whatsapp_template_id`, `default_email_template_id`.
+3. CREATE `recruitment_scoring_settings` (single row enforced via unique constraint on a fixed key).
+4. ALTER `players`, `player_outreach_youth`, `player_outreach_pro`: add `fit_score int`, `fit_score_breakdown jsonb`, `fit_score_updated_at timestamptz`.
+5. Edge function `compute-fit-score` (Lovable AI, `google/gemini-3-flash-preview`) — called per-player or batched.
 
 Frontend:
-- Replace `PlayerOutreach.tsx` tab layout with `Pipeline | Table | Targets` sub-tabs.
-- New components: `OutreachPipelineBoard`, `OutreachTargetsManager`, `OutreachFollowupWidget`, `OutreachInteractionDrawer`.
-- Reuse existing `PlayerOutreachPanel` table as the Table sub-tab (minimal changes).
+- `src/lib/fitScore.ts` — pure deterministic scorer (shared by every list view).
+- `useFitScore` hook — reads cached score, falls back to deterministic core if not yet computed.
+- `FitScoreBadge` component (Rise-gold ring, click → breakdown popover).
+- `src/components/staff/recruitment/CreateOfferButton.tsx` — promote-to-offer flow (reused by outreach + offers page).
+- `src/components/staff/recruitment/TemplatePickerInline.tsx` — auto-matches template, shows preview + copy.
+- Refactor `RepresentationOffers.tsx`: add collapsible groups, search, filters, fit badge, template picker, "+ Create offer" dialog.
+- New `src/components/staff/recruitment/ScoringSettings.tsx` mounted under Recruitment.
 
 ## Rollout
-1. Migrations + backfill.
-2. Pipeline board + interaction drawer (read/write to new fields).
-3. Targets manager + filter binding.
-4. Follow-up widget + daily notification.
-5. Bulk actions, CSV export, age-rule badge polish.
+1. Migrations + edge function scaffolding.
+2. Deterministic fit score + badge live across all surfaces.
+3. Create-offer flow from outreach + offers page.
+4. Representation Offers collapsible groups + search + filters.
+5. Template tagging + inline copy.
+6. AI nudge component of the score (optional toggle on by default).
+7. Scoring Settings admin page.
 
-## Out of scope (call out, don't build)
-- Auto-scraping replies from IG/WhatsApp — needs platform integrations we haven't set up.
-- AI suggested follow-up message drafts — separate spike once the pipeline is live so we have real reply text to learn from.
+## Out of scope
+- Auto-sending the message via WhatsApp / IG APIs (we copy, you paste).
+- Tracking opens of the offer link beyond what `representation_visitors` already records.
