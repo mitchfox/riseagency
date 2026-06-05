@@ -780,6 +780,79 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
   const [isPersonalNew, setIsPersonalNew] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
   const [bankBusy, setBankBusy] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parsedItems, setParsedItems] = useState<Array<{ spend_date: string; category: string; vendor: string; amount: string; notes: string }>>([]);
+  const [savingAll, setSavingAll] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleReceiptUpload = async (file: File) => {
+    if (!file) return;
+    setParsing(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-receipt-image", {
+        body: { imageBase64: dataUrl },
+      });
+      if (error) throw error;
+      const parsed: any = (data as any)?.parsed || {};
+      const raw: any[] = Array.isArray(parsed?.items)
+        ? parsed.items
+        : (parsed && (parsed.amount || parsed.item || parsed.vendor)) ? [parsed] : [];
+      if (raw.length === 0) {
+        toast.error("Could not read any items from that image");
+        return;
+      }
+      const allowed = SPENDING_CATEGORIES;
+      const mapped = raw.map((it: any) => {
+        const c = String(it?.category || "").toLowerCase();
+        return {
+          spend_date: it?.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date) ? it.date : new Date().toISOString().slice(0, 10),
+          category: allowed.includes(c) ? c : "misc",
+          vendor: String(it?.vendor || it?.location || "").slice(0, 120),
+          amount: it?.amount != null ? String(it.amount) : "",
+          notes: [it?.item, it?.location, it?.time ? `at ${it.time}` : null].filter(Boolean).join(" — "),
+        };
+      });
+      setParsedItems(mapped);
+      toast.success(`Found ${mapped.length} item${mapped.length === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to parse image");
+    } finally {
+      setParsing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const saveParsedItems = async () => {
+    const valid = parsedItems.filter(p => p.amount && !isNaN(Number(p.amount)));
+    if (valid.length === 0) { toast.error("Add an amount to at least one row"); return; }
+    setSavingAll(true);
+    try {
+      for (const p of valid) {
+        await write("insert", "investor_spending", { row: {
+          spend_date: p.spend_date,
+          category: p.category,
+          vendor: p.vendor,
+          amount_gbp: Number(p.amount),
+          notes: p.notes,
+          is_personal: isPersonalNew,
+        }});
+      }
+      toast.success(`Saved ${valid.length} expense${valid.length === 1 ? "" : "s"}`);
+      setParsedItems([]);
+      setAddOpen(false);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save");
+    } finally {
+      setSavingAll(false);
+    }
+  };
 
   const scoped = useMemo(
     () => rows.filter(r => (scope === "personal" ? !!r.is_personal : !r.is_personal)),
