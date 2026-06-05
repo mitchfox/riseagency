@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Users, Search, Star } from "lucide-react";
+import { Users, Search, Star, LayoutGrid, Target as TargetIcon, Table as TableIcon } from "lucide-react";
 import { PlayerOutreachPanel } from "./PlayerOutreachPanel";
 import { TransfermarktScraper } from "./TransfermarktScraper";
 import { TransfermarktShortlist } from "./TransfermarktShortlist";
+import { OutreachPipelineBoard } from "./recruitment/OutreachPipelineBoard";
+import { OutreachTargetsManager } from "./recruitment/OutreachTargetsManager";
 
 export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
   const [activeTab, setActiveTab] = useState("youth");
+  const [view, setView] = useState<"pipeline" | "table" | "targets">("pipeline");
   const [scraperVisible, setScraperVisible] = useState(false);
 
   return (
@@ -32,6 +35,17 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
       <TransfermarktScraper visible={scraperVisible} onClose={() => setScraperVisible(false)} />
 
+      <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-grid">
+          <TabsTrigger value="pipeline" className="gap-2"><LayoutGrid className="h-3.5 w-3.5" /> Pipeline</TabsTrigger>
+          <TabsTrigger value="targets" className="gap-2"><TargetIcon className="h-3.5 w-3.5" /> Targets</TabsTrigger>
+          <TabsTrigger value="table" className="gap-2"><TableIcon className="h-3.5 w-3.5" /> Table</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {view === "targets" ? (
+        <OutreachTargetsManager />
+      ) : (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 h-auto sm:h-10">
           <TabsTrigger value="youth" className="text-sm sm:text-base py-2.5">Youth (U18)</TabsTrigger>
@@ -43,17 +57,18 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
         </TabsList>
 
         <TabsContent value="youth" className="mt-4">
-          <PlayerOutreachPanel type="youth" />
+          {view === "pipeline" ? <OutreachPipelineBoard type="youth" /> : <PlayerOutreachPanel type="youth" />}
         </TabsContent>
 
         <TabsContent value="pro" className="mt-4">
-          <PlayerOutreachPanel type="pro" />
+          {view === "pipeline" ? <OutreachPipelineBoard type="pro" /> : <PlayerOutreachPanel type="pro" />}
         </TabsContent>
 
         <TabsContent value="shortlist" className="mt-4">
           <TransfermarktShortlist />
         </TabsContent>
       </Tabs>
+      )}
     </div>
   );
 };
