@@ -197,7 +197,22 @@ const gbpAxis = (v: number) => {
   return `${sign}£${Math.round(n)}`;
 };
 
-const SPENDING_CATEGORIES = ["tools", "travel", "staff", "misc"];
+const SPENDING_CATEGORIES_DEFAULT = ["tools", "travel", "staff", "misc"];
+const SPENDING_CATEGORIES_LS_KEY = "investorsSpendingCategories.v1";
+const SPENDING_START_DATE = new Date("2026-06-01T00:00:00Z");
+const loadCustomCategories = (): string[] => {
+  try {
+    const raw = localStorage.getItem(SPENDING_CATEGORIES_LS_KEY);
+    if (!raw) return [];
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter(x => typeof x === "string") : [];
+  } catch { return []; }
+};
+const saveCustomCategories = (list: string[]) => {
+  try { localStorage.setItem(SPENDING_CATEGORIES_LS_KEY, JSON.stringify(list)); } catch {}
+};
+// Back-compat constant used elsewhere
+const SPENDING_CATEGORIES = SPENDING_CATEGORIES_DEFAULT;
 
 interface CategoryDef {
   id: string;
