@@ -12,6 +12,7 @@ const ALLOWED_TABLES = new Set([
   "investor_forecast",
   "investor_forecast_settings",
   "investor_timeline",
+  "investor_updates",
 ]);
 
 async function getSessionUser(supabase: any, token: string) {
