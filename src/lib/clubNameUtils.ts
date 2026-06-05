@@ -14,6 +14,18 @@ export const normalizeClubName = (name: string): string => {
     .trim();
 };
 
+const CLUB_ALIASES: Record<string, string> = {
+  psg: 'paris saint germain',
+  'paris sg': 'paris saint germain',
+  'paris saint germain fc': 'paris saint germain',
+  'paris saint-germain': 'paris saint germain',
+};
+
+export const canonicalClubName = (name: string | null | undefined): string => {
+  const normalised = normalizeClubName(name || '');
+  return CLUB_ALIASES[normalised] || normalised;
+};
+
 // Common youth team suffixes
 const YOUTH_SUFFIXES = ['u19', 'u21', 'u23', 'u18', 'u17', 'u16', 'u15', 'b team', 'b', 'ii', 'reserves', 'youth', 'academy', 'juniors', 'jong', 'primavera', 'juvenil', 'castilla'];
 
@@ -38,7 +50,7 @@ export const findClubCountry = (clubName: string | null, clubCountryMap: Record<
   const lower = clubName.toLowerCase().trim();
   if (clubCountryMap[lower]) return clubCountryMap[lower];
 
-  const normalized = normalizeClubName(clubName);
+  const normalized = canonicalClubName(clubName);
   if (!normalized) return null;
 
   // Check normalised key in map
@@ -73,10 +85,10 @@ export const findClubRating = (
   isYouth: boolean
 ): string | null => {
   if (!clubName || ratings.length === 0) return null;
-  const normalized = normalizeClubName(clubName);
+  const normalized = canonicalClubName(clubName);
   if (!normalized) return null;
   for (const rating of ratings) {
-    const normRating = normalizeClubName(rating.club_name);
+    const normRating = canonicalClubName(rating.club_name);
     if (normRating === normalized || normRating.includes(normalized) || normalized.includes(normRating)) {
       return isYouth ? rating.academy_rating : rating.first_team_rating;
     }
