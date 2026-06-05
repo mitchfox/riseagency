@@ -51,13 +51,13 @@ const About = () => {
             <div className="max-w-6xl mx-auto">
               <ScrollReveal>
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                  {t('about.our_story', 'OUR')} <span className="text-primary">{t('about.story', 'STORY')}</span>
+                  OUR <span className="text-primary">{t('about.our_story', 'STORY').replace(/^our\s+/i, '')}</span>
                 </h2>
               </ScrollReveal>
               <ScrollReveal delay={0.1}>
                 <div className="space-y-6 text-lg text-muted-foreground">
                   <p>{t('about.story_p1', 'We started as players. We understand the journey: the sacrifices, the setbacks, and what it takes to make it.')}</p>
-                  <p>{t('about.story_p2', 'RISE was founded on a simple belief: talent needs more than opportunity—it needs the right guidance, structure, and support to truly flourish.')}</p>
+                  <p>{t('about.story_p2', 'RISE was founded on a simple belief: talent needs more than opportunity. It needs the right guidance, structure, and support to truly flourish.')}</p>
                   <p>{t('about.story_p3', 'We combine data-driven performance analysis with personalised career management to help players reach their full potential.')}</p>
                   <p className="text-foreground font-medium">{t('about.story_p4', 'We built this into the agency we run today. Every lesson, every insight, every connection. Now focused on helping the next generation realise their potential.')}</p>
                 </div>
@@ -268,7 +268,7 @@ const About = () => {
                       <span className="text-4xl font-bebas text-primary/30">02</span>
                       <div>
                         <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Development-Focused</h3>
-                        <p className="text-muted-foreground">We're not just agents—we're performance partners. Our in-house team provides tactical analysis, physical training, and psychological support.</p>
+                        <p className="text-muted-foreground">We're not just agents, we're performance partners. Our in-house team provides tactical analysis, physical training, and psychological support.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -298,7 +298,7 @@ const About = () => {
                       <span className="text-4xl font-bebas text-primary/30">06</span>
                       <div>
                         <h3 className="text-xl font-bebas uppercase tracking-wider text-foreground mb-2">Transparent Partnership</h3>
-                        <p className="text-muted-foreground">We believe in open communication and honest guidance. Your career is your career—we're here to support it.</p>
+                        <p className="text-muted-foreground">We believe in open communication and honest guidance. Your career is your career, and we're here to support it.</p>
                       </div>
                     </div>
                   </div>
