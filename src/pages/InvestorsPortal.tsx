@@ -800,6 +800,103 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
   const [savingAll, setSavingAll] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Custom categories (persisted to localStorage, merged with defaults + categories already used in DB rows)
+  const [customCats, setCustomCats] = useState<string[]>(() => loadCustomCategories());
+  const [manageCatsOpen, setManageCatsOpen] = useState(false);
+  const [newCatInput, setNewCatInput] = useState("");
+  const [renamingCat, setRenamingCat] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  // Edit-row dialog state
+  const [editingRow, setEditingRow] = useState<SpendingRowExt | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editCat, setEditCat] = useState("");
+  const [editVendor, setEditVendor] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editPersonal, setEditPersonal] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Categories shown in selects: defaults + custom + any category already present in DB rows.
+  const categories = useMemo(() => {
+    const present = rows.map(r => (r.category || "").toLowerCase()).filter(Boolean);
+    const merged = Array.from(new Set([
+      ...SPENDING_CATEGORIES_DEFAULT,
+      ...customCats.map(c => c.toLowerCase()),
+      ...present,
+    ]));
+    return merged.sort();
+  }, [customCats, rows]);
+
+  const openEdit = (r: SpendingRowExt) => {
+    setEditingRow(r);
+    setEditDate(r.spend_date.slice(0, 10));
+    setEditCat(r.category);
+    setEditVendor(r.vendor || "");
+    setEditAmount(String(r.amount_gbp ?? ""));
+    setEditNotes(r.notes || "");
+    setEditPersonal(!!r.is_personal);
+  };
+  const saveEdit = async () => {
+    if (!editingRow) return;
+    if (!editAmount || isNaN(Number(editAmount))) { toast.error("Enter a valid amount"); return; }
+    setEditSaving(true);
+    try {
+      await write("update", "investor_spending", {
+        id: editingRow.id,
+        patch: {
+          spend_date: editDate,
+          category: editCat,
+          vendor: editVendor,
+          amount_gbp: Number(editAmount),
+          notes: editNotes,
+          is_personal: editPersonal,
+        },
+      });
+      toast.success("Expense updated");
+      setEditingRow(null);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const addCustomCategory = () => {
+    const v = newCatInput.trim().toLowerCase();
+    if (!v) return;
+    if (categories.includes(v)) { toast.info("Category already exists"); setNewCatInput(""); return; }
+    const next = Array.from(new Set([...customCats, v]));
+    setCustomCats(next); saveCustomCategories(next); setNewCatInput("");
+  };
+  const removeCustomCategory = (c: string) => {
+    if (SPENDING_CATEGORIES_DEFAULT.includes(c)) { toast.error("Default categories cannot be removed"); return; }
+    const next = customCats.filter(x => x !== c);
+    setCustomCats(next); saveCustomCategories(next);
+  };
+  const commitRename = async (oldName: string) => {
+    const v = renameValue.trim().toLowerCase();
+    if (!v || v === oldName) { setRenamingCat(null); return; }
+    if (categories.includes(v)) { toast.error("That category already exists"); return; }
+    try {
+      // Re-tag every row currently using oldName for this scope
+      const affected = rows.filter(r => r.category === oldName);
+      for (const r of affected) {
+        await write("update", "investor_spending", { id: r.id, patch: { category: v } });
+      }
+      const nextCustom = customCats.includes(oldName)
+        ? Array.from(new Set([...customCats.filter(x => x !== oldName), v]))
+        : Array.from(new Set([...customCats, v]));
+      setCustomCats(nextCustom); saveCustomCategories(nextCustom);
+      setRenamingCat(null); setRenameValue("");
+      toast.success(`Renamed to ${v} (${affected.length} entries updated)`);
+      await onRefresh();
+    } catch (e: any) {
+      toast.error(e?.message || "Rename failed");
+    }
+  };
+
   const handleReceiptUpload = async (file: File) => {
     if (!file) return;
     setParsing(true);
