@@ -273,13 +273,15 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     position: '', nationality: '',
     parents_name: '', parent_contact: '', parent_approval: false,
     messaged: false, response_received: false, initial_message: '', notes: '',
-    national_team: false, star_of_team: false, previous_serious_injury: ''
+    national_team: false, star_of_team: false, previous_serious_injury: '',
+    transfermarkt_url: '', agent_name: '', agent_status: ''
   };
   const emptyProForm = {
     player_name: '', ig_handle: '', current_club: '', date_of_birth: '',
     position: '', nationality: '',
     messaged: false, response_received: false, initial_message: '', notes: '',
-    national_team: false, star_of_team: false, previous_serious_injury: ''
+    national_team: false, star_of_team: false, previous_serious_injury: '',
+    transfermarkt_url: '', agent_name: '', agent_status: ''
   };
 
   const [formData, setFormData] = useState<any>(isYouth ? emptyYouthForm : emptyProForm);
@@ -997,6 +999,10 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
             )}
             <div className="space-y-2"><Label>Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={3} /></div>
             <div className="space-y-2"><Label>Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Transfermarkt URL</Label><BlurInput value={formData.transfermarkt_url || ''} onCommit={v => setFormData((f: any) => ({ ...f, transfermarkt_url: v }))} placeholder="https://www.transfermarkt.com/.../spieler/123456" /></div>
+              <div className="space-y-2"><Label>Agent / Agency</Label><BlurInput value={formData.agent_name || ''} onCommit={v => setFormData((f: any) => ({ ...f, agent_name: v }))} /></div>
+            </div>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label>Messaged</Label></div>
               <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label>Response</Label></div>
