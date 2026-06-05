@@ -1,103 +1,116 @@
-## Site-wide audit plan
+# Recruitment & Player Outreach — Major Upgrade Plan
 
-Goal: produce a single written report of every issue with links, text, formatting, layout, and copy across the public site, player portal, staff portal, investors portal, scouts portal, agents portal — on desktop and mobile, in all 12 languages. Nothing gets fixed until you've reviewed and approved the report.
+## Goals
+1. Filter outreach by **strategic targets** (who we actually want to sign).
+2. Never let a **responder** go cold — surface and chase replies relentlessly.
+3. Move outreach from a flat list into a **pipeline** with stages, owners and next-action dates.
 
-### Realistic scoping note
+## Quick-fix housekeeping (shipped now)
+- "Coming soon" copy removed from Financial Reports and Staff PWA install panels.
+- Note: 700+ `console.log` and 300+ hardcoded colour-class sweeps remain queued — these are mechanical and best run in a dedicated cleanup pass so they don't bury the recruitment changes in a giant diff.
 
-The full project has roughly 50 public routes plus the portals. Multiplied by 12 languages and 2 viewports that's well over 1,000 page renders. I'll get full coverage of English desktop + mobile, then sample the other 11 languages on the high-traffic pages and any page that uses dynamic copy, rather than rendering every locale of every page. If something is broken structurally on a page it will be broken in every language; if it's a translation overflow or missing key, the sample will catch it. I'll call out anything skipped at the end of the report so you can ask me to re-audit specific pages if needed.
+---
 
-### What I check on every page
+## 1. Target Lists ("who we want")
 
-Links and routing
-- 404s, redirect loops, dead internal links, anchors that don't scroll
-- External links open correctly (target/rel)
-- Localized routes work (e.g. `/es/jugadores` resolves)
-- Buttons that say "Coming soon" or are wired to dead handlers
-- Hash links that don't match an `id`
+New table `recruitment_targets` capturing the agency's strategic intake plan:
 
-Text and copy
-- Untranslated keys (literal `header.foo` strings rendering)
-- Strings that fell back to English in a non-English locale
-- UK English compliance (defence, optimised, organise, em-dash usage)
-- Football term localization vs position abbreviations (GK, CF, CB, LW)
-- Typos, double spaces, stray punctuation, unclosed brackets
-- Placeholder/lorem text, "TODO", "test", "John Doe"
-- Numbers and times formatted per project rules (mm.ss, 0/0.00 inputs)
-- Sentence case vs Title Case consistency
-- Date locale formatting
+- `name`, `scope` (`youth` | `pro` | `both`)
+- `positions text[]` (e.g. CB, CF) — uses our standard abbreviations
+- `min_age` / `max_age`
+- `nationalities text[]`, `countries_of_club text[]`
+- `min_club_rating` (R1–R5), `max_club_rating`
+- `priority` (1–5), `active` boolean, `notes`
+- `owner_user_id` (who's driving this target)
 
-Layout and formatting
-- Overflow on 360-414px viewports, horizontal scroll, content cut off
-- Text clipping or ellipses on labels that should wrap
-- Buttons that wrap awkwardly or collapse to icons-only without aria-label
-- Headers sticking, z-index conflicts, safe-area padding on iOS-sized viewports
-- Images broken, wrong aspect ratio, missing alt
-- Cards/sections misaligned, inconsistent spacing
-- Skipped heading levels, multiple `<main>` elements
-- Tap targets under 44×44 on primary mobile CTAs
-- Dark mode bleed on staff portal (must be strictly dark)
-- Rise Gold (#C6A332) accent compliance on staff portal
+UI: a "Targets" tab inside Player Outreach. Each target is a saved filter you can:
+- One-click apply to either outreach table.
+- See a live count of "matches not yet contacted" vs "matches contacted" vs "matches responded".
 
-Things that don't make sense
-- Empty states that look like errors
-- Counters showing "0" where data should exist
-- Tooltips/popovers that hide behind other elements
-- Login-required pages that render half the UI for logged-out users
-- Forms with no validation feedback
-- CTAs that go to the wrong place ("Contact" → home)
-- Duplicated nav items, inconsistent footer between pages
+Filtering logic: a player row matches a target if **all** non-null criteria match. Players inherit target tags so a single outreach row can belong to multiple targets.
 
-Interactive (forms/CTAs)
-- Submit a representative input on each public form (Contact, Request Representation, Realise Potential, Jobs apply, etc.) and confirm it either posts to the backend or shows a clear validation error
-- Click primary CTAs on each landing section and confirm they navigate correctly
-- Test language switcher on every top-level page
-- Test mobile menu open/close on each layout
+## 2. Response-driven follow-up
 
-### What I do NOT touch in this audit
+Today `response_received` is just a boolean — invisible the moment you scroll past it. Replace with a structured **response tracker**:
 
-- Authenticated portals beyond a logged-out smoke test (you said you want CTAs/forms but not authenticated flows). For staff/player/scout/agent/investor portals I'll audit only the login screen and any public-facing surface; the gated content stays out of scope unless you log in and ask for a follow-up sweep.
-- Performance, SEO scoring, accessibility WCAG audits (separate skills exist for those — happy to run after).
-- Backend logic, RLS, data correctness.
+Add to `player_outreach_youth` / `player_outreach_pro`:
+- `response_status` enum: `none`, `replied`, `interested`, `not_interested`, `signed`, `lost`
+- `first_response_at timestamptz`
+- `last_contact_at timestamptz`
+- `next_followup_at date` (defaults to last_contact_at + 7 days when a reply lands)
+- `assigned_to uuid` (staff member chasing)
 
-### Execution order
+New table `outreach_interactions` (one row per touch — message sent, reply received, call, meeting):
+- `outreach_id`, `outreach_type` ('youth'|'pro'), `kind` ('message_out'|'reply_in'|'call'|'meeting'|'note'), `channel` ('instagram'|'whatsapp'|'email'|'phone'|'in_person'), `summary`, `occurred_at`, `created_by`.
 
-1. Enumerate every route from `src/App.tsx` and the localized-route helpers. Produce a route inventory grouped by area (Public marketing / Player portal / Staff / Scouts / Agents / Investors / Reports & shared).
-2. Static pass: ripgrep for known smells — untranslated keys, hardcoded English in localized contexts, `TODO`, `placeholder`, `console.log`, broken `href`/`to` (relative paths starting with letters, `#`-only anchors, `javascript:`), `target="_blank"` without `rel`, `h-screen` outside expected places, custom color classes that bypass the design system, multiple `<main>` tags, missing alt attributes on `<img>`, icon-only `<Button size="icon">` without `aria-label`.
-3. Dynamic pass — English desktop (1440×900): render every public route + each portal login screen. Capture a screenshot, scan for visible issues, click language switcher, mobile menu, primary CTAs.
-4. Dynamic pass — English mobile (390×844): same sweep at iPhone width.
-5. Locale sweep: cycle the language switcher through ES, FR, DE, IT, PT, RU, PL, CZ, NO, TR, HR (the 11 non-English locales) on the Home, About, Players, Stars, Contact, Request Representation, and Footer. Look for overflow, missing keys, and football-term localization issues.
-6. Form/CTA pass: submit one valid and one invalid attempt on each public form; click every primary landing CTA and confirm destination.
-7. Compile findings.
+This gives us a true contact history per player and unblocks the follow-up board below.
 
-### Report format
+## 3. Pipeline view (replaces the flat table as the default)
 
-You'll get a single report grouped by severity, then by area:
+Kanban-style board with columns:
+1. **Targets — not contacted** (matches a target, zero interactions)
+2. **Contacted — awaiting reply**
+3. **Replied — needs follow-up** ⬅ the most important column
+4. **In conversation**
+5. **Decision pending** (parent approval for youth / club permission for pro)
+6. **Won / Signed**
+7. **Lost / Cold**
+
+Cards show: photo, name, age, position, club + rating badge, last contact (relative time), next follow-up due, owner avatar. Drag between columns updates `response_status` + writes an interaction row.
+
+Existing table view stays as an alternate density toggle for power users.
+
+## 4. "Needs follow-up today" dashboard widget
+
+On the staff home / My Tasks:
+- Count and list of outreach rows where `response_status = 'replied'` AND (`next_followup_at <= today` OR `last_contact_at < now() - 3 days`).
+- Same widget for "Targets with zero outreach this week" so cold target lists get worked.
+- Both link straight into the pipeline pre-filtered.
+
+## 5. Reminders & nudges
+
+- Daily 08:00 staff notification (existing `staff_notification_events` pipeline): "X players replied and are awaiting your follow-up", "Y target slots not contacted this week".
+- Per-row "Snooze" → sets `next_followup_at` (today+1/3/7/custom).
+- Overdue rows get a subtle Rise Gold border in the pipeline.
+
+## 6. Smaller polish bundled in
+
+- Saved column-presets per user on the outreach table.
+- Bulk actions: assign owner, set next-followup, tag with target.
+- CSV export filtered to current view.
+- IG handle click already opens Instagram — add WhatsApp deep-link from `parent_contact` / phone.
+- Surface `recruitment_age_rules` inline: if a youth player's country has `min_contact_age` and they're below it, show a clear "not yet contactable — eligible {date}" badge instead of just colour.
+
+---
+
+## Technical sketch
 
 ```text
-CRITICAL  (blocks user / broken)
-  - <area> · <page> · <viewport/lang> — <issue> — <file:line if known>
-HIGH      (visibly wrong, looks unprofessional)
-  - ...
-MEDIUM    (copy, polish, consistency)
-  - ...
-LOW       (nit, optional)
-  - ...
-SKIPPED   (out of scope or needs your input)
-  - ...
+recruitment_targets ──┐
+                      ├── (matched at query time) ── player_outreach_youth / _pro
+outreach_interactions ┘            │
+                                   └── pipeline view (groups by response_status)
+                                   └── follow-up widget (filters by next_followup_at)
 ```
 
-Each finding has: where, what, why it matters, suggested fix in one line. Where the same issue repeats across many pages (e.g. a shared component bug), it's collapsed into one finding with the affected list.
+Migrations (single batch, fully GRANT-ed + RLS for staff/admin):
+1. `recruitment_targets` table
+2. ALTER outreach tables to add `response_status`, `first_response_at`, `last_contact_at`, `next_followup_at`, `assigned_to`
+3. `outreach_interactions` table
+4. Backfill: any row with `response_received = true` → `response_status = 'replied'`, `first_response_at = updated_at`
 
-### After the report
+Frontend:
+- Replace `PlayerOutreach.tsx` tab layout with `Pipeline | Table | Targets` sub-tabs.
+- New components: `OutreachPipelineBoard`, `OutreachTargetsManager`, `OutreachFollowupWidget`, `OutreachInteractionDrawer`.
+- Reuse existing `PlayerOutreachPanel` table as the Table sub-tab (minimal changes).
 
-Once you've read it, tell me which items to fix (or "fix all of severity X and above"). I'll batch fixes by shared component to avoid touching the same file multiple times, then run a verification pass on the changed surfaces before handing back.
+## Rollout
+1. Migrations + backfill.
+2. Pipeline board + interaction drawer (read/write to new fields).
+3. Targets manager + filter binding.
+4. Follow-up widget + daily notification.
+5. Bulk actions, CSV export, age-rule badge polish.
 
-### Approximate effort
-
-- Static pass + route inventory: small.
-- Dynamic English desktop + mobile sweep: medium-large, the bulk of the work.
-- Locale sample: medium.
-- Form/CTA pass: small-medium.
-- Report compilation: small.
-
-If anything in this scope should be wider or narrower — for example, you do want me to log in and audit the staff portal proper, or you'd rather I cover only 3 languages and go deeper instead of 12 — say so and I'll adjust before kicking off.
+## Out of scope (call out, don't build)
+- Auto-scraping replies from IG/WhatsApp — needs platform integrations we haven't set up.
+- AI suggested follow-up message drafts — separate spike once the pipeline is live so we have real reply text to learn from.

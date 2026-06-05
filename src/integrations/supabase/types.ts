@@ -3941,6 +3941,42 @@ export type Database = {
           },
         ]
       }
+      outreach_interactions: {
+        Row: {
+          channel: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          occurred_at: string
+          outreach_id: string
+          outreach_type: string
+          summary: string | null
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          occurred_at?: string
+          outreach_id: string
+          outreach_type: string
+          summary?: string | null
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          occurred_at?: string
+          outreach_id?: string
+          outreach_type?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           case_study_content: string | null
@@ -5032,50 +5068,65 @@ export type Database = {
       player_outreach_pro: {
         Row: {
           age: number | null
+          assigned_to: string | null
           created_at: string | null
           current_club: string | null
           date_of_birth: string | null
+          first_response_at: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
+          last_contact_at: string | null
           messaged: boolean | null
           nationality: string | null
+          next_followup_at: string | null
           notes: string | null
           player_name: string
           position: string | null
           response_received: boolean | null
+          response_status: Database["public"]["Enums"]["outreach_response_status"]
           updated_at: string | null
         }
         Insert: {
           age?: number | null
+          assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
           date_of_birth?: string | null
+          first_response_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          last_contact_at?: string | null
           messaged?: boolean | null
           nationality?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           player_name: string
           position?: string | null
           response_received?: boolean | null
+          response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
         Update: {
           age?: number | null
+          assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
           date_of_birth?: string | null
+          first_response_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          last_contact_at?: string | null
           messaged?: boolean | null
           nationality?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           player_name?: string
           position?: string | null
           response_received?: boolean | null
+          response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
         Relationships: []
@@ -5083,14 +5134,18 @@ export type Database = {
       player_outreach_youth: {
         Row: {
           age: number | null
+          assigned_to: string | null
           created_at: string | null
           current_club: string | null
           date_of_birth: string | null
+          first_response_at: string | null
           id: string
           ig_handle: string | null
           initial_message: string | null
+          last_contact_at: string | null
           messaged: boolean | null
           nationality: string | null
+          next_followup_at: string | null
           notes: string | null
           parent_approval: boolean | null
           parent_contact: string | null
@@ -5098,18 +5153,23 @@ export type Database = {
           player_name: string
           position: string | null
           response_received: boolean | null
+          response_status: Database["public"]["Enums"]["outreach_response_status"]
           updated_at: string | null
         }
         Insert: {
           age?: number | null
+          assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
           date_of_birth?: string | null
+          first_response_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          last_contact_at?: string | null
           messaged?: boolean | null
           nationality?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           parent_approval?: boolean | null
           parent_contact?: string | null
@@ -5117,18 +5177,23 @@ export type Database = {
           player_name: string
           position?: string | null
           response_received?: boolean | null
+          response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
         Update: {
           age?: number | null
+          assigned_to?: string | null
           created_at?: string | null
           current_club?: string | null
           date_of_birth?: string | null
+          first_response_at?: string | null
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          last_contact_at?: string | null
           messaged?: boolean | null
           nationality?: string | null
+          next_followup_at?: string | null
           notes?: string | null
           parent_approval?: boolean | null
           parent_contact?: string | null
@@ -5136,6 +5201,7 @@ export type Database = {
           player_name?: string
           position?: string | null
           response_received?: boolean | null
+          response_status?: Database["public"]["Enums"]["outreach_response_status"]
           updated_at?: string | null
         }
         Relationships: []
@@ -6351,6 +6417,63 @@ export type Database = {
           min_contact_age?: number | null
           min_sign_age?: number | null
           notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recruitment_targets: {
+        Row: {
+          active: boolean
+          countries_of_club: string[]
+          created_at: string
+          id: string
+          max_age: number | null
+          max_club_rating: string | null
+          min_age: number | null
+          min_club_rating: string | null
+          name: string
+          nationalities: string[]
+          notes: string | null
+          owner_user_id: string | null
+          positions: string[]
+          priority: number
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          countries_of_club?: string[]
+          created_at?: string
+          id?: string
+          max_age?: number | null
+          max_club_rating?: string | null
+          min_age?: number | null
+          min_club_rating?: string | null
+          name: string
+          nationalities?: string[]
+          notes?: string | null
+          owner_user_id?: string | null
+          positions?: string[]
+          priority?: number
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          countries_of_club?: string[]
+          created_at?: string
+          id?: string
+          max_age?: number | null
+          max_club_rating?: string | null
+          min_age?: number | null
+          min_club_rating?: string | null
+          name?: string
+          nationalities?: string[]
+          notes?: string | null
+          owner_user_id?: string | null
+          positions?: string[]
+          priority?: number
+          scope?: string
           updated_at?: string
         }
         Relationships: []
@@ -8602,6 +8725,13 @@ export type Database = {
         | "network_collaborator"
         | "member"
         | "stats_updater"
+      outreach_response_status:
+        | "none"
+        | "replied"
+        | "interested"
+        | "not_interested"
+        | "signed"
+        | "lost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8738,6 +8868,14 @@ export const Constants = {
         "network_collaborator",
         "member",
         "stats_updater",
+      ],
+      outreach_response_status: [
+        "none",
+        "replied",
+        "interested",
+        "not_interested",
+        "signed",
+        "lost",
       ],
     },
   },
