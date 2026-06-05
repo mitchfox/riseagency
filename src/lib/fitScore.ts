@@ -24,6 +24,27 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
   ai_nudge: 20,
 };
 
+/**
+ * Universal bonus weights applied after the ratio-based base score.
+ * Stored in `recruitment_scoring_settings.bonus_weights` and editable
+ * in the Fit-score settings UI. Per-target overrides may shadow these.
+ */
+export type BonusWeights = {
+  national_team: number;
+  star_of_team: number;
+  previous_serious_injury: number; // typically negative
+  top_club: number;
+  parent_approval: number;
+};
+
+export const DEFAULT_BONUS_WEIGHTS: BonusWeights = {
+  national_team: 8,
+  star_of_team: 6,
+  previous_serious_injury: -10,
+  top_club: 5,
+  parent_approval: 5,
+};
+
 export interface RecruitmentTargetLite {
   id: string;
   name: string;
@@ -39,6 +60,7 @@ export interface RecruitmentTargetLite {
   active: boolean;
   weights_override?: Partial<ScoringWeights> | null;
   ai_nudge_enabled?: boolean | null;
+  bonus_weights_override?: Partial<BonusWeights> | null;
 }
 
 export interface PlayerLike {
@@ -58,6 +80,10 @@ export interface PlayerLike {
   last_contact_at?: string | null;
   // AI nudge cached on row
   ai_bonus?: number | null;
+  // Universal bonus toggles
+  national_team?: boolean | null;
+  star_of_team?: boolean | null;
+  previous_serious_injury?: string | null;
 }
 
 export interface ScoreBreakdown {
@@ -69,6 +95,24 @@ export interface ScoreBreakdown {
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+
+const normalisePosLocal = (raw?: string | null): string => {
+  if (!raw) return "";
+  const s = raw.trim().toLowerCase();
+  const map: Record<string, string> = {
+    midfielder: "CM", "central midfielder": "CM", mid: "CM",
+    "defensive midfielder": "CDM", "holding midfielder": "CDM",
+    "attacking midfielder": "CAM",
+    "centre back": "CB", "center back": "CB", defender: "CB", "centre-back": "CB",
+    "left back": "LB", "right back": "RB",
+    "left wing back": "LWB", "right wing back": "RWB",
+    striker: "CF", forward: "CF", "centre forward": "CF", "center forward": "CF",
+    "left wing": "LW", "right wing": "RW", winger: "LW",
+    goalkeeper: "GK",
+  };
+  if (map[s]) return map[s];
+  return raw.trim().toUpperCase();
+};
 
 const computeAge = (p: PlayerLike): number | null => {
   if (typeof p.age === "number") return p.age;
@@ -97,14 +141,22 @@ const scoreAgainstTarget = (
   target: RecruitmentTargetLite,
   weights: ScoringWeights,
   ageBand: number,
-): { score: number; reasons: string[]; components: Record<string, number> } => {
+): { score: number; reasons: string[]; components: Record<string, number>; maxComponents: Record<string, number> } => {
   const components: Record<string, number> = {};
+  const maxComponents: Record<string, number> = {
+    position: weights.position,
+    age: weights.age,
+    nationality: weights.nationality,
+    club_country: weights.club_country,
+    club_rating: weights.club_rating,
+    outreach: weights.outreach,
+  };
   const reasons: string[] = [];
 
   // Position match
-  const pos = (player.position || "").toUpperCase().trim();
+  const pos = normalisePosLocal(player.position);
   if (target.positions.length > 0) {
-    if (pos && target.positions.map(p => p.toUpperCase()).includes(pos)) {
+    if (pos && target.positions.map(p => normalisePosLocal(p)).includes(pos)) {
       components.position = weights.position;
       reasons.push(`+${weights.position} position match (${pos})`);
     } else {
@@ -191,7 +243,7 @@ const scoreAgainstTarget = (
   if (outreach > 0) reasons.push(`+${outreach} outreach traction`);
 
   const subtotal = Object.values(components).reduce((s, v) => s + v, 0);
-  return { score: subtotal, reasons, components };
+  return { score: subtotal, reasons, components, maxComponents };
 };
 
 /**
@@ -204,6 +256,7 @@ export const computeFitScore = (
   weights: ScoringWeights = DEFAULT_WEIGHTS,
   ageBand = 2,
   scope?: "youth" | "pro",
+  bonusWeights: BonusWeights = DEFAULT_BONUS_WEIGHTS,
 ): ScoreBreakdown => {
   const candidates = targets.filter(t => t.active && (scope ? t.scope === scope || t.scope === "both" : true));
   if (candidates.length === 0) {
@@ -217,19 +270,50 @@ export const computeFitScore = (
   }
   if (!best) return { total: 0, reasons: [], components: {}, target_id: null, target_name: null };
 
-  // AI nudge (0..weights.ai_nudge) added on top if pre-computed and not disabled for this target
+  // ---- Ratio-based base score (0..85) ----
+  // Sum of achieved component points / sum of max component points × 85
+  // Reserves 15 headroom for AI nudge + bonuses so a perfect base still leaves
+  // room for upside but is always capped at 100 below.
+  const maxSum = Object.values(best.res.maxComponents).reduce((s, v) => s + v, 0) || 1;
+  const achievedSum = Object.values(best.res.components).reduce((s, v) => s + v, 0);
+  const baseScaled = (achievedSum / maxSum) * 85;
+
+  // AI nudge — scaled the same ratio way using its dedicated weight.
   const aiAllowed = best.target.ai_nudge_enabled !== false;
-  const aiBonus = aiAllowed ? clamp(player.ai_bonus ?? 0, 0, best.effectiveWeights.ai_nudge) : 0;
-  const total = clamp(Math.round(best.res.score + aiBonus), 0, 100);
+  const aiRaw = aiAllowed ? clamp(player.ai_bonus ?? 0, 0, best.effectiveWeights.ai_nudge) : 0;
+  const aiScaled = best.effectiveWeights.ai_nudge > 0
+    ? (aiRaw / best.effectiveWeights.ai_nudge) * 10
+    : 0;
+
+  // Universal bonuses — applied additively, per-target override merges over global.
+  const bonusEff: BonusWeights = { ...bonusWeights, ...(best.target.bonus_weights_override || {}) };
+  const bonuses: Array<{ key: string; value: number; reason: string }> = [];
+  if (player.national_team) bonuses.push({ key: "national_team", value: bonusEff.national_team, reason: `${signed(bonusEff.national_team)} national team player` });
+  if (player.star_of_team) bonuses.push({ key: "star_of_team", value: bonusEff.star_of_team, reason: `${signed(bonusEff.star_of_team)} star of the team` });
+  if (player.previous_serious_injury && player.previous_serious_injury.trim().length > 0)
+    bonuses.push({ key: "previous_serious_injury", value: bonusEff.previous_serious_injury, reason: `${signed(bonusEff.previous_serious_injury)} previous serious injury (${player.previous_serious_injury.trim()})` });
+  const playerRatingNum = ratingValue(player.club_first_team_rating);
+  if (playerRatingNum === 1) bonuses.push({ key: "top_club", value: bonusEff.top_club, reason: `${signed(bonusEff.top_club)} top-tier club (R1)` });
+  if (player.parent_approval) bonuses.push({ key: "parent_approval", value: bonusEff.parent_approval, reason: `${signed(bonusEff.parent_approval)} parent approval` });
+
+  const bonusSum = bonuses.reduce((s, b) => s + b.value, 0);
+  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum), 0, 100);
 
   const reasons = [...best.res.reasons];
-  if (aiBonus > 0) reasons.push(`+${aiBonus} AI nudge`);
+  if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
+  for (const b of bonuses) reasons.push(b.reason);
 
   return {
     total,
     reasons,
-    components: { ...best.res.components, ai_nudge: aiBonus },
+    components: {
+      ...best.res.components,
+      ai_nudge: Math.round(aiScaled),
+      ...Object.fromEntries(bonuses.map(b => [b.key, b.value])),
+    },
     target_id: best.target.id,
     target_name: best.target.name,
   };
 };
+
+const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
