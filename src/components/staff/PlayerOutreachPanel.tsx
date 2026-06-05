@@ -230,6 +230,25 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
   const dragScrollRef = useHorizontalDragScroll();
+  const { targets } = useRecruitmentTargets();
+  const { settings: scoringSettings } = useScoringSettings();
+
+  // Pre-compute fit score per row so sorting/filtering by Fit applies across ALL pages,
+  // not just the rows the FitScoreBadge has lazily rendered.
+  const fitScoreById = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const row of data) {
+      if (typeof row.fit_score === 'number' && row.fit_score > 0) {
+        map[row.id] = row.fit_score;
+        continue;
+      }
+      try {
+        const r = computeFitScore(row as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights);
+        map[row.id] = Math.max(0, Math.min(100, Math.round(r.total)));
+      } catch { map[row.id] = 0; }
+    }
+    return map;
+  }, [data, targets, scoringSettings, type]);
   const { getHeaderProps, ResizeHandle } = useResizableColumns(`outreach-panel-${type}`);
   const isYouth = type === 'youth';
 
