@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy, Lock } from "lucide-react";
+import { Plus, FileText, Trash2, Eye, CheckCircle, Save, Loader2, PenTool, Download, Link, Upload, BookMarked, ChevronDown, Users, Copy, Lock, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFDocumentViewer, FieldPosition } from "./PDFDocumentViewer";
 import { downloadSignedContractPDF } from "@/lib/pdfExport";
@@ -26,6 +27,7 @@ interface SignatureContract {
   owner_field_values: Record<string, string> | null;
   completed_pdf_url: string | null;
   view_password: string | null;
+  is_mandate?: boolean | null;
   created_at: string;
   updated_at: string;
 }
