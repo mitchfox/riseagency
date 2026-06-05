@@ -22,6 +22,8 @@ import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown,
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
+import { StarToggle } from './recruitment/StarToggle';
+import { normalisePosition } from '@/lib/positionNormalise';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
@@ -150,12 +152,13 @@ const EligibilityBadge = ({ item, type, clubCountryMap, ageRules }: {
   );
 };
 
-type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth';
+type SortField = 'player_name' | 'age' | 'current_club' | 'nationality' | 'date_of_birth' | 'fit_score';
 type SortDir = 'asc' | 'desc';
 
 const YOUTH_COLUMNS: ColumnConfig[] = [
-  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'star', label: 'Star', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -172,8 +175,9 @@ const YOUTH_COLUMNS: ColumnConfig[] = [
 ];
 
 const PRO_COLUMNS: ColumnConfig[] = [
-  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'star', label: 'Star', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
+  { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
