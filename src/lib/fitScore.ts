@@ -37,6 +37,8 @@ export interface RecruitmentTargetLite {
   max_club_rating: string | null;
   priority: number;
   active: boolean;
+  weights_override?: Partial<ScoringWeights> | null;
+  ai_nudge_enabled?: boolean | null;
 }
 
 export interface PlayerLike {
@@ -207,15 +209,17 @@ export const computeFitScore = (
   if (candidates.length === 0) {
     return { total: 0, reasons: ["No active targets configured"], components: {}, target_id: null, target_name: null };
   }
-  let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget> } | null = null;
+  let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget>; effectiveWeights: ScoringWeights } | null = null;
   for (const t of candidates) {
-    const res = scoreAgainstTarget(player, t, weights, ageBand);
-    if (!best || res.score > best.res.score) best = { target: t, res };
+    const effectiveWeights: ScoringWeights = { ...weights, ...(t.weights_override || {}) } as ScoringWeights;
+    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand);
+    if (!best || res.score > best.res.score) best = { target: t, res, effectiveWeights };
   }
   if (!best) return { total: 0, reasons: [], components: {}, target_id: null, target_name: null };
 
-  // AI nudge (0..weights.ai_nudge) added on top if pre-computed
-  const aiBonus = clamp(player.ai_bonus ?? 0, 0, weights.ai_nudge);
+  // AI nudge (0..weights.ai_nudge) added on top if pre-computed and not disabled for this target
+  const aiAllowed = best.target.ai_nudge_enabled !== false;
+  const aiBonus = aiAllowed ? clamp(player.ai_bonus ?? 0, 0, best.effectiveWeights.ai_nudge) : 0;
   const total = clamp(Math.round(best.res.score + aiBonus), 0, 100);
 
   const reasons = [...best.res.reasons];
