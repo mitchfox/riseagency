@@ -3439,6 +3439,7 @@ const InvestorsPortal = () => {
         forecast: dd.forecast || [],
         forecastSettings: dd.forecastSettings || null,
         timeline: dd.timeline || [],
+        updates: dd.updates || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
