@@ -919,7 +919,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
         toast.error("Could not read any items from that image");
         return;
       }
-      const allowed = SPENDING_CATEGORIES;
+      const allowed = categories;
       const mapped = raw.map((it: any) => {
         const c = String(it?.category || "").toLowerCase();
         return {
@@ -1074,7 +1074,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                         <div className="col-span-6 sm:col-span-2"><Label className="text-xs">Category</Label>
                           <Select value={p.category} onValueChange={(v) => setParsedItems(items => items.map((it, i) => i === idx ? { ...it, category: v } : it))}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                            <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
                         <div className="col-span-6 sm:col-span-3"><Label className="text-xs">Vendor</Label>
@@ -1113,7 +1113,7 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                 <div><Label>Category</Label>
                   <Select value={cat} onValueChange={setCat}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SPENDING_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
