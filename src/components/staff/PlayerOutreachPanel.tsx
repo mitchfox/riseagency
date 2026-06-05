@@ -187,6 +187,7 @@ const PRO_COLUMNS: ColumnConfig[] = [
 ];
 
 const DEFAULT_SECTION_CAP = 100;
+const PAGE_SIZE = 50;
 
 export const PlayerOutreachPanel = ({ type }: Props) => {
   const [data, setData] = useState<any[]>([]);
@@ -207,6 +208,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     notMessaged: true, noResponse: true, responded: true
   });
   const [sectionCaps, setSectionCaps] = useState<Record<string, number>>({});
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
 
   // Filters
   const [ageFilter, setAgeFilter] = useState<string>('all');
@@ -214,6 +216,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [dobFrom, setDobFrom] = useState('');
   const [dobTo, setDobTo] = useState('');
+
+  // Reset pagination when filters/search/sort change
+  useEffect(() => { setSectionPages({}); }, [deferredSearchQuery, ageFilter, nationFilter, positionFilter, dobFrom, dobTo, sortField, sortDir]);
 
   const columns = type === 'youth' ? YOUTH_COLUMNS : PRO_COLUMNS;
   const settings = useTableSettings(`outreach-panel-${type}`, columns);
