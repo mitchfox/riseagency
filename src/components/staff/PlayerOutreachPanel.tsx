@@ -21,6 +21,7 @@ import { FaInstagram } from 'react-icons/fa';
 import { Plus, Edit, CheckCircle2, HelpCircle, Clock, Star, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from 'lucide-react';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
+import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
@@ -154,6 +155,7 @@ type SortDir = 'asc' | 'desc';
 
 const YOUTH_COLUMNS: ColumnConfig[] = [
   { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'fit', label: 'Fit', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -171,6 +173,7 @@ const YOUTH_COLUMNS: ColumnConfig[] = [
 
 const PRO_COLUMNS: ColumnConfig[] = [
   { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
+  { key: 'fit', label: 'Fit', defaultVisible: true },
   { key: 'name', label: 'Name', defaultVisible: true },
   { key: 'ig', label: 'Instagram', defaultVisible: true },
   { key: 'nationality', label: 'Nationality', defaultVisible: true },
@@ -507,6 +510,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     );
     switch (key) {
       case 'eligibility': return plainHeader('', 'w-10');
+      case 'fit': return plainHeader('Fit', 'w-12 text-center');
       case 'name': return sortableHeader('Name', 'player_name');
       case 'ig': return plainHeader('IG', 'w-12 text-center');
       case 'nationality': return sortableHeader('Nat', 'nationality');
@@ -531,6 +535,30 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         return (
           <TableCell key={key} className="py-1.5" onClick={e => e.stopPropagation()}>
             <EligibilityBadge item={item} type={type} clubCountryMap={clubCountryMap} ageRules={ageRules} />
+          </TableCell>
+        );
+      case 'fit':
+        return (
+          <TableCell key={key} className="py-1.5 text-center" onClick={e => e.stopPropagation()}>
+            <FitScoreBadge
+              scope={type}
+              player={{
+                position: item.position,
+                age: calculateAge(item.date_of_birth),
+                date_of_birth: item.date_of_birth,
+                nationality: item.nationality,
+                current_club: item.current_club,
+                club_country: findClubCountry(item.current_club, clubCountryMap),
+                club_first_team_rating: findClubRating(item.current_club, clubRatings, type === 'youth') as any,
+                messaged: item.messaged,
+                response_received: item.response_received,
+                response_status: item.response_status,
+                parent_approval: item.parent_approval,
+                last_contact_at: item.last_contact_at,
+              }}
+              cachedScore={item.fit_score ?? null}
+              cachedBreakdown={item.fit_score_breakdown ?? null}
+            />
           </TableCell>
         );
       case 'name':
