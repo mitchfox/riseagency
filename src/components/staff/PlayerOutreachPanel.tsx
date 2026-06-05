@@ -1033,10 +1033,16 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
               )}
               <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={formData.notes} onCommit={v => setFormData((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
               <div className="space-y-1"><Label className="text-xs">Initial Message</Label><BlurTextarea value={formData.initial_message} onCommit={v => setFormData((f: any) => ({ ...f, initial_message: v }))} rows={2} /></div>
+              <div className="space-y-1">
+                <Label className="text-xs">Previous Serious Injury (e.g. ACL 2023)</Label>
+                <BlurInput value={formData.previous_serious_injury} onCommit={v => setFormData((f: any) => ({ ...f, previous_serious_injury: v }))} />
+              </div>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2"><Switch checked={formData.messaged} onCheckedChange={v => setFormData({ ...formData, messaged: v })} /><Label className="text-xs">Messaged</Label></div>
                 <div className="flex items-center space-x-2"><Switch checked={formData.response_received} onCheckedChange={v => setFormData({ ...formData, response_received: v })} /><Label className="text-xs">Response</Label></div>
                 {isYouth && <div className="flex items-center space-x-2"><Switch checked={formData.parent_approval} onCheckedChange={v => setFormData({ ...formData, parent_approval: v })} /><Label className="text-xs">Parent Approval</Label></div>}
+                <div className="flex items-center space-x-2"><Switch checked={formData.national_team} onCheckedChange={v => setFormData({ ...formData, national_team: v })} /><Label className="text-xs">National Team</Label></div>
+                <div className="flex items-center space-x-2"><Switch checked={formData.star_of_team} onCheckedChange={v => setFormData({ ...formData, star_of_team: v })} /><Label className="text-xs">Star of Team</Label></div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleDetailSave} className="flex-1">Save</Button>
