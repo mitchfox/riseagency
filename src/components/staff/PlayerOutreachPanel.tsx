@@ -24,6 +24,8 @@ import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './Tab
 import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { StarToggle } from './recruitment/StarToggle';
 import { normalisePosition } from '@/lib/positionNormalise';
+import { computeFitScore } from '@/lib/fitScore';
+import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
 import { normalizeClubName, findClubCountry, findClubRating as findClubRatingUtil } from '@/lib/clubNameUtils';
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
