@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
           {
             role: 'system',
             content:
-              'You are extracting receipt data. Return ONLY a JSON object with keys: date (YYYY-MM-DD), time (HH:MM 24h), amount (number, GBP), item (short description of what was bought), location (vendor name and/or city). Use null for any value you cannot read. No prose, no markdown.',
+            'You are extracting expense data from a receipt, invoice or screenshot. A single image can contain MULTIPLE separate purchases or line items (for example two different receipts photographed together, or a bank statement listing several transactions). Return ONLY a JSON object of the form { "items": [ { ... }, ... ] } where each item has keys: date (YYYY-MM-DD), time (HH:MM 24h), amount (number, in GBP — convert if another currency is shown), vendor (short merchant or counterparty name), item (short description of what was bought, e.g. "Coffee and pastry"), location (city or address if visible), category (one of: tools, travel, staff, misc). Use null for any value you cannot read. If the image only shows one purchase, return a single-element items array. No prose, no markdown.',
           },
           {
             role: 'user',
