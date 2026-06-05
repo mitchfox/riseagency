@@ -2119,7 +2119,12 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                       variant="default"
                                       size="sm"
                                       onClick={() => {
-                                        navigate(`/staff?section=analysis`);
+                                        const params = new URLSearchParams();
+                                        new URLSearchParams(window.location.search).forEach((value, key) => {
+                                          if (key.startsWith('__lovable')) params.set(key, value);
+                                        });
+                                        params.set('section', 'analysis');
+                                        navigate(`/staff?${params.toString()}`);
                                         // Small delay to let section load, then trigger edit
                                         setTimeout(() => {
                                           window.dispatchEvent(new CustomEvent('edit-analysis', { detail: { id: analysis.id, type: analysis.analysis_type } }));
