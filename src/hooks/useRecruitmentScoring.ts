@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_WEIGHTS, type RecruitmentTargetLite, type ScoringWeights } from "@/lib/fitScore";
+import {
+  DEFAULT_BONUS_WEIGHTS,
+  DEFAULT_WEIGHTS,
+  type BonusWeights,
+  type RecruitmentTargetLite,
+  type ScoringWeights,
+} from "@/lib/fitScore";
 
 export interface ScoringSettingsRow {
   weights: ScoringWeights;
+  bonus_weights: BonusWeights;
   age_sweet_spot_band: number;
   ai_nudge_enabled: boolean;
   fit_score_threshold: number;
@@ -11,6 +18,7 @@ export interface ScoringSettingsRow {
 
 const DEFAULT_SETTINGS: ScoringSettingsRow = {
   weights: DEFAULT_WEIGHTS,
+  bonus_weights: DEFAULT_BONUS_WEIGHTS,
   age_sweet_spot_band: 2,
   ai_nudge_enabled: true,
   fit_score_threshold: 60,
@@ -27,13 +35,14 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
   inflightSettings = (async () => {
     const { data } = await (supabase as any)
       .from("recruitment_scoring_settings")
-      .select("weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold")
+      .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold")
       .eq("id", "singleton")
       .maybeSingle();
     const merged: ScoringSettingsRow = {
       ...DEFAULT_SETTINGS,
       ...(data || {}),
       weights: { ...DEFAULT_WEIGHTS, ...((data?.weights) || {}) },
+      bonus_weights: { ...DEFAULT_BONUS_WEIGHTS, ...((data?.bonus_weights) || {}) },
     };
     cachedSettings = merged;
     return merged;

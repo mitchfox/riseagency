@@ -5127,15 +5127,20 @@ export type Database = {
           id: string
           ig_handle: string | null
           initial_message: string | null
+          is_starred: boolean
           last_contact_at: string | null
           messaged: boolean | null
+          national_team: boolean
           nationality: string | null
           next_followup_at: string | null
           notes: string | null
           player_name: string
           position: string | null
+          previous_serious_injury: string | null
           response_received: boolean | null
           response_status: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team: boolean
+          starred_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -5152,15 +5157,20 @@ export type Database = {
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          is_starred?: boolean
           last_contact_at?: string | null
           messaged?: boolean | null
+          national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
           notes?: string | null
           player_name: string
           position?: string | null
+          previous_serious_injury?: string | null
           response_received?: boolean | null
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team?: boolean
+          starred_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -5177,15 +5187,20 @@ export type Database = {
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          is_starred?: boolean
           last_contact_at?: string | null
           messaged?: boolean | null
+          national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
           notes?: string | null
           player_name?: string
           position?: string | null
+          previous_serious_injury?: string | null
           response_received?: boolean | null
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team?: boolean
+          starred_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -5213,8 +5228,10 @@ export type Database = {
           id: string
           ig_handle: string | null
           initial_message: string | null
+          is_starred: boolean
           last_contact_at: string | null
           messaged: boolean | null
+          national_team: boolean
           nationality: string | null
           next_followup_at: string | null
           notes: string | null
@@ -5223,8 +5240,11 @@ export type Database = {
           parents_name: string | null
           player_name: string
           position: string | null
+          previous_serious_injury: string | null
           response_received: boolean | null
           response_status: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team: boolean
+          starred_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -5241,8 +5261,10 @@ export type Database = {
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          is_starred?: boolean
           last_contact_at?: string | null
           messaged?: boolean | null
+          national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
           notes?: string | null
@@ -5251,8 +5273,11 @@ export type Database = {
           parents_name?: string | null
           player_name: string
           position?: string | null
+          previous_serious_injury?: string | null
           response_received?: boolean | null
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team?: boolean
+          starred_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -5269,8 +5294,10 @@ export type Database = {
           id?: string
           ig_handle?: string | null
           initial_message?: string | null
+          is_starred?: boolean
           last_contact_at?: string | null
           messaged?: boolean | null
+          national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
           notes?: string | null
@@ -5279,8 +5306,11 @@ export type Database = {
           parents_name?: string | null
           player_name?: string
           position?: string | null
+          previous_serious_injury?: string | null
           response_received?: boolean | null
           response_status?: Database["public"]["Enums"]["outreach_response_status"]
+          star_of_team?: boolean
+          starred_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -5829,9 +5859,11 @@ export type Database = {
           identification_reference_image_url: string | null
           identification_reference_images: string[]
           image_url: string | null
+          is_starred: boolean
           league: string | null
           links: Json | null
           name: string
+          national_team: boolean
           nationality: string
           next_program_notes: string | null
           not_to_confuse_with: string | null
@@ -5842,10 +5874,13 @@ export type Database = {
           position: string
           potential_commission_annual: number | null
           preferred_currency: string | null
+          previous_serious_injury: string | null
           programming_notes: string | null
           representation_status: string | null
           salary_cap_overrides: Json
+          star_of_team: boolean
           star_order: number | null
+          starred_at: string | null
           transfer_priority: string | null
           transfer_status: string | null
           updated_at: string | null
@@ -5881,9 +5916,11 @@ export type Database = {
           identification_reference_image_url?: string | null
           identification_reference_images?: string[]
           image_url?: string | null
+          is_starred?: boolean
           league?: string | null
           links?: Json | null
           name: string
+          national_team?: boolean
           nationality: string
           next_program_notes?: string | null
           not_to_confuse_with?: string | null
@@ -5894,10 +5931,13 @@ export type Database = {
           position: string
           potential_commission_annual?: number | null
           preferred_currency?: string | null
+          previous_serious_injury?: string | null
           programming_notes?: string | null
           representation_status?: string | null
           salary_cap_overrides?: Json
+          star_of_team?: boolean
           star_order?: number | null
+          starred_at?: string | null
           transfer_priority?: string | null
           transfer_status?: string | null
           updated_at?: string | null
@@ -5933,9 +5973,11 @@ export type Database = {
           identification_reference_image_url?: string | null
           identification_reference_images?: string[]
           image_url?: string | null
+          is_starred?: boolean
           league?: string | null
           links?: Json | null
           name?: string
+          national_team?: boolean
           nationality?: string
           next_program_notes?: string | null
           not_to_confuse_with?: string | null
@@ -5946,10 +5988,13 @@ export type Database = {
           position?: string
           potential_commission_annual?: number | null
           preferred_currency?: string | null
+          previous_serious_injury?: string | null
           programming_notes?: string | null
           representation_status?: string | null
           salary_cap_overrides?: Json
+          star_of_team?: boolean
           star_order?: number | null
+          starred_at?: string | null
           transfer_priority?: string | null
           transfer_status?: string | null
           updated_at?: string | null
@@ -6532,6 +6577,7 @@ export type Database = {
         Row: {
           age_sweet_spot_band: number
           ai_nudge_enabled: boolean
+          bonus_weights: Json
           fit_score_threshold: number
           id: string
           updated_at: string
@@ -6541,6 +6587,7 @@ export type Database = {
         Insert: {
           age_sweet_spot_band?: number
           ai_nudge_enabled?: boolean
+          bonus_weights?: Json
           fit_score_threshold?: number
           id?: string
           updated_at?: string
@@ -6550,6 +6597,7 @@ export type Database = {
         Update: {
           age_sweet_spot_band?: number
           ai_nudge_enabled?: boolean
+          bonus_weights?: Json
           fit_score_threshold?: number
           id?: string
           updated_at?: string

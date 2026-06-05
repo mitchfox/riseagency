@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNightMode } from "@/hooks/useNightMode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -204,6 +205,7 @@ const Staff = () => {
   const [showGridPickerDialog, setShowGridPickerDialog] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const isNight = useNightMode();
   const logoPressTimerRef = useRef<number | null>(null);
   const logoLongPressFiredRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
@@ -1212,9 +1214,11 @@ const Staff = () => {
           opacity: theme === 'light' ? 0.5 : 0.25,
         }}
       />
+      {isNight && <div className="staff-night-aura" aria-hidden="true" />}
 
       {/* Header with Logo - always visible */}
        <header className={`fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border pwa-safe-top transition-all duration-200 ${headerCollapsed ? 'h-10' : ''}`}>
+        {isNight && <div className="staff-night-glow" aria-hidden="true" />}
         <div className={`flex items-center ${headerCollapsed ? 'h-10' : 'h-16'} px-4 relative`}>
           {/* Centre logo — clickable to collapse/expand */}
           <div
