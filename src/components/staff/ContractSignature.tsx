@@ -60,6 +60,7 @@ interface SignatureSubmission {
   document_hash?: string | null;
   signed_pdf_url?: string | null;
   signed_pdf_hash?: string | null;
+  submission_type?: string | null;
 }
 
 interface SavedSignature {
