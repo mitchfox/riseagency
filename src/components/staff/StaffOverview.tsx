@@ -1101,7 +1101,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "workflows":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Workflow className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage active workflows
@@ -1114,7 +1114,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "sprints":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Track sprint progress
@@ -1124,7 +1124,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "velocity":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Monitor team velocity
@@ -1140,7 +1140,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "backlog":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <ListTodo className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View task backlog
@@ -1150,7 +1150,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "automations":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
               Manage automations
@@ -1160,7 +1160,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "achievements":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'visionboard' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('visionboard')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Trophy className="h-8 w-8 mx-auto mb-2 opacity-50" />
               View achievements and wins
