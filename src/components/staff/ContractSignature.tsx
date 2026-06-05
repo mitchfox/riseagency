@@ -60,6 +60,7 @@ interface SignatureSubmission {
   document_hash?: string | null;
   signed_pdf_url?: string | null;
   signed_pdf_hash?: string | null;
+  submission_type?: string | null;
 }
 
 interface SavedSignature {
@@ -1441,6 +1442,11 @@ const ContractSignature = ({ isAdmin }: ContractSignatureProps) => {
                       <CheckCircle className="h-5 w-5 text-green-500" />
                       <span className="font-medium">{sub.signer_name}</span>
                       <span className="text-sm text-muted-foreground">({sub.signer_email})</span>
+                      {sub.submission_type === 'manual_upload' && (
+                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
+                          Manual upload
+                        </span>
+                      )}
                     </div>
                     <Button
                       size="sm"
