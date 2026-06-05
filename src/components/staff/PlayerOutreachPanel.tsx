@@ -482,6 +482,9 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
     if (dobTo) {
       result = result.filter(d => d.date_of_birth && d.date_of_birth <= dobTo);
     }
+    if (minFit > 0) {
+      result = result.filter(d => (d.fit_score ?? 0) >= minFit);
+    }
 
     result = [...result].sort((a, b) => {
       let cmp = 0;
@@ -491,6 +494,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         case 'current_club': cmp = (a.current_club || 'ZZZ').localeCompare(b.current_club || 'ZZZ'); break;
         case 'nationality': cmp = (a.nationality || 'ZZZ').localeCompare(b.nationality || 'ZZZ'); break;
         case 'date_of_birth': cmp = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
+        case 'fit_score': cmp = (a.fit_score ?? -1) - (b.fit_score ?? -1); break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -503,7 +507,7 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
 
   const hasActiveFilters = ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || dobFrom || dobTo;
   const clearAllFilters = () => {
-    setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setDobFrom(''); setDobTo('');
+    setAgeFilter('all'); setNationFilter('all'); setPositionFilter([]); setDobFrom(''); setDobTo(''); setMinFit(0);
   };
 
   // Dynamic column rendering based on settings order
