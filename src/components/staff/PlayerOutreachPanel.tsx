@@ -360,13 +360,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       parents_name: item.parents_name || '', parent_contact: item.parent_contact || '',
       parent_approval: item.parent_approval || false,
       messaged: item.messaged || false, response_received: item.response_received || false,
-      initial_message: item.initial_message || '', notes: item.notes || ''
+      initial_message: item.initial_message || '', notes: item.notes || '',
+      national_team: !!item.national_team, star_of_team: !!item.star_of_team,
+      previous_serious_injury: item.previous_serious_injury || ''
     } : {
       player_name: item.player_name || '', ig_handle: item.ig_handle || '',
       current_club: item.current_club || '', date_of_birth: item.date_of_birth || '',
       position: item.position || '', nationality: item.nationality || '',
       messaged: item.messaged || false, response_received: item.response_received || false,
-      initial_message: item.initial_message || '', notes: item.notes || ''
+      initial_message: item.initial_message || '', notes: item.notes || '',
+      national_team: !!item.national_team, star_of_team: !!item.star_of_team,
+      previous_serious_injury: item.previous_serious_injury || ''
     });
     setDetailOpen(true);
   };
