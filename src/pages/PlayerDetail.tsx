@@ -246,6 +246,9 @@ const PlayerDetail = () => {
   const sponsorsLabel = usePlayerProfileLabel('sponsors');
   const sponsorOpportunitiesLabel = usePlayerProfileLabel('sponsorOpportunities');
   const reachOutLabel = usePlayerProfileLabel('reachOut');
+  const seeMoreLabel = usePlayerProfileLabel('seeMore');
+  const noStatsAvailableLabel = usePlayerProfileLabel('noStatsAvailable');
+  const viewFullSeasonReportLabel = usePlayerProfileLabel('viewFullSeasonReport');
 
   // Debug: Log the current language
   console.log('PlayerDetail - Current language:', language);
@@ -734,10 +737,10 @@ const PlayerDetail = () => {
                   <p className="text-foreground/60 font-bebas text-lg md:text-xl uppercase tracking-wider text-center">
                     {dbHighlights.length > 0 && typeof currentVideoType === 'number' && dbHighlights[currentVideoType]?.name
                       ? dbHighlights[currentVideoType].name
-                      : t('player.highlights', 'Highlights')}
+                      : highlightsLabel}
                   </p>
                   <p className="text-xs md:text-sm text-muted-foreground">
-                    {t('player.coming_soon', 'Coming Soon')}
+                    {comingSoonLabel}
                   </p>
                 </div>
               )}
@@ -857,7 +860,7 @@ const PlayerDetail = () => {
                       onClick={() => setMobileVisibleRows(r => r + 1)}
                       className="mt-2 w-full text-xs font-bebas uppercase tracking-wider text-[hsl(var(--gold))] border border-[hsl(var(--gold))]/40 rounded py-1.5 hover:bg-[hsl(var(--gold))]/10"
                     >
-                      See more ({remaining})
+                      {seeMoreLabel} ({remaining})
                     </button>
                   )}
                 </div>
