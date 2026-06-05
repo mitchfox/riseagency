@@ -105,6 +105,51 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 import { countryTier, isEliteClub } from "./countryClubTiers";
 
+const TOP_AGENCIES = [
+  "caa stellar", "caa base", "wasserman", "roof", "stellar group",
+  "gestifute", "jorge mendes", "pini zahavi", "raiola", "one football agency",
+  "icm stellar", "base soccer", "unique sports", "roc nation",
+  "key sports", "p&p sport management", "epic sports", "epic management",
+  "you first sports", "sem", "soccer entertainment management",
+];
+
+export const classifyAgentStatusFromName = (
+  name?: string | null,
+  fallback?: string | null,
+): "unrepresented" | "family" | "represented" | "top_agency" | "unknown" => {
+  const status = (fallback || "").toLowerCase().trim();
+  if (status === "no_agent" || status === "unrepresented" || status === "free") return "unrepresented";
+  if (status === "family_agent" || status === "family") return "family";
+  const n = (name || "").toLowerCase().trim();
+  if (!n) {
+    if (status === "represented") return "represented";
+    if (status === "top_agency") return "top_agency";
+    return "unknown";
+  }
+  if (TOP_AGENCIES.some(a => n.includes(a))) return "top_agency";
+  return "represented";
+};
+
+// Position adjacency — partial credit when player's position is close to the target's
+const ADJACENCY: Record<string, string[]> = {
+  GK: [],
+  CB: ["LB", "RB", "CDM"],
+  LB: ["CB", "LWB", "LM"],
+  RB: ["CB", "RWB", "RM"],
+  LWB: ["LB", "LM", "LW"],
+  RWB: ["RB", "RM", "RW"],
+  CDM: ["CM", "CB"],
+  CM: ["CDM", "CAM", "LM", "RM"],
+  CAM: ["CM", "CF", "LW", "RW"],
+  LM: ["LW", "CM", "LB", "LWB"],
+  RM: ["RW", "CM", "RB", "RWB"],
+  LW: ["LM", "RW", "CAM", "CF", "LWB"],
+  RW: ["RM", "LW", "CAM", "CF", "RWB"],
+  CF: ["CAM", "LW", "RW"],
+};
+const isAdjacent = (pos: string, target: string) =>
+  pos !== target && (ADJACENCY[pos]?.includes(target) || ADJACENCY[target]?.includes(pos) || false);
+
 const normalisePosLocal = (raw?: string | null): string => {
   if (!raw) return "";
   const s = raw.trim().toLowerCase();
