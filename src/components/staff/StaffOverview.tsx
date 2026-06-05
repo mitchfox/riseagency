@@ -831,7 +831,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "analytics":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'analysis' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('analysis')}>
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-primary/10 rounded text-center">
                 <div className="text-lg font-bold text-primary">{reportsData.data?.total || 0}</div>
@@ -847,7 +847,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "reports":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'player-analysis' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('player-analysis')}>
             {reportsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : reportsData.data ? (
@@ -871,7 +871,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "outreach":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'outreach' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('outreach')}>
             {outreachData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : outreachData.data ? (
@@ -898,7 +898,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "coaching":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'coaching' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('coaching')}>
             {coachingData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : coachingData.data ? (
@@ -927,7 +927,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "notifications":
         return (
-          <div className="space-y-2 px-1 cursor-pointer" onClick={() => setSearchParams({ section: 'overview' })}>
+          <div className="space-y-2 px-1 cursor-pointer" onClick={() => navigateToSection('overview')}>
             <div className="text-center text-xs text-muted-foreground py-4">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               No new notifications
@@ -956,7 +956,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "sitevisits":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'visitors' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('visitors')}>
             {siteVisitsData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : siteVisitsData.data ? (
@@ -988,7 +988,7 @@ export const StaffOverview = ({ isAdmin, userId, isMarketeer = false }: { isAdmi
 
       case "newplayers":
         return (
-          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => setSearchParams({ section: 'players' })}>
+          <div className="space-y-2 px-1 cursor-pointer h-full" onClick={() => navigateToSection('players')}>
             {newPlayersData.loading ? (
               <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>
             ) : newPlayersData.data ? (
