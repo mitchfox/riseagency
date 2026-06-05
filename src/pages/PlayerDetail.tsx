@@ -1152,7 +1152,7 @@ const PlayerDetail = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No stats data available yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{noStatsAvailableLabel}</p>
                 )}
               </div>
             </div>
@@ -1256,7 +1256,7 @@ const PlayerDetail = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No stats data available yet</p>
+                      <p className="text-sm text-muted-foreground text-center py-4">{noStatsAvailableLabel}</p>
                     )}
                   </div>
                 </div>
