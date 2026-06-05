@@ -763,6 +763,74 @@ const SignContract = () => {
                     <Printer className="h-3.5 w-3.5 mr-1.5" />
                     Print to sign by hand
                   </Button>
+                  <div className="pt-3 mt-1 border-t border-border/60 space-y-2">
+                    <p>
+                      Already signed on paper? Upload a scan or photo of the signed document
+                      and we'll attach it to this contract.
+                    </p>
+                    {manualUploaded ? (
+                      <div className="flex items-center gap-2 text-xs text-foreground">
+                        <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                        Signed copy received. Thank you.
+                      </div>
+                    ) : (
+                      <>
+                        <input
+                          ref={manualUploadInputRef}
+                          type="file"
+                          accept="application/pdf,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0] ?? null;
+                            setManualFile(f);
+                            if (e.target) e.target.value = '';
+                          }}
+                        />
+                        {!manualFile ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => manualUploadInputRef.current?.click()}
+                            className="h-8"
+                          >
+                            <Upload className="h-3.5 w-3.5 mr-1.5" />
+                            Upload signed copy
+                          </Button>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="text-xs text-foreground truncate max-w-[200px]">
+                              {manualFile.name}
+                              <span className="text-muted-foreground ml-1">
+                                ({(manualFile.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={handleManualUpload}
+                              disabled={manualUploading}
+                              className="h-8"
+                            >
+                              {manualUploading ? (
+                                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                              ) : (
+                                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                              )}
+                              Send to RISE
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setManualFile(null)}
+                              disabled={manualUploading}
+                              className="h-8"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
               <Button onClick={handleSubmit} disabled={submitting} className="w-full h-10">
