@@ -11,6 +11,9 @@ import { formatDistanceToNowStrict, parseISO, differenceInCalendarDays } from "d
 import { ChevronRight, Clock, MoreVertical, Search } from "lucide-react";
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
+import { FitScoreBadge } from "./FitScoreBadge";
+import { CreateOfferButton } from "./CreateOfferButton";
+import { TemplatePickerInline } from "./TemplatePickerInline";
 
 interface Row {
   id: string;
@@ -18,12 +21,17 @@ interface Row {
   position: string | null;
   current_club: string | null;
   age: number | null;
+  nationality?: string | null;
+  date_of_birth?: string | null;
+  messaged: boolean | null;
+  response_received: boolean | null;
   response_status: string;
   last_contact_at: string | null;
   next_followup_at: string | null;
   first_response_at: string | null;
-  messaged: boolean | null;
-  response_received: boolean | null;
+  parent_approval?: boolean | null;
+  fit_score?: number | null;
+  fit_score_breakdown?: any;
 }
 
 const STAGES: { id: string; label: string; tone: string }[] = [
@@ -67,7 +75,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     setLoading(true);
     const { data, error } = await supabase
       .from(table)
-      .select("id,player_name,position,current_club,age,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received")
+      .select("id,player_name,position,current_club,age,nationality,date_of_birth,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received,parent_approval,fit_score,fit_score_breakdown")
       .order("updated_at", { ascending: false })
       .limit(500);
     if (error) toast.error("Failed to load pipeline");
@@ -156,7 +164,24 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                             {[r.position, r.age ? `${r.age}y` : null, r.current_club].filter(Boolean).join(" · ")}
                           </div>
                         </div>
-                        <DropdownMenu>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <FitScoreBadge
+                            player={{
+                              position: r.position,
+                              age: r.age,
+                              date_of_birth: r.date_of_birth,
+                              nationality: r.nationality,
+                              current_club: r.current_club,
+                              messaged: r.messaged,
+                              response_received: r.response_received,
+                              response_status: r.response_status,
+                              parent_approval: r.parent_approval,
+                            }}
+                            scope={type}
+                            cachedScore={r.fit_score ?? null}
+                            cachedBreakdown={r.fit_score_breakdown}
+                          />
+                          <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                             <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0">
                               <MoreVertical className="h-3.5 w-3.5" />
@@ -169,7 +194,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                               </DropdownMenuItem>
                             ))}
                           </DropdownMenuContent>
-                        </DropdownMenu>
+                          </DropdownMenu>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 mt-2 flex-wrap">
                         {r.last_contact_at && (
@@ -179,6 +205,28 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                           </span>
                         )}
                         {overdueBadge(r)}
+                      </div>
+                      <div className="mt-2 flex items-center gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
+                        <TemplatePickerInline
+                          compact
+                          playerName={r.player_name}
+                          position={r.position}
+                          club={r.current_club}
+                          age={r.age}
+                          scope={type}
+                          preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
+                        />
+                        <CreateOfferButton
+                          source={{
+                            name: r.player_name,
+                            position: r.position,
+                            nationality: r.nationality,
+                            club: r.current_club,
+                            date_of_birth: r.date_of_birth,
+                            age: r.age,
+                          }}
+                          label="Offer link"
+                        />
                       </div>
                     </Card>
                   ))}
