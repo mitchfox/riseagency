@@ -55,6 +55,7 @@ import { PlayerDatabaseManagement } from "@/components/staff/PlayerDatabaseManag
 import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
 import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
 import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
+import ClubOutreachManager from "@/components/staff/ClubOutreachManager";
 import LegalManagement from "@/components/staff/LegalManagement";
 import { PartnersManagement } from "@/components/staff/PartnersManagement";
 import { LanguagesManagement } from "@/components/staff/LanguagesManagement";
