@@ -106,10 +106,15 @@ Deno.serve(async (req) => {
         const d = defaultsByPlayer.get(e.player_id);
         let proofUrl: string | null = null;
         if (d?.proof_of_representation_path) {
-          const { data: signed } = await supabase.storage
-            .from("proof-of-representation")
-            .createSignedUrl(d.proof_of_representation_path, 60 * 60 * 24);
-          proofUrl = signed?.signedUrl ?? null;
+          const raw = d.proof_of_representation_path as string;
+          if (/^https?:\/\//i.test(raw)) {
+            proofUrl = raw;
+          } else {
+            const { data: signed } = await supabase.storage
+              .from("proof-of-representation")
+              .createSignedUrl(raw, 60 * 60 * 24 * 7, { download: false });
+            proofUrl = signed?.signedUrl ?? null;
+          }
         }
         const starsUrl =
           d?.stars_url_override ??
