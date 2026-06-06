@@ -109,14 +109,14 @@ export const ScoringSettings = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sliders className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold uppercase tracking-wide">Fit-score settings</h3>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={reset}><RotateCcw className="h-4 w-4 mr-1.5" /> Reset</Button>
-          <Button size="sm" onClick={save} disabled={saving}><Save className="h-4 w-4 mr-1.5" /> Save</Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button size="sm" variant="ghost" onClick={reset} className="flex-1 sm:flex-initial"><RotateCcw className="h-4 w-4 mr-1.5" /> Reset</Button>
+          <Button size="sm" onClick={save} disabled={saving} className="flex-1 sm:flex-initial"><Save className="h-4 w-4 mr-1.5" /> Save</Button>
         </div>
       </div>
 
