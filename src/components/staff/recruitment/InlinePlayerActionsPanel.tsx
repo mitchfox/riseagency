@@ -12,6 +12,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import {
   ArrowLeft, Copy, ExternalLink, Link2, Loader2,
   MessageSquare, Phone, Users as UsersIcon, StickyNote, Reply, Send,
+  Upload, X, User as UserIcon,
 } from "lucide-react";
 import { PlayerNotesBoard } from "@/components/staff/PlayerNotesBoard";
 import type { OutreachType } from "./OutreachInteractionDrawer";
@@ -71,6 +72,24 @@ const ageFromDob = (dob?: string | null): number | null => {
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : (name ? name.trim().toLowerCase() : '');
 
+const PORTAL_LANGUAGES = [
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" },
+  { code: "no", label: "Norsk", flag: "🇳🇴" },
+];
+
+const PERSONAL_MSG_LIMIT = 320;
+const OFFER_IMAGE_MAX = 6;
+
 interface Props {
   row: RowLike;
   type: OutreachType;
@@ -78,96 +97,174 @@ interface Props {
 }
 
 export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
-  // ---- Offer link form state ----
-  const initialAge = ageFromDob(row.date_of_birth) ?? row.age ?? null;
+  // ---- Player details (the real source of truth) ----
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [name, setName] = useState(row.player_name || "");
   const [position, setPosition] = useState(row.position || "");
   const [nationality, setNationality] = useState(row.nationality || "");
   const [club, setClub] = useState(row.current_club || "");
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState(row.date_of_birth || "");
-  const [under18, setUnder18] = useState<boolean>(initialAge !== null ? initialAge < 18 : true);
   const [imageUrl, setImageUrl] = useState("");
-  const [bio, setBio] = useState("");
-  const [offerUrl, setOfferUrl] = useState<string | null>(null);
-  const [hasOffer, setHasOffer] = useState(false);
-  const [savingOffer, setSavingOffer] = useState(false);
+  const [savingDetails, setSavingDetails] = useState(false);
   const [loadingPlayer, setLoadingPlayer] = useState(true);
 
-  // Load existing player record (if any) for the offer link details
+  // ---- Offer link state (only things that actually personalise the link) ----
+  const [language, setLanguage] = useState<string>("en");
+  const [under18Override, setUnder18Override] = useState<boolean | null>(null); // null => derive from DOB
+  const [personalMessage, setPersonalMessage] = useState("");
+  const [offerImages, setOfferImages] = useState<Record<string, string>>({});
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [savingOffer, setSavingOffer] = useState(false);
+
+  const computedAge = ageFromDob(dob);
+  const derivedUnder18 = computedAge !== null ? computedAge < 18 : true;
+  const under18 = under18Override ?? derivedUnder18;
+
+  const offerSlug = slugify(name || row.player_name);
+  const offerUrl = offerSlug ? `${window.location.origin}/risewithus/${offerSlug}` : "";
+
+  // Load existing player record + offer settings.
+  // Starred players already have a representation offer — we just edit the details on it.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoadingPlayer(true);
-      const { data } = await (supabase as any)
+      // 1) Player record
+      const { data: playerData } = await (supabase as any)
         .from("players")
-        .select("id,name,position,nationality,club,email,date_of_birth,image_url,bio,has_representation_offer")
+        .select("id,name,position,nationality,club,email,date_of_birth,image_url,has_representation_offer,portal_language")
         .ilike("name", row.player_name.trim())
         .limit(1)
         .maybeSingle();
+
+      let resolvedId: string | null = playerData?.id ?? null;
+
+      // 2) If no player record exists yet, create one so the offer link is real immediately.
+      if (!resolvedId) {
+        const ageGuess = ageFromDob(row.date_of_birth) ?? row.age ?? null;
+        const { data: created } = await (supabase as any).from("players").insert({
+          name: row.player_name.trim(),
+          representation_status: "prospect",
+          has_representation_offer: true,
+          position: row.position || "Other",
+          nationality: row.nationality || "Unknown",
+          club: row.current_club || null,
+          date_of_birth: row.date_of_birth || null,
+          age: ageGuess ?? 0,
+        }).select("id").maybeSingle();
+        resolvedId = created?.id ?? null;
+      } else if (!playerData.has_representation_offer) {
+        // Make sure the link is live for any starred player.
+        await (supabase as any).from("players")
+          .update({ has_representation_offer: true })
+          .eq("id", resolvedId);
+      }
+
       if (cancelled) return;
-      if (data) {
-        setPosition(data.position || row.position || "");
-        setNationality(data.nationality || row.nationality || "");
-        setClub(data.club || row.current_club || "");
-        setEmail(data.email || "");
-        setDob(data.date_of_birth || row.date_of_birth || "");
-        setImageUrl(data.image_url || "");
-        setBio(data.bio || "");
-        setHasOffer(!!data.has_representation_offer);
-        if (data.has_representation_offer) {
-          setOfferUrl(`${window.location.origin}/risewithus/${slugify(data.name || row.player_name)}`);
+      setPlayerId(resolvedId);
+      if (playerData) {
+        setName(playerData.name || row.player_name);
+        setPosition(playerData.position || row.position || "");
+        setNationality(playerData.nationality || row.nationality || "");
+        setClub(playerData.club || row.current_club || "");
+        setEmail(playerData.email || "");
+        setDob(playerData.date_of_birth || row.date_of_birth || "");
+        setImageUrl(playerData.image_url || "");
+        setLanguage(playerData.portal_language || "en");
+      }
+
+      // 3) Offer settings (images) + portal settings (under18 + personalised message)
+      if (resolvedId) {
+        const [offerRes, portalRes] = await Promise.all([
+          (supabase as any).from("player_offer_settings")
+            .select("section_images").eq("player_id", resolvedId).maybeSingle(),
+          (supabase as any).from("player_portal_settings")
+            .select("rise_with_us_under18, representation_subtitle_secondary")
+            .eq("player_id", resolvedId).maybeSingle(),
+        ]);
+        if (!cancelled) {
+          setOfferImages((offerRes.data?.section_images || {}) as Record<string, string>);
+          if (portalRes.data) {
+            setUnder18Override(
+              typeof portalRes.data.rise_with_us_under18 === "boolean" ? portalRes.data.rise_with_us_under18 : null
+            );
+            setPersonalMessage(portalRes.data.representation_subtitle_secondary || "");
+          }
         }
       }
-      setLoadingPlayer(false);
+      if (!cancelled) setLoadingPlayer(false);
     })();
     return () => { cancelled = true; };
   }, [row.id, row.player_name]);
 
-  const submitOffer = async () => {
+  const saveDetails = async () => {
+    if (!playerId) { toast.error("Player record not ready"); return; }
     if (!name.trim()) { toast.error("Name is required"); return; }
-    setSavingOffer(true);
+    setSavingDetails(true);
     try {
-      const computedAge = ageFromDob(dob);
-      const effectiveAge = computedAge ?? (under18 ? 17 : 19);
-      const slug = slugify(name);
-
-      const { data: existing } = await (supabase as any)
-        .from("players")
-        .select("id")
-        .ilike("name", name.trim())
-        .limit(1)
-        .maybeSingle();
-
-      const payload: Record<string, unknown> = {
-        has_representation_offer: true,
+      const ageVal = ageFromDob(dob) ?? row.age ?? 0;
+      await (supabase as any).from("players").update({
+        name: name.trim(),
         position: position || "Other",
         nationality: nationality || "Unknown",
         club: club || null,
         email: email || null,
         date_of_birth: dob || null,
-        age: effectiveAge,
+        age: ageVal,
         image_url: imageUrl || null,
-        bio: bio || null,
-      };
-
-      if (existing?.id) {
-        await (supabase as any).from("players").update(payload).eq("id", existing.id);
-      } else {
-        await (supabase as any).from("players").insert({
-          name: name.trim(),
-          representation_status: "prospect",
-          ...payload,
-        });
-      }
-
-      const url = `${window.location.origin}/risewithus/${slug}`;
-      setOfferUrl(url);
-      setHasOffer(true);
-      try { await navigator.clipboard.writeText(url); toast.success("Offer link saved & copied"); }
-      catch { toast.success("Offer link saved"); }
+      }).eq("id", playerId);
+      toast.success("Player details saved");
     } catch (e: any) {
-      toast.error("Could not save offer", { description: e?.message });
+      toast.error("Could not save details", { description: e?.message });
+    } finally {
+      setSavingDetails(false);
+    }
+  };
+
+  const uploadOfferImage = async (file: File) => {
+    if (!playerId) { toast.error("Player record not ready"); return; }
+    if (Object.keys(offerImages).length >= OFFER_IMAGE_MAX) {
+      toast.error(`Maximum ${OFFER_IMAGE_MAX} images`); return;
+    }
+    setUploadingImg(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const key = `intro-${Date.now()}`;
+    const path = `offer-sections/${playerId}/${key}.${ext}`;
+    const { error } = await supabase.storage
+      .from("marketing-gallery")
+      .upload(path, file, { cacheControl: "3600", upsert: true });
+    if (error) { toast.error("Upload failed"); setUploadingImg(false); return; }
+    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+    setOfferImages(prev => ({ ...prev, [key]: data.publicUrl }));
+    setUploadingImg(false);
+  };
+
+  const removeOfferImage = (key: string) => {
+    setOfferImages(prev => { const n = { ...prev }; delete n[key]; return n; });
+  };
+
+  const saveOfferDetails = async () => {
+    if (!playerId) { toast.error("Player record not ready"); return; }
+    setSavingOffer(true);
+    try {
+      await Promise.all([
+        (supabase as any).from("players")
+          .update({ portal_language: language, has_representation_offer: true })
+          .eq("id", playerId),
+        (supabase as any).from("player_offer_settings").upsert({
+          player_id: playerId,
+          section_images: offerImages,
+        }, { onConflict: "player_id" }),
+        (supabase as any).from("player_portal_settings").upsert({
+          player_id: playerId,
+          rise_with_us_under18: under18,
+          representation_subtitle_secondary: personalMessage.trim() || null,
+        }, { onConflict: "player_id" }),
+      ]);
+      toast.success("Offer details saved");
+    } catch (e: any) {
+      toast.error("Could not save offer details", { description: e?.message });
     } finally {
       setSavingOffer(false);
     }
@@ -252,98 +349,189 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to pipeline
           </Button>
           <div className="text-lg font-semibold truncate">{row.player_name}</div>
-          {hasOffer && <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>}
+          <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>
         </div>
+        {offerUrl && (
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(offerUrl); toast.success("Copied"); }}>
+              <Copy className="h-3.5 w-3.5 mr-1" /> Copy link
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => window.open(offerUrl, "_blank", "noopener,noreferrer")}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1" /> Open
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ============ Player details & notes (source of truth) ============ */}
+      <div className="rounded-lg border border-border bg-card/40 p-4 space-y-3">
+        <div className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
+          <UserIcon className="h-4 w-4 text-primary" /> Player details & notes
+        </div>
+        {loadingPlayer ? (
+          <div className="text-sm text-muted-foreground py-4">Loading player record…</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Name</Label>
+                <Input value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Position</Label>
+                <Input value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. CF" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Current club</Label>
+                <Input value={club} onChange={e => setClub(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nationality</Label>
+                <Input value={nationality} onChange={e => setNationality(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Date of birth</Label>
+                <Input type="date" value={dob} onChange={e => setDob(e.target.value)} />
+                {computedAge !== null && (
+                  <p className="text-[10px] text-muted-foreground">Age {computedAge} · {derivedUnder18 ? "Under 18" : "18 and over"}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email</Label>
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button size="sm" onClick={saveDetails} disabled={savingDetails}>
+                {savingDetails ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+                Save details
+              </Button>
+            </div>
+            <div className="pt-2 border-t border-border/40">
+              <PlayerNotesBoard
+                playerKey={buildPlayerKey(row.player_name, row.date_of_birth)}
+                playerName={row.player_name}
+                source={type === "youth" ? "outreach_youth" : "outreach_pro"}
+                sourceId={row.id}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Offer link panel */}
+        {/* ============ Representation offer link ============ */}
         <div className="rounded-lg border border-border bg-card/40 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-primary" /> Representation offer link
-            </div>
+          <div className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" /> Representation offer link
           </div>
           {loadingPlayer ? (
-            <div className="text-sm text-muted-foreground py-4">Loading player record…</div>
+            <div className="text-sm text-muted-foreground py-4">Loading…</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Name</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Position</Label>
-                  <Input value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. CF" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Nationality</Label>
-                  <Input value={nationality} onChange={e => setNationality(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Current club</Label>
-                  <Input value={club} onChange={e => setClub(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Date of birth</Label>
-                  <Input type="date" value={dob} onChange={e => setDob(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Age bracket</Label>
-                  <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
-                    <span className={`text-xs ${under18 ? "text-foreground" : "text-muted-foreground"}`}>Under 18</span>
-                    <Switch checked={!under18} onCheckedChange={(v) => setUnder18(!v)} />
-                    <span className={`text-xs ${!under18 ? "text-foreground" : "text-muted-foreground"}`}>18 and over</span>
-                  </div>
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs">Email</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs">Player image URL</Label>
-                  <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://…" />
-                  {imageUrl && (
-                    <div className="mt-2 rounded-md overflow-hidden border border-border w-24 h-24 bg-muted">
-                      <img src={imageUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs">Short bio</Label>
-                  <Textarea rows={3} value={bio} onChange={e => setBio(e.target.value)} />
-                </div>
-              </div>
-
               {offerUrl && (
-                <div className="p-3 rounded-md border border-border bg-muted/40 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Offer link</div>
+                <div className="p-2.5 rounded-md border border-border bg-muted/40 flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Live link</div>
                     <div className="text-xs truncate">{offerUrl}</div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(offerUrl); toast.success("Copied"); }}>
-                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => window.open(offerUrl, "_blank", "noopener,noreferrer")}>
-                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Open
-                    </Button>
-                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(offerUrl); toast.success("Copied"); }}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => window.open(offerUrl, "_blank", "noopener,noreferrer")}>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               )}
 
+              <div className="space-y-1.5">
+                <Label className="text-xs">Language shown to player</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PORTAL_LANGUAGES.map(l => (
+                      <SelectItem key={l.code} value={l.code}>
+                        <span className="flex items-center gap-2"><span>{l.flag}</span><span>{l.label}</span></span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Offer version</Label>
+                <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
+                  <span className={`text-xs ${under18 ? "text-foreground" : "text-muted-foreground"}`}>Under 18</span>
+                  <Switch
+                    checked={!under18}
+                    onCheckedChange={(v) => setUnder18Override(!v)}
+                  />
+                  <span className={`text-xs ${!under18 ? "text-foreground" : "text-muted-foreground"}`}>18 and over</span>
+                  {under18Override === null && (
+                    <span className="text-[10px] text-muted-foreground ml-auto">auto from DOB</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Personalised message</Label>
+                  <span className={`text-[10px] ${personalMessage.length > PERSONAL_MSG_LIMIT ? "text-destructive" : "text-muted-foreground"}`}>
+                    {personalMessage.length}/{PERSONAL_MSG_LIMIT}
+                  </span>
+                </div>
+                <Textarea
+                  rows={4}
+                  value={personalMessage}
+                  onChange={e => setPersonalMessage(e.target.value.slice(0, PERSONAL_MSG_LIMIT))}
+                  placeholder="What we specifically like about this player — shown on their offer page."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Player images <span className="text-muted-foreground">({Object.keys(offerImages).length}/{OFFER_IMAGE_MAX})</span></Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.entries(offerImages).map(([key, url]) => (
+                    <div key={key} className="relative h-24 rounded-md overflow-hidden border border-border bg-muted">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeOfferImage(key)}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-background/80 border hover:bg-background"
+                        aria-label="Remove image"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {Object.keys(offerImages).length < OFFER_IMAGE_MAX && (
+                    <label className="flex items-center justify-center h-24 rounded-md border border-dashed border-border cursor-pointer hover:bg-muted/30 transition">
+                      {uploadingImg ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                          <Upload className="h-4 w-4" />
+                          <span className="text-[10px]">Upload</span>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadOfferImage(f); e.currentTarget.value = ""; }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end">
-                <Button onClick={submitOffer} disabled={savingOffer}>
+                <Button onClick={saveOfferDetails} disabled={savingOffer}>
                   {savingOffer ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Link2 className="h-4 w-4 mr-1.5" />}
-                  {hasOffer ? "Save changes" : "Create offer link"}
+                  Save offer details
                 </Button>
               </div>
             </>
           )}
         </div>
 
-        {/* Contact history panel */}
+        {/* ============ Contact history ============ */}
         <div className="rounded-lg border border-border bg-card/40 p-4 space-y-3">
           <div className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" /> Contact history
@@ -417,27 +605,6 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
               );
             })}
           </div>
-        </div>
-      </div>
-
-      {/* Player details & notes */}
-      <div className="rounded-lg border border-border bg-card/40 p-4 space-y-3">
-        <div className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
-          <StickyNote className="h-4 w-4 text-primary" /> Player details & notes
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <div><div className="text-xs text-muted-foreground">Position</div><div className="font-medium">{position || "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Club</div><div className="font-medium">{club || "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Nationality</div><div className="font-medium">{nationality || "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Age</div><div className="font-medium">{ageFromDob(dob) ?? row.age ?? "—"}</div></div>
-        </div>
-        <div className="pt-2 border-t border-border/40">
-          <PlayerNotesBoard
-            playerKey={buildPlayerKey(row.player_name, row.date_of_birth)}
-            playerName={row.player_name}
-            source={type === "youth" ? "outreach_youth" : "outreach_pro"}
-            sourceId={row.id}
-          />
         </div>
       </div>
     </div>

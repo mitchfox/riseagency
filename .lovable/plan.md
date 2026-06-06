@@ -1,40 +1,41 @@
-## 1. Fix the crash (root cause)
+I’ll rebuild the recruitment surfaces around the exact issues you raised.
 
-`OutreachPipelineBoard.tsx` has `useMemo` calls for `filtered` and `byStage` AFTER my new early return for the inline Actions panel. React requires the same number of hooks every render — that mismatch is what throws "Rendered fewer hooks than expected" the moment Actions is clicked.
+## What I will change
 
-Fix: keep all hooks at the top, and move the conditional render into the JSX (or compute `actionsRow` and branch only after every hook has run). No early `return` before hooks.
+1. **Pipeline cards: space, actions and missing details**
+   - Make the **Actions** control a full-width primary row across the card, not a tiny button.
+   - Show key recruitment data clearly on every card: player name, AI score, position, age, current club, nationality flag where available, agent status, national team marker and follow-up state.
+   - Pull in player database data where possible so pipeline cards can display **player image and club logo** when the outreach row only has the club name.
+   - Keep the card layout more open and readable on mobile, with details on two lines where needed instead of cramped inline chips.
 
-## 2. Visual redesign — Outreach Pipeline + Prospect Board
+2. **Automatic pipeline ordering**
+   - Sort every pipeline column by **AI fit score from best to worst** by default.
+   - Keep overdue/follow-up information visible, but it will no longer override the main AI score ordering unless we explicitly add that later.
 
-Both share the same problems: cramped Kanban columns, plain bordered cards, no hover life, hidden data, no rhythm.
+3. **Actions panel restructure**
+   - Split the current messy panel into the correct sections:
+     - **Player details & notes**: name, position, club, nationality, date of birth, age, email, player details and notes.
+     - **Offer link**: live URL, copy, open, language, under-18/over-18 status, uploaded offer images and personalised message.
+     - **Contact history**: log contact, follow-up date and interaction timeline.
+   - Move nationality, club and date of birth out of offer-link settings and into player details.
+   - Name, position and age bracket will be automatic from player details, with edits allowed where necessary.
+   - Replace image URL input with proper **image uploads** using the existing offer image system, capped to the same number already used by the representation offer flow.
+   - Rename “Short bio” to a **personalised message** field, save it to the existing representation offer intro text and enforce a practical character limit.
+   - Remove “Create offer link” wording. Once a player is starred, they will be treated as already having a representation offer link. The button will be **Save offer details**.
 
-Concrete moves applied to both boards:
+4. **Starred player offer behaviour**
+   - When a player is starred from the pipeline, ensure their linked player record is marked as having a representation offer, so the link already exists.
+   - Opening Actions will edit that existing offer information rather than presenting link creation as a separate task.
 
-- **Column headers**: pill-shaped, Rise-gold underline on active/loaded column, animated count chip, subtle gradient stripe matching the stage tone (cold = slate, warm = gold, signed = emerald glow).
-- **Cards**: 
-  - Layered card: faint gradient surface + 1px gold-tinted ring on hover, lift + shadow on hover, "shine" sweep (CSS keyframe across the card on hover).
-  - Avatar block on the left: initials in a gold ring (image when we have one).
-  - Right-side accent strip colour-coded by fit-score band (90+ glowing gold, 70-89 amber, 50-69 neutral, <50 muted).
-  - Key details shown inline: position pill (normalised abbreviation), age, club with country flag, fit score badge, agent badge if top-agency, national-team star, "Overdue Xd" chip.
-  - Star toggle gets a soft glow when starred.
-- **Drag affordance**: grip dots on hover only; cursor changes; ghost card with stronger shadow while dragging; drop-target column gets gold dashed ring + scale 1.01.
-- **Empty columns**: dashed gold-tinted placeholder with a short, real instruction (e.g. "Star players in the table to queue them here").
-- **Density**: comfortable 12px gap between cards, 8px inner padding, consistent typography scale; on mobile the columns become a horizontal snap-scroller with one column visible at a time.
-- **Micro-polish**: page-load fade/scale on cards (staggered ~30ms each), pulse on overdue chips, smooth FLIP transitions when status changes.
-
-Prospect Board specifically also gets:
-- Probability-weighted column header showing weighted EV (already in the data — surface it).
-- Player photo where available, otherwise gold-initial avatar.
-- Same card system as the pipeline for visual continuity.
+5. **Prospect board visual rebuild**
+   - Replace the current rigid prospect cards with a proper polished card system matching the pipeline: larger player image/initials, score prominence, club logo, position, age, priority, weighted value and stage cues.
+   - Improve column headers with counts and weighted value so the board feels useful, not just decorative.
+   - Use responsive horizontal board behaviour on mobile with stronger spacing, readable cards and visible controls.
+   - Remove hardcoded inline colour styling where practical and use the existing Rise Gold dark design tokens.
 
 ## Technical notes
 
-- All colours via existing semantic tokens (`--primary` = Rise gold, `--card`, `--muted`, etc.). No raw hex.
-- Hover/shine via Tailwind + a single shared `card-shine` keyframe in `index.css`.
-- Card becomes a small shared component used by both boards so they stay consistent.
-- No new dependencies. Animations via existing framer-motion patterns already in the project.
-
-## Out of scope
-
-- Backend/scoring logic (untouched).
-- Mobile redesign of the rest of recruitment (already done in a previous turn).
+- Main files: `OutreachPipelineBoard.tsx`, `InlinePlayerActionsPanel.tsx`, `ProspectBoard.tsx` and recruitment CSS in `index.css`.
+- I will reuse the existing `players`, `player_offer_settings` and `player_portal_settings` fields, so this should not need a database schema migration.
+- Image uploads will go through the existing `marketing-gallery` storage bucket, matching the current offer customiser pattern.
+- I will avoid popups for the pipeline Actions flow and keep it inline as requested.

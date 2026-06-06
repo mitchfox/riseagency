@@ -16,6 +16,7 @@ import { StarToggle } from "./StarToggle";
 import { normalisePosition } from "@/lib/positionNormalise";
 import { InlinePlayerActionsPanel } from "./InlinePlayerActionsPanel";
 import { Settings2 } from "lucide-react";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
 import {
   DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable,
@@ -98,6 +99,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [activeRow, setActiveRow] = useState<Row | null>(null);
   const [actionsRowId, setActionsRowId] = useState<string | null>(null);
   const [stagePages, setStagePages] = useState<Record<string, number>>({});
+  const [playerMeta, setPlayerMeta] = useState<Record<string, { image_url: string | null; club_logo: string | null }>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
@@ -112,8 +114,23 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
       .order("updated_at", { ascending: false })
       .limit(500);
     if (error) toast.error("Failed to load pipeline", { description: error.message });
-    setRows((data as any) || []);
+    const loaded = (data as any[]) || [];
+    setRows(loaded);
     setLoading(false);
+
+    // Hydrate player photos + club logos from the players table where names match
+    const names = Array.from(new Set(loaded.map(r => (r.player_name || "").trim()).filter(Boolean)));
+    if (names.length > 0) {
+      const { data: pData } = await supabase
+        .from("players")
+        .select("name,image_url,club_logo")
+        .in("name", names);
+      const map: Record<string, { image_url: string | null; club_logo: string | null }> = {};
+      (pData || []).forEach((p: any) => {
+        map[p.name.toLowerCase()] = { image_url: p.image_url, club_logo: p.club_logo };
+      });
+      setPlayerMeta(map);
+    }
   };
 
   useEffect(() => { load(); }, [type]);
@@ -143,11 +160,13 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     });
     // Not contacted shows starred-only — players we actually want to contact
     map.not_contacted = (map.not_contacted || []).filter(r => !!r.is_starred);
-    // Sort the "replied" column so overdue/oldest follow-ups appear first
-    map.replied.sort((a, b) => {
-      const ad = a.next_followup_at || a.first_response_at || a.last_contact_at || "";
-      const bd = b.next_followup_at || b.first_response_at || b.last_contact_at || "";
-      return ad.localeCompare(bd);
+    // Sort every column by AI fit score (best to worst); null scores sink to the bottom.
+    Object.keys(map).forEach(stageId => {
+      map[stageId].sort((a, b) => {
+        const av = typeof a.fit_score === "number" ? a.fit_score : -Infinity;
+        const bv = typeof b.fit_score === "number" ? b.fit_score : -Infinity;
+        return bv - av;
+      });
     });
     return map;
   }, [filtered]);
@@ -281,8 +300,18 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                       fitBandClass={fitBand(r.fit_score)}
                       onOpen={() => { setActiveRow(r); setDrawerOpen(true); }}
                     >
+                      {(() => {
+                        const meta = playerMeta[(r.player_name || "").toLowerCase()] || { image_url: null, club_logo: null };
+                        const flag = r.nationality ? getCountryFlagUrl(r.nationality) : null;
+                        return (
+                      <>
                       <div className="flex items-start gap-2.5">
-                        <span className="pipeline-avatar" aria-hidden>{initialsOf(r.player_name)}</span>
+                        {meta.image_url ? (
+                          <img src={meta.image_url} alt={r.player_name}
+                            className="h-10 w-10 rounded-full object-cover object-top border border-primary/40 shrink-0" />
+                        ) : (
+                          <span className="pipeline-avatar !h-10 !w-10 !text-xs" aria-hidden>{initialsOf(r.player_name)}</span>
+                        )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <StarToggle id={r.id} table={table as any} initial={!!r.is_starred} size={14}
@@ -304,9 +333,22 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                                 {r.age}y
                               </span>
                             )}
+                            {flag && (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-foreground/[0.06] text-foreground/75 border border-border/50">
+                                <img src={flag} alt={r.nationality || ""} className="h-2.5 w-3.5 object-cover rounded-[1px]" />
+                                {r.nationality}
+                              </span>
+                            )}
                           </div>
                           {r.current_club && (
-                            <div className="text-[11px] text-muted-foreground truncate mt-1">{r.current_club}</div>
+                            <div className="mt-1 flex items-center gap-1.5 min-w-0">
+                              {meta.club_logo ? (
+                                <img src={meta.club_logo} alt="" className="h-3.5 w-3.5 object-contain shrink-0" />
+                              ) : (
+                                <Shield className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+                              )}
+                              <span className="text-[11px] text-muted-foreground truncate">{r.current_club}</span>
+                            </div>
                           )}
                           {r.agent_status === "top_agency" && r.agent_name && (
                             <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-300/90">
@@ -353,7 +395,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-2 flex-wrap pl-[42px]">
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap pl-[50px]">
                         {r.last_contact_at && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                             <Clock className="h-3 w-3" />
@@ -364,27 +406,31 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                       </div>
                       {/* Offer + template only on starred rows (i.e. players we actually want to contact) */}
                       {r.is_starred && (
-                        <div className="mt-2 flex items-center gap-1 flex-wrap pl-[42px]" onClick={e => e.stopPropagation()}>
-                          <TemplatePickerInline
-                            compact
-                            playerName={r.player_name}
-                            position={r.position}
-                            club={r.current_club}
-                            age={r.age}
-                            scope={type}
-                            preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
-                          />
+                        <div className="mt-2.5 space-y-1.5" onClick={e => e.stopPropagation()}>
+                          <div className="pl-[50px]">
+                            <TemplatePickerInline
+                              compact
+                              playerName={r.player_name}
+                              position={r.position}
+                              club={r.current_club}
+                              age={r.age}
+                              scope={type}
+                              preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
+                            />
+                          </div>
                           <Button
                             type="button"
                             size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px] border-primary/40 hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
+                            className="w-full h-9 bg-primary/90 hover:bg-primary text-primary-foreground font-semibold tracking-wide shadow-[0_4px_14px_-6px_hsl(var(--primary)/0.55)]"
                             onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
                           >
-                            <Settings2 className="h-3.5 w-3.5 mr-1" /> Actions
+                            <Settings2 className="h-4 w-4 mr-1.5" /> Open actions
                           </Button>
                         </div>
                       )}
+                      </>
+                        );
+                      })()}
                     </DraggableCard>
                   ))}
                 </div>
