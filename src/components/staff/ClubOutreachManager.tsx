@@ -344,10 +344,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
         club_id: clubId,
         player_id: entries[0]?.player_id ?? null,
         fit_recommendation: entries[0]?.fit_recommendation ?? null,
-        club_contact_name: contactName.trim() || null,
-        club_contact_role: contactRole.trim() || null,
-        club_contact_phone: contactPhone.trim() || null,
-        club_contact_accent: contactName.trim() ? contactAccent : null,
+        prepared_for_name: preparedFor.trim() || null,
+        show_form: showForm,
+        show_in_numbers: showInNumbers,
+        show_season_stats: showSeasonStats,
+        show_strengths: showStrengths,
       };
       let linkId = editing?.id ?? null;
       if (editing) {
