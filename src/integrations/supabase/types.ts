@@ -1084,6 +1084,7 @@ export type Database = {
       club_outreach_links: {
         Row: {
           archived_at: string | null
+          club_contact_accent: string | null
           club_contact_name: string | null
           club_contact_phone: string | null
           club_contact_role: string | null
@@ -1099,6 +1100,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          club_contact_accent?: string | null
           club_contact_name?: string | null
           club_contact_phone?: string | null
           club_contact_role?: string | null
@@ -1114,6 +1116,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          club_contact_accent?: string | null
           club_contact_name?: string | null
           club_contact_phone?: string | null
           club_contact_role?: string | null

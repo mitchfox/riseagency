@@ -1,0 +1,1 @@
+ALTER TABLE public.club_outreach_links ADD COLUMN IF NOT EXISTS club_contact_accent text;

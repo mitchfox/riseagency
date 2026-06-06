@@ -1,66 +1,55 @@
-# Club outreach proposal polish
+# Club Outreach polish — round 3
 
-## 1. Unblock proof of representation
+## 1. Use the real sitewide Rise Gold `#C6A332`
 
-The `proof-of-representation` bucket is private. Even with a service-role signed URL, opening the link can land on Supabase's auth screen for some browsers, and any legacy rows where `proof_of_representation_path` is a full URL fail silently.
+The brand gold used everywhere else in the app (Stars icons, PlaylistManager, TransferReportView, AnnotationToolbar, MatchClipPlayer, ShotMapGraphic, etc.) is the hex constant `#C6A332`. The previous pass swapped to `hsl(43,96%,56%)` which is a brighter yellow and does not match. Revert every occurrence to `#C6A332` (and `rgba(198,163,50,…)` for shadows) in:
 
-- Flip the `proof-of-representation` bucket to public via `storage_update_bucket` (matches other read-only document buckets like `analysis-files`, and contents are legitimately shareable to the receiving club).
-- In `get-club-outreach`, change the URL builder to:
-  - if the stored value already starts with `http`, return it as-is
-  - otherwise return the public URL via `supabase.storage.from('proof-of-representation').getPublicUrl(path)`
-- Keep the staff-only upload/update policy unchanged so only staff/admin can write.
+- `src/pages/ClubOutreachProposal.tsx` — loader spinner, hero eyebrow, slot pills, carousel arrows, fit recommendation block (border, background, eyebrow), card hovers, card icon tiles, card footer arrows, "Key Details" eyebrow, marble background club glow, footer accents.
+- `src/components/staff/ClubOutreachManager.tsx` — New Outreach button, section divider gradients, card hover ring/shadow, status toggle selected state, player select highlight, dashed proof panel, Save defaults button, Log update button, contact icons, status icon tints.
 
-## 2. Use the real Rise Gold everywhere on these screens
+Apply via a Tailwind constant pattern: introduce a local `const RG = "#C6A332"` at the top of each file and reuse with bracket classes (`bg-[#C6A332]`, `text-[#C6A332]`, `border-[#C6A332]`, `hover:border-[#C6A332]/60`, `hover:shadow-[0_10px_40px_-15px_rgba(198,163,50,0.4)]`). Status toggle "selected" pill becomes `bg-[#C6A332] text-black`.
 
-The current `#C6A332` is the dull token; the brand bright Rise Gold used everywhere else in the app is `hsl(43, 96%, 56%)` (≈ `#F5C518`). Replace every `#C6A332` reference in:
+## 2. Key Details card — correct club logo and league country
 
-- `src/pages/ClubOutreachProposal.tsx` (chips, carousel arrows, hero glow, fit card border/eyebrow, card icons, CTA background and shadow, footer accents).
-- `src/components/staff/ClubOutreachManager.tsx` — including the staff section's **New Outreach** button, the player selection highlights, the dashed proof panel, the Log update button, the Save defaults button, and any text/icon golds.
+Current code uses the outreached club's `image_url` for the club tile (wrong — that's the destination club, not the player's current club) and the destination club's country for the league flag (wrong — should be the league's own country).
 
-Use `hsl(43,96%,56%)` directly (or `text-risegold` where the alias resolves) so it matches the rest of the staff portal.
+Changes:
 
-## 3. Redesign the Key Details card (card 04)
+- **Club tile**: resolve the player's current club logo from `club_map_positions` using `players.club`. Easiest place is the edge function `supabase/functions/get-club-outreach/index.ts`: after loading players, run a second `club_map_positions` query with `.in('club_name', uniqueClubNames)` and attach `player_club_image_url` + `player_club_country` to each player entry. Front-end then renders `entry.player_club_image_url` here, falling back to the first letter of `player.club`.
+- **League tile**: derive country from the league string itself. Add a small helper `leagueCountryFromName(league)` in `src/lib/countryFlags.ts` that scans `countryCodeMap` keys (countries + demonyms) for the first whole-word match against the league string (case-insensitive). Examples: "Czech Liga" → `cz`, "Norwegian Eliteserien" → `no`, "Liga Portugal 2" → `pt`, "Bundesliga" stays unmatched and falls back to the player's club country (from step above) then nationality. Render that flag.
 
-Replace the current label/value list inside `KeyDetailsCard` with a 2x2 grid of equal tiles inside the same card frame:
+Drop the current `leagueCountry = club?.country` line entirely.
 
-```text
-+---------------------------+
-|   [club logo]   |  AGE    |
-|   club name     |   17    |
-|-----------------+---------|
-| [nationality]   | [league |
-|  nationality    |  flag]  |
-|                 |  league |
-+---------------------------+
-```
+## 3. Club contact accent colour (manager dialogs)
 
-- Tile 1: club crest (`club_image_url` from `players.club` resolved via `useClubMaps`/`club_map_positions` lookup, fall back to first letter), with club name beneath.
-- Tile 2: huge age number (≈ `text-5xl font-semibold`) with "yrs" suffix in muted text.
-- Tile 3: nationality flag (`/flags/<iso>.svg` via `countryFlags` helper) with nationality label beneath.
-- Tile 4: league country flag (derived from `players.league` → country via existing `countryClubTiers`/league-country map, fall back to club country) with the league name beneath.
+Add an optional `club_contact_accent` colour per outreach link so staff can match the destination club's brand:
 
-Position is no longer needed (it already shows under the player name strip); drop it from this card to keep the four-tile grid clean.
+- Migration: add nullable `club_contact_accent text` to `club_outreach_links` (hex string, no constraint).
+- `ClubOutreachManager.tsx` New Outreach + Edit dialogs: add a small native `<input type="color">` next to the contact name field labelled "Contact button colour". Persist on save.
+- `get-club-outreach` edge function: include `club_contact_accent` in the returned `link` payload.
+- `ClubOutreachProposal.tsx` "Your club contact" CTA: when set, use the picked hex as background and pick black/white text automatically using a luminance helper (`(0.299*r + 0.587*g + 0.114*b) > 150 ? '#000' : '#fff'`). When unset, keep the current outline style.
 
-## 4. WhatsApp-branded agent contact CTA
+The WhatsApp CTA stays branded green regardless.
 
-Update the agent contact button:
+## 4. WhatsApp CTA label
 
-- Background `#25D366` (WhatsApp green), text white, hover slightly darker (`#1ebe57`).
-- Replace `lucide-react` `MessageCircle` with an inline WhatsApp SVG logo (white).
-- Keep the same shape, padding, and "Agent contact / Rise Football Agency" copy.
-- The secondary "Your club contact" CTA stays in the existing outline style so the distinction is sharper.
+Update the WhatsApp button label in `ClubOutreachProposal.tsx` from "WhatsApp the agent / Rise Football Agency" to:
 
-## 5. Black marble background on the proposal page
+- Primary line: **WhatsApp the Agent**
+- Sub line: **Jolon Levene — RISE Football**
 
-The proposal page is currently flat black. Apply the smudged black marble used elsewhere in the brand:
+(use an en-dash, not an em-dash, per project prose rules).
 
-- Add a fixed-position background layer using `@/assets/black-marble-smudged.png`, full viewport, `bg-cover bg-center`, overlaid with a subtle black gradient (≈ 70% opacity) for readability.
-- Cards and the Fit & Recommendation block stay on translucent surfaces (`bg-white/[0.04]`, `backdrop-blur-sm`) so the marble shows through.
-- Header club logo region gets a soft Rise Gold radial glow on top of the marble.
+## 5. New Outreach + status pill highlight
 
-## Technical notes
+Already covered in step 1 — the selected pill in the three-state status toggle (`Ready/Drafts/Sent`) and the staff "New Outreach" button both move to `#C6A332` with black text.
 
-- Files touched: `src/pages/ClubOutreachProposal.tsx`, `src/components/staff/ClubOutreachManager.tsx`, `supabase/functions/get-club-outreach/index.ts`.
-- Bucket flip via `supabase--storage_update_bucket` (no migration needed).
-- League-country resolution: add a small helper that maps league name → ISO country code using the existing `countryClubTiers` data; fall back to `players.country`/`club_map_positions.country` when unknown.
-- No schema changes.
+## Files touched
+
+- `src/pages/ClubOutreachProposal.tsx`
+- `src/components/staff/ClubOutreachManager.tsx`
+- `src/lib/countryFlags.ts` (new `leagueCountryFromName` helper)
+- `supabase/functions/get-club-outreach/index.ts` (player club lookup + `club_contact_accent`)
+- New migration: add `club_contact_accent` column on `club_outreach_links`.
+
+No other behaviour changes.
