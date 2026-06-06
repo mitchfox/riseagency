@@ -246,7 +246,7 @@ export default function ClubOutreachProposal() {
           subtitle="Signed agreement with Rise Football Agency"
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
         />
-        <KeyDetailsCard player={player} age={age} />
+        <KeyDetailsCard player={player} age={age} club={club} />
       </section>
 
       {/* Contact CTAs */}
