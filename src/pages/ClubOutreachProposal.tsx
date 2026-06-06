@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 
 function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
@@ -34,6 +35,11 @@ interface PlayerEntry {
   player_club_image_url: string | null;
   player_club_country: string | null;
   first_highlight_url: string | null;
+  top_stats: any | null;
+  season_stats: any | null;
+  strengths_and_play_style: any | null;
+  form_config: { window_size: number; stats: any[] } | null;
+  form_analyses: any[] | null;
 }
 
 interface Payload {
@@ -46,10 +52,24 @@ interface Payload {
     club_contact_role: string | null;
     club_contact_phone: string | null;
     club_contact_accent: string | null;
+    prepared_for_name: string | null;
+    show_form: boolean;
+    show_in_numbers: boolean;
+    show_season_stats: boolean;
+    show_strengths: boolean;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
   whatsapp_number: string | null;
+  agent_name: string | null;
+  agent_image_url: string | null;
+  club_contact: {
+    contact_name: string | null;
+    contact_role: string | null;
+    contact_phone: string | null;
+    contact_accent: string | null;
+    contact_image_url: string | null;
+  } | null;
 }
 
 // Pick black or white text based on background luminance.
@@ -136,19 +156,24 @@ export default function ClubOutreachProposal() {
   const player = current.player;
 
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
-  const playerNames = data.players.map((e) => e.player?.name).filter(Boolean).join(", ");
-  const waText = encodeURIComponent(
-    `Hi, I just viewed the Rise Football Agency proposal${playerNames ? ` for ${playerNames}` : ""}${club?.club_name ? ` (${club.club_name})` : ""}. I'd like to discuss further.`
-  );
-  const agencyWaUrl = wa ? `https://wa.me/${wa}?text=${waText}` : null;
+  const agencyWaUrl = wa ? `https://wa.me/${wa}` : null;
 
-  const clubPhone = (data.link.club_contact_phone ?? "").replace(/[^0-9]/g, "");
+  // Prefer club-level contact directory; fall back to per-link fields
+  const clubContactName = data.club_contact?.contact_name ?? data.link.club_contact_name;
+  const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
+  const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
+  const clubContactImage = data.club_contact?.contact_image_url ?? null;
+  const clubPhone = (clubContactPhoneRaw ?? "").replace(/[^0-9]/g, "");
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
   const hasMultiple = data.players.length > 1;
   const fitText = (current.fit_recommendation ?? "").trim();
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
   const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
+  const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
+  const playerClubLogo = current.player_club_image_url;
+  const preparedFor =
+    (data.link.prepared_for_name ?? "").trim() || (club?.club_name ? `${club.club_name}${club.country ? `, ${club.country}` : ""}` : "");
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
@@ -165,19 +190,26 @@ export default function ClubOutreachProposal() {
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
         {club?.image_url ? (
-          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]" />
+          <img
+            src={club.image_url}
+            alt={club.club_name}
+            onError={(e) => ((e.currentTarget.style.display = "none"))}
+            className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]"
+          />
         ) : (
           <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
-        <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">
-          {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
-        </h1>
-        {club?.club_name && (
-          <p className="mt-3 text-xs text-white/40">Prepared for <span className="text-white/80">{club.club_name}</span>{club.country ? `, ${club.country}` : ""}</p>
-        )}
+        <div className="mt-6 flex flex-col items-center gap-4">
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
+          <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
+            {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
+          </h1>
+          {preparedFor && (
+            <p className="text-xs text-white/40">Prepared for <span className="text-white/85">{preparedFor}</span></p>
+          )}
+        </div>
       </header>
 
       {/* Position chips */}
@@ -217,12 +249,37 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Single-player name strip (when only one) */}
-      {!hasMultiple && player && (
-        <div className="max-w-3xl mx-auto px-6 mt-4 text-center">
-          <p className="text-sm text-white/60">
-            {[player.position, age ? `${age} yrs` : null, player.nationality, player.club].filter(Boolean).join(" • ")}
-          </p>
+      {/* Player info strip (Stars-style with flag + club logo) */}
+      {player && (
+        <div className="max-w-3xl mx-auto px-6 mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-white/75">
+          {player.position && <span className="uppercase tracking-wider text-white/85">{player.position}</span>}
+          {age != null && <span className="text-white/55">{age} yrs</span>}
+          {player.nationality && (
+            <span className="inline-flex items-center gap-2">
+              {nationalityFlag && (
+                <img
+                  src={nationalityFlag}
+                  alt={player.nationality}
+                  onError={(e) => ((e.currentTarget.style.display = "none"))}
+                  className="h-3.5 w-5 object-cover rounded-[2px]"
+                />
+              )}
+              {player.nationality}
+            </span>
+          )}
+          {player.club && (
+            <span className="inline-flex items-center gap-2">
+              {playerClubLogo && (
+                <img
+                  src={playerClubLogo}
+                  alt={player.club}
+                  onError={(e) => ((e.currentTarget.style.display = "none"))}
+                  className="h-5 w-5 object-contain"
+                />
+              )}
+              {player.club}
+            </span>
+          )}
         </div>
       )}
 
@@ -237,8 +294,8 @@ export default function ClubOutreachProposal() {
                 className="w-full h-full object-contain bg-black"
                 controls
                 playsInline
+                autoPlay
                 preload="metadata"
-                poster={player?.image_url ?? undefined}
               />
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
@@ -267,17 +324,44 @@ export default function ClubOutreachProposal() {
           subtitle="Full profile, highlights and statistics"
         />
         <ProposalCard
-          href={current.proof_of_representation_url}
+          href={
+            current.proof_of_representation_url && data.link.short_id && player?.id
+              ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+              : null
+          }
           icon={<FileBadge2 className="h-6 w-6" />}
           eyebrow="02"
           title="Proof of Representation"
           subtitle="Signed agreement with Rise Football Agency"
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
+          internal
         />
       </section>
       <section className="max-w-3xl mx-auto px-6 mt-4">
         <KeyDetailsCard entry={current} age={age} />
       </section>
+
+      {/* Optional Stars-derived sections (per-link toggles) */}
+      {data.link.show_form && current.form_config && current.form_analyses && (
+        <section className="max-w-3xl mx-auto px-6 mt-4">
+          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} />
+        </section>
+      )}
+      {data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0 && (
+        <section className="max-w-3xl mx-auto px-6 mt-4">
+          <InNumbersCard stats={current.top_stats} />
+        </section>
+      )}
+      {data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0 && (
+        <section className="max-w-3xl mx-auto px-6 mt-4">
+          <SeasonStatsCard stats={current.season_stats} />
+        </section>
+      )}
+      {data.link.show_strengths && current.strengths_and_play_style && (
+        <section className="max-w-3xl mx-auto px-6 mt-4">
+          <StrengthsCard data={current.strengths_and_play_style} />
+        </section>
+      )}
 
       {/* Contact CTAs */}
       <div className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
@@ -290,17 +374,26 @@ export default function ClubOutreachProposal() {
             className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold shadow-[0_10px_40px_-10px_rgba(37,211,102,0.55)] hover:shadow-[0_14px_50px_-10px_rgba(37,211,102,0.85)] transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
-              <WhatsAppIcon className="h-6 w-6" />
+              {data.agent_image_url ? (
+                <img
+                  src={data.agent_image_url}
+                  alt={data.agent_name ?? "Agent"}
+                  onError={(e) => ((e.currentTarget.style.display = "none"))}
+                  className="h-10 w-10 rounded-full object-cover border-2 border-white/40"
+                />
+              ) : (
+                <WhatsAppIcon className="h-6 w-6" />
+              )}
               <div className="text-left">
                 <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp {firstName}'s Agent</div>
-                <div className="text-sm sm:text-base">Jolon Levene – RISE Football</div>
+                <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
             <ExternalLink className="h-4 w-4 opacity-80" />
           </a>
         )}
-        {clubWaUrl && data.link.club_contact_name && (() => {
-          const accent = data.link.club_contact_accent;
+        {clubWaUrl && clubContactName && (() => {
+          const accent = clubContactAccent;
           const useAccent = !!accent && /^#?[0-9a-fA-F]{3,6}$/.test(accent);
           const bg = useAccent ? (accent!.startsWith("#") ? accent! : `#${accent}`) : null;
           const fg = bg ? readableTextOn(bg) : "#fff";
@@ -318,11 +411,21 @@ export default function ClubOutreachProposal() {
               }
             >
               <div className="flex items-center gap-3">
-                <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
+                {clubContactImage ? (
+                  <img
+                    src={clubContactImage}
+                    alt={clubContactName}
+                    onError={(e) => ((e.currentTarget.style.display = "none"))}
+                    className="h-10 w-10 rounded-full object-cover border-2"
+                    style={{ borderColor: bg ? fg + "55" : "rgba(255,255,255,0.4)" }}
+                  />
+                ) : (
+                  <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
+                )}
                 <div className="text-left">
                   <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
                   <div className="text-sm sm:text-base">
-                    {data.link.club_contact_name}
+                    {clubContactName}
                     {club?.club_name ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {club.club_name}</span> : null}
                   </div>
                 </div>
@@ -333,15 +436,15 @@ export default function ClubOutreachProposal() {
         })()}
       </div>
 
-      <footer className="mt-12 text-center text-[11px] uppercase tracking-[0.3em] text-white/30">
-        Rise Football Agency
+      <footer className="mt-12 flex items-center justify-center">
+        <img src={riseLogoWhite} alt="RISE Football" className="h-8 w-auto opacity-70" />
       </footer>
     </div>
   );
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -349,6 +452,7 @@ function ProposalCard({
   title: string;
   subtitle: string;
   disabledLabel?: string;
+  internal?: boolean;
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
@@ -365,6 +469,9 @@ function ProposalCard({
     </div>
   );
   if (disabled) return <div className="block min-h-[180px]">{inner}</div>;
+  if (internal) {
+    return <Link to={href!} className="block min-h-[180px]">{inner}</Link>;
+  }
   return (
     <a href={href!} target="_blank" rel="noopener noreferrer" className="block min-h-[180px]">{inner}</a>
   );
@@ -393,51 +500,171 @@ function KeyDetailsCard({
       <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {clubLogo ? (
-            <img src={clubLogo} alt={player?.club ?? ""} className="h-12 w-12 object-contain" />
-          ) : (
-            <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
-              {(player?.club ?? "?")[0]}
-            </div>
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.club ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {clubLogo ? (
+              <img
+                src={clubLogo}
+                alt={player?.club ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-12 w-12 object-contain"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
+                {(player?.club ?? "?")[0]}
+              </div>
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.club ?? "—"}</p>
         </div>
 
         {/* Age */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          <span className="text-5xl font-semibold leading-none text-white">
-            {age != null ? age : "—"}
-          </span>
-          <span className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/50">Years old</span>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+          </div>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">Years old</p>
         </div>
 
         {/* Nationality */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {nationalityFlag ? (
-            <img src={nationalityFlag} alt={player?.nationality ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-          ) : (
-            <div className="h-10 w-14 rounded-sm bg-white/10" />
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.nationality ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {nationalityFlag ? (
+              <img
+                src={nationalityFlag}
+                alt={player?.nationality ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+              />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.nationality ?? "—"}</p>
         </div>
 
         {/* League */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {leagueFlag ? (
-            <img src={leagueFlag} alt={player?.league ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-          ) : (
-            <div className="h-10 w-14 rounded-sm bg-white/10" />
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.league ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {leagueFlag ? (
+              <img
+                src={leagueFlag}
+                alt={player?.league ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+              />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.league ?? "—"}</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// Optional Stars-derived sections
+function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
+  return (
+    <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 overflow-hidden">
+      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
+      <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
+  const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
+  const SUM = new Set(["goals", "assists", "xg", "xa"]);
+  const num = (row: any, key: string): number | null => {
+    const fs = row.fixture_stats || {};
+    const ss = row.striker_stats || {};
+    const v = fs[key] ?? ss[key] ?? row[key];
+    if (v == null) return null;
+    const n = typeof v === "number" ? v : parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
+  const fmt = (v: number | null, k: string) =>
+    v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+  const items = (cfg.stats || []).map((s: any) => {
+    const key = typeof s === "string" ? s : s.key;
+    const label = typeof s === "string" ? key : (s.label || key);
+    if (typeof s !== "string" && s.mode === "manual") {
+      const n = parseFloat((s.value ?? "").toString().trim());
+      return { key, label, value: isNaN(n) ? null : n };
+    }
+    const vals = rows.map((r) => num(r, key)).filter((v): v is number => v != null);
+    if (vals.length === 0) return { key, label, value: null };
+    const sum = vals.reduce((a, b) => a + b, 0);
+    return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
+  });
+  if (items.length === 0) return null;
+  return (
+    <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
+        {items.map((it) => (
+          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 text-center">
+            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{it.label}</div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function InNumbersCard({ stats }: { stats: any[] }) {
+  return (
+    <SectionShell title="In Numbers" eyebrow="05">
+      <div className="space-y-4">
+        {stats.map((s, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className="text-3xl font-semibold text-[#cbb96b] leading-none min-w-[3rem]">{s.value}</div>
+            <div className="flex-1">
+              <div className="text-[11px] uppercase tracking-wider text-white/70">{s.label}</div>
+              {s.description && <p className="mt-1 text-xs text-white/60 leading-relaxed">{s.description}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function SeasonStatsCard({ stats }: { stats: any[] }) {
+  return (
+    <SectionShell title="Season Stats" eyebrow="06">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {stats.map((s, i) => (
+          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{s.header}</div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function StrengthsCard({ data }: { data: any }) {
+  const items: string[] = Array.isArray(data)
+    ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
+    : typeof data === "string"
+    ? data.split(/\n+/).filter(Boolean)
+    : [];
+  if (items.length === 0) return null;
+  return (
+    <SectionShell title="Strengths & Play Style" eyebrow="07">
+      <ul className="space-y-2">
+        {items.map((s, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-white/85">
+            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#cbb96b] flex-shrink-0" />
+            <span>{s}</span>
+          </li>
+        ))}
+      </ul>
+    </SectionShell>
   );
 }

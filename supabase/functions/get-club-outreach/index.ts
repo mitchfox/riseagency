@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, created_at, archived_at"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -50,8 +50,15 @@ Deno.serve(async (req) => {
 
     const { data: settings } = await supabase
       .from("club_outreach_settings")
-      .select("whatsapp_number")
+      .select("whatsapp_number, agent_name, agent_image_url")
       .eq("id", 1)
+      .maybeSingle();
+
+    // Resolve the club-level contact (preferred over per-link fields)
+    const { data: clubContact } = await supabase
+      .from("club_outreach_club_contacts")
+      .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url")
+      .eq("club_id", link.club_id)
       .maybeSingle();
 
     const { data: linkPlayers } = await supabase
@@ -79,7 +86,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("players")
             .select(
-              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights"
+              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights, bio"
             )
             .in("id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -100,6 +107,30 @@ Deno.serve(async (req) => {
       (defaultsRows ?? []).map((d: any) => [d.player_id, d])
     );
 
+    // Form configs + recent analyses for the optional Form banner
+    const [{ data: formCfgs }, { data: formAnalyses }] = await Promise.all([
+      playerIds.length
+        ? supabase
+            .from("player_form_config")
+            .select("player_id, window_size, stats")
+            .in("player_id", playerIds)
+        : Promise.resolve({ data: [] as any[] }),
+      playerIds.length
+        ? supabase
+            .from("player_analysis")
+            .select("player_id, analysis_date, striker_stats, fixture_stats, minutes_played")
+            .in("player_id", playerIds)
+            .order("analysis_date", { ascending: false })
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const formCfgByPlayer = new Map<string, any>((formCfgs ?? []).map((c: any) => [c.player_id, c]));
+    const analysesByPlayer = new Map<string, any[]>();
+    (formAnalyses ?? []).forEach((r: any) => {
+      const arr = analysesByPlayer.get(r.player_id) ?? [];
+      arr.push(r);
+      analysesByPlayer.set(r.player_id, arr);
+    });
+
     // Resolve each player's CURRENT club logo via club_map_positions (case-insensitive).
     const uniqueClubNames = Array.from(
       new Set(
@@ -110,10 +141,14 @@ Deno.serve(async (req) => {
     );
     let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
     if (uniqueClubNames.length) {
+      // Case-insensitive name match via ilike OR-list keeps lookups tolerant.
+      const orFilter = uniqueClubNames
+        .map((n) => `club_name.ilike.${n.replace(/[,()]/g, " ")}`)
+        .join(",");
       const { data: clubRows } = await supabase
         .from("club_map_positions")
         .select("club_name, image_url, country")
-        .in("club_name", uniqueClubNames);
+        .or(orFilter);
       (clubRows ?? []).forEach((c: any) => {
         if (c.club_name) {
           clubLookup.set(c.club_name.toLowerCase().trim(), {
@@ -145,8 +180,9 @@ Deno.serve(async (req) => {
           (p?.name ? `https://risefootballagency.com/stars/${slugify(p.name)}` : null);
         const clubKey = (p?.club ?? "").toString().toLowerCase().trim();
         const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
-        // First highlight video on the player's Stars profile
+        // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
+        let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
           if (typeof h === "string") h = JSON.parse(h);
@@ -158,6 +194,21 @@ Deno.serve(async (req) => {
         } catch (_) {
           firstHighlightUrl = null;
         }
+        try {
+          bioParsed = p?.bio ? (typeof p.bio === "string" ? JSON.parse(p.bio) : p.bio) : null;
+        } catch (_) {
+          bioParsed = null;
+        }
+        const tactical = Array.isArray(bioParsed?.schemeHistory)
+          ? bioParsed.schemeHistory.find((s: any) => s?.clubLogo)
+          : null;
+        const bioClubLogo: string | null =
+          bioParsed?.currentClubLogo ?? tactical?.clubLogo ?? null;
+
+        // Form banner inputs
+        const cfg = formCfgByPlayer.get(e.player_id) ?? null;
+        const windowSize = cfg?.window_size ?? 5;
+        const recentAnalyses = (analysesByPlayer.get(e.player_id) ?? []).slice(0, windowSize);
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -166,9 +217,15 @@ Deno.serve(async (req) => {
           stars_url: starsUrl,
           highlights_url: d?.highlights_url ?? null,
           proof_of_representation_url: proofUrl,
-          player_club_image_url: clubInfo?.image_url ?? p?.club_logo ?? null,
+          player_club_image_url:
+            bioClubLogo ?? clubInfo?.image_url ?? p?.club_logo ?? null,
           player_club_country: clubInfo?.country ?? null,
           first_highlight_url: firstHighlightUrl,
+          top_stats: bioParsed?.topStats ?? null,
+          season_stats: bioParsed?.seasonStats ?? null,
+          strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,
+          form_config: cfg ? { window_size: windowSize, stats: cfg.stats ?? [] } : null,
+          form_analyses: recentAnalyses,
         };
       })
     );
@@ -190,6 +247,9 @@ Deno.serve(async (req) => {
         club,
         players,
         whatsapp_number: settings?.whatsapp_number ?? null,
+        agent_name: settings?.agent_name ?? null,
+        agent_image_url: settings?.agent_image_url ?? null,
+        club_contact: clubContact ?? null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

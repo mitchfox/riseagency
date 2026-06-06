@@ -21,6 +21,7 @@ import { ThemeProvider } from "next-themes";
 import Home from "./pages/Home";
 import Stars from "./pages/Stars";
 import PlayerDetail from "./pages/PlayerDetail";
+import ClubOutreachProof from "./pages/ClubOutreachProof";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
@@ -143,6 +144,7 @@ const App = () => {
                       {createLocalizedRoutes('/clubs', <Clubs />)}
                       <Route path="/clubs/:shortId" element={<ClubOutreachProposal />} />
                       <Route path="/club-proposal/:shortId" element={<ClubOutreachProposal />} />
+                      <Route path="/club-proposal/:shortId/proof/:playerId" element={<ClubOutreachProof />} />
                       {createLocalizedRoutes('/coaches', <Coaches />)}
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
