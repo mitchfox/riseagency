@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, created_at, archived_at"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, created_at, archived_at"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -100,6 +100,30 @@ Deno.serve(async (req) => {
       (defaultsRows ?? []).map((d: any) => [d.player_id, d])
     );
 
+    // Resolve each player's CURRENT club logo via club_map_positions (case-insensitive).
+    const uniqueClubNames = Array.from(
+      new Set(
+        (playerRows ?? [])
+          .map((p: any) => (p.club ?? "").toString().trim())
+          .filter((s: string) => s.length > 0)
+      )
+    );
+    let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
+    if (uniqueClubNames.length) {
+      const { data: clubRows } = await supabase
+        .from("club_map_positions")
+        .select("club_name, image_url, country")
+        .in("club_name", uniqueClubNames);
+      (clubRows ?? []).forEach((c: any) => {
+        if (c.club_name) {
+          clubLookup.set(c.club_name.toLowerCase().trim(), {
+            image_url: c.image_url ?? null,
+            country: c.country ?? null,
+          });
+        }
+      });
+    }
+
     const players = await Promise.all(
       entries.map(async (e: any) => {
         const p = playerById.get(e.player_id);
@@ -119,6 +143,8 @@ Deno.serve(async (req) => {
         const starsUrl =
           d?.stars_url_override ??
           (p?.name ? `https://risefootballagency.com/stars/${slugify(p.name)}` : null);
+        const clubKey = (p?.club ?? "").toString().toLowerCase().trim();
+        const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -127,6 +153,8 @@ Deno.serve(async (req) => {
           stars_url: starsUrl,
           highlights_url: d?.highlights_url ?? null,
           proof_of_representation_url: proofUrl,
+          player_club_image_url: clubInfo?.image_url ?? null,
+          player_club_country: clubInfo?.country ?? null,
         };
       })
     );
