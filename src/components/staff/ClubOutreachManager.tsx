@@ -659,26 +659,56 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
   );
 }
 
-function SettingsDialog({ open, onClose, players }: { open: boolean; onClose: () => void; players: PlayerLite[]; }) {
+function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; }) {
   const [whatsapp, setWhatsapp] = useState("");
+  const [agentName, setAgentName] = useState("");
+  const [agentImageUrl, setAgentImageUrl] = useState("");
+  const [agentUploading, setAgentUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
+  // Club contacts state
+  const [clubQuery, setClubQuery] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string }>({
+    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "",
+  });
+  const [contactImgUploading, setContactImgUploading] = useState(false);
 
   const filteredPlayers = useMemo(() => {
     const n = playerQuery.trim().toLowerCase();
     return n ? players.filter(p => p.name.toLowerCase().includes(n)) : players;
   }, [players, playerQuery]);
+  const filteredClubs = useMemo(() => {
+    const n = clubQuery.trim().toLowerCase();
+    return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
+  }, [clubs, clubQuery]);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("club_outreach_settings").select("whatsapp_number").eq("id", 1).maybeSingle();
+      const { data } = await supabase.from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url").eq("id", 1).maybeSingle();
       setWhatsapp(data?.whatsapp_number ?? "");
+      setAgentName(data?.agent_name ?? "");
+      setAgentImageUrl(data?.agent_image_url ?? "");
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!selectedClubId) return;
+    (async () => {
+      const { data } = await supabase.from("club_outreach_club_contacts").select("*").eq("club_id", selectedClubId).maybeSingle();
+      setContact({
+        contact_name: data?.contact_name ?? "",
+        contact_role: data?.contact_role ?? "",
+        contact_phone: data?.contact_phone ?? "",
+        contact_accent: data?.contact_accent ?? "#1f2937",
+        contact_image_url: data?.contact_image_url ?? "",
+      });
+    })();
+  }, [selectedClubId]);
 
   useEffect(() => {
     if (!selectedPlayerId) return;
@@ -693,9 +723,65 @@ function SettingsDialog({ open, onClose, players }: { open: boolean; onClose: ()
   }, [selectedPlayerId]);
 
   const saveWhatsapp = async () => {
-    const { error } = await supabase.from("club_outreach_settings").upsert({ id: 1, whatsapp_number: whatsapp.trim(), updated_at: new Date().toISOString() });
+    const { error } = await supabase.from("club_outreach_settings").upsert({
+      id: 1,
+      whatsapp_number: whatsapp.trim(),
+      agent_name: agentName.trim() || null,
+      agent_image_url: agentImageUrl.trim() || null,
+      updated_at: new Date().toISOString(),
+    });
     if (error) return toast.error(error.message);
-    toast.success("WhatsApp number saved");
+    toast.success("Agency contact saved");
+  };
+
+  const uploadAgentImage = async (file: File) => {
+    setAgentUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `agent-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("club-logos").upload(path, file, { cacheControl: "3600", upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+      setAgentImageUrl(data.publicUrl);
+      toast.success("Agent image uploaded — click Save to apply");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setAgentUploading(false);
+    }
+  };
+
+  const saveClubContact = async () => {
+    if (!selectedClubId) return;
+    const { error } = await supabase.from("club_outreach_club_contacts").upsert({
+      club_id: selectedClubId,
+      contact_name: contact.contact_name.trim() || null,
+      contact_role: contact.contact_role.trim() || null,
+      contact_phone: contact.contact_phone.trim() || null,
+      contact_accent: contact.contact_name.trim() ? contact.contact_accent : null,
+      contact_image_url: contact.contact_image_url.trim() || null,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Club contact saved");
+  };
+
+  const uploadContactImage = async (file: File) => {
+    if (!selectedClubId) return;
+    setContactImgUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `contact-${selectedClubId}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("club-logos").upload(path, file, { cacheControl: "3600", upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+      setContact(c => ({ ...c, contact_image_url: data.publicUrl }));
+      toast.success("Image uploaded — click Save to apply");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setContactImgUploading(false);
+    }
   };
 
   const saveDefaults = async () => {
