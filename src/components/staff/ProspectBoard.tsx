@@ -113,44 +113,25 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
       ref={setNodeRef}
       style={style}
       className={`
-        relative group rounded-xl overflow-hidden border-2 transition-all duration-300 shine-on-hover
-        ${isDragging ? 'opacity-40 scale-95' : 'hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-18px_hsl(var(--primary)/0.55)]'}
+        pipeline-card group relative overflow-hidden p-3
+        ${isDragging ? 'opacity-40 scale-95' : ''}
         ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}
       `}
       {...(isAdmin ? { ...attributes, ...listeners } : {})}
     >
-      {/* Card background with gradient */}
-      <div
-        className="relative p-3 min-h-[140px] flex flex-col justify-between"
-        style={{
-          background: `linear-gradient(145deg, hsl(0, 0%, 14%) 0%, hsl(0, 0%, 8%) 100%)`,
-          borderColor: priorityColor,
-        }}
-      >
+      <div className="relative min-h-[140px] flex flex-col justify-between">
         {/* Top section: position badge + priority dot */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-1.5">
             {isAdmin && (
-              <GripVertical className="w-3.5 h-3.5 text-muted-foreground/40" />
+              <GripVertical className="grip-dots w-3.5 h-3.5 text-muted-foreground/40" />
             )}
             {prospect.position && (
-              <span
-                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-                style={{
-                  background: `${priorityColor}22`,
-                  color: priorityColor,
-                  border: `1px solid ${priorityColor}44`,
-                }}
-              >
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
                 {prospect.position}
               </span>
             )}
-            <Badge
-              variant="outline"
-              className="text-[9px] h-4 px-1.5 font-bebas tracking-wider"
-              style={{ color: 'hsl(43, 49%, 70%)', borderColor: 'hsl(43, 49%, 61% / 0.4)', background: 'hsl(43, 49%, 61% / 0.08)' }}
-              title="Team level"
-            >
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bebas tracking-wider text-primary/80 border-primary/40 bg-primary/10" title="Team level">
               {ageGroupLabelMap[prospect.age_group]}
             </Badge>
           </div>
@@ -175,17 +156,14 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
 
         {/* Centre: avatar + name */}
         <div className="flex items-center gap-3 my-1">
-          <Avatar className="h-16 w-16 border-2 shrink-0 rounded-lg" style={{ borderColor: `${priorityColor}66` }}>
+          <Avatar className="h-16 w-16 border-2 border-primary/40 shrink-0 rounded-lg">
             <AvatarImage src={prospect.profile_image_url || ""} alt={prospect.name} className="object-cover object-top" />
-            <AvatarFallback
-              className="text-xs font-bold rounded-lg"
-              style={{ background: `${priorityColor}22`, color: priorityColor }}
-            >
+            <AvatarFallback className="text-xs font-bold rounded-lg bg-primary/15 text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <div className="font-bold text-sm truncate" style={{ color: 'hsl(43, 49%, 75%)' }}>
+            <div className="font-bold text-sm truncate text-primary">
               {prospect.name}
             </div>
             {prospect.current_club && (
@@ -211,7 +189,7 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
         </div>
 
         {/* Bottom: age group + age + actions */}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
           <div className="flex items-center gap-2" />
           <div className="flex items-center gap-1">
             {prospect.player_email && (
@@ -282,15 +260,10 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
             )}
           </div>
         </div>
-
-        {/* Decorative corner line */}
-        <div
-          className="absolute top-0 right-0 w-8 h-8"
-          style={{
-            background: `linear-gradient(225deg, ${priorityColor}33 0%, transparent 60%)`,
-          }}
-        />
       </div>
+      {/* Priority strip down the right edge */}
+      <span aria-hidden className="absolute top-0 right-0 bottom-0 w-[3px]"
+        style={{ background: `linear-gradient(180deg, ${priorityColor}, ${priorityColor}44)` }} />
     </div>
   );
 };
@@ -336,27 +309,39 @@ const StageColumn = ({ stageValue, stageLabel, prospects: stageProspects, isAdmi
 }) => {
   const { setNodeRef } = useDroppable({ id: stageValue });
 
+  const weightedEV = stageProspects.reduce((acc, p) => {
+    const rev = p.projected_revenue || 0;
+    const w = (p.probability_weight || 0) / 100;
+    return acc + rev * w;
+  }, 0);
+
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[200px] rounded-xl border transition-all duration-200 ${isOver ? 'ring-2 ring-primary/50 border-primary/40' : ''}`}
-      style={{ borderColor: isOver ? undefined : 'rgba(255, 255, 255, 0.08)' }}
+      className={`stage-column flex-1 min-w-[240px] !p-0 overflow-hidden ${isOver ? 'is-over' : ''}`}
     >
-      <div
-        className="px-3 py-2 flex items-center justify-between rounded-t-xl"
-        style={{ backgroundColor: 'hsl(43, 49%, 61%)' }}
-      >
-        <span className="font-bebas uppercase text-sm tracking-wider" style={{ color: 'hsl(0, 0%, 0%)' }}>
-          {stageLabel}
-        </span>
-        <Badge variant="secondary" className="text-[10px] h-5 bg-black/20 text-black border-0">
-          {stageProspects.length}
-        </Badge>
+      <div className="px-3 py-2.5 flex items-center justify-between bg-primary/[0.08] border-b border-primary/20">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_currentColor]" />
+          <span className="font-bebas uppercase text-sm tracking-wider text-primary truncate">
+            {stageLabel}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {weightedEV > 0 && (
+            <span className="text-[10px] text-muted-foreground font-medium">
+              £{Math.round(weightedEV).toLocaleString()}
+            </span>
+          )}
+          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-foreground/[0.06] border border-border/60 text-foreground/80">
+            {stageProspects.length}
+          </span>
+        </div>
       </div>
-      <div className="p-2 space-y-2 min-h-[150px]" style={{ backgroundColor: 'hsl(0, 0%, 6%)' }}>
+      <div className="p-2 space-y-2 min-h-[180px] bg-card/30">
         {stageProspects.length === 0 ? (
-          <div className="py-8 text-center text-xs text-muted-foreground opacity-30">
-            Drop here
+          <div className="py-8 text-center text-[11px] text-muted-foreground italic border border-dashed border-border/40 rounded-md">
+            Drop a prospect here
           </div>
         ) : (
           stageProspects.map(p => (
