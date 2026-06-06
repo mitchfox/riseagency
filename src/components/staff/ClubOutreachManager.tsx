@@ -834,13 +834,73 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
           <section>
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4 text-[#cbb96b]" />
-              <h3 className="text-sm font-semibold">Agency WhatsApp number</h3>
+              <h3 className="text-sm font-semibold">Agency contact</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-2">Used by the WhatsApp button on every proposal. Include country code, e.g. <code>447700900000</code>.</p>
-            <div className="flex gap-2">
-              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="447700900000" />
-              <Button onClick={saveWhatsapp} disabled={loading}>Save</Button>
+            <p className="text-xs text-muted-foreground mb-2">Shown as the WhatsApp agent on every proposal. WhatsApp number must include country code, e.g. <code>447700900000</code>.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp number (e.g. 447700900000)" />
+              <Input value={agentName} onChange={(e) => setAgentName(e.target.value)} placeholder="Agent name (e.g. Jolon Levene)" />
             </div>
+            <div className="mt-2 flex items-center gap-3">
+              {agentImageUrl ? (
+                <img src={agentImageUrl} className="h-12 w-12 rounded-full object-cover border border-[#cbb96b]/40" />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center"><UserCircle2 className="h-6 w-6 text-muted-foreground" /></div>
+              )}
+              <label className="inline-flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border px-3 py-2 hover:border-[#cbb96b]/60">
+                <Upload className="h-3.5 w-3.5" />
+                <span>{agentUploading ? "Uploading…" : agentImageUrl ? "Replace agent image" : "Upload agent image"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAgentImage(f); }} disabled={agentUploading} />
+              </label>
+              <Button onClick={saveWhatsapp} disabled={loading} className="ml-auto bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Club contacts</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">One saved contact per club, reused across every outreach to that club. Text auto-switches between black and white for contrast.</p>
+            <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mb-2" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1 mb-3">
+              {filteredClubs.map(c => (
+                <button key={c.id} type="button" onClick={() => setSelectedClubId(c.id)}
+                  className={`flex items-center gap-2 rounded-md border p-2 text-left ${selectedClubId === c.id ? "border-[#cbb96b] bg-[#cbb96b]/10" : "border-border hover:border-[#cbb96b]/40"}`}>
+                  {c.image_url ? <img src={c.image_url} className="h-8 w-8 object-contain bg-white/5 rounded" /> : <div className="h-8 w-8 rounded bg-muted" />}
+                  <div className="text-xs font-medium truncate">{c.club_name}</div>
+                </button>
+              ))}
+            </div>
+            {selectedClubId && (
+              <div className="space-y-3 rounded-md border border-border p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Input placeholder="Contact name" value={contact.contact_name} onChange={(e) => setContact(c => ({ ...c, contact_name: e.target.value }))} />
+                  <Input placeholder="Role e.g. Technical Director" value={contact.contact_role} onChange={(e) => setContact(c => ({ ...c, contact_role: e.target.value }))} />
+                  <Input placeholder="WhatsApp e.g. 447700900000" value={contact.contact_phone} onChange={(e) => setContact(c => ({ ...c, contact_phone: e.target.value }))} />
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Label className="text-xs text-muted-foreground">Button colour</Label>
+                  <input type="color" value={contact.contact_accent} onChange={(e) => setContact(c => ({ ...c, contact_accent: e.target.value }))}
+                    className="h-8 w-12 rounded cursor-pointer border border-border bg-transparent p-0" aria-label="Contact button colour" />
+                  <span className="text-[11px] text-muted-foreground font-mono">{contact.contact_accent}</span>
+                  <span className="text-[11px] text-muted-foreground">Match the club's team colour.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {contact.contact_image_url ? (
+                    <img src={contact.contact_image_url} className="h-12 w-12 rounded-full object-cover border border-[#cbb96b]/40" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center"><UserCircle2 className="h-6 w-6 text-muted-foreground" /></div>
+                  )}
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border px-3 py-2 hover:border-[#cbb96b]/60">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{contactImgUploading ? "Uploading…" : contact.contact_image_url ? "Replace contact image" : "Upload contact image"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadContactImage(f); }} disabled={contactImgUploading} />
+                  </label>
+                  <Button onClick={saveClubContact} className="ml-auto bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save contact</Button>
+                </div>
+              </div>
+            )}
           </section>
           <section>
             <div className="flex items-center gap-2 mb-2">
