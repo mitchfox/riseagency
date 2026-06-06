@@ -203,9 +203,10 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; }) {
+function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
+  const hasLogs = row.comm_count > 0;
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[hsl(43,96%,56%)]/60 hover:shadow-[0_10px_40px_-15px_rgba(251,189,35,0.3)] transition-all">
       <div className="flex items-start gap-3">
@@ -221,13 +222,53 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { 
         </div>
       </div>
       <div className="mt-3 px-2 py-1.5 rounded-md bg-muted/40 text-[11px] font-mono text-muted-foreground truncate">{url}</div>
+      <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
         <Button size="sm" variant="outline" asChild title="Open link"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
-        <Button size="sm" variant="outline" onClick={onLog} title="Log update"><FileText className="h-3.5 w-3.5" /></Button>
+        <Button
+          size="sm"
+          variant={hasLogs ? "default" : "outline"}
+          onClick={onLog}
+          title={hasLogs ? "Update Transfer Hub log" : "Log to Transfer Hub"}
+          className={hasLogs ? "bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-600" : ""}
+        >
+          <Building2 className="h-3.5 w-3.5" />
+        </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
+    </div>
+  );
+}
+
+function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: (s: OutreachStatus) => void }) {
+  const opts: { value: OutreachStatus; label: string; icon: any }[] = [
+    { value: "draft", label: "Draft", icon: FileEdit },
+    { value: "ready", label: "Ready", icon: Send },
+    { value: "sent", label: "Sent", icon: CheckCircle2 },
+  ];
+  return (
+    <div className="mt-3 grid grid-cols-3 rounded-md border border-border p-0.5 bg-muted/30">
+      {opts.map((o) => {
+        const active = status === o.value;
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            className={`flex items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition ${
+              active
+                ? "bg-[hsl(43,96%,56%)] text-black font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3 w-3" />
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
