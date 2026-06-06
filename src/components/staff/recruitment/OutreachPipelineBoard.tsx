@@ -17,6 +17,9 @@ import { normalisePosition } from "@/lib/positionNormalise";
 import { InlinePlayerActionsPanel } from "./InlinePlayerActionsPanel";
 import { Settings2 } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { computeFitScore } from "@/lib/fitScore";
+import { useRecruitmentTargets, useScoringSettings } from "@/hooks/useRecruitmentScoring";
+import { useClubMaps } from "@/hooks/useClubMaps";
 import {
   DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable,
