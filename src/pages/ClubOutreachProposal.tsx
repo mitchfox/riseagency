@@ -444,7 +444,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -452,6 +452,7 @@ function ProposalCard({
   title: string;
   subtitle: string;
   disabledLabel?: string;
+  internal?: boolean;
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
@@ -468,6 +469,9 @@ function ProposalCard({
     </div>
   );
   if (disabled) return <div className="block min-h-[180px]">{inner}</div>;
+  if (internal) {
+    return <Link to={href!} className="block min-h-[180px]">{inner}</Link>;
+  }
   return (
     <a href={href!} target="_blank" rel="noopener noreferrer" className="block min-h-[180px]">{inner}</a>
   );
@@ -496,51 +500,171 @@ function KeyDetailsCard({
       <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {clubLogo ? (
-            <img src={clubLogo} alt={player?.club ?? ""} className="h-12 w-12 object-contain" />
-          ) : (
-            <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
-              {(player?.club ?? "?")[0]}
-            </div>
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.club ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {clubLogo ? (
+              <img
+                src={clubLogo}
+                alt={player?.club ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-12 w-12 object-contain"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
+                {(player?.club ?? "?")[0]}
+              </div>
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.club ?? "—"}</p>
         </div>
 
         {/* Age */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          <span className="text-5xl font-semibold leading-none text-white">
-            {age != null ? age : "—"}
-          </span>
-          <span className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/50">Years old</span>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+          </div>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">Years old</p>
         </div>
 
         {/* Nationality */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {nationalityFlag ? (
-            <img src={nationalityFlag} alt={player?.nationality ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-          ) : (
-            <div className="h-10 w-14 rounded-sm bg-white/10" />
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.nationality ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {nationalityFlag ? (
+              <img
+                src={nationalityFlag}
+                alt={player?.nationality ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+              />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.nationality ?? "—"}</p>
         </div>
 
         {/* League */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {leagueFlag ? (
-            <img src={leagueFlag} alt={player?.league ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-          ) : (
-            <div className="h-10 w-14 rounded-sm bg-white/10" />
-          )}
-          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.league ?? "—"}
-          </p>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+          <div className="h-12 flex items-center justify-center">
+            {leagueFlag ? (
+              <img
+                src={leagueFlag}
+                alt={player?.league ?? ""}
+                onError={(e) => ((e.currentTarget.style.display = "none"))}
+                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+              />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.league ?? "—"}</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// Optional Stars-derived sections
+function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
+  return (
+    <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 overflow-hidden">
+      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
+      <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
+  const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
+  const SUM = new Set(["goals", "assists", "xg", "xa"]);
+  const num = (row: any, key: string): number | null => {
+    const fs = row.fixture_stats || {};
+    const ss = row.striker_stats || {};
+    const v = fs[key] ?? ss[key] ?? row[key];
+    if (v == null) return null;
+    const n = typeof v === "number" ? v : parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
+  const fmt = (v: number | null, k: string) =>
+    v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+  const items = (cfg.stats || []).map((s: any) => {
+    const key = typeof s === "string" ? s : s.key;
+    const label = typeof s === "string" ? key : (s.label || key);
+    if (typeof s !== "string" && s.mode === "manual") {
+      const n = parseFloat((s.value ?? "").toString().trim());
+      return { key, label, value: isNaN(n) ? null : n };
+    }
+    const vals = rows.map((r) => num(r, key)).filter((v): v is number => v != null);
+    if (vals.length === 0) return { key, label, value: null };
+    const sum = vals.reduce((a, b) => a + b, 0);
+    return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
+  });
+  if (items.length === 0) return null;
+  return (
+    <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
+        {items.map((it) => (
+          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 text-center">
+            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{it.label}</div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function InNumbersCard({ stats }: { stats: any[] }) {
+  return (
+    <SectionShell title="In Numbers" eyebrow="05">
+      <div className="space-y-4">
+        {stats.map((s, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className="text-3xl font-semibold text-[#cbb96b] leading-none min-w-[3rem]">{s.value}</div>
+            <div className="flex-1">
+              <div className="text-[11px] uppercase tracking-wider text-white/70">{s.label}</div>
+              {s.description && <p className="mt-1 text-xs text-white/60 leading-relaxed">{s.description}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function SeasonStatsCard({ stats }: { stats: any[] }) {
+  return (
+    <SectionShell title="Season Stats" eyebrow="06">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {stats.map((s, i) => (
+          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{s.header}</div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function StrengthsCard({ data }: { data: any }) {
+  const items: string[] = Array.isArray(data)
+    ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
+    : typeof data === "string"
+    ? data.split(/\n+/).filter(Boolean)
+    : [];
+  if (items.length === 0) return null;
+  return (
+    <SectionShell title="Strengths & Play Style" eyebrow="07">
+      <ul className="space-y-2">
+        {items.map((s, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-white/85">
+            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#cbb96b] flex-shrink-0" />
+            <span>{s}</span>
+          </li>
+        ))}
+      </ul>
+    </SectionShell>
   );
 }
