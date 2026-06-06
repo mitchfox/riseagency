@@ -642,7 +642,6 @@ export const PlayerDatabase = () => {
                 response_received: player.response_received,
                 parent_approval: player.parent_approval,
               }}
-              cachedScore={fitScoreByRowKey[`${player.source}-${player.id}`] ?? null}
               scope={player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined}
             />
           </TableCell>
