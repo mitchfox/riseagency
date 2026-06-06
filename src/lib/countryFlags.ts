@@ -254,3 +254,26 @@ export const getCountryFlagUrl = (country: string): string => {
   // Use local SVG flags from public/flags/
   return `/flags/${code}.svg`;
 };
+
+/**
+ * Try to infer the country of a league from the league name.
+ * Scans country names and demonyms in countryCodeMap for a whole-word match.
+ * Examples: "Czech Liga" → cz, "Norwegian Eliteserien" → no, "Liga Portugal 2" → pt.
+ * Returns null when no confident match is found (e.g. "Bundesliga" alone).
+ */
+export const leagueCountryFromName = (league?: string | null): string | null => {
+  if (!league) return null;
+  const haystack = ` ${league.toLowerCase()} `;
+  for (const [name, code] of Object.entries(countryCodeMap)) {
+    const n = name.toLowerCase();
+    if (n.length < 4) continue; // skip "uk", "us", "uae" etc to avoid false matches
+    const re = new RegExp(`(^|[^a-z])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`);
+    if (re.test(haystack)) return code;
+  }
+  return null;
+};
+
+export const getLeagueFlagUrl = (league?: string | null): string | null => {
+  const code = leagueCountryFromName(league);
+  return code ? `/flags/${code}.svg` : null;
+};
