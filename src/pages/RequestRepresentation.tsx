@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
