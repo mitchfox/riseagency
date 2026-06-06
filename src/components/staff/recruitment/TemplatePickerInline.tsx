@@ -76,7 +76,7 @@ export const TemplatePickerInline = ({ playerName, position, club, age, offerSlu
 
   const filled = useMemo(() => {
     if (!current) return "";
-    const offerLink = offerSlug ? `${window.location.origin}/risewithus/${offerSlug}` : "";
+    const offerLink = offerSlug ? `https://risefootballagency.com/risewithus/${offerSlug}` : "";
     return fillMerge(current.message_content, {
       name: playerName,
       first_name: playerName.split(" ")[0] || playerName,
