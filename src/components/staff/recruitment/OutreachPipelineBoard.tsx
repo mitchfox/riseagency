@@ -12,10 +12,11 @@ import { ChevronLeft, ChevronRight, Clock, MoreVertical, Search } from "lucide-r
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
 import { FitScoreBadge } from "./FitScoreBadge";
-import { CreateOfferButton } from "./CreateOfferButton";
 import { TemplatePickerInline } from "./TemplatePickerInline";
 import { StarToggle } from "./StarToggle";
 import { normalisePosition } from "@/lib/positionNormalise";
+import { InlinePlayerActionsPanel } from "./InlinePlayerActionsPanel";
+import { Settings2 } from "lucide-react";
 import {
   DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable,
@@ -96,6 +97,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [query, setQuery] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<Row | null>(null);
+  const [actionsRowId, setActionsRowId] = useState<string | null>(null);
   const [stagePages, setStagePages] = useState<Record<string, number>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -117,6 +119,21 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
 
   useEffect(() => { load(); }, [type]);
   useEffect(() => { setStagePages({}); }, [query, type]);
+
+  const actionsRow = useMemo(
+    () => (actionsRowId ? rows.find(r => r.id === actionsRowId) || null : null),
+    [actionsRowId, rows]
+  );
+
+  if (actionsRow) {
+    return (
+      <InlinePlayerActionsPanel
+        row={actionsRow}
+        type={type}
+        onBack={() => { setActionsRowId(null); load(); }}
+      />
+    );
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -305,17 +322,14 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                             scope={type}
                             preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
                           />
-                          <CreateOfferButton
-                            source={{
-                              name: r.player_name,
-                              position: r.position,
-                              nationality: r.nationality,
-                              club: r.current_club,
-                              date_of_birth: r.date_of_birth,
-                              age: r.age,
-                            }}
-                            label="Offer link"
-                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
+                          >
+                            <Settings2 className="h-4 w-4 mr-1.5" /> Actions
+                          </Button>
                         </div>
                       )}
                     </DraggableCard>
