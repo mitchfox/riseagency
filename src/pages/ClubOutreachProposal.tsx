@@ -5,9 +5,9 @@ import { calculateAge } from "@/lib/ageUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 
-function WhatsAppIcon({ className }: { className?: string }) {
+function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 32 32" className={className} style={style} fill="currentColor" aria-hidden="true">
       <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035 1.058 2.737 1.058.59 0 1.852-.704 2.235-1.176.244-.304.32-.622.32-.997 0-.246-1.677-.95-1.853-.95zM16.062 25.99c-2.124 0-4.16-.616-5.913-1.776L5.6 25.598l1.42-4.382a10.396 10.396 0 0 1-1.96-6.09c0-5.785 4.762-10.488 10.602-10.488 2.83.014 5.488 1.103 7.493 3.085 1.98 1.967 3.083 4.609 3.083 7.408-.014 5.794-4.78 10.49-10.617 10.49zm9.18-19.575C22.793 4.024 19.504 2.65 16.062 2.65 9.025 2.65 3.302 8.4 3.302 15.405c0 2.236.585 4.413 1.695 6.337L3 28.66l7.06-2.21a12.7 12.7 0 0 0 5.997 1.519h.005c7.034 0 12.989-5.762 12.989-12.767 0-3.444-1.523-6.78-3.81-8.787z"/>
     </svg>
   );
