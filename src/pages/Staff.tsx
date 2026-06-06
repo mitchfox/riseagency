@@ -893,6 +893,7 @@ const Staff = () => {
             { id: 'casestudies', title: 'Scripts', icon: MessageSquare },
             { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
+            { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
             { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
             { id: 'submissions', title: 'Form Submissions', icon: Mail },
