@@ -987,6 +987,121 @@ export type Database = {
           },
         ]
       }
+      club_outreach_links: {
+        Row: {
+          archived_at: string | null
+          club_id: string
+          created_at: string
+          created_by: string | null
+          fit_recommendation: string | null
+          id: string
+          player_id: string
+          short_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          club_id: string
+          created_at?: string
+          created_by?: string | null
+          fit_recommendation?: string | null
+          id?: string
+          player_id: string
+          short_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          club_id?: string
+          created_at?: string
+          created_by?: string | null
+          fit_recommendation?: string | null
+          id?: string
+          player_id?: string
+          short_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_links_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_map_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_links_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_links_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_outreach_player_defaults: {
+        Row: {
+          highlights_url: string | null
+          player_id: string
+          proof_of_representation_path: string | null
+          stars_url_override: string | null
+          updated_at: string
+        }
+        Insert: {
+          highlights_url?: string | null
+          player_id: string
+          proof_of_representation_path?: string | null
+          stars_url_override?: string | null
+          updated_at?: string
+        }
+        Update: {
+          highlights_url?: string | null
+          player_id?: string
+          proof_of_representation_path?: string | null
+          stars_url_override?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_player_defaults_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_player_defaults_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_outreach_settings: {
+        Row: {
+          id: number
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       club_outreach_updates: {
         Row: {
           created_at: string
@@ -1015,6 +1130,38 @@ export type Database = {
             columns: ["outreach_id"]
             isOneToOne: false
             referencedRelation: "club_outreach"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_outreach_visits: {
+        Row: {
+          id: string
+          outreach_id: string
+          referrer: string | null
+          user_agent: string | null
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          outreach_id: string
+          referrer?: string | null
+          user_agent?: string | null
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          outreach_id?: string
+          referrer?: string | null
+          user_agent?: string | null
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_visits_outreach_id_fkey"
+            columns: ["outreach_id"]
+            isOneToOne: false
+            referencedRelation: "club_outreach_links"
             referencedColumns: ["id"]
           },
         ]
