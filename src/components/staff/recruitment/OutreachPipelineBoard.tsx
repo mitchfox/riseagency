@@ -422,9 +422,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                         )}
                         {overdueBadge(r)}
                       </div>
-                      {/* Offer + template only on starred rows (i.e. players we actually want to contact) */}
-                      {r.is_starred && (
-                        <div className="mt-2.5 space-y-1.5" onClick={e => e.stopPropagation()}>
+                      <div className="mt-2.5 space-y-1.5" onClick={e => e.stopPropagation()}>
+                        {r.is_starred && (
                           <div className="pl-[50px]">
                             <TemplatePickerInline
                               compact
@@ -436,16 +435,16 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                               preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
                             />
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="w-full h-9 bg-primary/90 hover:bg-primary text-primary-foreground font-semibold tracking-wide shadow-[0_4px_14px_-6px_hsl(var(--primary)/0.55)]"
-                            onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
-                          >
-                            <Settings2 className="h-4 w-4 mr-1.5" /> Open actions
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-9 bg-primary/90 hover:bg-primary text-primary-foreground font-semibold tracking-wide shadow-[0_4px_14px_-6px_hsl(var(--primary)/0.55)]"
+                          onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
+                        >
+                          <Settings2 className="h-4 w-4 mr-1.5" /> Open actions
+                        </Button>
+                      </div>
                       </>
                         );
                       })()}
