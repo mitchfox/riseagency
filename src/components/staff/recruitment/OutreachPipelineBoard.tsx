@@ -318,6 +318,9 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                       {(() => {
                         const meta = playerMeta[(r.player_name || "").toLowerCase()] || { image_url: null, club_logo: null };
                         const flag = r.nationality ? getCountryFlagUrl(r.nationality) : null;
+                        const clubLogo = meta.club_logo
+                          || (r.current_club ? clubLogos[r.current_club.toLowerCase()] : null)
+                          || null;
                         return (
                       <>
                       <div className="flex items-start gap-2.5">
@@ -357,8 +360,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                           </div>
                           {r.current_club && (
                             <div className="mt-1 flex items-center gap-1.5 min-w-0">
-                              {meta.club_logo ? (
-                                <img src={meta.club_logo} alt="" className="h-3.5 w-3.5 object-contain shrink-0" />
+                              {clubLogo ? (
+                                <img src={clubLogo} alt="" className="h-3.5 w-3.5 object-contain shrink-0" />
                               ) : (
                                 <Shield className="h-3 w-3 text-muted-foreground/60 shrink-0" />
                               )}
