@@ -113,8 +113,8 @@ const ProspectCard = ({ prospect, isAdmin, onEdit, onDelete, onEditDetails, isDr
       ref={setNodeRef}
       style={style}
       className={`
-        relative group rounded-xl overflow-hidden border-2 transition-all duration-200
-        ${isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:shadow-xl'}
+        relative group rounded-xl overflow-hidden border-2 transition-all duration-300 shine-on-hover
+        ${isDragging ? 'opacity-40 scale-95' : 'hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-18px_hsl(var(--primary)/0.55)]'}
         ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}
       `}
       {...(isAdmin ? { ...attributes, ...listeners } : {})}
