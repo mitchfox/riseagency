@@ -480,28 +480,30 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
             )}
           </div>
 
-          <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/10">
+          <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/10">
             <div>
-              <Label>Club contact (optional)</Label>
-              <p className="text-[11px] text-muted-foreground mt-1">Adds a second WhatsApp button on the proposal so the club official is reachable directly, clearly distinct from our agency contact.</p>
+              <Label>Prepared for</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">The person at the club this proposal is addressed to. Shown at the top under the player's name.</p>
+              <Input className="mt-1.5" placeholder="e.g. Mehmet Yilmaz" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Input placeholder="Name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
-              <Input placeholder="Role e.g. Technical Director" value={contactRole} onChange={(e) => setContactRole(e.target.value)} />
-              <Input placeholder="Phone e.g. 447700900000" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            <div>
+              <Label>Show on proposal</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">Pull these sections through from the player's Stars profile.</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {[
+                  { v: showForm, set: setShowForm, label: "Form" },
+                  { v: showInNumbers, set: setShowInNumbers, label: "In Numbers" },
+                  { v: showSeasonStats, set: setShowSeasonStats, label: "Season stats" },
+                  { v: showStrengths, set: setShowStrengths, label: "Strengths / Play style" },
+                ].map((opt) => (
+                  <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
+                    <Checkbox checked={opt.v} onCheckedChange={(c) => opt.set(!!c)} />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Label className="text-xs text-muted-foreground">Contact button colour</Label>
-              <input
-                type="color"
-                value={contactAccent}
-                onChange={(e) => setContactAccent(e.target.value)}
-                className="h-8 w-12 rounded cursor-pointer border border-border bg-transparent p-0"
-                aria-label="Contact button colour"
-              />
-              <span className="text-[11px] text-muted-foreground font-mono">{contactAccent}</span>
-              <span className="text-[11px] text-muted-foreground">Match the club's team colour. Text auto-switches between black and white.</span>
-            </div>
+            <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
           </div>
         </div>
         <DialogFooter>
