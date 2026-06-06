@@ -397,6 +397,19 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
           </Button>
           <div className="text-lg font-semibold truncate">{row.player_name}</div>
           <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>
+          <div className="flex items-center gap-1.5">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Stage</Label>
+            <Select value={stage} onValueChange={changeStage} disabled={savingStage}>
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STAGE_OPTIONS.map(s => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {offerUrl && (
           <div className="flex items-center gap-1.5">
