@@ -991,6 +991,7 @@ export type Database = {
         Row: {
           club_id: string
           contact_accent: string | null
+          contact_club_id: string | null
           contact_image_url: string | null
           contact_name: string | null
           contact_phone: string | null
@@ -1000,6 +1001,7 @@ export type Database = {
         Insert: {
           club_id: string
           contact_accent?: string | null
+          contact_club_id?: string | null
           contact_image_url?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -1009,6 +1011,7 @@ export type Database = {
         Update: {
           club_id?: string
           contact_accent?: string | null
+          contact_club_id?: string | null
           contact_image_url?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -1020,6 +1023,13 @@ export type Database = {
             foreignKeyName: "club_outreach_club_contacts_club_id_fkey"
             columns: ["club_id"]
             isOneToOne: true
+            referencedRelation: "club_map_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_club_contacts_contact_club_id_fkey"
+            columns: ["contact_club_id"]
+            isOneToOne: false
             referencedRelation: "club_map_positions"
             referencedColumns: ["id"]
           },
