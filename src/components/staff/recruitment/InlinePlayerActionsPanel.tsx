@@ -149,6 +149,21 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   const [uploadingImg, setUploadingImg] = useState(false);
   const [savingOffer, setSavingOffer] = useState(false);
 
+  // Pipeline stage / category — editable from inside the panel
+  const [stage, setStage] = useState<string>(stageFromRow(row.response_status, row.messaged));
+  const [savingStage, setSavingStage] = useState(false);
+  const changeStage = async (next: string) => {
+    const patch = stagePatchFor(next);
+    if (Object.keys(patch).length === 0) return;
+    setSavingStage(true);
+    setStage(next);
+    const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
+    const { error } = await (supabase.from(table) as any).update(patch).eq("id", row.id);
+    setSavingStage(false);
+    if (error) { toast.error("Could not move stage", { description: error.message }); return; }
+    toast.success(`Moved to ${STAGE_OPTIONS.find(s => s.value === next)?.label || next}`);
+  };
+
   const computedAge = ageFromDob(dob);
   const derivedUnder18 = computedAge !== null ? computedAge < 18 : true;
   const under18 = under18Override ?? derivedUnder18;
