@@ -363,17 +363,21 @@ function ProposalCard({
 }
 
 function KeyDetailsCard({
-  player,
+  entry,
   age,
-  club,
 }: {
-  player: PlayerEntry["player"];
+  entry: PlayerEntry;
   age: number | null;
-  club: Payload["club"];
 }) {
+  const player = entry.player;
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
-  const leagueCountry = club?.country ?? player?.nationality ?? null;
-  const leagueFlag = leagueCountry ? getCountryFlagUrl(leagueCountry) : null;
+  // League flag: derive country from the league name itself (e.g. "Czech Liga" → cz).
+  // Fall back to the player's own club country, then their nationality.
+  const leagueFlag =
+    getLeagueFlagUrl(player?.league) ??
+    (entry.player_club_country ? getCountryFlagUrl(entry.player_club_country) : null) ??
+    (player?.nationality ? getCountryFlagUrl(player.nationality) : null);
+  const clubLogo = entry.player_club_image_url;
 
   return (
     <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 min-h-[260px] sm:min-h-[280px] overflow-hidden">
@@ -382,15 +386,15 @@ function KeyDetailsCard({
       <div className="grid grid-cols-2 gap-2 h-[calc(100%-2.25rem)]">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
-          {club?.image_url ? (
-            <img src={club.image_url} alt={club.club_name} className="h-12 w-12 object-contain" />
+          {clubLogo ? (
+            <img src={clubLogo} alt={player?.club ?? ""} className="h-12 w-12 object-contain" />
           ) : (
             <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
-              {(player?.club ?? club?.club_name ?? "?")[0]}
+              {(player?.club ?? "?")[0]}
             </div>
           )}
           <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
-            {player?.club ?? club?.club_name ?? "—"}
+            {player?.club ?? "—"}
           </p>
         </div>
 
@@ -417,7 +421,7 @@ function KeyDetailsCard({
         {/* League */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
           {leagueFlag ? (
-            <img src={leagueFlag} alt={leagueCountry ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+            <img src={leagueFlag} alt={player?.league ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
           ) : (
             <div className="h-10 w-14 rounded-sm bg-white/10" />
           )}
