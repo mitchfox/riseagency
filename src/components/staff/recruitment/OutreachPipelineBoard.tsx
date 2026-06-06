@@ -39,6 +39,11 @@ interface Row {
   fit_score?: number | null;
   fit_score_breakdown?: any;
   is_starred?: boolean | null;
+  national_team?: boolean | null;
+  star_of_team?: boolean | null;
+  previous_serious_injury?: string | null;
+  agent_name?: string | null;
+  agent_status?: string | null;
 }
 
 const STAGES: { id: string; label: string; tone: string }[] = [
