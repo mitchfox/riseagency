@@ -336,8 +336,9 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded images appear at phase 3 only, larger */}
-      {phase === 3 && extraImages.length > 0 && (
+      {/* Uploaded intro images: visible from phase 1 onwards so they
+          actually register with the viewer (phase 0 keeps a clean reveal). */}
+      {phase >= 1 && extraImages.length > 0 && (
         <div className="pointer-events-none absolute inset-0 z-[5]">
           {extraImages.slice(0, 4).map((src, i) => {
             const positions = [
