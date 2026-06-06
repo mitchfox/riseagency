@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
+import riseLogoWhite from "@/assets/RISEWhite.png";
 
 function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
@@ -34,6 +35,11 @@ interface PlayerEntry {
   player_club_image_url: string | null;
   player_club_country: string | null;
   first_highlight_url: string | null;
+  top_stats: any | null;
+  season_stats: any | null;
+  strengths_and_play_style: any | null;
+  form_config: { window_size: number; stats: any[] } | null;
+  form_analyses: any[] | null;
 }
 
 interface Payload {
@@ -46,10 +52,24 @@ interface Payload {
     club_contact_role: string | null;
     club_contact_phone: string | null;
     club_contact_accent: string | null;
+    prepared_for_name: string | null;
+    show_form: boolean;
+    show_in_numbers: boolean;
+    show_season_stats: boolean;
+    show_strengths: boolean;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
   whatsapp_number: string | null;
+  agent_name: string | null;
+  agent_image_url: string | null;
+  club_contact: {
+    contact_name: string | null;
+    contact_role: string | null;
+    contact_phone: string | null;
+    contact_accent: string | null;
+    contact_image_url: string | null;
+  } | null;
 }
 
 // Pick black or white text based on background luminance.
