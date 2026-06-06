@@ -100,6 +100,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [actionsRowId, setActionsRowId] = useState<string | null>(null);
   const [stagePages, setStagePages] = useState<Record<string, number>>({});
   const [playerMeta, setPlayerMeta] = useState<Record<string, { image_url: string | null; club_logo: string | null }>>({});
+  const [clubLogos, setClubLogos] = useState<Record<string, string>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
@@ -130,6 +131,20 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
         map[p.name.toLowerCase()] = { image_url: p.image_url, club_logo: p.club_logo };
       });
       setPlayerMeta(map);
+    }
+
+    // Hydrate club logos from the coaching database (club_map_positions) by club name.
+    const clubs = Array.from(new Set(loaded.map(r => (r.current_club || "").trim()).filter(Boolean)));
+    if (clubs.length > 0) {
+      const { data: cData } = await (supabase as any)
+        .from("club_map_positions")
+        .select("club_name,image_url")
+        .in("club_name", clubs);
+      const cmap: Record<string, string> = {};
+      (cData || []).forEach((c: any) => {
+        if (c?.club_name && c?.image_url) cmap[c.club_name.toLowerCase()] = c.image_url;
+      });
+      setClubLogos(cmap);
     }
   };
 
