@@ -25,6 +25,8 @@ interface RowLike {
   age: number | null;
   nationality?: string | null;
   date_of_birth?: string | null;
+  response_status?: string | null;
+  messaged?: boolean | null;
 }
 
 interface Interaction {
