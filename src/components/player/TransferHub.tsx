@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Lock, Unlock, Building2, FileText, TrendingUp, MessageSquare, Key } from "lucide-react";
+import { Lock, Unlock, Building2, FileText, TrendingUp, MessageSquare, Key, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerClubInterest } from "@/components/PlayerClubInterest";
 import { PlayerTransferStatus } from "./PlayerTransferStatus";
 import { PlayerAgentNotes } from "./PlayerAgentNotes";
+import { PlayerOutreachUpdates } from "./PlayerOutreachUpdates";
 
 interface PlayerTransferHubProps {
   playerId: string;
@@ -158,7 +159,7 @@ export const PlayerTransferHub = ({ playerId }: PlayerTransferHubProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 gap-2 h-auto p-2 bg-muted">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 h-auto p-2 bg-muted">
           <TabsTrigger value="interest" className="font-medium text-sm">
             <Building2 className="h-4 w-4 mr-2" />
             Club Interest
@@ -166,6 +167,10 @@ export const PlayerTransferHub = ({ playerId }: PlayerTransferHubProps) => {
           <TabsTrigger value="status" className="font-medium text-sm">
             <TrendingUp className="h-4 w-4 mr-2" />
             Transfer Status
+          </TabsTrigger>
+          <TabsTrigger value="updates" className="font-medium text-sm">
+            <Inbox className="h-4 w-4 mr-2" />
+            Club Updates
           </TabsTrigger>
           <TabsTrigger value="notes" className="font-medium text-sm">
             <MessageSquare className="h-4 w-4 mr-2" />
@@ -179,6 +184,10 @@ export const PlayerTransferHub = ({ playerId }: PlayerTransferHubProps) => {
 
         <TabsContent value="status" className="mt-6">
           <PlayerTransferStatus playerId={playerId} />
+        </TabsContent>
+
+        <TabsContent value="updates" className="mt-6">
+          <PlayerOutreachUpdates playerId={playerId} />
         </TabsContent>
 
         <TabsContent value="notes" className="mt-6">

@@ -987,37 +987,140 @@ export type Database = {
           },
         ]
       }
+      club_outreach_communications: {
+        Row: {
+          channel: string | null
+          contact_name: string | null
+          contact_role: string | null
+          contacted_at: string
+          created_at: string
+          created_by: string | null
+          id: string
+          next_step: string | null
+          outreach_id: string
+          player_id: string | null
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          contacted_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          next_step?: string | null
+          outreach_id: string
+          player_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          contacted_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          next_step?: string | null
+          outreach_id?: string
+          player_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_communications_outreach_id_fkey"
+            columns: ["outreach_id"]
+            isOneToOne: false
+            referencedRelation: "club_outreach_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_outreach_link_players: {
+        Row: {
+          created_at: string
+          fit_recommendation: string | null
+          id: string
+          link_id: string
+          player_id: string
+          position_slot: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fit_recommendation?: string | null
+          id?: string
+          link_id: string
+          player_id: string
+          position_slot?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fit_recommendation?: string | null
+          id?: string
+          link_id?: string
+          player_id?: string
+          position_slot?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_link_players_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "club_outreach_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_outreach_links: {
         Row: {
           archived_at: string | null
+          club_contact_name: string | null
+          club_contact_phone: string | null
+          club_contact_role: string | null
           club_id: string
           created_at: string
           created_by: string | null
           fit_recommendation: string | null
           id: string
-          player_id: string
+          player_id: string | null
           short_id: string
           updated_at: string
         }
         Insert: {
           archived_at?: string | null
+          club_contact_name?: string | null
+          club_contact_phone?: string | null
+          club_contact_role?: string | null
           club_id: string
           created_at?: string
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
-          player_id: string
+          player_id?: string | null
           short_id: string
           updated_at?: string
         }
         Update: {
           archived_at?: string | null
+          club_contact_name?: string | null
+          club_contact_phone?: string | null
+          club_contact_role?: string | null
           club_id?: string
           created_at?: string
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
-          player_id?: string
+          player_id?: string | null
           short_id?: string
           updated_at?: string
         }

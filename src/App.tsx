@@ -142,6 +142,7 @@ const App = () => {
                       {createLocalizedDynamicRoutes('/stars/:playername', <PlayerDetail />)}
                       {createLocalizedRoutes('/clubs', <Clubs />)}
                       <Route path="/clubs/:shortId" element={<ClubOutreachProposal />} />
+                      <Route path="/club-proposal/:shortId" element={<ClubOutreachProposal />} />
                       {createLocalizedRoutes('/coaches', <Coaches />)}
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
