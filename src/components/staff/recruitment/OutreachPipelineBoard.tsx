@@ -106,6 +106,10 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [clubLogos, setClubLogos] = useState<Record<string, string>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  const { targets } = useRecruitmentTargets();
+  const { settings } = useScoringSettings();
+  const { enrichForFit } = useClubMaps();
+
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
 
   const load = async () => {
@@ -127,11 +131,29 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     if (names.length > 0) {
       const { data: pData } = await supabase
         .from("players")
-        .select("name,image_url,club_logo")
+        .select("id,name,image_url,club_logo")
         .in("name", names);
+      const playerIds = (pData || []).map((p: any) => p.id).filter(Boolean);
+      const offerByPlayer: Record<string, string> = {};
+      if (playerIds.length) {
+        const { data: offers } = await (supabase as any)
+          .from("player_offer_settings")
+          .select("player_id, section_images")
+          .in("player_id", playerIds);
+        (offers || []).forEach((o: any) => {
+          const imgs = o.section_images && typeof o.section_images === "object"
+            ? Object.values(o.section_images).filter((v: any) => typeof v === "string")
+            : [];
+          if (imgs.length) offerByPlayer[o.player_id] = imgs[0] as string;
+        });
+      }
       const map: Record<string, { image_url: string | null; club_logo: string | null }> = {};
       (pData || []).forEach((p: any) => {
-        map[p.name.toLowerCase()] = { image_url: p.image_url, club_logo: p.club_logo };
+        const offerImg = offerByPlayer[p.id] || null;
+        map[p.name.toLowerCase()] = {
+          image_url: offerImg || p.image_url || null,
+          club_logo: p.club_logo,
+        };
       });
       setPlayerMeta(map);
     }
