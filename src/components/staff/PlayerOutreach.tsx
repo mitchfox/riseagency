@@ -16,8 +16,8 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 text-center sm:text-left">
+        <h2 className="text-lg sm:text-2xl font-bold flex items-center justify-center sm:justify-start gap-2">
           <Users className="h-5 w-5 sm:h-6 sm:w-6" />
           Player Outreach
         </h2>
@@ -26,7 +26,7 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
             variant="outline"
             size="sm"
             onClick={() => setScraperVisible(true)}
-            className="shrink-0"
+            className="shrink-0 w-full sm:w-auto"
           >
             <Search className="h-4 w-4 mr-2" />
             Transfermarkt Scraper
@@ -37,11 +37,11 @@ export const PlayerOutreach = ({ isAdmin }: { isAdmin: boolean }) => {
       <TransfermarktScraper visible={scraperVisible} onClose={() => setScraperVisible(false)} />
 
       <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 sm:w-auto sm:inline-grid">
-          <TabsTrigger value="pipeline" className="gap-2"><LayoutGrid className="h-3.5 w-3.5" /> Pipeline</TabsTrigger>
-          <TabsTrigger value="targets" className="gap-2"><TargetIcon className="h-3.5 w-3.5" /> Targets</TabsTrigger>
-          <TabsTrigger value="table" className="gap-2"><TableIcon className="h-3.5 w-3.5" /> Table</TabsTrigger>
-          <TabsTrigger value="scoring" className="gap-2"><Sliders className="h-3.5 w-3.5" /> Scoring</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 sm:w-auto sm:inline-grid h-auto gap-1 p-1">
+          <TabsTrigger value="pipeline" className="gap-1.5 text-xs sm:text-sm py-2"><LayoutGrid className="h-3.5 w-3.5" /> Pipeline</TabsTrigger>
+          <TabsTrigger value="targets" className="gap-1.5 text-xs sm:text-sm py-2"><TargetIcon className="h-3.5 w-3.5" /> Targets</TabsTrigger>
+          <TabsTrigger value="table" className="gap-1.5 text-xs sm:text-sm py-2"><TableIcon className="h-3.5 w-3.5" /> Table</TabsTrigger>
+          <TabsTrigger value="scoring" className="gap-1.5 text-xs sm:text-sm py-2"><Sliders className="h-3.5 w-3.5" /> Scoring</TabsTrigger>
         </TabsList>
       </Tabs>
 
