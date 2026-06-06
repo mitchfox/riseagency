@@ -37,6 +37,7 @@ interface OutreachRow {
   club_contact_name: string | null;
   club_contact_role: string | null;
   club_contact_phone: string | null;
+  club_contact_accent: string | null;
   created_at: string;
   archived_at: string | null;
   status: OutreachStatus;
@@ -280,6 +281,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
   const [contactName, setContactName] = useState(editing?.club_contact_name ?? "");
   const [contactRole, setContactRole] = useState(editing?.club_contact_role ?? "");
   const [contactPhone, setContactPhone] = useState(editing?.club_contact_phone ?? "");
+  const [contactAccent, setContactAccent] = useState<string>(editing?.club_contact_accent ?? "#1f2937");
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -338,6 +340,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
         club_contact_name: contactName.trim() || null,
         club_contact_role: contactRole.trim() || null,
         club_contact_phone: contactPhone.trim() || null,
+        club_contact_accent: contactName.trim() ? contactAccent : null,
       };
       let linkId = editing?.id ?? null;
       if (editing) {
@@ -478,6 +481,18 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
               <Input placeholder="Name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
               <Input placeholder="Role e.g. Technical Director" value={contactRole} onChange={(e) => setContactRole(e.target.value)} />
               <Input placeholder="Phone e.g. 447700900000" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-3">
+              <Label className="text-xs text-muted-foreground">Contact button colour</Label>
+              <input
+                type="color"
+                value={contactAccent}
+                onChange={(e) => setContactAccent(e.target.value)}
+                className="h-8 w-12 rounded cursor-pointer border border-border bg-transparent p-0"
+                aria-label="Contact button colour"
+              />
+              <span className="text-[11px] text-muted-foreground font-mono">{contactAccent}</span>
+              <span className="text-[11px] text-muted-foreground">Match the club's team colour. Text auto-switches between black and white.</span>
             </div>
           </div>
         </div>
