@@ -96,6 +96,36 @@ interface Props {
   onBack: () => void;
 }
 
+const STAGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "not_contacted",   label: "Not contacted" },
+  { value: "awaiting_reply",  label: "Awaiting reply" },
+  { value: "replied",         label: "Replied — follow up" },
+  { value: "interested",      label: "In conversation" },
+  { value: "signed",          label: "Signed" },
+  { value: "lost",            label: "Lost / cold" },
+];
+
+const stagePatchFor = (stageId: string): any => {
+  switch (stageId) {
+    case "not_contacted":  return { response_status: "none",       messaged: false };
+    case "awaiting_reply": return { response_status: "none",       messaged: true };
+    case "replied":        return { response_status: "replied",    messaged: true, response_received: true };
+    case "interested":     return { response_status: "interested", messaged: true, response_received: true };
+    case "signed":         return { response_status: "signed",     messaged: true, response_received: true };
+    case "lost":           return { response_status: "lost",       messaged: true };
+    default: return {};
+  }
+};
+
+const stageFromRow = (rs: string | null | undefined, messaged: boolean | null | undefined): string => {
+  if (rs === "signed") return "signed";
+  if (rs === "not_interested" || rs === "lost") return "lost";
+  if (rs === "interested") return "interested";
+  if (rs === "replied") return "replied";
+  if (messaged) return "awaiting_reply";
+  return "not_contacted";
+};
+
 export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   // ---- Player details (the real source of truth) ----
   const [playerId, setPlayerId] = useState<string | null>(null);
