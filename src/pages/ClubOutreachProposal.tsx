@@ -388,10 +388,10 @@ function KeyDetailsCard({
   const clubLogo = entry.player_club_image_url;
 
   return (
-    <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 min-h-[260px] sm:min-h-[280px] overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">04</span>
+    <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
+      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">03</span>
       <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
-      <div className="grid grid-cols-2 gap-2 h-[calc(100%-2.25rem)]">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
           {clubLogo ? (
