@@ -33,6 +33,7 @@ interface PlayerEntry {
   proof_of_representation_url: string | null;
   player_club_image_url: string | null;
   player_club_country: string | null;
+  first_highlight_url: string | null;
 }
 
 interface Payload {
@@ -147,6 +148,7 @@ export default function ClubOutreachProposal() {
   const hasMultiple = data.players.length > 1;
   const fitText = (current.fit_recommendation ?? "").trim();
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
+  const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
@@ -224,11 +226,23 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Hero image */}
-      {player?.image_url && (
+      {/* Hero — first Stars highlight video, falls back to player image */}
+      {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10">
-            <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
+            {current.first_highlight_url ? (
+              <video
+                key={current.first_highlight_url}
+                src={current.first_highlight_url}
+                className="w-full h-full object-contain bg-black"
+                controls
+                playsInline
+                preload="metadata"
+                poster={player?.image_url ?? undefined}
+              />
+            ) : (
+              <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
+            )}
           </div>
         </div>
       )}
@@ -253,21 +267,15 @@ export default function ClubOutreachProposal() {
           subtitle="Full profile, highlights and statistics"
         />
         <ProposalCard
-          href={current.highlights_url}
-          icon={<Film className="h-6 w-6" />}
-          eyebrow="02"
-          title="Full Season Highlights"
-          subtitle="Every meaningful moment from the season"
-          disabledLabel={current.highlights_url ? undefined : "Coming soon"}
-        />
-        <ProposalCard
           href={current.proof_of_representation_url}
           icon={<FileBadge2 className="h-6 w-6" />}
-          eyebrow="03"
+          eyebrow="02"
           title="Proof of Representation"
           subtitle="Signed agreement with Rise Football Agency"
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
         />
+      </section>
+      <section className="max-w-3xl mx-auto px-6 mt-4">
         <KeyDetailsCard entry={current} age={age} />
       </section>
 
@@ -284,7 +292,7 @@ export default function ClubOutreachProposal() {
             <div className="flex items-center gap-3">
               <WhatsAppIcon className="h-6 w-6" />
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp the Agent</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp {firstName}'s Agent</div>
                 <div className="text-sm sm:text-base">Jolon Levene – RISE Football</div>
               </div>
             </div>
@@ -312,10 +320,10 @@ export default function ClubOutreachProposal() {
               <div className="flex items-center gap-3">
                 <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
                 <div className="text-left">
-                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Your club contact</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
                   <div className="text-sm sm:text-base">
                     {data.link.club_contact_name}
-                    {data.link.club_contact_role ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {data.link.club_contact_role}</span> : null}
+                    {club?.club_name ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {club.club_name}</span> : null}
                   </div>
                 </div>
               </div>
