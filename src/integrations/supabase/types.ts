@@ -987,6 +987,44 @@ export type Database = {
           },
         ]
       }
+      club_outreach_club_contacts: {
+        Row: {
+          club_id: string
+          contact_accent: string | null
+          contact_image_url: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_role: string | null
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          contact_accent?: string | null
+          contact_image_url?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          contact_accent?: string | null
+          contact_image_url?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_role?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_outreach_club_contacts_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: true
+            referencedRelation: "club_map_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_outreach_communications: {
         Row: {
           channel: string | null
@@ -1094,7 +1132,12 @@ export type Database = {
           fit_recommendation: string | null
           id: string
           player_id: string | null
+          prepared_for_name: string | null
           short_id: string
+          show_form: boolean
+          show_in_numbers: boolean
+          show_season_stats: boolean
+          show_strengths: boolean
           status: string
           updated_at: string
         }
@@ -1110,7 +1153,12 @@ export type Database = {
           fit_recommendation?: string | null
           id?: string
           player_id?: string | null
+          prepared_for_name?: string | null
           short_id: string
+          show_form?: boolean
+          show_in_numbers?: boolean
+          show_season_stats?: boolean
+          show_strengths?: boolean
           status?: string
           updated_at?: string
         }
@@ -1126,7 +1174,12 @@ export type Database = {
           fit_recommendation?: string | null
           id?: string
           player_id?: string | null
+          prepared_for_name?: string | null
           short_id?: string
+          show_form?: boolean
+          show_in_numbers?: boolean
+          show_season_stats?: boolean
+          show_strengths?: boolean
           status?: string
           updated_at?: string
         }
@@ -1195,16 +1248,22 @@ export type Database = {
       }
       club_outreach_settings: {
         Row: {
+          agent_image_url: string | null
+          agent_name: string | null
           id: number
           updated_at: string
           whatsapp_number: string | null
         }
         Insert: {
+          agent_image_url?: string | null
+          agent_name?: string | null
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
         }
         Update: {
+          agent_image_url?: string | null
+          agent_name?: string | null
           id?: number
           updated_at?: string
           whatsapp_number?: string | null

@@ -1,55 +1,86 @@
-# Club Outreach polish — round 3
+## Plan
 
-## 1. Use the real sitewide Rise Gold `#C6A332`
+1. **Footer branding**
+   - Replace the bottom text “Rise Football Agency” with the existing `RISEWhite` logo asset.
+   - Keep it subtle, centred, and sized so it reads as a brand mark rather than extra page copy.
 
-The brand gold used everywhere else in the app (Stars icons, PlaylistManager, TransferReportView, AnnotationToolbar, MatchClipPlayer, ShotMapGraphic, etc.) is the hex constant `#C6A332`. The previous pass swapped to `hsl(43,96%,56%)` which is a brighter yellow and does not match. Revert every occurrence to `#C6A332` (and `rgba(198,163,50,…)` for shadows) in:
+2. **Header spacing and prepared-for name**
+   - Make the three header lines use equal vertical spacing:
+     - `Rise Football Agency presents`
+     - player name / player count
+     - `Prepared for ...`
+   - Add a new editable field in **Edit/New Club Outreach** for the prepared-for person name.
+   - Public page will show `Prepared for {person name}` and fall back to the club name only if that field is blank.
 
-- `src/pages/ClubOutreachProposal.tsx` — loader spinner, hero eyebrow, slot pills, carousel arrows, fit recommendation block (border, background, eyebrow), card hovers, card icon tiles, card footer arrows, "Key Details" eyebrow, marble background club glow, footer accents.
-- `src/components/staff/ClubOutreachManager.tsx` — New Outreach button, section divider gradients, card hover ring/shadow, status toggle selected state, player select highlight, dashed proof panel, Save defaults button, Log update button, contact icons, status icon tints.
+3. **Move club contact defaults into Settings**
+   - Remove the club contact fields from each outreach link.
+   - Add a **Club contacts** area in Club Outreach Settings where each outreach club can store:
+     - contact name
+     - contact role
+     - WhatsApp number
+     - contact button colour
+     - contact image
+   - The proposal will use the saved contact for the selected club.
 
-Apply via a Tailwind constant pattern: introduce a local `const RG = "#C6A332"` at the top of each file and reuse with bracket classes (`bg-[#C6A332]`, `text-[#C6A332]`, `border-[#C6A332]`, `hover:border-[#C6A332]/60`, `hover:shadow-[0_10px_40px_-15px_rgba(198,163,50,0.4)]`). Status toggle "selected" pill becomes `bg-[#C6A332] text-black`.
+4. **Agency contact image**
+   - Extend Club Outreach Settings with agency contact details:
+     - WhatsApp number
+     - agent image
+   - The public WhatsApp agent button will show the saved circular agent image when set.
 
-## 2. Key Details card — correct club logo and league country
+5. **Club contact image**
+   - Add upload support for a circular club contact image in Settings.
+   - Show it in the public “Key Club Contact” button.
 
-Current code uses the outreached club's `image_url` for the club tile (wrong — that's the destination club, not the player's current club) and the destination club's country for the league flag (wrong — should be the league's own country).
+6. **WhatsApp links**
+   - Remove the pre-written WhatsApp message from the agency WhatsApp URL.
+   - Keep the direct `wa.me/{number}` link only.
 
-Changes:
+7. **Video player behaviour**
+   - Use the first Stars highlight video as the main player.
+   - Make it attempt autoplay with sound on first open, with controls available. If the browser blocks sound autoplay, it will still be playable by the user.
+   - Remove the player-photo poster so the browser can show the video’s own first frame/thumbnail instead.
 
-- **Club tile**: resolve the player's current club logo from `club_map_positions` using `players.club`. Easiest place is the edge function `supabase/functions/get-club-outreach/index.ts`: after loading players, run a second `club_map_positions` query with `.in('club_name', uniqueClubNames)` and attach `player_club_image_url` + `player_club_country` to each player entry. Front-end then renders `entry.player_club_image_url` here, falling back to the first letter of `player.club`.
-- **League tile**: derive country from the league string itself. Add a small helper `leagueCountryFromName(league)` in `src/lib/countryFlags.ts` that scans `countryCodeMap` keys (countries + demonyms) for the first whole-word match against the league string (case-insensitive). Examples: "Czech Liga" → `cz`, "Norwegian Eliteserien" → `no`, "Liga Portugal 2" → `pt`, "Bundesliga" stays unmatched and falls back to the player's club country (from step above) then nationality. Render that flag.
+8. **Player info strip above video**
+   - Replicate the Stars profile top info strip more closely:
+     - position
+     - age
+     - nationality flag + nationality
+     - current club logo + club
+   - Add robust image fallback so a bad club logo URL does not show a broken image icon.
 
-Drop the current `leagueCountry = club?.country` line entirely.
+9. **Fix Tyrese / FC Vysočina Jihlava logo lookup**
+   - Improve current club logo resolution in the backend function by using case-insensitive matching and falling back through:
+     - parsed Stars bio current club logo / tactical formation logo
+     - `players.club_logo`
+     - `club_map_positions.image_url`
+   - Frontend will hide failed images and show initials instead of a broken icon.
 
-## 3. Club contact accent colour (manager dialogs)
+10. **Proof of Representation blocked URL**
+   - Avoid exposing the blocked backend storage URL directly in the page link.
+   - Add a public app route, e.g. `/club-proposal/:shortId/proof/:playerId`, that fetches the signed proof URL at click time and redirects/open-loads it from within the app.
+   - Update the proof card to use this app route so browser extensions are less likely to block the visible target URL.
 
-Add an optional `club_contact_accent` colour per outreach link so staff can match the destination club's brand:
+11. **Key Details alignment**
+   - Lock icon/flag/logo rows to consistent heights.
+   - Let long text wrap underneath without pushing flags/logos out of alignment.
 
-- Migration: add nullable `club_contact_accent text` to `club_outreach_links` (hex string, no constraint).
-- `ClubOutreachManager.tsx` New Outreach + Edit dialogs: add a small native `<input type="color">` next to the contact name field labelled "Contact button colour". Persist on save.
-- `get-club-outreach` edge function: include `club_contact_accent` in the returned `link` payload.
-- `ClubOutreachProposal.tsx` "Your club contact" CTA: when set, use the picked hex as background and pick black/white text automatically using a luminance helper (`(0.299*r + 0.587*g + 0.114*b) > 150 ? '#000' : '#fff'`). When unset, keep the current outline style.
+12. **Optional outreach page sections**
+   - Add per-link visibility toggles in New/Edit Club Outreach for Stars-derived sections:
+     - Form
+     - In Numbers / data
+     - Season stats
+     - Strengths / play style
+   - Backend returns the same parsed Stars profile data and form config needed for those sections.
+   - Public proposal renders the selected sections in the same visual language as the Stars profile, using Rise Gold `#cbb96b` accents.
 
-The WhatsApp CTA stays branded green regardless.
+## Technical notes
 
-## 4. WhatsApp CTA label
-
-Update the WhatsApp button label in `ClubOutreachProposal.tsx` from "WhatsApp the agent / Rise Football Agency" to:
-
-- Primary line: **WhatsApp the Agent**
-- Sub line: **Jolon Levene — RISE Football**
-
-(use an en-dash, not an em-dash, per project prose rules).
-
-## 5. New Outreach + status pill highlight
-
-Already covered in step 1 — the selected pill in the three-state status toggle (`Ready/Drafts/Sent`) and the staff "New Outreach" button both move to `#C6A332` with black text.
-
-## Files touched
-
-- `src/pages/ClubOutreachProposal.tsx`
-- `src/components/staff/ClubOutreachManager.tsx`
-- `src/lib/countryFlags.ts` (new `leagueCountryFromName` helper)
-- `supabase/functions/get-club-outreach/index.ts` (player club lookup + `club_contact_accent`)
-- New migration: add `club_contact_accent` column on `club_outreach_links`.
-
-No other behaviour changes.
+- This needs a database migration to add the new settings/default columns while keeping existing data safe.
+- The edge function `get-club-outreach` will return settings, contact defaults, display options, parsed profile data, form data, and improved club logo fields.
+- The affected files will be:
+  - `src/components/staff/ClubOutreachManager.tsx`
+  - `src/pages/ClubOutreachProposal.tsx`
+  - `supabase/functions/get-club-outreach/index.ts`
+  - `src/integrations/supabase/types.ts`
+  - a new migration for outreach settings/contact/display fields
