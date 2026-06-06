@@ -35,6 +35,7 @@ const Staff = lazy(() => import("./pages/Staff"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const About = lazy(() => import("./pages/About"));
 const Clubs = lazy(() => import("./pages/Clubs"));
+const ClubOutreachProposal = lazy(() => import("./pages/ClubOutreachProposal"));
 const Coaches = lazy(() => import("./pages/Coaches"));
 const Scouts = lazy(() => import("./pages/Scouts"));
 const Agents = lazy(() => import("./pages/Agents"));
@@ -140,6 +141,7 @@ const App = () => {
                       {createLocalizedRoutes('/stars', <Stars />)}
                       {createLocalizedDynamicRoutes('/stars/:playername', <PlayerDetail />)}
                       {createLocalizedRoutes('/clubs', <Clubs />)}
+                      <Route path="/clubs/:shortId" element={<ClubOutreachProposal />} />
                       {createLocalizedRoutes('/coaches', <Coaches />)}
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
