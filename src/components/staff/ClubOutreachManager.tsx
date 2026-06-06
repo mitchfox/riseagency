@@ -201,7 +201,7 @@ export default function ClubOutreachManager() {
         <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} editing={editRow} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
-        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} players={players} />
+        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} players={players} clubs={clubs} />
       )}
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
