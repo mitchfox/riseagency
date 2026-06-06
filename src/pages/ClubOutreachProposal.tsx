@@ -129,7 +129,7 @@ export default function ClubOutreachProposal() {
       {/* Header */}
       <header className="px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
         {club?.image_url ? (
-          <img src={club.image_url} alt={club.club_name} className="mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(198,163,50,0.25)]" />
+          <img src={club.image_url} alt={club.club_name} className="mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(251,189,35,0.25)]" />
         ) : (
           <div className="mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
@@ -245,7 +245,7 @@ export default function ClubOutreachProposal() {
             href={agencyWaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[hsl(43,96%,56%)] text-black font-semibold shadow-[0_10px_40px_-10px_rgba(198,163,50,0.6)] hover:shadow-[0_14px_50px_-10px_rgba(198,163,50,0.85)] transition-all active:scale-[0.99]"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[hsl(43,96%,56%)] text-black font-semibold shadow-[0_10px_40px_-10px_rgba(251,189,35,0.6)] hover:shadow-[0_14px_50px_-10px_rgba(251,189,35,0.85)] transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
               <MessageCircle className="h-5 w-5" />
@@ -298,7 +298,7 @@ function ProposalCard({
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[hsl(43,96%,56%)]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(198,163,50,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[hsl(43,96%,56%)]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(251,189,35,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[hsl(43,96%,56%)]/10 text-[hsl(43,96%,56%)] flex items-center justify-center">{icon}</div>
         <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>

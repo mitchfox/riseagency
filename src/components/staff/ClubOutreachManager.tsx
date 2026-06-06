@@ -163,7 +163,7 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { 
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   return (
-    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[hsl(43,96%,56%)]/60 hover:shadow-[0_10px_40px_-15px_rgba(198,163,50,0.3)] transition-all">
+    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[hsl(43,96%,56%)]/60 hover:shadow-[0_10px_40px_-15px_rgba(251,189,35,0.3)] transition-all">
       <div className="flex items-start gap-3">
         {row.club?.image_url ? (
           <img src={row.club.image_url} alt={row.club.club_name} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
