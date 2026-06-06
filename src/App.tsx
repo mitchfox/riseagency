@@ -21,6 +21,7 @@ import { ThemeProvider } from "next-themes";
 import Home from "./pages/Home";
 import Stars from "./pages/Stars";
 import PlayerDetail from "./pages/PlayerDetail";
+import ClubOutreachProof from "./pages/ClubOutreachProof";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
