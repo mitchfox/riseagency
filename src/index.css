@@ -970,3 +970,16 @@ a:hover .hover-text-letter-clone,
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .pipeline-card { animation: pipeline-card-in 280ms ease-out backwards; }
+
+/* Standalone shine sweep that can be added to any card */
+.shine-on-hover { position: relative; overflow: hidden; }
+.shine-on-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, hsl(var(--primary) / 0.14) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 750ms ease;
+  pointer-events: none;
+}
+.shine-on-hover:hover::after { transform: translateX(120%); }
