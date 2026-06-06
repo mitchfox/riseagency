@@ -1013,6 +1013,7 @@ const Staff = () => {
            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
+          { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
           { id: 'submissions', title: 'Form Submissions', icon: Mail },
@@ -1942,6 +1943,7 @@ const Staff = () => {
                   {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
+                  {expandedSection === 'cluboutreach' && <ClubOutreachManager />}
                   {expandedSection === 'casestudies' && <ScriptsAndCaseStudies />}
                   {expandedSection === 'representationoffers' && <RepresentationOffers />}
                   {expandedSection === 'transferreports' && <TransferReports />}
