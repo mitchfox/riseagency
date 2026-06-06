@@ -260,10 +260,13 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                               response_received: r.response_received,
                               response_status: r.response_status,
                               parent_approval: r.parent_approval,
+                              national_team: r.national_team,
+                              star_of_team: r.star_of_team,
+                              previous_serious_injury: r.previous_serious_injury,
+                              agent_name: r.agent_name,
+                              agent_status: r.agent_status,
                             }}
                             scope={type}
-                            cachedScore={r.fit_score ?? null}
-                            cachedBreakdown={r.fit_score_breakdown}
                           />
                           <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
