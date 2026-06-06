@@ -111,7 +111,7 @@ export default function ClubOutreachManager() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by player or club" className="pl-9" />
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setNewOpen(true)} className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90">
+          <Button onClick={() => setNewOpen(true)} className="bg-[hsl(43,96%,56%)] text-black hover:bg-[hsl(43,96%,56%)]/90">
             <Plus className="h-4 w-4 mr-2" /> New Outreach
           </Button>
           <Button variant="outline" onClick={() => setSettingsOpen(true)}>
@@ -163,7 +163,7 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { 
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   return (
-    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#C6A332]/60 hover:shadow-[0_10px_40px_-15px_rgba(198,163,50,0.3)] transition-all">
+    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[hsl(43,96%,56%)]/60 hover:shadow-[0_10px_40px_-15px_rgba(198,163,50,0.3)] transition-all">
       <div className="flex items-start gap-3">
         {row.club?.image_url ? (
           <img src={row.club.image_url} alt={row.club.club_name} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
@@ -309,7 +309,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
               {filteredClubs.map(c => (
                 <button key={c.id} type="button" onClick={() => setClubId(c.id)}
-                  className={`flex items-center gap-2 rounded-md border p-2 text-left ${clubId === c.id ? "border-[#C6A332] bg-[#C6A332]/10" : "border-border hover:border-[#C6A332]/40"}`}>
+                  className={`flex items-center gap-2 rounded-md border p-2 text-left ${clubId === c.id ? "border-[hsl(43,96%,56%)] bg-[hsl(43,96%,56%)]/10" : "border-border hover:border-[hsl(43,96%,56%)]/40"}`}>
                   {c.image_url ? <img src={c.image_url} className="h-8 w-8 object-contain bg-white/5 rounded" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[10px]">No logo</div>}
                   <div className="min-w-0">
                     <div className="text-xs font-medium truncate">{c.club_name}</div>
@@ -319,7 +319,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
               ))}
             </div>
             {selectedClub && !selectedClub.image_url && (
-              <div className="mt-3 rounded-md border border-dashed border-[#C6A332]/40 p-3 bg-[#C6A332]/5">
+              <div className="mt-3 rounded-md border border-dashed border-[hsl(43,96%,56%)]/40 p-3 bg-[hsl(43,96%,56%)]/5">
                 <p className="text-xs mb-2">No logo on file for <b>{selectedClub.club_name}</b>. Upload one — it will be saved into the coaching database.</p>
                 <label className="inline-flex items-center gap-2 cursor-pointer text-xs">
                   <Upload className="h-3.5 w-3.5" />
@@ -338,7 +338,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
               <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1">
                 {filteredPlayers.slice(0, 30).map(p => (
                   <button key={p.id} type="button" onClick={() => addPlayer(p.id)}
-                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:border-[#C6A332]/60">
+                    className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:border-[hsl(43,96%,56%)]/60">
                     {p.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
                     <div className="min-w-0">
                       <div className="text-xs font-medium truncate">{p.name}</div>
@@ -398,7 +398,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving || !clubId || entries.length === 0} className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90">
+          <Button onClick={save} disabled={saving || !clubId || entries.length === 0} className="bg-[hsl(43,96%,56%)] text-black hover:bg-[hsl(43,96%,56%)]/90">
             {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
           </Button>
         </DialogFooter>
@@ -514,7 +514,7 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
             <Input value={nextStep} onChange={(e) => setNextStep(e.target.value)} placeholder="e.g. Follow up next week" className="mt-1.5" />
           </div>
           <div className="flex justify-end">
-            <Button onClick={submit} disabled={saving} className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90">{saving ? "Saving…" : "Log update"}</Button>
+            <Button onClick={submit} disabled={saving} className="bg-[hsl(43,96%,56%)] text-black hover:bg-[hsl(43,96%,56%)]/90">{saving ? "Saving…" : "Log update"}</Button>
           </div>
         </div>
 
@@ -637,7 +637,7 @@ function SettingsDialog({ open, onClose, players }: { open: boolean; onClose: ()
         <div className="space-y-8">
           <section>
             <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="h-4 w-4 text-[#C6A332]" />
+              <MessageCircle className="h-4 w-4 text-[hsl(43,96%,56%)]" />
               <h3 className="text-sm font-semibold">Agency WhatsApp number</h3>
             </div>
             <p className="text-xs text-muted-foreground mb-2">Used by the WhatsApp button on every proposal. Include country code, e.g. <code>447700900000</code>.</p>
@@ -648,14 +648,14 @@ function SettingsDialog({ open, onClose, players }: { open: boolean; onClose: ()
           </section>
           <section>
             <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-[#C6A332]" />
+              <Shield className="h-4 w-4 text-[hsl(43,96%,56%)]" />
               <h3 className="text-sm font-semibold">Per-player defaults</h3>
             </div>
             <Input placeholder="Search players" value={playerQuery} onChange={(e) => setPlayerQuery(e.target.value)} className="mb-2" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1 mb-4">
               {filteredPlayers.map(p => (
                 <button key={p.id} type="button" onClick={() => setSelectedPlayerId(p.id)}
-                  className={`flex items-center gap-2 rounded-md border p-2 text-left ${selectedPlayerId === p.id ? "border-[#C6A332] bg-[#C6A332]/10" : "border-border hover:border-[#C6A332]/40"}`}>
+                  className={`flex items-center gap-2 rounded-md border p-2 text-left ${selectedPlayerId === p.id ? "border-[hsl(43,96%,56%)] bg-[hsl(43,96%,56%)]/10" : "border-border hover:border-[hsl(43,96%,56%)]/40"}`}>
                   {p.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
                   <div className="text-xs font-medium truncate">{p.name}</div>
                 </button>
@@ -679,14 +679,14 @@ function SettingsDialog({ open, onClose, players }: { open: boolean; onClose: ()
                   ) : (
                     <p className="text-[11px] text-muted-foreground mt-1">No file uploaded yet.</p>
                   )}
-                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs mt-2 rounded-md border border-border px-3 py-2 hover:border-[#C6A332]/60">
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs mt-2 rounded-md border border-border px-3 py-2 hover:border-[hsl(43,96%,56%)]/60">
                     <Upload className="h-3.5 w-3.5" />
                     <span>{uploading ? "Uploading…" : "Upload PDF"}</span>
                     <input type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProof(f); }} disabled={uploading} />
                   </label>
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={saveDefaults} className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90">Save defaults</Button>
+                  <Button onClick={saveDefaults} className="bg-[hsl(43,96%,56%)] text-black hover:bg-[hsl(43,96%,56%)]/90">Save defaults</Button>
                 </div>
               </div>
             )}
