@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNowStrict, parseISO, differenceInCalendarDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, MoreVertical, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MoreVertical, Search, GripVertical, Star, Shield } from "lucide-react";
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
 import { FitScoreBadge } from "./FitScoreBadge";
@@ -196,10 +196,27 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const overdueBadge = (r: Row) => {
     if (!r.next_followup_at) return null;
     const days = differenceInCalendarDays(parseISO(r.next_followup_at), new Date());
-    if (days < 0) return <Badge variant="outline" className="border-primary/60 text-primary text-[10px] px-1 py-0">Overdue {Math.abs(days)}d</Badge>;
-    if (days === 0) return <Badge variant="outline" className="border-primary/60 text-primary text-[10px] px-1 py-0">Due today</Badge>;
-    if (days <= 2) return <Badge variant="outline" className="text-[10px] px-1 py-0">Due in {days}d</Badge>;
+    if (days < 0) return <Badge variant="outline" className="overdue-pulse border-primary/70 text-primary bg-primary/10 text-[10px] px-1.5 py-0">Overdue {Math.abs(days)}d</Badge>;
+    if (days === 0) return <Badge variant="outline" className="border-primary/70 text-primary bg-primary/10 text-[10px] px-1.5 py-0">Due today</Badge>;
+    if (days <= 2) return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Due in {days}d</Badge>;
     return null;
+  };
+
+  const initialsOf = (name: string) => {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    const first = parts[0][0] || "";
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+    return (first + last).toUpperCase();
+  };
+
+  const fitBand = (score: number | null | undefined): string => {
+    const s = typeof score === "number" ? score : 0;
+    if (s >= 90) return "fit-strip-elite";
+    if (s >= 70) return "fit-strip-high";
+    if (s >= 50) return "fit-strip-mid";
+    return "fit-strip-low";
   };
 
   return (
@@ -225,10 +242,20 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
             const setPage = (next: number) =>
               setStagePages(prev => ({ ...prev, [stage.id]: Math.max(0, Math.min(totalPages - 1, next)) }));
             return (
-              <StageDroppable key={stage.id} stageId={stage.id} className={`rounded-lg border border-border p-2 ${stage.tone} min-h-[180px] flex flex-col`}>
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <div className="text-xs font-semibold uppercase tracking-wide">{stage.label}</div>
-                  <Badge variant="outline" className="text-[10px]">{allItems.length}</Badge>
+              <StageDroppable
+                key={stage.id}
+                stageId={stage.id}
+                className={`stage-column ${stage.tone}`}
+                accent={stage.accent}
+              >
+                <div className="flex items-center justify-between mb-2 px-1 pt-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${stage.dot} shadow-[0_0_6px_currentColor]`} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/85 truncate">{stage.label}</span>
+                  </div>
+                  <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10px] font-semibold bg-foreground/[0.06] border border-border/60 text-foreground/80">
+                    {allItems.length}
+                  </span>
                 </div>
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between gap-1 mb-2 px-1">
@@ -243,29 +270,52 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                 )}
                 <div className="space-y-2 flex-1">
                   {allItems.length === 0 && (
-                    <div className="text-[11px] text-muted-foreground italic px-1">
-                      {stage.id === "not_contacted" ? "Star players in the table to queue them here." : "None"}
+                    <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-[11px] text-muted-foreground italic text-center">
+                      {stage.id === "not_contacted" ? "Star players in the table to queue them here." : "Nothing here yet"}
                     </div>
                   )}
-                  {items.map(r => (
+                  {items.map((r, idx) => (
                     <DraggableCard
                       key={r.id}
                       rowId={r.id}
+                      delay={idx}
+                      fitBandClass={fitBand(r.fit_score)}
                       onOpen={() => { setActiveRow(r); setDrawerOpen(true); }}
                     >
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="min-w-0">
-                          <div className="font-medium text-sm truncate flex items-center gap-1.5">
+                      <div className="flex items-start gap-2.5">
+                        <span className="pipeline-avatar" aria-hidden>{initialsOf(r.player_name)}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <StarToggle id={r.id} table={table as any} initial={!!r.is_starred} size={14}
                               onChange={next => setRows(prev => prev.map(x => x.id === r.id ? { ...x, is_starred: next } : x))}
                             />
-                            <span className="truncate">{r.player_name}</span>
+                            <span className="font-semibold text-sm truncate text-foreground">{r.player_name}</span>
+                            {r.national_team && (
+                              <Star className="h-3 w-3 text-primary fill-primary shrink-0" aria-label="National team" />
+                            )}
                           </div>
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            {[normalisePosition(r.position) || null, r.age ? `${r.age}y` : null, r.current_club].filter(Boolean).join(" · ")}
+                          <div className="mt-1 flex items-center gap-1 flex-wrap">
+                            {normalisePosition(r.position) && (
+                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-primary/15 text-primary border border-primary/25">
+                                {normalisePosition(r.position)}
+                              </span>
+                            )}
+                            {r.age && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-foreground/[0.06] text-foreground/75 border border-border/50">
+                                {r.age}y
+                              </span>
+                            )}
                           </div>
+                          {r.current_club && (
+                            <div className="text-[11px] text-muted-foreground truncate mt-1">{r.current_club}</div>
+                          )}
+                          {r.agent_status === "top_agency" && r.agent_name && (
+                            <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-amber-300/90">
+                              <Shield className="h-3 w-3" /> {r.agent_name}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex flex-col items-end gap-1 shrink-0">
                           <FitScoreBadge
                             player={{
                               position: r.position,
@@ -285,6 +335,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                             }}
                             scope={type}
                           />
+                          <div className="flex items-center gap-0.5">
+                          <GripVertical className="grip-dots h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                           <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                             <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0">
@@ -299,9 +351,10 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                             ))}
                           </DropdownMenuContent>
                           </DropdownMenu>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap pl-[42px]">
                         {r.last_contact_at && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                             <Clock className="h-3 w-3" />
@@ -312,7 +365,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                       </div>
                       {/* Offer + template only on starred rows (i.e. players we actually want to contact) */}
                       {r.is_starred && (
-                        <div className="mt-2 flex items-center gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
+                        <div className="mt-2 flex items-center gap-1 flex-wrap pl-[42px]" onClick={e => e.stopPropagation()}>
                           <TemplatePickerInline
                             compact
                             playerName={r.player_name}
@@ -326,9 +379,10 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                             type="button"
                             size="sm"
                             variant="outline"
+                            className="h-7 px-2 text-[11px] border-primary/40 hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
                             onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
                           >
-                            <Settings2 className="h-4 w-4 mr-1.5" /> Actions
+                            <Settings2 className="h-3.5 w-3.5 mr-1" /> Actions
                           </Button>
                         </div>
                       )}
@@ -356,30 +410,48 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
 
 // --- DnD wrappers ---
 
-const StageDroppable = ({ stageId, className, children }: { stageId: string; className: string; children: React.ReactNode }) => {
+const StageDroppable = ({ stageId, className, accent, children }: { stageId: string; className: string; accent?: string; children: React.ReactNode }) => {
   const { setNodeRef, isOver } = useDroppable({ id: stageId });
+  const style: React.CSSProperties = accent
+    ? ({ ["--stage-accent" as any]: `linear-gradient(90deg, hsl(var(--primary) / 0.55), transparent)` } as any)
+    : {};
+  // Map our gradient class hint into the CSS variable so the header strip colour-codes per stage
+  const accentToVar: Record<string, string> = {
+    "from-muted-foreground/30 to-transparent": "hsl(var(--muted-foreground) / 0.4)",
+    "from-blue-400/40 to-transparent":         "hsl(210 90% 65% / 0.55)",
+    "from-primary/60 to-transparent":          "hsl(var(--primary) / 0.7)",
+    "from-emerald-400/50 to-transparent":      "hsl(150 70% 55% / 0.6)",
+    "from-amber-400/50 to-transparent":        "hsl(40 90% 60% / 0.6)",
+    "from-emerald-500/70 to-transparent":      "hsl(150 75% 50% / 0.8)",
+    "from-red-400/40 to-transparent":          "hsl(0 80% 65% / 0.55)",
+  };
+  const stageColor = accent ? accentToVar[accent] : undefined;
+  const finalStyle: React.CSSProperties = stageColor
+    ? ({ ["--stage-accent" as any]: `linear-gradient(90deg, ${stageColor}, transparent)` } as any)
+    : style;
   return (
-    <div ref={setNodeRef} className={`${className} ${isOver ? "ring-2 ring-primary/60" : ""}`}>
+    <div ref={setNodeRef} style={finalStyle} className={`${className} ${isOver ? "is-over" : ""}`}>
       {children}
     </div>
   );
 };
 
-const DraggableCard = ({ rowId, onOpen, children }: { rowId: string; onOpen: () => void; children: React.ReactNode }) => {
+const DraggableCard = ({ rowId, onOpen, children, delay = 0, fitBandClass }: { rowId: string; onOpen: () => void; children: React.ReactNode; delay?: number; fitBandClass?: string }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: rowId });
   const style: React.CSSProperties = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
-    : {};
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, animationDelay: "0ms" }
+    : { animationDelay: `${Math.min(delay, 20) * 25}ms` };
   return (
-    <Card
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       onClick={(e) => { if (!isDragging) onOpen(); }}
-      className={`p-2.5 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors ${isDragging ? "opacity-70 shadow-lg" : ""}`}
+      className={`pipeline-card p-2.5 pr-3 cursor-grab active:cursor-grabbing ${isDragging ? "opacity-80 shadow-2xl scale-[1.02]" : ""}`}
     >
+      {fitBandClass && <span className={`fit-strip ${fitBandClass}`} aria-hidden />}
       {children}
-    </Card>
+    </div>
   );
 };
