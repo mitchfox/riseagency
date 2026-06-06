@@ -12,6 +12,9 @@ import { Sliders, RotateCcw, Save } from "lucide-react";
 import { DEFAULT_BONUS_WEIGHTS, DEFAULT_WEIGHTS, type BonusWeights, type ScoringWeights } from "@/lib/fitScore";
 import { invalidateScoringCaches } from "@/hooks/useRecruitmentScoring";
 
+const POSITION_KEYS = ["GK", "CB", "LB", "RB", "LWB", "RWB", "CDM", "CM", "CAM", "LM", "RM", "LW", "RW", "CF"] as const;
+type PositionKey = typeof POSITION_KEYS[number];
+
 const WEIGHT_LABELS: Record<keyof ScoringWeights, { label: string; help: string }> = {
   position: { label: "Position match", help: "Player position equals one of the target's positions." },
   age: { label: "Age fit", help: "Player age sits inside the target's age band (with a soft edge)." },
@@ -35,6 +38,7 @@ const BONUS_LABELS: Record<keyof BonusWeights, { label: string; help: string; mi
 export const ScoringSettings = () => {
   const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_WEIGHTS);
   const [bonusWeights, setBonusWeights] = useState<BonusWeights>(DEFAULT_BONUS_WEIGHTS);
+  const [positionWeights, setPositionWeights] = useState<Record<string, number>>({});
   const [ageBand, setAgeBand] = useState(2);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [threshold, setThreshold] = useState(60);
@@ -47,12 +51,13 @@ export const ScoringSettings = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("recruitment_scoring_settings")
-        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight")
+        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight, position_weights")
         .eq("id", "singleton")
         .maybeSingle();
       if (data) {
         setWeights({ ...DEFAULT_WEIGHTS, ...(data.weights || {}) });
         setBonusWeights({ ...DEFAULT_BONUS_WEIGHTS, ...(data.bonus_weights || {}) });
+        setPositionWeights((data.position_weights as Record<string, number>) || {});
         setAgeBand(data.age_sweet_spot_band ?? 2);
         setAiEnabled(!!data.ai_nudge_enabled);
         setThreshold(data.fit_score_threshold ?? 60);
@@ -72,6 +77,7 @@ export const ScoringSettings = () => {
       .update({
         weights,
         bonus_weights: bonusWeights,
+        position_weights: positionWeights,
         age_sweet_spot_band: ageBand,
         ai_nudge_enabled: aiEnabled,
         fit_score_threshold: threshold,
@@ -91,6 +97,7 @@ export const ScoringSettings = () => {
   const reset = () => {
     setWeights(DEFAULT_WEIGHTS);
     setBonusWeights(DEFAULT_BONUS_WEIGHTS);
+    setPositionWeights({});
     setAgeBand(2);
     setAiEnabled(true);
     setThreshold(60);
@@ -102,14 +109,14 @@ export const ScoringSettings = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sliders className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold uppercase tracking-wide">Fit-score settings</h3>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={reset}><RotateCcw className="h-4 w-4 mr-1.5" /> Reset</Button>
-          <Button size="sm" onClick={save} disabled={saving}><Save className="h-4 w-4 mr-1.5" /> Save</Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button size="sm" variant="ghost" onClick={reset} className="flex-1 sm:flex-initial"><RotateCcw className="h-4 w-4 mr-1.5" /> Reset</Button>
+          <Button size="sm" onClick={save} disabled={saving} className="flex-1 sm:flex-initial"><Save className="h-4 w-4 mr-1.5" /> Save</Button>
         </div>
       </div>
 
@@ -143,6 +150,35 @@ export const ScoringSettings = () => {
             Component weights are scored as a ratio of points achieved against the maximum possible, so the score still caps at 100 regardless of the total here. Aim for 100 for the cleanest balance.
           </p>
         )}
+      </Card>
+
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="text-sm font-medium">Position weights</div>
+          <Badge variant="outline" className="text-[10px]">Overrides position component per role</Badge>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Set how many points a player gets when their position matches a target. Leave at 0 to fall back to the generic position weight ({weights.position}).
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {POSITION_KEYS.map(pos => (
+            <div key={pos} className="flex items-center gap-2">
+              <Label className="text-xs font-mono w-10 shrink-0">{pos}</Label>
+              <Input
+                type="number"
+                min={0}
+                max={60}
+                step={1}
+                value={positionWeights[pos] ?? 0}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  setPositionWeights(prev => ({ ...prev, [pos]: Number.isFinite(v) && v > 0 ? v : 0 }));
+                }}
+                className="h-8 text-xs"
+              />
+            </div>
+          ))}
+        </div>
       </Card>
 
       <Card className="p-4 space-y-4">

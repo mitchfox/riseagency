@@ -16,6 +16,7 @@ export interface ScoringSettingsRow {
   fit_score_threshold: number;
   position_adjacency_factor: number;
   league_strength_weight: number;
+  position_weights: Record<string, number>;
 }
 
 const DEFAULT_SETTINGS: ScoringSettingsRow = {
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: ScoringSettingsRow = {
   fit_score_threshold: 60,
   position_adjacency_factor: 0.5,
   league_strength_weight: 10,
+  position_weights: {},
 };
 
 let cachedSettings: ScoringSettingsRow | null = null;
@@ -56,7 +58,7 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
   inflightSettings = (async () => {
     const { data } = await (supabase as any)
       .from("recruitment_scoring_settings")
-      .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight")
+      .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight, position_weights")
       .eq("id", "singleton")
       .maybeSingle();
     const merged: ScoringSettingsRow = {
@@ -66,6 +68,7 @@ const fetchSettings = async (): Promise<ScoringSettingsRow> => {
       bonus_weights: { ...DEFAULT_BONUS_WEIGHTS, ...((data?.bonus_weights) || {}) },
       position_adjacency_factor: Number(data?.position_adjacency_factor ?? 0.5),
       league_strength_weight: Number(data?.league_strength_weight ?? 10),
+      position_weights: (data?.position_weights as Record<string, number>) || {},
     };
     cachedSettings = merged;
     writeSession(SS_KEY_SETTINGS, merged);

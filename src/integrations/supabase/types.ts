@@ -6600,6 +6600,7 @@ export type Database = {
           id: string
           league_strength_weight: number
           position_adjacency_factor: number
+          position_weights: Json
           updated_at: string
           updated_by: string | null
           weights: Json
@@ -6612,6 +6613,7 @@ export type Database = {
           id?: string
           league_strength_weight?: number
           position_adjacency_factor?: number
+          position_weights?: Json
           updated_at?: string
           updated_by?: string | null
           weights?: Json
@@ -6624,6 +6626,7 @@ export type Database = {
           id?: string
           league_strength_weight?: number
           position_adjacency_factor?: number
+          position_weights?: Json
           updated_at?: string
           updated_by?: string | null
           weights?: Json

@@ -441,6 +441,7 @@ export const PlayerDatabase = () => {
           scoringSettings.bonus_weights,
           scoringSettings.position_adjacency_factor,
           scoringSettings.league_strength_weight,
+          scoringSettings.position_weights,
         );
         map[`${player.source}-${player.id}`] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch {
@@ -641,7 +642,6 @@ export const PlayerDatabase = () => {
                 response_received: player.response_received,
                 parent_approval: player.parent_approval,
               }}
-              cachedScore={fitScoreByRowKey[`${player.source}-${player.id}`] ?? null}
               scope={player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined}
             />
           </TableCell>

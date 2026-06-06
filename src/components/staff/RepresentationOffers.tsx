@@ -176,8 +176,6 @@ export const RepresentationOffers = () => {
             <span className="min-w-0 flex-1 truncate">{player.name}</span>
             <FitScoreBadge
               player={player as any}
-              cachedScore={player.fit_score ?? null}
-              cachedBreakdown={player.fit_score_breakdown}
             />
           </CardTitle>
         </CardHeader>

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { computeFitScore, type PlayerLike } from "@/lib/fitScore";
 import { useRecruitmentTargets, useScoringSettings } from "@/hooks/useRecruitmentScoring";
+import { useClubMaps } from "@/hooks/useClubMaps";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -9,26 +10,30 @@ interface Props {
   scope?: "youth" | "pro";
   size?: "sm" | "md";
   className?: string;
-  /** Pre-computed cached score; falls back to live deterministic if absent. */
+  /** @deprecated Cached scores are ignored — every view now computes live so the same
+   *  player shows the same score everywhere. Prop kept for back-compat. */
   cachedScore?: number | null;
   cachedBreakdown?: { reasons?: string[]; target_name?: string | null } | null;
 }
 
-export const FitScoreBadge = ({ player, scope, size = "sm", className, cachedScore, cachedBreakdown }: Props) => {
+export const FitScoreBadge = ({ player, scope, size = "sm", className }: Props) => {
   const { targets } = useRecruitmentTargets();
   const { settings } = useScoringSettings();
+  const { enrichForFit } = useClubMaps();
 
   const computed = useMemo(() => {
+    const enriched = enrichForFit(player as any, scope);
     const r = computeFitScore(
-      player, targets, settings.weights, settings.age_sweet_spot_band, scope, settings.bonus_weights,
+      enriched as any, targets, settings.weights, settings.age_sweet_spot_band, scope, settings.bonus_weights,
       settings.position_adjacency_factor, settings.league_strength_weight,
+      settings.position_weights,
     );
     return {
-      total: typeof cachedScore === "number" ? cachedScore : r.total,
-      reasons: cachedBreakdown?.reasons || r.reasons,
-      target_name: cachedBreakdown?.target_name ?? r.target_name,
+      total: r.total,
+      reasons: r.reasons,
+      target_name: r.target_name,
     };
-  }, [player, targets, settings, scope, cachedScore, cachedBreakdown]);
+  }, [player, targets, settings, scope, enrichForFit]);
 
   const total = Math.max(0, Math.min(100, Math.round(computed.total)));
 

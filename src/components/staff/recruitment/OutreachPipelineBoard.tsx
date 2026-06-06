@@ -39,6 +39,11 @@ interface Row {
   fit_score?: number | null;
   fit_score_breakdown?: any;
   is_starred?: boolean | null;
+  national_team?: boolean | null;
+  star_of_team?: boolean | null;
+  previous_serious_injury?: string | null;
+  agent_name?: string | null;
+  agent_status?: string | null;
 }
 
 const STAGES: { id: string; label: string; tone: string }[] = [
@@ -98,7 +103,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
 
   const load = async () => {
     setLoading(true);
-    const baseCols = "id,player_name,position,current_club,age,nationality,date_of_birth,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received,fit_score,fit_score_breakdown,is_starred";
+    const baseCols = "id,player_name,position,current_club,age,nationality,date_of_birth,response_status,last_contact_at,next_followup_at,first_response_at,messaged,response_received,fit_score,fit_score_breakdown,is_starred,national_team,star_of_team,previous_serious_injury,agent_name,agent_status";
     const cols = type === "youth" ? `${baseCols},parent_approval` : baseCols;
     const { data, error } = await supabase
       .from(table)
@@ -255,10 +260,13 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                               response_received: r.response_received,
                               response_status: r.response_status,
                               parent_approval: r.parent_approval,
+                              national_team: r.national_team,
+                              star_of_team: r.star_of_team,
+                              previous_serious_injury: r.previous_serious_injury,
+                              agent_name: r.agent_name,
+                              agent_status: r.agent_status,
                             }}
                             scope={type}
-                            cachedScore={r.fit_score ?? null}
-                            cachedBreakdown={r.fit_score_breakdown}
                           />
                           <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
