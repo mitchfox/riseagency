@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("players")
             .select(
-              "id, name, position, age, date_of_birth, nationality, image_url, club, league"
+              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights"
             )
             .in("id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -145,6 +145,19 @@ Deno.serve(async (req) => {
           (p?.name ? `https://risefootballagency.com/stars/${slugify(p.name)}` : null);
         const clubKey = (p?.club ?? "").toString().toLowerCase().trim();
         const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
+        // First highlight video on the player's Stars profile
+        let firstHighlightUrl: string | null = null;
+        try {
+          let h: any = p?.highlights ?? null;
+          if (typeof h === "string") h = JSON.parse(h);
+          if (h && !Array.isArray(h) && h.matchHighlights) h = h.matchHighlights;
+          if (Array.isArray(h)) {
+            const first = h.find((x: any) => x && (x.videoUrl || x.video_url));
+            firstHighlightUrl = first?.videoUrl ?? first?.video_url ?? null;
+          }
+        } catch (_) {
+          firstHighlightUrl = null;
+        }
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -153,8 +166,9 @@ Deno.serve(async (req) => {
           stars_url: starsUrl,
           highlights_url: d?.highlights_url ?? null,
           proof_of_representation_url: proofUrl,
-          player_club_image_url: clubInfo?.image_url ?? null,
+          player_club_image_url: clubInfo?.image_url ?? p?.club_logo ?? null,
           player_club_country: clubInfo?.country ?? null,
+          first_highlight_url: firstHighlightUrl,
         };
       })
     );

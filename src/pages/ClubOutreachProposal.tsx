@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Video, Film, FileBadge2, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
@@ -33,6 +33,7 @@ interface PlayerEntry {
   proof_of_representation_url: string | null;
   player_club_image_url: string | null;
   player_club_country: string | null;
+  first_highlight_url: string | null;
 }
 
 interface Payload {
@@ -115,7 +116,7 @@ export default function ClubOutreachProposal() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#C6A332]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
       </div>
     );
   }
@@ -147,6 +148,7 @@ export default function ClubOutreachProposal() {
   const hasMultiple = data.players.length > 1;
   const fitText = (current.fit_recommendation ?? "").trim();
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
+  const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
@@ -161,15 +163,15 @@ export default function ClubOutreachProposal() {
       />
       {/* Header */}
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(198,163,50,0.18),_transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
         {club?.image_url ? (
-          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(198,163,50,0.4)]" />
+          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]" />
         ) : (
           <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
-        <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#C6A332]">Rise Football Agency presents</p>
+        <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">
           {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
         </h1>
@@ -183,7 +185,7 @@ export default function ClubOutreachProposal() {
         <div className="max-w-3xl mx-auto px-6 mt-6 flex flex-wrap gap-2 justify-center">
           <button
             onClick={() => setActiveSlot(null)}
-            className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+            className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
             All
           </button>
@@ -191,7 +193,7 @@ export default function ClubOutreachProposal() {
             <button
               key={s}
               onClick={() => setActiveSlot(s)}
-              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
               {s}
             </button>
@@ -202,14 +204,14 @@ export default function ClubOutreachProposal() {
       {/* Carousel controls */}
       {filteredPlayers.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
-          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 text-center text-xs text-white/60">
             <span className="text-white/90 font-medium">{player?.name}</span>
             <span className="ml-2 text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
           </div>
-          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -224,11 +226,23 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Hero image */}
-      {player?.image_url && (
+      {/* Hero — first Stars highlight video, falls back to player image */}
+      {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10">
-            <img src={player.image_url} alt={player.name} className="w-full h-full object-cover" />
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
+            {current.first_highlight_url ? (
+              <video
+                key={current.first_highlight_url}
+                src={current.first_highlight_url}
+                className="w-full h-full object-contain bg-black"
+                controls
+                playsInline
+                preload="metadata"
+                poster={player?.image_url ?? undefined}
+              />
+            ) : (
+              <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
+            )}
           </div>
         </div>
       )}
@@ -236,8 +250,8 @@ export default function ClubOutreachProposal() {
       {/* Fit & Recommendation — full width above cards */}
       {fitText && (
         <section className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="rounded-2xl border border-[#C6A332]/30 bg-gradient-to-br from-[#C6A332]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">Fit & Recommendation</p>
+          <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Fit & Recommendation</p>
             <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
           </div>
         </section>
@@ -253,21 +267,15 @@ export default function ClubOutreachProposal() {
           subtitle="Full profile, highlights and statistics"
         />
         <ProposalCard
-          href={current.highlights_url}
-          icon={<Film className="h-6 w-6" />}
-          eyebrow="02"
-          title="Full Season Highlights"
-          subtitle="Every meaningful moment from the season"
-          disabledLabel={current.highlights_url ? undefined : "Coming soon"}
-        />
-        <ProposalCard
           href={current.proof_of_representation_url}
           icon={<FileBadge2 className="h-6 w-6" />}
-          eyebrow="03"
+          eyebrow="02"
           title="Proof of Representation"
           subtitle="Signed agreement with Rise Football Agency"
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
         />
+      </section>
+      <section className="max-w-3xl mx-auto px-6 mt-4">
         <KeyDetailsCard entry={current} age={age} />
       </section>
 
@@ -284,7 +292,7 @@ export default function ClubOutreachProposal() {
             <div className="flex items-center gap-3">
               <WhatsAppIcon className="h-6 w-6" />
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp the Agent</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp {firstName}'s Agent</div>
                 <div className="text-sm sm:text-base">Jolon Levene – RISE Football</div>
               </div>
             </div>
@@ -312,10 +320,10 @@ export default function ClubOutreachProposal() {
               <div className="flex items-center gap-3">
                 <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
                 <div className="text-left">
-                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Your club contact</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
                   <div className="text-sm sm:text-base">
                     {data.link.club_contact_name}
-                    {data.link.club_contact_role ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {data.link.club_contact_role}</span> : null}
+                    {club?.club_name ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {club.club_name}</span> : null}
                   </div>
                 </div>
               </div>
@@ -344,14 +352,14 @@ function ProposalCard({
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#C6A332]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(198,163,50,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
-        <div className="h-12 w-12 rounded-xl bg-[#C6A332]/10 text-[#C6A332] flex items-center justify-center">{icon}</div>
+        <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
         <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       </div>
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
-      <div className="mt-4 flex items-center gap-2 text-xs text-[#C6A332]">
+      <div className="mt-4 flex items-center gap-2 text-xs text-[#cbb96b]">
         {disabled ? (disabledLabel ?? "Unavailable") : <>Open <ExternalLink className="h-3.5 w-3.5" /></>}
       </div>
     </div>
@@ -380,10 +388,10 @@ function KeyDetailsCard({
   const clubLogo = entry.player_club_image_url;
 
   return (
-    <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 min-h-[260px] sm:min-h-[280px] overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">04</span>
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">Key Details</h3>
-      <div className="grid grid-cols-2 gap-2 h-[calc(100%-2.25rem)]">
+    <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
+      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">03</span>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
           {clubLogo ? (
