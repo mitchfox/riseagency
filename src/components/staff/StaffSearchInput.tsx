@@ -13,21 +13,41 @@ interface StaffSearchInputProps {
 export const StaffSearchInput = ({ value, onChange, placeholder = "Search...", className }: StaffSearchInputProps) => {
   const [localValue, setLocalValue] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track the last value we committed up to the parent so we can ignore
+  // echoes of stale parent state during typing. Without this, any
+  // unrelated parent re-render before the debounce fires would feed the
+  // pre-debounce `value` back through useEffect and wipe what the user
+  // just typed.
+  const lastCommittedRef = useRef<string>(value);
 
-  // Sync from parent when value changes externally (e.g. cleared)
+  // Only sync from parent when the parent's value differs from what we
+  // last committed — i.e. it's a genuine EXTERNAL change (e.g. clear
+  // button elsewhere) rather than the parent echoing our own debounced
+  // commit or a stale render during typing.
   useEffect(() => {
-    setLocalValue(value);
+    if (value !== lastCommittedRef.current) {
+      lastCommittedRef.current = value;
+      setLocalValue(value);
+    }
   }, [value]);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   const handleChange = (v: string) => {
     setLocalValue(v);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onChange(v), 300);
+    timerRef.current = setTimeout(() => {
+      lastCommittedRef.current = v;
+      onChange(v);
+    }, 300);
   };
 
   const handleClear = () => {
     setLocalValue("");
     if (timerRef.current) clearTimeout(timerRef.current);
+    lastCommittedRef.current = "";
     onChange("");
   };
 

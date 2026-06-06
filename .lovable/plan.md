@@ -1,86 +1,49 @@
-## Plan
+## 1. RiseWithUs detail view shows nothing in Italian (Antonio)
 
-1. **Footer branding**
-   - Replace the bottom text “Rise Football Agency” with the existing `RISEWhite` logo asset.
-   - Keep it subtle, centred, and sized so it reads as a brand mark rather than extra page copy.
+**Cause:** `DetailView` in `src/pages/RequestRepresentation.tsx` calls `useLanguage()` (global site language) for body content, while the RiseWithUs hub uses `usePlayerLanguageTranslations(player.portal_language)` for titles. When the prospect's `portal_language` differs from the visitor's site language, body content falls back / renders blank because keys aren't translated in the global language scope.
 
-2. **Header spacing and prepared-for name**
-   - Make the three header lines use equal vertical spacing:
-     - `Rise Football Agency presents`
-     - player name / player count
-     - `Prepared for ...`
-   - Add a new editable field in **Edit/New Club Outreach** for the prepared-for person name.
-   - Public page will show `Prepared for {person name}` and fall back to the club name only if that field is blank.
+**Fix:**
+- Make `DetailView` accept an optional `lang` / `t` override:
+  - Add a `playerLang?: string` prop (and surface `translations` Map keyed by that lang).
+  - Build a local `t` that mirrors `useLanguage`'s lookup but pulls from translations for the supplied language. Reuse the same hook as the hub: `usePlayerLanguageTranslations(playerLang)` and pass its `t` (plus its `translations` map) into `DetailView` for `translateSkillField`'s fuzzy lookup.
+- Update `src/pages/RiseWithUs.tsx` to pass `playerLang={playerLang}` to `<DetailView>` so all detail sections (Performance, Scouting, Brand, Fees, FAQs, Network, Agreement, Expectations, Negotiation, sub-screens) translate using the prospect's language.
+- Keep `RequestRepresentation`'s own use of `<DetailView>` unchanged (no `playerLang` prop = falls back to global `useLanguage`).
+- `usePlayerLanguageTranslations` will need to also return its `translations` Map (or expose `language`) so skill fuzzy-match still works.
 
-3. **Move club contact defaults into Settings**
-   - Remove the club contact fields from each outreach link.
-   - Add a **Club contacts** area in Club Outreach Settings where each outreach club can store:
-     - contact name
-     - contact role
-     - WhatsApp number
-     - contact button colour
-     - contact image
-   - The proposal will use the saved contact for the selected club.
+## 2. Club Outreach contact's club is wrong
 
-4. **Agency contact image**
-   - Extend Club Outreach Settings with agency contact details:
-     - WhatsApp number
-     - agent image
-   - The public WhatsApp agent button will show the saved circular agent image when set.
+**Current:** `club_outreach_club_contacts.club_id` reuses the outreach target club, so the proposal labels the contact (e.g. Lukas Vaculik) with the target club instead of his own club (Vysocina Jihlava).
 
-5. **Club contact image**
-   - Add upload support for a circular club contact image in Settings.
-   - Show it in the public “Key Club Contact” button.
+**Fix (schema + UI):**
+- Migration: add `contact_club_id uuid references public.club_map_positions(id)` to `club_outreach_club_contacts` plus `contact_club_name text`, `contact_club_logo_url text` (denormalised snapshot for fast public render).
+- `SettingsDialog` → Club Contacts editor: add a club picker for "Contact's own club" separate from the outreach target. Save its id + name + logo url onto the contact row. Keep `club_id` as the lookup key (so a single outreach target can still surface this contact when matched) — or, better, decouple: rename `club_id` semantics to "intro target club", and store contact's own club in the new `contact_club_*` fields. Existing rows backfilled to copy current `club_id` → `contact_club_id` so visible state stays unchanged for existing entries.
+- `supabase/functions/get-club-outreach/index.ts`: return `contact_club_name` and `contact_club_logo_url` (fallback through `club_map_positions` lookup using `contact_club_id`).
+- `src/pages/ClubOutreachProposal.tsx`: in the Key Club Contact card, display the contact's own club name and logo (instead of the outreach target). Outreach target keeps appearing in the "Prepared for" header.
 
-6. **WhatsApp links**
-   - Remove the pre-written WhatsApp message from the agency WhatsApp URL.
-   - Keep the direct `wa.me/{number}` link only.
+## 3. "Prepared for" should be the individual at the target club
 
-7. **Video player behaviour**
-   - Use the first Stars highlight video as the main player.
-   - Make it attempt autoplay with sound on first open, with controls available. If the browser blocks sound autoplay, it will still be playable by the user.
-   - Remove the player-photo poster so the browser can show the video’s own first frame/thumbnail instead.
+**Current:** Already wired to `prepared_for_name`. Issue is wording in the manager — staff are confusing it with the bottom contact.
 
-8. **Player info strip above video**
-   - Replicate the Stars profile top info strip more closely:
-     - position
-     - age
-     - nationality flag + nationality
-     - current club logo + club
-   - Add robust image fallback so a bad club logo URL does not show a broken image icon.
+**Fix:**
+- `OutreachDialog` in `ClubOutreachManager.tsx`: rename the field label to **"Prepared for (recipient at target club)"** with helper text "e.g. the sporting director at the club you're sending this to. This is different from the saved Key Club Contact."
+- `ClubOutreachProposal.tsx` already renders `Prepared for {prepared_for_name}` — no change.
 
-9. **Fix Tyrese / FC Vysočina Jihlava logo lookup**
-   - Improve current club logo resolution in the backend function by using case-insensitive matching and falling back through:
-     - parsed Stars bio current club logo / tactical formation logo
-     - `players.club_logo`
-     - `club_map_positions.image_url`
-   - Frontend will hide failed images and show initials instead of a broken icon.
+## 4. Pro outreach / Youth outreach / Player database table searches not filtering
 
-10. **Proof of Representation blocked URL**
-   - Avoid exposing the blocked backend storage URL directly in the page link.
-   - Add a public app route, e.g. `/club-proposal/:shortId/proof/:playerId`, that fetches the signed proof URL at click time and redirects/open-loads it from within the app.
-   - Update the proof card to use this app route so browser extensions are less likely to block the visible target URL.
+**Cause:** `StaffSearchInput` resyncs `localValue` from the parent `value` prop on every parent render. While typing, parent re-renders (other state, scoring recalcs, etc.) feed the *pre-debounce* `value` back through `useEffect`, overwriting freshly-typed characters and effectively clearing the search before the 300ms timer commits.
 
-11. **Key Details alignment**
-   - Lock icon/flag/logo rows to consistent heights.
-   - Let long text wrap underneath without pushing flags/logos out of alignment.
+**Fix:**
+- In `src/components/staff/StaffSearchInput.tsx`, only sync from prop when the parent's value differs from the last value we committed (track via a ref). Specifically: when local input is "dirty" (a pending debounce timer is active), do not let an incoming `value` change overwrite `localValue` unless it is a genuine external clear (`value === ""` and our last commit wasn't ""). Also clear the debounce timer on unmount.
+- Verify in preview that typing into Pro Outreach / Youth Outreach (table view) and Player Database filters the rows live.
 
-12. **Optional outreach page sections**
-   - Add per-link visibility toggles in New/Edit Club Outreach for Stars-derived sections:
-     - Form
-     - In Numbers / data
-     - Season stats
-     - Strengths / play style
-   - Backend returns the same parsed Stars profile data and form config needed for those sections.
-   - Public proposal renders the selected sections in the same visual language as the Stars profile, using Rise Gold `#cbb96b` accents.
+## Files to touch
 
-## Technical notes
-
-- This needs a database migration to add the new settings/default columns while keeping existing data safe.
-- The edge function `get-club-outreach` will return settings, contact defaults, display options, parsed profile data, form data, and improved club logo fields.
-- The affected files will be:
-  - `src/components/staff/ClubOutreachManager.tsx`
-  - `src/pages/ClubOutreachProposal.tsx`
-  - `supabase/functions/get-club-outreach/index.ts`
-  - `src/integrations/supabase/types.ts`
-  - a new migration for outreach settings/contact/display fields
+- `supabase/migrations/<new>.sql` — add contact club fields, backfill from current `club_id`.
+- `supabase/functions/get-club-outreach/index.ts` — return contact_club_name/logo.
+- `src/pages/RiseWithUs.tsx` — pass `playerLang` to `<DetailView>`.
+- `src/pages/RequestRepresentation.tsx` — `DetailView` accepts `playerLang` and uses the player-language translator + translations map.
+- `src/hooks/usePlayerLanguageTranslations.ts` — also return `translations` map.
+- `src/pages/ClubOutreachProposal.tsx` — render contact's own club name + logo in the Key Club Contact card.
+- `src/components/staff/ClubOutreachManager.tsx` — add "Contact's own club" picker in Settings club-contact editor; relabel "Prepared for" field with helper text.
+- `src/components/staff/StaffSearchInput.tsx` — fix parent-sync clobber so debounced typing isn't reverted.
+- `src/integrations/supabase/types.ts` — refresh types for new columns after migration.

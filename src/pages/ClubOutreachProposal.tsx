@@ -69,6 +69,8 @@ interface Payload {
     contact_phone: string | null;
     contact_accent: string | null;
     contact_image_url: string | null;
+    contact_club_name?: string | null;
+    contact_club_logo_url?: string | null;
   } | null;
 }
 
@@ -163,6 +165,8 @@ export default function ClubOutreachProposal() {
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
+  const clubContactClubName = data.club_contact?.contact_club_name ?? null;
+  const clubContactClubLogo = data.club_contact?.contact_club_logo_url ?? null;
   const clubPhone = (clubContactPhoneRaw ?? "").replace(/[^0-9]/g, "");
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
@@ -426,7 +430,7 @@ export default function ClubOutreachProposal() {
                   <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
                   <div className="text-sm sm:text-base">
                     {clubContactName}
-                    {club?.club_name ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {club.club_name}</span> : null}
+                    {clubContactClubName ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {clubContactClubName}</span> : null}
                   </div>
                 </div>
               </div>

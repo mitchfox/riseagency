@@ -482,8 +482,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
 
           <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/10">
             <div>
-              <Label>Prepared for</Label>
-              <p className="text-[11px] text-muted-foreground mt-1">The person at the club this proposal is addressed to. Shown at the top under the player's name.</p>
+              <Label>Prepared for (recipient at target club)</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">The individual at the club you're outreaching to (e.g. their sporting director). Shown at the top under the player's name. This is different from the saved Key Club Contact at the bottom of the proposal.</p>
               <Input className="mt-1.5" placeholder="e.g. Mehmet Yilmaz" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} />
             </div>
             <div>
@@ -672,9 +672,10 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   // Club contacts state
   const [clubQuery, setClubQuery] = useState("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
-  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string }>({
-    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "",
+  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string; contact_club_id: string }>({
+    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "", contact_club_id: "",
   });
+  const [contactClubQuery, setContactClubQuery] = useState("");
   const [contactImgUploading, setContactImgUploading] = useState(false);
 
   const filteredPlayers = useMemo(() => {
@@ -706,7 +707,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         contact_phone: data?.contact_phone ?? "",
         contact_accent: data?.contact_accent ?? "#1f2937",
         contact_image_url: data?.contact_image_url ?? "",
+        // Default the contact's own club to the outreach club so existing
+        // records that pre-date this field display sensibly until edited.
+        contact_club_id: (data as any)?.contact_club_id ?? selectedClubId,
       });
+      setContactClubQuery("");
     })();
   }, [selectedClubId]);
 
@@ -760,6 +765,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       contact_phone: contact.contact_phone.trim() || null,
       contact_accent: contact.contact_name.trim() ? contact.contact_accent : null,
       contact_image_url: contact.contact_image_url.trim() || null,
+      contact_club_id: contact.contact_club_id || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -878,6 +884,54 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Input placeholder="Contact name" value={contact.contact_name} onChange={(e) => setContact(c => ({ ...c, contact_name: e.target.value }))} />
                   <Input placeholder="Role e.g. Technical Director" value={contact.contact_role} onChange={(e) => setContact(c => ({ ...c, contact_role: e.target.value }))} />
                   <Input placeholder="WhatsApp e.g. 447700900000" value={contact.contact_phone} onChange={(e) => setContact(c => ({ ...c, contact_phone: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Contact's own club</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 mb-1.5">
+                    The club this contact actually works for — shown next to their name on the proposal.
+                    Usually different from the club we're outreaching to.
+                  </p>
+                  {(() => {
+                    const selected = clubs.find(c => c.id === contact.contact_club_id);
+                    return (
+                      <div className="flex items-center gap-2 mb-2 text-xs">
+                        <span className="text-muted-foreground">Selected:</span>
+                        {selected ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/10 px-2 py-1">
+                            {selected.image_url ? <img src={selected.image_url} className="h-4 w-4 object-contain" /> : null}
+                            <span className="font-medium">{selected.club_name}</span>
+                          </span>
+                        ) : (
+                          <span className="italic text-muted-foreground">None</span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  <Input
+                    placeholder="Search the contact's club"
+                    value={contactClubQuery}
+                    onChange={(e) => setContactClubQuery(e.target.value)}
+                    className="mb-2"
+                  />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto pr-1">
+                    {clubs
+                      .filter(c => {
+                        const n = contactClubQuery.trim().toLowerCase();
+                        return n ? c.club_name.toLowerCase().includes(n) : true;
+                      })
+                      .slice(0, 60)
+                      .map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setContact(prev => ({ ...prev, contact_club_id: c.id }))}
+                          className={`flex items-center gap-2 rounded-md border p-2 text-left ${contact.contact_club_id === c.id ? "border-[#cbb96b] bg-[#cbb96b]/10" : "border-border hover:border-[#cbb96b]/40"}`}
+                        >
+                          {c.image_url ? <img src={c.image_url} className="h-6 w-6 object-contain bg-white/5 rounded" /> : <div className="h-6 w-6 rounded bg-muted" />}
+                          <div className="text-[11px] font-medium truncate">{c.club_name}</div>
+                        </button>
+                      ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Label className="text-xs text-muted-foreground">Button colour</Label>

@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { HoverText } from "@/components/HoverText";
 import { LanguageMapSelector } from "@/components/LanguageMapSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SmokeOverlay } from "@/components/SmokeOverlay";
 import { RepresentationIntro } from "@/components/RepresentationIntro";
@@ -994,6 +995,10 @@ interface DetailViewProps {
   setPerformanceSub: (p: PerformanceSub | null) => void;
   recommendedScoutingPosition: ScoutingPosition | null;
   onBack: () => void;
+  /** When provided, body translations use this language instead of the
+   *  visitor's global site language. Used by the per-prospect RiseWithUs
+   *  page so detail sections render in the player's portal_language. */
+  playerLang?: string;
 }
 
 export const DetailView = ({
@@ -1002,8 +1007,14 @@ export const DetailView = ({
   performanceSub, setPerformanceSub,
   recommendedScoutingPosition,
   onBack,
+  playerLang,
 }: DetailViewProps) => {
-  const { t, language, translations } = useLanguage();
+  const ctxLang = useLanguage();
+  const playerT = usePlayerLanguageTranslations(playerLang || ctxLang.language);
+  const usePlayer = !!playerLang;
+  const t = usePlayer ? playerT.t : ctxLang.t;
+  const language = usePlayer ? (playerT.language as any) : ctxLang.language;
+  const translations = usePlayer ? playerT.translations : ctxLang.translations;
   const meta = CARD_META.find((c) => c.key === activeCard)!;
   const Icon = meta.icon;
   const content = (cardContent as any)[activeCard];

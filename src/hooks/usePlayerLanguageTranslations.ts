@@ -69,7 +69,7 @@ export const usePlayerLanguageTranslations = (lang: string) => {
   const t = (key: string, fallback?: string): string =>
     map.get(key) || fallback || key;
 
-  return { t, loaded, language: code };
+  return { t, loaded, language: code, translations: map };
 };
 
 export default usePlayerLanguageTranslations;

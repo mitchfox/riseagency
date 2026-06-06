@@ -683,6 +683,7 @@ const RiseWithUs = () => {
                 setPerformanceSub={setPerformanceSub}
                 recommendedScoutingPosition={null}
                 onBack={onDetailBack}
+                playerLang={playerLang}
               />
 
               {/* Scoped slider + back-to-all + next button */}
