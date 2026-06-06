@@ -51,9 +51,17 @@ export default function ClubOutreachProposal() {
     (async () => {
       try {
         const url = `https://qwethimbtaamlhbajmal.supabase.co/functions/v1/get-club-outreach?short_id=${encodeURIComponent(shortId)}`;
-        const res = await fetch(url, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } });
+        const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(url, {
+          headers: { apikey: key, Authorization: `Bearer ${key}` },
+        });
         if (!res.ok) {
-          setErr(res.status === 404 ? "This proposal could not be found." : "Failed to load proposal.");
+          let msg = "Failed to load proposal.";
+          try {
+            const body = await res.json();
+            if (body?.error) msg = body.error;
+          } catch {}
+          setErr(res.status === 404 ? "This proposal could not be found." : msg);
           return;
         }
         setData(await res.json());
