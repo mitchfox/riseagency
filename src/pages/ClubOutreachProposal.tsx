@@ -324,12 +324,17 @@ export default function ClubOutreachProposal() {
           subtitle="Full profile, highlights and statistics"
         />
         <ProposalCard
-          href={current.proof_of_representation_url}
+          href={
+            current.proof_of_representation_url && data.link.short_id && player?.id
+              ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+              : null
+          }
           icon={<FileBadge2 className="h-6 w-6" />}
           eyebrow="02"
           title="Proof of Representation"
           subtitle="Signed agreement with Rise Football Agency"
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
+          internal
         />
       </section>
       <section className="max-w-3xl mx-auto px-6 mt-4">
