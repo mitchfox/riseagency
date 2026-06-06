@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, Video, Film, FileBadge2, IdCard, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Video, Film, FileBadge2, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
+import { getCountryFlagUrl } from "@/lib/countryFlags";
+import blackMarbleBg from "@/assets/black-marble-smudged.png";
 
 interface PlayerEntry {
   player: {
@@ -125,13 +127,23 @@ export default function ClubOutreachProposal() {
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white pb-[max(24px,env(safe-area-inset-bottom))]">
+    <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
+      {/* Smudged black marble brand background */}
+      <div
+        className="fixed inset-0 -z-10 bg-black"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.85)), url(${blackMarbleBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
       {/* Header */}
-      <header className="px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
+      <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(251,189,35,0.18),_transparent_60%)]" />
         {club?.image_url ? (
-          <img src={club.image_url} alt={club.club_name} className="mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(251,189,35,0.25)]" />
+          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(251,189,35,0.4)]" />
         ) : (
-          <div className="mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
+          <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
