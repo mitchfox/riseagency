@@ -257,16 +257,16 @@ export default function ClubOutreachProposal() {
             href={agencyWaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[hsl(43,96%,56%)] text-black font-semibold shadow-[0_10px_40px_-10px_rgba(251,189,35,0.6)] hover:shadow-[0_14px_50px_-10px_rgba(251,189,35,0.85)] transition-all active:scale-[0.99]"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold shadow-[0_10px_40px_-10px_rgba(37,211,102,0.55)] hover:shadow-[0_14px_50px_-10px_rgba(37,211,102,0.85)] transition-all active:scale-[0.99]"
           >
             <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5" />
+              <WhatsAppIcon className="h-6 w-6" />
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-70">Agent contact</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp the agent</div>
                 <div className="text-sm sm:text-base">Rise Football Agency</div>
               </div>
             </div>
-            <ExternalLink className="h-4 w-4 opacity-70" />
+            <ExternalLink className="h-4 w-4 opacity-80" />
           </a>
         )}
         {clubWaUrl && data.link.club_contact_name && (
