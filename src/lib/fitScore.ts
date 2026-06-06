@@ -196,10 +196,19 @@ const scoreAgainstTarget = (
   weights: ScoringWeights,
   ageBand: number,
   adjacencyFactor: number,
+  positionWeights: Record<string, number> = {},
 ): { score: number; reasons: string[]; components: Record<string, number>; maxComponents: Record<string, number> } => {
   const components: Record<string, number> = {};
+  // Position weight may be overridden per-position via the settings map.
+  // If a player matches a target position, that role's specific weight (if set > 0)
+  // is used as both the cap and the awarded value. Otherwise fall back to weights.position.
+  const posKey = normalisePosLocal(player.position);
+  const posOverride = posKey && positionWeights && typeof positionWeights[posKey] === "number" && positionWeights[posKey] > 0
+    ? positionWeights[posKey]
+    : null;
+  const positionPoints = posOverride ?? weights.position;
   const maxComponents: Record<string, number> = {
-    position: weights.position,
+    position: positionPoints,
     age: weights.age,
     nationality: weights.nationality,
     club_country: weights.club_country,
@@ -213,17 +222,17 @@ const scoreAgainstTarget = (
   if (target.positions.length > 0) {
     const targetPositions = target.positions.map(p => normalisePosLocal(p));
     if (pos && targetPositions.includes(pos)) {
-      components.position = weights.position;
-      reasons.push(`+${weights.position} position match (${pos})`);
+      components.position = positionPoints;
+      reasons.push(`+${positionPoints} position match (${pos})`);
     } else if (pos && targetPositions.some(tp => isAdjacent(pos, tp))) {
-      const partial = Math.round(weights.position * Math.max(0, Math.min(1, adjacencyFactor)));
+      const partial = Math.round(positionPoints * Math.max(0, Math.min(1, adjacencyFactor)));
       components.position = partial;
       reasons.push(`+${partial} adjacent position (${pos})`);
     } else {
       components.position = 0;
     }
   } else {
-    components.position = weights.position * 0.5; // no constraint = neutral
+    components.position = positionPoints * 0.5; // no constraint = neutral
   }
 
   // Age fit (peak at midpoint, falls off across band)
@@ -339,6 +348,7 @@ export const computeFitScore = (
   bonusWeights: BonusWeights = DEFAULT_BONUS_WEIGHTS,
   adjacencyFactor = 0.5,
   leagueStrengthWeight = 0,
+  positionWeights: Record<string, number> = {},
 ): ScoreBreakdown => {
   const candidates = targets.filter(t => t.active && (scope ? t.scope === scope || t.scope === "both" : true));
   if (candidates.length === 0) {
@@ -347,7 +357,7 @@ export const computeFitScore = (
   let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget>; effectiveWeights: ScoringWeights } | null = null;
   for (const t of candidates) {
     const effectiveWeights: ScoringWeights = { ...weights, ...(t.weights_override || {}) } as ScoringWeights;
-    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand, adjacencyFactor);
+    const res = scoreAgainstTarget(player, t, effectiveWeights, ageBand, adjacencyFactor, positionWeights);
     if (!best || res.score > best.res.score) best = { target: t, res, effectiveWeights };
   }
   if (!best) return { total: 0, reasons: [], components: {}, target_id: null, target_name: null };
