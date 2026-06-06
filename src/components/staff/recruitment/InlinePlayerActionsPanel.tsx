@@ -122,7 +122,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   const under18 = under18Override ?? derivedUnder18;
 
   const offerSlug = slugify(name || row.player_name);
-  const offerUrl = offerSlug ? `${window.location.origin}/risewithus/${offerSlug}` : "";
+  const offerUrl = offerSlug ? `https://risefootballagency.com/risewithus/${offerSlug}` : "";
 
   // Load existing player record + offer settings.
   // Starred players already have a representation offer — we just edit the details on it.
