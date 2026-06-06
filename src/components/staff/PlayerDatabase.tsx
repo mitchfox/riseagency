@@ -441,6 +441,7 @@ export const PlayerDatabase = () => {
           scoringSettings.bonus_weights,
           scoringSettings.position_adjacency_factor,
           scoringSettings.league_strength_weight,
+          scoringSettings.position_weights,
         );
         map[`${player.source}-${player.id}`] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch {
