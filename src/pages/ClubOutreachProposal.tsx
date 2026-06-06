@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Video, Film, FileBadge2, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
-import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -31,6 +31,8 @@ interface PlayerEntry {
   stars_url: string | null;
   highlights_url: string | null;
   proof_of_representation_url: string | null;
+  player_club_image_url: string | null;
+  player_club_country: string | null;
 }
 
 interface Payload {
@@ -42,10 +44,22 @@ interface Payload {
     club_contact_name: string | null;
     club_contact_role: string | null;
     club_contact_phone: string | null;
+    club_contact_accent: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
   whatsapp_number: string | null;
+}
+
+// Pick black or white text based on background luminance.
+function readableTextOn(hex: string): "#000" | "#fff" {
+  const h = hex.replace("#", "");
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (v.length !== 6) return "#fff";
+  const r = parseInt(v.slice(0, 2), 16);
+  const g = parseInt(v.slice(2, 4), 16);
+  const b = parseInt(v.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000" : "#fff";
 }
 
 export default function ClubOutreachProposal() {
