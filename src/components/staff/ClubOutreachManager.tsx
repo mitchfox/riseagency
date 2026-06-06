@@ -6,12 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const APP_BASE = "https://risefootballagency.com";
 const POSITION_SLOTS = ["GK", "CB", "FB", "DM", "CM", "AM", "W", "CF"];
 const CHANNELS = ["WhatsApp", "Email", "Call", "Meeting", "Other"];
+const STATUSES = ["draft", "ready", "sent"] as const;
+type OutreachStatus = typeof STATUSES[number];
+const STATUS_LABELS: Record<OutreachStatus, string> = { draft: "Drafts", ready: "Ready To Send", sent: "Sent" };
+const STATUS_ORDER: OutreachStatus[] = ["ready", "draft", "sent"];
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 const makeShortId = () => {
@@ -35,6 +39,8 @@ interface OutreachRow {
   club_contact_phone: string | null;
   created_at: string;
   archived_at: string | null;
+  status: OutreachStatus;
+  comm_count: number;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
 }
@@ -52,11 +58,12 @@ export default function ClubOutreachManager() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: linkRows }, { data: playerRows }, { data: clubRows }, { data: linkPlayerRows }] = await Promise.all([
+    const [{ data: linkRows }, { data: playerRows }, { data: clubRows }, { data: linkPlayerRows }, { data: commRows }] = await Promise.all([
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
       supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name"),
       supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, sort_order"),
+      supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
     const clubMap = new Map((clubRows ?? []).map((c: any) => [c.id, c]));
     const byLink = new Map<string, LinkPlayerRow[]>();
@@ -65,8 +72,14 @@ export default function ClubOutreachManager() {
       arr.push(lp);
       byLink.set(lp.link_id, arr);
     });
+    const commByLink = new Map<string, number>();
+    (commRows ?? []).forEach((c: any) => {
+      commByLink.set(c.outreach_id, (commByLink.get(c.outreach_id) ?? 0) + 1);
+    });
     setRows((linkRows ?? []).map((r: any) => ({
       ...r,
+      status: (r.status ?? "draft") as OutreachStatus,
+      comm_count: commByLink.get(r.id) ?? 0,
       link_players: (byLink.get(r.id) ?? []).sort((a, b) => a.sort_order - b.sort_order),
       club: clubMap.get(r.club_id) ?? null,
     })));
@@ -103,6 +116,21 @@ export default function ClubOutreachManager() {
     load();
   };
 
+  const setStatus = async (id: string, status: OutreachStatus) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    const { error } = await supabase.from("club_outreach_links").update({ status }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
+  };
+
+  const grouped = useMemo(() => {
+    const map: Record<OutreachStatus, OutreachRow[]> = { ready: [], draft: [], sent: [] };
+    filtered.forEach((r) => { map[r.status]?.push(r) ?? (map.draft.push(r)); });
+    return map;
+  }, [filtered]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -127,18 +155,34 @@ export default function ClubOutreachManager() {
           <p className="text-sm text-muted-foreground">No club outreach links yet. Create your first one to share a slick proposal with a club.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {filtered.map((r) => (
-            <OutreachCard
-              key={r.id}
-              row={r}
-              players={players}
-              url={proposalUrl(r.short_id)}
-              onCopy={() => copyLink(r.short_id)}
-              onEdit={() => setEditRow(r)}
-              onLog={() => setLogRow(r)}
-              onRemove={() => remove(r.id)}
-            />
+        <div className="space-y-8">
+          {STATUS_ORDER.map((status, i) => (
+            <section key={status}>
+              <div className="flex items-center gap-3 mb-3">
+                <h3 className="text-white text-lg font-semibold tracking-tight">{STATUS_LABELS[status]}</h3>
+                <span className="text-xs text-muted-foreground">{grouped[status].length}</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-[hsl(43,96%,56%)]/70 via-[hsl(43,96%,56%)]/30 to-transparent" />
+              </div>
+              {grouped[status].length === 0 ? (
+                <p className="text-xs text-muted-foreground px-1">No outreach in this column.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {grouped[status].map((r) => (
+                    <OutreachCard
+                      key={r.id}
+                      row={r}
+                      players={players}
+                      url={proposalUrl(r.short_id)}
+                      onCopy={() => copyLink(r.short_id)}
+                      onEdit={() => setEditRow(r)}
+                      onLog={() => setLogRow(r)}
+                      onRemove={() => remove(r.id)}
+                      onStatusChange={(s) => setStatus(r.id, s)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           ))}
         </div>
       )}
@@ -159,9 +203,10 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; }) {
+function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
+  const hasLogs = row.comm_count > 0;
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[hsl(43,96%,56%)]/60 hover:shadow-[0_10px_40px_-15px_rgba(251,189,35,0.3)] transition-all">
       <div className="flex items-start gap-3">
@@ -177,13 +222,53 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove }: { 
         </div>
       </div>
       <div className="mt-3 px-2 py-1.5 rounded-md bg-muted/40 text-[11px] font-mono text-muted-foreground truncate">{url}</div>
+      <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
         <Button size="sm" variant="outline" asChild title="Open link"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
-        <Button size="sm" variant="outline" onClick={onLog} title="Log update"><FileText className="h-3.5 w-3.5" /></Button>
+        <Button
+          size="sm"
+          variant={hasLogs ? "default" : "outline"}
+          onClick={onLog}
+          title={hasLogs ? "Update Transfer Hub log" : "Log to Transfer Hub"}
+          className={hasLogs ? "bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-600" : ""}
+        >
+          <Building2 className="h-3.5 w-3.5" />
+        </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
+    </div>
+  );
+}
+
+function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: (s: OutreachStatus) => void }) {
+  const opts: { value: OutreachStatus; label: string; icon: any }[] = [
+    { value: "draft", label: "Draft", icon: FileEdit },
+    { value: "ready", label: "Ready", icon: Send },
+    { value: "sent", label: "Sent", icon: CheckCircle2 },
+  ];
+  return (
+    <div className="mt-3 grid grid-cols-3 rounded-md border border-border p-0.5 bg-muted/30">
+      {opts.map((o) => {
+        const active = status === o.value;
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            className={`flex items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition ${
+              active
+                ? "bg-[hsl(43,96%,56%)] text-black font-semibold"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3 w-3" />
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
