@@ -115,7 +115,7 @@ export default function ClubOutreachProposal() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#C6A332]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
       </div>
     );
   }
@@ -161,15 +161,15 @@ export default function ClubOutreachProposal() {
       />
       {/* Header */}
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(198,163,50,0.18),_transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
         {club?.image_url ? (
-          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(198,163,50,0.4)]" />
+          <img src={club.image_url} alt={club.club_name} className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]" />
         ) : (
           <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
-        <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#C6A332]">Rise Football Agency presents</p>
+        <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">
           {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
         </h1>
@@ -183,7 +183,7 @@ export default function ClubOutreachProposal() {
         <div className="max-w-3xl mx-auto px-6 mt-6 flex flex-wrap gap-2 justify-center">
           <button
             onClick={() => setActiveSlot(null)}
-            className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+            className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
             All
           </button>
@@ -191,7 +191,7 @@ export default function ClubOutreachProposal() {
             <button
               key={s}
               onClick={() => setActiveSlot(s)}
-              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
               {s}
             </button>
@@ -202,14 +202,14 @@ export default function ClubOutreachProposal() {
       {/* Carousel controls */}
       {filteredPlayers.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
-          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 text-center text-xs text-white/60">
             <span className="text-white/90 font-medium">{player?.name}</span>
             <span className="ml-2 text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
           </div>
-          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -236,8 +236,8 @@ export default function ClubOutreachProposal() {
       {/* Fit & Recommendation — full width above cards */}
       {fitText && (
         <section className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="rounded-2xl border border-[#C6A332]/30 bg-gradient-to-br from-[#C6A332]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">Fit & Recommendation</p>
+          <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Fit & Recommendation</p>
             <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
           </div>
         </section>
@@ -344,14 +344,14 @@ function ProposalCard({
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#C6A332]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(198,163,50,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
-        <div className="h-12 w-12 rounded-xl bg-[#C6A332]/10 text-[#C6A332] flex items-center justify-center">{icon}</div>
+        <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
         <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       </div>
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
-      <div className="mt-4 flex items-center gap-2 text-xs text-[#C6A332]">
+      <div className="mt-4 flex items-center gap-2 text-xs text-[#cbb96b]">
         {disabled ? (disabledLabel ?? "Unavailable") : <>Open <ExternalLink className="h-3.5 w-3.5" /></>}
       </div>
     </div>
@@ -382,7 +382,7 @@ function KeyDetailsCard({
   return (
     <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 min-h-[260px] sm:min-h-[280px] overflow-hidden">
       <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">04</span>
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">Key Details</h3>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
       <div className="grid grid-cols-2 gap-2 h-[calc(100%-2.25rem)]">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
