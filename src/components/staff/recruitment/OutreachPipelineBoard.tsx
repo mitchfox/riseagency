@@ -47,14 +47,14 @@ interface Row {
   agent_status?: string | null;
 }
 
-const STAGES: { id: string; label: string; tone: string }[] = [
-  { id: "not_contacted", label: "Not contacted", tone: "bg-muted/40" },
-  { id: "awaiting_reply", label: "Awaiting reply", tone: "bg-blue-500/5" },
-  { id: "replied", label: "Replied — follow up", tone: "bg-primary/10 border-primary/30" },
-  { id: "interested", label: "In conversation", tone: "bg-emerald-500/5" },
-  { id: "decision_pending", label: "Decision pending", tone: "bg-amber-500/5" },
-  { id: "signed", label: "Signed", tone: "bg-emerald-600/10" },
-  { id: "lost", label: "Lost / cold", tone: "bg-red-500/5" },
+const STAGES: { id: string; label: string; tone: string; accent: string; dot: string }[] = [
+  { id: "not_contacted",   label: "Not contacted",      tone: "bg-muted/30",        accent: "from-muted-foreground/30 to-transparent", dot: "bg-muted-foreground/50" },
+  { id: "awaiting_reply",  label: "Awaiting reply",     tone: "bg-blue-500/[0.04]", accent: "from-blue-400/40 to-transparent",        dot: "bg-blue-400" },
+  { id: "replied",         label: "Replied — follow up", tone: "bg-primary/[0.06]",  accent: "from-primary/60 to-transparent",         dot: "bg-primary" },
+  { id: "interested",      label: "In conversation",    tone: "bg-emerald-500/[0.05]", accent: "from-emerald-400/50 to-transparent",  dot: "bg-emerald-400" },
+  { id: "decision_pending",label: "Decision pending",   tone: "bg-amber-500/[0.05]", accent: "from-amber-400/50 to-transparent",      dot: "bg-amber-400" },
+  { id: "signed",          label: "Signed",             tone: "bg-emerald-600/[0.10]", accent: "from-emerald-500/70 to-transparent",  dot: "bg-emerald-500" },
+  { id: "lost",            label: "Lost / cold",        tone: "bg-red-500/[0.04]",  accent: "from-red-400/40 to-transparent",         dot: "bg-red-400" },
 ];
 
 const stageOf = (r: Row): string => {
@@ -125,16 +125,6 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     [actionsRowId, rows]
   );
 
-  if (actionsRow) {
-    return (
-      <InlinePlayerActionsPanel
-        row={actionsRow}
-        type={type}
-        onBack={() => { setActionsRowId(null); load(); }}
-      />
-    );
-  }
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
@@ -162,6 +152,16 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     });
     return map;
   }, [filtered]);
+
+  if (actionsRow) {
+    return (
+      <InlinePlayerActionsPanel
+        row={actionsRow}
+        type={type}
+        onBack={() => { setActionsRowId(null); load(); }}
+      />
+    );
+  }
 
   const updateStatus = async (row: Row, status: string) => {
     const patch: any = { response_status: status };
