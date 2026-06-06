@@ -57,9 +57,21 @@ Deno.serve(async (req) => {
     // Resolve the club-level contact (preferred over per-link fields)
     const { data: clubContact } = await supabase
       .from("club_outreach_club_contacts")
-      .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url")
+      .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
       .eq("club_id", link.club_id)
       .maybeSingle();
+
+    // Resolve the contact's OWN club (separate from the outreach target).
+    let contactClub: { club_name: string | null; image_url: string | null; country: string | null } | null = null;
+    const contactClubId = (clubContact as any)?.contact_club_id ?? null;
+    if (contactClubId) {
+      const { data: cc } = await supabase
+        .from("club_map_positions")
+        .select("club_name, image_url, country")
+        .eq("id", contactClubId)
+        .maybeSingle();
+      contactClub = cc ?? null;
+    }
 
     const { data: linkPlayers } = await supabase
       .from("club_outreach_link_players")
@@ -249,7 +261,13 @@ Deno.serve(async (req) => {
         whatsapp_number: settings?.whatsapp_number ?? null,
         agent_name: settings?.agent_name ?? null,
         agent_image_url: settings?.agent_image_url ?? null,
-        club_contact: clubContact ?? null,
+        club_contact: clubContact
+          ? {
+              ...clubContact,
+              contact_club_name: contactClub?.club_name ?? null,
+              contact_club_logo_url: contactClub?.image_url ?? null,
+            }
+          : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
