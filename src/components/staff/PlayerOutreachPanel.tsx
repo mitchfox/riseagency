@@ -259,7 +259,8 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
           agent_name: row.agent_name,
           agent_status: row.agent_status,
         } as any, targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band, type, scoringSettings.bonus_weights,
-           scoringSettings.position_adjacency_factor, scoringSettings.league_strength_weight);
+           scoringSettings.position_adjacency_factor, scoringSettings.league_strength_weight,
+           scoringSettings.position_weights);
         map[row.id] = Math.max(0, Math.min(100, Math.round(r.total)));
       } catch { map[row.id] = 0; }
     }
