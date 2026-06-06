@@ -865,3 +865,121 @@ a:hover .hover-text-letter-clone,
   z-index: 0;
   background: radial-gradient(ellipse at top, hsl(var(--primary) / 0.05), transparent 70%);
 }
+
+/* ---- Recruitment pipeline / prospect board cards ---- */
+.pipeline-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, hsl(var(--card) / 0.6) 0%, hsl(var(--card) / 0.95) 100%);
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+.pipeline-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, hsl(var(--primary) / 0.12) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms ease;
+  pointer-events: none;
+}
+.pipeline-card:hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--primary) / 0.45);
+  box-shadow:
+    0 12px 28px -16px hsl(var(--primary) / 0.5),
+    0 4px 10px -6px hsl(0 0% 0% / 0.6);
+}
+.pipeline-card:hover::before {
+  transform: translateX(120%);
+}
+.pipeline-card .grip-dots {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.pipeline-card:hover .grip-dots { opacity: 0.7; }
+
+/* Right-edge accent strip coloured by fit-score band */
+.fit-strip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0 10px 10px 0;
+}
+.fit-strip-elite { background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.4)); box-shadow: 0 0 10px hsl(var(--primary) / 0.55); }
+.fit-strip-high  { background: linear-gradient(180deg, hsl(43 80% 60%), hsl(43 60% 40% / 0.4)); }
+.fit-strip-mid   { background: linear-gradient(180deg, hsl(var(--muted-foreground) / 0.6), hsl(var(--muted-foreground) / 0.15)); }
+.fit-strip-low   { background: linear-gradient(180deg, hsl(var(--muted-foreground) / 0.25), transparent); }
+
+/* Avatar disc with gold ring */
+.pipeline-avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: hsl(var(--primary));
+  background: radial-gradient(circle at 30% 25%, hsl(var(--primary) / 0.22), hsl(var(--card)) 70%);
+  border: 1px solid hsl(var(--primary) / 0.45);
+  box-shadow: inset 0 0 8px hsl(var(--primary) / 0.12);
+}
+
+/* Stage column header */
+.stage-column {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border));
+  padding: 8px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.stage-column::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 8px; right: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--stage-accent, hsl(var(--muted-foreground) / 0.3)), transparent);
+}
+.stage-column.is-over {
+  border-color: hsl(var(--primary) / 0.7);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.4), 0 0 28px -10px hsl(var(--primary) / 0.55);
+}
+
+/* Overdue pulse */
+@keyframes overdue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.0); }
+  50%      { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18); }
+}
+.overdue-pulse { animation: overdue-pulse 2.2s ease-in-out infinite; }
+
+/* Card entry stagger */
+@keyframes pipeline-card-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pipeline-card { animation: pipeline-card-in 280ms ease-out backwards; }
+
+/* Standalone shine sweep that can be added to any card */
+.shine-on-hover { position: relative; overflow: hidden; }
+.shine-on-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, hsl(var(--primary) / 0.14) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 750ms ease;
+  pointer-events: none;
+}
+.shine-on-hover:hover::after { transform: translateX(120%); }
