@@ -284,10 +284,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
-  const [contactName, setContactName] = useState(editing?.club_contact_name ?? "");
-  const [contactRole, setContactRole] = useState(editing?.club_contact_role ?? "");
-  const [contactPhone, setContactPhone] = useState(editing?.club_contact_phone ?? "");
-  const [contactAccent, setContactAccent] = useState<string>(editing?.club_contact_accent ?? "#1f2937");
+  const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? "");
+  const [showForm, setShowForm] = useState<boolean>(editing?.show_form ?? false);
+  const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
+  const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
+  const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
