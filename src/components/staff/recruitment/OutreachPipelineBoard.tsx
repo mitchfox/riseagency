@@ -17,6 +17,9 @@ import { normalisePosition } from "@/lib/positionNormalise";
 import { InlinePlayerActionsPanel } from "./InlinePlayerActionsPanel";
 import { Settings2 } from "lucide-react";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import { computeFitScore } from "@/lib/fitScore";
+import { useRecruitmentTargets, useScoringSettings } from "@/hooks/useRecruitmentScoring";
+import { useClubMaps } from "@/hooks/useClubMaps";
 import {
   DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable,
@@ -103,6 +106,10 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [clubLogos, setClubLogos] = useState<Record<string, string>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  const { targets } = useRecruitmentTargets();
+  const { settings } = useScoringSettings();
+  const { enrichForFit } = useClubMaps();
+
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
 
   const load = async () => {
@@ -124,11 +131,29 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     if (names.length > 0) {
       const { data: pData } = await supabase
         .from("players")
-        .select("name,image_url,club_logo")
+        .select("id,name,image_url,club_logo")
         .in("name", names);
+      const playerIds = (pData || []).map((p: any) => p.id).filter(Boolean);
+      const offerByPlayer: Record<string, string> = {};
+      if (playerIds.length) {
+        const { data: offers } = await (supabase as any)
+          .from("player_offer_settings")
+          .select("player_id, section_images")
+          .in("player_id", playerIds);
+        (offers || []).forEach((o: any) => {
+          const imgs = o.section_images && typeof o.section_images === "object"
+            ? Object.values(o.section_images).filter((v: any) => typeof v === "string")
+            : [];
+          if (imgs.length) offerByPlayer[o.player_id] = imgs[0] as string;
+        });
+      }
       const map: Record<string, { image_url: string | null; club_logo: string | null }> = {};
       (pData || []).forEach((p: any) => {
-        map[p.name.toLowerCase()] = { image_url: p.image_url, club_logo: p.club_logo };
+        const offerImg = offerByPlayer[p.id] || null;
+        map[p.name.toLowerCase()] = {
+          image_url: offerImg || p.image_url || null,
+          club_logo: p.club_logo,
+        };
       });
       setPlayerMeta(map);
     }
@@ -166,6 +191,34 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     );
   }, [rows, query]);
 
+  // Compute live fit scores (matches what the FitScoreBadge shows on each card)
+  // so the stored stale `fit_score` column never wins the sort.
+  const liveScores = useMemo(() => {
+    const map: Record<string, number> = {};
+    rows.forEach(r => {
+      try {
+        const enriched = enrichForFit({
+          position: r.position, age: r.age, date_of_birth: r.date_of_birth,
+          nationality: r.nationality, current_club: r.current_club,
+          messaged: r.messaged, response_received: r.response_received,
+          response_status: r.response_status, parent_approval: r.parent_approval,
+          national_team: r.national_team, star_of_team: r.star_of_team,
+          previous_serious_injury: r.previous_serious_injury,
+          agent_name: r.agent_name, agent_status: r.agent_status,
+        } as any, type);
+        const res = computeFitScore(
+          enriched as any, targets, settings.weights, settings.age_sweet_spot_band, type,
+          settings.bonus_weights, settings.position_adjacency_factor,
+          settings.league_strength_weight, settings.position_weights,
+        );
+        map[r.id] = typeof res.total === "number" ? res.total : -Infinity;
+      } catch {
+        map[r.id] = typeof r.fit_score === "number" ? r.fit_score : -Infinity;
+      }
+    });
+    return map;
+  }, [rows, targets, settings, enrichForFit, type]);
+
   const byStage = useMemo(() => {
     const map: Record<string, Row[]> = {};
     STAGES.forEach(s => { map[s.id] = []; });
@@ -178,13 +231,13 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
     // Sort every column by AI fit score (best to worst); null scores sink to the bottom.
     Object.keys(map).forEach(stageId => {
       map[stageId].sort((a, b) => {
-        const av = typeof a.fit_score === "number" ? a.fit_score : -Infinity;
-        const bv = typeof b.fit_score === "number" ? b.fit_score : -Infinity;
+        const av = liveScores[a.id] ?? (typeof a.fit_score === "number" ? a.fit_score : -Infinity);
+        const bv = liveScores[b.id] ?? (typeof b.fit_score === "number" ? b.fit_score : -Infinity);
         return bv - av;
       });
     });
     return map;
-  }, [filtered]);
+  }, [filtered, liveScores]);
 
   if (actionsRow) {
     return (
