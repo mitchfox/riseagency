@@ -284,33 +284,45 @@ export default function ClubOutreachProposal() {
             <div className="flex items-center gap-3">
               <WhatsAppIcon className="h-6 w-6" />
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp the agent</div>
-                <div className="text-sm sm:text-base">Rise Football Agency</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp the Agent</div>
+                <div className="text-sm sm:text-base">Jolon Levene – RISE Football</div>
               </div>
             </div>
             <ExternalLink className="h-4 w-4 opacity-80" />
           </a>
         )}
-        {clubWaUrl && data.link.club_contact_name && (
-          <a
-            href={clubWaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 border border-white/20 bg-white/[0.03] text-white font-medium hover:border-white/40 hover:bg-white/[0.06] transition-all active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-white/70" />
-              <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] text-white/50">Your club contact</div>
-                <div className="text-sm sm:text-base">
-                  {data.link.club_contact_name}
-                  {data.link.club_contact_role ? <span className="text-white/50"> — {data.link.club_contact_role}</span> : null}
+        {clubWaUrl && data.link.club_contact_name && (() => {
+          const accent = data.link.club_contact_accent;
+          const useAccent = !!accent && /^#?[0-9a-fA-F]{3,6}$/.test(accent);
+          const bg = useAccent ? (accent!.startsWith("#") ? accent! : `#${accent}`) : null;
+          const fg = bg ? readableTextOn(bg) : "#fff";
+          const subOpacity = fg === "#000" ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+          return (
+            <a
+              href={clubWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={bg ? { backgroundColor: bg, color: fg } : undefined}
+              className={
+                bg
+                  ? "flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 font-medium transition-all active:scale-[0.99] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.45)]"
+                  : "flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 border border-white/20 bg-white/[0.03] text-white font-medium hover:border-white/40 hover:bg-white/[0.06] transition-all active:scale-[0.99]"
+              }
+            >
+              <div className="flex items-center gap-3">
+                <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
+                <div className="text-left">
+                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Your club contact</div>
+                  <div className="text-sm sm:text-base">
+                    {data.link.club_contact_name}
+                    {data.link.club_contact_role ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {data.link.club_contact_role}</span> : null}
+                  </div>
                 </div>
               </div>
-            </div>
-            <ExternalLink className="h-4 w-4 text-white/40" />
-          </a>
-        )}
+              <ExternalLink className="h-4 w-4 opacity-70" style={bg ? { color: fg } : undefined} />
+            </a>
+          );
+        })()}
       </div>
 
       <footer className="mt-12 text-center text-[11px] uppercase tracking-[0.3em] text-white/30">
