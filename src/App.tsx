@@ -143,6 +143,7 @@ const App = () => {
                       {createLocalizedRoutes('/clubs', <Clubs />)}
                       <Route path="/clubs/:shortId" element={<ClubOutreachProposal />} />
                       <Route path="/club-proposal/:shortId" element={<ClubOutreachProposal />} />
+                      <Route path="/club-proposal/:shortId/proof/:playerId" element={<ClubOutreachProof />} />
                       {createLocalizedRoutes('/coaches', <Coaches />)}
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
