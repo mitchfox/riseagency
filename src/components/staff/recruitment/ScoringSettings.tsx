@@ -12,6 +12,9 @@ import { Sliders, RotateCcw, Save } from "lucide-react";
 import { DEFAULT_BONUS_WEIGHTS, DEFAULT_WEIGHTS, type BonusWeights, type ScoringWeights } from "@/lib/fitScore";
 import { invalidateScoringCaches } from "@/hooks/useRecruitmentScoring";
 
+const POSITION_KEYS = ["GK", "CB", "LB", "RB", "LWB", "RWB", "CDM", "CM", "CAM", "LM", "RM", "LW", "RW", "CF"] as const;
+type PositionKey = typeof POSITION_KEYS[number];
+
 const WEIGHT_LABELS: Record<keyof ScoringWeights, { label: string; help: string }> = {
   position: { label: "Position match", help: "Player position equals one of the target's positions." },
   age: { label: "Age fit", help: "Player age sits inside the target's age band (with a soft edge)." },
@@ -35,6 +38,7 @@ const BONUS_LABELS: Record<keyof BonusWeights, { label: string; help: string; mi
 export const ScoringSettings = () => {
   const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_WEIGHTS);
   const [bonusWeights, setBonusWeights] = useState<BonusWeights>(DEFAULT_BONUS_WEIGHTS);
+  const [positionWeights, setPositionWeights] = useState<Record<string, number>>({});
   const [ageBand, setAgeBand] = useState(2);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [threshold, setThreshold] = useState(60);
@@ -47,12 +51,13 @@ export const ScoringSettings = () => {
     (async () => {
       const { data } = await (supabase as any)
         .from("recruitment_scoring_settings")
-        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight")
+        .select("weights, bonus_weights, age_sweet_spot_band, ai_nudge_enabled, fit_score_threshold, position_adjacency_factor, league_strength_weight, position_weights")
         .eq("id", "singleton")
         .maybeSingle();
       if (data) {
         setWeights({ ...DEFAULT_WEIGHTS, ...(data.weights || {}) });
         setBonusWeights({ ...DEFAULT_BONUS_WEIGHTS, ...(data.bonus_weights || {}) });
+        setPositionWeights((data.position_weights as Record<string, number>) || {});
         setAgeBand(data.age_sweet_spot_band ?? 2);
         setAiEnabled(!!data.ai_nudge_enabled);
         setThreshold(data.fit_score_threshold ?? 60);
@@ -72,6 +77,7 @@ export const ScoringSettings = () => {
       .update({
         weights,
         bonus_weights: bonusWeights,
+        position_weights: positionWeights,
         age_sweet_spot_band: ageBand,
         ai_nudge_enabled: aiEnabled,
         fit_score_threshold: threshold,
@@ -91,6 +97,7 @@ export const ScoringSettings = () => {
   const reset = () => {
     setWeights(DEFAULT_WEIGHTS);
     setBonusWeights(DEFAULT_BONUS_WEIGHTS);
+    setPositionWeights({});
     setAgeBand(2);
     setAiEnabled(true);
     setThreshold(60);
