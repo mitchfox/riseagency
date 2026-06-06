@@ -328,32 +328,70 @@ function ProposalCard({
   );
 }
 
-function KeyDetailsCard({ player, age }: { player: PlayerEntry["player"]; age: number | null }) {
-  const rows: { label: string; value: string | null }[] = [
-    { label: "Nationality", value: player?.nationality ?? null },
-    { label: "Age", value: age != null ? `${age}` : null },
-    { label: "Position", value: player?.position ?? null },
-    { label: "Club", value: player?.club ?? null },
-    { label: "League", value: player?.league ?? null },
-  ].filter((r) => !!r.value) as { label: string; value: string }[];
+function KeyDetailsCard({
+  player,
+  age,
+  club,
+}: {
+  player: PlayerEntry["player"];
+  age: number | null;
+  club: Payload["club"];
+}) {
+  const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
+  const leagueCountry = club?.country ?? player?.nationality ?? null;
+  const leagueFlag = leagueCountry ? getCountryFlagUrl(leagueCountry) : null;
 
   return (
-    <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 min-h-[180px]">
-      <div className="flex items-start justify-between">
-        <div className="h-12 w-12 rounded-xl bg-[hsl(43,96%,56%)]/10 text-[hsl(43,96%,56%)] flex items-center justify-center">
-          <IdCard className="h-6 w-6" />
+    <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 min-h-[260px] sm:min-h-[280px] overflow-hidden">
+      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">04</span>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[hsl(43,96%,56%)]">Key Details</h3>
+      <div className="grid grid-cols-2 gap-2 h-[calc(100%-2.25rem)]">
+        {/* Club */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
+          {club?.image_url ? (
+            <img src={club.image_url} alt={club.club_name} className="h-12 w-12 object-contain" />
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
+              {(player?.club ?? club?.club_name ?? "?")[0]}
+            </div>
+          )}
+          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
+            {player?.club ?? club?.club_name ?? "—"}
+          </p>
         </div>
-        <span className="text-[10px] tracking-[0.3em] text-white/30">04</span>
+
+        {/* Age */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
+          <span className="text-5xl font-semibold leading-none text-white">
+            {age != null ? age : "—"}
+          </span>
+          <span className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/50">Years old</span>
+        </div>
+
+        {/* Nationality */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
+          {nationalityFlag ? (
+            <img src={nationalityFlag} alt={player?.nationality ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+          ) : (
+            <div className="h-10 w-14 rounded-sm bg-white/10" />
+          )}
+          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
+            {player?.nationality ?? "—"}
+          </p>
+        </div>
+
+        {/* League */}
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center">
+          {leagueFlag ? (
+            <img src={leagueFlag} alt={leagueCountry ?? ""} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+          ) : (
+            <div className="h-10 w-14 rounded-sm bg-white/10" />
+          )}
+          <p className="mt-2 text-[11px] text-white/80 leading-tight line-clamp-2">
+            {player?.league ?? "—"}
+          </p>
+        </div>
       </div>
-      <h3 className="mt-5 text-lg font-semibold">Key Details</h3>
-      <dl className="mt-3 divide-y divide-white/5">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between py-1.5 text-sm">
-            <dt className="text-white/45 text-xs uppercase tracking-wider">{r.label}</dt>
-            <dd className="text-white/90 text-right">{r.value}</dd>
-          </div>
-        ))}
-      </dl>
     </div>
   );
 }
