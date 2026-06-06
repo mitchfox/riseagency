@@ -482,8 +482,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
 
           <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/10">
             <div>
-              <Label>Prepared for</Label>
-              <p className="text-[11px] text-muted-foreground mt-1">The person at the club this proposal is addressed to. Shown at the top under the player's name.</p>
+              <Label>Prepared for (recipient at target club)</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">The individual at the club you're outreaching to (e.g. their sporting director). Shown at the top under the player's name. This is different from the saved Key Club Contact at the bottom of the proposal.</p>
               <Input className="mt-1.5" placeholder="e.g. Mehmet Yilmaz" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} />
             </div>
             <div>
