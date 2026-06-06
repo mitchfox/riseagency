@@ -152,6 +152,35 @@ export const ScoringSettings = () => {
         )}
       </Card>
 
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="text-sm font-medium">Position weights</div>
+          <Badge variant="outline" className="text-[10px]">Overrides position component per role</Badge>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Set how many points a player gets when their position matches a target. Leave at 0 to fall back to the generic position weight ({weights.position}).
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {POSITION_KEYS.map(pos => (
+            <div key={pos} className="flex items-center gap-2">
+              <Label className="text-xs font-mono w-10 shrink-0">{pos}</Label>
+              <Input
+                type="number"
+                min={0}
+                max={60}
+                step={1}
+                value={positionWeights[pos] ?? 0}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  setPositionWeights(prev => ({ ...prev, [pos]: Number.isFinite(v) && v > 0 ? v : 0 }));
+                }}
+                className="h-8 text-xs"
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium">Universal bonuses</div>
