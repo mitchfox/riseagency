@@ -100,6 +100,7 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   const [actionsRowId, setActionsRowId] = useState<string | null>(null);
   const [stagePages, setStagePages] = useState<Record<string, number>>({});
   const [playerMeta, setPlayerMeta] = useState<Record<string, { image_url: string | null; club_logo: string | null }>>({});
+  const [clubLogos, setClubLogos] = useState<Record<string, string>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
@@ -130,6 +131,20 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
         map[p.name.toLowerCase()] = { image_url: p.image_url, club_logo: p.club_logo };
       });
       setPlayerMeta(map);
+    }
+
+    // Hydrate club logos from the coaching database (club_map_positions) by club name.
+    const clubs = Array.from(new Set(loaded.map(r => (r.current_club || "").trim()).filter(Boolean)));
+    if (clubs.length > 0) {
+      const { data: cData } = await (supabase as any)
+        .from("club_map_positions")
+        .select("club_name,image_url")
+        .in("club_name", clubs);
+      const cmap: Record<string, string> = {};
+      (cData || []).forEach((c: any) => {
+        if (c?.club_name && c?.image_url) cmap[c.club_name.toLowerCase()] = c.image_url;
+      });
+      setClubLogos(cmap);
     }
   };
 
@@ -303,6 +318,9 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                       {(() => {
                         const meta = playerMeta[(r.player_name || "").toLowerCase()] || { image_url: null, club_logo: null };
                         const flag = r.nationality ? getCountryFlagUrl(r.nationality) : null;
+                        const clubLogo = meta.club_logo
+                          || (r.current_club ? clubLogos[r.current_club.toLowerCase()] : null)
+                          || null;
                         return (
                       <>
                       <div className="flex items-start gap-2.5">
@@ -342,8 +360,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                           </div>
                           {r.current_club && (
                             <div className="mt-1 flex items-center gap-1.5 min-w-0">
-                              {meta.club_logo ? (
-                                <img src={meta.club_logo} alt="" className="h-3.5 w-3.5 object-contain shrink-0" />
+                              {clubLogo ? (
+                                <img src={clubLogo} alt="" className="h-3.5 w-3.5 object-contain shrink-0" />
                               ) : (
                                 <Shield className="h-3 w-3 text-muted-foreground/60 shrink-0" />
                               )}
@@ -404,9 +422,8 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                         )}
                         {overdueBadge(r)}
                       </div>
-                      {/* Offer + template only on starred rows (i.e. players we actually want to contact) */}
-                      {r.is_starred && (
-                        <div className="mt-2.5 space-y-1.5" onClick={e => e.stopPropagation()}>
+                      <div className="mt-2.5 space-y-1.5" onClick={e => e.stopPropagation()}>
+                        {r.is_starred && (
                           <div className="pl-[50px]">
                             <TemplatePickerInline
                               compact
@@ -418,16 +435,16 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
                               preferredTargetId={(r.fit_score_breakdown as any)?.target_id ?? null}
                             />
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="w-full h-9 bg-primary/90 hover:bg-primary text-primary-foreground font-semibold tracking-wide shadow-[0_4px_14px_-6px_hsl(var(--primary)/0.55)]"
-                            onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
-                          >
-                            <Settings2 className="h-4 w-4 mr-1.5" /> Open actions
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-9 bg-primary/90 hover:bg-primary text-primary-foreground font-semibold tracking-wide shadow-[0_4px_14px_-6px_hsl(var(--primary)/0.55)]"
+                          onClick={(e) => { e.stopPropagation(); setActionsRowId(r.id); }}
+                        >
+                          <Settings2 className="h-4 w-4 mr-1.5" /> Open actions
+                        </Button>
+                      </div>
                       </>
                         );
                       })()}

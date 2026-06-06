@@ -25,6 +25,8 @@ interface RowLike {
   age: number | null;
   nationality?: string | null;
   date_of_birth?: string | null;
+  response_status?: string | null;
+  messaged?: boolean | null;
 }
 
 interface Interaction {
@@ -96,6 +98,36 @@ interface Props {
   onBack: () => void;
 }
 
+const STAGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "not_contacted",   label: "Not contacted" },
+  { value: "awaiting_reply",  label: "Awaiting reply" },
+  { value: "replied",         label: "Replied — follow up" },
+  { value: "interested",      label: "In conversation" },
+  { value: "signed",          label: "Signed" },
+  { value: "lost",            label: "Lost / cold" },
+];
+
+const stagePatchFor = (stageId: string): any => {
+  switch (stageId) {
+    case "not_contacted":  return { response_status: "none",       messaged: false };
+    case "awaiting_reply": return { response_status: "none",       messaged: true };
+    case "replied":        return { response_status: "replied",    messaged: true, response_received: true };
+    case "interested":     return { response_status: "interested", messaged: true, response_received: true };
+    case "signed":         return { response_status: "signed",     messaged: true, response_received: true };
+    case "lost":           return { response_status: "lost",       messaged: true };
+    default: return {};
+  }
+};
+
+const stageFromRow = (rs: string | null | undefined, messaged: boolean | null | undefined): string => {
+  if (rs === "signed") return "signed";
+  if (rs === "not_interested" || rs === "lost") return "lost";
+  if (rs === "interested") return "interested";
+  if (rs === "replied") return "replied";
+  if (messaged) return "awaiting_reply";
+  return "not_contacted";
+};
+
 export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   // ---- Player details (the real source of truth) ----
   const [playerId, setPlayerId] = useState<string | null>(null);
@@ -117,12 +149,27 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   const [uploadingImg, setUploadingImg] = useState(false);
   const [savingOffer, setSavingOffer] = useState(false);
 
+  // Pipeline stage / category — editable from inside the panel
+  const [stage, setStage] = useState<string>(stageFromRow(row.response_status, row.messaged));
+  const [savingStage, setSavingStage] = useState(false);
+  const changeStage = async (next: string) => {
+    const patch = stagePatchFor(next);
+    if (Object.keys(patch).length === 0) return;
+    setSavingStage(true);
+    setStage(next);
+    const table = type === "youth" ? "player_outreach_youth" : "player_outreach_pro";
+    const { error } = await (supabase.from(table) as any).update(patch).eq("id", row.id);
+    setSavingStage(false);
+    if (error) { toast.error("Could not move stage", { description: error.message }); return; }
+    toast.success(`Moved to ${STAGE_OPTIONS.find(s => s.value === next)?.label || next}`);
+  };
+
   const computedAge = ageFromDob(dob);
   const derivedUnder18 = computedAge !== null ? computedAge < 18 : true;
   const under18 = under18Override ?? derivedUnder18;
 
   const offerSlug = slugify(name || row.player_name);
-  const offerUrl = offerSlug ? `${window.location.origin}/risewithus/${offerSlug}` : "";
+  const offerUrl = offerSlug ? `https://risefootballagency.com/risewithus/${offerSlug}` : "";
 
   // Load existing player record + offer settings.
   // Starred players already have a representation offer — we just edit the details on it.
@@ -350,6 +397,19 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
           </Button>
           <div className="text-lg font-semibold truncate">{row.player_name}</div>
           <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>
+          <div className="flex items-center gap-1.5">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Stage</Label>
+            <Select value={stage} onValueChange={changeStage} disabled={savingStage}>
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STAGE_OPTIONS.map(s => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {offerUrl && (
           <div className="flex items-center gap-1.5">
