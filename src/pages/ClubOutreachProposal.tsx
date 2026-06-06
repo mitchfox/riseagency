@@ -1,32 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Video, Film, FileBadge2, Sparkles, MessageCircle, ExternalLink } from "lucide-react";
+import { Loader2, Video, Film, FileBadge2, IdCard, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { calculateAge } from "@/lib/ageUtils";
 
-interface Payload {
-  link: { id: string; short_id: string; fit_recommendation: string | null; created_at: string };
-  player: { id: string; name: string; position: string | null; age: number | null; nationality: string | null; image_url: string | null; club: string | null; league: string | null } | null;
-  club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
-  defaults: { stars_url_override: string | null; highlights_url: string | null; proof_of_representation_url: string | null };
-  whatsapp_number: string | null;
+interface PlayerEntry {
+  player: {
+    id: string;
+    name: string;
+    position: string | null;
+    age: number | null;
+    date_of_birth: string | null;
+    nationality: string | null;
+    image_url: string | null;
+    club: string | null;
+    league: string | null;
+  } | null;
+  position_slot: string | null;
+  fit_recommendation: string | null;
+  sort_order: number;
+  stars_url: string | null;
+  highlights_url: string | null;
+  proof_of_representation_url: string | null;
 }
 
-const slugify = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+interface Payload {
+  link: {
+    id: string;
+    short_id: string;
+    fit_recommendation: string | null;
+    created_at: string;
+    club_contact_name: string | null;
+    club_contact_role: string | null;
+    club_contact_phone: string | null;
+  };
+  club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
+  players: PlayerEntry[];
+  whatsapp_number: string | null;
+}
 
 export default function ClubOutreachProposal() {
   const { shortId } = useParams<{ shortId: string }>();
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (!shortId) return;
     (async () => {
       try {
         const url = `https://qwethimbtaamlhbajmal.supabase.co/functions/v1/get-club-outreach?short_id=${encodeURIComponent(shortId)}`;
-        const res = await fetch(url, {
-          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        });
+        const res = await fetch(url, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } });
         if (!res.ok) {
           setErr(res.status === 404 ? "This proposal could not be found." : "Failed to load proposal.");
           return;
@@ -40,16 +65,20 @@ export default function ClubOutreachProposal() {
     })();
   }, [shortId]);
 
-  const starsUrl = useMemo(() => {
-    if (!data) return null;
-    if (data.defaults.stars_url_override) return data.defaults.stars_url_override;
-    if (!data.player?.name) return null;
-    return `https://risefootballagency.com/stars/${slugify(data.player.name)}`;
+  const slots = useMemo(() => {
+    if (!data) return [] as string[];
+    const set = new Set<string>();
+    data.players.forEach((e) => set.add(e.position_slot || "All"));
+    return Array.from(set);
   }, [data]);
 
-  const highlightsUrl = data?.defaults.highlights_url ?? null;
-  const proofUrl = data?.defaults.proof_of_representation_url ?? null;
-  const fitText = (data?.link.fit_recommendation ?? "").trim();
+  const filteredPlayers = useMemo(() => {
+    if (!data) return [] as PlayerEntry[];
+    if (!activeSlot) return data.players;
+    return data.players.filter((e) => (e.position_slot || "All") === activeSlot);
+  }, [data, activeSlot]);
+
+  useEffect(() => { setActiveIndex(0); }, [activeSlot]);
 
   if (loading) {
     return (
@@ -58,7 +87,7 @@ export default function ClubOutreachProposal() {
       </div>
     );
   }
-  if (err || !data) {
+  if (err || !data || data.players.length === 0) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center text-white p-6 text-center">
         <div>
@@ -69,38 +98,89 @@ export default function ClubOutreachProposal() {
     );
   }
 
-  const player = data.player;
   const club = data.club;
+  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
+  const player = current.player;
+
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
+  const playerNames = data.players.map((e) => e.player?.name).filter(Boolean).join(", ");
   const waText = encodeURIComponent(
-    `Hi, I just viewed the Rise Football Agency proposal for ${player?.name ?? ""}${club?.club_name ? ` (${club.club_name})` : ""}. I'd like to discuss further.`
+    `Hi, I just viewed the Rise Football Agency proposal${playerNames ? ` for ${playerNames}` : ""}${club?.club_name ? ` (${club.club_name})` : ""}. I'd like to discuss further.`
   );
-  const waUrl = wa ? `https://wa.me/${wa}?text=${waText}` : null;
+  const agencyWaUrl = wa ? `https://wa.me/${wa}?text=${waText}` : null;
+
+  const clubPhone = (data.link.club_contact_phone ?? "").replace(/[^0-9]/g, "");
+  const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
+
+  const hasMultiple = data.players.length > 1;
+  const fitText = (current.fit_recommendation ?? "").trim();
+  const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
 
   return (
     <div className="min-h-[100dvh] bg-black text-white pb-[max(24px,env(safe-area-inset-bottom))]">
       {/* Header */}
       <header className="px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
         {club?.image_url ? (
-          <img
-            src={club.image_url}
-            alt={club.club_name}
-            className="mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(198,163,50,0.25)]"
-          />
+          <img src={club.image_url} alt={club.club_name} className="mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(198,163,50,0.25)]" />
         ) : (
           <div className="mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
         <p className="mt-5 text-[11px] uppercase tracking-[0.35em] text-[#C6A332]">Rise Football Agency presents</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">{player?.name ?? "Player"}</h1>
-        <p className="mt-2 text-sm text-white/60">
-          {[player?.position, player?.age ? `${player.age} yrs` : null, player?.nationality, player?.club].filter(Boolean).join(" • ")}
-        </p>
+        <h1 className="mt-2 text-3xl sm:text-4xl font-semibold">
+          {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
+        </h1>
         {club?.club_name && (
           <p className="mt-3 text-xs text-white/40">Prepared for <span className="text-white/80">{club.club_name}</span>{club.country ? `, ${club.country}` : ""}</p>
         )}
       </header>
+
+      {/* Position chips */}
+      {hasMultiple && slots.length > 1 && (
+        <div className="max-w-3xl mx-auto px-6 mt-6 flex flex-wrap gap-2 justify-center">
+          <button
+            onClick={() => setActiveSlot(null)}
+            className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+          >
+            All
+          </button>
+          {slots.map((s) => (
+            <button
+              key={s}
+              onClick={() => setActiveSlot(s)}
+              className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#C6A332] text-black border-[#C6A332]" : "border-white/15 text-white/70 hover:border-white/40"}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Carousel controls */}
+      {filteredPlayers.length > 1 && (
+        <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
+          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex-1 text-center text-xs text-white/60">
+            <span className="text-white/90 font-medium">{player?.name}</span>
+            <span className="ml-2 text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
+          </div>
+          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#C6A332]/60">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Single-player name strip (when only one) */}
+      {!hasMultiple && player && (
+        <div className="max-w-3xl mx-auto px-6 mt-4 text-center">
+          <p className="text-sm text-white/60">
+            {[player.position, age ? `${age} yrs` : null, player.nationality, player.club].filter(Boolean).join(" • ")}
+          </p>
+        </div>
+      )}
 
       {/* Hero image */}
       {player?.image_url && (
@@ -111,49 +191,85 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
+      {/* Fit & Recommendation — full width above cards */}
+      {fitText && (
+        <section className="max-w-3xl mx-auto px-6 mt-6">
+          <div className="rounded-2xl border border-[#C6A332]/30 bg-gradient-to-br from-[#C6A332]/[0.08] to-white/[0.02] p-5">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#C6A332]">Fit & Recommendation</p>
+            <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
+          </div>
+        </section>
+      )}
+
       {/* Cards */}
-      <section className="max-w-3xl mx-auto px-6 mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProposalCard
-          href={starsUrl}
+          href={current.stars_url}
           icon={<Video className="h-6 w-6" />}
           eyebrow="01"
           title="Video & Data"
           subtitle="Full profile, highlights and statistics"
         />
         <ProposalCard
-          href={highlightsUrl}
+          href={current.highlights_url}
           icon={<Film className="h-6 w-6" />}
           eyebrow="02"
           title="Full Season Highlights"
           subtitle="Every meaningful moment from the season"
-          disabledLabel={highlightsUrl ? undefined : "Coming soon"}
+          disabledLabel={current.highlights_url ? undefined : "Coming soon"}
         />
         <ProposalCard
-          href={proofUrl}
+          href={current.proof_of_representation_url}
           icon={<FileBadge2 className="h-6 w-6" />}
           eyebrow="03"
           title="Proof of Representation"
           subtitle="Signed agreement with Rise Football Agency"
-          disabledLabel={proofUrl ? undefined : "Available on request"}
+          disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
         />
-        <FitCard fitText={fitText} />
+        <KeyDetailsCard player={player} age={age} />
       </section>
 
-      {/* WhatsApp CTA */}
-      {waUrl && (
-        <div className="max-w-3xl mx-auto px-6 mt-10">
+      {/* Contact CTAs */}
+      <div className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">Discuss further</p>
+        {agencyWaUrl && (
           <a
-            href={waUrl}
+            href={agencyWaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-center gap-3 w-full rounded-2xl px-6 py-5 bg-[#25D366] text-black font-semibold text-base sm:text-lg shadow-[0_10px_40px_-10px_rgba(37,211,102,0.6)] hover:shadow-[0_14px_50px_-10px_rgba(37,211,102,0.85)] transition-all active:scale-[0.99]"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[#C6A332] text-black font-semibold shadow-[0_10px_40px_-10px_rgba(198,163,50,0.6)] hover:shadow-[0_14px_50px_-10px_rgba(198,163,50,0.85)] transition-all active:scale-[0.99]"
           >
-            <MessageCircle className="h-6 w-6" />
-            Discuss {player?.name?.split(" ")[0] ?? "this player"} on WhatsApp
+            <div className="flex items-center gap-3">
+              <MessageCircle className="h-5 w-5" />
+              <div className="text-left">
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-70">Agent contact</div>
+                <div className="text-sm sm:text-base">Rise Football Agency</div>
+              </div>
+            </div>
+            <ExternalLink className="h-4 w-4 opacity-70" />
           </a>
-          <p className="text-center text-xs text-white/40 mt-3">Tap to open a conversation directly with our agency team.</p>
-        </div>
-      )}
+        )}
+        {clubWaUrl && data.link.club_contact_name && (
+          <a
+            href={clubWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 border border-white/20 bg-white/[0.03] text-white font-medium hover:border-white/40 hover:bg-white/[0.06] transition-all active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <MessageCircle className="h-5 w-5 text-white/70" />
+              <div className="text-left">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-white/50">Your club contact</div>
+                <div className="text-sm sm:text-base">
+                  {data.link.club_contact_name}
+                  {data.link.club_contact_role ? <span className="text-white/50"> — {data.link.club_contact_role}</span> : null}
+                </div>
+              </div>
+            </div>
+            <ExternalLink className="h-4 w-4 text-white/40" />
+          </a>
+        )}
+      </div>
 
       <footer className="mt-12 text-center text-[11px] uppercase tracking-[0.3em] text-white/30">
         Rise Football Agency
@@ -163,12 +279,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href,
-  icon,
-  eyebrow,
-  title,
-  subtitle,
-  disabledLabel,
+  href, icon, eyebrow, title, subtitle, disabledLabel,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -181,9 +292,7 @@ function ProposalCard({
   const inner = (
     <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#C6A332]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(198,163,50,0.45)]"}`}>
       <div className="flex items-start justify-between">
-        <div className="h-12 w-12 rounded-xl bg-[#C6A332]/10 text-[#C6A332] flex items-center justify-center">
-          {icon}
-        </div>
+        <div className="h-12 w-12 rounded-xl bg-[#C6A332]/10 text-[#C6A332] flex items-center justify-center">{icon}</div>
         <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       </div>
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
@@ -195,32 +304,36 @@ function ProposalCard({
   );
   if (disabled) return <div className="block min-h-[180px]">{inner}</div>;
   return (
-    <a href={href!} target="_blank" rel="noopener noreferrer" className="block min-h-[180px]">
-      {inner}
-    </a>
+    <a href={href!} target="_blank" rel="noopener noreferrer" className="block min-h-[180px]">{inner}</a>
   );
 }
 
-function FitCard({ fitText }: { fitText: string }) {
-  const [open, setOpen] = useState(false);
-  const hasText = fitText.length > 0;
+function KeyDetailsCard({ player, age }: { player: PlayerEntry["player"]; age: number | null }) {
+  const rows: { label: string; value: string | null }[] = [
+    { label: "Nationality", value: player?.nationality ?? null },
+    { label: "Age", value: age != null ? `${age}` : null },
+    { label: "Position", value: player?.position ?? null },
+    { label: "Club", value: player?.club ?? null },
+    { label: "League", value: player?.league ?? null },
+  ].filter((r) => !!r.value) as { label: string; value: string }[];
+
   return (
-    <button
-      type="button"
-      onClick={() => hasText && setOpen((v) => !v)}
-      className={`text-left sm:col-span-2 relative rounded-2xl border border-white/10 bg-gradient-to-br from-[#C6A332]/[0.08] to-white/[0.02] p-5 transition-all duration-300 ${hasText ? "hover:border-[#C6A332]/60 hover:shadow-[0_20px_60px_-20px_rgba(198,163,50,0.45)]" : "opacity-60"}`}
-    >
+    <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 min-h-[180px]">
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#C6A332]/10 text-[#C6A332] flex items-center justify-center">
-          <Sparkles className="h-6 w-6" />
+          <IdCard className="h-6 w-6" />
         </div>
         <span className="text-[10px] tracking-[0.3em] text-white/30">04</span>
       </div>
-      <h3 className="mt-5 text-lg font-semibold">Fit & Recommendation</h3>
-      <p className="mt-1 text-sm text-white/55 leading-snug">{hasText ? (open ? "Tap to collapse" : "Why this player fits your club") : "No personalised note added"}</p>
-      {open && hasText && (
-        <div className="mt-4 text-sm leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</div>
-      )}
-    </button>
+      <h3 className="mt-5 text-lg font-semibold">Key Details</h3>
+      <dl className="mt-3 divide-y divide-white/5">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between py-1.5 text-sm">
+            <dt className="text-white/45 text-xs uppercase tracking-wider">{r.label}</dt>
+            <dd className="text-white/90 text-right">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
