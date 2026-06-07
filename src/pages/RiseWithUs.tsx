@@ -257,11 +257,49 @@ const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
 /* ============== INTRO ============== */
 interface PulsePoint { x: number; y: number; id: number }
 
+const introImageFrames: Record<number, Array<{ className: string; style: React.CSSProperties }>> = {
+  1: [
+    { className: "h-40 w-40 sm:h-56 sm:w-56 md:h-64 md:w-64", style: { top: "9%", right: "7%", rotate: "4deg" } },
+  ],
+  2: [
+    { className: "h-36 w-36 sm:h-52 sm:w-52 md:h-60 md:w-60", style: { top: "9%", left: "7%", rotate: "-5deg" } },
+    { className: "h-36 w-36 sm:h-52 sm:w-52 md:h-60 md:w-60", style: { bottom: "11%", right: "7%", rotate: "5deg" } },
+  ],
+  3: [
+    { className: "h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56", style: { top: "7%", left: "7%", rotate: "-5deg" } },
+    { className: "h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56", style: { top: "7%", right: "7%", rotate: "5deg" } },
+    { className: "h-36 w-36 sm:h-52 sm:w-52 md:h-60 md:w-60", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)", rotate: "-2deg" } },
+  ],
+  4: [
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", left: "6%", rotate: "-6deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", right: "6%", rotate: "6deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", left: "7%", rotate: "4deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", right: "7%", rotate: "-4deg" } },
+  ],
+  5: [
+    { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-48 md:w-48", style: { top: "6%", left: "6%", rotate: "-6deg" } },
+    { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-48 md:w-48", style: { top: "6%", right: "6%", rotate: "6deg" } },
+    { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-48 md:w-48", style: { bottom: "8%", left: "6%", rotate: "4deg" } },
+    { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-48 md:w-48", style: { bottom: "8%", right: "6%", rotate: "-4deg" } },
+    { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { top: "50%", left: "8%", transform: "translateY(-50%)", rotate: "3deg" } },
+  ],
+  6: [
+    { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { top: "6%", left: "6%", rotate: "-6deg" } },
+    { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { top: "6%", right: "6%", rotate: "6deg" } },
+    { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { bottom: "8%", left: "6%", rotate: "4deg" } },
+    { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { bottom: "8%", right: "6%", rotate: "-4deg" } },
+    { className: "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", left: "7%", transform: "translateY(-50%)", rotate: "3deg" } },
+    { className: "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", right: "7%", transform: "translateY(-50%)", rotate: "-3deg" } },
+  ],
+};
+
+const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
+
 const IntroCinematic = ({
-  fullName, lang, extraImages, playerImage, secondaryParagraph, onDone,
+  fullName, lang, extraImages, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
-  playerImage: string | null; secondaryParagraph?: string | null; onDone: () => void;
+  secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -336,26 +374,20 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro images: visible from phase 1 onwards so they
-          actually register with the viewer (phase 0 keeps a clean reveal). */}
-      {phase >= 1 && extraImages.length > 0 && (
+      {/* Uploaded intro images appear only on the final RISE logo beat. */}
+      {phase === 3 && extraImages.length > 0 && (
         <div className="pointer-events-none absolute inset-0 z-[5]">
-          {extraImages.slice(0, 4).map((src, i) => {
-            const positions = [
-              { top: "5%",  left: "4%"  },
-              { top: "6%",  right: "4%" },
-              { bottom: "8%", left: "5%" },
-              { bottom: "7%", right: "6%" },
-            ][i];
+          {extraImages.slice(0, 6).map((src, i) => {
+            const frame = getIntroImageFrames(extraImages.slice(0, 6).length)[i];
             return (
               <motion.img
                 key={src + i}
                 src={src}
                 alt=""
-                className="absolute h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56 object-cover rounded-2xl border border-primary/40 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.7)]"
-                style={positions as React.CSSProperties}
-                initial={{ opacity: 0, scale: 0.75, rotate: i % 2 ? -8 : 8 }}
-                animate={{ opacity: 0.92, scale: 1, rotate: i % 2 ? -3 : 3 }}
+                className={`absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`}
+                style={frame.style}
+                initial={{ opacity: 0, scale: 0.75 }}
+                animate={{ opacity: 0.9, scale: 1 }}
                 transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
               />
             );
@@ -565,7 +597,6 @@ const RiseWithUs = () => {
             fullName={fullName}
             lang={lang}
             extraImages={extraImages}
-            playerImage={player.image_url}
             secondaryParagraph={settings.representation_subtitle_secondary}
             onDone={() => setIntroDone(true)}
           />
