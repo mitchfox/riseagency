@@ -268,13 +268,13 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
   3: [
     { className: "h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56", style: { top: "7%", left: "7%", rotate: "-5deg" } },
     { className: "h-32 w-32 sm:h-48 sm:w-48 md:h-56 md:w-56", style: { top: "7%", right: "7%", rotate: "5deg" } },
-    { className: "h-34 w-34 sm:h-52 sm:w-52 md:h-60 md:w-60", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)", rotate: "-2deg" } },
+    { className: "h-36 w-36 sm:h-52 sm:w-52 md:h-60 md:w-60", style: { bottom: "8%", left: "50%", transform: "translateX(-50%)", rotate: "-2deg" } },
   ],
   4: [
-    { className: "h-30 w-30 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", left: "6%", rotate: "-6deg" } },
-    { className: "h-30 w-30 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", right: "6%", rotate: "6deg" } },
-    { className: "h-30 w-30 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", left: "7%", rotate: "4deg" } },
-    { className: "h-30 w-30 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", right: "7%", rotate: "-4deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", left: "6%", rotate: "-6deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { top: "7%", right: "6%", rotate: "6deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", left: "7%", rotate: "4deg" } },
+    { className: "h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52", style: { bottom: "8%", right: "7%", rotate: "-4deg" } },
   ],
   5: [
     { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-48 md:w-48", style: { top: "6%", left: "6%", rotate: "-6deg" } },
@@ -288,8 +288,8 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
     { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { top: "6%", right: "6%", rotate: "6deg" } },
     { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { bottom: "8%", left: "6%", rotate: "4deg" } },
     { className: "h-24 w-24 sm:h-36 sm:w-36 md:h-44 md:w-44", style: { bottom: "8%", right: "6%", rotate: "-4deg" } },
-    { className: "h-22 w-22 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", left: "7%", transform: "translateY(-50%)", rotate: "3deg" } },
-    { className: "h-22 w-22 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", right: "7%", transform: "translateY(-50%)", rotate: "-3deg" } },
+    { className: "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", left: "7%", transform: "translateY(-50%)", rotate: "3deg" } },
+    { className: "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40", style: { top: "50%", right: "7%", transform: "translateY(-50%)", rotate: "-3deg" } },
   ],
 };
 
