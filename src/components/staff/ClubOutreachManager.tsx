@@ -388,7 +388,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; }) {
+function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; }) {
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
@@ -483,7 +483,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   };
 
   const addPlayer = (id: string) => {
-    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: "", sort_order: prev.length }]);
+    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: editing ? "" : (defaultFit ?? ""), sort_order: prev.length }]);
     setPlayerQuery("");
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
