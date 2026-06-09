@@ -1256,10 +1256,38 @@ export type Database = {
           },
         ]
       }
+      club_outreach_quick_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       club_outreach_settings: {
         Row: {
           agent_image_url: string | null
           agent_name: string | null
+          default_fit_recommendation: string | null
           id: number
           updated_at: string
           whatsapp_number: string | null
@@ -1267,6 +1295,7 @@ export type Database = {
         Insert: {
           agent_image_url?: string | null
           agent_name?: string | null
+          default_fit_recommendation?: string | null
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
@@ -1274,6 +1303,7 @@ export type Database = {
         Update: {
           agent_image_url?: string | null
           agent_name?: string | null
+          default_fit_recommendation?: string | null
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
