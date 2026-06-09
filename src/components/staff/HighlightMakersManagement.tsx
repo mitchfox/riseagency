@@ -294,9 +294,7 @@ const ManagePlayersDialog = ({
           .eq("highlight_maker_id", maker.id),
       ]);
       if (!p.error) {
-        const filtered = (p.data || []).filter((pl: any) =>
-          pl.category !== "Scouted" && pl.category !== "Fuel For Football",
-        );
+        const filtered = ((p.data || []) as PlayerLite[]).filter(isAvailableForHighlightMakers);
         setPlayers(filtered as any);
       }
       if (!a.error) {
