@@ -24,7 +24,35 @@ interface Maker {
   created_at: string;
 }
 
-interface PlayerLite { id: string; name: string; position: string | null; club: string | null }
+interface PlayerLite {
+  id: string;
+  name: string;
+  position: string | null;
+  club: string | null;
+  representation_status?: string | null;
+  category?: string | null;
+}
+
+const isAvailableForHighlightMakers = (player: PlayerLite) =>
+  player.category !== "Scouted" &&
+  player.category !== "Fuel For Football" &&
+  player.representation_status !== "Scouted" &&
+  player.representation_status !== "Fuel For Football";
+
+const normaliseSearch = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const autoMatchedPlayerIds = (players: PlayerLite[], username: string, displayName: string) => {
+  const haystack = normaliseSearch(`${username} ${displayName}`);
+  if (!haystack) return [] as string[];
+  return players
+    .filter((player) => {
+      const nameParts = player.name.split(/\s+/).filter((part) => part.length >= 3);
+      const surname = nameParts[nameParts.length - 1] || "";
+      return nameParts.some((part) => haystack.includes(normaliseSearch(part))) ||
+        (!!surname && haystack.includes(normaliseSearch(surname)));
+    })
+    .map((player) => player.id);
+};
 
 export const HighlightMakersManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [makers, setMakers] = useState<Maker[]>([]);
