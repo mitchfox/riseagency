@@ -280,7 +280,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; editing?: OutreachRow; }) {
+function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; }) {
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
@@ -292,6 +292,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [creatingClub, setCreatingClub] = useState(false);
+  const [newClubName, setNewClubName] = useState("");
+  const [newClubCountry, setNewClubCountry] = useState("");
+  const [newClubLogoFile, setNewClubLogoFile] = useState<File | null>(null);
+  const [savingNewClub, setSavingNewClub] = useState(false);
 
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
   const selectedIds = new Set(entries.map(e => e.player_id));
@@ -306,6 +311,47 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
     const n = clubQuery.trim().toLowerCase();
     return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
   }, [clubs, clubQuery]);
+  const exactMatch = useMemo(() => {
+    const n = clubQuery.trim().toLowerCase();
+    return n ? clubs.some(c => c.club_name.toLowerCase() === n) : true;
+  }, [clubs, clubQuery]);
+
+  const createNewClub = async () => {
+    const name = newClubName.trim();
+    if (!name) return toast.error("Club name required");
+    setSavingNewClub(true);
+    try {
+      const { data: inserted, error } = await supabase
+        .from("club_map_positions")
+        .insert({ club_name: name, country: newClubCountry.trim() || null })
+        .select("id, club_name, country, image_url")
+        .single();
+      if (error) throw error;
+      let image_url: string | null = inserted.image_url ?? null;
+      if (newClubLogoFile) {
+        const ext = newClubLogoFile.name.split(".").pop() || "png";
+        const path = `${slugify(name)}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("club-logos").upload(path, newClubLogoFile, { cacheControl: "3600", upsert: true });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("club-logos").getPublicUrl(path);
+        image_url = pub.publicUrl;
+        await supabase.from("club_map_positions").update({ image_url }).eq("id", inserted.id);
+      }
+      const newClub: ClubLite = { id: inserted.id, club_name: inserted.club_name, country: inserted.country, image_url };
+      onClubAdded(newClub);
+      setClubId(newClub.id);
+      setClubQuery("");
+      setCreatingClub(false);
+      setNewClubName("");
+      setNewClubCountry("");
+      setNewClubLogoFile(null);
+      toast.success("Club added to database");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to create club");
+    } finally {
+      setSavingNewClub(false);
+    }
+  };
 
   const onClubLogoUpload = async (file: File) => {
     if (!selectedClub) return;
@@ -414,6 +460,45 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, editing }: { o
                 </button>
               ))}
             </div>
+          {clubQuery.trim() && !exactMatch && !creatingClub && (
+            <div className="mt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => { setNewClubName(clubQuery.trim()); setCreatingClub(true); }}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Create "{clubQuery.trim()}"
+              </Button>
+            </div>
+          )}
+          {creatingClub && (
+            <div className="mt-3 rounded-md border border-[#cbb96b]/50 p-3 bg-[#cbb96b]/5 space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[#cbb96b]">Add new club to database</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Club name</Label>
+                  <Input value={newClubName} onChange={(e) => setNewClubName(e.target.value)} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Country</Label>
+                  <Input value={newClubCountry} onChange={(e) => setNewClubCountry(e.target.value)} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Logo (optional)</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border px-2 py-1.5 hover:border-[#cbb96b]/60">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{newClubLogoFile ? newClubLogoFile.name : "Choose file"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => setNewClubLogoFile(e.target.files?.[0] ?? null)} />
+                  </label>
+                  {newClubLogoFile && (
+                    <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setNewClubLogoFile(null)}>Remove</button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setCreatingClub(false); setNewClubLogoFile(null); }}>Cancel</Button>
+                <Button type="button" size="sm" onClick={createNewClub} disabled={savingNewClub}>{savingNewClub ? "Saving…" : "Create club"}</Button>
+              </div>
+            </div>
+          )}
             {selectedClub && !selectedClub.image_url && (
               <div className="mt-3 rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5">
                 <p className="text-xs mb-2">No logo on file for <b>{selectedClub.club_name}</b>. Upload one — it will be saved into the coaching database.</p>
