@@ -123,7 +123,10 @@ export default function ClubOutreachProposal() {
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
-    data.players.forEach((e) => set.add(e.position_slot || "All"));
+    data.players.forEach((e) => {
+      const s = (e.position_slot ?? "").trim();
+      if (s && s.toLowerCase() !== "all") set.add(s);
+    });
     return Array.from(set);
   }, [data]);
 
@@ -165,6 +168,7 @@ export default function ClubOutreachProposal() {
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
+  const clubContactRole = data.club_contact?.contact_role ?? data.link.club_contact_role;
   const clubContactClubName = data.club_contact?.contact_club_name ?? null;
   const clubContactClubLogo = data.club_contact?.contact_club_logo_url ?? null;
   const clubPhone = (clubContactPhoneRaw ?? "").replace(/[^0-9]/g, "");
@@ -299,6 +303,7 @@ export default function ClubOutreachProposal() {
                 controls
                 playsInline
                 autoPlay
+                muted
                 preload="metadata"
               />
             ) : (
@@ -427,7 +432,9 @@ export default function ClubOutreachProposal() {
                   <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
                 )}
                 <div className="text-left">
-                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>
+                    WhatsApp Key Club Contact{clubContactRole ? ` – ${clubContactRole}` : ""}
+                  </div>
                   <div className="text-sm sm:text-base">
                     {clubContactName}
                     {clubContactClubName ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {clubContactClubName}</span> : null}
@@ -582,6 +589,33 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
 function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
+  const STAT_LABELS: Record<string, string> = {
+    goals: "Goals",
+    assists: "Assists",
+    xg: "xG",
+    xa: "xA",
+    shots: "Shots",
+    shots_on_target: "Shots on Target",
+    key_passes: "Key Passes",
+    chances_created: "Chances Created",
+    passes_total_per90: "Passes /90",
+    pass_accuracy_pct: "Pass %",
+    successful_dribbles_per90: "Dribbles /90",
+    dribble_success_pct: "Dribble %",
+    tackles_per90: "Tackles /90",
+    tackle_success_pct: "Tackle %",
+    interceptions_per90: "Interceptions /90",
+    duels_won_pct: "Duels Won %",
+    aerial_duels_won_pct: "Aerial %",
+    minutes_played: "Minutes",
+  };
+  const humanize = (k: string) =>
+    STAT_LABELS[k] ??
+    k
+      .replace(/_per90/gi, " /90")
+      .replace(/_pct$/i, " %")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   const num = (row: any, key: string): number | null => {
     const fs = row.fixture_stats || {};
     const ss = row.striker_stats || {};
@@ -594,7 +628,7 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
   const items = (cfg.stats || []).map((s: any) => {
     const key = typeof s === "string" ? s : s.key;
-    const label = typeof s === "string" ? key : (s.label || key);
+    const label = humanize(key);
     if (typeof s !== "string" && s.mode === "manual") {
       const n = parseFloat((s.value ?? "").toString().trim());
       return { key, label, value: isNaN(n) ? null : n };
@@ -605,13 +639,21 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
   });
   if (items.length === 0) return null;
+  // Two columns on narrow screens so labels can wrap onto multiple lines
+  // instead of being crushed into a single row.
+  const cols = Math.min(items.length, 4);
   return (
     <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
+      >
         {items.map((it) => (
-          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 text-center">
+          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{it.label}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+              {it.label}
+            </div>
           </div>
         ))}
       </div>
@@ -638,13 +680,19 @@ function InNumbersCard({ stats }: { stats: any[] }) {
 }
 
 function SeasonStatsCard({ stats }: { stats: any[] }) {
+  const prettify = (s: string) =>
+    (s ?? "")
+      .replace(/_per90/gi, " /90")
+      .replace(/_pct$/i, " %")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   return (
     <SectionShell title="Season Stats" eyebrow="06">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stats.map((s, i) => (
-          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{s.header}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{prettify(s.header)}</div>
           </div>
         ))}
       </div>
