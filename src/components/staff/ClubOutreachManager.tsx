@@ -19,12 +19,19 @@ const STATUS_LABELS: Record<OutreachStatus, string> = { draft: "Drafts", ready: 
 const STATUS_ORDER: OutreachStatus[] = ["ready", "draft", "sent"];
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+const slugifyShortId = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "").slice(0, 64);
 const makeShortId = () => {
   const c = "abcdefghijkmnpqrstuvwxyz23456789";
   let out = "";
   for (let i = 0; i < 8; i++) out += c[Math.floor(Math.random() * c.length)];
   return out;
 };
+
+interface QuickTemplate { id: string; title: string; content: string; sort_order: number; }
+
+function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+}
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
