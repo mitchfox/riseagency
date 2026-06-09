@@ -300,9 +300,9 @@ Deno.serve(async (req) => {
         whatsapp_number: settings?.whatsapp_number ?? null,
         agent_name: settings?.agent_name ?? null,
         agent_image_url: settings?.agent_image_url ?? null,
-        club_contact: clubContact
+        club_contact: resolvedClubContact
           ? {
-              ...clubContact,
+              ...resolvedClubContact,
               contact_club_name: contactClub?.club_name ?? null,
               contact_club_logo_url: contactClub?.image_url ?? null,
             }
