@@ -85,6 +85,13 @@ function readableTextOn(hex: string): "#000" | "#fff" {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000" : "#fff";
 }
 
+function requestUnmutedPlayback(video: HTMLVideoElement) {
+  video.muted = false;
+  video.defaultMuted = false;
+  video.volume = 1;
+  video.play().catch(() => {});
+}
+
 export default function ClubOutreachProposal() {
   const { shortId } = useParams<{ shortId: string }>();
   const [data, setData] = useState<Payload | null>(null);
@@ -145,12 +152,9 @@ export default function ClubOutreachProposal() {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
     video.currentTime = 0;
-    video.muted = false;
-    video.defaultMuted = false;
-    video.volume = 1;
-    video.play().catch(() => {
-      // Browser autoplay policy may still require one tap before sound can start.
-    });
+    requestUnmutedPlayback(video);
+    const retry = window.setTimeout(() => requestUnmutedPlayback(video), 250);
+    return () => window.clearTimeout(retry);
   }, [current?.first_highlight_url]);
 
   if (loading) {
@@ -321,15 +325,11 @@ export default function ClubOutreachProposal() {
                 muted={false}
                 onLoadedMetadata={(e) => {
                   e.currentTarget.currentTime = 0;
-                  e.currentTarget.muted = false;
-                  e.currentTarget.defaultMuted = false;
-                  e.currentTarget.volume = 1;
-                  e.currentTarget.play().catch(() => {});
+                  requestUnmutedPlayback(e.currentTarget);
                 }}
+                onCanPlay={(e) => requestUnmutedPlayback(e.currentTarget)}
                 onPlay={(e) => {
-                  e.currentTarget.muted = false;
-                  e.currentTarget.defaultMuted = false;
-                  e.currentTarget.volume = 1;
+                  requestUnmutedPlayback(e.currentTarget);
                 }}
                 preload="auto"
               />
