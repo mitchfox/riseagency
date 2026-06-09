@@ -865,6 +865,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [tplSaving, setTplSaving] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
+  const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
@@ -925,6 +926,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         highlights_url: data?.highlights_url ?? "",
         proof_path: data?.proof_of_representation_path ?? null,
       });
+      setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
     })();
   }, [selectedPlayerId]);
 
@@ -1023,11 +1025,12 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   const saveDefaults = async () => {
     if (!selectedPlayerId) return;
-    const { error } = await supabase.from("club_outreach_player_defaults").upsert({
+    const { error } = await (supabase as any).from("club_outreach_player_defaults").upsert({
       player_id: selectedPlayerId,
       stars_url_override: defaults.stars_url_override.trim() || null,
       highlights_url: defaults.highlights_url.trim() || null,
       proof_of_representation_path: defaults.proof_path,
+      default_fit_recommendation: playerDefaultFit.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
