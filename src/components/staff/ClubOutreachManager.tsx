@@ -195,10 +195,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-        <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} onSaved={() => { setNewOpen(false); load(); }} />
+       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-        <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} editing={editRow} onSaved={() => { setEditRow(null); load(); }} />
+       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} players={players} clubs={clubs} />
