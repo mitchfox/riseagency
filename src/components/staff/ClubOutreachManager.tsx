@@ -246,10 +246,30 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; }) {
+function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [shortIdDraft, setShortIdDraft] = useState(row.short_id);
+  useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
+  const firstPlayerName = names[0] ?? "";
+  const copyTemplate = async (t: QuickTemplate) => {
+    const filled = fillTemplate(t.content, {
+      club: row.club?.club_name ?? "",
+      player: firstPlayerName,
+      first_name: firstPlayerName.split(" ")[0] ?? "",
+      players: names.join(", "),
+      link: url,
+      url,
+    });
+    try {
+      await navigator.clipboard.writeText(filled);
+      toast.success(`Copied: ${t.title}`);
+    } catch {
+      toast.error("Clipboard unavailable");
+    }
+  };
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
       <div className="flex items-start gap-3">
@@ -264,7 +284,59 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{new Date(row.created_at).toLocaleDateString()}</div>
         </div>
       </div>
-      <div className="mt-3 px-2 py-1.5 rounded-md bg-muted/40 text-[11px] font-mono text-muted-foreground truncate">{url}</div>
+      <div className="mt-3 rounded-md bg-muted/40 px-2 py-1.5">
+        {editingUrl ? (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-mono text-muted-foreground shrink-0">/club-proposal/</span>
+            <Input
+              autoFocus
+              value={shortIdDraft}
+              onChange={(e) => setShortIdDraft(e.target.value)}
+              className="h-6 text-[11px] font-mono px-1.5"
+              onKeyDown={async (e) => {
+                if (e.key === "Enter") {
+                  const ok = await onShortIdSave(shortIdDraft);
+                  if (ok) setEditingUrl(false);
+                } else if (e.key === "Escape") {
+                  setShortIdDraft(row.short_id);
+                  setEditingUrl(false);
+                }
+              }}
+            />
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={async () => { const ok = await onShortIdSave(shortIdDraft); if (ok) setEditingUrl(false); }}>Save</Button>
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => { setShortIdDraft(row.short_id); setEditingUrl(false); }}>Cancel</Button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setEditingUrl(true)} className="w-full text-left text-[11px] font-mono text-muted-foreground truncate hover:text-foreground" title="Click to edit URL ending">
+            {url}
+          </button>
+        )}
+      </div>
+      {templates.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {templates.map(t => {
+            const preview = fillTemplate(t.content, {
+              club: row.club?.club_name ?? "",
+              player: firstPlayerName,
+              first_name: firstPlayerName.split(" ")[0] ?? "",
+              players: names.join(", "),
+              link: url,
+              url,
+            });
+            return (
+              <button
+                key={t.id}
+                type="button"
+                title={preview}
+                onClick={() => copyTemplate(t)}
+                className="inline-flex items-center gap-1 rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[#cbb96b] hover:bg-[#cbb96b]/20"
+              >
+                <Copy className="h-3 w-3" /> {t.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
