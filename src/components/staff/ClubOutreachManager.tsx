@@ -69,6 +69,17 @@ export default function ClubOutreachManager() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
+  const [templates, setTemplates] = useState<QuickTemplate[]>([]);
+  const [defaultFit, setDefaultFit] = useState<string>("");
+
+  const loadTemplates = async () => {
+    const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
+    setTemplates((data ?? []) as QuickTemplate[]);
+  };
+  const loadSettings = async () => {
+    const { data } = await (supabase as any).from("club_outreach_settings").select("default_fit_recommendation").eq("id", 1).maybeSingle();
+    setDefaultFit(data?.default_fit_recommendation ?? "");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -103,6 +114,7 @@ export default function ClubOutreachManager() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { loadTemplates(); loadSettings(); }, []);
 
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
 
@@ -128,6 +140,21 @@ export default function ClubOutreachManager() {
     if (error) return toast.error(error.message);
     toast.success("Archived");
     load();
+  };
+
+  const updateShortId = async (id: string, currentShort: string, nextRaw: string): Promise<boolean> => {
+    const next = slugifyShortId(nextRaw);
+    if (!next) { toast.error("URL ending can't be empty"); return false; }
+    if (next === currentShort) return true;
+    const { error } = await supabase.from("club_outreach_links").update({ short_id: next }).eq("id", id);
+    if (error) {
+      if ((error as any).code === "23505") toast.error("That URL ending is already taken");
+      else toast.error(error.message);
+      return false;
+    }
+    setRows(prev => prev.map(r => r.id === id ? { ...r, short_id: next } : r));
+    toast.success("URL updated");
+    return true;
   };
 
   const setStatus = async (id: string, status: OutreachStatus) => {
@@ -192,6 +219,8 @@ export default function ClubOutreachManager() {
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}
+                      templates={templates}
+                      onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                     />
                   ))}
                 </div>
@@ -202,13 +231,13 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
-        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} players={players} clubs={clubs} />
+        <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
       )}
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
