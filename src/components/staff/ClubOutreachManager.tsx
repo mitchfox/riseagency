@@ -482,9 +482,36 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     }
   };
 
-  const addPlayer = (id: string) => {
-    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: editing ? "" : (defaultFit ?? ""), sort_order: prev.length }]);
+  const addPlayer = async (id: string) => {
     setPlayerQuery("");
+    if (editing) {
+      setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: "", sort_order: prev.length }]);
+      return;
+    }
+    // Determine new entries count after adding
+    const willBeSingle = entries.length === 0;
+    let initialFit = "";
+    if (willBeSingle) {
+      // Single-player outreach: prefer that player's per-player default
+      const { data } = await (supabase as any)
+        .from("club_outreach_player_defaults")
+        .select("default_fit_recommendation")
+        .eq("player_id", id)
+        .maybeSingle();
+      initialFit = (data?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
+    } else {
+      initialFit = defaultFit ?? "";
+    }
+    setEntries(prev => {
+      const next = [...prev, { player_id: id, position_slot: null, fit_recommendation: initialFit, sort_order: prev.length }];
+      // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
+      if (prev.length === 1) {
+        const [first] = prev;
+        // Replace only when first entry text is still the player-specific default (unknown here, so leave it untouched to avoid wiping user edits).
+        return next;
+      }
+      return next;
+    });
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
