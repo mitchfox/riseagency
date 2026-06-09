@@ -1095,6 +1095,58 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
           <section>
             <div className="flex items-center gap-2 mb-2">
+              <FileEdit className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Default fit / recommendation</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">Auto-applied to every new outreach as the starting fit note for each player. Edit per player on the outreach itself when needed.</p>
+            <Textarea rows={4} value={defaultFit} onChange={(e) => setDefaultFit(e.target.value)} placeholder="e.g. A press-resistant ball-progresser who fits a possession-led 4-3-3..." />
+            <div className="flex justify-end mt-2">
+              <Button onClick={saveWhatsapp} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save default</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <Copy className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Quick copy templates</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              One-tap copy buttons shown above every outreach link. Use placeholders <code>{"{club}"}</code>, <code>{"{player}"}</code>, <code>{"{first_name}"}</code>, <code>{"{players}"}</code>, <code>{"{link}"}</code> — they fill in automatically when copied.
+            </p>
+            <div className="space-y-3">
+              {templates.map((t) => (
+                <div key={t.id} className="rounded-md border border-border p-3 bg-muted/10 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={t.title}
+                      onChange={(e) => updateTemplate(t.id, { title: e.target.value })}
+                      placeholder="Button title (e.g. WhatsApp intro)"
+                      className="flex-1"
+                    />
+                    <Button size="sm" variant="outline" onClick={() => saveTemplate(t)}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => deleteTemplate(t.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                  <Textarea
+                    rows={4}
+                    value={t.content}
+                    onChange={(e) => updateTemplate(t.id, { content: e.target.value })}
+                    placeholder="Message text. Use {club}, {player}, {first_name}, {link}."
+                  />
+                </div>
+              ))}
+              <div className="rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5 space-y-2">
+                <div className="text-[11px] uppercase tracking-wider text-[#cbb96b] font-semibold">Add new template</div>
+                <Input value={newTplTitle} onChange={(e) => setNewTplTitle(e.target.value)} placeholder="Button title" />
+                <Textarea rows={3} value={newTplContent} onChange={(e) => setNewTplContent(e.target.value)} placeholder="Message — placeholders welcome." />
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={addTemplate} disabled={tplSaving} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90"><Plus className="h-3.5 w-3.5 mr-1" />{tplSaving ? "Adding…" : "Add template"}</Button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
               <Building2 className="h-4 w-4 text-[#cbb96b]" />
               <h3 className="text-sm font-semibold">Club contacts</h3>
             </div>
