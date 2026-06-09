@@ -144,6 +144,7 @@ export default function ClubOutreachProposal() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
+    video.currentTime = 0;
     video.muted = false;
     video.defaultMuted = false;
     video.volume = 1;
@@ -318,6 +319,18 @@ export default function ClubOutreachProposal() {
                 playsInline
                 autoPlay
                 muted={false}
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.currentTime = 0;
+                  e.currentTarget.muted = false;
+                  e.currentTarget.defaultMuted = false;
+                  e.currentTarget.volume = 1;
+                  e.currentTarget.play().catch(() => {});
+                }}
+                onPlay={(e) => {
+                  e.currentTarget.muted = false;
+                  e.currentTarget.defaultMuted = false;
+                  e.currentTarget.volume = 1;
+                }}
                 preload="auto"
               />
             ) : (
