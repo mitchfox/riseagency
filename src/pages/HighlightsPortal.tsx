@@ -509,7 +509,7 @@ const HighlightsPortal = () => {
             <TabsContent value="playlists" className="mt-4 space-y-3">
               {playerPlaylists.length === 0 ? (
                 <Card className="p-8 text-center text-muted-foreground">
-                  No favourited playlists for this player yet. Ask staff to star playlists that should appear here.
+                  No playlists for this player yet.
                 </Card>
               ) : (
                 playerPlaylists.map((pl) => {
