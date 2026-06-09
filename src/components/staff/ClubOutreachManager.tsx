@@ -19,12 +19,19 @@ const STATUS_LABELS: Record<OutreachStatus, string> = { draft: "Drafts", ready: 
 const STATUS_ORDER: OutreachStatus[] = ["ready", "draft", "sent"];
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+const slugifyShortId = (s: string) => s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "").slice(0, 64);
 const makeShortId = () => {
   const c = "abcdefghijkmnpqrstuvwxyz23456789";
   let out = "";
   for (let i = 0; i < 8; i++) out += c[Math.floor(Math.random() * c.length)];
   return out;
 };
+
+interface QuickTemplate { id: string; title: string; content: string; sort_order: number; }
+
+function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+}
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
@@ -62,6 +69,17 @@ export default function ClubOutreachManager() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
+  const [templates, setTemplates] = useState<QuickTemplate[]>([]);
+  const [defaultFit, setDefaultFit] = useState<string>("");
+
+  const loadTemplates = async () => {
+    const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
+    setTemplates((data ?? []) as QuickTemplate[]);
+  };
+  const loadSettings = async () => {
+    const { data } = await (supabase as any).from("club_outreach_settings").select("default_fit_recommendation").eq("id", 1).maybeSingle();
+    setDefaultFit(data?.default_fit_recommendation ?? "");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -96,6 +114,7 @@ export default function ClubOutreachManager() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { loadTemplates(); loadSettings(); }, []);
 
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
 
@@ -121,6 +140,21 @@ export default function ClubOutreachManager() {
     if (error) return toast.error(error.message);
     toast.success("Archived");
     load();
+  };
+
+  const updateShortId = async (id: string, currentShort: string, nextRaw: string): Promise<boolean> => {
+    const next = slugifyShortId(nextRaw);
+    if (!next) { toast.error("URL ending can't be empty"); return false; }
+    if (next === currentShort) return true;
+    const { error } = await supabase.from("club_outreach_links").update({ short_id: next }).eq("id", id);
+    if (error) {
+      if ((error as any).code === "23505") toast.error("That URL ending is already taken");
+      else toast.error(error.message);
+      return false;
+    }
+    setRows(prev => prev.map(r => r.id === id ? { ...r, short_id: next } : r));
+    toast.success("URL updated");
+    return true;
   };
 
   const setStatus = async (id: string, status: OutreachStatus) => {
@@ -185,6 +219,8 @@ export default function ClubOutreachManager() {
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}
+                      templates={templates}
+                      onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                     />
                   ))}
                 </div>
@@ -195,13 +231,13 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
-        <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} players={players} clubs={clubs} />
+        <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
       )}
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
@@ -210,10 +246,30 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; }) {
+function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [shortIdDraft, setShortIdDraft] = useState(row.short_id);
+  useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
+  const firstPlayerName = names[0] ?? "";
+  const copyTemplate = async (t: QuickTemplate) => {
+    const filled = fillTemplate(t.content, {
+      club: row.club?.club_name ?? "",
+      player: firstPlayerName,
+      first_name: firstPlayerName.split(" ")[0] ?? "",
+      players: names.join(", "),
+      link: url,
+      url,
+    });
+    try {
+      await navigator.clipboard.writeText(filled);
+      toast.success(`Copied: ${t.title}`);
+    } catch {
+      toast.error("Clipboard unavailable");
+    }
+  };
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
       <div className="flex items-start gap-3">
@@ -228,7 +284,59 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{new Date(row.created_at).toLocaleDateString()}</div>
         </div>
       </div>
-      <div className="mt-3 px-2 py-1.5 rounded-md bg-muted/40 text-[11px] font-mono text-muted-foreground truncate">{url}</div>
+      <div className="mt-3 rounded-md bg-muted/40 px-2 py-1.5">
+        {editingUrl ? (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-mono text-muted-foreground shrink-0">/club-proposal/</span>
+            <Input
+              autoFocus
+              value={shortIdDraft}
+              onChange={(e) => setShortIdDraft(e.target.value)}
+              className="h-6 text-[11px] font-mono px-1.5"
+              onKeyDown={async (e) => {
+                if (e.key === "Enter") {
+                  const ok = await onShortIdSave(shortIdDraft);
+                  if (ok) setEditingUrl(false);
+                } else if (e.key === "Escape") {
+                  setShortIdDraft(row.short_id);
+                  setEditingUrl(false);
+                }
+              }}
+            />
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={async () => { const ok = await onShortIdSave(shortIdDraft); if (ok) setEditingUrl(false); }}>Save</Button>
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => { setShortIdDraft(row.short_id); setEditingUrl(false); }}>Cancel</Button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setEditingUrl(true)} className="w-full text-left text-[11px] font-mono text-muted-foreground truncate hover:text-foreground" title="Click to edit URL ending">
+            {url}
+          </button>
+        )}
+      </div>
+      {templates.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {templates.map(t => {
+            const preview = fillTemplate(t.content, {
+              club: row.club?.club_name ?? "",
+              player: firstPlayerName,
+              first_name: firstPlayerName.split(" ")[0] ?? "",
+              players: names.join(", "),
+              link: url,
+              url,
+            });
+            return (
+              <button
+                key={t.id}
+                type="button"
+                title={preview}
+                onClick={() => copyTemplate(t)}
+                className="inline-flex items-center gap-1 rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-[#cbb96b] hover:bg-[#cbb96b]/20"
+              >
+                <Copy className="h-3 w-3" /> {t.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
@@ -280,7 +388,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; }) {
+function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; }) {
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
@@ -375,7 +483,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   };
 
   const addPlayer = (id: string) => {
-    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: "", sort_order: prev.length }]);
+    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: editing ? "" : (defaultFit ?? ""), sort_order: prev.length }]);
     setPlayerQuery("");
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
@@ -750,6 +858,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [agentImageUrl, setAgentImageUrl] = useState("");
   const [agentUploading, setAgentUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [defaultFit, setDefaultFit] = useState("");
+  const [templates, setTemplates] = useState<QuickTemplate[]>([]);
+  const [newTplTitle, setNewTplTitle] = useState("");
+  const [newTplContent, setNewTplContent] = useState("");
+  const [tplSaving, setTplSaving] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [uploading, setUploading] = useState(false);
@@ -774,11 +887,14 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url").eq("id", 1).maybeSingle();
+      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation").eq("id", 1).maybeSingle();
       setWhatsapp(data?.whatsapp_number ?? "");
       setAgentName(data?.agent_name ?? "");
       setAgentImageUrl(data?.agent_image_url ?? "");
+      setDefaultFit(data?.default_fit_recommendation ?? "");
       setLoading(false);
+      const { data: tpls } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
+      setTemplates((tpls ?? []) as QuickTemplate[]);
     })();
   }, []);
 
@@ -813,15 +929,45 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   }, [selectedPlayerId]);
 
   const saveWhatsapp = async () => {
-    const { error } = await supabase.from("club_outreach_settings").upsert({
+    const { error } = await (supabase as any).from("club_outreach_settings").upsert({
       id: 1,
       whatsapp_number: whatsapp.trim(),
       agent_name: agentName.trim() || null,
       agent_image_url: agentImageUrl.trim() || null,
+      default_fit_recommendation: defaultFit.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
     toast.success("Agency contact saved");
+  };
+
+  const addTemplate = async () => {
+    if (!newTplTitle.trim() || !newTplContent.trim()) return toast.error("Title and content required");
+    setTplSaving(true);
+    const { data, error } = await supabase.from("club_outreach_quick_templates").insert({
+      title: newTplTitle.trim(),
+      content: newTplContent,
+      sort_order: templates.length,
+    }).select("id,title,content,sort_order").single();
+    setTplSaving(false);
+    if (error) return toast.error(error.message);
+    setTemplates(prev => [...prev, data as QuickTemplate]);
+    setNewTplTitle(""); setNewTplContent("");
+    toast.success("Template added");
+  };
+  const updateTemplate = async (id: string, patch: Partial<QuickTemplate>) => {
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+  };
+  const saveTemplate = async (t: QuickTemplate) => {
+    const { error } = await supabase.from("club_outreach_quick_templates").update({ title: t.title, content: t.content }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    toast.success("Template saved");
+  };
+  const deleteTemplate = async (id: string) => {
+    if (!confirm("Delete this template?")) return;
+    const { error } = await supabase.from("club_outreach_quick_templates").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
   const uploadAgentImage = async (file: File) => {
@@ -944,6 +1090,58 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAgentImage(f); }} disabled={agentUploading} />
               </label>
               <Button onClick={saveWhatsapp} disabled={loading} className="ml-auto bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <FileEdit className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Default fit / recommendation</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">Auto-applied to every new outreach as the starting fit note for each player. Edit per player on the outreach itself when needed.</p>
+            <Textarea rows={4} value={defaultFit} onChange={(e) => setDefaultFit(e.target.value)} placeholder="e.g. A press-resistant ball-progresser who fits a possession-led 4-3-3..." />
+            <div className="flex justify-end mt-2">
+              <Button onClick={saveWhatsapp} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save default</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <Copy className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Quick copy templates</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              One-tap copy buttons shown above every outreach link. Use placeholders <code>{"{club}"}</code>, <code>{"{player}"}</code>, <code>{"{first_name}"}</code>, <code>{"{players}"}</code>, <code>{"{link}"}</code> — they fill in automatically when copied.
+            </p>
+            <div className="space-y-3">
+              {templates.map((t) => (
+                <div key={t.id} className="rounded-md border border-border p-3 bg-muted/10 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={t.title}
+                      onChange={(e) => updateTemplate(t.id, { title: e.target.value })}
+                      placeholder="Button title (e.g. WhatsApp intro)"
+                      className="flex-1"
+                    />
+                    <Button size="sm" variant="outline" onClick={() => saveTemplate(t)}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => deleteTemplate(t.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                  <Textarea
+                    rows={4}
+                    value={t.content}
+                    onChange={(e) => updateTemplate(t.id, { content: e.target.value })}
+                    placeholder="Message text. Use {club}, {player}, {first_name}, {link}."
+                  />
+                </div>
+              ))}
+              <div className="rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5 space-y-2">
+                <div className="text-[11px] uppercase tracking-wider text-[#cbb96b] font-semibold">Add new template</div>
+                <Input value={newTplTitle} onChange={(e) => setNewTplTitle(e.target.value)} placeholder="Button title" />
+                <Textarea rows={3} value={newTplContent} onChange={(e) => setNewTplContent(e.target.value)} placeholder="Message — placeholders welcome." />
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={addTemplate} disabled={tplSaving} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90"><Plus className="h-3.5 w-3.5 mr-1" />{tplSaving ? "Adding…" : "Add template"}</Button>
+                </div>
+              </div>
             </div>
           </section>
 
