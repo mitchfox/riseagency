@@ -506,7 +506,6 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">03</span>
       <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
