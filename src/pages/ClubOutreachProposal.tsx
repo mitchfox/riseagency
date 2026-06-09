@@ -432,7 +432,9 @@ export default function ClubOutreachProposal() {
                   <WhatsAppIcon className="h-5 w-5" style={bg ? { color: fg } : undefined} />
                 )}
                 <div className="text-left">
-                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>Key Club Contact</div>
+                  <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>
+                    WhatsApp Key Club Contact{clubContactRole ? ` – ${clubContactRole}` : ""}
+                  </div>
                   <div className="text-sm sm:text-base">
                     {clubContactName}
                     {clubContactClubName ? <span style={{ color: bg ? subOpacity : undefined }} className={bg ? "" : "text-white/50"}> – {clubContactClubName}</span> : null}
