@@ -123,7 +123,10 @@ export default function ClubOutreachProposal() {
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
-    data.players.forEach((e) => set.add(e.position_slot || "All"));
+    data.players.forEach((e) => {
+      const s = (e.position_slot ?? "").trim();
+      if (s && s.toLowerCase() !== "all") set.add(s);
+    });
     return Array.from(set);
   }, [data]);
 
