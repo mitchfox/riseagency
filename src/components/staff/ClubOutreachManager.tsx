@@ -482,9 +482,36 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     }
   };
 
-  const addPlayer = (id: string) => {
-    setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: editing ? "" : (defaultFit ?? ""), sort_order: prev.length }]);
+  const addPlayer = async (id: string) => {
     setPlayerQuery("");
+    if (editing) {
+      setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: "", sort_order: prev.length }]);
+      return;
+    }
+    // Determine new entries count after adding
+    const willBeSingle = entries.length === 0;
+    let initialFit = "";
+    if (willBeSingle) {
+      // Single-player outreach: prefer that player's per-player default
+      const { data } = await (supabase as any)
+        .from("club_outreach_player_defaults")
+        .select("default_fit_recommendation")
+        .eq("player_id", id)
+        .maybeSingle();
+      initialFit = (data?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
+    } else {
+      initialFit = defaultFit ?? "";
+    }
+    setEntries(prev => {
+      const next = [...prev, { player_id: id, position_slot: null, fit_recommendation: initialFit, sort_order: prev.length }];
+      // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
+      if (prev.length === 1) {
+        const [first] = prev;
+        // Replace only when first entry text is still the player-specific default (unknown here, so leave it untouched to avoid wiping user edits).
+        return next;
+      }
+      return next;
+    });
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
@@ -865,6 +892,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [tplSaving, setTplSaving] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
+  const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
@@ -925,6 +953,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         highlights_url: data?.highlights_url ?? "",
         proof_path: data?.proof_of_representation_path ?? null,
       });
+      setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
     })();
   }, [selectedPlayerId]);
 
@@ -1023,11 +1052,12 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   const saveDefaults = async () => {
     if (!selectedPlayerId) return;
-    const { error } = await supabase.from("club_outreach_player_defaults").upsert({
+    const { error } = await (supabase as any).from("club_outreach_player_defaults").upsert({
       player_id: selectedPlayerId,
       stars_url_override: defaults.stars_url_override.trim() || null,
       highlights_url: defaults.highlights_url.trim() || null,
       proof_of_representation_path: defaults.proof_path,
+      default_fit_recommendation: playerDefaultFit.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -1264,6 +1294,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                 <div>
                   <Label className="flex items-center gap-2"><Film className="h-3.5 w-3.5" /> Full season highlights link</Label>
                   <Input className="mt-1.5" placeholder="Paste the highlights URL" value={defaults.highlights_url} onChange={(e) => setDefaults(d => ({ ...d, highlights_url: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2"><FileEdit className="h-3.5 w-3.5" /> Default fit / recommendation (single-player only)</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Used when this player is the only one on an outreach. If two or more players are attached, the general default applies instead.</p>
+                  <Textarea rows={4} className="mt-1.5" value={playerDefaultFit} onChange={(e) => setPlayerDefaultFit(e.target.value)} placeholder="Tailored fit note for this player when sent solo to a club." />
                 </div>
                 <div>
                   <Label className="flex items-center gap-2"><FileBadge2 className="h-3.5 w-3.5" /> Proof of Representation PDF</Label>
