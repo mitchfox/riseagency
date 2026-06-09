@@ -165,6 +165,7 @@ export default function ClubOutreachProposal() {
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
+  const clubContactRole = data.club_contact?.contact_role ?? data.link.club_contact_role;
   const clubContactClubName = data.club_contact?.contact_club_name ?? null;
   const clubContactClubLogo = data.club_contact?.contact_club_logo_url ?? null;
   const clubPhone = (clubContactPhoneRaw ?? "").replace(/[^0-9]/g, "");
