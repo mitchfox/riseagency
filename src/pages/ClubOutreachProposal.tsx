@@ -636,24 +636,48 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
   });
   if (items.length === 0) return null;
-  // Two columns on narrow screens so labels can wrap onto multiple lines
-  // instead of being crushed into a single row.
+  // Lay 5 items out as 3+2 centred; otherwise one even row.
+  const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
   return (
     <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
-      >
-        {items.map((it) => (
-          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
-            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-              {it.label}
+      {useSplit ? (
+        <div className="space-y-2">
+          {[items.slice(0, 3), items.slice(3, 5)].map((row, ri) => (
+            <div
+              key={ri}
+              className="grid gap-2 mx-auto"
+              style={{
+                gridTemplateColumns: `repeat(${row.length}, minmax(0,1fr))`,
+                maxWidth: row.length === 2 ? "66%" : "100%",
+              }}
+            >
+              {row.map((it) => (
+                <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+                  <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+                    {it.label}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
+        >
+          {items.map((it) => (
+            <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+              <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+                {it.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </SectionShell>
   );
 }
