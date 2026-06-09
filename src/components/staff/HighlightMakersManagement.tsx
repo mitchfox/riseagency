@@ -24,7 +24,35 @@ interface Maker {
   created_at: string;
 }
 
-interface PlayerLite { id: string; name: string; position: string | null; club: string | null }
+interface PlayerLite {
+  id: string;
+  name: string;
+  position: string | null;
+  club: string | null;
+  representation_status?: string | null;
+  category?: string | null;
+}
+
+const isAvailableForHighlightMakers = (player: PlayerLite) =>
+  player.category !== "Scouted" &&
+  player.category !== "Fuel For Football" &&
+  player.representation_status !== "Scouted" &&
+  player.representation_status !== "Fuel For Football";
+
+const normaliseSearch = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const autoMatchedPlayerIds = (players: PlayerLite[], username: string, displayName: string) => {
+  const haystack = normaliseSearch(`${username} ${displayName}`);
+  if (!haystack) return [] as string[];
+  return players
+    .filter((player) => {
+      const nameParts = player.name.split(/\s+/).filter((part) => part.length >= 3);
+      const surname = nameParts[nameParts.length - 1] || "";
+      return nameParts.some((part) => haystack.includes(normaliseSearch(part))) ||
+        (!!surname && haystack.includes(normaliseSearch(surname)));
+    })
+    .map((player) => player.id);
+};
 
 export const HighlightMakersManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [makers, setMakers] = useState<Maker[]>([]);
@@ -183,12 +211,28 @@ const MakerDialog = ({
         }).eq("id", maker.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("highlight_makers").insert({
+        const { data: created, error } = await supabase.from("highlight_makers").insert({
           username: username.trim(),
           password: "",
           display_name: displayName.trim(),
-        });
+        }).select("id, username, display_name").single();
         if (error) throw error;
+        const { data: players, error: playersError } = await supabase
+          .from("players")
+          .select("id, name, position, club, representation_status, category");
+        if (playersError) throw playersError;
+        const matchedIds = autoMatchedPlayerIds(
+          ((players || []) as PlayerLite[]).filter(isAvailableForHighlightMakers),
+          created.username,
+          created.display_name,
+        );
+        if (matchedIds.length > 0) {
+          const { error: assignError } = await supabase.from("highlight_maker_players").upsert(
+            matchedIds.map((playerId) => ({ highlight_maker_id: created.id, player_id: playerId })),
+            { onConflict: "highlight_maker_id,player_id" },
+          );
+          if (assignError) throw assignError;
+        }
       }
       toast.success("Saved");
       onSaved();
@@ -250,9 +294,7 @@ const ManagePlayersDialog = ({
           .eq("highlight_maker_id", maker.id),
       ]);
       if (!p.error) {
-        const filtered = (p.data || []).filter((pl: any) =>
-          pl.category !== "Scouted" && pl.category !== "Fuel For Football",
-        );
+        const filtered = ((p.data || []) as PlayerLite[]).filter(isAvailableForHighlightMakers);
         setPlayers(filtered as any);
       }
       if (!a.error) {

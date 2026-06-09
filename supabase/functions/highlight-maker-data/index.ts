@@ -63,8 +63,7 @@ Deno.serve(async (req) => {
         .from("playlists")
         .select("id, player_id, name, clips, created_at, updated_at, is_favourite")
         .in("player_id", playerIds)
-        .eq("is_favourite", true)
-        .order("created_at", { ascending: false }),
+        .order("updated_at", { ascending: false }),
       supabase
         .from("player_analysis")
         .select(
