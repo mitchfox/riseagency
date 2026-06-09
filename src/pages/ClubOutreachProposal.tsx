@@ -88,7 +88,7 @@ function readableTextOn(hex: string): "#000" | "#fff" {
 function requestUnmutedPlayback(video: HTMLVideoElement) {
   video.muted = false;
   video.defaultMuted = false;
-  video.volume = 1;
+  video.volume = 0.6;
   video.play().catch(() => {});
 }
 
