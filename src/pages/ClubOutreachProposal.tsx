@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
@@ -85,6 +85,13 @@ function readableTextOn(hex: string): "#000" | "#fff" {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000" : "#fff";
 }
 
+function requestUnmutedPlayback(video: HTMLVideoElement) {
+  video.muted = false;
+  video.defaultMuted = false;
+  video.volume = 1;
+  video.play().catch(() => {});
+}
+
 export default function ClubOutreachProposal() {
   const { shortId } = useParams<{ shortId: string }>();
   const [data, setData] = useState<Payload | null>(null);
@@ -92,6 +99,7 @@ export default function ClubOutreachProposal() {
   const [err, setErr] = useState<string | null>(null);
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
@@ -138,6 +146,17 @@ export default function ClubOutreachProposal() {
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
 
+  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !current?.first_highlight_url) return;
+    video.currentTime = 0;
+    requestUnmutedPlayback(video);
+    const retry = window.setTimeout(() => requestUnmutedPlayback(video), 250);
+    return () => window.clearTimeout(retry);
+  }, [current?.first_highlight_url]);
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
@@ -145,7 +164,7 @@ export default function ClubOutreachProposal() {
       </div>
     );
   }
-  if (err || !data || data.players.length === 0) {
+  if (err || !data || data.players.length === 0 || !current) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center text-white p-6 text-center">
         <div>
@@ -157,7 +176,6 @@ export default function ClubOutreachProposal() {
   }
 
   const club = data.club;
-  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
   const player = current.player;
 
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
@@ -297,14 +315,23 @@ export default function ClubOutreachProposal() {
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
               <video
+                ref={videoRef}
                 key={current.first_highlight_url}
                 src={current.first_highlight_url}
                 className="w-full h-full object-contain bg-black"
                 controls
                 playsInline
                 autoPlay
-                muted
-                preload="metadata"
+                muted={false}
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.currentTime = 0;
+                  requestUnmutedPlayback(e.currentTarget);
+                }}
+                onCanPlay={(e) => requestUnmutedPlayback(e.currentTarget)}
+                onPlay={(e) => {
+                  requestUnmutedPlayback(e.currentTarget);
+                }}
+                preload="auto"
               />
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
