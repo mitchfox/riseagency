@@ -139,7 +139,7 @@ export default function ClubOutreachProposal() {
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
 
-  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0] ?? null;
+  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
 
   useEffect(() => {
     const video = videoRef.current;
@@ -159,7 +159,7 @@ export default function ClubOutreachProposal() {
       </div>
     );
   }
-  if (err || !data || data.players.length === 0) {
+  if (err || !data || data.players.length === 0 || !current) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center text-white p-6 text-center">
         <div>
