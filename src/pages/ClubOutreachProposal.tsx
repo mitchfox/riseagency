@@ -579,7 +579,6 @@ function KeyDetailsCard({
 function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-3">{title}</h3>
       {children}
     </div>
