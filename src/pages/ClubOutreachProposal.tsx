@@ -85,11 +85,18 @@ function readableTextOn(hex: string): "#000" | "#fff" {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000" : "#fff";
 }
 
-function requestUnmutedPlayback(video: HTMLVideoElement) {
+function tryAutoplay(video: HTMLVideoElement) {
+  // Try unmuted first; if the browser blocks it, fall back to muted autoplay
+  // so the video at least starts (viewer can click the speaker icon).
   video.muted = false;
   video.defaultMuted = false;
-  video.volume = 0.6;
-  video.play().catch(() => {});
+  const p = video.play();
+  if (p && typeof p.catch === "function") {
+    p.catch(() => {
+      video.muted = true;
+      video.play().catch(() => {});
+    });
+  }
 }
 
 export default function ClubOutreachProposal() {
@@ -152,9 +159,7 @@ export default function ClubOutreachProposal() {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
     video.currentTime = 0;
-    requestUnmutedPlayback(video);
-    const retry = window.setTimeout(() => requestUnmutedPlayback(video), 250);
-    return () => window.clearTimeout(retry);
+    tryAutoplay(video);
   }, [current?.first_highlight_url]);
 
   if (loading) {
@@ -233,7 +238,7 @@ export default function ClubOutreachProposal() {
             {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
           </h1>
           {preparedFor && (
-            <p className="text-xs text-white/40">Prepared for <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-xs text-white/40">For <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
@@ -274,70 +279,10 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Player info card (Stars-style) */}
-      {player && (
-        <div className="max-w-3xl mx-auto px-6 mt-4">
-          <div className="relative border-2 border-[#cbb96b] rounded-lg bg-white/5 backdrop-blur-sm overflow-hidden">
-            <div className="relative p-4 md:p-5">
-              <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#cbb96b]/20 via-[#cbb96b]/10 to-transparent blur-xl" />
-                  <h1 className="relative text-2xl md:text-3xl font-bebas uppercase font-bold text-white leading-none tracking-wide whitespace-nowrap">
-                    {player.name}
-                  </h1>
-                </div>
-
-                {player.position && (
-                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none whitespace-nowrap">
-                    {player.position}
-                  </p>
-                )}
-
-                {(player.date_of_birth || age != null) && (
-                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                    {player.date_of_birth ? (
-                      <>
-                        {player.date_of_birth}
-                        {age != null && <span className="text-white/50">({age})</span>}
-                      </>
-                    ) : (
-                      <span>{age} yrs</span>
-                    )}
-                  </p>
-                )}
-
-                {player.nationality && (
-                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                    {nationalityFlag && (
-                      <img
-                        src={nationalityFlag}
-                        alt={player.nationality}
-                        onError={(e) => ((e.currentTarget.style.display = "none"))}
-                        className="w-6 h-4 object-cover rounded"
-                      />
-                    )}
-                    {player.nationality}
-                  </p>
-                )}
-
-                {player.club && (
-                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
-                    {playerClubLogo && (
-                      <img
-                        src={playerClubLogo}
-                        alt={player.club}
-                        onError={(e) => ((e.currentTarget.style.display = "none"))}
-                        className="w-6 h-6 md:w-8 md:h-8 object-contain"
-                      />
-                    )}
-                    {player.club}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Key details — moved above the hero video */}
+      <section className="max-w-3xl mx-auto px-6 mt-4">
+        <KeyDetailsCard entry={current} age={age} />
+      </section>
 
       {/* Hero — first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
@@ -352,15 +297,11 @@ export default function ClubOutreachProposal() {
                 controls
                 playsInline
                 autoPlay
-                muted={false}
                 onLoadedMetadata={(e) => {
                   e.currentTarget.currentTime = 0;
-                  requestUnmutedPlayback(e.currentTarget);
+                  tryAutoplay(e.currentTarget);
                 }}
-                onCanPlay={(e) => requestUnmutedPlayback(e.currentTarget)}
-                onPlay={(e) => {
-                  requestUnmutedPlayback(e.currentTarget);
-                }}
+                onCanPlay={(e) => tryAutoplay(e.currentTarget)}
                 preload="auto"
               />
             ) : (
@@ -402,9 +343,6 @@ export default function ClubOutreachProposal() {
           disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
           internal
         />
-      </section>
-      <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} />
       </section>
 
       {/* Optional Stars-derived sections (per-link toggles) */}
