@@ -266,8 +266,7 @@ export default function ClubOutreachProposal() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 text-center text-xs text-white/60">
-            <span className="text-white/90 font-medium">{player?.name}</span>
-            <span className="ml-2 text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
+            <span className="text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
           </div>
           <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
             <ChevronRight className="h-4 w-4" />
@@ -275,37 +274,68 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Player info strip (Stars-style with flag + club logo) */}
+      {/* Player info card (Stars-style) */}
       {player && (
-        <div className="max-w-3xl mx-auto px-6 mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-white/75">
-          {player.position && <span className="uppercase tracking-wider text-white/85">{player.position}</span>}
-          {age != null && <span className="text-white/55">{age} yrs</span>}
-          {player.nationality && (
-            <span className="inline-flex items-center gap-2">
-              {nationalityFlag && (
-                <img
-                  src={nationalityFlag}
-                  alt={player.nationality}
-                  onError={(e) => ((e.currentTarget.style.display = "none"))}
-                  className="h-3.5 w-5 object-cover rounded-[2px]"
-                />
-              )}
-              {player.nationality}
-            </span>
-          )}
-          {player.club && (
-            <span className="inline-flex items-center gap-2">
-              {playerClubLogo && (
-                <img
-                  src={playerClubLogo}
-                  alt={player.club}
-                  onError={(e) => ((e.currentTarget.style.display = "none"))}
-                  className="h-5 w-5 object-contain"
-                />
-              )}
-              {player.club}
-            </span>
-          )}
+        <div className="max-w-3xl mx-auto px-6 mt-4">
+          <div className="relative border-2 border-[#cbb96b] rounded-lg bg-white/5 backdrop-blur-sm overflow-hidden">
+            <div className="relative p-4 md:p-5">
+              <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#cbb96b]/20 via-[#cbb96b]/10 to-transparent blur-xl" />
+                  <h1 className="relative text-2xl md:text-3xl font-bebas uppercase font-bold text-white leading-none tracking-wide whitespace-nowrap">
+                    {player.name}
+                  </h1>
+                </div>
+
+                {player.position && (
+                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none whitespace-nowrap">
+                    {player.position}
+                  </p>
+                )}
+
+                {(player.date_of_birth || age != null) && (
+                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                    {player.date_of_birth ? (
+                      <>
+                        {player.date_of_birth}
+                        {age != null && <span className="text-white/50">({age})</span>}
+                      </>
+                    ) : (
+                      <span>{age} yrs</span>
+                    )}
+                  </p>
+                )}
+
+                {player.nationality && (
+                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                    {nationalityFlag && (
+                      <img
+                        src={nationalityFlag}
+                        alt={player.nationality}
+                        onError={(e) => ((e.currentTarget.style.display = "none"))}
+                        className="w-6 h-4 object-cover rounded"
+                      />
+                    )}
+                    {player.nationality}
+                  </p>
+                )}
+
+                {player.club && (
+                  <p className="text-lg md:text-xl text-white/70 uppercase tracking-wide font-bebas leading-none flex items-center gap-2 whitespace-nowrap">
+                    {playerClubLogo && (
+                      <img
+                        src={playerClubLogo}
+                        alt={player.club}
+                        onError={(e) => ((e.currentTarget.style.display = "none"))}
+                        className="w-6 h-6 md:w-8 md:h-8 object-contain"
+                      />
+                    )}
+                    {player.club}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -475,7 +505,7 @@ export default function ClubOutreachProposal() {
       </div>
 
       <footer className="mt-12 flex items-center justify-center">
-        <img src={riseLogoWhite} alt="RISE Football" className="h-8 w-auto opacity-70" />
+        <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80" />
       </footer>
     </div>
   );
