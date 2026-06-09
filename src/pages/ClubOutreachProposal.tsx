@@ -680,13 +680,19 @@ function InNumbersCard({ stats }: { stats: any[] }) {
 }
 
 function SeasonStatsCard({ stats }: { stats: any[] }) {
+  const prettify = (s: string) =>
+    (s ?? "")
+      .replace(/_per90/gi, " /90")
+      .replace(/_pct$/i, " %")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   return (
     <SectionShell title="Season Stats" eyebrow="06">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stats.map((s, i) => (
-          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{s.header}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{prettify(s.header)}</div>
           </div>
         ))}
       </div>
