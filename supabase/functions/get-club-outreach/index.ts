@@ -54,16 +54,55 @@ Deno.serve(async (req) => {
       .eq("id", 1)
       .maybeSingle();
 
-    // Resolve the club-level contact (preferred over per-link fields)
+    // Resolve the club-level contact (preferred over per-link fields).
+    // Some older links stored the contact directly on the link while the photo
+    // was later saved in the shared contact directory against that person's own club.
     const { data: clubContact } = await supabase
       .from("club_outreach_club_contacts")
       .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
       .eq("club_id", link.club_id)
       .maybeSingle();
 
+    let matchedContact: any = null;
+    if (!clubContact?.contact_image_url && (link.club_contact_phone || link.club_contact_name)) {
+      if (link.club_contact_phone) {
+        const { data } = await supabase
+          .from("club_outreach_club_contacts")
+          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+          .eq("contact_phone", link.club_contact_phone)
+          .not("contact_image_url", "is", null)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        matchedContact = data ?? null;
+      }
+      if (!matchedContact && link.club_contact_name) {
+        const { data } = await supabase
+          .from("club_outreach_club_contacts")
+          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+          .ilike("contact_name", link.club_contact_name)
+          .not("contact_image_url", "is", null)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        matchedContact = data ?? null;
+      }
+    }
+
+    const resolvedClubContact = clubContact || matchedContact || link.club_contact_name || link.club_contact_phone
+      ? {
+          contact_name: clubContact?.contact_name ?? link.club_contact_name ?? matchedContact?.contact_name ?? null,
+          contact_role: clubContact?.contact_role ?? link.club_contact_role ?? matchedContact?.contact_role ?? null,
+          contact_phone: clubContact?.contact_phone ?? link.club_contact_phone ?? matchedContact?.contact_phone ?? null,
+          contact_accent: clubContact?.contact_accent ?? link.club_contact_accent ?? matchedContact?.contact_accent ?? null,
+          contact_image_url: clubContact?.contact_image_url ?? matchedContact?.contact_image_url ?? null,
+          contact_club_id: clubContact?.contact_club_id ?? matchedContact?.contact_club_id ?? null,
+        }
+      : null;
+
     // Resolve the contact's OWN club (separate from the outreach target).
     let contactClub: { club_name: string | null; image_url: string | null; country: string | null } | null = null;
-    const contactClubId = (clubContact as any)?.contact_club_id ?? null;
+    const contactClubId = (resolvedClubContact as any)?.contact_club_id ?? null;
     if (contactClubId) {
       const { data: cc } = await supabase
         .from("club_map_positions")
