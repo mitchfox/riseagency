@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
@@ -92,6 +92,7 @@ export default function ClubOutreachProposal() {
   const [err, setErr] = useState<string | null>(null);
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
@@ -137,6 +138,17 @@ export default function ClubOutreachProposal() {
   }, [data, activeSlot]);
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !current?.first_highlight_url) return;
+    video.muted = false;
+    video.defaultMuted = false;
+    video.volume = 1;
+    video.play().catch(() => {
+      // Browser autoplay policy may still require one tap before sound can start.
+    });
+  }, [current?.first_highlight_url]);
 
   if (loading) {
     return (
@@ -297,14 +309,15 @@ export default function ClubOutreachProposal() {
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
               <video
+                ref={videoRef}
                 key={current.first_highlight_url}
                 src={current.first_highlight_url}
                 className="w-full h-full object-contain bg-black"
                 controls
                 playsInline
                 autoPlay
-                muted
-                preload="metadata"
+                muted={false}
+                preload="auto"
               />
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
