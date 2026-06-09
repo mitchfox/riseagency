@@ -303,6 +303,7 @@ export default function ClubOutreachProposal() {
                 controls
                 playsInline
                 autoPlay
+                muted
                 preload="metadata"
               />
             ) : (
