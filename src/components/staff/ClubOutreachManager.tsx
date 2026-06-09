@@ -858,6 +858,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [agentImageUrl, setAgentImageUrl] = useState("");
   const [agentUploading, setAgentUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [defaultFit, setDefaultFit] = useState("");
+  const [templates, setTemplates] = useState<QuickTemplate[]>([]);
+  const [newTplTitle, setNewTplTitle] = useState("");
+  const [newTplContent, setNewTplContent] = useState("");
+  const [tplSaving, setTplSaving] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [uploading, setUploading] = useState(false);
@@ -882,11 +887,14 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url").eq("id", 1).maybeSingle();
+      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation").eq("id", 1).maybeSingle();
       setWhatsapp(data?.whatsapp_number ?? "");
       setAgentName(data?.agent_name ?? "");
       setAgentImageUrl(data?.agent_image_url ?? "");
+      setDefaultFit(data?.default_fit_recommendation ?? "");
       setLoading(false);
+      const { data: tpls } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
+      setTemplates((tpls ?? []) as QuickTemplate[]);
     })();
   }, []);
 
@@ -921,15 +929,45 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   }, [selectedPlayerId]);
 
   const saveWhatsapp = async () => {
-    const { error } = await supabase.from("club_outreach_settings").upsert({
+    const { error } = await (supabase as any).from("club_outreach_settings").upsert({
       id: 1,
       whatsapp_number: whatsapp.trim(),
       agent_name: agentName.trim() || null,
       agent_image_url: agentImageUrl.trim() || null,
+      default_fit_recommendation: defaultFit.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
     toast.success("Agency contact saved");
+  };
+
+  const addTemplate = async () => {
+    if (!newTplTitle.trim() || !newTplContent.trim()) return toast.error("Title and content required");
+    setTplSaving(true);
+    const { data, error } = await supabase.from("club_outreach_quick_templates").insert({
+      title: newTplTitle.trim(),
+      content: newTplContent,
+      sort_order: templates.length,
+    }).select("id,title,content,sort_order").single();
+    setTplSaving(false);
+    if (error) return toast.error(error.message);
+    setTemplates(prev => [...prev, data as QuickTemplate]);
+    setNewTplTitle(""); setNewTplContent("");
+    toast.success("Template added");
+  };
+  const updateTemplate = async (id: string, patch: Partial<QuickTemplate>) => {
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+  };
+  const saveTemplate = async (t: QuickTemplate) => {
+    const { error } = await supabase.from("club_outreach_quick_templates").update({ title: t.title, content: t.content }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    toast.success("Template saved");
+  };
+  const deleteTemplate = async (id: string) => {
+    if (!confirm("Delete this template?")) return;
+    const { error } = await supabase.from("club_outreach_quick_templates").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
   const uploadAgentImage = async (file: File) => {
