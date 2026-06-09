@@ -211,12 +211,28 @@ const MakerDialog = ({
         }).eq("id", maker.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("highlight_makers").insert({
+        const { data: created, error } = await supabase.from("highlight_makers").insert({
           username: username.trim(),
           password: "",
           display_name: displayName.trim(),
-        });
+        }).select("id, username, display_name").single();
         if (error) throw error;
+        const { data: players, error: playersError } = await supabase
+          .from("players")
+          .select("id, name, position, club, representation_status, category");
+        if (playersError) throw playersError;
+        const matchedIds = autoMatchedPlayerIds(
+          ((players || []) as PlayerLite[]).filter(isAvailableForHighlightMakers),
+          created.username,
+          created.display_name,
+        );
+        if (matchedIds.length > 0) {
+          const { error: assignError } = await supabase.from("highlight_maker_players").upsert(
+            matchedIds.map((playerId) => ({ highlight_maker_id: created.id, player_id: playerId })),
+            { onConflict: "highlight_maker_id,player_id" },
+          );
+          if (assignError) throw assignError;
+        }
       }
       toast.success("Saved");
       onSaved();
