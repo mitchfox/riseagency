@@ -470,7 +470,6 @@ function ProposalCard({
     <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
-        <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       </div>
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
