@@ -767,7 +767,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       contact_image_url: contact.contact_image_url.trim() || null,
       contact_club_id: contact.contact_club_id || null,
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: "club_id" });
     if (error) return toast.error(error.message);
     toast.success("Club contact saved");
   };

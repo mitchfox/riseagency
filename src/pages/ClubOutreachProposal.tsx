@@ -470,7 +470,6 @@ function ProposalCard({
     <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
-        <span className="text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       </div>
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
@@ -507,7 +506,6 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">03</span>
       <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
@@ -579,7 +577,6 @@ function KeyDetailsCard({
 function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 overflow-hidden">
-      <span className="absolute top-3 right-4 text-[10px] tracking-[0.3em] text-white/30">{eyebrow}</span>
       <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-3">{title}</h3>
       {children}
     </div>
@@ -639,24 +636,48 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
   });
   if (items.length === 0) return null;
-  // Two columns on narrow screens so labels can wrap onto multiple lines
-  // instead of being crushed into a single row.
+  // Lay 5 items out as 3+2 centred; otherwise one even row.
+  const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
   return (
     <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
-      >
-        {items.map((it) => (
-          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
-            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-              {it.label}
+      {useSplit ? (
+        <div className="space-y-2">
+          {[items.slice(0, 3), items.slice(3, 5)].map((row, ri) => (
+            <div
+              key={ri}
+              className="grid gap-2 mx-auto"
+              style={{
+                gridTemplateColumns: `repeat(${row.length}, minmax(0,1fr))`,
+                maxWidth: row.length === 2 ? "66%" : "100%",
+              }}
+            >
+              {row.map((it) => (
+                <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+                  <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+                    {it.label}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
+        >
+          {items.map((it) => (
+            <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+              <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+                {it.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </SectionShell>
   );
 }
