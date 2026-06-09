@@ -589,6 +589,33 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
 function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
+  const STAT_LABELS: Record<string, string> = {
+    goals: "Goals",
+    assists: "Assists",
+    xg: "xG",
+    xa: "xA",
+    shots: "Shots",
+    shots_on_target: "Shots on Target",
+    key_passes: "Key Passes",
+    chances_created: "Chances Created",
+    passes_total_per90: "Passes /90",
+    pass_accuracy_pct: "Pass %",
+    successful_dribbles_per90: "Dribbles /90",
+    dribble_success_pct: "Dribble %",
+    tackles_per90: "Tackles /90",
+    tackle_success_pct: "Tackle %",
+    interceptions_per90: "Interceptions /90",
+    duels_won_pct: "Duels Won %",
+    aerial_duels_won_pct: "Aerial %",
+    minutes_played: "Minutes",
+  };
+  const humanize = (k: string) =>
+    STAT_LABELS[k] ??
+    k
+      .replace(/_per90/gi, " /90")
+      .replace(/_pct$/i, " %")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   const num = (row: any, key: string): number | null => {
     const fs = row.fixture_stats || {};
     const ss = row.striker_stats || {};
@@ -601,7 +628,7 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
   const items = (cfg.stats || []).map((s: any) => {
     const key = typeof s === "string" ? s : s.key;
-    const label = typeof s === "string" ? key : (s.label || key);
+    const label = humanize(key);
     if (typeof s !== "string" && s.mode === "manual") {
       const n = parseFloat((s.value ?? "").toString().trim());
       return { key, label, value: isNaN(n) ? null : n };
@@ -612,13 +639,21 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
     return { key, label, value: SUM.has(key) ? sum : sum / vals.length };
   });
   if (items.length === 0) return null;
+  // Two columns on narrow screens so labels can wrap onto multiple lines
+  // instead of being crushed into a single row.
+  const cols = Math.min(items.length, 4);
   return (
     <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
+      >
         {items.map((it) => (
-          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 text-center">
+          <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight">{it.label}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
+              {it.label}
+            </div>
           </div>
         ))}
       </div>
