@@ -139,6 +139,8 @@ export default function ClubOutreachProposal() {
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
 
+  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0] ?? null;
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
@@ -169,7 +171,6 @@ export default function ClubOutreachProposal() {
   }
 
   const club = data.club;
-  const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
   const player = current.player;
 
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
