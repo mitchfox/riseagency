@@ -54,14 +54,55 @@ Deno.serve(async (req) => {
       .eq("id", 1)
       .maybeSingle();
 
-    // Resolve the club-level contact (preferred over per-link fields).
-    // Some older links stored the contact directly on the link while the photo
-    // was later saved in the shared contact directory against that person's own club.
-    const { data: clubContact } = await supabase
-      .from("club_outreach_club_contacts")
-      .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
-      .eq("club_id", link.club_id)
-      .maybeSingle();
+    // Resolve the club-level contact. Historically this was keyed by the
+    // target (recipient) club, but the saved Key Club Contact represents the
+    // person at the PLAYER'S current club you would negotiate with. So we now
+    // look up the contact via the attached player's current club, and fall
+    // back to the target club for backwards compatibility.
+    const { data: linkPlayersEarly } = await supabase
+      .from("club_outreach_link_players")
+      .select("player_id, sort_order")
+      .eq("link_id", link.id)
+      .order("sort_order", { ascending: true });
+    const primaryPlayerId: string | null =
+      linkPlayersEarly?.[0]?.player_id ?? link.player_id ?? null;
+
+    let playerCurrentClubId: string | null = null;
+    if (primaryPlayerId) {
+      const { data: pRow } = await supabase
+        .from("players")
+        .select("club")
+        .eq("id", primaryPlayerId)
+        .maybeSingle();
+      const clubName = (pRow?.club ?? "").toString().trim();
+      if (clubName) {
+        const { data: clubMatch } = await supabase
+          .from("club_map_positions")
+          .select("id")
+          .ilike("club_name", clubName)
+          .limit(1)
+          .maybeSingle();
+        playerCurrentClubId = clubMatch?.id ?? null;
+      }
+    }
+
+    let clubContact: any = null;
+    if (playerCurrentClubId) {
+      const { data } = await supabase
+        .from("club_outreach_club_contacts")
+        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+        .eq("club_id", playerCurrentClubId)
+        .maybeSingle();
+      clubContact = data ?? null;
+    }
+    if (!clubContact) {
+      const { data } = await supabase
+        .from("club_outreach_club_contacts")
+        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+        .eq("club_id", link.club_id)
+        .maybeSingle();
+      clubContact = data ?? null;
+    }
 
     let matchedContact: any = null;
     if (!clubContact?.contact_image_url && (link.club_contact_phone || link.club_contact_name)) {
