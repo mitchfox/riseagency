@@ -1261,6 +1261,17 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Input placeholder="WhatsApp e.g. 447700900000" value={contact.contact_phone} onChange={(e) => setContact(c => ({ ...c, contact_phone: e.target.value }))} />
                 </div>
                 <div>
+                  <Label className="text-xs">Transfermarkt URL (for the target club)</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 mb-1.5">
+                    Shown as a pinned Transfermarkt button at the bottom of the club proposal until the visitor scrolls to the contact CTAs.
+                  </p>
+                  <Input
+                    placeholder="https://www.transfermarkt.com/..."
+                    value={contact.transfermarkt_url}
+                    onChange={(e) => setContact(c => ({ ...c, transfermarkt_url: e.target.value }))}
+                  />
+                </div>
+                <div>
                   <Label className="text-xs">Contact's own club</Label>
                   <p className="text-[11px] text-muted-foreground mt-0.5 mb-1.5">
                     The club this contact actually works for — shown next to their name on the proposal.
