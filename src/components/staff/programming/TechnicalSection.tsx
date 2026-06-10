@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Target, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Target, ChevronDown, ChevronRight, Save } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
+import { TechnicalScheduleTab } from "./TechnicalScheduleTab";
+import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
 
 interface Program {
   id: string;
@@ -26,6 +29,11 @@ export const TechnicalSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [programs, setPrograms] = useState<Program[]>([]);
   const [openProgram, setOpenProgram] = useState<string | null>(null);
+  const [tab, setTab] = useState<"programmes" | "schedule">("programmes");
+  const [saveDialog, setSaveDialog] = useState<{ open: boolean; programId: string | null; programName: string; phase: string | null }>({
+    open: false, programId: null, programName: "", phase: null,
+  });
+  const [saveSessions, setSaveSessions] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -49,6 +57,7 @@ export const TechnicalSection = () => {
   useEffect(() => { loadPrograms(); }, [loadPrograms]);
 
   const current = players.find(p => p.id === selectedPlayer);
+  const currentProgramme = programs.find(p => p.is_current) || programs[0];
 
   const addProgram = async () => {
     if (selectedPlayer === "all") return;
@@ -82,6 +91,32 @@ export const TechnicalSection = () => {
     loadPrograms();
   };
 
+  const openSaveDialog = async (p: Program) => {
+    // load full sessions+drills+variations for this programme
+    const { data: ss } = await supabase
+      .from("technical_sessions" as any)
+      .select("*")
+      .eq("program_id", p.id)
+      .order("display_order");
+    const sessIds = (ss || []).map((s: any) => s.id);
+    const { data: dd } = sessIds.length
+      ? await supabase.from("technical_drills" as any).select("*").in("session_id", sessIds).order("display_order")
+      : { data: [] as any[] };
+    const drillIds = (dd || []).map((d: any) => d.id);
+    const { data: vv } = drillIds.length
+      ? await supabase.from("technical_drill_variations" as any).select("*").in("drill_id", drillIds).order("display_order")
+      : { data: [] as any[] };
+    const sessions = (ss || []).map((s: any) => ({
+      ...s,
+      drills: (dd || []).filter((d: any) => d.session_id === s.id).map((d: any) => ({
+        ...d,
+        variations: (vv || []).filter((v: any) => v.drill_id === d.id),
+      })),
+    }));
+    setSaveSessions(sessions);
+    setSaveDialog({ open: true, programId: p.id, programName: p.program_name, phase: p.phase_name });
+  };
+
   return (
     <div className="space-y-4">
       <PlayerCombobox
@@ -104,16 +139,23 @@ export const TechnicalSection = () => {
         <div className="space-y-4">
           <SPSTimeline programs={programs as any} playerName={current.name} />
 
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Technical Programmes</h3>
-            <Button size="sm" onClick={addProgram}><Plus className="w-3.5 h-3.5 mr-1" />New programme</Button>
-          </div>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+            <TabsList>
+              <TabsTrigger value="programmes">Programmes</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            </TabsList>
 
-          {programs.length === 0 && (
-            <p className="text-sm text-muted-foreground">No technical programmes yet.</p>
-          )}
+            <TabsContent value="programmes" className="space-y-4 mt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Technical Programmes</h3>
+                <Button size="sm" onClick={addProgram}><Plus className="w-3.5 h-3.5 mr-1" />New programme</Button>
+              </div>
 
-          {programs.map(p => (
+              {programs.length === 0 && (
+                <p className="text-sm text-muted-foreground">No technical programmes yet.</p>
+              )}
+
+              {programs.map(p => (
             <Card key={p.id} className={p.is_current ? "border-primary" : ""}>
               <CardHeader className="py-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -154,6 +196,9 @@ export const TechnicalSection = () => {
                   >
                     {p.is_current ? "Current" : "Set current"}
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => openSaveDialog(p)}>
+                    <Save className="h-4 w-4 mr-1" />Save to DB
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => deleteProgram(p.id)} className="text-destructive ml-auto">
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -165,9 +210,26 @@ export const TechnicalSection = () => {
                 </CardContent>
               )}
             </Card>
-          ))}
+              ))}
+            </TabsContent>
+
+            <TabsContent value="schedule" className="mt-4">
+              <TechnicalScheduleTab
+                playerId={selectedPlayer}
+                currentTechnicalProgrammeId={currentProgramme?.id ?? null}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
+
+      <SaveTechnicalToCoachingDBDialog
+        open={saveDialog.open}
+        onClose={() => setSaveDialog(s => ({ ...s, open: false }))}
+        programName={saveDialog.programName}
+        phaseName={saveDialog.phase}
+        sessions={saveSessions}
+      />
     </div>
   );
 };
