@@ -8604,6 +8604,231 @@ export type Database = {
         }
         Relationships: []
       }
+      technical_drill_variations: {
+        Row: {
+          created_at: string
+          description: string | null
+          diagram: Json | null
+          display_order: number
+          drill_id: string
+          id: string
+          label: string
+          load: string | null
+          notes: string | null
+          recovery_time: string | null
+          reps: string | null
+          reps_per_side: boolean
+          sets: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          diagram?: Json | null
+          display_order?: number
+          drill_id: string
+          id?: string
+          label: string
+          load?: string | null
+          notes?: string | null
+          recovery_time?: string | null
+          reps?: string | null
+          reps_per_side?: boolean
+          sets?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          diagram?: Json | null
+          display_order?: number
+          drill_id?: string
+          id?: string
+          label?: string
+          load?: string | null
+          notes?: string | null
+          recovery_time?: string | null
+          reps?: string | null
+          reps_per_side?: boolean
+          sets?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_drill_variations_drill_id_fkey"
+            columns: ["drill_id"]
+            isOneToOne: false
+            referencedRelation: "technical_drills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technical_drills: {
+        Row: {
+          created_at: string
+          description: string | null
+          diagram: Json | null
+          display_order: number
+          id: string
+          load: string | null
+          name: string
+          notes: string | null
+          recovery_time: string | null
+          reps: string | null
+          reps_per_side: boolean
+          session_id: string
+          sets: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          diagram?: Json | null
+          display_order?: number
+          id?: string
+          load?: string | null
+          name: string
+          notes?: string | null
+          recovery_time?: string | null
+          reps?: string | null
+          reps_per_side?: boolean
+          session_id: string
+          sets?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          diagram?: Json | null
+          display_order?: number
+          id?: string
+          load?: string | null
+          name?: string
+          notes?: string | null
+          recovery_time?: string | null
+          reps?: string | null
+          reps_per_side?: boolean
+          session_id?: string
+          sets?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_drills_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "technical_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technical_programs: {
+        Row: {
+          created_at: string
+          display_order: number
+          end_date: string | null
+          id: string
+          is_current: boolean
+          overview_text: string | null
+          phase_dates: string | null
+          phase_name: string | null
+          player_id: string
+          program_name: string
+          schedule_notes: string | null
+          start_date: string | null
+          updated_at: string
+          weekly_schedules: Json
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          overview_text?: string | null
+          phase_dates?: string | null
+          phase_name?: string | null
+          player_id: string
+          program_name: string
+          schedule_notes?: string | null
+          start_date?: string | null
+          updated_at?: string
+          weekly_schedules?: Json
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          overview_text?: string | null
+          phase_dates?: string | null
+          phase_name?: string | null
+          player_id?: string
+          program_name?: string
+          schedule_notes?: string | null
+          start_date?: string | null
+          updated_at?: string
+          weekly_schedules?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_programs_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_programs_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technical_sessions: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          program_id: string
+          session_key: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          program_id: string
+          session_key: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          program_id?: string
+          session_key?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_sessions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "technical_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transfer_reports: {
         Row: {
           content_config: Json

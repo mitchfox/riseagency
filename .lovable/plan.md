@@ -1,78 +1,133 @@
-# Transfer Hub: show club contacts inline + full visibility
+## Technical Programming — parallel to Strength, Power & Speed
 
-## Problem
+A new Technical section under Coaching → Programming. Sessions contain drills, drills can have variations (duplicated then edited), each drill/variation can carry a tactical-board diagram. Portal Programming shows SPS by default with a tab to switch to Technical. The weekly schedule is shared across both, so a given day slot can only hold one session (SPS or Technical, never both).
 
-1. **Staff Transfer Hub doesn't show clubs that have been contacted.** The "Club Outreach" tab inside `src/components/staff/TransferHub.tsx` is powered by `ClubOutreachManagement.tsx`, which only reads the legacy `club_outreach` table. The current outreach flow (`ClubOutreachManager.tsx`) writes to the new `club_outreach_links` / `club_outreach_link_players` / `club_outreach_communications` tables. Result: from the staff Transfer Hub it looks like nothing has been logged, even when it has been.
-2. **Clicking a row opens a narrow dialog** for both the staff side (`ClubOutreachManagement` detail dialog at line ~106) and a few flows on the player side (`PlayerClubInterest` already uses inline collapse, but logging an update from the staff side uses a dialog). The user wants the row to expand inline so there is room to read history and add updates.
-3. **Per‑player visibility is weak.** On the staff Transfer Hub the "Roster" tab lists players but doesn't show how many clubs have been contacted, when the last contact was, who was contacted, and the most recent reply. On the player Transfer Hub the "Club Interest" and "Club Updates" tabs work but are visually thin and don't show counts/last-contact summaries.
+### Staff: new section
 
-## What to build
+- New nav entry under "Programming" group in `src/pages/Staff.tsx`: id `technical`, title "Technical", same Dumbbell-style icon (use `Target` to distinguish).
+- New component `src/components/staff/programming/TechnicalSection.tsx`, modelled on `StrengthPowerSpeedSection.tsx`:
+  - PlayerCombobox at top with the same represented/mandated grouping.
+  - Same timeline (reuse `SPSTimeline` against `technical_programs` rows) so coaches see Technical phases on a year strip.
+  - Per-player program list with create/edit/delete, current flag, start/end dates — mirroring `ProgrammingManagement` but trimmed to the Technical data model.
 
-### 1. Unify the data layer (read from both old and new tables)
+### Technical data model (drills + variations + diagrams)
 
-Create a small helper `src/lib/transferHubData.ts` that, given a `playerId` (or `null` for "all"), returns a merged, deduplicated list of club contacts with this shape:
+- A Technical program → many sessions → many drills → many variations.
+- Each variation inherits its parent drill's fields and overrides only what changes (description, diagram, reps/sets, load, recovery). "Duplicate variation" copies the previous variation as a starting point.
+- Reps/sets fields per drill or variation: `reps`, `sets`, `reps_per_side` (boolean), `load`, `recovery_time`, `notes`. UI shows "× each side" automatically when `reps_per_side` is true.
+- Diagram = tactical-board JSON (pitch layout, players, cones, arrows, zones). Stored on the drill OR variation row. "Duplicate variation" copies the diagram JSON so the coach can edit from the same starting frame.
 
-```ts
-type ClubContactRow = {
-  source: "new" | "legacy";
-  outreach_id: string;     // links.id or club_outreach.id
-  player_id: string;
-  player_name: string;
-  club_id: string | null;
-  club_name: string;
-  contact_name: string | null;
-  contact_role: string | null;
-  status: string;
-  created_at: string;
-  last_contacted_at: string | null;
-  last_summary: string | null;
-  last_next_step: string | null;
-  communications_count: number;
-};
+### Diagram editor
+
+- New `src/components/staff/programming/DrillDiagramEditor.tsx` reusing the drawing primitives from `src/components/staff/coaching/TacticsBoard.tsx` (half-pitch + full-pitch options, drag tokens, arrows, labels).
+- Opened from the drill/variation row as a wide dialog (per project rule: wide screen, not thin).
+- Saves diagram JSON back to the drill/variation row.
+
+### Unified weekly schedule (prevents clash with SPS)
+
+- Both SPS and Technical programs surface their `weekly_schedules` into a single planner view keyed by `player_id` + ISO week + day-of-week.
+- When a Technical session is dragged onto a day that already has an SPS session for the same player/week (or vice versa), the planner blocks the drop and shows a toast naming the conflicting session.
+- The unified planner is rendered:
+  - In the Technical section as a "Weekly Plan" card under the timeline.
+  - In the SPS section in the same card slot so both sides see the same canonical schedule.
+- Validation also runs on save (server-side check via the migration's `validate_program_day_unique` trigger described in Technical Details) so direct DB writes can't bypass it.
+
+### Player portal
+
+- In `src/pages/Dashboard.tsx` Programming view, add a top-level toggle: `SPS | Technical` (SPS default, matching current behaviour).
+- SPS branch keeps today's UI unchanged.
+- Technical branch loads from `technical_programs` and renders sessions → drills → variations with their diagrams (read-only). Diagrams render via a lightweight read-only renderer that reuses the same JSON the editor produces.
+- Weekly schedule on portal shows both kinds of sessions on the same calendar grid with a small tag (SPS / Technical) per day so players see one combined week.
+
+### Out of scope
+
+- No changes to Nutrition, Psychology, Tactics Board, Athlete Centre.
+- No edits to existing SPS data — Technical lives in its own tables.
+- No mobile-only redesign; mobile uses the same components.
+
+### Files to create / edit
+
+- new `src/components/staff/programming/TechnicalSection.tsx`
+- new `src/components/staff/programming/TechnicalProgramEditor.tsx` (sessions / drills / variations CRUD)
+- new `src/components/staff/programming/DrillDiagramEditor.tsx` (tactical-board-style editor)
+- new `src/components/staff/programming/DrillDiagramView.tsx` (read-only renderer)
+- new `src/components/staff/programming/UnifiedWeeklyPlanner.tsx` (shared by SPS + Technical staff views)
+- new `src/components/portal/TechnicalProgramView.tsx`
+- edit `src/pages/Staff.tsx` — register section id, search keywords, route to `TechnicalSection`
+- edit `src/components/staff/programming/StrengthPowerSpeedSection.tsx` — mount `UnifiedWeeklyPlanner`
+- edit `src/pages/Dashboard.tsx` — add SPS/Technical tab in Programming view
+- new migration creating Technical tables, RLS, GRANTs, and the day-uniqueness trigger
+
+### Technical Details
+
+Tables (all in `public`, with full GRANTs + RLS + admin/staff manage + player read-own policies):
+
+```text
+technical_programs(
+  id uuid pk, player_id uuid fk players,
+  program_name text, phase_name text, phase_dates text,
+  overview_text text, schedule_notes text,
+  start_date date, end_date date, is_current bool,
+  weekly_schedules jsonb default '[]',
+  display_order int default 0,
+  created_at, updated_at
+)
+
+technical_sessions(
+  id uuid pk, program_id uuid fk technical_programs on delete cascade,
+  session_key text,            -- 'A', 'B', stable within program
+  title text, description text,
+  display_order int default 0,
+  created_at, updated_at
+)
+
+technical_drills(
+  id uuid pk, session_id uuid fk technical_sessions on delete cascade,
+  name text, description text,
+  reps text, sets text, reps_per_side bool default false,
+  load text, recovery_time text, notes text,
+  diagram jsonb,               -- base diagram
+  display_order int default 0,
+  created_at, updated_at
+)
+
+technical_drill_variations(
+  id uuid pk, drill_id uuid fk technical_drills on delete cascade,
+  label text,                  -- 'Variation 1', or coach-named
+  description text,
+  reps text, sets text, reps_per_side bool default false,
+  load text, recovery_time text, notes text,
+  diagram jsonb,               -- copied from parent or previous variation on duplicate
+  display_order int default 0,
+  created_at, updated_at
+)
 ```
 
-Logic:
-- Pull `club_outreach_links` joined with `club_outreach_link_players` (filter by `player_id` when given) and resolve `club_id` → `club_name` via `club_map_positions`.
-- Pull `club_outreach_communications` for those link ids; compute count + latest per link.
-- Pull legacy `club_outreach` (filter by `player_id` when given) and its `club_outreach_updates` for latest update.
-- Merge, sort by `last_contacted_at ?? created_at` desc. Keep both rows if a club appears in both sources (don't drop legacy history).
+Diagram JSON shape (shared with TacticsBoard primitives):
 
-Both staff `ClubOutreachManagement` and the player side already do versions of this; the helper consolidates them.
+```text
+{
+  pitch: 'full' | 'half',
+  orientation: 'horizontal' | 'vertical',
+  tokens:   [{ id, kind: 'player' | 'cone' | 'ball' | 'gate', x, y, label?, color? }],
+  arrows:   [{ id, from:{x,y}, to:{x,y}, kind: 'pass'|'run'|'dribble'|'shot' }],
+  zones:    [{ id, shape: 'rect'|'circle', x, y, w, h, color }],
+  notes:    string?
+}
+```
 
-### 2. Staff Transfer Hub: inline expansion + new data
+Day-uniqueness rule across both program types:
 
-Update `src/components/staff/ClubOutreachManagement.tsx`:
-- Replace the detail `Dialog` (`detailDialogOpen`, `selectedClubGroup`) with an inline expandable row using `Collapsible` (same pattern as `PlayerClubInterest`).
-- Source rows from the new helper so links logged via `ClubOutreachManager` appear immediately.
-- When expanded, show: full communications timeline (date, contact, channel, summary, next step) and an inline "Add update" form that writes to `club_outreach_communications` for new‑source rows or `club_outreach_updates` for legacy rows.
-- Keep the existing "Add club outreach" dialog as is (creation is fine in a modal).
+- DB trigger `validate_program_day_unique` runs on insert/update of `player_programs.weekly_schedules` and `technical_programs.weekly_schedules`. For each `{ week, day }` it builds the combined set across both tables for the same `player_id`. If a day appears in more than one program with a non-empty session, the trigger raises `Schedule clash on {week} {day}: already used by {other program}.`.
+- Client-side guard mirrors this in `UnifiedWeeklyPlanner` so the conflict is surfaced before save.
 
-Update `src/components/staff/TransferHub.tsx`:
-- "Roster" tab: add columns "Clubs Contacted" (count) and "Last Contact" (date · club · status badge) populated from the helper grouped by `player_id`. Clicking a player row expands inline beneath it showing that player's full club‑contact list (same component used in player Transfer Hub, see step 3) plus quick access to "Add update".
-- Remove the modal pattern for per‑player drill‑down.
+UI rules:
 
-### 3. Player Transfer Hub: richer visibility
+- "Reps per side" toggle renders as a small "× each side" suffix in displays. Example: `8 × 3  each side`.
+- Variations panel inside a drill: list with "Duplicate" button on each row that inserts a sibling variation pre-filled from the source (including diagram JSON, deep-cloned, with a new id).
+- Drill rows show a thumbnail of the diagram (small SVG) when present; clicking opens the editor dialog.
 
-`src/components/player/TransferHub.tsx` tabs stay (Club Interest, Transfer Status, Club Updates, Agent Notes), but:
-- Extract the per‑player club‑contact list into a shared component `src/components/transferhub/PlayerClubContactList.tsx` that renders the unified rows with inline collapse. Use it in both `PlayerClubInterest` (RISE‑contacted block) and the staff per‑player expansion in step 2.
-- Add a small header summary on the Club Interest tab: "X clubs contacted · last activity {date}".
-- "Club Updates" tab keeps the chronological feed but pulls from the same helper so nothing is missed.
+Portal:
 
-### 4. Match the user's wording
-
-When the helper returns at least one contact for a player, label it "Contacted" on both portals so staff and players see the same status. Use Rise Gold (`#C6A332`) for the count badge on the staff roster row, per the project design tokens.
-
-## Out of scope
-
-- No schema/migration changes. Both legacy and new tables remain.
-- No edits to `ClubOutreachManager.tsx` logging flow (already done last turn).
-- No changes to Transfer Status, Agent Notes, or Contracts tabs.
-
-## Files
-
-- **new** `src/lib/transferHubData.ts` — unified fetch helper.
-- **new** `src/components/transferhub/PlayerClubContactList.tsx` — shared inline list.
-- **edit** `src/components/staff/ClubOutreachManagement.tsx` — inline expand, use helper.
-- **edit** `src/components/staff/TransferHub.tsx` — roster shows contacted counts + inline player drill‑down.
-- **edit** `src/components/PlayerClubInterest.tsx` — render via shared list, add summary header.
-- **edit** `src/components/player/PlayerOutreachUpdates.tsx` — pull via helper.
+- Tab state stored in `localStorage` key `portal.programmingTab` so player choice persists between visits.
+- Read-only views fetch with `eq('player_id', currentPlayerId)` and rely on the new RLS policy `players can read own technical programs` (joined through `players.email = auth.email()` to match existing patterns in this repo).
