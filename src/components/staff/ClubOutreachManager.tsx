@@ -765,6 +765,26 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
     setContactRole((outreach as any).club_contact_role ?? "");
   }, [outreach.id]);
 
+  // If the link row doesn't carry contact details, fall back to the club's
+  // saved contact in club_outreach_club_contacts so staff don't have to retype
+  // what's already on record for that club.
+  useEffect(() => {
+    if (!outreach.club_id) return;
+    const linkName = ((outreach as any).club_contact_name ?? "").trim();
+    const linkRole = ((outreach as any).club_contact_role ?? "").trim();
+    if (linkName && linkRole) return;
+    (async () => {
+      const { data } = await supabase
+        .from("club_outreach_club_contacts")
+        .select("contact_name, contact_role")
+        .eq("club_id", outreach.club_id)
+        .maybeSingle();
+      if (!data) return;
+      setContactName((prev) => (prev.trim() ? prev : (data.contact_name ?? "")));
+      setContactRole((prev) => (prev.trim() ? prev : (data.contact_role ?? "")));
+    })();
+  }, [outreach.id, outreach.club_id]);
+
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from("club_outreach_communications").select("*").eq("outreach_id", outreach.id).order("contacted_at", { ascending: false });
