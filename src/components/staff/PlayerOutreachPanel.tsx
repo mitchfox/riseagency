@@ -499,13 +499,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const sortAndFilter = (items: any[]): any[] => {
     let result = items;
     if (deferredSearchQuery) {
-      const q = deferredSearchQuery.toLowerCase();
-      result = result.filter(d =>
-        d.player_name?.toLowerCase().includes(q) ||
-        d.current_club?.toLowerCase().includes(q) ||
-        d.nationality?.toLowerCase().includes(q) ||
-        d.position?.toLowerCase().includes(q)
-      );
+      result = result.filter(d => matchesQuery(deferredSearchQuery, [
+        d.player_name,
+        d.current_club,
+        d.nationality,
+        d.position,
+        d.date_of_birth,
+        (d as any).agent_name,
+      ]));
     }
     // Apply filters
     if (ageFilter !== 'all') {
