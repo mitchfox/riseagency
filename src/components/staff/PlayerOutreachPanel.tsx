@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from '
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
+import { matchesQuery } from '@/lib/searchMatch';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
