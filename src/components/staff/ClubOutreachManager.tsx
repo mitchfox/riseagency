@@ -1079,7 +1079,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   const saveClubContact = async () => {
     if (!selectedClubId) return;
-    const { error } = await supabase.from("club_outreach_club_contacts").upsert({
+    const { error } = await (supabase as any).from("club_outreach_club_contacts").upsert({
       club_id: selectedClubId,
       contact_name: contact.contact_name.trim() || null,
       contact_role: contact.contact_role.trim() || null,
