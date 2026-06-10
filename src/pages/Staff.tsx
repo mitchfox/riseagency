@@ -102,6 +102,7 @@ import { ActivityLog } from "@/components/staff/ActivityLog";
 import { DatabaseExport } from "@/components/staff/DatabaseExport";
 import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
 import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
+import { TechnicalSection } from "@/components/staff/programming/TechnicalSection";
 import { NutritionSection } from "@/components/staff/programming/NutritionSection";
 import { PsychologySection } from "@/components/staff/programming/PsychologySection";
 import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
