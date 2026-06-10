@@ -54,6 +54,7 @@ import { AnalysisVideoReports } from "@/components/portal/AnalysisVideoReports";
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { MarkdownContent } from "@/utils/markdownRenderer";
 import { InjuryLog } from "@/components/portal/InjuryLog";
+import { TechnicalProgramView } from "@/components/portal/TechnicalProgramView";
 import { PlayerSpqHistory } from "@/components/staff/PlayerSpqHistory";
 import { PlayerMatchClipper } from "@/components/portal/PlayerMatchClipper";
 import { PortalEmptyState } from "@/components/portal/PortalEmptyState";
@@ -143,6 +144,9 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
+  const [programmingMode, setProgrammingMode] = useState<"sps" | "technical">(() =>
+    (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "sps"
+  );
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
@@ -3433,6 +3437,28 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
+              <div className="container mx-auto px-4 -mb-4">
+                <div className="inline-flex rounded-md border bg-muted p-1">
+                  {([
+                    { id: "sps", label: "Strength, Power & Speed" },
+                    { id: "technical", label: "Technical" },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
+                      className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {programmingMode === "technical" ? (
+                <div className="container mx-auto px-4">
+                  <TechnicalProgramView playerId={playerData?.id ?? null} />
+                </div>
+              ) : (
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
                 <CardHeader marble>
                   <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -4240,6 +4266,7 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
+              )}
               {/* Injury Log Section */}
               <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 mt-6">
                 <CardHeader marble>
