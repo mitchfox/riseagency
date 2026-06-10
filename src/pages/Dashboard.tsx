@@ -147,6 +147,7 @@ const Dashboard = () => {
   const [programmingMode, setProgrammingMode] = useState<"sps" | "technical">(() =>
     (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "sps"
   );
+  const [hasTechnicalPrograms, setHasTechnicalPrograms] = useState<boolean>(false);
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
@@ -230,6 +231,21 @@ const Dashboard = () => {
 
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
+
+  // Detect whether this player has any technical programmes; the Technical
+  // tab is only surfaced once at least one programme exists.
+  useEffect(() => {
+    if (!playerData?.id) { setHasTechnicalPrograms(false); return; }
+    (async () => {
+      const { count } = await (supabase as any)
+        .from("technical_programs")
+        .select("id", { count: "exact", head: true })
+        .eq("player_id", playerData.id);
+      const has = (count ?? 0) > 0;
+      setHasTechnicalPrograms(has);
+      if (!has) setProgrammingMode("sps");
+    })();
+  }, [playerData?.id]);
 
   // Track portal tab views for staff notifications
   useEffect(() => {
@@ -3437,24 +3453,26 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
-              <div className="container mx-auto px-4 -mb-4">
-                <div className="inline-flex rounded-md border bg-muted p-1">
-                  {([
-                    { id: "sps", label: "Strength, Power & Speed" },
-                    { id: "technical", label: "Technical" },
-                  ] as const).map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
-                      className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {hasTechnicalPrograms && (
+                <div className="container mx-auto px-4 -mb-4">
+                  <div className="inline-flex rounded-md border bg-muted p-1">
+                    {([
+                      { id: "sps", label: "Strength, Power & Speed" },
+                      { id: "technical", label: "Technical" },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
+                        className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {programmingMode === "technical" ? (
+              )}
+              {hasTechnicalPrograms && programmingMode === "technical" ? (
                 <div className="container mx-auto px-4">
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>

@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     if (playerCurrentClubId) {
       const { data } = await supabase
         .from("club_outreach_club_contacts")
-        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, transfermarkt_url")
         .eq("club_id", playerCurrentClubId)
         .maybeSingle();
       clubContact = data ?? null;
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     if (!clubContact) {
       const { data } = await supabase
         .from("club_outreach_club_contacts")
-        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+        .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, transfermarkt_url")
         .eq("club_id", link.club_id)
         .maybeSingle();
       clubContact = data ?? null;
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       if (link.club_contact_phone) {
         const { data } = await supabase
           .from("club_outreach_club_contacts")
-          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, transfermarkt_url")
           .eq("contact_phone", link.club_contact_phone)
           .not("contact_image_url", "is", null)
           .order("updated_at", { ascending: false })
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       if (!matchedContact && link.club_contact_name) {
         const { data } = await supabase
           .from("club_outreach_club_contacts")
-          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id")
+          .select("contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, transfermarkt_url")
           .ilike("contact_name", link.club_contact_name)
           .not("contact_image_url", "is", null)
           .order("updated_at", { ascending: false })
@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
           contact_accent: clubContact?.contact_accent ?? link.club_contact_accent ?? matchedContact?.contact_accent ?? null,
           contact_image_url: clubContact?.contact_image_url ?? matchedContact?.contact_image_url ?? null,
           contact_club_id: clubContact?.contact_club_id ?? matchedContact?.contact_club_id ?? null,
+          transfermarkt_url: clubContact?.transfermarkt_url ?? matchedContact?.transfermarkt_url ?? null,
         }
       : null;
 

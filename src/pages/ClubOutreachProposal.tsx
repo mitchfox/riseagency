@@ -71,6 +71,7 @@ interface Payload {
     contact_image_url: string | null;
     contact_club_name?: string | null;
     contact_club_logo_url?: string | null;
+    transfermarkt_url?: string | null;
   } | null;
 }
 
@@ -107,6 +108,22 @@ export default function ClubOutreachProposal() {
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const contactsRef = useRef<HTMLDivElement | null>(null);
+  const [contactsVisible, setContactsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = contactsRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const e = entries[0];
+        setContactsVisible(!!e?.isIntersecting);
+      },
+      { threshold: 0.05 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [data]);
 
   useEffect(() => {
     if (!shortId) return;
@@ -368,7 +385,7 @@ export default function ClubOutreachProposal() {
       )}
 
       {/* Contact CTAs */}
-      <div className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
+      <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
         <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">Discuss further</p>
         {agencyWaUrl && (
           <a
@@ -445,6 +462,47 @@ export default function ClubOutreachProposal() {
       <footer className="mt-12 flex items-center justify-center">
         <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80" />
       </footer>
+
+      {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
+      {(() => {
+        const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
+        if (!tmUrl && !agencyWaUrl) return null;
+        return (
+          <div
+            className={`fixed inset-x-0 bottom-0 z-40 pointer-events-none transition-opacity duration-300 ${contactsVisible ? "opacity-0" : "opacity-100"}`}
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+            aria-hidden={contactsVisible}
+          >
+            <div className="pointer-events-auto mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/70 backdrop-blur-md px-2 py-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+              {tmUrl && (
+                <a
+                  href={tmUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Transfermarkt"
+                  className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
+                  style={{ backgroundColor: "#1A3552" }}
+                >
+                  {/* Transfermarkt 'TM' mark in their brand blue */}
+                  <span className="text-[13px] font-extrabold tracking-tight leading-none">TM</span>
+                </a>
+              )}
+              {agencyWaUrl && (
+                <a
+                  href={agencyWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`WhatsApp ${data.agent_name ?? "agent"}`}
+                  className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
+                  style={{ backgroundColor: "#25D366" }}
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

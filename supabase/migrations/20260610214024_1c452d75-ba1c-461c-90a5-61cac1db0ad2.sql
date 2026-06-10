@@ -1,0 +1,1 @@
+ALTER TABLE public.club_outreach_club_contacts ADD COLUMN IF NOT EXISTS transfermarkt_url text;

@@ -996,6 +996,7 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           contact_role: string | null
+          transfermarkt_url: string | null
           updated_at: string
         }
         Insert: {
@@ -1006,6 +1007,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contact_role?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -1016,6 +1018,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contact_role?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string
         }
         Relationships: [

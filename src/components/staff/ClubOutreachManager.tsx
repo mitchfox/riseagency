@@ -779,9 +779,18 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         .select("contact_name, contact_role")
         .eq("club_id", outreach.club_id)
         .maybeSingle();
-      if (!data) return;
-      setContactName((prev) => (prev.trim() ? prev : (data.contact_name ?? "")));
-      setContactRole((prev) => (prev.trim() ? prev : (data.contact_role ?? "")));
+      const prepared = ((outreach as any).prepared_for_name ?? "").trim();
+      // Prefer the saved club contact; if it's missing, fall back to the
+      // "Prepared for" name on the proposal so the same name that's shown
+      // on the club proposal page is already filled in here.
+      setContactName((prev) => {
+        if (prev.trim()) return prev;
+        return (data?.contact_name ?? "").trim() || prepared || "";
+      });
+      setContactRole((prev) => {
+        if (prev.trim()) return prev;
+        return data?.contact_role ?? "";
+      });
     })();
   }, [outreach.id, outreach.club_id]);
 
@@ -815,6 +824,19 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         created_by: u.user?.id ?? null,
       });
       if (error) throw error;
+      // Persist the contact back onto the link row when the link doesn't
+      // already carry it, so Transfer Hub (which reads from the link) shows
+      // the person without staff having to re-enter it there.
+      const linkPatch: Record<string, string> = {};
+      if (!((outreach as any).club_contact_name ?? "").trim() && contactName.trim()) {
+        linkPatch.club_contact_name = contactName.trim();
+      }
+      if (!((outreach as any).club_contact_role ?? "").trim() && contactRole.trim()) {
+        linkPatch.club_contact_role = contactRole.trim();
+      }
+      if (Object.keys(linkPatch).length > 0) {
+        await supabase.from("club_outreach_links").update(linkPatch).eq("id", outreach.id);
+      }
       toast.success("Update logged");
       setSummary(""); setNextStep("");
       load();
@@ -936,8 +958,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   // Club contacts state
   const [clubQuery, setClubQuery] = useState("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
-  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string; contact_club_id: string }>({
-    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "", contact_club_id: "",
+  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string; contact_club_id: string; transfermarkt_url: string }>({
+    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "", contact_club_id: "", transfermarkt_url: "",
   });
   const [contactClubQuery, setContactClubQuery] = useState("");
   const [contactImgUploading, setContactImgUploading] = useState(false);
@@ -977,6 +999,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         // Default the contact's own club to the outreach club so existing
         // records that pre-date this field display sensibly until edited.
         contact_club_id: (data as any)?.contact_club_id ?? selectedClubId,
+        transfermarkt_url: (data as any)?.transfermarkt_url ?? "",
       });
       setContactClubQuery("");
     })();
@@ -1056,7 +1079,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   const saveClubContact = async () => {
     if (!selectedClubId) return;
-    const { error } = await supabase.from("club_outreach_club_contacts").upsert({
+    const { error } = await (supabase as any).from("club_outreach_club_contacts").upsert({
       club_id: selectedClubId,
       contact_name: contact.contact_name.trim() || null,
       contact_role: contact.contact_role.trim() || null,
@@ -1064,6 +1087,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       contact_accent: contact.contact_name.trim() ? contact.contact_accent : null,
       contact_image_url: contact.contact_image_url.trim() || null,
       contact_club_id: contact.contact_club_id || null,
+      transfermarkt_url: contact.transfermarkt_url.trim() || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: "club_id" });
     if (error) return toast.error(error.message);
@@ -1235,6 +1259,17 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Input placeholder="Contact name" value={contact.contact_name} onChange={(e) => setContact(c => ({ ...c, contact_name: e.target.value }))} />
                   <Input placeholder="Role e.g. Technical Director" value={contact.contact_role} onChange={(e) => setContact(c => ({ ...c, contact_role: e.target.value }))} />
                   <Input placeholder="WhatsApp e.g. 447700900000" value={contact.contact_phone} onChange={(e) => setContact(c => ({ ...c, contact_phone: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Transfermarkt URL (for the target club)</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 mb-1.5">
+                    Shown as a pinned Transfermarkt button at the bottom of the club proposal until the visitor scrolls to the contact CTAs.
+                  </p>
+                  <Input
+                    placeholder="https://www.transfermarkt.com/..."
+                    value={contact.transfermarkt_url}
+                    onChange={(e) => setContact(c => ({ ...c, transfermarkt_url: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <Label className="text-xs">Contact's own club</Label>
