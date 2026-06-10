@@ -462,6 +462,47 @@ export default function ClubOutreachProposal() {
       <footer className="mt-12 flex items-center justify-center">
         <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80" />
       </footer>
+
+      {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
+      {(() => {
+        const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
+        if (!tmUrl && !agencyWaUrl) return null;
+        return (
+          <div
+            className={`fixed inset-x-0 bottom-0 z-40 pointer-events-none transition-opacity duration-300 ${contactsVisible ? "opacity-0" : "opacity-100"}`}
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+            aria-hidden={contactsVisible}
+          >
+            <div className="pointer-events-auto mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/70 backdrop-blur-md px-2 py-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+              {tmUrl && (
+                <a
+                  href={tmUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Transfermarkt"
+                  className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
+                  style={{ backgroundColor: "#1A3552" }}
+                >
+                  {/* Transfermarkt 'TM' mark in their brand blue */}
+                  <span className="text-[13px] font-extrabold tracking-tight leading-none">TM</span>
+                </a>
+              )}
+              {agencyWaUrl && (
+                <a
+                  href={agencyWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`WhatsApp ${data.agent_name ?? "agent"}`}
+                  className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
+                  style={{ backgroundColor: "#25D366" }}
+                >
+                  <WhatsAppIcon className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
