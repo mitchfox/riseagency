@@ -62,6 +62,12 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
     fetchClubContactRows(null).then(setContactRows).catch(() => setContactRows([]));
   }, []);
 
+  // Re-pull contact rows whenever the user switches tab so newly logged
+  // outreach updates appear in Roster without needing a full page refresh.
+  useEffect(() => {
+    fetchClubContactRows(null).then(setContactRows).catch(() => undefined);
+  }, [activeTab]);
+
   const fetchPlayers = async () => {
     const { data, error } = await supabase
       .from("players")
