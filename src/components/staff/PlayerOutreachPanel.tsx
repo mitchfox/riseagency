@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { BlurInput } from '@/components/staff/BlurInput';
 import { BlurTextarea } from '@/components/staff/BlurTextarea';
-import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
+import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -956,9 +956,13 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
       </div>
 
       {/* Search */}
-      <StaffSearchInput
+      <SearchWithSuggestions
         value={searchQuery}
-        onChange={setSearchQuery}
+        onCommit={setSearchQuery}
+        sources={data.flatMap((d: any) => [
+          { label: d.player_name || '', sublabel: d.current_club || d.nationality || null },
+          ...(d.current_club ? [{ label: d.current_club, sublabel: 'Club' }] : []),
+        ])}
         placeholder="Search name, club, nationality..."
       />
 
