@@ -232,6 +232,21 @@ const Dashboard = () => {
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
 
+  // Detect whether this player has any technical programmes; the Technical
+  // tab is only surfaced once at least one programme exists.
+  useEffect(() => {
+    if (!playerData?.id) { setHasTechnicalPrograms(false); return; }
+    (async () => {
+      const { count } = await (supabase as any)
+        .from("technical_programs")
+        .select("id", { count: "exact", head: true })
+        .eq("player_id", playerData.id);
+      const has = (count ?? 0) > 0;
+      setHasTechnicalPrograms(has);
+      if (!has) setProgrammingMode("sps");
+    })();
+  }, [playerData?.id]);
+
   // Track portal tab views for staff notifications
   useEffect(() => {
     if (!playerData?.id) return;
