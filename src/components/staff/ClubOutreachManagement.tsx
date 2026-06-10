@@ -15,6 +15,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Building, User, Briefcase, Clock, MessageSquare, UserCircle, Search, Loader2, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { fetchClubContactRows, type ClubContactRow } from "@/lib/transferHubData";
+import { PlayerClubContactList } from "@/components/transferhub/PlayerClubContactList";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 interface ClubOutreach {
   id: string;
   player_id: string;
@@ -82,6 +86,8 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 export const ClubOutreachManagement = () => {
   const [outreachRecords, setOutreachRecords] = useState<ClubOutreach[]>([]);
   const [clubGroups, setClubGroups] = useState<ClubGroup[]>([]);
+  const [unifiedRows, setUnifiedRows] = useState<ClubContactRow[]>([]);
+  const [expandedClub, setExpandedClub] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerSubmissions, setPlayerSubmissions] = useState<PlayerSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,13 +108,7 @@ export const ClubOutreachManagement = () => {
   const [networkContacts, setNetworkContacts] = useState<ClubNetworkContact[]>([]);
   const [selectedContactId, setSelectedContactId] = useState<string>("");
   
-  // Detail dialog state
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedClubGroup, setSelectedClubGroup] = useState<ClubGroup | null>(null);
-  const [selectedOutreach, setSelectedOutreach] = useState<ClubOutreach | null>(null);
-  const [outreachUpdates, setOutreachUpdates] = useState<OutreachUpdate[]>([]);
-  const [newUpdateText, setNewUpdateText] = useState("");
-  const [updatesLoading, setUpdatesLoading] = useState(false);
+  // (detail handled inline via Collapsible)
 
   // Templates dialog state
   const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
@@ -155,6 +155,10 @@ export const ClubOutreachManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Unified rows across new + legacy outreach systems
+      const rows = await fetchClubContactRows(null);
+      setUnifiedRows(rows);
+
       // Fetch only represented/mandated players (actual clients)
       const { data: playersData } = await supabase
         .from("players")
@@ -217,7 +221,34 @@ export const ClubOutreachManagement = () => {
         return acc;
       }, [] as ClubGroup[]);
 
-      setClubGroups(grouped);
+      // Group unified rows by club name for the inline list (covers new + legacy)
+      const unifiedGroups: ClubGroup[] = [];
+      rows.forEach((r) => {
+        const existing = unifiedGroups.find((g) => g.clubName.toLowerCase() === r.club_name.toLowerCase());
+        const legacyRecord: ClubOutreach = {
+          id: r.outreach_id,
+          player_id: r.player_id,
+          club_name: r.club_name,
+          contact_name: r.contact_name,
+          contact_role: r.contact_role,
+          status: r.status,
+          latest_update: r.last_summary,
+          latest_update_date: r.last_contacted_at,
+          created_at: r.created_at,
+          player: { id: r.player_id, name: r.player_name },
+        };
+        if (existing) {
+          existing.records.push(legacyRecord);
+        } else {
+          unifiedGroups.push({
+            clubName: r.club_name,
+            contactName: r.contact_name,
+            contactRole: r.contact_role,
+            records: [legacyRecord],
+          });
+        }
+      });
+      setClubGroups(unifiedGroups);
     } catch (error: any) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
@@ -304,94 +335,8 @@ export const ClubOutreachManagement = () => {
     }
   };
 
-  const handleOpenClubDetail = async (clubGroup: ClubGroup) => {
-    setSelectedClubGroup(clubGroup);
-    setSelectedOutreach(clubGroup.records[0]); // Select first record for updates
-    setDetailDialogOpen(true);
-    setUpdatesLoading(true);
-
-    try {
-      // Fetch all updates for all records in this club group
-      const outreachIds = clubGroup.records.map(r => r.id);
-      const { data, error } = await supabase
-        .from("club_outreach_updates")
-        .select("*")
-        .in("outreach_id", outreachIds)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setOutreachUpdates(data || []);
-    } catch (error) {
-      console.error("Error fetching updates:", error);
-      toast.error("Failed to load updates");
-    } finally {
-      setUpdatesLoading(false);
-    }
-  };
-
-  const handleAddUpdate = async () => {
-    if (!newUpdateText.trim() || !selectedClubGroup) return;
-
-    setSaving(true);
-    try {
-      // Add update to all records in the club group
-      for (const record of selectedClubGroup.records) {
-        await supabase
-          .from("club_outreach_updates")
-          .insert({
-            outreach_id: record.id,
-            update_text: newUpdateText.trim(),
-          });
-
-        await supabase
-          .from("club_outreach")
-          .update({
-            latest_update: newUpdateText.trim(),
-            latest_update_date: new Date().toISOString(),
-          })
-          .eq("id", record.id);
-      }
-
-      toast.success("Update added");
-      setNewUpdateText("");
-      
-      // Refresh updates list
-      const outreachIds = selectedClubGroup.records.map(r => r.id);
-      const { data } = await supabase
-        .from("club_outreach_updates")
-        .select("*")
-        .in("outreach_id", outreachIds)
-        .order("created_at", { ascending: false });
-      setOutreachUpdates(data || []);
-      
-      fetchData();
-    } catch (error) {
-      console.error("Error adding update:", error);
-      toast.error("Failed to add update");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (!selectedClubGroup) return;
-
-    try {
-      // Update all records in the club group
-      for (const record of selectedClubGroup.records) {
-        await supabase
-          .from("club_outreach")
-          .update({ status: newStatus })
-          .eq("id", record.id);
-      }
-      
-      toast.success("Status updated");
-      fetchData();
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-    }
-  };
+  const rowsForClub = (clubName: string) =>
+    unifiedRows.filter((r) => r.club_name.toLowerCase() === clubName.toLowerCase());
 
   const filteredGroups = selectedClubFilter === "all" 
     ? clubGroups 
@@ -455,90 +400,121 @@ export const ClubOutreachManagement = () => {
                   {/* Mobile Card View */}
                   <div className="block md:hidden space-y-3">
                     {filteredGroups.map(group => (
-                      <Card 
+                      <Collapsible
                         key={group.clubName}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleOpenClubDetail(group)}
+                        open={expandedClub === group.clubName}
+                        onOpenChange={(o) => setExpandedClub(o ? group.clubName : null)}
                       >
-                        <CardContent className="p-4 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <h4 className="font-semibold">{group.clubName}</h4>
-                            <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
-                              {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {group.records.map(r => (
-                              <Badge key={r.id} variant="outline" className="text-xs">
-                                {r.player?.name || "Unknown"}
-                              </Badge>
-                            ))}
-                          </div>
-                          {group.contactName && (
-                            <p className="text-sm text-muted-foreground">
-                              {group.contactName}
-                              {group.contactRole && ` (${group.contactRole})`}
-                            </p>
-                          )}
-                          {group.records[0]?.latest_update && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {group.records[0]?.latest_update}
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
+                        <Card className="overflow-hidden">
+                          <CollapsibleTrigger asChild>
+                            <button type="button" className="w-full text-left">
+                              <CardContent className="p-4 space-y-2 hover:bg-muted/30 transition-colors">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="font-semibold">{group.clubName}</h4>
+                                  <div className="flex items-center gap-2">
+                                    <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                                      {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
+                                    </Badge>
+                                    {expandedClub === group.clubName ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {group.records.map(r => (
+                                    <Badge key={r.id} variant="outline" className="text-xs">
+                                      {r.player?.name || "Unknown"}
+                                    </Badge>
+                                  ))}
+                                </div>
+                                {group.contactName && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {group.contactName}
+                                    {group.contactRole && ` (${group.contactRole})`}
+                                  </p>
+                                )}
+                                {group.records[0]?.latest_update && (
+                                  <p className="text-xs text-muted-foreground truncate">{group.records[0]?.latest_update}</p>
+                                )}
+                              </CardContent>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="border-t p-3 bg-muted/10">
+                              <PlayerClubContactList
+                                rows={rowsForClub(group.clubName)}
+                                showPlayerName
+                                onChanged={fetchData}
+                                emptyMessage="No updates yet for this club."
+                              />
+                            </div>
+                          </CollapsibleContent>
+                        </Card>
+                      </Collapsible>
                     ))}
                   </div>
 
-                  {/* Desktop Table View */}
+                  {/* Desktop list view (inline expandable) */}
                   <div className="hidden md:block">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Club</TableHead>
-                          <TableHead>Players</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Latest Update</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredGroups.map(group => (
-                          <TableRow
+                    <div className="space-y-2">
+                      {filteredGroups.map((group) => {
+                        const open = expandedClub === group.clubName;
+                        return (
+                          <Collapsible
                             key={group.clubName}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => handleOpenClubDetail(group)}
+                            open={open}
+                            onOpenChange={(o) => setExpandedClub(o ? group.clubName : null)}
                           >
-                            <TableCell className="font-medium">{group.clubName}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {group.records.map(r => (
-                                  <Badge key={r.id} variant="outline" className="text-xs">
-                                    {r.player?.name || "Unknown"}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {group.contactName ? (
-                                <span>
-                                  {group.contactName}
-                                  {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
-                                </span>
-                              ) : "-"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
-                                {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="max-w-[300px] truncate">
-                              {group.records[0]?.latest_update || "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            <div className="border rounded-md overflow-hidden">
+                              <CollapsibleTrigger asChild>
+                                <button type="button" className="w-full text-left hover:bg-muted/30 transition-colors">
+                                  <div className="grid grid-cols-12 gap-3 items-center p-3">
+                                    <div className="col-span-3 font-medium truncate">{group.clubName}</div>
+                                    <div className="col-span-3 flex flex-wrap gap-1">
+                                      {group.records.slice(0, 4).map((r) => (
+                                        <Badge key={r.id} variant="outline" className="text-xs">
+                                          {r.player?.name || "Unknown"}
+                                        </Badge>
+                                      ))}
+                                      {group.records.length > 4 && (
+                                        <span className="text-xs text-muted-foreground">+{group.records.length - 4}</span>
+                                      )}
+                                    </div>
+                                    <div className="col-span-2 text-sm truncate">
+                                      {group.contactName ? (
+                                        <span>
+                                          {group.contactName}
+                                          {group.contactRole && <span className="text-muted-foreground"> ({group.contactRole})</span>}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground">—</span>
+                                      )}
+                                    </div>
+                                    <div className="col-span-2">
+                                      <Badge className={statusConfig[group.records[0]?.status]?.color || "bg-muted"}>
+                                        {statusConfig[group.records[0]?.status]?.label || group.records[0]?.status}
+                                      </Badge>
+                                    </div>
+                                    <div className="col-span-2 text-xs text-muted-foreground truncate flex items-center justify-between gap-2">
+                                      <span className="truncate">{group.records[0]?.latest_update || "—"}</span>
+                                      {open ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+                                    </div>
+                                  </div>
+                                </button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="border-t p-4 bg-muted/10">
+                                  <PlayerClubContactList
+                                    rows={rowsForClub(group.clubName)}
+                                    showPlayerName
+                                    onChanged={fetchData}
+                                    emptyMessage="No updates yet for this club."
+                                  />
+                                </div>
+                              </CollapsibleContent>
+                            </div>
+                          </Collapsible>
+                        );
+                      })}
+                    </div>
                   </div>
                 </>
               )}
