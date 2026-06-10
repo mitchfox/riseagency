@@ -958,8 +958,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   // Club contacts state
   const [clubQuery, setClubQuery] = useState("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
-  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string; contact_club_id: string }>({
-    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "", contact_club_id: "",
+  const [contact, setContact] = useState<{ contact_name: string; contact_role: string; contact_phone: string; contact_accent: string; contact_image_url: string; contact_club_id: string; transfermarkt_url: string }>({
+    contact_name: "", contact_role: "", contact_phone: "", contact_accent: "#1f2937", contact_image_url: "", contact_club_id: "", transfermarkt_url: "",
   });
   const [contactClubQuery, setContactClubQuery] = useState("");
   const [contactImgUploading, setContactImgUploading] = useState(false);
@@ -999,6 +999,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         // Default the contact's own club to the outreach club so existing
         // records that pre-date this field display sensibly until edited.
         contact_club_id: (data as any)?.contact_club_id ?? selectedClubId,
+        transfermarkt_url: (data as any)?.transfermarkt_url ?? "",
       });
       setContactClubQuery("");
     })();
@@ -1086,6 +1087,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       contact_accent: contact.contact_name.trim() ? contact.contact_accent : null,
       contact_image_url: contact.contact_image_url.trim() || null,
       contact_club_id: contact.contact_club_id || null,
+      transfermarkt_url: contact.transfermarkt_url.trim() || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: "club_id" });
     if (error) return toast.error(error.message);
