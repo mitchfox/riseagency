@@ -740,17 +740,30 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
 function CommunicationsDialog({ open, onClose, outreach, players }: { open: boolean; onClose: () => void; outreach: OutreachRow; players: PlayerLite[]; }) {
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [playerId, setPlayerId] = useState<string>("");
-  const [contactName, setContactName] = useState("");
-  const [contactRole, setContactRole] = useState("");
+  const linkPlayers = (outreach.link_players ?? []);
+  const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+
+  // Prefill from data the outreach link already holds. No assumptions from the
+  // club's other contacts — only what's on this specific link row.
+  const defaultPlayerId = linkPlayers.length === 1 ? linkPlayers[0].player_id : "";
+  const defaultContactName = (outreach as any).club_contact_name ?? "";
+  const defaultContactRole = (outreach as any).club_contact_role ?? "";
+
+  const [playerId, setPlayerId] = useState<string>(defaultPlayerId);
+  const [contactName, setContactName] = useState(defaultContactName);
+  const [contactRole, setContactRole] = useState(defaultContactRole);
   const [channel, setChannel] = useState("WhatsApp");
   const [summary, setSummary] = useState("");
   const [nextStep, setNextStep] = useState("");
   const [contactedAt, setContactedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [saving, setSaving] = useState(false);
 
-  const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
-  const linkPlayers = (outreach.link_players ?? []);
+  // Re-apply prefill when switching between outreach rows.
+  useEffect(() => {
+    setPlayerId(linkPlayers.length === 1 ? linkPlayers[0].player_id : "");
+    setContactName((outreach as any).club_contact_name ?? "");
+    setContactRole((outreach as any).club_contact_role ?? "");
+  }, [outreach.id]);
 
   const load = async () => {
     setLoading(true);
@@ -761,7 +774,12 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
   useEffect(() => { load(); }, [outreach.id]);
 
   const submit = async () => {
-    if (!summary.trim()) return toast.error("Add a short summary");
+    const clubName = outreach.club?.club_name ?? "Club";
+    const playerName = playerId ? (playerById.get(playerId)?.name ?? "") : "";
+    const fallbackSummary = playerName
+      ? `Outreach link sent to ${clubName} re ${playerName}.`
+      : `Outreach link sent to ${clubName}.`;
+    const finalSummary = summary.trim() || fallbackSummary;
     setSaving(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -772,13 +790,13 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         contact_name: contactName.trim() || null,
         contact_role: contactRole.trim() || null,
         channel: channel || null,
-        summary: summary.trim(),
+        summary: finalSummary,
         next_step: nextStep.trim() || null,
         created_by: u.user?.id ?? null,
       });
       if (error) throw error;
       toast.success("Update logged");
-      setSummary(""); setNextStep(""); setContactName(""); setContactRole("");
+      setSummary(""); setNextStep("");
       load();
     } catch (e: any) {
       toast.error(e.message ?? "Failed to log");
