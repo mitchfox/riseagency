@@ -8,6 +8,7 @@ import {
 import { formatDistanceToNowStrict, parseISO, differenceInCalendarDays } from "date-fns";
 import { ChevronLeft, ChevronRight, Clock, MoreVertical, GripVertical, Star, Shield } from "lucide-react";
 import { SearchWithSuggestions } from "@/components/staff/SearchWithSuggestions";
+import { matchesQuery } from "@/lib/searchMatch";
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
 import { FitScoreBadge } from "./FitScoreBadge";
@@ -182,13 +183,14 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r =>
-      r.player_name?.toLowerCase().includes(q) ||
-      r.current_club?.toLowerCase().includes(q) ||
-      r.position?.toLowerCase().includes(q)
-    );
+    if (!query.trim()) return rows;
+    return rows.filter(r => matchesQuery(query, [
+      r.player_name,
+      r.current_club,
+      r.position,
+      r.nationality,
+      r.date_of_birth,
+    ]));
   }, [rows, query]);
 
   // Compute live fit scores (matches what the FitScoreBadge shows on each card)
