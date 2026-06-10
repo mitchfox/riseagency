@@ -69,6 +69,9 @@ export const PlayerClubInterest = ({ playerId }: PlayerClubInterestProps) => {
   const [expandedOutreachId, setExpandedOutreachId] = useState<string | null>(null);
   const [outreachUpdates, setOutreachUpdates] = useState<OutreachUpdate[]>([]);
   const [updatesLoading, setUpdatesLoading] = useState(false);
+  // Track which outreach IDs come from the new club_outreach_links table
+  // (vs the legacy club_outreach table) so we can hit the right table when expanding.
+  const [newOutreachIds, setNewOutreachIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (playerId) {
@@ -79,15 +82,88 @@ export const PlayerClubInterest = ({ playerId }: PlayerClubInterestProps) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch RISE outreach for this player
-      const { data: outreachData, error: outreachError } = await supabase
+      // 1. Legacy RISE outreach (kept for historical records)
+      const { data: legacyData, error: legacyError } = await supabase
         .from("club_outreach")
         .select("*")
         .eq("player_id", playerId)
         .order("created_at", { ascending: false });
+      if (legacyError) throw legacyError;
 
-      if (outreachError) throw outreachError;
-      setRiseOutreach(outreachData || []);
+      // 2. New-style outreach via link_players → club_outreach_links → club_map_positions
+      const { data: linkPlayers } = await supabase
+        .from("club_outreach_link_players" as any)
+        .select("link_id")
+        .eq("player_id", playerId);
+      const linkIds = Array.from(new Set((linkPlayers || []).map((l: any) => l.link_id).filter(Boolean)));
+
+      let newRows: ClubOutreach[] = [];
+      const newIds = new Set<string>();
+      if (linkIds.length > 0) {
+        const { data: links } = await supabase
+          .from("club_outreach_links" as any)
+          .select("id, club_id, status, club_contact_name, club_contact_role, created_at, updated_at, archived_at")
+          .in("id", linkIds)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false });
+
+        const clubIds = Array.from(new Set((links || []).map((l: any) => l.club_id).filter(Boolean)));
+        const clubMap: Record<string, string> = {};
+        if (clubIds.length > 0) {
+          const { data: clubs } = await supabase
+            .from("club_map_positions")
+            .select("id, club_name")
+            .in("id", clubIds);
+          (clubs || []).forEach((c: any) => { clubMap[c.id] = c.club_name; });
+        }
+
+        // Latest communication per link for "latest update" text
+        const latestByLink: Record<string, { text: string; date: string }> = {};
+        if (linkIds.length > 0) {
+          const { data: comms } = await supabase
+            .from("club_outreach_communications" as any)
+            .select("outreach_id, summary, next_step, contacted_at, created_at")
+            .in("outreach_id", linkIds)
+            .order("contacted_at", { ascending: false });
+          (comms || []).forEach((c: any) => {
+            if (!latestByLink[c.outreach_id]) {
+              latestByLink[c.outreach_id] = {
+                text: c.summary || c.next_step || "",
+                date: c.contacted_at || c.created_at,
+              };
+            }
+          });
+        }
+
+        newRows = (links || []).map((l: any) => {
+          newIds.add(l.id);
+          const latest = latestByLink[l.id];
+          return {
+            id: l.id,
+            club_name: clubMap[l.club_id] || "Club",
+            contact_name: l.club_contact_name,
+            contact_role: l.club_contact_role,
+            status: l.status || "contacted",
+            latest_update: latest?.text || null,
+            latest_update_date: latest?.date || null,
+            created_at: l.created_at,
+          };
+        });
+      }
+
+      // Merge, de-duplicate by club_name (case-insensitive), newest first.
+      const merged: ClubOutreach[] = [...newRows, ...(legacyData || [])];
+      const seen = new Set<string>();
+      const deduped = merged.filter(r => {
+        const key = (r.club_name || "").toLowerCase().trim();
+        if (!key) return true;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setRiseOutreach(deduped);
+      setNewOutreachIds(newIds);
 
       // Fetch player's own submissions
       const { data: submissionsData, error: submissionsError } = await supabase
@@ -156,14 +232,29 @@ export const PlayerClubInterest = ({ playerId }: PlayerClubInterestProps) => {
     setUpdatesLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("club_outreach_updates")
-        .select("*")
-        .eq("outreach_id", outreachId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setOutreachUpdates(data || []);
+      if (newOutreachIds.has(outreachId)) {
+        // New-style: pull communications for this link
+        const { data, error } = await supabase
+          .from("club_outreach_communications" as any)
+          .select("id, summary, next_step, contacted_at, created_at")
+          .eq("outreach_id", outreachId)
+          .order("contacted_at", { ascending: false });
+        if (error) throw error;
+        const mapped: OutreachUpdate[] = (data || []).map((c: any) => ({
+          id: c.id,
+          update_text: [c.summary, c.next_step ? `Next step: ${c.next_step}` : null].filter(Boolean).join("\n\n"),
+          created_at: c.contacted_at || c.created_at,
+        }));
+        setOutreachUpdates(mapped);
+      } else {
+        const { data, error } = await supabase
+          .from("club_outreach_updates")
+          .select("*")
+          .eq("outreach_id", outreachId)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setOutreachUpdates(data || []);
+      }
     } catch (error) {
       console.error("Error fetching updates:", error);
     } finally {
