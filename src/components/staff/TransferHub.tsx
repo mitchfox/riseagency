@@ -21,7 +21,6 @@ import { fetchClubContactRows, groupRowsByPlayer, type ClubContactRow } from "@/
 import { PlayerClubContactList } from "@/components/transferhub/PlayerClubContactList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { format } from "date-fns";
 
 interface Player {
   id: string;
