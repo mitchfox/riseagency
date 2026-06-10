@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Edit, Trash2, Search, FileText, Save, GripVertical, Download, Copy } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
+import { matchesQuery } from "@/lib/searchMatch";
 
 interface SiteText {
   id: string;
@@ -316,9 +317,7 @@ export const SiteTextManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const filteredTexts = siteTexts.filter((text) => {
     const matchesSearch =
       searchQuery === "" ||
-      text.english_text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      text.text_key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (text.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+      matchesQuery(searchQuery, [text.english_text, text.text_key, text.description]);
 
     const matchesPage = selectedPage === "all" || text.page_name === selectedPage;
 

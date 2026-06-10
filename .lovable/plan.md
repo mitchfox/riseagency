@@ -1,64 +1,58 @@
-# Fix Transfer Hub data + rebuild search with dropdown
+# Rebuild staff search filtering
 
-## 1. Transfer Hub showing blank lists
+## Why the current search struggles
 
-### Problem
-Since the club outreach system was migrated to a many-to-many model (`club_outreach_links` + `club_outreach_link_players`), the legacy `club_outreach.player_id` column is no longer populated for new outreach. The player portal's Transfer Hub still queries the old shape, so historical and recent outreach both come back empty.
+`SearchWithSuggestions` only commits on Enter/blur/suggestion click, so typing feels like "nothing happens" until you press Enter. And every panel does its own naive `.toLowerCase().includes(query)` against a handful of fields, which means:
 
-- `src/components/PlayerClubInterest.tsx` reads `club_outreach` by `player_id` and `club_outreach_updates` by `outreach_id` (old IDs).
-- `PlayerOutreachUpdates.tsx` already uses the link table, but does not surface the older legacy outreach rows the player previously had.
+- **Diacritics break matches**: searching `vaculik` misses `Vaculík`, `jihlava` misses `Jihlava` only when accented variants exist, `omotoye` works but `Tyrése` doesn't.
+- **Word order matters**: `omotoye tyrese` returns nothing because the full string doesn't contain that substring.
+- **Limited fields**: PlayerDatabase only searches name, club, position; nationality, DOB year, source, etc. are ignored.
+- **No live feedback**: parent ignores keystrokes until commit, so the table looks frozen.
 
-### Fix
-Rewrite `PlayerClubInterest.tsx` (the "Club Interest" tab) so it loads in two passes and merges:
+## What changes
 
-1. Legacy: `club_outreach` rows where `player_id = playerId` (kept for backward compatibility with already-saved data).
-2. New: `club_outreach_link_players` → `link_id` set → `club_outreach_links` rows (club_name, status fields, latest update). Map each link row into the same `ClubOutreach` shape used by the UI.
-3. De-dupe by club_name + created_at, sort newest first, render unchanged.
+### 1. New shared matcher: `src/lib/searchMatch.ts`
+A single utility used by every staff search:
 
-When the row is expanded, fetch `club_outreach_communications` for the new-style link IDs (since `club_outreach_updates` is the legacy table) and still fetch `club_outreach_updates` for legacy IDs. Display whichever exists.
+- `normalise(str)` — lowercase + `String.normalize('NFD').replace(/\p{Diacritic}/gu, '')` + collapse whitespace.
+- `tokenise(query)` — split on whitespace, drop empties, normalise each token.
+- `matchesQuery(query, fields: (string | null | undefined)[])` — every token must appear (substring) in the concatenated normalised field blob. Returns boolean.
+- `scoreMatch(query, primary, secondary?)` — small score used to rank suggestions (exact prefix > word-start > substring).
 
-Apply the same merge to:
-- `PlayerOutreachUpdates.tsx` — also pull legacy `club_outreach_updates` joined by legacy `club_outreach.player_id` so the player still sees historical updates.
-- `PlayerTransferStatus.tsx` — verify it reads from the right source; if it depends on `club_outreach.status`, include the new-style link statuses too.
+This gives diacritic-insensitive, multi-token, order-independent matching with no external library.
 
-Result: the player sees every club ever contacted on their behalf, old and new combined, with their latest update.
+### 2. Replace `SearchWithSuggestions` behaviour
+Same component name and props, rewritten so:
 
-## 2. Outreach + Player Database search
+- Typing updates the **committed** value live (debounced ~120ms) instead of waiting for Enter. The table filters as you type.
+- The dropdown still shows suggestions (now ranked by `scoreMatch`) and Enter/click still works.
+- `useDeferredValue` already present in each parent keeps the heavy table responsive.
+- Keep clear (X) and Esc behaviour.
 
-### What the user wants
-- Typing in the search box shows a small dropdown of matching player names (and clubs) underneath.
-- Pressing Enter (or clicking a suggestion) filters the table/board to only rows whose name/club/position contains those letters.
-- Today: `StaffSearchInput` debounces text into the filter, no dropdown, and on some screens the filtered result feels like "nothing happens".
+### 3. Swap raw `.includes` filters for `matchesQuery`
+In each filter `useMemo`, replace the manual lowercased includes block with a single `matchesQuery` call that includes more fields:
 
-### Fix
-Create a new `SearchWithSuggestions` component (in `src/components/staff/`) that wraps an `Input` with a popover dropdown:
+- **`PlayerDatabase.tsx`**: name, current_club, position, nationality, source, date_of_birth (year).
+- **`PlayerOutreachPanel.tsx`**: player_name, current_club, position, nationality, agent_name (if present), notes preview.
+- **`OutreachPipelineBoard.tsx`**: player name, club name, contact name, stage.
+- **`ClubNetworkManagement.tsx`**, **`ClubRatings.tsx`**, **`PlayerManagement.tsx`**, **`MarketingManagement.tsx`**, **`CoachingDatabase.tsx`**, **`DatasetBuilder.tsx`**, **`SiteTextManagement.tsx`**, **`LanguagesManagement.tsx`** — same swap against whatever fields they currently filter on (no new fields unless trivial).
 
-- Props: `value`, `onChange`, `onCommit(value)`, `suggestions: { id, label, sublabel? }[]`, `placeholder`.
-- As the user types, `value` updates locally and the parent receives `onChange` immediately (so the dropdown shows live matches). The parent does NOT filter the heavy table on every keystroke — instead it filters only when `onCommit` fires.
-- `onCommit` fires on Enter, on suggestion click, and on blur if the value changed.
-- Dropdown shows up to 8 suggestions matching the current text (case-insensitive `includes`), grouped: players first, then clubs (deduped). Highlights matched substring.
-- ArrowUp/ArrowDown/Enter keyboard navigation; Esc closes.
+### 4. Suggestion sources
+Where the dropdown is used (PlayerDatabase, PlayerOutreachPanel, OutreachPipelineBoard) extend the `sources` array to also feed nationality where it's a useful filter target. Suggestions are deduped and ranked with `scoreMatch`.
 
-Wire it in:
-
-- **`PlayerDatabase.tsx`** — replace the `StaffSearchInput` block. Suggestions are built from `players` (name + club). Committed value drives the existing `deferredSearchQuery` filter so the table updates after Enter/selection.
-- **`PlayerOutreachPanel.tsx`** (Youth + Pro table view) — same swap. Suggestions from current `data` rows (player_name, current_club).
-- **`OutreachPipelineBoard.tsx`** — same swap so the pipeline board also gets the dropdown and "Enter to filter" behaviour.
-
-### Technical details
-- Suggestions list is memoised on the source array + current typed value; capped at 8 entries to stay fast.
-- The committed value is what feeds the existing filter pipelines, so no other logic needs to change.
-- The component stays controlled, so clearing (X button) commits empty string and resets the table.
-- Keep `StaffSearchInput` available for other places (header search etc.) — only replace the three call sites above.
+### 5. Keep `StaffSearchInput`
+Leave the legacy component alone for header/command palette uses. It already debounces and is fine for those.
 
 ## Files touched
 
-- `src/components/PlayerClubInterest.tsx` — merge legacy + new-style outreach.
-- `src/components/player/PlayerOutreachUpdates.tsx` — also include legacy updates.
-- `src/components/player/PlayerTransferStatus.tsx` — include link-table statuses if needed.
-- `src/components/staff/SearchWithSuggestions.tsx` — new.
-- `src/components/staff/PlayerDatabase.tsx` — swap search input.
-- `src/components/staff/PlayerOutreachPanel.tsx` — swap search input.
-- `src/components/staff/recruitment/OutreachPipelineBoard.tsx` — swap search input.
+- `src/lib/searchMatch.ts` — new utility.
+- `src/components/staff/SearchWithSuggestions.tsx` — live commit + ranked suggestions.
+- `src/components/staff/PlayerDatabase.tsx`, `PlayerOutreachPanel.tsx`, `recruitment/OutreachPipelineBoard.tsx`, `ClubNetworkManagement.tsx`, `ClubRatings.tsx`, `PlayerManagement.tsx`, `MarketingManagement.tsx`, `CoachingDatabase.tsx`, `DatasetBuilder.tsx`, `SiteTextManagement.tsx`, `LanguagesManagement.tsx` — swap filter logic for `matchesQuery`.
 
-No database migrations required.
+No DB migrations. No new dependencies.
+
+## Result
+
+- Typing filters the table immediately (no Enter required).
+- `vaculik` finds `Vaculík`; `omotoye tyrese` finds `Tyrese Omotoye`; `cz cb` finds Czech centre-backs in PlayerDatabase.
+- Suggestions dropdown still appears and ranks best matches first.

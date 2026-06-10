@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, KeyboardEvent } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { normalise, scoreMatch } from "@/lib/searchMatch";
 
 export interface SearchSuggestionSource {
   /** Free-form text to match against (lowercased internally) */
@@ -43,11 +44,16 @@ export const SearchWithSuggestions = ({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastCommittedRef = useRef<string>(value);
 
   // Keep local draft in sync if the parent clears/changes the committed value
   // (e.g. "Clear filters" button).
   useEffect(() => {
-    setDraft(value);
+    if (value !== lastCommittedRef.current) {
+      lastCommittedRef.current = value;
+      setDraft(value);
+    }
   }, [value]);
 
   // Close on outside click.
@@ -59,29 +65,48 @@ export const SearchWithSuggestions = ({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  useEffect(() => () => {
+    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+  }, []);
+
+  const scheduleCommit = (v: string) => {
+    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = setTimeout(() => {
+      if (v !== lastCommittedRef.current) {
+        lastCommittedRef.current = v;
+        onCommit(v);
+      }
+    }, 140);
+  };
+
   const suggestions = useMemo(() => {
-    const q = draft.trim().toLowerCase();
+    const q = draft.trim();
     if (!q) return [] as SearchSuggestionSource[];
-    const out: SearchSuggestionSource[] = [];
+    const scored: Array<{ s: SearchSuggestionSource; score: number }> = [];
     const seen = new Set<string>();
     for (const s of sources) {
       const label = (s.label || "").trim();
       if (!label) continue;
-      if (!label.toLowerCase().includes(q)) continue;
-      const key = label.toLowerCase();
-      if (seen.has(key)) continue;
+      const key = normalise(label);
+      if (!key || seen.has(key)) continue;
+      const score = scoreMatch(q, label);
+      if (score < 0) continue;
       seen.add(key);
-      out.push(s);
-      if (out.length >= maxSuggestions) break;
+      scored.push({ s, score });
     }
-    return out;
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, maxSuggestions).map((x) => x.s);
   }, [draft, sources, maxSuggestions]);
 
   const commit = (v: string) => {
+    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
     setDraft(v);
     setOpen(false);
     setActiveIndex(-1);
-    if (v !== value) onCommit(v);
+    if (v !== lastCommittedRef.current) {
+      lastCommittedRef.current = v;
+      onCommit(v);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -126,21 +151,13 @@ export const SearchWithSuggestions = ({
         placeholder={placeholder}
         value={draft}
         onChange={(e) => {
-          setDraft(e.target.value);
+          const v = e.target.value;
+          setDraft(v);
           setOpen(true);
           setActiveIndex(-1);
+          scheduleCommit(v);
         }}
         onFocus={() => { if (draft.trim()) setOpen(true); }}
-        onBlur={() => {
-          // Commit on blur if the value changed and no suggestion click is pending
-          // (suggestion mousedown calls commit before blur fires).
-          if (draft !== value) {
-            setTimeout(() => {
-              // Skip if focus moved into a suggestion that already committed
-              if (draft !== value) onCommit(draft);
-            }, 120);
-          }
-        }}
         onKeyDown={handleKeyDown}
         className="pl-10 pr-9 h-10 bg-muted/40 border-muted-foreground/20 focus-visible:bg-background transition-colors"
       />
@@ -174,9 +191,6 @@ export const SearchWithSuggestions = ({
               )}
             </button>
           ))}
-          <div className="px-3 py-1.5 border-t border-border bg-muted/40 text-[10px] text-muted-foreground">
-            Press Enter to filter
-          </div>
         </div>
       )}
     </div>

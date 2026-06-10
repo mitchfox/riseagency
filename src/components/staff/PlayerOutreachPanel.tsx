@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from '
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
+import { matchesQuery } from '@/lib/searchMatch';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -499,13 +500,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   const sortAndFilter = (items: any[]): any[] => {
     let result = items;
     if (deferredSearchQuery) {
-      const q = deferredSearchQuery.toLowerCase();
-      result = result.filter(d =>
-        d.player_name?.toLowerCase().includes(q) ||
-        d.current_club?.toLowerCase().includes(q) ||
-        d.nationality?.toLowerCase().includes(q) ||
-        d.position?.toLowerCase().includes(q)
-      );
+      result = result.filter(d => matchesQuery(deferredSearchQuery, [
+        d.player_name,
+        d.current_club,
+        d.nationality,
+        d.position,
+        d.date_of_birth,
+        (d as any).agent_name,
+      ]));
     }
     // Apply filters
     if (ageFilter !== 'all') {
