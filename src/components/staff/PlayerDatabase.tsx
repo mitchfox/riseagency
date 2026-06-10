@@ -29,6 +29,7 @@ import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
 import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
+import { matchesQuery } from '@/lib/searchMatch';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
