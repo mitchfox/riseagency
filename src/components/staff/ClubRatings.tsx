@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Building2, Upload, Search, ImagePlus, Wand2, Merge } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
+import { matchesQuery } from "@/lib/searchMatch";
 import { toast } from "sonner";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -320,10 +321,7 @@ export const ClubRatings = () => {
   const ratingsByCountry = useMemo(() => {
     let filtered = ratings;
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      filtered = ratings.filter(r =>
-        r.club_name.toLowerCase().includes(q) || r.country.toLowerCase().includes(q)
-      );
+      filtered = ratings.filter(r => matchesQuery(searchQuery, [r.club_name, r.country]));
     }
 
     const grouped = new Map<string, ClubRating[]>();
