@@ -385,7 +385,7 @@ export default function ClubOutreachProposal() {
       )}
 
       {/* Contact CTAs */}
-      <div className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
+      <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
         <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">Discuss further</p>
         {agencyWaUrl && (
           <a
