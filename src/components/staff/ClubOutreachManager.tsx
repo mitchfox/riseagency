@@ -779,9 +779,18 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         .select("contact_name, contact_role")
         .eq("club_id", outreach.club_id)
         .maybeSingle();
-      if (!data) return;
-      setContactName((prev) => (prev.trim() ? prev : (data.contact_name ?? "")));
-      setContactRole((prev) => (prev.trim() ? prev : (data.contact_role ?? "")));
+      const prepared = ((outreach as any).prepared_for_name ?? "").trim();
+      // Prefer the saved club contact; if it's missing, fall back to the
+      // "Prepared for" name on the proposal so the same name that's shown
+      // on the club proposal page is already filled in here.
+      setContactName((prev) => {
+        if (prev.trim()) return prev;
+        return (data?.contact_name ?? "").trim() || prepared || "";
+      });
+      setContactRole((prev) => {
+        if (prev.trim()) return prev;
+        return data?.contact_role ?? "";
+      });
     })();
   }, [outreach.id, outreach.club_id]);
 
@@ -815,6 +824,19 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         created_by: u.user?.id ?? null,
       });
       if (error) throw error;
+      // Persist the contact back onto the link row when the link doesn't
+      // already carry it, so Transfer Hub (which reads from the link) shows
+      // the person without staff having to re-enter it there.
+      const linkPatch: Record<string, string> = {};
+      if (!((outreach as any).club_contact_name ?? "").trim() && contactName.trim()) {
+        linkPatch.club_contact_name = contactName.trim();
+      }
+      if (!((outreach as any).club_contact_role ?? "").trim() && contactRole.trim()) {
+        linkPatch.club_contact_role = contactRole.trim();
+      }
+      if (Object.keys(linkPatch).length > 0) {
+        await supabase.from("club_outreach_links").update(linkPatch).eq("id", outreach.id);
+      }
       toast.success("Update logged");
       setSummary(""); setNextStep("");
       load();
