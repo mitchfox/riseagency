@@ -69,6 +69,7 @@ import { normalizeClubName } from '@/lib/clubNameUtils';
 import { ScrollReveal, ScrollRevealContainer, ScrollRevealItem } from '@/components/ScrollReveal';
 import { ImageCropDialog } from './ImageCropDialog';
 import { StaffSearchInput } from './StaffSearchInput';
+import { matchesQuery } from '@/lib/searchMatch';
 import { QuickMessageSection } from './QuickMessageSection';
 import MessagePathways from './MessagePathways';
 import { FormationDisplay } from '@/components/FormationDisplay';
@@ -994,11 +995,9 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     if (!selectedRoleKey) return [];
     let result = [...(roleContactsCache.get(selectedRoleKey) || [])];
     if (deferredSearch.trim()) {
-      const query = deferredSearch.toLowerCase();
-      result = result.filter((contact) =>
-        [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.country || '']
-          .join(' ').toLowerCase().includes(query)
-      );
+      result = result.filter((contact) => matchesQuery(deferredSearch, [
+        contact.name, contact.club_name, contact.position, contact.email, contact.city, contact.country,
+      ]));
     }
     result.sort((a, b) => {
       const aVal = ((a[sortField] as string | null) || '').toLowerCase();
@@ -1031,28 +1030,25 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
   }, [roleContacts, getClubLogo, getClubProfile, getClubRating]);
 
   const filteredCountries = useMemo(() => {
-    const query = deferredSearch.toLowerCase();
     return countryData
       .filter((country) => {
         if (!deferredSearch.trim()) return country.count > 0;
-        return country.name.toLowerCase().includes(query);
+        return matchesQuery(deferredSearch, [country.name]);
       });
   }, [countryData, deferredSearch]);
 
   const filteredRegions = useMemo(() => {
     if (!deferredSearch.trim()) return regionData;
-    const query = deferredSearch.toLowerCase();
     return regionData
       .map((region) => ({
         ...region,
-        countries: region.countries.filter((c) => c.name.toLowerCase().includes(query)),
+        countries: region.countries.filter((c) => matchesQuery(deferredSearch, [c.name])),
       }))
       .filter((region) => region.countries.length > 0);
   }, [regionData, deferredSearch]);
 
   const filteredLandingRoles = useMemo(() => {
-    const query = deferredSearch.toLowerCase();
-    return landingRoleEntries.filter((role) => !deferredSearch.trim() || role.name.toLowerCase().includes(query));
+    return landingRoleEntries.filter((role) => !deferredSearch.trim() || matchesQuery(deferredSearch, [role.name]));
   }, [landingRoleEntries, deferredSearch]);
 
   const countryContacts = useMemo(() => {
@@ -1062,13 +1058,9 @@ const ClubNetworkManagement = ({ isAdmin = false, userRole }: ClubNetworkManagem
     let result = [...allCached];
 
     if (deferredSearch.trim()) {
-      const query = deferredSearch.toLowerCase();
-      result = result.filter((contact) =>
-        [contact.name, contact.club_name || '', contact.position || '', contact.email || '', contact.city || '', contact.notes || '']
-          .join(' ')
-          .toLowerCase()
-          .includes(query)
-      );
+      result = result.filter((contact) => matchesQuery(deferredSearch, [
+        contact.name, contact.club_name, contact.position, contact.email, contact.city, contact.notes,
+      ]));
     }
 
     if (roleFilter !== 'all') {
