@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Edit, FileText, LineChart, Video, Calendar, Plus, DollarSign, User, Trash2, Eye, TrendingUp, GripVertical, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Image as ImageIcon, X, Download, FileDown, Pencil, Copy, Link, Settings, Search as SearchIcon, Brain, ScrollText } from "lucide-react";
 import { StaffSearchInput } from "./StaffSearchInput";
+import { matchesQuery } from "@/lib/searchMatch";
 import { logActivity } from "@/lib/activityLogger";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
 import { CreatePerformanceReportDialog } from "./CreatePerformanceReportDialog";
@@ -1402,7 +1403,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   // Group players directly from the managed Player Categories settings
   const _searchedPlayers = playerSearchTerm.trim()
-    ? players.filter(p => (p.name || '').toLowerCase().includes(playerSearchTerm.trim().toLowerCase()))
+    ? players.filter(p => matchesQuery(playerSearchTerm, [p.name]))
     : players;
   const groupedPlayers = categorySections.map(category => ({
     ...category,
@@ -4246,11 +4247,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             <ScrollArea className="h-[400px] border rounded-md p-4">
               <div className="space-y-2">
                 {availableAnalyses
-                  .filter(analysis => 
-                    analysis.title?.toLowerCase().includes(analysisSearchQuery.toLowerCase()) ||
-                    analysis.description?.toLowerCase().includes(analysisSearchQuery.toLowerCase()) ||
-                    analysis.content?.toLowerCase().includes(analysisSearchQuery.toLowerCase())
-                  )
+                  .filter(analysis => matchesQuery(analysisSearchQuery, [analysis.title, analysis.description, analysis.content]))
                   .map((analysis) => (
                     <div key={analysis.id} className="flex items-start space-x-2 p-2 hover:bg-accent rounded-md">
                       <Checkbox
