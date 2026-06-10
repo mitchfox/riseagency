@@ -50,9 +50,12 @@ export const AddToPlaylistButton = ({
   const [newName, setNewName] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // Fallback: portal player sessions store their email locally.
+  // Fallback: portal player sessions store their email locally. Only fall back
+  // when the caller hasn't explicitly identified itself (e.g. highlight makers
+  // pass makerUsername — sending a stale player_email from a previous portal
+  // session can confuse the server-side auth check).
   const resolvedPlayerEmail = playerEmail
-    || (typeof window !== "undefined"
+    || (!makerUsername && !asStaff && typeof window !== "undefined"
       ? (localStorage.getItem("player_email") || sessionStorage.getItem("player_email") || undefined)
       : undefined);
 
