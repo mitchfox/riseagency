@@ -67,7 +67,7 @@ export const fetchClubContactRows = async (
   if (linkIds.length > 0) {
     const { data: links } = await supabase
       .from("club_outreach_links" as any)
-      .select("id, club_id, status, club_contact_name, club_contact_role, created_at, archived_at")
+      .select("id, club_id, status, club_contact_name, club_contact_role, prepared_for_name, created_at, archived_at")
       .in("id", linkIds)
       .is("archived_at", null);
 
@@ -121,7 +121,13 @@ export const fetchClubContactRows = async (
           player_name: playerNameById[lp.player_id] || "Unknown",
           club_id: l.club_id || null,
           club_name: clubNameById[l.club_id] || "Club",
-          contact_name: l.club_contact_name || latestContact?.name || null,
+          contact_name:
+            l.club_contact_name ||
+            latestContact?.name ||
+            (l.prepared_for_name && l.prepared_for_name.toLowerCase() !== (clubNameById[l.club_id] || "").toLowerCase()
+              ? l.prepared_for_name
+              : null) ||
+            null,
           contact_role: l.club_contact_role || latestContact?.role || null,
           status: l.status || "contacted",
           created_at: l.created_at,
