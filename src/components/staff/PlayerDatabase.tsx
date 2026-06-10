@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { BlurInput } from '@/components/staff/BlurInput';
 import { BlurTextarea } from '@/components/staff/BlurTextarea';
-import { StaffSearchInput } from '@/components/staff/StaffSearchInput';
+import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -804,9 +804,13 @@ export const PlayerDatabase = () => {
       </div>
 
       {/* Search */}
-      <StaffSearchInput
+      <SearchWithSuggestions
         value={searchQuery}
-        onChange={setSearchQuery}
+        onCommit={setSearchQuery}
+        sources={players.flatMap(p => [
+          { label: p.player_name || '', sublabel: p.current_club || p.position || null },
+          ...(p.current_club ? [{ label: p.current_club, sublabel: 'Club' }] : []),
+        ])}
         placeholder="Search by name, club, position..."
       />
 

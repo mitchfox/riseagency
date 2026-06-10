@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { formatDistanceToNowStrict, parseISO, differenceInCalendarDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, MoreVertical, Search, GripVertical, Star, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MoreVertical, GripVertical, Star, Shield } from "lucide-react";
+import { SearchWithSuggestions } from "@/components/staff/SearchWithSuggestions";
 import { OutreachInteractionDrawer, type OutreachType } from "./OutreachInteractionDrawer";
 import { toast } from "sonner";
 import { FitScoreBadge } from "./FitScoreBadge";
@@ -308,10 +308,16 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search pipeline…" className="pl-9" />
-        </div>
+        <SearchWithSuggestions
+          value={query}
+          onCommit={setQuery}
+          sources={rows.flatMap((r: any) => [
+            { label: r.player_name || '', sublabel: r.current_club || r.position || null },
+            ...(r.current_club ? [{ label: r.current_club, sublabel: 'Club' }] : []),
+          ])}
+          placeholder="Search pipeline…"
+          className="flex-1 max-w-sm"
+        />
         <Button variant="outline" size="sm" onClick={load}>Refresh</Button>
       </div>
 

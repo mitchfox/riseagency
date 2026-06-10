@@ -1,26 +1,64 @@
-## Plan
+# Fix Transfer Hub data + rebuild search with dropdown
 
-**1. Replace the current thin "player info strip" on the club proposal with a Stars-style info card.**
+## 1. Transfer Hub showing blank lists
 
-In `src/pages/ClubOutreachProposal.tsx`, the block at lines 278-310 currently shows a single faded row of small text (position, age, flag+nationality, club logo+club). Replace it with a card that mirrors the Stars header at `src/pages/PlayerDetail.tsx` lines 634-680:
+### Problem
+Since the club outreach system was migrated to a many-to-many model (`club_outreach_links` + `club_outreach_link_players`), the legacy `club_outreach.player_id` column is no longer populated for new outreach. The player portal's Transfer Hub still queries the old shape, so historical and recent outreach both come back empty.
 
-- Wrap in a `border-2 border-[#cbb96b] rounded-lg bg-secondary/20 backdrop-blur-sm` container, `p-4 md:p-5`, same width as every other section on the page (`max-w-3xl mx-auto px-6`).
-- Inside: flex-wrap row with `gap-4 md:gap-6 lg:gap-8`, items vertically centred.
-- Order of fields, all in `font-bebas uppercase tracking-wide whitespace-nowrap`:
-  1. Player name as `<h1>` with the gold gloss backdrop (`text-2xl md:text-3xl text-white`).
-  2. Position (`text-lg md:text-xl text-white/70`).
-  3. Date of birth + `(age)` when DOB available, otherwise just the age (same styling).
-  4. Flag image (`w-6 h-4 object-cover rounded`) + nationality.
-  5. Club logo (`w-6 h-6 md:w-8 md:h-8 object-contain`) + club name.
-- Drop the now-redundant carousel name caption from the controls block; keep just the position counter `1 / N` (the name now lives in the card).
+- `src/components/PlayerClubInterest.tsx` reads `club_outreach` by `player_id` and `club_outreach_updates` by `outreach_id` (old IDs).
+- `PlayerOutreachUpdates.tsx` already uses the link table, but does not surface the older legacy outreach rows the player previously had.
 
-**2. Confirm width parity.**
+### Fix
+Rewrite `PlayerClubInterest.tsx` (the "Club Interest" tab) so it loads in two passes and merges:
 
-Every other section on the page (controls, hero video, sections, footer) is `max-w-3xl mx-auto px-6`. The new info card uses the same wrapper, so it lines up exactly.
+1. Legacy: `club_outreach` rows where `player_id = playerId` (kept for backward compatibility with already-saved data).
+2. New: `club_outreach_link_players` → `link_id` set → `club_outreach_links` rows (club_name, status fields, latest update). Map each link row into the same `ClubOutreach` shape used by the UI.
+3. De-dupe by club_name + created_at, sort newest first, render unchanged.
 
-**3. Increase the RISE white logo at the bottom.**
+When the row is expanded, fetch `club_outreach_communications` for the new-style link IDs (since `club_outreach_updates` is the legacy table) and still fetch `club_outreach_updates` for legacy IDs. Display whichever exists.
 
-In the footer at line 477-479 of the same file, change the logo `className` from `h-8 w-auto opacity-70` to `h-16 md:h-20 w-auto opacity-80` so it reads as a proper sign-off rather than a small mark.
+Apply the same merge to:
+- `PlayerOutreachUpdates.tsx` — also pull legacy `club_outreach_updates` joined by legacy `club_outreach.player_id` so the player still sees historical updates.
+- `PlayerTransferStatus.tsx` — verify it reads from the right source; if it depends on `club_outreach.status`, include the new-style link statuses too.
 
-### Files changed
-- `src/pages/ClubOutreachProposal.tsx` — replace info strip with Stars-style card, simplify carousel caption, enlarge footer logo.
+Result: the player sees every club ever contacted on their behalf, old and new combined, with their latest update.
+
+## 2. Outreach + Player Database search
+
+### What the user wants
+- Typing in the search box shows a small dropdown of matching player names (and clubs) underneath.
+- Pressing Enter (or clicking a suggestion) filters the table/board to only rows whose name/club/position contains those letters.
+- Today: `StaffSearchInput` debounces text into the filter, no dropdown, and on some screens the filtered result feels like "nothing happens".
+
+### Fix
+Create a new `SearchWithSuggestions` component (in `src/components/staff/`) that wraps an `Input` with a popover dropdown:
+
+- Props: `value`, `onChange`, `onCommit(value)`, `suggestions: { id, label, sublabel? }[]`, `placeholder`.
+- As the user types, `value` updates locally and the parent receives `onChange` immediately (so the dropdown shows live matches). The parent does NOT filter the heavy table on every keystroke — instead it filters only when `onCommit` fires.
+- `onCommit` fires on Enter, on suggestion click, and on blur if the value changed.
+- Dropdown shows up to 8 suggestions matching the current text (case-insensitive `includes`), grouped: players first, then clubs (deduped). Highlights matched substring.
+- ArrowUp/ArrowDown/Enter keyboard navigation; Esc closes.
+
+Wire it in:
+
+- **`PlayerDatabase.tsx`** — replace the `StaffSearchInput` block. Suggestions are built from `players` (name + club). Committed value drives the existing `deferredSearchQuery` filter so the table updates after Enter/selection.
+- **`PlayerOutreachPanel.tsx`** (Youth + Pro table view) — same swap. Suggestions from current `data` rows (player_name, current_club).
+- **`OutreachPipelineBoard.tsx`** — same swap so the pipeline board also gets the dropdown and "Enter to filter" behaviour.
+
+### Technical details
+- Suggestions list is memoised on the source array + current typed value; capped at 8 entries to stay fast.
+- The committed value is what feeds the existing filter pipelines, so no other logic needs to change.
+- The component stays controlled, so clearing (X button) commits empty string and resets the table.
+- Keep `StaffSearchInput` available for other places (header search etc.) — only replace the three call sites above.
+
+## Files touched
+
+- `src/components/PlayerClubInterest.tsx` — merge legacy + new-style outreach.
+- `src/components/player/PlayerOutreachUpdates.tsx` — also include legacy updates.
+- `src/components/player/PlayerTransferStatus.tsx` — include link-table statuses if needed.
+- `src/components/staff/SearchWithSuggestions.tsx` — new.
+- `src/components/staff/PlayerDatabase.tsx` — swap search input.
+- `src/components/staff/PlayerOutreachPanel.tsx` — swap search input.
+- `src/components/staff/recruitment/OutreachPipelineBoard.tsx` — swap search input.
+
+No database migrations required.
