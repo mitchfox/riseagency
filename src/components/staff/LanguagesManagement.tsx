@@ -276,10 +276,7 @@ export const LanguagesManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   };
 
   const filteredTranslations = translations.filter((t) => {
-    const matchesSearch =
-      t.text_key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.english.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.page_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = matchesQuery(searchQuery, [t.text_key, t.english, t.page_name]);
     const matchesPage = selectedPage === "all" || t.page_name === selectedPage;
     return matchesSearch && matchesPage;
   });
