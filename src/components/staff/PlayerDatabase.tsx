@@ -458,8 +458,14 @@ export const PlayerDatabase = () => {
         if (!allowedIds || !allowedIds.has(player.id)) return false;
       }
       if (deferredSearchQuery) {
-        const query = deferredSearchQuery.toLowerCase();
-        if (!player.player_name.toLowerCase().includes(query) && !player.current_club?.toLowerCase().includes(query) && !player.position?.toLowerCase().includes(query)) return false;
+        if (!matchesQuery(deferredSearchQuery, [
+          player.player_name,
+          player.current_club,
+          player.position,
+          player.nationality,
+          player.source,
+          player.date_of_birth,
+        ])) return false;
       }
       if (ageFilter !== 'all') {
         const age = player.date_of_birth ? calculateAge(player.date_of_birth) : player.age;
