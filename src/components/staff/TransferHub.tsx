@@ -17,6 +17,11 @@ import { format } from "date-fns";
 import { ClubOutreachManagement } from "./ClubOutreachManagement";
 import { TransferStatusManagement } from "./TransferStatusManagement";
 import { AgentNotesManagement } from "./AgentNotesManagement";
+import { fetchClubContactRows, groupRowsByPlayer, type ClubContactRow } from "@/lib/transferHubData";
+import { PlayerClubContactList } from "@/components/transferhub/PlayerClubContactList";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { format } from "date-fns";
 
 interface Player {
   id: string;
@@ -50,9 +55,12 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [contactRows, setContactRows] = useState<ClubContactRow[]>([]);
+  const [expandedRosterPlayer, setExpandedRosterPlayer] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPlayers();
+    fetchClubContactRows(null).then(setContactRows).catch(() => setContactRows([]));
   }, []);
 
   const fetchPlayers = async () => {
@@ -72,6 +80,12 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
     p.club?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.position?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const contactsByPlayer = groupRowsByPlayer(contactRows);
+
+  const refreshContacts = () => {
+    fetchClubContactRows(null).then(setContactRows).catch(() => undefined);
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -151,36 +165,66 @@ export const TransferHub = ({ isAdmin }: { isAdmin: boolean }) => {
               {loading ? (
                 <LoadingSpinner size="md" className="py-8" />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Player</TableHead>
-                      <TableHead>Position</TableHead>
-                      <TableHead>Current Club</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Age</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(selectedPlayer === "all" ? filteredPlayers : filteredPlayers.filter(p => p.id === selectedPlayer)).map(player => (
-                      <TableRow key={player.id}>
-                        <TableCell className="font-medium">{player.name}</TableCell>
-                        <TableCell>{player.position}</TableCell>
-                        <TableCell>{player.club || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={
-                            player.representation_status === 'active' ? 'bg-green-500/20 text-green-400' :
-                            player.representation_status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-muted text-muted-foreground'
-                          }>
-                            {player.representation_status || 'Active'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{player.age}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-2">
+                  {(selectedPlayer === "all" ? filteredPlayers : filteredPlayers.filter(p => p.id === selectedPlayer)).map(player => {
+                    const info = contactsByPlayer.get(player.id);
+                    const count = info?.count || 0;
+                    const last = info?.last || null;
+                    const open = expandedRosterPlayer === player.id;
+                    return (
+                      <Collapsible
+                        key={player.id}
+                        open={open}
+                        onOpenChange={(o) => setExpandedRosterPlayer(o ? player.id : null)}
+                      >
+                        <div className="border rounded-md overflow-hidden">
+                          <CollapsibleTrigger asChild>
+                            <button type="button" className="w-full text-left hover:bg-muted/30 transition-colors">
+                              <div className="grid grid-cols-12 gap-3 items-center p-3">
+                                <div className="col-span-3 font-medium truncate">{player.name}</div>
+                                <div className="col-span-2 text-sm text-muted-foreground truncate">{player.position}</div>
+                                <div className="col-span-2 text-sm truncate">{player.club || "—"}</div>
+                                <div className="col-span-2">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs"
+                                    style={count > 0 ? { borderColor: "#C6A332", color: "#C6A332" } : undefined}
+                                  >
+                                    {count > 0 ? `${count} club${count === 1 ? "" : "s"} contacted` : "No outreach"}
+                                  </Badge>
+                                </div>
+                                <div className="col-span-2 text-xs text-muted-foreground truncate">
+                                  {last ? (
+                                    <>
+                                      <span>{last.club_name}</span>
+                                      {last.last_contacted_at && (
+                                        <span className="ml-1">· {format(new Date(last.last_contacted_at), "d MMM")}</span>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span>—</span>
+                                  )}
+                                </div>
+                                <div className="col-span-1 flex justify-end">
+                                  {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </div>
+                              </div>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="border-t bg-muted/10 p-3">
+                              <PlayerClubContactList
+                                rows={info?.rows || []}
+                                onChanged={refreshContacts}
+                                emptyMessage="No clubs have been contacted for this player yet."
+                              />
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
