@@ -3438,24 +3438,26 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6">
-              <div className="container mx-auto px-4 -mb-4">
-                <div className="inline-flex rounded-md border bg-muted p-1">
-                  {([
-                    { id: "sps", label: "Strength, Power & Speed" },
-                    { id: "technical", label: "Technical" },
-                  ] as const).map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
-                      className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {hasTechnicalPrograms && (
+                <div className="container mx-auto px-4 -mb-4">
+                  <div className="inline-flex rounded-md border bg-muted p-1">
+                    {([
+                      { id: "sps", label: "Strength, Power & Speed" },
+                      { id: "technical", label: "Technical" },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
+                        className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {programmingMode === "technical" ? (
+              )}
+              {hasTechnicalPrograms && programmingMode === "technical" ? (
                 <div className="container mx-auto px-4">
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
