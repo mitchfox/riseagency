@@ -67,7 +67,7 @@ export const fetchClubContactRows = async (
   if (linkIds.length > 0) {
     const { data: links } = await supabase
       .from("club_outreach_links" as any)
-      .select("id, club_id, status, club_contact_name, club_contact_role, created_at, archived_at")
+      .select("id, club_id, status, club_contact_name, club_contact_role, prepared_for_name, created_at, archived_at")
       .in("id", linkIds)
       .is("archived_at", null);
 
@@ -85,11 +85,12 @@ export const fetchClubContactRows = async (
 
     const { data: comms } = await supabase
       .from("club_outreach_communications" as any)
-      .select("outreach_id, summary, next_step, contacted_at, created_at")
+      .select("outreach_id, summary, next_step, contacted_at, created_at, contact_name, contact_role")
       .in("outreach_id", linkIds)
       .order("contacted_at", { ascending: false });
 
     const latestByLink: Record<string, { summary: string | null; next_step: string | null; date: string }> = {};
+    const latestContactByLink: Record<string, { name: string | null; role: string | null }> = {};
     const countByLink: Record<string, number> = {};
     (comms || []).forEach((c: any) => {
       countByLink[c.outreach_id] = (countByLink[c.outreach_id] || 0) + 1;
@@ -100,12 +101,19 @@ export const fetchClubContactRows = async (
           date: c.contacted_at || c.created_at,
         };
       }
+      if (!latestContactByLink[c.outreach_id] && (c.contact_name || c.contact_role)) {
+        latestContactByLink[c.outreach_id] = {
+          name: c.contact_name || null,
+          role: c.contact_role || null,
+        };
+      }
     });
 
     (links || []).forEach((l: any) => {
       const playersForLink = linkPlayerRows.filter((lp) => lp.link_id === l.id);
       playersForLink.forEach((lp) => {
         const latest = latestByLink[l.id];
+        const latestContact = latestContactByLink[l.id];
         newRows.push({
           source: "new",
           outreach_id: l.id,
@@ -113,8 +121,14 @@ export const fetchClubContactRows = async (
           player_name: playerNameById[lp.player_id] || "Unknown",
           club_id: l.club_id || null,
           club_name: clubNameById[l.club_id] || "Club",
-          contact_name: l.club_contact_name || null,
-          contact_role: l.club_contact_role || null,
+          contact_name:
+            l.club_contact_name ||
+            latestContact?.name ||
+            (l.prepared_for_name && l.prepared_for_name.toLowerCase() !== (clubNameById[l.club_id] || "").toLowerCase()
+              ? l.prepared_for_name
+              : null) ||
+            null,
+          contact_role: l.club_contact_role || latestContact?.role || null,
           status: l.status || "contacted",
           created_at: l.created_at,
           last_contacted_at: latest?.date || null,
