@@ -71,6 +71,7 @@ interface Payload {
     contact_image_url: string | null;
     contact_club_name?: string | null;
     contact_club_logo_url?: string | null;
+    transfermarkt_url?: string | null;
   } | null;
 }
 
@@ -107,6 +108,22 @@ export default function ClubOutreachProposal() {
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const contactsRef = useRef<HTMLDivElement | null>(null);
+  const [contactsVisible, setContactsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = contactsRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const e = entries[0];
+        setContactsVisible(!!e?.isIntersecting);
+      },
+      { threshold: 0.05 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [data]);
 
   useEffect(() => {
     if (!shortId) return;
