@@ -147,6 +147,7 @@ const Dashboard = () => {
   const [programmingMode, setProgrammingMode] = useState<"sps" | "technical">(() =>
     (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "sps"
   );
+  const [hasTechnicalPrograms, setHasTechnicalPrograms] = useState<boolean>(false);
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
