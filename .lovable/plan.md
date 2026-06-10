@@ -1,58 +1,78 @@
-# Rebuild staff search filtering
+# Transfer Hub: show club contacts inline + full visibility
 
-## Why the current search struggles
+## Problem
 
-`SearchWithSuggestions` only commits on Enter/blur/suggestion click, so typing feels like "nothing happens" until you press Enter. And every panel does its own naive `.toLowerCase().includes(query)` against a handful of fields, which means:
+1. **Staff Transfer Hub doesn't show clubs that have been contacted.** The "Club Outreach" tab inside `src/components/staff/TransferHub.tsx` is powered by `ClubOutreachManagement.tsx`, which only reads the legacy `club_outreach` table. The current outreach flow (`ClubOutreachManager.tsx`) writes to the new `club_outreach_links` / `club_outreach_link_players` / `club_outreach_communications` tables. Result: from the staff Transfer Hub it looks like nothing has been logged, even when it has been.
+2. **Clicking a row opens a narrow dialog** for both the staff side (`ClubOutreachManagement` detail dialog at line ~106) and a few flows on the player side (`PlayerClubInterest` already uses inline collapse, but logging an update from the staff side uses a dialog). The user wants the row to expand inline so there is room to read history and add updates.
+3. **Per‑player visibility is weak.** On the staff Transfer Hub the "Roster" tab lists players but doesn't show how many clubs have been contacted, when the last contact was, who was contacted, and the most recent reply. On the player Transfer Hub the "Club Interest" and "Club Updates" tabs work but are visually thin and don't show counts/last-contact summaries.
 
-- **Diacritics break matches**: searching `vaculik` misses `Vaculík`, `jihlava` misses `Jihlava` only when accented variants exist, `omotoye` works but `Tyrése` doesn't.
-- **Word order matters**: `omotoye tyrese` returns nothing because the full string doesn't contain that substring.
-- **Limited fields**: PlayerDatabase only searches name, club, position; nationality, DOB year, source, etc. are ignored.
-- **No live feedback**: parent ignores keystrokes until commit, so the table looks frozen.
+## What to build
 
-## What changes
+### 1. Unify the data layer (read from both old and new tables)
 
-### 1. New shared matcher: `src/lib/searchMatch.ts`
-A single utility used by every staff search:
+Create a small helper `src/lib/transferHubData.ts` that, given a `playerId` (or `null` for "all"), returns a merged, deduplicated list of club contacts with this shape:
 
-- `normalise(str)` — lowercase + `String.normalize('NFD').replace(/\p{Diacritic}/gu, '')` + collapse whitespace.
-- `tokenise(query)` — split on whitespace, drop empties, normalise each token.
-- `matchesQuery(query, fields: (string | null | undefined)[])` — every token must appear (substring) in the concatenated normalised field blob. Returns boolean.
-- `scoreMatch(query, primary, secondary?)` — small score used to rank suggestions (exact prefix > word-start > substring).
+```ts
+type ClubContactRow = {
+  source: "new" | "legacy";
+  outreach_id: string;     // links.id or club_outreach.id
+  player_id: string;
+  player_name: string;
+  club_id: string | null;
+  club_name: string;
+  contact_name: string | null;
+  contact_role: string | null;
+  status: string;
+  created_at: string;
+  last_contacted_at: string | null;
+  last_summary: string | null;
+  last_next_step: string | null;
+  communications_count: number;
+};
+```
 
-This gives diacritic-insensitive, multi-token, order-independent matching with no external library.
+Logic:
+- Pull `club_outreach_links` joined with `club_outreach_link_players` (filter by `player_id` when given) and resolve `club_id` → `club_name` via `club_map_positions`.
+- Pull `club_outreach_communications` for those link ids; compute count + latest per link.
+- Pull legacy `club_outreach` (filter by `player_id` when given) and its `club_outreach_updates` for latest update.
+- Merge, sort by `last_contacted_at ?? created_at` desc. Keep both rows if a club appears in both sources (don't drop legacy history).
 
-### 2. Replace `SearchWithSuggestions` behaviour
-Same component name and props, rewritten so:
+Both staff `ClubOutreachManagement` and the player side already do versions of this; the helper consolidates them.
 
-- Typing updates the **committed** value live (debounced ~120ms) instead of waiting for Enter. The table filters as you type.
-- The dropdown still shows suggestions (now ranked by `scoreMatch`) and Enter/click still works.
-- `useDeferredValue` already present in each parent keeps the heavy table responsive.
-- Keep clear (X) and Esc behaviour.
+### 2. Staff Transfer Hub: inline expansion + new data
 
-### 3. Swap raw `.includes` filters for `matchesQuery`
-In each filter `useMemo`, replace the manual lowercased includes block with a single `matchesQuery` call that includes more fields:
+Update `src/components/staff/ClubOutreachManagement.tsx`:
+- Replace the detail `Dialog` (`detailDialogOpen`, `selectedClubGroup`) with an inline expandable row using `Collapsible` (same pattern as `PlayerClubInterest`).
+- Source rows from the new helper so links logged via `ClubOutreachManager` appear immediately.
+- When expanded, show: full communications timeline (date, contact, channel, summary, next step) and an inline "Add update" form that writes to `club_outreach_communications` for new‑source rows or `club_outreach_updates` for legacy rows.
+- Keep the existing "Add club outreach" dialog as is (creation is fine in a modal).
 
-- **`PlayerDatabase.tsx`**: name, current_club, position, nationality, source, date_of_birth (year).
-- **`PlayerOutreachPanel.tsx`**: player_name, current_club, position, nationality, agent_name (if present), notes preview.
-- **`OutreachPipelineBoard.tsx`**: player name, club name, contact name, stage.
-- **`ClubNetworkManagement.tsx`**, **`ClubRatings.tsx`**, **`PlayerManagement.tsx`**, **`MarketingManagement.tsx`**, **`CoachingDatabase.tsx`**, **`DatasetBuilder.tsx`**, **`SiteTextManagement.tsx`**, **`LanguagesManagement.tsx`** — same swap against whatever fields they currently filter on (no new fields unless trivial).
+Update `src/components/staff/TransferHub.tsx`:
+- "Roster" tab: add columns "Clubs Contacted" (count) and "Last Contact" (date · club · status badge) populated from the helper grouped by `player_id`. Clicking a player row expands inline beneath it showing that player's full club‑contact list (same component used in player Transfer Hub, see step 3) plus quick access to "Add update".
+- Remove the modal pattern for per‑player drill‑down.
 
-### 4. Suggestion sources
-Where the dropdown is used (PlayerDatabase, PlayerOutreachPanel, OutreachPipelineBoard) extend the `sources` array to also feed nationality where it's a useful filter target. Suggestions are deduped and ranked with `scoreMatch`.
+### 3. Player Transfer Hub: richer visibility
 
-### 5. Keep `StaffSearchInput`
-Leave the legacy component alone for header/command palette uses. It already debounces and is fine for those.
+`src/components/player/TransferHub.tsx` tabs stay (Club Interest, Transfer Status, Club Updates, Agent Notes), but:
+- Extract the per‑player club‑contact list into a shared component `src/components/transferhub/PlayerClubContactList.tsx` that renders the unified rows with inline collapse. Use it in both `PlayerClubInterest` (RISE‑contacted block) and the staff per‑player expansion in step 2.
+- Add a small header summary on the Club Interest tab: "X clubs contacted · last activity {date}".
+- "Club Updates" tab keeps the chronological feed but pulls from the same helper so nothing is missed.
 
-## Files touched
+### 4. Match the user's wording
 
-- `src/lib/searchMatch.ts` — new utility.
-- `src/components/staff/SearchWithSuggestions.tsx` — live commit + ranked suggestions.
-- `src/components/staff/PlayerDatabase.tsx`, `PlayerOutreachPanel.tsx`, `recruitment/OutreachPipelineBoard.tsx`, `ClubNetworkManagement.tsx`, `ClubRatings.tsx`, `PlayerManagement.tsx`, `MarketingManagement.tsx`, `CoachingDatabase.tsx`, `DatasetBuilder.tsx`, `SiteTextManagement.tsx`, `LanguagesManagement.tsx` — swap filter logic for `matchesQuery`.
+When the helper returns at least one contact for a player, label it "Contacted" on both portals so staff and players see the same status. Use Rise Gold (`#C6A332`) for the count badge on the staff roster row, per the project design tokens.
 
-No DB migrations. No new dependencies.
+## Out of scope
 
-## Result
+- No schema/migration changes. Both legacy and new tables remain.
+- No edits to `ClubOutreachManager.tsx` logging flow (already done last turn).
+- No changes to Transfer Status, Agent Notes, or Contracts tabs.
 
-- Typing filters the table immediately (no Enter required).
-- `vaculik` finds `Vaculík`; `omotoye tyrese` finds `Tyrese Omotoye`; `cz cb` finds Czech centre-backs in PlayerDatabase.
-- Suggestions dropdown still appears and ranks best matches first.
+## Files
+
+- **new** `src/lib/transferHubData.ts` — unified fetch helper.
+- **new** `src/components/transferhub/PlayerClubContactList.tsx` — shared inline list.
+- **edit** `src/components/staff/ClubOutreachManagement.tsx` — inline expand, use helper.
+- **edit** `src/components/staff/TransferHub.tsx` — roster shows contacted counts + inline player drill‑down.
+- **edit** `src/components/PlayerClubInterest.tsx` — render via shared list, add summary header.
+- **edit** `src/components/player/PlayerOutreachUpdates.tsx` — pull via helper.
