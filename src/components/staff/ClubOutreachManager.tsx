@@ -286,9 +286,13 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
   const [shortIdDraft, setShortIdDraft] = useState(row.short_id);
   useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
   const firstPlayerName = names[0] ?? "";
+  const isAgent = (row.target_type ?? 'club') === 'agent';
+  const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
+  const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
   const copyTemplate = async (t: QuickTemplate) => {
     const filled = fillTemplate(t.content, {
-      club: row.club?.club_name ?? "",
+      club: targetName,
+      agent: isAgent ? targetName : "",
       player: firstPlayerName,
       first_name: firstPlayerName.split(" ")[0] ?? "",
       players: names.join(", "),
@@ -305,13 +309,13 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
       <div className="flex items-start gap-3">
-        {row.club?.image_url ? (
-          <img src={row.club.image_url} alt={row.club.club_name} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
+        {targetLogo ? (
+          <img src={targetLogo} alt={targetName} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
         ) : (
-          <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-sm">{row.club?.club_name?.[0] ?? "?"}</div>
+          <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-sm">{targetName?.[0] ?? "?"}</div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold truncate">{row.club?.club_name ?? "Unknown club"}</div>
+          <div className="text-sm font-semibold truncate">{targetName}</div>
           <div className="text-xs text-muted-foreground truncate">{names.length ? names.join(", ") : "No players"}</div>
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{new Date(row.created_at).toLocaleDateString()}</div>
         </div>
@@ -348,7 +352,8 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
         <div className="mt-2 flex flex-wrap gap-1.5">
           {templates.map(t => {
             const preview = fillTemplate(t.content, {
-              club: row.club?.club_name ?? "",
+              club: targetName,
+              agent: isAgent ? targetName : "",
               player: firstPlayerName,
               first_name: firstPlayerName.split(" ")[0] ?? "",
               players: names.join(", "),
