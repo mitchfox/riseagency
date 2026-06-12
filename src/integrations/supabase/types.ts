@@ -1134,12 +1134,14 @@ export type Database = {
       }
       club_outreach_links: {
         Row: {
+          agent_logo_url: string | null
+          agent_name: string | null
           archived_at: string | null
           club_contact_accent: string | null
           club_contact_name: string | null
           club_contact_phone: string | null
           club_contact_role: string | null
-          club_id: string
+          club_id: string | null
           created_at: string
           created_by: string | null
           fit_recommendation: string | null
@@ -1152,15 +1154,18 @@ export type Database = {
           show_season_stats: boolean
           show_strengths: boolean
           status: string
+          target_type: string
           updated_at: string
         }
         Insert: {
+          agent_logo_url?: string | null
+          agent_name?: string | null
           archived_at?: string | null
           club_contact_accent?: string | null
           club_contact_name?: string | null
           club_contact_phone?: string | null
           club_contact_role?: string | null
-          club_id: string
+          club_id?: string | null
           created_at?: string
           created_by?: string | null
           fit_recommendation?: string | null
@@ -1173,15 +1178,18 @@ export type Database = {
           show_season_stats?: boolean
           show_strengths?: boolean
           status?: string
+          target_type?: string
           updated_at?: string
         }
         Update: {
+          agent_logo_url?: string | null
+          agent_name?: string | null
           archived_at?: string | null
           club_contact_accent?: string | null
           club_contact_name?: string | null
           club_contact_phone?: string | null
           club_contact_role?: string | null
-          club_id?: string
+          club_id?: string | null
           created_at?: string
           created_by?: string | null
           fit_recommendation?: string | null
@@ -1194,6 +1202,7 @@ export type Database = {
           show_season_stats?: boolean
           show_strengths?: boolean
           status?: string
+          target_type?: string
           updated_at?: string
         }
         Relationships: [
