@@ -739,6 +739,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               </div>
             )}
           </div>
+          )}
 
           <div>
             <Label>Players to propose</Label>
