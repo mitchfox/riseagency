@@ -76,6 +76,7 @@ export default function ClubOutreachManager() {
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
+  const [mode, setMode] = useState<OutreachMode>('club');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
@@ -112,6 +113,7 @@ export default function ClubOutreachManager() {
       comm_count: commByLink.get(r.id) ?? 0,
       link_players: (byLink.get(r.id) ?? []).sort((a, b) => a.sort_order - b.sort_order),
       club: clubMap.get(r.club_id) ?? null,
+      target_type: (r.target_type ?? 'club') as OutreachMode,
     })));
     setPlayers((playerRows ?? []) as PlayerLite[]);
     setClubs((clubRows ?? []) as ClubLite[]);
@@ -125,12 +127,16 @@ export default function ClubOutreachManager() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter(r => {
-      if ((r.club?.club_name ?? "").toLowerCase().includes(needle)) return true;
+    const scoped = rows.filter(r => (r.target_type ?? 'club') === mode);
+    if (!needle) return scoped;
+    return scoped.filter(r => {
+      const targetLabel = mode === 'agent'
+        ? (r.agent_name ?? "").toLowerCase()
+        : (r.club?.club_name ?? "").toLowerCase();
+      if (targetLabel.includes(needle)) return true;
       return (r.link_players ?? []).some(lp => (playerById.get(lp.player_id)?.name ?? "").toLowerCase().includes(needle));
     });
-  }, [rows, q, playerById]);
+  }, [rows, q, playerById, mode]);
 
   const proposalUrl = (shortId: string) => `${APP_BASE}/club-proposal/${shortId}`;
 
