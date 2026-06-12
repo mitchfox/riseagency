@@ -185,14 +185,31 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
+      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+        {([
+          { v: 'club', label: 'Club Outreach' },
+          { v: 'agent', label: 'Agent Outreach' },
+        ] as { v: OutreachMode; label: string }[]).map((t) => (
+          <button
+            key={t.v}
+            type="button"
+            onClick={() => setMode(t.v)}
+            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+              mode === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by player or club" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
-            <Plus className="h-4 w-4 mr-2" /> New Outreach
+            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
           <Button variant="outline" onClick={() => setSettingsOpen(true)}>
             <Settings className="h-4 w-4 mr-2" /> Settings
