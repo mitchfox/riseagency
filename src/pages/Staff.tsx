@@ -1172,6 +1172,15 @@ const Staff = () => {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>{loading ? "Logging in..." : "Access Dashboard"}</Button>
               </form>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={resetAppCache}
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Having trouble loading? Reset app cache
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -1190,6 +1199,7 @@ const Staff = () => {
             <CardContent className="space-y-4">
               <p className="text-center text-muted-foreground">You do not have staff permissions to access this page.</p>
               <Button onClick={handleLogout} className="w-full" variant="outline">Logout</Button>
+              <Button onClick={resetAppCache} className="w-full" variant="ghost">Reset app cache</Button>
             </CardContent>
           </Card>
         </div>
