@@ -1895,6 +1895,9 @@ const Staff = () => {
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
               {/* Use hidden class for key sections to preserve state (popups, playback, etc.) */}
+              {/* ErrorBoundary keyed by section so one tab crashing never blanks the whole portal. */}
+              <ErrorBoundary key={expandedSection ?? 'none'}>
+                <Suspense fallback={<PageLoading />}>
                   <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
                   <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
@@ -1977,6 +1980,8 @@ const Staff = () => {
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
                   {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
                   {expandedSection === 'usage' && isAdmin && <UsageSection />}
+                </Suspense>
+              </ErrorBoundary>
                 </CardContent>
               </Card>
             </div>
