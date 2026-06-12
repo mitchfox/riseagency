@@ -420,8 +420,12 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; }) {
+function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; mode?: OutreachMode; }) {
+  const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
+  const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
+  const [agentLogoUrl, setAgentLogoUrl] = useState(editing?.agent_logo_url ?? "");
+  const [agentLogoUploading, setAgentLogoUploading] = useState(false);
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
   const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? "");
