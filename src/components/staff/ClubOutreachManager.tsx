@@ -221,7 +221,11 @@ export default function ClubOutreachManager() {
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center">
-          <p className="text-sm text-muted-foreground">No club outreach links yet. Create your first one to share a slick proposal with a club.</p>
+          <p className="text-sm text-muted-foreground">
+            {mode === 'agent'
+              ? "No agent outreach links yet. Create your first one to share a slick proposal with an agent."
+              : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -259,10 +263,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+       <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+       <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
