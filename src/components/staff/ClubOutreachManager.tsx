@@ -553,12 +553,19 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
 
   const save = async () => {
-    if (!clubId) return toast.error("Pick a club");
+    if (isAgent) {
+      if (!agentName.trim()) return toast.error("Agent name required");
+    } else if (!clubId) {
+      return toast.error("Pick a club");
+    }
     if (entries.length === 0) return toast.error("Add at least one player");
     setSaving(true);
     try {
-      const payload = {
-        club_id: clubId,
+      const payload: any = {
+        target_type: isAgent ? 'agent' : 'club',
+        club_id: isAgent ? null : clubId,
+        agent_name: isAgent ? agentName.trim() : null,
+        agent_logo_url: isAgent ? (agentLogoUrl.trim() || null) : null,
         player_id: entries[0]?.player_id ?? null,
         fit_recommendation: entries[0]?.fit_recommendation ?? null,
         prepared_for_name: preparedFor.trim() || null,
