@@ -636,10 +636,44 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Club Outreach" : "New Club Outreach"}</DialogTitle>
-          <DialogDescription>Build a personalised proposal for a club. Add one or many players, each with their own position and fit note.</DialogDescription>
+          <DialogTitle>
+            {editing
+              ? (isAgent ? "Edit Agent Outreach" : "Edit Club Outreach")
+              : (isAgent ? "New Agent Outreach" : "New Club Outreach")}
+          </DialogTitle>
+          <DialogDescription>
+            {isAgent
+              ? "Build a personalised proposal for an agent. Add one or many players, each with their own position and fit note."
+              : "Build a personalised proposal for a club. Add one or many players, each with their own position and fit note."}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
+          {isAgent ? (
+            <div className="space-y-3">
+              <div>
+                <Label>Agent name</Label>
+                <Input className="mt-1.5" placeholder="e.g. John Smith" value={agentName} onChange={(e) => setAgentName(e.target.value)} />
+              </div>
+              <div>
+                <Label>Logo (optional)</Label>
+                <div className="mt-1.5 flex items-center gap-3">
+                  {agentLogoUrl ? (
+                    <img src={agentLogoUrl} className="h-12 w-12 rounded-md object-contain bg-white/5 p-1 border border-border" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No logo</div>
+                  )}
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border px-2 py-1.5 hover:border-[#cbb96b]/60">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{agentLogoUploading ? "Uploading…" : agentLogoUrl ? "Replace logo" : "Upload logo"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAgentLogoUpload(f); }} disabled={agentLogoUploading} />
+                  </label>
+                  {agentLogoUrl && (
+                    <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setAgentLogoUrl("")}>Remove</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
           <div>
             <Label>Club</Label>
             <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mt-1.5" />
