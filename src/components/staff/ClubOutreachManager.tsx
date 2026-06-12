@@ -40,7 +40,7 @@ interface OutreachRow {
   id: string;
   short_id: string;
   player_id: string | null;
-  club_id: string;
+  club_id: string | null;
   fit_recommendation: string | null;
   club_contact_name: string | null;
   club_contact_role: string | null;
@@ -57,7 +57,12 @@ interface OutreachRow {
   show_strengths?: boolean;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
+  target_type?: 'club' | 'agent';
+  agent_name?: string | null;
+  agent_logo_url?: string | null;
 }
+
+type OutreachMode = 'club' | 'agent';
 
 export default function ClubOutreachManager() {
   const [rows, setRows] = useState<OutreachRow[]>([]);
