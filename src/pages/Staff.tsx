@@ -1108,6 +1108,25 @@ const Staff = () => {
     category.sections.filter((section: any) => !(section as any).isGroupLabel).map((section: any) => section.id)
   );
 
+  // Escape hatch for stuck PWA caches (especially mobile Safari on slow networks).
+  // Unregisters service workers, clears caches and reloads.
+  const resetAppCache = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.allSettled(regs.map(r => r.unregister()));
+      }
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.allSettled(keys.map(k => caches.delete(k)));
+      }
+    } catch (e) {
+      console.warn('resetAppCache failed', e);
+    } finally {
+      window.location.reload();
+    }
+  };
+
   useEffect(() => {
     if (!isStaff || permissionsLoading || visibleSectionIds.length === 0) return;
     if (expandedSection && visibleSectionIds.includes(expandedSection)) return;
