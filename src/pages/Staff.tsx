@@ -271,9 +271,16 @@ const Staff = () => {
   
   // Check for app updates on load (force check on every staff portal load)
   useEffect(() => {
-    if (navigator.onLine) {
-      VersionManager.initialize(true); // Force check, bypass interval
+    if (!navigator.onLine) return;
+    // Defer until after first paint so it doesn't compete with section loading on slow links
+    const run = () => VersionManager.initialize(true);
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(run, { timeout: 3000 });
+      return () => w.cancelIdleCallback?.(id);
     }
+    const t = window.setTimeout(run, 1500);
+    return () => window.clearTimeout(t);
   }, []);
   
   // Hydration guard for PWA cold start
