@@ -57,6 +57,9 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    target_type?: 'club' | 'agent';
+    agent_name?: string | null;
+    agent_logo_url?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
