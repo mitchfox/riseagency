@@ -518,6 +518,23 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     }
   };
 
+  const onAgentLogoUpload = async (file: File) => {
+    setAgentLogoUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `agent-outreach-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("club-logos").upload(path, file, { cacheControl: "3600", upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+      setAgentLogoUrl(data.publicUrl);
+      toast.success("Logo uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to upload logo");
+    } finally {
+      setAgentLogoUploading(false);
+    }
+  };
+
   const addPlayer = async (id: string) => {
     setPlayerQuery("");
     if (editing) {
