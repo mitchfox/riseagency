@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useNightMode } from "@/hooks/useNightMode";
 import { Button } from "@/components/ui/button";
@@ -25,96 +26,91 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import PlayerManagement from "@/components/staff/PlayerManagement";
-import { PlayerList } from "@/components/staff/PlayerList";
-import BlogManagement from "@/components/staff/BlogManagement";
-import BetweenTheLinesManagement from "@/components/staff/BetweenTheLinesManagement";
-import { CoachingDatabase } from "@/components/staff/CoachingDatabase";
-import { AnalysisManagement } from "@/components/staff/AnalysisManagement";
-import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList";
-import { CoachingDataSection } from "@/components/staff/CoachingDataSection";
-import { FormSubmissionsManagement } from "@/components/staff/FormSubmissionsManagement";
-import { SiteVisitorsManagement } from "@/components/staff/SiteVisitorsManagement";
-import { InvoiceManagement } from "@/components/staff/InvoiceManagement";
-import { UpdatesManagement } from "@/components/staff/UpdatesManagement";
-import { StaffSchedule } from "@/components/staff/StaffSchedule";
+// Eager shell pieces (small, needed for first paint or always mounted)
 import { StaffOverview } from "@/components/staff/StaffOverview";
-import { StaffAccountabilityOverview } from "@/components/staff/StaffAccountabilityOverview";
-import { InteractionHistory } from "@/components/staff/InteractionHistory";
-// GoalsTasksManagement removed - replaced by VisionBoardSection
-import { StaffAvailabilityManagement } from "@/components/staff/StaffAvailabilityManagement";
-import { StaffSchedulesManagement } from "@/components/staff/StaffSchedulesManagement";
-import { MarketingManagement } from "@/components/staff/MarketingManagement";
-import { ScheduleManager } from "@/components/staff/marketing/ScheduleManager";
-import { ContentCreator, SalesDeck } from "@/components/staff/marketing";
-import { RecruitmentManagement } from "@/components/staff/RecruitmentManagement";
-import { ScoutingCentreManagement } from "@/components/staff/ScoutingCentreManagement";
-import { HighlightMakersManagement } from "@/components/staff/HighlightMakersManagement";
-
-import { PlayerDatabaseManagement } from "@/components/staff/PlayerDatabaseManagement";
-import { StaffAccountManagement } from "@/components/staff/StaffAccountManagement";
-import { PlayerPasswordManagement } from "@/components/staff/PlayerPasswordManagement";
-import ClubNetworkManagement from "@/components/staff/ClubNetworkManagement";
-import ClubOutreachManager from "@/components/staff/ClubOutreachManager";
-import LegalManagement from "@/components/staff/LegalManagement";
-import { PartnersManagement } from "@/components/staff/PartnersManagement";
-import { LanguagesManagement } from "@/components/staff/LanguagesManagement";
-import { SiteTextManagement } from "@/components/staff/SiteTextManagement";
-import { StaffPWAInstall } from "@/components/staff/StaffPWAInstall";
-import { StaffOfflineManager } from "@/components/staff/StaffOfflineManager";
-import { StaffPushNotifications } from "@/components/staff/StaffPushNotifications";
-import { useStaffNotifications } from "@/hooks/useStaffNotifications";
-import { TransferHub } from "@/components/staff/TransferHub";
-import { ExpensesManagement } from "@/components/staff/ExpensesManagement";
-import { TaxRecordsManagement } from "@/components/staff/TaxRecordsManagement";
-import { CorporationTaxSection } from "@/components/staff/CorporationTaxSection";
-import { BudgetsManagement } from "@/components/staff/BudgetsManagement";
-import { FinancialReports } from "@/components/staff/FinancialReports";
-import { PaymentsManagement } from "@/components/staff/PaymentsManagement";
-import { AthleteCentre } from "@/components/staff/AthleteCentre";
-import { OpenAccessManagement } from "@/components/staff/OpenAccessManagement";
-import PressReleasesManagement from "@/components/staff/PressReleasesManagement";
-import { PublicContentManagement } from "@/components/staff/PublicContentManagement";
 import { FocusedTasksSection } from "@/components/staff/FocusedTasksSection";
 import { StaffNotificationsDropdown } from "@/components/staff/StaffNotificationsDropdown";
 import { PlayerPortalQuickOpenDialog } from "@/components/staff/PlayerPortalQuickOpenDialog";
 import { PlayerBirthdayDialog } from "@/components/staff/PlayerBirthdayDialog";
-import { TacticsBoard } from "@/components/staff/coaching/TacticsBoard";
-import { Meetings } from "@/components/staff/coaching/Meetings";
-import { NotificationSettingsManagement } from "@/components/staff/NotificationSettingsManagement";
-import { JobsManagement } from "@/components/staff/JobsManagement";
-import { SocialShareManagement } from "@/components/staff/SocialShareManagement";
-import { RequestsManagement } from "@/components/staff/RequestsManagement";
-
-import { StaffSMSNotifications } from "@/components/staff/StaffSMSNotifications";
-import { VisionBoardSection } from "@/components/staff/VisionBoardSection";
-import { DocsSection } from "@/components/staff/DocsSection";
-import { SheetsSection } from "@/components/staff/SheetsSection";
 import { MobileScrollButtons } from "@/components/staff/MobileScrollButtons";
-import { DesignProjects } from "@/components/staff/design/DesignProjects";
-import { AnnotationProjects } from "@/components/staff/annotations/AnnotationProjects";
-import { StreamsSection } from "@/components/staff/StreamsSection";
+import { useStaffNotifications } from "@/hooks/useStaffNotifications";
+
+// Heavy section components — lazy loaded, only fetched when their tab is opened.
+// This is critical for slow mobile connections (e.g. Anthony on Nigerian 4G).
+const PlayerManagement = lazy(() => import("@/components/staff/PlayerManagement"));
+const PlayerList = lazy(() => import("@/components/staff/PlayerList").then(m => ({ default: m.PlayerList })));
+const CoachingDatabase = lazy(() => import("@/components/staff/CoachingDatabase").then(m => ({ default: m.CoachingDatabase })));
+const AnalysisManagement = lazy(() => import("@/components/staff/AnalysisManagement").then(m => ({ default: m.AnalysisManagement })));
+const CoachingDataSection = lazy(() => import("@/components/staff/CoachingDataSection").then(m => ({ default: m.CoachingDataSection })));
+const FormSubmissionsManagement = lazy(() => import("@/components/staff/FormSubmissionsManagement").then(m => ({ default: m.FormSubmissionsManagement })));
+const SiteVisitorsManagement = lazy(() => import("@/components/staff/SiteVisitorsManagement").then(m => ({ default: m.SiteVisitorsManagement })));
+const InvoiceManagement = lazy(() => import("@/components/staff/InvoiceManagement").then(m => ({ default: m.InvoiceManagement })));
+const UpdatesManagement = lazy(() => import("@/components/staff/UpdatesManagement").then(m => ({ default: m.UpdatesManagement })));
+const StaffAccountabilityOverview = lazy(() => import("@/components/staff/StaffAccountabilityOverview").then(m => ({ default: m.StaffAccountabilityOverview })));
+const InteractionHistory = lazy(() => import("@/components/staff/InteractionHistory").then(m => ({ default: m.InteractionHistory })));
+const StaffAvailabilityManagement = lazy(() => import("@/components/staff/StaffAvailabilityManagement").then(m => ({ default: m.StaffAvailabilityManagement })));
+const StaffSchedulesManagement = lazy(() => import("@/components/staff/StaffSchedulesManagement").then(m => ({ default: m.StaffSchedulesManagement })));
+const MarketingManagement = lazy(() => import("@/components/staff/MarketingManagement").then(m => ({ default: m.MarketingManagement })));
+const ScheduleManager = lazy(() => import("@/components/staff/marketing/ScheduleManager").then(m => ({ default: m.ScheduleManager })));
+const ContentCreator = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.ContentCreator })));
+const SalesDeck = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.SalesDeck })));
+const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentManagement").then(m => ({ default: m.RecruitmentManagement })));
+const ScoutingCentreManagement = lazy(() => import("@/components/staff/ScoutingCentreManagement").then(m => ({ default: m.ScoutingCentreManagement })));
+const HighlightMakersManagement = lazy(() => import("@/components/staff/HighlightMakersManagement").then(m => ({ default: m.HighlightMakersManagement })));
+const PlayerDatabaseManagement = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseManagement })));
+const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccountManagement").then(m => ({ default: m.StaffAccountManagement })));
+const PlayerPasswordManagement = lazy(() => import("@/components/staff/PlayerPasswordManagement").then(m => ({ default: m.PlayerPasswordManagement })));
+const ClubNetworkManagement = lazy(() => import("@/components/staff/ClubNetworkManagement"));
+const ClubOutreachManager = lazy(() => import("@/components/staff/ClubOutreachManager"));
+const LegalManagement = lazy(() => import("@/components/staff/LegalManagement"));
+const PartnersManagement = lazy(() => import("@/components/staff/PartnersManagement").then(m => ({ default: m.PartnersManagement })));
+const LanguagesManagement = lazy(() => import("@/components/staff/LanguagesManagement"));
+const SiteTextManagement = lazy(() => import("@/components/staff/SiteTextManagement"));
+const StaffPWAInstall = lazy(() => import("@/components/staff/StaffPWAInstall").then(m => ({ default: m.StaffPWAInstall })));
+const StaffOfflineManager = lazy(() => import("@/components/staff/StaffOfflineManager").then(m => ({ default: m.StaffOfflineManager })));
+const StaffPushNotifications = lazy(() => import("@/components/staff/StaffPushNotifications").then(m => ({ default: m.StaffPushNotifications })));
+const TransferHub = lazy(() => import("@/components/staff/TransferHub").then(m => ({ default: m.TransferHub })));
+const ExpensesManagement = lazy(() => import("@/components/staff/ExpensesManagement").then(m => ({ default: m.ExpensesManagement })));
+const TaxRecordsManagement = lazy(() => import("@/components/staff/TaxRecordsManagement").then(m => ({ default: m.TaxRecordsManagement })));
+const CorporationTaxSection = lazy(() => import("@/components/staff/CorporationTaxSection").then(m => ({ default: m.CorporationTaxSection })));
+const BudgetsManagement = lazy(() => import("@/components/staff/BudgetsManagement").then(m => ({ default: m.BudgetsManagement })));
+const FinancialReports = lazy(() => import("@/components/staff/FinancialReports").then(m => ({ default: m.FinancialReports })));
+const PaymentsManagement = lazy(() => import("@/components/staff/PaymentsManagement"));
+const AthleteCentre = lazy(() => import("@/components/staff/AthleteCentre").then(m => ({ default: m.AthleteCentre })));
+const PublicContentManagement = lazy(() => import("@/components/staff/PublicContentManagement"));
+const TacticsBoard = lazy(() => import("@/components/staff/coaching/TacticsBoard").then(m => ({ default: m.TacticsBoard })));
+const Meetings = lazy(() => import("@/components/staff/coaching/Meetings").then(m => ({ default: m.Meetings })));
+const NotificationSettingsManagement = lazy(() => import("@/components/staff/NotificationSettingsManagement").then(m => ({ default: m.NotificationSettingsManagement })));
+const JobsManagement = lazy(() => import("@/components/staff/JobsManagement").then(m => ({ default: m.JobsManagement })));
+const SocialShareManagement = lazy(() => import("@/components/staff/SocialShareManagement").then(m => ({ default: m.SocialShareManagement })));
+const RequestsManagement = lazy(() => import("@/components/staff/RequestsManagement").then(m => ({ default: m.RequestsManagement })));
+const StaffSMSNotifications = lazy(() => import("@/components/staff/StaffSMSNotifications").then(m => ({ default: m.StaffSMSNotifications })));
+const VisionBoardSection = lazy(() => import("@/components/staff/VisionBoardSection").then(m => ({ default: m.VisionBoardSection })));
+const DocsSection = lazy(() => import("@/components/staff/DocsSection").then(m => ({ default: m.DocsSection })));
+const SheetsSection = lazy(() => import("@/components/staff/SheetsSection").then(m => ({ default: m.SheetsSection })));
+const DesignProjects = lazy(() => import("@/components/staff/design/DesignProjects").then(m => ({ default: m.DesignProjects })));
+const AnnotationProjects = lazy(() => import("@/components/staff/annotations/AnnotationProjects").then(m => ({ default: m.AnnotationProjects })));
+const StreamsSection = lazy(() => import("@/components/staff/StreamsSection").then(m => ({ default: m.StreamsSection })));
+const ActivityLog = lazy(() => import("@/components/staff/ActivityLog").then(m => ({ default: m.ActivityLog })));
+const DatabaseExport = lazy(() => import("@/components/staff/DatabaseExport").then(m => ({ default: m.DatabaseExport })));
+const VideoAnalysis = lazy(() => import("@/components/staff/coaching/VideoAnalysis").then(m => ({ default: m.VideoAnalysis })));
+const StrengthPowerSpeedSection = lazy(() => import("@/components/staff/programming/StrengthPowerSpeedSection").then(m => ({ default: m.StrengthPowerSpeedSection })));
+const TechnicalSection = lazy(() => import("@/components/staff/programming/TechnicalSection").then(m => ({ default: m.TechnicalSection })));
+const NutritionSection = lazy(() => import("@/components/staff/programming/NutritionSection").then(m => ({ default: m.NutritionSection })));
+const PsychologySection = lazy(() => import("@/components/staff/programming/PsychologySection").then(m => ({ default: m.PsychologySection })));
+const ScriptsAndCaseStudies = lazy(() => import("@/components/staff/ScriptsAndCaseStudies"));
+const RepresentationOffers = lazy(() => import("@/components/staff/RepresentationOffers").then(m => ({ default: m.RepresentationOffers })));
+const TransferReports = lazy(() => import("@/components/staff/TransferReports").then(m => ({ default: m.TransferReports })));
+const PortalManagement = lazy(() => import("@/components/staff/PortalManagement").then(m => ({ default: m.PortalManagement })));
+const VideoCompressor = lazy(() => import("@/components/staff/VideoCompressor").then(m => ({ default: m.VideoCompressor })));
+const MusicStudio = lazy(() => import("@/components/staff/MusicStudio").then(m => ({ default: m.MusicStudio })));
+const HighlightCompiler = lazy(() => import("@/components/staff/HighlightCompiler").then(m => ({ default: m.HighlightCompiler })));
+const DatasetBuilder = lazy(() => import("@/components/staff/DatasetBuilder").then(m => ({ default: m.DatasetBuilder })));
+const UsageSection = lazy(() => import("@/components/staff/UsageSection").then(m => ({ default: m.UsageSection })));
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
 import type { User } from "@supabase/supabase-js";
-import { ActivityLog } from "@/components/staff/ActivityLog";
-import { DatabaseExport } from "@/components/staff/DatabaseExport";
-import { VideoAnalysis } from "@/components/staff/coaching/VideoAnalysis";
-import { StrengthPowerSpeedSection } from "@/components/staff/programming/StrengthPowerSpeedSection";
-import { TechnicalSection } from "@/components/staff/programming/TechnicalSection";
-import { NutritionSection } from "@/components/staff/programming/NutritionSection";
-import { PsychologySection } from "@/components/staff/programming/PsychologySection";
-import { MessagingCaseStudies } from "@/components/staff/MessagingCaseStudies";
-import { ScriptsAndCaseStudies } from "@/components/staff/ScriptsAndCaseStudies";
-import { RepresentationOffers } from "@/components/staff/RepresentationOffers";
-import { TransferReports } from "@/components/staff/TransferReports";
-import { PortalManagement } from "@/components/staff/PortalManagement";
-import { VideoCompressor } from "@/components/staff/VideoCompressor";
-import { MusicStudio } from "@/components/staff/MusicStudio";
-import { HighlightCompiler } from "@/components/staff/HighlightCompiler";
-import { DatasetBuilder } from "@/components/staff/DatasetBuilder";
-import { UsageSection } from "@/components/staff/UsageSection";
 import { ExportProgressFloat } from "@/components/staff/ExportProgressFloat";
 import { SectionGridPicker } from "@/components/staff/SectionGridPicker";
 import { StaffMusicPlayer } from "@/components/staff/StaffMusicPlayer";
@@ -275,9 +271,16 @@ const Staff = () => {
   
   // Check for app updates on load (force check on every staff portal load)
   useEffect(() => {
-    if (navigator.onLine) {
-      VersionManager.initialize(true); // Force check, bypass interval
+    if (!navigator.onLine) return;
+    // Defer until after first paint so it doesn't compete with section loading on slow links
+    const run = () => VersionManager.initialize(true);
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(run, { timeout: 3000 });
+      return () => w.cancelIdleCallback?.(id);
     }
+    const t = window.setTimeout(run, 1500);
+    return () => window.clearTimeout(t);
   }, []);
   
   // Hydration guard for PWA cold start
@@ -1105,6 +1108,25 @@ const Staff = () => {
     category.sections.filter((section: any) => !(section as any).isGroupLabel).map((section: any) => section.id)
   );
 
+  // Escape hatch for stuck PWA caches (especially mobile Safari on slow networks).
+  // Unregisters service workers, clears caches and reloads.
+  const resetAppCache = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.allSettled(regs.map(r => r.unregister()));
+      }
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.allSettled(keys.map(k => caches.delete(k)));
+      }
+    } catch (e) {
+      console.warn('resetAppCache failed', e);
+    } finally {
+      window.location.reload();
+    }
+  };
+
   useEffect(() => {
     if (!isStaff || permissionsLoading || visibleSectionIds.length === 0) return;
     if (expandedSection && visibleSectionIds.includes(expandedSection)) return;
@@ -1150,6 +1172,15 @@ const Staff = () => {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>{loading ? "Logging in..." : "Access Dashboard"}</Button>
               </form>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={resetAppCache}
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Having trouble loading? Reset app cache
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -1168,6 +1199,7 @@ const Staff = () => {
             <CardContent className="space-y-4">
               <p className="text-center text-muted-foreground">You do not have staff permissions to access this page.</p>
               <Button onClick={handleLogout} className="w-full" variant="outline">Logout</Button>
+              <Button onClick={resetAppCache} className="w-full" variant="ghost">Reset app cache</Button>
             </CardContent>
           </Card>
         </div>
@@ -1892,6 +1924,9 @@ const Staff = () => {
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
               {/* Use hidden class for key sections to preserve state (popups, playback, etc.) */}
+              {/* ErrorBoundary keyed by section so one tab crashing never blanks the whole portal. */}
+              <ErrorBoundary key={expandedSection ?? 'none'}>
+                <Suspense fallback={<PageLoading />}>
                   <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
                   <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
                   <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
@@ -1974,6 +2009,8 @@ const Staff = () => {
                   {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
                   {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
                   {expandedSection === 'usage' && isAdmin && <UsageSection />}
+                </Suspense>
+              </ErrorBoundary>
                 </CardContent>
               </Card>
             </div>
