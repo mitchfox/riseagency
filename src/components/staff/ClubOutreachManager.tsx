@@ -823,7 +823,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving || !clubId || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+          <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
             {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
           </Button>
         </DialogFooter>
