@@ -40,7 +40,7 @@ interface OutreachRow {
   id: string;
   short_id: string;
   player_id: string | null;
-  club_id: string;
+  club_id: string | null;
   fit_recommendation: string | null;
   club_contact_name: string | null;
   club_contact_role: string | null;
@@ -57,7 +57,12 @@ interface OutreachRow {
   show_strengths?: boolean;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
+  target_type?: 'club' | 'agent';
+  agent_name?: string | null;
+  agent_logo_url?: string | null;
 }
+
+type OutreachMode = 'club' | 'agent';
 
 export default function ClubOutreachManager() {
   const [rows, setRows] = useState<OutreachRow[]>([]);
@@ -71,6 +76,7 @@ export default function ClubOutreachManager() {
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
+  const [mode, setMode] = useState<OutreachMode>('club');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
@@ -107,6 +113,7 @@ export default function ClubOutreachManager() {
       comm_count: commByLink.get(r.id) ?? 0,
       link_players: (byLink.get(r.id) ?? []).sort((a, b) => a.sort_order - b.sort_order),
       club: clubMap.get(r.club_id) ?? null,
+      target_type: (r.target_type ?? 'club') as OutreachMode,
     })));
     setPlayers((playerRows ?? []) as PlayerLite[]);
     setClubs((clubRows ?? []) as ClubLite[]);
@@ -120,12 +127,16 @@ export default function ClubOutreachManager() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter(r => {
-      if ((r.club?.club_name ?? "").toLowerCase().includes(needle)) return true;
+    const scoped = rows.filter(r => (r.target_type ?? 'club') === mode);
+    if (!needle) return scoped;
+    return scoped.filter(r => {
+      const targetLabel = mode === 'agent'
+        ? (r.agent_name ?? "").toLowerCase()
+        : (r.club?.club_name ?? "").toLowerCase();
+      if (targetLabel.includes(needle)) return true;
       return (r.link_players ?? []).some(lp => (playerById.get(lp.player_id)?.name ?? "").toLowerCase().includes(needle));
     });
-  }, [rows, q, playerById]);
+  }, [rows, q, playerById, mode]);
 
   const proposalUrl = (shortId: string) => `${APP_BASE}/club-proposal/${shortId}`;
 
@@ -174,14 +185,31 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
+      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+        {([
+          { v: 'club', label: 'Club Outreach' },
+          { v: 'agent', label: 'Agent Outreach' },
+        ] as { v: OutreachMode; label: string }[]).map((t) => (
+          <button
+            key={t.v}
+            type="button"
+            onClick={() => setMode(t.v)}
+            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+              mode === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by player or club" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
-            <Plus className="h-4 w-4 mr-2" /> New Outreach
+            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
           <Button variant="outline" onClick={() => setSettingsOpen(true)}>
             <Settings className="h-4 w-4 mr-2" /> Settings
@@ -193,7 +221,11 @@ export default function ClubOutreachManager() {
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center">
-          <p className="text-sm text-muted-foreground">No club outreach links yet. Create your first one to share a slick proposal with a club.</p>
+          <p className="text-sm text-muted-foreground">
+            {mode === 'agent'
+              ? "No agent outreach links yet. Create your first one to share a slick proposal with an agent."
+              : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -231,10 +263,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-       <OutreachDialog open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+       <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-       <OutreachDialog open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+       <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
@@ -254,9 +286,13 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
   const [shortIdDraft, setShortIdDraft] = useState(row.short_id);
   useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
   const firstPlayerName = names[0] ?? "";
+  const isAgent = (row.target_type ?? 'club') === 'agent';
+  const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
+  const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
   const copyTemplate = async (t: QuickTemplate) => {
     const filled = fillTemplate(t.content, {
-      club: row.club?.club_name ?? "",
+      club: targetName,
+      agent: isAgent ? targetName : "",
       player: firstPlayerName,
       first_name: firstPlayerName.split(" ")[0] ?? "",
       players: names.join(", "),
@@ -273,13 +309,13 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
   return (
     <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
       <div className="flex items-start gap-3">
-        {row.club?.image_url ? (
-          <img src={row.club.image_url} alt={row.club.club_name} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
+        {targetLogo ? (
+          <img src={targetLogo} alt={targetName} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
         ) : (
-          <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-sm">{row.club?.club_name?.[0] ?? "?"}</div>
+          <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-sm">{targetName?.[0] ?? "?"}</div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold truncate">{row.club?.club_name ?? "Unknown club"}</div>
+          <div className="text-sm font-semibold truncate">{targetName}</div>
           <div className="text-xs text-muted-foreground truncate">{names.length ? names.join(", ") : "No players"}</div>
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{new Date(row.created_at).toLocaleDateString()}</div>
         </div>
@@ -316,7 +352,8 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
         <div className="mt-2 flex flex-wrap gap-1.5">
           {templates.map(t => {
             const preview = fillTemplate(t.content, {
-              club: row.club?.club_name ?? "",
+              club: targetName,
+              agent: isAgent ? targetName : "",
               player: firstPlayerName,
               first_name: firstPlayerName.split(" ")[0] ?? "",
               players: names.join(", "),
@@ -388,8 +425,12 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; }) {
+function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; mode?: OutreachMode; }) {
+  const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
+  const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
+  const [agentLogoUrl, setAgentLogoUrl] = useState(editing?.agent_logo_url ?? "");
+  const [agentLogoUploading, setAgentLogoUploading] = useState(false);
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
   const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? "");
@@ -482,6 +523,23 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     }
   };
 
+  const onAgentLogoUpload = async (file: File) => {
+    setAgentLogoUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `agent-outreach-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("club-logos").upload(path, file, { cacheControl: "3600", upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+      setAgentLogoUrl(data.publicUrl);
+      toast.success("Logo uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to upload logo");
+    } finally {
+      setAgentLogoUploading(false);
+    }
+  };
+
   const addPlayer = async (id: string) => {
     setPlayerQuery("");
     if (editing) {
@@ -517,12 +575,19 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
 
   const save = async () => {
-    if (!clubId) return toast.error("Pick a club");
+    if (isAgent) {
+      if (!agentName.trim()) return toast.error("Agent name required");
+    } else if (!clubId) {
+      return toast.error("Pick a club");
+    }
     if (entries.length === 0) return toast.error("Add at least one player");
     setSaving(true);
     try {
-      const payload = {
-        club_id: clubId,
+      const payload: any = {
+        target_type: isAgent ? 'agent' : 'club',
+        club_id: isAgent ? null : clubId,
+        agent_name: isAgent ? agentName.trim() : null,
+        agent_logo_url: isAgent ? (agentLogoUrl.trim() || null) : null,
         player_id: entries[0]?.player_id ?? null,
         fit_recommendation: entries[0]?.fit_recommendation ?? null,
         prepared_for_name: preparedFor.trim() || null,
@@ -576,10 +641,44 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Club Outreach" : "New Club Outreach"}</DialogTitle>
-          <DialogDescription>Build a personalised proposal for a club. Add one or many players, each with their own position and fit note.</DialogDescription>
+          <DialogTitle>
+            {editing
+              ? (isAgent ? "Edit Agent Outreach" : "Edit Club Outreach")
+              : (isAgent ? "New Agent Outreach" : "New Club Outreach")}
+          </DialogTitle>
+          <DialogDescription>
+            {isAgent
+              ? "Build a personalised proposal for an agent. Add one or many players, each with their own position and fit note."
+              : "Build a personalised proposal for a club. Add one or many players, each with their own position and fit note."}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
+          {isAgent ? (
+            <div className="space-y-3">
+              <div>
+                <Label>Agent name</Label>
+                <Input className="mt-1.5" placeholder="e.g. John Smith" value={agentName} onChange={(e) => setAgentName(e.target.value)} />
+              </div>
+              <div>
+                <Label>Logo (optional)</Label>
+                <div className="mt-1.5 flex items-center gap-3">
+                  {agentLogoUrl ? (
+                    <img src={agentLogoUrl} className="h-12 w-12 rounded-md object-contain bg-white/5 p-1 border border-border" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground">No logo</div>
+                  )}
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border px-2 py-1.5 hover:border-[#cbb96b]/60">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>{agentLogoUploading ? "Uploading…" : agentLogoUrl ? "Replace logo" : "Upload logo"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onAgentLogoUpload(f); }} disabled={agentLogoUploading} />
+                  </label>
+                  {agentLogoUrl && (
+                    <button type="button" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setAgentLogoUrl("")}>Remove</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
           <div>
             <Label>Club</Label>
             <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mt-1.5" />
@@ -645,6 +744,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               </div>
             )}
           </div>
+          )}
 
           <div>
             <Label>Players to propose</Label>
@@ -728,7 +828,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving || !clubId || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+          <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
             {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
           </Button>
         </DialogFooter>

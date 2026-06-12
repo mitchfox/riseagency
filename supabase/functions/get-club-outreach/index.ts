@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -42,11 +42,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: club } = await supabase
-      .from("club_map_positions")
-      .select("id, club_name, country, image_url")
-      .eq("id", link.club_id)
-      .maybeSingle();
+    let club: any = null;
+    if (link.club_id) {
+      const { data: clubRow } = await supabase
+        .from("club_map_positions")
+        .select("id, club_name, country, image_url")
+        .eq("id", link.club_id)
+        .maybeSingle();
+      club = clubRow ?? null;
+    }
+    // For agent outreach, synthesise a club-shaped object from agent fields so
+    // the proposal renders the agent's name and optional logo in the header.
+    if (!club && link.target_type === "agent" && link.agent_name) {
+      club = {
+        id: null,
+        club_name: link.agent_name,
+        country: null,
+        image_url: link.agent_logo_url ?? null,
+      };
+    }
 
     const { data: settings } = await supabase
       .from("club_outreach_settings")

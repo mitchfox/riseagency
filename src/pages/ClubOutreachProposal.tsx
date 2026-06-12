@@ -57,6 +57,9 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    target_type?: 'club' | 'agent';
+    agent_name?: string | null;
+    agent_logo_url?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
@@ -339,7 +342,7 @@ export default function ClubOutreachProposal() {
       )}
 
       {/* Cards */}
-      <section className="max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
         <ProposalCard
           href={current.stars_url}
           icon={<Video className="h-6 w-6" />}
@@ -347,19 +350,21 @@ export default function ClubOutreachProposal() {
           title="Video & Data"
           subtitle="Full profile, highlights and statistics"
         />
-        <ProposalCard
-          href={
-            current.proof_of_representation_url && data.link.short_id && player?.id
-              ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-              : null
-          }
-          icon={<FileBadge2 className="h-6 w-6" />}
-          eyebrow="02"
-          title="Proof of Representation"
-          subtitle="Signed agreement with Rise Football Agency"
-          disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
-          internal
-        />
+        {data.link.target_type !== 'agent' && (
+          <ProposalCard
+            href={
+              current.proof_of_representation_url && data.link.short_id && player?.id
+                ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+                : null
+            }
+            icon={<FileBadge2 className="h-6 w-6" />}
+            eyebrow="02"
+            title="Proof of Representation"
+            subtitle="Signed agreement with Rise Football Agency"
+            disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
+            internal
+          />
+        )}
       </section>
 
       {/* Optional Stars-derived sections (per-link toggles) */}
