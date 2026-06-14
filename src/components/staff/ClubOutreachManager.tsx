@@ -231,17 +231,17 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+      <div className="flex w-full sm:w-auto sm:inline-flex overflow-x-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'outreach', label: 'Outreach' },
-          { v: 'strategy', label: 'Outreach Strategy' },
+          { v: 'strategy', label: 'Strategy' },
           { v: 'relationships', label: 'Relationships' },
         ] as { v: 'outreach' | 'strategy' | 'relationships'; label: string }[]).map((t) => (
           <button
             key={t.v}
             type="button"
             onClick={() => setTopTab(t.v)}
-            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+            className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-wider rounded-md transition ${
               topTab === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
