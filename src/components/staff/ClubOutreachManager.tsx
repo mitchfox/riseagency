@@ -62,9 +62,26 @@ interface OutreachRow {
   target_type?: 'club' | 'agent';
   agent_name?: string | null;
   agent_logo_url?: string | null;
+  language?: string | null;
+  translations?: any | null;
 }
 
 type OutreachMode = 'club' | 'agent';
+
+const OUTREACH_LANGUAGES: { code: string; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Spanish" },
+  { code: "pt", label: "Portuguese" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "it", label: "Italian" },
+  { code: "pl", label: "Polish" },
+  { code: "cs", label: "Czech" },
+  { code: "ru", label: "Russian" },
+  { code: "tr", label: "Turkish" },
+  { code: "hr", label: "Croatian" },
+  { code: "no", label: "Norwegian" },
+];
 
 export default function ClubOutreachManager() {
   const [rows, setRows] = useState<OutreachRow[]>([]);
