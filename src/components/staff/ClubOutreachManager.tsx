@@ -342,6 +342,8 @@ export default function ClubOutreachManager() {
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
       )}
+      </>
+      )}
     </div>
   );
 }
