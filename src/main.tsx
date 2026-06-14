@@ -31,7 +31,9 @@
         localStorage.removeItem(LAST_ROUTE_KEY);
         localStorage.removeItem(LAST_SCOPE_KEY);
       }
-    } catch {}
+    } catch {
+      return;
+    }
     return;
   }
 
@@ -40,7 +42,9 @@
     try {
       localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
       localStorage.setItem(LAST_SCOPE_KEY, isStaffRoute(currentPathname) ? 'staff' : 'portal');
-    } catch {}
+    } catch {
+      return;
+    }
     return;
   }
 
@@ -50,14 +54,18 @@
   let savedRoute: string | null = null;
   try {
     savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
-  } catch {}
+  } catch {
+    savedRoute = null;
+  }
 
   const savedPath = savedRoute ? pathOnly(savedRoute) : null;
   if (savedRoute && savedPath && !isRestorableRoute(savedPath)) {
     try {
       localStorage.removeItem(LAST_ROUTE_KEY);
       localStorage.removeItem(LAST_SCOPE_KEY);
-    } catch {}
+    } catch {
+      return;
+    }
     return;
   }
 
