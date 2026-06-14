@@ -563,7 +563,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -572,6 +572,8 @@ function ProposalCard({
   subtitle: string;
   disabledLabel?: string;
   internal?: boolean;
+  openLabel?: string;
+  unavailableLabel?: string;
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
@@ -582,7 +584,7 @@ function ProposalCard({
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
       <div className="mt-4 flex items-center gap-2 text-xs text-[#cbb96b]">
-        {disabled ? (disabledLabel ?? "Unavailable") : <>Open <ExternalLink className="h-3.5 w-3.5" /></>}
+        {disabled ? (disabledLabel ?? unavailableLabel ?? "Unavailable") : <>{openLabel ?? "Open"} <ExternalLink className="h-3.5 w-3.5" /></>}
       </div>
     </div>
   );
