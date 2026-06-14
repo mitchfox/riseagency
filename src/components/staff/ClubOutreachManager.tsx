@@ -471,6 +471,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
+  const [language, setLanguage] = useState<string>(editing?.language ?? "en");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [creatingClub, setCreatingClub] = useState(false);
   const [newClubName, setNewClubName] = useState("");
