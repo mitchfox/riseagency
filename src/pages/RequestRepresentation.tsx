@@ -36,7 +36,6 @@ const POSITION_OPTIONS: PlayerPosition[] = [
 /** Maps the home-screen 11-position picker to the broader scouting
  *  groupings used in the Scouting section. */
 const POSITION_TO_SCOUTING: Record<PlayerPosition, ScoutingPosition> = {
-  const { t } = useLanguage();
   GK:  "Goalkeeper",
   LB:  "Full-Back",
   RB:  "Full-Back",
