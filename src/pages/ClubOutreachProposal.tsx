@@ -695,7 +695,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
-function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
+function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
   const STAT_LABELS: Record<string, string> = {
@@ -751,8 +751,9 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
   // Lay 5 items out as 3+2 centred; otherwise one even row.
   const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
+  const formTitle = (titleTemplate ?? "Form · Last {n}").replace("{n}", String(cfg.window_size));
   return (
-    <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
+    <SectionShell title={formTitle} eyebrow="04">
       {useSplit ? (
         <div className="space-y-2">
           {[items.slice(0, 3), items.slice(3, 5)].map((row, ri) => (
@@ -794,9 +795,9 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
   );
 }
 
-function InNumbersCard({ stats }: { stats: any[] }) {
+function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   return (
-    <SectionShell title="In Numbers" eyebrow="05">
+    <SectionShell title={title ?? "In Numbers"} eyebrow="05">
       <div className="space-y-4">
         {stats.map((s, i) => (
           <div key={i} className="flex items-start gap-3">
@@ -812,7 +813,7 @@ function InNumbersCard({ stats }: { stats: any[] }) {
   );
 }
 
-function SeasonStatsCard({ stats }: { stats: any[] }) {
+function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
   const prettify = (s: string) =>
     (s ?? "")
       .replace(/_per90/gi, " /90")
@@ -820,7 +821,7 @@ function SeasonStatsCard({ stats }: { stats: any[] }) {
       .replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
   return (
-    <SectionShell title="Season Stats" eyebrow="06">
+    <SectionShell title={title ?? "Season Stats"} eyebrow="06">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stats.map((s, i) => (
           <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
@@ -833,7 +834,7 @@ function SeasonStatsCard({ stats }: { stats: any[] }) {
   );
 }
 
-function StrengthsCard({ data }: { data: any }) {
+function StrengthsCard({ data, title }: { data: any; title?: string }) {
   const items: string[] = Array.isArray(data)
     ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
     : typeof data === "string"
@@ -841,7 +842,7 @@ function StrengthsCard({ data }: { data: any }) {
     : [];
   if (items.length === 0) return null;
   return (
-    <SectionShell title="Strengths & Play Style" eyebrow="07">
+    <SectionShell title={title ?? "Strengths & Play Style"} eyebrow="07">
       <ul className="space-y-2">
         {items.map((s, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-white/85">
