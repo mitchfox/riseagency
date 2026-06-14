@@ -465,7 +465,16 @@ export default function ClubOutreachProposal() {
       </div>
 
       <footer className="mt-12 flex items-center justify-center">
-        <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80" />
+        <a
+          href="https://risefootballagency.com"
+          aria-label="Visit RISE Football Agency"
+          className="inline-flex flex-col items-center gap-2 group"
+        >
+          <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80 group-hover:opacity-100 transition-opacity" />
+          <span className="text-[11px] uppercase tracking-[0.2em] text-white/60 group-hover:text-white/90 transition-colors">
+            risefootballagency.com
+          </span>
+        </a>
       </footer>
 
       {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
