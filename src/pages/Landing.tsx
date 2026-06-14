@@ -214,8 +214,8 @@ function LandingContent() {
   
   return <>
     <SEO 
-      title="RISE Football Agency - Elite Player Representation"
-      description="Elite football representation. We scout across Europe and guide Premier League players to success through their development."
+      title={t('landing.rise_football_agency_elite_player_representation', 'RISE Football Agency - Elite Player Representation')}
+      description={t('landing.elite_football_representation_we_scout_across_eu', 'Elite football representation. We scout across Europe and guide Premier League players to success through their development.')}
     />
     <div className={`landing-no-scroll bg-black flex flex-col items-center justify-end relative cursor-none md:cursor-none ${pwaClass}`} style={{
     height: '100dvh',
@@ -284,11 +284,11 @@ function LandingContent() {
       }}>
         {/* Desktop */}
         <div className="hidden md:block">
-          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[55px] w-auto" loading="eager" />
+          <img src={riseLogoWhite} alt={t('landing.rise_football_agency', 'RISE Football Agency')} className="h-[55px] w-auto" loading="eager" />
         </div>
         {/* Mobile */}
         <div className="md:hidden">
-          <img src={riseLogoWhite} alt="RISE Football Agency" className="h-[42px] w-auto" loading="eager" />
+          <img src={riseLogoWhite} alt={t('landing.rise_football_agency_2', 'RISE Football Agency')} className="h-[42px] w-auto" loading="eager" />
         </div>
       </div>
       

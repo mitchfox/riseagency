@@ -42,6 +42,7 @@ const languageUrlSubdomains: Record<string, string> = {
 };
 
 export const LanguageSelector = () => {
+  const { t } = useLanguage();
   const { language } = useLanguage();
   const [selectedLang, setSelectedLang] = useState<typeof languages[0] | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -112,7 +113,8 @@ export const LanguageSelector = () => {
                 onClick={handleEnterLanguage}
                 className="w-full px-2 py-1.5 text-xs font-bebas uppercase tracking-wider text-primary hover:bg-primary/20 transition-colors rounded"
               >
-                Enter in {selectedLang.name}
+                
+                {t('language_selector.enter_in', 'Enter in')} {selectedLang.name}
               </button>
             </div>
           )}

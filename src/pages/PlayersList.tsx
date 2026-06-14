@@ -202,7 +202,7 @@ const PlayersList = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Helmet>
-        <title>Player List | RISE Football Agency</title>
+        <title>{t('players_list.player_list_rise_football_agency', 'Player List | RISE Football Agency')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       
@@ -262,7 +262,7 @@ const PlayersList = () => {
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
-                title="Grid View"
+                title={t('players_list.grid_view', 'Grid View')}
               >
                 <LayoutGrid className="w-5 h-5" />
               </button>
@@ -273,7 +273,7 @@ const PlayersList = () => {
                     ? "bg-primary text-black"
                     : "bg-secondary text-foreground hover:bg-secondary/80"
                 }`}
-                title="List View"
+                title={t('players_list.list_view', 'List View')}
               >
                 <List className="w-5 h-5" />
               </button>

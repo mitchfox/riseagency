@@ -222,7 +222,7 @@ const Index = () => {
                     </span>
                   </div>
                   <h2 className="text-4xl md:text-6xl font-bebas uppercase tracking-wider text-foreground">
-                    INSIDE<span className="text-primary">:ACCESS</span>
+                    INSIDE<span className="text-primary">{t('players_page.access', ':ACCESS')}</span>
                   </h2>
                 </div>
               </ScrollReveal>
@@ -278,13 +278,15 @@ const Index = () => {
             <ScrollReveal delay={0.3}>
               <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-primary/5 border border-primary/20 rounded-xl text-center">
                 <p className="text-sm sm:text-base text-muted-foreground mb-4 px-2">
-                  If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.
+                  
+                  {t('players_page.if_you_see_players_scouted_in_your_side_we_may_h', 'If you see players scouted in your side, we may have a detailed report on your game. Reach out to request to learn more about our observations.')}
                 </p>
                 <button 
                   onClick={() => setShowReportDialog(true)}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-bebas text-lg uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  My Report
+                  
+                  {t('players_page.my_report', 'My Report')}
                 </button>
               </div>
             </ScrollReveal>
@@ -385,7 +387,7 @@ const Index = () => {
               </ScrollRevealItem>
               <ScrollRevealItem>
                 <div className="text-center group">
-                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">£100M+</div>
+                  <div className="text-6xl md:text-8xl font-bebas text-primary group-hover:scale-110 transition-transform duration-300">{t('players_page.100m', '£100M+')}</div>
                   <div className="h-px w-16 bg-primary/50 mx-auto my-3" />
                   <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("home.stat_transfer", "Transfer Fees Developed")}</p>
                 </div>
@@ -401,23 +403,28 @@ const Index = () => {
                 <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bebas uppercase tracking-wider text-foreground/50">
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                    Premier League
+                    
+                    {t('players_page.premier_league', 'Premier League')}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                    La Liga
+                    
+                    {t('players_page.la_liga', 'La Liga')}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                    Bundesliga
+                    
+                    {t('players_page.bundesliga', 'Bundesliga')}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                    Serie A
+                    
+                    {t('players_page.serie_a', 'Serie A')}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary/60"></span>
-                    Ligue 1
+                    
+                    {t('players_page.ligue_1', 'Ligue 1')}
                   </span>
                 </div>
               </div>
@@ -626,7 +633,7 @@ const Index = () => {
                     width="100%"
                     height="100%"
                     src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
-                    title="RISE Football Video 1"
+                    title={t('players_page.rise_football_video_1', 'RISE Football Video 1')}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
@@ -643,7 +650,7 @@ const Index = () => {
                     width="100%"
                     height="100%"
                     src="https://www.youtube-nocookie.com/embed/XtmRhHvXeyo?rel=0"
-                    title="RISE Football Video 2"
+                    title={t('players_page.rise_football_video_2', 'RISE Football Video 2')}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen

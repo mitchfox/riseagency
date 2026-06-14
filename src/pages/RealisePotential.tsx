@@ -77,8 +77,8 @@ const RealisePotential = () => {
   return (
     <>
       <SEO
-        title="Realise Potential - RISE Football Agency"
-        description="Discover how RISE optimises player development through a comprehensive match week approach - from training to highlights."
+        title={t('realise_potential.realise_potential_rise_football_agency', 'Realise Potential - RISE Football Agency')}
+        description={t('realise_potential.discover_how_rise_optimises_player_development_t', 'Discover how RISE optimises player development through a comprehensive match week approach - from training to highlights.')}
         url="/realise-potential"
       />
       <Header />

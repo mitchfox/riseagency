@@ -89,9 +89,9 @@ const JobRole = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 pt-32 pb-24 text-center md:pt-32">
-          <h1 className="font-bebas text-4xl uppercase tracking-wider">Role not found</h1>
-          <p className="mt-3 text-muted-foreground">This role may have been filled or removed.</p>
-          <Button asChild className="mt-6"><Link to="/jobs">View all roles</Link></Button>
+          <h1 className="font-bebas text-4xl uppercase tracking-wider">{t('job_role.role_not_found', 'Role not found')}</h1>
+          <p className="mt-3 text-muted-foreground">{t('job_role.this_role_may_have_been_filled_or_removed', 'This role may have been filled or removed.')}</p>
+          <Button asChild className="mt-6"><Link to="/jobs">{t('job_role.view_all_roles', 'View all roles')}</Link></Button>
         </main>
         <Footer />
       </div>
@@ -140,10 +140,10 @@ const JobRole = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-background" />
           <div className="relative container mx-auto px-4 py-12 md:py-20">
             <Link to="/jobs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
-              <ArrowLeft className="h-4 w-4" /> All roles
+              <ArrowLeft className="h-4 w-4" />  {t('job_role.all_roles', 'All roles')}
             </Link>
             <div className="mt-4 flex items-center gap-2 text-xs uppercase tracking-widest text-primary/80">
-              <span>Careers</span><ChevronRight className="h-3 w-3" /><span className="text-muted-foreground">{job.department}</span>
+              <span>{t('job_role.careers', 'Careers')}</span><ChevronRight className="h-3 w-3" /><span className="text-muted-foreground">{job.department}</span>
             </div>
             <h1 className="mt-3 font-bebas text-4xl uppercase tracking-wider text-white md:text-6xl">
               {job.title}
@@ -159,7 +159,7 @@ const JobRole = () => {
             </div>
             <div className="mt-6 flex flex-wrap gap-2">
               <Button asChild className="btn-shine font-bebas uppercase tracking-wider">
-                <a href="#apply">Apply for this role</a>
+                <a href="#apply">{t('job_role.apply_for_this_role', 'Apply for this role')}</a>
               </Button>
               <JobShareButton url={canonical} title={job.title} summary={job.summary || undefined} />
             </div>
@@ -173,19 +173,19 @@ const JobRole = () => {
               <div className="space-y-10 divide-y divide-primary/15">
                 {job.description && (
                   <div className="pt-0">
-                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">About the role</h2>
+                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">{t('job_role.about_the_role', 'About the role')}</h2>
                     <JobBody content={job.description} />
                   </div>
                 )}
                 {job.responsibilities && (
                   <div className="pt-10">
-                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">Responsibilities</h2>
+                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">{t('job_role.responsibilities', 'Responsibilities')}</h2>
                     <JobBody content={job.responsibilities} />
                   </div>
                 )}
                 {job.requirements && (
                   <div className="pt-10">
-                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">Requirements</h2>
+                    <h2 className="mb-4 font-bebas text-2xl uppercase tracking-wider text-primary">{t('job_role.requirements', 'Requirements')}</h2>
                     <JobBody content={job.requirements} />
                   </div>
                 )}
@@ -194,7 +194,7 @@ const JobRole = () => {
 
             <aside className="lg:sticky lg:top-28 lg:self-start">
               <div className="rounded-2xl border border-primary/20 bg-card/50 p-5 backdrop-blur-sm">
-                <h3 className="font-bebas text-lg uppercase tracking-wider text-primary">At a glance</h3>
+                <h3 className="font-bebas text-lg uppercase tracking-wider text-primary">{t('job_role.at_a_glance', 'At a glance')}</h3>
                 <dl className="mt-3 space-y-2 text-sm">
                   <Row k="Department" v={job.department} />
                   {job.location && <Row k="Location" v={job.location} />}
@@ -202,7 +202,7 @@ const JobRole = () => {
                   {job.salary_range && <Row k="Salary" v={job.salary_range} />}
                 </dl>
                 <Button asChild className="btn-shine mt-4 w-full font-bebas uppercase tracking-wider">
-                  <a href="#apply">Apply now</a>
+                  <a href="#apply">{t('job_role.apply_now', 'Apply now')}</a>
                 </Button>
                 <div className="mt-3">
                   <JobShareButton url={canonical} title={job.title} summary={job.summary || undefined} />
@@ -216,9 +216,10 @@ const JobRole = () => {
         <section id="apply" className="container mx-auto px-4 pb-24">
           <div className="mx-auto max-w-3xl">
             <h2 className="mb-2 font-bebas text-3xl uppercase tracking-wider md:text-4xl">
-              Apply for <span className="text-primary">{job.title}</span>
+              
+              {t('job_role.apply_for', 'Apply for')} <span className="text-primary">{job.title}</span>
             </h2>
-            <p className="mb-6 text-muted-foreground">All fields except the cover letter and CV are required.</p>
+            <p className="mb-6 text-muted-foreground">{t('job_role.all_fields_except_the_cover_letter_and_cv_are_re', 'All fields except the cover letter and CV are required.')}</p>
             <JobApplyForm jobId={job.id} jobSlug={job.slug} jobTitle={job.title} />
           </div>
         </section>
@@ -230,7 +231,8 @@ const JobRole = () => {
           href="#apply"
           className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-primary/60 bg-primary px-6 py-3 font-bebas text-sm uppercase tracking-widest text-primary-foreground shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.7)] backdrop-blur-md transition hover:scale-[1.03] md:bottom-8"
         >
-          Apply now
+          
+          {t('job_role.apply_now_2', 'Apply now')}
         </a>
       )}
 

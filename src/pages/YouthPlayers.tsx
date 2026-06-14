@@ -120,8 +120,8 @@ const YouthPlayers = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Youth Players & Parents - RISE Agency"
-        description="The pathway to the top. Learn how RISE develops youth players with the will and skill to make it. Expert guidance."
+        title={t('youth_players.youth_players_parents_rise_agency', 'Youth Players & Parents - RISE Agency')}
+        description={t('youth_players.the_pathway_to_the_top_learn_how_rise_develops_y', 'The pathway to the top. Learn how RISE develops youth players with the will and skill to make it. Expert guidance.')}
         image="/og-preview-youth.png"
         url="/youth-players"
         structuredData={faqSchema}

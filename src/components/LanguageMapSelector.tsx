@@ -41,7 +41,8 @@ interface LanguageMapSelectorProps {
   triggerContent?: React.ReactNode;
 }
 
-export const LanguageMapSelector = ({ onOpenChange, className, triggerContent }: LanguageMapSelectorProps) => {
+export const LanguageMapSelector = ({
+  onOpenChange, className, triggerContent }: LanguageMapSelectorProps) => {
   const { language, switchLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -129,7 +130,7 @@ export const LanguageMapSelector = ({ onOpenChange, className, triggerContent }:
               {/* Europe Map Image */}
               <img 
                 src={europeMap} 
-                alt="Europe Map"
+                alt={t('language_map_selector.europe_map', 'Europe Map')}
                 className="absolute inset-0 w-full h-full object-contain opacity-60"
               />
               

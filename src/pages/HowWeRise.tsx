@@ -171,8 +171,8 @@ const PlayersDraft = () => {
       style={{ scrollBehavior: "smooth" }}
     >
       <SEO 
-        title="Players | RISE Football Agency"
-        description="Discover the complete player journey with RISE Football Agency. From scouting to career progression - comprehensive support for footballers at every level."
+        title={t('how_we_rise.players_rise_football_agency', 'Players | RISE Football Agency')}
+        description={t('how_we_rise.discover_the_complete_player_journey_with_rise_f', 'Discover the complete player journey with RISE Football Agency. From scouting to career progression - comprehensive support for footballers at every level.')}
         noindex={true}
       />
 
@@ -247,7 +247,7 @@ const PlayersDraft = () => {
             <div className="relative w-full h-full animate-pulse">
               <img
                 src={footballIcon}
-                alt="Football"
+                alt={t('how_we_rise.football', 'Football')}
                 className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]"
               />
               <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-ping" />
@@ -327,7 +327,7 @@ const PlayersDraft = () => {
             onClick={handleScrollHint}
             className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/60 hover:text-white transition-colors cursor-pointer"
           >
-            <span className="text-sm uppercase tracking-wider">Scroll to begin</span>
+            <span className="text-sm uppercase tracking-wider">{t('how_we_rise.scroll_to_begin', 'Scroll to begin')}</span>
             <ChevronDown className="w-6 h-6 animate-bounce" />
           </button>
         </div>
@@ -417,7 +417,7 @@ const PlayersDraft = () => {
                     onClick={() => scrollToSection(sectionIndex + 1)}
                     className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/40 hover:text-white transition-colors"
                   >
-                    <span className="text-xs uppercase tracking-wider">Next: {journeySections[journeyIndex + 1]?.titleFallback}</span>
+                    <span className="text-xs uppercase tracking-wider">{t('how_we_rise.next', 'Next:')} {journeySections[journeyIndex + 1]?.titleFallback}</span>
                     <ChevronDown className="w-4 h-4 animate-bounce" />
                   </button>
                 )}
@@ -508,7 +508,7 @@ const PlayersDraft = () => {
             }`}
           >
             <div className="mb-8">
-              <span className="text-primary font-bebas text-xl tracking-widest">THE JOURNEY STARTS HERE</span>
+              <span className="text-primary font-bebas text-xl tracking-widest">{t('how_we_rise.the_journey_starts_here', 'THE JOURNEY STARTS HERE')}</span>
             </div>
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-bebas uppercase tracking-wider text-white mb-6">
               {t('players.cta_title', 'Ready to Rise?')}

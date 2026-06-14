@@ -817,7 +817,7 @@ export const RadialMenu = () => {
         <button
           ref={closeButtonRef}
           className="fixed top-8 left-8 z-[250] group flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white animate-[fade-in_0.3s_ease-out_0.35s_both]"
-          aria-label="Close menu"
+          aria-label={t('radial_menu.close_menu', 'Close menu')}
         >
           <div className="relative w-12 h-12 flex items-center justify-center">
             <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-out" />
@@ -1190,7 +1190,7 @@ export const RadialMenu = () => {
               {/* Europe Map Image */}
               <img 
                 src={europeMap} 
-                alt="Europe Map"
+                alt={t('radial_menu.europe_map', 'Europe Map')}
                 className="absolute inset-0 w-full h-full object-contain opacity-60"
               />
               
@@ -1270,7 +1270,8 @@ export const RadialMenu = () => {
               {/* Current selection indicator */}
               <div className="absolute bottom-4 left-0 right-0 text-center">
                 <span className="text-sm font-bebas uppercase tracking-wider text-white/60">
-                  Current: <span className="text-primary inline-flex items-center gap-1"><img src={getFlagUrl(languageRegions.find(l => l.code === language)?.flagCode || 'gb')} alt="" className="w-4 h-auto rounded-sm" /> {languageRegions.find(l => l.code === language)?.nativeName}</span>
+                  
+                  {t('radial_menu.current', 'Current:')} <span className="text-primary inline-flex items-center gap-1"><img src={getFlagUrl(languageRegions.find(l => l.code === language)?.flagCode || 'gb')} alt="" className="w-4 h-auto rounded-sm" /> {languageRegions.find(l => l.code === language)?.nativeName}</span>
                 </span>
               </div>
             </div>

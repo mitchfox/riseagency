@@ -262,7 +262,7 @@ const Stars = () => {
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  aria-label="Grid view"
+                  aria-label={t('stars.grid_view', 'Grid view')}
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
@@ -273,7 +273,7 @@ const Stars = () => {
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
-                  aria-label="List view"
+                  aria-label={t('stars.list_view', 'List view')}
                 >
                   <List className="w-4 h-4" />
                 </button>

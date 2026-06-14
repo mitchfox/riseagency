@@ -200,7 +200,7 @@ const PlayerJourney = () => {
                 <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_national", "National Team Players")}</p>
               </div>
               <div className="text-center p-6 border border-border/50 bg-card/30 rounded-lg">
-                <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">£100M+</div>
+                <div className="text-5xl md:text-6xl font-bebas text-primary mb-2">{t('player_journey.100m', '£100M+')}</div>
                 <p className="text-sm font-bebas uppercase tracking-widest text-foreground/70">{t("journey.stat_transfers", "Transfer Fees Developed")}</p>
               </div>
             </div>

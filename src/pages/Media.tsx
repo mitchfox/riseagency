@@ -404,7 +404,7 @@ const Media = () => {
                 {pressReleases.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No press releases available at this time.</p>
+                    <p>{t('media.no_press_releases_available_at_this_time', 'No press releases available at this time.')}</p>
                   </div>
                 ) : (
                   <Accordion type="single" collapsible defaultValue={pressReleases[0]?.id} className="space-y-4">

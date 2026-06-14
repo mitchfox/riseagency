@@ -91,8 +91,8 @@ const OpenAccess = () => {
   return (
     <>
       <SEO 
-        title="Open Access - RISE Football Agency"
-        description="Read our monthly Open Access magazine featuring exclusive insights, player stories, and behind-the-scenes content from RISE Football Agency."
+        title={t('open_access.open_access_rise_football_agency', 'Open Access - RISE Football Agency')}
+        description={t('open_access.read_our_monthly_open_access_magazine_featuring_', 'Read our monthly Open Access magazine featuring exclusive insights, player stories, and behind-the-scenes content from RISE Football Agency.')}
         url="/open-access"
       />
       <Header />
@@ -102,14 +102,17 @@ const OpenAccess = () => {
             <div className="text-center mb-12 space-y-3 animate-fade-in">
               <div className="inline-block">
                 <span className="text-sm font-bebas uppercase tracking-widest text-primary border border-primary/30 px-6 py-2 rounded-full">
-                  Monthly Magazine
+                  
+                  {t('open_access.monthly_magazine', 'Monthly Magazine')}
                 </span>
               </div>
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bebas uppercase tracking-wider text-foreground">
-                Open <span className="text-primary">Access</span>
+                
+                {t('open_access.open', 'Open')} <span className="text-primary">{t('open_access.access', 'Access')}</span>
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Our monthly magazine featuring exclusive player stories, behind-the-scenes content, and the latest from RISE Football Agency.
+                
+                {t('open_access.our_monthly_magazine_featuring_exclusive_player_', 'Our monthly magazine featuring exclusive player stories, behind-the-scenes content, and the latest from RISE Football Agency.')}
               </p>
             </div>
 
@@ -125,7 +128,8 @@ const OpenAccess = () => {
             ) : issues.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-xl text-muted-foreground">
-                  No issues available yet. Check back soon!
+                  
+                  {t('open_access.no_issues_available_yet_check_back_soon', 'No issues available yet. Check back soon!')}
                 </p>
               </div>
             ) : (
@@ -150,7 +154,7 @@ const OpenAccess = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-muted-foreground">No cover</span>
+                            <span className="text-muted-foreground">{t('open_access.no_cover', 'No cover')}</span>
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -227,7 +231,7 @@ const OpenAccess = () => {
               </div>
             </>
           ) : (
-            <p className="text-white">No pages in this issue</p>
+            <p className="text-white">{t('open_access.no_pages_in_this_issue', 'No pages in this issue')}</p>
           )}
         </div>
       )}

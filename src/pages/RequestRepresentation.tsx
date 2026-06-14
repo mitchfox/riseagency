@@ -1141,7 +1141,7 @@ export const DetailView = ({
               <div className="relative aspect-video w-full">
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
-                  title="RISE Football Analysis"
+                  title={t('request_representation.rise_football_analysis', 'RISE Football Analysis')}
                   frameBorder={0}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen

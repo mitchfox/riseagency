@@ -344,8 +344,8 @@ const Packages = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Build Your Package - Football Marketing Solutions | RISE Agency"
-        description="Create a customised football marketing package. Select from our comprehensive range of commercial services, talent access, and campaign solutions."
+        title={t('packages.build_your_package_football_marketing_solutions_', 'Build Your Package - Football Marketing Solutions | RISE Agency')}
+        description={t('packages.create_a_customised_football_marketing_package_s', 'Create a customised football marketing package. Select from our comprehensive range of commercial services, talent access, and campaign solutions.')}
         url="/packages"
       />
       <Header />
@@ -359,16 +359,18 @@ const Packages = () => {
             {/* Header */}
             <div className="p-6 border-b border-border">
               <h1 className="text-3xl font-bebas uppercase tracking-wider text-foreground">
-                Build Your Package
+                
+                {t('packages.build_your_package', 'Build Your Package')}
               </h1>
               <p className="text-sm text-muted-foreground mt-1 italic">
-                Select all services that could benefit your brand or business. Build your ideal partnership and we'll create a tailored proposal.
+                
+                {t('packages.select_all_services_that_could_benefit_your_bran', 'Select all services that could benefit your brand or business. Build your ideal partnership and we\'ll create a tailored proposal.')}
               </p>
             </div>
 
             {/* Quick Templates */}
             <div className="p-4 border-b border-border">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Quick Start Templates</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">{t('packages.quick_start_templates', 'Quick Start Templates')}</p>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {PACKAGE_TEMPLATES.map((template) => (
                   <TooltipProvider key={template.name}>
@@ -397,7 +399,7 @@ const Packages = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search services..."
+                  placeholder={t('packages.search_services', 'Search services...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -452,7 +454,7 @@ const Packages = () => {
             <div className="p-6 border-t border-border bg-card">
             <div className="mb-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Services Selected</span>
+                <span className="text-sm text-muted-foreground">{t('packages.services_selected', 'Services Selected')}</span>
                 <span className="text-2xl font-bebas text-primary">{selectedServices.size}</span>
               </div>
             </div>
@@ -464,13 +466,15 @@ const Packages = () => {
                 disabled={selectedServices.size === 0}
               >
                 <Send className="mr-2 h-4 w-4" />
-                Submit Request
+                
+                {t('packages.submit_request', 'Submit Request')}
               </Button>
 
               <LocalizedLink to="/business" className="block mt-3">
                 <Button variant="ghost" className="w-full text-muted-foreground" size="sm">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Business
+                  
+                  {t('packages.back_to_business', 'Back to Business')}
                 </Button>
               </LocalizedLink>
             </div>
@@ -560,10 +564,12 @@ const Packages = () => {
                         <PenTool className="w-10 h-10 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bebas uppercase tracking-wider mb-3">
-                        Select a Category
+                        
+                        {t('packages.select_a_category', 'Select a Category')}
                       </h2>
                       <p className="text-muted-foreground italic">
-                        Browse our comprehensive range of football marketing services. Select everything that interests your brand - we'll tailor a proposal to match your needs and budget.
+                        
+                        {t('packages.browse_our_comprehensive_range_of_football_marke', 'Browse our comprehensive range of football marketing services. Select everything that interests your brand - we\'ll tailor a proposal to match your needs and budget.')}
                       </p>
                     </div>
                   </motion.div>
@@ -574,10 +580,10 @@ const Packages = () => {
             {/* Selected Services Preview (Desktop) */}
             <div className="hidden xl:block w-80 border-l border-border bg-card/30 overflow-y-auto">
               <div className="p-6">
-                <h3 className="text-lg font-bebas uppercase tracking-wider mb-4">Your Package</h3>
+                <h3 className="text-lg font-bebas uppercase tracking-wider mb-4">{t('packages.your_package', 'Your Package')}</h3>
                 
                 {selectedList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No services selected yet. Browse categories on the left to add services to your package.</p>
+                  <p className="text-sm text-muted-foreground italic">{t('packages.no_services_selected_yet_browse_categories_on_th', 'No services selected yet. Browse categories on the left to add services to your package.')}</p>
                 ) : (
                   <div className="space-y-3">
                     {selectedList.map((service) => (
@@ -625,7 +631,7 @@ const Packages = () => {
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bebas uppercase tracking-wider">Submit Request</h2>
+                  <h2 className="text-2xl font-bebas uppercase tracking-wider">{t('packages.submit_request_2', 'Submit Request')}</h2>
                   <button onClick={() => setShowSummary(false)}>
                     <X className="w-6 h-6" />
                   </button>
@@ -634,28 +640,28 @@ const Packages = () => {
                 {/* Contact Details */}
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label className="text-sm font-medium text-foreground block mb-2">Company Name *</label>
+                    <label className="text-sm font-medium text-foreground block mb-2">{t('packages.company_name', 'Company Name *')}</label>
                     <Input
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Your company name"
+                      placeholder={t('packages.your_company_name', 'Your company name')}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground block mb-2">Contact Email *</label>
+                    <label className="text-sm font-medium text-foreground block mb-2">{t('packages.contact_email', 'Contact Email *')}</label>
                     <Input
                       type="email"
                       value={contactEmail}
                       onChange={(e) => setContactEmail(e.target.value)}
-                      placeholder="your@email.com"
+                      placeholder={t('packages.your_email_com', 'your@email.com')}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground block mb-2">Project Description</label>
+                    <label className="text-sm font-medium text-foreground block mb-2">{t('packages.project_description', 'Project Description')}</label>
                     <Textarea
                       value={projectDescription}
                       onChange={(e) => setProjectDescription(e.target.value)}
-                      placeholder="Tell us about your project and goals..."
+                      placeholder={t('packages.tell_us_about_your_project_and_goals', 'Tell us about your project and goals...')}
                       rows={4}
                     />
                   </div>
@@ -663,7 +669,7 @@ const Packages = () => {
 
                 {/* Selected Services */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-foreground mb-3">Selected Services ({selectedServices.size})</h3>
+                  <h3 className="text-sm font-medium text-foreground mb-3">{t('packages.selected_services', 'Selected Services (')}{selectedServices.size})</h3>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {selectedList.map((service) => (
                       <div key={service.id} className="flex items-center justify-between py-2 border-b border-border/50">
@@ -684,7 +690,8 @@ const Packages = () => {
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Your email client will open with the request details. Our team will respond within 24-48 hours.
+                  
+                  {t('packages.your_email_client_will_open_with_the_request_det', 'Your email client will open with the request details. Our team will respond within 24-48 hours.')}
                 </p>
               </div>
             </motion.div>

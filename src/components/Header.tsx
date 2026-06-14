@@ -466,7 +466,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
           {/* Drawer Menu - Left */}
           <Drawer direction="top" preventScrollRestoration={false} shouldScaleBackground={false}>
             <DrawerTrigger asChild>
-              <button className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 md:w-14 md:h-14" aria-label="Toggle menu">
+              <button className="group relative flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ease-out w-12 h-12 md:w-14 md:h-14" aria-label={t('header.toggle_menu', 'Toggle menu')}>
                 <svg className="text-primary group-hover:text-foreground transition-all duration-300 ease-out w-7 h-7 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="4" y1="8" x2="20" y2="8" className="origin-center transition-transform duration-300 group-hover:rotate-[-45deg]" />
                   <line x1="2" y1="16" x2="18" y2="16" className="origin-center transition-transform duration-300 group-hover:rotate-[-45deg] group-hover:translate-x-1" />
@@ -501,7 +501,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
             })()}
             className="absolute left-1/2 transform -translate-x-1/2 z-10"
           >
-            <img src={logo} alt="RISE Football Agency" className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-10 md:h-12'}`} />
+            <img src={logo} alt={t('header.rise_football_agency', 'RISE Football Agency')} className={`transition-all duration-500 ease-out ${isScrolled ? 'h-9 md:h-11' : 'h-10 md:h-12'}`} />
           </Link>
 
           {/* Utility icons - animate from top bar into header */}
@@ -578,7 +578,7 @@ export const Header = ({ shouldFade = false }: HeaderProps) => {
             <span className="hidden md:inline truncate"><HoverText text={t("header.rise_with_us", "RISE WITH US")} /></span>
             <span className="md:hidden flex flex-col items-center leading-[0.9]">
               <span>RISE</span>
-              <span>WITH US</span>
+              <span>{t('header.with_us', 'WITH US')}</span>
             </span>
           </Button>
         </div>

@@ -44,8 +44,8 @@ const Jobs = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Careers at RISE - Join Our Team | RISE Football Agency"
-        description="Join RISE Football Agency. We're looking for talented individuals passionate about football to help develop the next generation of players."
+        title={t('jobs.careers_at_rise_join_our_team_rise_football_agen', 'Careers at RISE - Join Our Team | RISE Football Agency')}
+        description={t('jobs.join_rise_football_agency_we_re_looking_for_tale', 'Join RISE Football Agency. We\'re looking for talented individuals passionate about football to help develop the next generation of players.')}
         image="/og-preview-jobs.png"
         url="/jobs"
       />
@@ -125,7 +125,8 @@ const Jobs = () => {
                         <Pill icon={<Briefcase className="h-3 w-3" />}>{job.department}</Pill>
                       </div>
                       <div className="mt-5 flex items-center justify-end gap-1 font-bebas text-sm uppercase tracking-widest text-primary">
-                        View role <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        
+                        {t('jobs.view_role', 'View role')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </div>
                     </Link>
                   </ScrollRevealItem>
@@ -151,7 +152,8 @@ const Jobs = () => {
                 className="btn-shine font-bebas uppercase tracking-wider"
               >
                 <a href="mailto:jolon.levene@risefootballagency.com?subject=Speculative%20Application">
-                  Send Speculative Application
+                  
+                  {t('jobs.send_speculative_application', 'Send Speculative Application')}
                 </a>
               </Button>
             </div>
