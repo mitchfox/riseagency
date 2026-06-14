@@ -627,6 +627,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_in_numbers: showInNumbers,
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
+        language,
       };
       let linkId = editing?.id ?? null;
       if (editing) {
@@ -661,6 +662,37 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         }
       }
       toast.success(editing ? "Outreach updated" : "Outreach link created");
+
+      // Translate (or clear translations if English) so the proposal page renders in the chosen language.
+      try {
+        const editingShort = editing?.short_id;
+        let shortIdForTranslate = editingShort ?? null;
+        if (!shortIdForTranslate && linkId) {
+          const { data: row } = await supabase
+            .from("club_outreach_links")
+            .select("short_id")
+            .eq("id", linkId)
+            .maybeSingle();
+          shortIdForTranslate = row?.short_id ?? null;
+        }
+        if (shortIdForTranslate) {
+          if (language === "en") {
+            await supabase.functions.invoke("translate-club-outreach", {
+              body: { short_id: shortIdForTranslate, language: "en" },
+            });
+          } else {
+            toast.message("Translating proposal…");
+            const { error: tErr } = await supabase.functions.invoke("translate-club-outreach", {
+              body: { short_id: shortIdForTranslate, language },
+            });
+            if (tErr) toast.error(`Translation failed: ${tErr.message ?? tErr}`);
+            else toast.success("Proposal translated");
+          }
+        }
+      } catch (e: any) {
+        toast.error(`Translation failed: ${e?.message ?? e}`);
+      }
+
       onSaved();
     } catch (e: any) {
       toast.error(e.message ?? "Failed to save");
