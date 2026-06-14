@@ -42,7 +42,7 @@ interface LanguageMapSelectorProps {
 }
 
 export const LanguageMapSelector = ({
-  const { t } = useLanguage(); onOpenChange, className, triggerContent }: LanguageMapSelectorProps) => {
+  onOpenChange, className, triggerContent }: LanguageMapSelectorProps) => {
   const { language, switchLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
