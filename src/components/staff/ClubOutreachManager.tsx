@@ -11,6 +11,7 @@ import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCirc
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
+import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 
 const APP_BASE = "https://risefootballagency.com";
 const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
@@ -98,7 +99,7 @@ export default function ClubOutreachManager() {
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
   const [mode, setMode] = useState<OutreachMode>('club');
-  const [topTab, setTopTab] = useState<'outreach' | 'strategy'>('outreach');
+  const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships'>('outreach');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
@@ -234,7 +235,8 @@ export default function ClubOutreachManager() {
         {([
           { v: 'outreach', label: 'Outreach' },
           { v: 'strategy', label: 'Outreach Strategy' },
-        ] as { v: 'outreach' | 'strategy'; label: string }[]).map((t) => (
+          { v: 'relationships', label: 'Relationships' },
+        ] as { v: 'outreach' | 'strategy' | 'relationships'; label: string }[]).map((t) => (
           <button
             key={t.v}
             type="button"
@@ -248,7 +250,9 @@ export default function ClubOutreachManager() {
         ))}
       </div>
 
-      {topTab === 'strategy' ? (
+      {topTab === 'relationships' ? (
+        <RelationshipsTab />
+      ) : topTab === 'strategy' ? (
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>

@@ -4445,6 +4445,88 @@ export type Database = {
         }
         Relationships: []
       }
+      outreach_relationship_notes: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          body: string
+          created_at: string
+          id: string
+          relationship_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          relationship_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          relationship_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_relationship_notes_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_relationships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_relationships: {
+        Row: {
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          last_outreach_at: string | null
+          nudge_dates: string[]
+          nudge_week_start: string | null
+          rapport_level: Database["public"]["Enums"]["outreach_rapport_level"]
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          last_outreach_at?: string | null
+          nudge_dates?: string[]
+          nudge_week_start?: string | null
+          rapport_level?: Database["public"]["Enums"]["outreach_rapport_level"]
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          last_outreach_at?: string | null
+          nudge_dates?: string[]
+          nudge_week_start?: string | null
+          rapport_level?: Database["public"]["Enums"]["outreach_rapport_level"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_relationships_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "club_network_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           case_study_content: string | null
@@ -9627,6 +9709,12 @@ export type Database = {
         | "network_collaborator"
         | "member"
         | "stats_updater"
+      outreach_rapport_level:
+        | "cold"
+        | "warming"
+        | "friendly"
+        | "trusted"
+        | "champion"
       outreach_response_status:
         | "none"
         | "replied"
@@ -9770,6 +9858,13 @@ export const Constants = {
         "network_collaborator",
         "member",
         "stats_updater",
+      ],
+      outreach_rapport_level: [
+        "cold",
+        "warming",
+        "friendly",
+        "trusted",
+        "champion",
       ],
       outreach_response_status: [
         "none",

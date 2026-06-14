@@ -1,89 +1,117 @@
-# Plan
+## 1. Credit Usage This Month (May 24 → Jun 24)
 
-Two builds. (The Mulligan/Omotoye data audit was already delivered above — no code change unless you want a re-usable "report data gaps" view; not included here.)
+Workspace has used **666.45 of 2,060** granted credits. Cloud is NOT the problem — it's a tiny slice. Build-mode messages dominate.
 
----
+| Bucket | Credits | % of spend |
+|---|---|---|
+| Build mode messages | 582.90 | 87.5% |
+| Plan mode messages | 60.70 | 9.1% |
+| Cloud (all sub-items combined) | 22.61 | 3.4% |
+| AI Gateway (Gemini 2.5 Flash) | 0.24 | <0.1% |
 
-## 1. Totals & averages header on Data → Match Data
+Cloud breakdown: cached egress 9.86, file storage 6.09, egress 4.05, compute pico 2.58, functions 0.02, realtime 0.01.
 
-**Location:** `src/components/staff/CoachingDataSection.tsx` → "Match Data" tab → above `AnalysisDataTab`.
+### Ways to keep this down
 
-Add a compact `MatchDataTotalsHeader` component that summarises the player's currently loaded `analyses` list. Two rows of pill stats:
+**Biggest lever — build mode (87.5%):**
+- Batch related changes into one message instead of several follow-ups. Each round-trip costs credits regardless of size.
+- Reply to the same thread rather than re-stating context in a new message.
+- Avoid "try again" / "make it nicer" loops — give one consolidated brief with all tweaks.
+- Use plan mode (1 credit flat) for anything design-y or ambiguous before committing build credits.
+- "Try to fix" on errors is free — use it before asking for a manual fix.
 
-- **Totals row:** matches, minutes, goals, assists, shots, key passes (sum across all analyses where the stat is present, nulls treated as 0 per project rule).
-- **Averages row:** the mean for every numeric field that appears in `striker_stats` / `fixture_stats` / GK stats — discovered dynamically from the loaded analyses so it covers every match-statistic recorded on data reports. Percentage fields exclude nulls (existing rule); raw counts treat null as 0; "per 90" cards weight by `minutes_played`.
+**Plan mode (9.1%):** fine as-is, but skip plan mode for tiny, unambiguous edits.
 
-Implementation:
-- New file `src/components/staff/MatchDataTotalsHeader.tsx`. Takes `analyses` + `playerData` (for position → GK vs outfield field set).
-- Reuse the field metadata already declared in `AnalysisDataTab` (extract a small `getStatFields(position)` helper into `src/lib/matchStatFields.ts` so both files share it — keeps "stats visibility merging" rules intact).
-- Render gold-bordered (`#C6A332`) pill cards, dark theme, em-dash for missing.
-- Position-aware (GK gets GK fields), respects the existing hidden-stat rules.
+**Cloud (3.4%):** small but trimmable:
+- Cached/raw egress (13.9c) is dominated by large media. Lazy-load video/PDF previews and ensure heatmaps/match clips use the existing CDN cache headers.
+- File storage (6.1c) — purge expired `analysis-videos` clips faster (the cleanup function already exists; schedule it daily).
+- Compute pico (2.6c) — review heaviest edge functions for unnecessary cold starts.
 
-Embedded in CoachingDataSection above `<AnalysisDataTab ... />`. No business-logic change inside `AnalysisDataTab`.
+Most impactful single change: consolidate requests. Cutting build messages 25% saves ~145 credits/month.
 
----
+## 2. Match-by-Match Action Data (Mulligan & Omotoye)
 
-## 2. Club Outreach → "Outreach Strategy" tab
+This is the final readable copy you asked for. Pulled live from `player_analysis` + `performance_report_actions`.
 
-**Location:** `src/components/staff/ClubOutreachManager.tsx`.
+### Michael Mulligan
 
-### UI
-Wrap the existing manager body in a top-level Tabs control with two tabs:
-1. **Outreach** (current screen, unchanged).
-2. **Outreach Strategy** (new).
+**Missing actions entirely (0 logged):**
+- 2023-05-21 FC Gießen, 2023-05-27 RW Hadamar, 2023-09-01 1862 Weinheim, 2023-09-09 VfB Eppingen, 2023-09-24 Zuzenhausen, 2023-10-13 Bruchsal, 2023-10-21 Spielberg, 2023-11-25 Germania Friedrichstal, 2024-01-28 Gonsenheim, 2024-03-10 Weinheim, 2025-01-18 TG Friedberg, 2025-09-24 Bohemians 1905 (12 fixtures)
 
-### Outreach Strategy tab
+**Actions logged but zero descriptions, descriptions hidden (`show_descriptions=false`):** intentional, not missing
+- 2026-04-04 Pribram II (81), 2026-05-01 Slavia C (74), 2026-05-20 Aritma (104), 2026-05-24 Dukla B (105)
 
-Single wide screen (per project rule — no thin popup):
+**Actions logged, descriptions empty, descriptions still toggled on:** these are the real gaps
+- 2026-03-28 Admira Praha (1/0, draft)
+- 2026-04-25 Motorlet Praha (68/0)
+- 2026-05-10 SK Petrin (50/0, draft)
+- 2026-05-16 Kladno (102/0)
 
-**A. Strategy form (top)**
-- Player(s) multi-select (uses existing `PlayerCombobox` pattern, excludes Scouted / FFF).
-- Target filters: country, league, league level, club name (free text), position fit notes (textarea), and any auto-fill defaults from the existing New Outreach dialog (fit/recommendation template, show toggles).
-- "Save strategy" persists for reuse.
+**Partial — only a sliver have descriptions:**
+- 2026-02-28 Králův Dvůr (68/66), 2026-03-07 SK Dynamo Č. Budějovice B (97/96), 2026-04-18 Pisek (48/2), 2026-05-30 Viktoria Plzeň B (77/2)
 
-**B. Bulk club picker**
-- Country → League → Clubs collapsible tree, sourced from `club_network_contacts` (group by `country`, then a `league` field). If no league field exists today, the migration below adds it and we surface a flat "Unknown league" group until populated. Clubs are de-duplicated by `club_name`.
-- Each club row has a checkbox; running tally at the bottom. "Confirm selection" creates draft outreaches.
+### Tyrese Omotoye
 
-**C. Generation**
-On confirm, for each selected club + each selected player, insert a row into `club_outreach_links` with:
-- `status = 'draft'`
-- `target_type = 'club'`
-- Linked player(s) via `club_outreach_link_players`
-- `club_contact_name` / club name filled from the picker
-- `fit_recommendation` and the show_* toggles inherited from the strategy auto-fill
-- New flag `is_pending_strategy_draft = true` so the main Outreach tab can render these with the brown shade + ? badge
+**Missing actions entirely (0 logged):**
+- 2025-07-25 SILON Taborsko, 2025-07-30 Artis Brno, 2025-08-03 Pribram, 2025-08-08 Chrudim, 2025-08-16 SFC Opava, 2025-08-22 1.SK Prostejov, 2025-08-31 Viktoria Zizkov, 2025-09-12 Slavia Prague B, 2025-09-20 Zbrojovka Brno, 2025-09-26 Banik Ostrava B, 2025-10-05 Vlasim (11 fixtures)
 
-### Drafts strip on main Outreach tab
-On the existing "Drafts" column in `ClubOutreachManager.tsx`, rows where `is_pending_strategy_draft = true` render with:
-- Brown card border / left accent (`hsl(28 45% 35%)`)
-- A `?` icon
-- Green-tick (Check) and red-X (X) buttons inline
+**Actions logged but zero descriptions, descriptions hidden (`show_descriptions=false`):** intentional
+- 2026-04-04 Prostejov (65), 2026-04-15 Slavia Praha (99), 2026-04-19 Zbrojovka Brno (44), 2026-04-24 Baník Ostrava B (97), 2026-05-06 SK Dynamo (71), 2026-05-10 Slavia Kromeriz (84), 2026-05-16 Sparta Prague B (102)
 
-Actions:
-- **Green tick:** clears `is_pending_strategy_draft`, opens the existing edit dialog pre-filled so staff can finalise.
-- **Red X:** soft-deletes (sets `archived_at`), same as the existing archive flow.
+**Actions logged, descriptions empty, descriptions still toggled on:** real gaps
+- 2026-05-23 Ústi nad Labem (63/0, draft)
 
-### Strategy persistence
+**Partial:**
+- 2026-03-06 Pribram (44/43), 2026-03-19 Opava (29/28)
 
-New table `club_outreach_strategies`:
-- `name text`
-- `player_ids uuid[]`
-- `filters jsonb` (country, league, level, position notes, etc.)
-- `defaults jsonb` (fit_recommendation template, show_form/show_in_numbers/show_season_stats/show_strengths, prepared_for_name pattern)
-- `created_by`, timestamps
-- RLS + GRANTs per project rules; authenticated staff only.
+## 3. Relationships Tab on Club Outreach
 
-Migration also adds:
-- `club_outreach_links.is_pending_strategy_draft boolean default false`
-- `club_outreach_links.strategy_id uuid` (FK to new table, nullable)
-- Optional `club_network_contacts.league text` if not present, so the picker can group by league.
+Add a third tab `Relationships` to `ClubOutreachManager` alongside the existing Outreach and Strategy tabs.
 
-### Files touched
-- New: `supabase/migrations/<ts>_outreach_strategy.sql`, `src/components/staff/outreach/OutreachStrategyTab.tsx`, `src/components/staff/outreach/StrategyClubPicker.tsx`, `src/components/staff/MatchDataTotalsHeader.tsx`, `src/lib/matchStatFields.ts`.
-- Edited: `src/components/staff/ClubOutreachManager.tsx` (Tabs wrapper, brown-draft rendering, tick/reject buttons), `src/components/staff/CoachingDataSection.tsx` (insert totals header above match data), `src/components/portal/AnalysisDataTab.tsx` (only to import shared field meta — no behaviour change).
+**Scope:** track our relationship with individual staff members at clubs (sporting directors, scouts, coaches, agents-of-agents), generate random weekly nudges, log conversation notes, tag rapport level.
+
+### Migration
+New table `outreach_relationships`:
+- `contact_id` (FK → `club_network_contacts`, unique) — source of name/club/role/country
+- `rapport_level` enum: `cold`, `warming`, `friendly`, `trusted`, `champion`
+- `weekly_trigger_count` smallint default random 3–5, regenerated each Monday
+- `last_outreach_at`, `next_nudge_at`
+- `is_archived` bool
+- standard timestamps
+
+New table `outreach_relationship_notes`:
+- `relationship_id` FK
+- `body` text
+- `author_id` uuid
+- `created_at`
+
+RLS: admin + staff with `outreach` permission can manage; service_role full. Grants for authenticated and service_role.
+
+Trigger on insert into `outreach_relationship_notes`: bump `relationships.last_outreach_at = now()` and clear `next_nudge_at` so a new trigger picks a new day.
+
+A daily edge function (or pg_cron) `regenerate-relationship-triggers` runs at 00:05 each Monday: for each non-archived relationship, set `weekly_trigger_count` to a random 3–5 and schedule that many `next_nudge_at` dates spread across the week (stored as a `nudge_dates date[]`).
+
+### UI — `src/components/staff/outreach/RelationshipsTab.tsx`
+
+- Header: search + rapport filter + "Add relationship" (picks existing contact from `club_network_contacts` or quick-adds new).
+- Card grid (one card per relationship):
+  - Contact photo, name, role, club (with logo), country flag.
+  - Rapport pill (colour-coded per level) — click to cycle/select.
+  - "Nudge" badge if `today ∈ nudge_dates`, brown highlight just like strategy drafts.
+  - Days-since-last-contact.
+  - Inline note composer (textarea + Save) — saves to `outreach_relationship_notes`, optimistic UI, auto-updates `last_outreach_at` via the trigger.
+  - Collapsible note history (most recent first, author + relative time).
+- Top strip: "This week's nudges" — list of cards due today/this week, click-through to focus the card.
+- Empty state explains the random 3–5 weekly trigger system.
+
+### Files
+
+- New migration: tables, grants, RLS, trigger, optional cron.
+- New `src/components/staff/outreach/RelationshipsTab.tsx`.
+- New `src/components/staff/outreach/RelationshipCard.tsx`.
+- New edge function `regenerate-relationship-triggers` + cron entry.
+- Edit `src/components/staff/ClubOutreachManager.tsx` — add the third tab.
 
 ### Out of scope
-- No change to existing send/translate/PDF flows.
-- No change to the public proposal page.
-- No automatic AI fill on bulk drafts — they inherit strategy defaults, nothing more, per your answer.
+
+No email/WhatsApp send from this tab (notes only), no AI-suggested message drafts, no calendar sync — those can come later.
