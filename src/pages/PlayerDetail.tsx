@@ -37,6 +37,7 @@ const languageColumnMap: Record<string, string> = {
 };
 
 const PlayerDetail = () => {
+  const { t } = useLanguage();
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
@@ -551,7 +552,7 @@ const PlayerDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{player.name} | {player.position} | RISE Football Agency</title>
+        <title>{player.name} | {player.position}  {t('player_detail.rise_football_agency', '| RISE Football Agency')}</title>
         <meta name="description" content={metaDescription} />
         <link rel="canonical" href={`${mainDomain}/stars/${playername}`} />
         
@@ -728,7 +729,8 @@ const PlayerDetail = () => {
                       }
                     }}
                   >
-                    Your browser does not support the video tag.
+                    
+                    {t('player_detail.your_browser_does_not_support_the_video_tag', 'Your browser does not support the video tag.')}
                   </LazyVideo>
                 </>
               ) : (
@@ -764,7 +766,7 @@ const PlayerDetail = () => {
                         <button
                           onClick={() => setCarouselStart(s => s - PAGE)}
                           className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
-                          aria-label="Previous logos"
+                          aria-label={t('player_detail.previous_logos', 'Previous logos')}
                         >
                           <ChevronLeft className="w-5 h-5" />
                         </button>
@@ -801,7 +803,7 @@ const PlayerDetail = () => {
                         <button
                           onClick={() => setCarouselStart(s => s + PAGE)}
                           className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[hsl(var(--gold))]/20 hover:bg-[hsl(var(--gold))]/30 border border-[hsl(var(--gold))]/40 flex items-center justify-center text-foreground transition-colors"
-                          aria-label="Next logos"
+                          aria-label={t('player_detail.next_logos', 'Next logos')}
                         >
                           <ChevronRight className="w-5 h-5" />
                         </button>
@@ -909,7 +911,7 @@ const PlayerDetail = () => {
             return (
               <div className="mb-6 w-full">
                 <div className="flex flex-col items-center gap-2 md:flex-row md:items-start md:gap-3 w-full">
-                  <img src={hudlLogo} alt="Wyscout" className="h-5 opacity-60 md:mt-1.5" />
+                  <img src={hudlLogo} alt={t('player_detail.wyscout', 'Wyscout')} className="h-5 opacity-60 md:mt-1.5" />
                   <div className="flex flex-wrap justify-center md:justify-start gap-2 flex-1">
                     {visibleEntries.map(({ key, label, actions }) => (
                       <button
@@ -1122,7 +1124,7 @@ const PlayerDetail = () => {
                               <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
                             </svg>
                           ) : stat.icon === '1v1' ? (
-                            <div className="text-primary font-black text-2xl tracking-tighter">1v1</div>
+                            <div className="text-primary font-black text-2xl tracking-tighter">{t('player_detail.1v1', '1v1')}</div>
                           ) : stat.icon === 'zap' ? (
                             <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
@@ -1226,7 +1228,7 @@ const PlayerDetail = () => {
                                   <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
                                 </svg>
                               ) : stat.icon === '1v1' ? (
-                                <div className="text-primary font-black text-2xl tracking-tighter">1v1</div>
+                                <div className="text-primary font-black text-2xl tracking-tighter">{t('player_detail.1v1_2', '1v1')}</div>
                               ) : stat.icon === 'zap' ? (
                                 <svg className="w-10 h-10 text-primary" viewBox="0 0 24 24" fill="currentColor">
                                   <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
@@ -1482,7 +1484,7 @@ const PlayerDetail = () => {
             <DialogContent className="max-w-[100vw] sm:max-w-5xl w-full max-h-[90dvh] overflow-y-auto p-3 sm:p-6 pt-12 sm:pt-12">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bebas uppercase tracking-wider text-primary">
-                  {player?.name} - Season Performance Report
+                  {player?.name}  {t('player_detail.season_performance_report', '- Season Performance Report')}
                 </DialogTitle>
               </DialogHeader>
               <div className="mt-2 overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
@@ -1506,7 +1508,7 @@ const PlayerDetail = () => {
                     embedded
                   />
                 ) : (
-                  <p className="text-center text-muted-foreground py-8">No match reports available</p>
+                  <p className="text-center text-muted-foreground py-8">{t('player_detail.no_match_reports_available', 'No match reports available')}</p>
                 )}
               </div>
             </DialogContent>
@@ -1524,7 +1526,8 @@ const PlayerDetail = () => {
           {player.news && player.news.length > 0 && (
             <div className="mb-16">
               <h2 className="text-sm font-bebas text-primary uppercase tracking-widest mb-6 text-lg">
-                Latest News
+                
+                {t('player_detail.latest_news', 'Latest News')}
               </h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {player.news.map((article, index) => (

@@ -352,16 +352,16 @@ const Login = () => {
       <footer className="py-8 px-4 bg-muted/20 border-t border-border/30">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
-            <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">Home</a>
-            <a href="/stars" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">Stars</a>
-            <a href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">About</a>
-            <a href="/performance" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">Realise Potential</a>
-            <a href="/news" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">News</a>
-            <a href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">Contact</a>
-            <a href="/staff" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">Staff</a>
+            <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.home', 'Home')}</a>
+            <a href="/stars" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.stars', 'Stars')}</a>
+            <a href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.about', 'About')}</a>
+            <a href="/performance" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.realise_potential', 'Realise Potential')}</a>
+            <a href="/news" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.news', 'News')}</a>
+            <a href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.contact', 'Contact')}</a>
+            <a href="/staff" className="text-sm text-muted-foreground hover:text-primary transition-colors font-bebas uppercase tracking-wider">{t('login.staff', 'Staff')}</a>
           </div>
           <p className="text-xs text-muted-foreground/60 text-center mt-4">
-            © {new Date().getFullYear()} RISE Football Agency. All rights reserved.
+            © {new Date().getFullYear()}  {t('login.rise_football_agency_all_rights_reserved', 'RISE Football Agency. All rights reserved.')}
           </p>
         </div>
       </footer>

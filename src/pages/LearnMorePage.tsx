@@ -20,8 +20,8 @@ const Performance = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden" key="players-page">
       <SEO 
-        title="Player Development & Career Support - RISE Football Agency"
-        description="We develop our players on and off the pitch. From tactical coaching to career management, discover how RISE helps footballers reach the top."
+        title={t('learn_more.player_development_career_support_rise_football_', 'Player Development & Career Support - RISE Football Agency')}
+        description={t('learn_more.we_develop_our_players_on_and_off_the_pitch_from', 'We develop our players on and off the pitch. From tactical coaching to career management, discover how RISE helps footballers reach the top.')}
         url="/learnmore"
       />
       <Header />

@@ -190,7 +190,8 @@ const PerformancePage = () => {
               {t('performance.hero_subtitle', 'Maximising potential through data-driven insights')}
             </p>
             <p className="text-base md:text-lg text-white/70 max-w-3xl mx-auto">
-              Supporting long-term development and match-day performance across every stage of a player's career
+              
+              {t('performance_page.supporting_long_term_development_and_match_day_p', 'Supporting long-term development and match-day performance across every stage of a player\'s career')}
             </p>
           </div>
         </section>
@@ -200,10 +201,12 @@ const PerformancePage = () => {
           <section className="py-16 md:py-24 px-4">
             <div className="container mx-auto max-w-4xl text-center">
               <h2 className="text-3xl md:text-5xl font-bebas uppercase tracking-wider mb-8">
-                Our <span className="text-primary">Services</span>
+                
+                {t('performance_page.our', 'Our')} <span className="text-primary">{t('performance_page.services', 'Services')}</span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                As a football agency, we provide a fully integrated performance environment for our players and for several clubs we work with. All services are delivered by experienced practitioners and tailored to the individual or collective needs of the player or club.
+                
+                {t('performance_page.as_a_football_agency_we_provide_a_fully_integrat', 'As a football agency, we provide a fully integrated performance environment for our players and for several clubs we work with. All services are delivered by experienced practitioners and tailored to the individual or collective needs of the player or club.')}
               </p>
             </div>
           </section>
@@ -258,25 +261,26 @@ const PerformancePage = () => {
                   {t('performance.our_approach', 'Our')} <span className="text-primary">{t('performance.approach', 'Approach')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
-                  A holistic framework addressing every dimension of elite performance
+                  
+                  {t('performance_page.a_holistic_framework_addressing_every_dimension_', 'A holistic framework addressing every dimension of elite performance')}
                 </p>
               </div>
               
               <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <div className="text-center p-8 border border-border/50 bg-card rounded-2xl hover:border-primary/30 transition-all">
                   <Activity className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">Physical</h3>
-                  <p className="text-sm text-muted-foreground">Strength, speed, endurance and injury prevention metrics tracked and optimised throughout the season</p>
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">{t('performance_page.physical', 'Physical')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('performance_page.strength_speed_endurance_and_injury_prevention_m', 'Strength, speed, endurance and injury prevention metrics tracked and optimised throughout the season')}</p>
                 </div>
                 <div className="text-center p-8 border border-border/50 bg-card rounded-2xl hover:border-primary/30 transition-all">
                   <Brain className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">Psychological</h3>
-                  <p className="text-sm text-muted-foreground">Mental resilience, focus and match preparation support for consistency at the highest level</p>
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">{t('performance_page.psychological', 'Psychological')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('performance_page.mental_resilience_focus_and_match_preparation_su', 'Mental resilience, focus and match preparation support for consistency at the highest level')}</p>
                 </div>
                 <div className="text-center p-8 border border-border/50 bg-card rounded-2xl hover:border-primary/30 transition-all">
                   <Target className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">Tactical</h3>
-                  <p className="text-sm text-muted-foreground">Positional intelligence, decision-making and game understanding developed through detailed analysis</p>
+                  <h3 className="text-xl font-bebas uppercase tracking-wider mb-3">{t('performance_page.tactical', 'Tactical')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('performance_page.positional_intelligence_decision_making_and_game', 'Positional intelligence, decision-making and game understanding developed through detailed analysis')}</p>
                 </div>
               </div>
             </div>
@@ -289,10 +293,12 @@ const PerformancePage = () => {
             <div className="container mx-auto px-4">
               <div className="text-center mb-12">
                 <h2 className="text-4xl md:text-5xl font-bebas uppercase tracking-wider mb-4">
-                  Integrated <span className="text-primary">Programmes</span>
+                  
+                  {t('performance_page.integrated', 'Integrated')} <span className="text-primary">{t('performance_page.programmes', 'Programmes')}</span>
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
-                  Comprehensive support packages tailored to individual development goals
+                  
+                  {t('performance_page.comprehensive_support_packages_tailored_to_indiv', 'Comprehensive support packages tailored to individual development goals')}
                 </p>
               </div>
               

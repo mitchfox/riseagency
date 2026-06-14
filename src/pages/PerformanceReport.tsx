@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
  * is forced open and closing it returns the visitor to the home page.
  */
 const PerformanceReport = () => {
+  const { t } = useLanguage();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -108,7 +109,7 @@ const PerformanceReport = () => {
     <div className="min-h-screen bg-background">
       <SEO
         title={meta ? `${meta.player} vs ${meta.opponent} — Performance Report` : "Performance Report"}
-        description="RISE Football Agency performance report"
+        description={t('performance_report.rise_football_agency_performance_report', 'RISE Football Agency performance report')}
       />
       <div className="print:hidden">
         {!isMobile && <Header />}
@@ -122,8 +123,8 @@ const PerformanceReport = () => {
         )}
         {!resolving && notFound && (
           <div className="text-center text-muted-foreground py-16">
-            <p className="text-lg font-semibold">Performance report not found</p>
-            <p className="text-sm mt-2">This link may be invalid or the report has been removed.</p>
+            <p className="text-lg font-semibold">{t('performance_report.performance_report_not_found', 'Performance report not found')}</p>
+            <p className="text-sm mt-2">{t('performance_report.this_link_may_be_invalid_or_the_report_has_been_', 'This link may be invalid or the report has been removed.')}</p>
           </div>
         )}
       </main>
