@@ -60,6 +60,8 @@ interface Payload {
     target_type?: 'club' | 'agent';
     agent_name?: string | null;
     agent_logo_url?: string | null;
+    language?: string | null;
+    translations?: { ui?: Record<string, string>; fits?: Record<string, string> } | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
