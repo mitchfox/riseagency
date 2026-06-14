@@ -270,9 +270,9 @@ export default function RelationshipsTab() {
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-auto max-h-[90vh] flex flex-col">
           <DialogHeader><DialogTitle>Add relationship</DialogTitle></DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+          <div className="flex-1 overflow-y-auto divide-y divide-border -mx-6 px-6">
             {contacts.map((c) => {
               const taken = rows.some((r) => r.contact_id === c.id);
               return (
