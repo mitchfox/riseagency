@@ -600,9 +600,11 @@ function ProposalCard({
 function KeyDetailsCard({
   entry,
   age,
+  tr,
 }: {
   entry: PlayerEntry;
   age: number | null;
+  tr?: (key: string, en: string) => string;
 }) {
   const player = entry.player;
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -616,7 +618,7 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr ? tr("key.title", "Key Details") : "Key Details"}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
@@ -642,7 +644,7 @@ function KeyDetailsCard({
           <div className="h-12 flex items-center justify-center">
             <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
           </div>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">Years old</p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{tr ? tr("key.yearsOld", "Years old") : "Years old"}</p>
         </div>
 
         {/* Nationality */}
