@@ -140,6 +140,7 @@ self.addEventListener('fetch', (event) => {
           return new Response('Asset not available offline', { status: 503 });
         });
       })
+      })
     );
     return;
   }
