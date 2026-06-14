@@ -169,6 +169,11 @@ export default function ClubOutreachProposal() {
     })();
   }, [shortId]);
 
+  useEffect(() => {
+    const lang = (data?.link?.language as string | undefined) || "en";
+    try { document.documentElement.lang = lang; } catch {}
+  }, [data?.link?.language]);
+
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
