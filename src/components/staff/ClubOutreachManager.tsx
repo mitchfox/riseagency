@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { openExternalUrl } from "@/utils/openExternalUrl";
 
 const APP_BASE = "https://risefootballagency.com";
 const POSITION_SLOTS = ["GK", "CB", "FB", "DM", "CM", "AM", "W", "CF"];
@@ -383,10 +384,7 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
           title="Open link in browser"
           onClick={(e) => {
             e.preventDefault();
-            // Force the proposal to open in the system browser (Safari/Chrome) rather
-            // than inside the Staff PWA window. Cross-origin window.open from a
-            // standalone PWA reliably opens in the default browser on iOS/Android.
-            window.open(url, "_blank", "noopener,noreferrer");
+            openExternalUrl(url);
           }}
         >
           <ExternalLink className="h-3.5 w-3.5" />
