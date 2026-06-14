@@ -14,23 +14,54 @@
   const currentPathname = window.location.pathname;
   const currentFullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const LAST_ROUTE_KEY = 'pwa_last_route';
+  const LAST_SCOPE_KEY = 'pwa_last_scope';
   const HOME_ROUTES = new Set(['/', '/index.html']);
+  const pathOnly = (route: string) => route.split('?')[0].split('#')[0] || '/';
+  const isStaffRoute = (path: string) => path === '/staff' || path.startsWith('/staff/');
+  const isPortalRoute = (path: string) => path === '/portal' || path.startsWith('/portal/');
+  const isRestorableRoute = (path: string) => isStaffRoute(path) || isPortalRoute(path);
+  const isPublicOutreachRoute = (path: string) => path === '/clubs' || path.startsWith('/clubs/') || path.startsWith('/club-proposal/');
 
-  // Persist any non-trivial route the user lands on so we can return to it on next launch
-  if (!HOME_ROUTES.has(currentPathname)) {
+  // Club proposal links are public pages. They must never become the saved
+  // Staff PWA route, otherwise iOS can keep relaunching the PWA into a proposal.
+  if (isPublicOutreachRoute(currentPathname)) {
     try {
-      localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
+      const savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
+      if (savedRoute && isPublicOutreachRoute(pathOnly(savedRoute))) {
+        localStorage.removeItem(LAST_ROUTE_KEY);
+        localStorage.removeItem(LAST_SCOPE_KEY);
+      }
     } catch {}
     return;
   }
 
-  // Cold-start landed on root — restore last visited route if we have one
+  // Persist only the actual installed app shells, not public website/proposal pages.
+  if (isRestorableRoute(currentPathname)) {
+    try {
+      localStorage.setItem(LAST_ROUTE_KEY, currentFullPath);
+      localStorage.setItem(LAST_SCOPE_KEY, isStaffRoute(currentPathname) ? 'staff' : 'portal');
+    } catch {}
+    return;
+  }
+
+  if (!HOME_ROUTES.has(currentPathname)) return;
+
+  // Cold-start landed on root — restore last visited staff/player portal route if valid.
   let savedRoute: string | null = null;
   try {
     savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
   } catch {}
 
-  if (savedRoute && savedRoute !== currentFullPath && !HOME_ROUTES.has(savedRoute.split('?')[0].split('#')[0])) {
+  const savedPath = savedRoute ? pathOnly(savedRoute) : null;
+  if (savedRoute && savedPath && !isRestorableRoute(savedPath)) {
+    try {
+      localStorage.removeItem(LAST_ROUTE_KEY);
+      localStorage.removeItem(LAST_SCOPE_KEY);
+    } catch {}
+    return;
+  }
+
+  if (savedRoute && savedRoute !== currentFullPath && savedPath && !HOME_ROUTES.has(savedPath)) {
     window.location.replace(savedRoute);
   }
 })();
