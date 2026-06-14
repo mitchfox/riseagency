@@ -562,6 +562,25 @@ export const MyPersonalScheduleBoard = () => {
         onDeleted={() => setDraftItem(null)}
         onLogToTasks={() => {}}
       />
+
+      {userId && (
+        <AiScheduleImportDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          currentUserId={userId}
+          onImported={() => {
+            supabase
+              .from("staff_personal_schedule_items")
+              .select("*")
+              .eq("user_id", userId)
+              .gte("scheduled_date", fmtDate(windowStart))
+              .lte("scheduled_date", fmtDate(windowEnd))
+              .order("scheduled_date")
+              .order("start_time")
+              .then(({ data }) => { if (data) setItems(data as Item[]); });
+          }}
+        />
+      )}
     </div>
   );
 };
