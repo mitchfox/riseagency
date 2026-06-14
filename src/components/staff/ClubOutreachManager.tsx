@@ -350,7 +350,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
+function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -361,6 +361,7 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
   const isAgent = (row.target_type ?? 'club') === 'agent';
   const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
   const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
+  const isPending = !!row.is_pending_strategy_draft;
   const copyTemplate = async (t: QuickTemplate) => {
     const filled = fillTemplate(t.content, {
       club: targetName,
@@ -379,7 +380,20 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
     }
   };
   return (
-    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
+    <div
+      className={
+        isPending
+          ? "group relative rounded-xl border-2 border-[hsl(28,55%,38%)] bg-[hsl(28,30%,15%)] p-4 hover:border-[hsl(28,65%,48%)] transition-all"
+          : "group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all"
+      }
+    >
+      {isPending && (
+        <div className="absolute -top-2 -right-2 flex items-center gap-1.5">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(28,55%,38%)] text-white shadow">
+            <HelpCircle className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      )}
       <div className="flex items-start gap-3">
         {targetLogo ? (
           <img src={targetLogo} alt={targetName} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
