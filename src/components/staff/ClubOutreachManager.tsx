@@ -871,6 +871,20 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               <Input className="mt-1.5" placeholder="e.g. Mehmet Yilmaz" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} />
             </div>
             <div>
+              <Label>Proposal language</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">All titles, button labels, and the per-player Fit & Recommendation text on this proposal will be translated to the chosen language when you save. English fields stay editable here.</p>
+              <Select value={language} onValueChange={(v) => setLanguage(v)}>
+                <SelectTrigger className="mt-1.5 h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OUTREACH_LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Show on proposal</Label>
               <p className="text-[11px] text-muted-foreground mt-1">Pull these sections through from the player's Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
