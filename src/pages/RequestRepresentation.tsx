@@ -359,7 +359,7 @@ export const SectionDivider = ({ label }: { label?: string }) => (
 /** Top-of-page logo with a one-shot diagonal shine sweep on first reveal. */
 const RiseLogoShine = ({ className = "" }: { className?: string }) => (
   <div className={`relative overflow-hidden ${className}`}>
-    <img src={riseLogoWhite} alt={t('request_representation.rise_football_agency', 'RISE Football Agency')} className="block h-full w-auto px-0 mx-0 mr-0" />
+    <img src={riseLogoWhite} alt="RISE Football Agency" className="block h-full w-auto px-0 mx-0 mr-0" />
     <span
       aria-hidden="true"
       className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent"
