@@ -208,20 +208,29 @@ export default function RelationshipsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input placeholder="Search name, club, role, country" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
-        <Select value={rapportFilter} onValueChange={(v) => setRapportFilter(v as any)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Rapport" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All rapport</SelectItem>
-            {RAPPORT_LEVELS.map((l) => <SelectItem key={l.v} value={l.v}>{l.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="sm" onClick={() => setShowArchived((v) => !v)}>
-          {showArchived ? "Active" : "Archived"}
-        </Button>
-        <div className="ml-auto" />
-        <Button onClick={openAdd} className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+        <Input
+          placeholder="Search name, club, role, country"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:max-w-xs"
+        />
+        <div className="flex gap-2 flex-wrap">
+          <Select value={rapportFilter} onValueChange={(v) => setRapportFilter(v as any)}>
+            <SelectTrigger className="flex-1 sm:w-40 min-w-[140px]"><SelectValue placeholder="Rapport" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All rapport</SelectItem>
+              {RAPPORT_LEVELS.map((l) => <SelectItem key={l.v} value={l.v}>{l.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={() => setShowArchived((v) => !v)}>
+            {showArchived ? "Active" : "Archived"}
+          </Button>
+        </div>
+        <Button
+          onClick={openAdd}
+          className="bg-[#C6A332] text-black hover:bg-[#C6A332]/90 w-full sm:w-auto sm:ml-auto"
+        >
           <Plus className="w-4 h-4 mr-1" /> Add relationship
         </Button>
       </div>
@@ -261,9 +270,9 @@ export default function RelationshipsTab() {
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-auto max-h-[90vh] flex flex-col">
           <DialogHeader><DialogTitle>Add relationship</DialogTitle></DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+          <div className="flex-1 overflow-y-auto divide-y divide-border -mx-6 px-6">
             {contacts.map((c) => {
               const taken = rows.some((r) => r.contact_id === c.id);
               return (

@@ -284,9 +284,9 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Left: strategy form */}
-        <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+        <div className="space-y-4 rounded-xl border border-border bg-card p-3 sm:p-5">
           <h3 className="text-base font-semibold text-white">Outreach Strategy</h3>
 
           <div>
@@ -328,7 +328,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Country</Label>
               <Input value={filterCountry} onChange={(e) => setFilterCountry(e.target.value)} placeholder="e.g. Germany" />
@@ -382,14 +382,14 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" onClick={saveStrategy}>
+            <Button variant="outline" onClick={saveStrategy} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-1.5" /> Save strategy
             </Button>
           </div>
         </div>
 
         {/* Right: club picker */}
-        <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+        <div className="space-y-3 rounded-xl border border-border bg-card p-3 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-white">Bulk club picker</h3>
             <Badge variant="secondary">{selectedClubIds.size} selected</Badge>
@@ -405,7 +405,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
             />
           </div>
 
-          <div className="max-h-[28rem] overflow-y-auto border border-border rounded-md bg-background/40">
+          <div className="max-h-[20rem] sm:max-h-[28rem] overflow-y-auto border border-border rounded-md bg-background/40">
             {tree.length === 0 && (
               <p className="text-xs text-muted-foreground p-4">No clubs match. Add a league on clubs in the network to organise them better.</p>
             )}
