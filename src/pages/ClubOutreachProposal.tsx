@@ -222,6 +222,17 @@ export default function ClubOutreachProposal() {
   const club = data.club;
   const player = current.player;
 
+  const lang = (data.link.language as string | undefined) || "en";
+  const uiT = data.link.translations?.ui ?? {};
+  const fitsT = data.link.translations?.fits ?? {};
+  const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
+  const fillTpl = (s: string, vars: Record<string, string | number>) =>
+    s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
+  const trFit = (playerId: string | undefined, en: string) => {
+    if (!playerId || lang === "en") return en;
+    return fitsT[playerId] ?? en;
+  };
+
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
   const agencyWaUrl = wa ? `https://wa.me/${wa}` : null;
 
@@ -237,7 +248,8 @@ export default function ClubOutreachProposal() {
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
   const hasMultiple = data.players.length > 1;
-  const fitText = (current.fit_recommendation ?? "").trim();
+  const fitTextEn = (current.fit_recommendation ?? "").trim();
+  const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
   const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
