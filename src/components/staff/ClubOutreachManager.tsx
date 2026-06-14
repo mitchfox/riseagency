@@ -235,7 +235,8 @@ export default function ClubOutreachManager() {
         {([
           { v: 'outreach', label: 'Outreach' },
           { v: 'strategy', label: 'Outreach Strategy' },
-        ] as { v: 'outreach' | 'strategy'; label: string }[]).map((t) => (
+          { v: 'relationships', label: 'Relationships' },
+        ] as { v: 'outreach' | 'strategy' | 'relationships'; label: string }[]).map((t) => (
           <button
             key={t.v}
             type="button"
@@ -249,7 +250,9 @@ export default function ClubOutreachManager() {
         ))}
       </div>
 
-      {topTab === 'strategy' ? (
+      {topTab === 'relationships' ? (
+        <RelationshipsTab />
+      ) : topTab === 'strategy' ? (
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>
