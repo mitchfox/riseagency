@@ -377,7 +377,20 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
       <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
-        <Button size="sm" variant="outline" asChild title="Open link"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Open link in browser"
+          onClick={(e) => {
+            e.preventDefault();
+            // Force the proposal to open in the system browser (Safari/Chrome) rather
+            // than inside the Staff PWA window. Cross-origin window.open from a
+            // standalone PWA reliably opens in the default browser on iOS/Android.
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Button>
         <Button
           size="sm"
           variant={hasLogs ? "default" : "outline"}
