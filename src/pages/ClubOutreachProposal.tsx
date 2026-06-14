@@ -284,12 +284,14 @@ export default function ClubOutreachProposal() {
           </div>
         )}
         <div className="mt-6 flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">{tr("hdr.presents", "Rise Football Agency presents")}</p>
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
-            {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
+            {hasMultiple
+              ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
+              : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
           {preparedFor && (
-            <p className="text-xs text-white/40">For <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
@@ -301,7 +303,7 @@ export default function ClubOutreachProposal() {
             onClick={() => setActiveSlot(null)}
             className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
-            All
+            {tr("chip.all", "All")}
           </button>
           {slots.map((s) => (
             <button
@@ -332,7 +334,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details — moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} />
       </section>
 
       {/* Hero — first Stars highlight video, falls back to player image */}
@@ -366,7 +368,7 @@ export default function ClubOutreachProposal() {
       {fitText && (
         <section className="max-w-3xl mx-auto px-6 mt-6">
           <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Fit & Recommendation</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
             <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
           </div>
         </section>
@@ -378,8 +380,10 @@ export default function ClubOutreachProposal() {
           href={current.stars_url}
           icon={<Video className="h-6 w-6" />}
           eyebrow="01"
-          title="Video & Data"
-          subtitle="Full profile, highlights and statistics"
+          title={tr("card.videoTitle", "Video & Data")}
+          subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
+          openLabel={tr("card.open", "Open")}
+          unavailableLabel={tr("card.unavailable", "Unavailable")}
         />
         {data.link.target_type !== 'agent' && (
           <ProposalCard
@@ -390,9 +394,11 @@ export default function ClubOutreachProposal() {
             }
             icon={<FileBadge2 className="h-6 w-6" />}
             eyebrow="02"
-            title="Proof of Representation"
-            subtitle="Signed agreement with Rise Football Agency"
-            disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
+            title={tr("card.proofTitle", "Proof of Representation")}
+            subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+            disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+            openLabel={tr("card.open", "Open")}
+            unavailableLabel={tr("card.unavailable", "Unavailable")}
             internal
           />
         )}
@@ -401,28 +407,28 @@ export default function ClubOutreachProposal() {
       {/* Optional Stars-derived sections (per-link toggles) */}
       {data.link.show_form && current.form_config && current.form_analyses && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} />
+          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
         </section>
       )}
       {data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0 && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <InNumbersCard stats={current.top_stats} />
+          <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
         </section>
       )}
       {data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0 && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <SeasonStatsCard stats={current.season_stats} />
+          <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
         </section>
       )}
       {data.link.show_strengths && current.strengths_and_play_style && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <StrengthsCard data={current.strengths_and_play_style} />
+          <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
         </section>
       )}
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">Discuss further</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">{tr("contact.discuss", "Discuss further")}</p>
         {agencyWaUrl && (
           <a
             href={agencyWaUrl}
@@ -442,7 +448,7 @@ export default function ClubOutreachProposal() {
                 <WhatsAppIcon className="h-6 w-6" />
               )}
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp {firstName}'s Agent</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(tr("contact.waAgent", "WhatsApp {firstName}'s Agent"), { firstName })}</div>
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
@@ -481,7 +487,7 @@ export default function ClubOutreachProposal() {
                 )}
                 <div className="text-left">
                   <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>
-                    WhatsApp Key Club Contact{clubContactRole ? ` – ${clubContactRole}` : ""}
+                    {tr("contact.waClubContact", "WhatsApp Key Club Contact")}{clubContactRole ? ` – ${clubContactRole}` : ""}
                   </div>
                   <div className="text-sm sm:text-base">
                     {clubContactName}
@@ -498,7 +504,7 @@ export default function ClubOutreachProposal() {
       <footer className="mt-12 flex items-center justify-center">
         <a
           href={PUBLIC_HOME_URL}
-          aria-label="Visit RISE Football Agency"
+          aria-label={tr("footer.visit", "Visit RISE Football Agency")}
           onClick={(e) => {
             e.preventDefault();
             goToPublicHomepage();
