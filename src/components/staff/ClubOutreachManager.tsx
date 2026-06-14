@@ -11,6 +11,7 @@ import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCirc
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
+import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 
 const APP_BASE = "https://risefootballagency.com";
 const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
