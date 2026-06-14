@@ -94,6 +94,11 @@ const SECTION_PREVIEWS: Record<string, string> = {
   interactionhistory: "History of staff interactions with contacts",
   transferreports: "Transfer reports and recommendation write-ups",
   corporationtax: "Corporation tax filings and TinyTax exports",
+  cluboutreach: "Outbound club and agent outreach campaigns with templates",
+  datasetbuilder: "Roboflow dataset builder with YOLO export support",
+  socialshare: "Social share previews and Open Graph card management",
+  technical: "Technical programming, drills and ball mastery sessions",
+  usage: "AI and platform usage tracking with cost breakdowns",
   // Investor portal sections
   investment: "Investment thesis, sections and overview cards",
   represented: "Players currently under representation",
@@ -110,6 +115,13 @@ const SECTION_PREVIEWS: Record<string, string> = {
   outreach: "Player outreach pipeline for youth and pro targets",
   timeManagement: "Time management board grouped by category",
   priorities: "Priority board with daily, weekly and seasonal items",
+  businessPlan: "Business plan, OKRs and long-term strategy document",
+  timeline: "Agency timeline of milestones, signings and key events",
+  capacity: "Staff capacity planning and workload distribution",
+  execNotes: "Executive thought wall for ideas, notes and reflections",
+  execScripts: "Executive scripts library for outreach and messaging",
+  execWorkflow: "Executive workflow board for cross-team coordination",
+  projections: "Long-range revenue and growth projections",
 };
 
 // Colour palette for section preview cards - cycles through these
