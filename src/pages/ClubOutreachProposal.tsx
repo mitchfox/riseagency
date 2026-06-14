@@ -468,6 +468,12 @@ export default function ClubOutreachProposal() {
         <a
           href="https://risefootballagency.com"
           aria-label="Visit RISE Football Agency"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            e.preventDefault();
+            window.open("https://risefootballagency.com", "_blank", "noopener,noreferrer");
+          }}
           className="inline-flex flex-col items-center gap-2 group"
         >
           <img src={riseLogoWhite} alt="RISE Football" className="h-16 md:h-20 w-auto opacity-80 group-hover:opacity-100 transition-opacity" />
