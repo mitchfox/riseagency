@@ -2,7 +2,7 @@
 // RISE Football Agency - Progressive Web App Service Worker
 // ================================================================
 // Cache version - increment to force cache refresh
-const CACHE_VERSION = 'rise-v2.0.2';
+const CACHE_VERSION = 'rise-v2.0.3';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -25,10 +25,10 @@ const urlsToCache = [
 
 // Helper function to determine which HTML file to serve for a given path
 function getHTMLForPath(pathname) {
-  if (pathname.startsWith('/portal')) {
+  if (pathname === '/portal' || pathname.startsWith('/portal/')) {
     return '/portal.html';
   }
-  if (pathname.startsWith('/staff')) {
+  if (pathname === '/staff' || pathname.startsWith('/staff/')) {
     return '/staff.html';
   }
   return '/index.html';
@@ -109,7 +109,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
   // Skip service worker and manifest
-  if (url.pathname === '/sw.js' || url.pathname === '/manifest.json') {
+  if (url.pathname === '/sw.js' || url.pathname === '/manifest.json' || url.pathname === '/manifest-staff.json' || url.pathname === '/manifest-player.json') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' }).then(addCrossOriginHeaders)
     );
