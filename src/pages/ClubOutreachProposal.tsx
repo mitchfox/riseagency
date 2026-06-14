@@ -103,6 +103,18 @@ function tryAutoplay(video: HTMLVideoElement) {
   }
 }
 
+const PUBLIC_HOME_URL = "https://risefootballagency.com/";
+
+function goToPublicHomepage() {
+  try {
+    localStorage.removeItem("pwa_last_route");
+    localStorage.removeItem("pwa_last_scope");
+  } catch {
+    // Continue to the homepage even if storage is unavailable.
+  }
+  window.location.assign(PUBLIC_HOME_URL);
+}
+
 export default function ClubOutreachProposal() {
   const { shortId } = useParams<{ shortId: string }>();
   const [data, setData] = useState<Payload | null>(null);
@@ -466,13 +478,11 @@ export default function ClubOutreachProposal() {
 
       <footer className="mt-12 flex items-center justify-center">
         <a
-          href="https://risefootballagency.com"
+          href={PUBLIC_HOME_URL}
           aria-label="Visit RISE Football Agency"
-          target="_blank"
-          rel="noopener noreferrer"
           onClick={(e) => {
             e.preventDefault();
-            window.open("https://risefootballagency.com", "_blank", "noopener,noreferrer");
+            goToPublicHomepage();
           }}
           className="inline-flex flex-col items-center gap-2 group"
         >

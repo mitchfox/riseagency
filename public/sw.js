@@ -2,7 +2,7 @@
 // RISE Football Agency - Progressive Web App Service Worker
 // ================================================================
 // Cache version - increment to force cache refresh
-const CACHE_VERSION = 'rise-v2.0.2';
+const CACHE_VERSION = 'rise-v2.0.3';
 const CACHE_NAME = `${CACHE_VERSION}`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 
@@ -25,10 +25,10 @@ const urlsToCache = [
 
 // Helper function to determine which HTML file to serve for a given path
 function getHTMLForPath(pathname) {
-  if (pathname.startsWith('/portal')) {
+  if (pathname === '/portal' || pathname.startsWith('/portal/')) {
     return '/portal.html';
   }
-  if (pathname.startsWith('/staff')) {
+  if (pathname === '/staff' || pathname.startsWith('/staff/')) {
     return '/staff.html';
   }
   return '/index.html';
@@ -109,7 +109,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
   // Skip service worker and manifest
-  if (url.pathname === '/sw.js' || url.pathname === '/manifest.json') {
+  if (url.pathname === '/sw.js' || url.pathname === '/manifest.json' || url.pathname === '/manifest-staff.json' || url.pathname === '/manifest-player.json') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' }).then(addCrossOriginHeaders)
     );
@@ -217,46 +217,47 @@ self.addEventListener('fetch', (event) => {
           return caches.match('/index.html').then((indexResponse) => {
             if (indexResponse) return addCrossOriginHeaders(indexResponse);
             // No cached HTML - show offline page
-          return new Response(
-            `<!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <title>Offline - RISE</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <style>
-                  body { 
-                    font-family: system-ui; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    min-height: 100vh; 
-                    margin: 0;
-                    background: #000;
-                    color: #C8A871;
-                  }
-                  .container { text-align: center; max-width: 400px; padding: 2rem; }
-                  h1 { font-size: 2rem; margin-bottom: 1rem; }
-                  p { color: #999; }
-                  a { color: #C8A871; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <h1>You're Offline</h1>
-                  <p>Please check your internet connection and try again.</p>
-                  <p><a href="javascript:location.reload()">Tap to retry</a></p>
-                </div>
-              </body>
-            </html>`,
-            {
-              status: 200,
-              statusText: 'OK',
-              headers: new Headers({
-                'Content-Type': 'text/html'
-              })
-            }
-          );
+            return new Response(
+              `<!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>Offline - RISE</title>
+                  <meta name="viewport" content="width=device-width, initial-scale=1">
+                  <style>
+                    body { 
+                      font-family: system-ui; 
+                      display: flex; 
+                      align-items: center; 
+                      justify-content: center; 
+                      min-height: 100vh; 
+                      margin: 0;
+                      background: #000;
+                      color: #C8A871;
+                    }
+                    .container { text-align: center; max-width: 400px; padding: 2rem; }
+                    h1 { font-size: 2rem; margin-bottom: 1rem; }
+                    p { color: #999; }
+                    a { color: #C8A871; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <h1>You're Offline</h1>
+                    <p>Please check your internet connection and try again.</p>
+                    <p><a href="javascript:location.reload()">Tap to retry</a></p>
+                  </div>
+                </body>
+              </html>`,
+              {
+                status: 200,
+                statusText: 'OK',
+                headers: new Headers({
+                  'Content-Type': 'text/html'
+                })
+              }
+            );
+          });
         });
       })
     );
