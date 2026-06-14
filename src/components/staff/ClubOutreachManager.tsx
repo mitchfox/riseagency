@@ -460,6 +460,25 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
           })}
         </div>
       )}
+      {isPending && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button
+            size="sm"
+            onClick={onApprovePending}
+            className="bg-emerald-600 text-white hover:bg-emerald-500"
+          >
+            <Check className="h-3.5 w-3.5 mr-1" /> Approve
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onRejectPending}
+            className="border-rose-500/60 text-rose-300 hover:bg-rose-500/10"
+          >
+            <X className="h-3.5 w-3.5 mr-1" /> Reject
+          </Button>
+        </div>
+      )}
       <StatusToggle status={row.status} onChange={onStatusChange} />
       <div className="mt-3 grid grid-cols-5 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
