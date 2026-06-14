@@ -1,35 +1,62 @@
-## AI schedule import
+## Translate club outreach proposals
 
-Add an "AI import" button on the My Schedule board that lets a staff member paste text, upload an image, or take a camera photo of a schedule. AI extracts day, time, and event for each row, then bulk-adds them to a chosen staff member's `staff_personal_schedule_items`.
+Let staff pick a language per outreach link. The public proposal page then displays every UI label, heading, and the per-player `fit_recommendation` text in that language.
 
-### UI (`MyPersonalScheduleBoard.tsx` header)
-- New button "AI import" next to the existing prev/next/today controls.
-- Opens a wide dialog (not narrow) with:
-  1. **Target staff** dropdown (admins see all staff from `profiles` joined to `user_roles` admin/staff; non-admins are locked to themselves).
-  2. Tabs: **Text**, **Upload image**, **Camera** (uses `<input type="file" accept="image/*" capture="environment">` on mobile).
-  3. "Parse with AI" button → calls edge function.
-  4. Preview table of parsed rows (date, start, end, title) with inline edit + per-row remove.
-  5. "Add to schedule" button → bulk insert.
+### Languages
+Use the existing 12 codes from `LanguageContext` (`en, es, pt, fr, de, it, pl, cs, ru, tr, hr, no`). English is the default and skips translation.
 
-### Edge function `parse-schedule-ai`
-- Lovable AI Gateway, model `google/gemini-3-flash-preview` (handles text + image).
-- Input: `{ mode: "text" | "image", text?: string, imageBase64?: string, referenceDate: string }`.
-- Uses `Output.object` schema:
+### DB migration (`club_outreach_links`)
+- `language text not null default 'en'`
+- `translations jsonb` — cached map `{ ui: { key: translatedString }, fits: { [player_id]: translatedString } }`
+- No new policies needed; existing ones cover the columns.
+
+### Edge function `translate-club-outreach`
+Input: `{ short_id: string, language: LanguageCode }`.
+
+Behaviour:
+- If `language === 'en'`, clear `translations` and set `language = 'en'`.
+- Otherwise:
+  1. Load the link, joined player rows (for `fit_recommendation`).
+  2. Build a fixed bundle of UI strings used by `ClubOutreachProposal.tsx` (titles, section headings, button labels, footer copy, empty-state text) keyed by short ids like `hdr.proposal`, `btn.next`, etc. — defined server-side so the function owns the keyset.
+  3. Append each player's `fit_recommendation` keyed by player id.
+  4. Single Lovable AI Gateway call (`google/gemini-2.5-flash`) with tool-call schema returning `{ ui: {...}, fits: {...} }` mapping every input key to its translation. UK English preserved for proper nouns, football terminology localised, no markdown.
+  5. Save back to `club_outreach_links.language` + `translations`.
+
+Return the cached object.
+
+### Staff UI (`ClubOutreachManager.tsx` → outreach dialog)
+- Add **Language** dropdown (same 12 options) to both Club and Agent outreach dialogs.
+- On Save:
+  1. Upsert the link as today (English fields stay canonical).
+  2. If language `!== 'en'`, call `translate-club-outreach` and wait for cache write; show toast "Translating…".
+- Add a small **Re-translate** button on existing rows when a language is already set (re-runs the function — needed if `fit_recommendation` changes).
+
+### Public reading (`get-club-outreach`)
+- Add `language` and `translations` to the returned payload.
+
+### Proposal page (`ClubOutreachProposal.tsx`)
+- Receive `language` + `translations` from the API response.
+- Introduce a tiny local helper:
+  ```ts
+  const tr = (key: string, en: string) =>
+    language === 'en' ? en : (translations?.ui?.[key] ?? en);
+  const trFit = (playerId: string, en: string) =>
+    language === 'en' ? en : (translations?.fits?.[playerId] ?? en);
   ```
-  { items: [{ date: "YYYY-MM-DD", start_time: "HH:MM", end_time: "HH:MM", title: string }] }
-  ```
-- System prompt: UK English, interpret day names relative to `referenceDate` (next occurrence), default 1-hour duration when only a start time is given, omit rows missing a time, keep `title` concise.
-- Returns the parsed items array.
+- Wrap every literal English label currently in the JSX with `tr('key', 'English')` and the per-player `fit_recommendation` render with `trFit(player.id, fit)`.
+- Set `<html lang={language}>` via a `useEffect` so screen readers and search engines see the right language.
+- Footer "risefootballagency.com" link unchanged.
 
-### Insert flow
-- For each previewed row, insert into `staff_personal_schedule_items` with `user_id = target staff id`, `title`, `scheduled_date`, `start_time`, `end_time`.
-- Refresh board, toast count added.
-
-### Permissions
-- Reuse existing RLS. Only admins can pick a staff member other than themselves; gate the dropdown with `has_role(..., 'admin')` check via `user_roles`.
+### UK English + tone
+- The AI prompt explicitly requests UK English equivalents for English fallbacks, preserves football terminology per the project's localisation memory, and keeps proper nouns unchanged.
 
 ### Files touched
-- `src/components/staff/MyPersonalScheduleBoard.tsx` — add button + dialog component (or a new `AiScheduleImportDialog.tsx` for cleanliness).
-- New `src/components/staff/AiScheduleImportDialog.tsx`.
-- New `supabase/functions/parse-schedule-ai/index.ts` (verify_jwt default, CORS, Lovable AI Gateway).
-- No DB schema changes.
+- New migration adding `language` + `translations` to `club_outreach_links`.
+- New `supabase/functions/translate-club-outreach/index.ts`.
+- `supabase/functions/get-club-outreach/index.ts` — include the two new fields.
+- `src/components/staff/ClubOutreachManager.tsx` — language dropdown + post-save translate call + re-translate button.
+- `src/pages/ClubOutreachProposal.tsx` — consume `language` / `translations`, replace literals with `tr(...)` / `trFit(...)`, set `<html lang>`.
+
+### Non-goals
+- Not adding a viewer-side language switcher (language is fixed per link as the user requested).
+- Not translating dynamic stats numbers, player names, or club names.
