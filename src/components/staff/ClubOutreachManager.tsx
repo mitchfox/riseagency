@@ -99,7 +99,7 @@ export default function ClubOutreachManager() {
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
   const [mode, setMode] = useState<OutreachMode>('club');
-  const [topTab, setTopTab] = useState<'outreach' | 'strategy'>('outreach');
+  const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships'>('outreach');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
