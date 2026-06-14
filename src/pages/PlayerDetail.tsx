@@ -37,7 +37,6 @@ const languageColumnMap: Record<string, string> = {
 };
 
 const PlayerDetail = () => {
-  const { t } = useLanguage();
   const { playername } = useParams<{ playername: string }>();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
