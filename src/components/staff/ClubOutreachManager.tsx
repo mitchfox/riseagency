@@ -321,6 +321,8 @@ export default function ClubOutreachManager() {
                       onStatusChange={(s) => setStatus(r.id, s)}
                       templates={templates}
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
+                      onApprovePending={() => approvePending(r)}
+                      onRejectPending={() => rejectPending(r)}
                     />
                   ))}
                 </div>
