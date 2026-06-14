@@ -109,7 +109,9 @@ function goToPublicHomepage() {
   try {
     localStorage.removeItem("pwa_last_route");
     localStorage.removeItem("pwa_last_scope");
-  } catch {}
+  } catch {
+    // Continue to the homepage even if storage is unavailable.
+  }
   window.location.assign(PUBLIC_HOME_URL);
 }
 
