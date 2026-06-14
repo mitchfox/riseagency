@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 
 const APP_BASE = "https://risefootballagency.com";
+const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
 const POSITION_SLOTS = ["GK", "CB", "FB", "DM", "CM", "AM", "W", "CF"];
 const CHANNELS = ["WhatsApp", "Email", "Call", "Meeting", "Other"];
 const STATUSES = ["draft", "ready", "sent"] as const;
@@ -140,6 +141,7 @@ export default function ClubOutreachManager() {
   }, [rows, q, playerById, mode]);
 
   const proposalUrl = (shortId: string) => `${APP_BASE}/club-proposal/${shortId}`;
+  const externalProposalUrl = (shortId: string) => `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
 
   const copyLink = async (shortId: string) => {
     await navigator.clipboard.writeText(proposalUrl(shortId));
@@ -247,6 +249,7 @@ export default function ClubOutreachManager() {
                       row={r}
                       players={players}
                       url={proposalUrl(r.short_id)}
+                      externalUrl={externalProposalUrl(r.short_id)}
                       onCopy={() => copyLink(r.short_id)}
                       onEdit={() => setEditRow(r)}
                       onLog={() => setLogRow(r)}
@@ -279,7 +282,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
+function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -384,7 +387,7 @@ function OutreachCard({ row, url, players, onCopy, onEdit, onLog, onRemove, onSt
           title="Open link in browser"
           onClick={(e) => {
             e.preventDefault();
-            openExternalUrl(url);
+            openExternalUrl(externalUrl);
           }}
         >
           <ExternalLink className="h-3.5 w-3.5" />
