@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, ClipboardList, ChevronDown, Repeat, Users, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TaskDetailDialog, ScheduleItem } from "./TaskDetailDialog";
+import { AiScheduleImportDialog } from "./AiScheduleImportDialog";
+import { Sparkles } from "lucide-react";
 
 type Item = {
   id: string;
@@ -63,6 +65,7 @@ export const MyPersonalScheduleBoard = () => {
   const [now, setNow] = useState<Date>(() => new Date());
   const [openItem, setOpenItem] = useState<Item | null>(null);
   const [draftItem, setDraftItem] = useState<ScheduleItem | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [dragId, setDragId] = useState<string | null>(null);
@@ -285,13 +288,23 @@ export const MyPersonalScheduleBoard = () => {
           </Button>
           <Button variant="outline" size="sm" onClick={() => setWindowStart(startOfDay(new Date()))}>Today</Button>
         </div>
-        <Button
-          size="sm"
-          onClick={() => openCreateAt(new Date(), Math.max(8, now.getHours()), 0)}
-          className="bg-primary/90 hover:bg-primary text-primary-foreground"
-        >
-          <Plus className="h-4 w-4 mr-1" /> Add task
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setAiOpen(true)}
+            title="Parse text or an image with AI and add to a schedule"
+          >
+            <Sparkles className="h-4 w-4 mr-1" /> AI import
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => openCreateAt(new Date(), Math.max(8, now.getHours()), 0)}
+            className="bg-primary/90 hover:bg-primary text-primary-foreground"
+          >
+            <Plus className="h-4 w-4 mr-1" /> Add task
+          </Button>
+        </div>
       </div>
 
       <div className={`grid gap-3 transition-[grid-template-columns] duration-300 ${tasksOpen ? "grid-cols-[240px_1fr]" : "grid-cols-[44px_1fr]"}`}>
@@ -549,6 +562,25 @@ export const MyPersonalScheduleBoard = () => {
         onDeleted={() => setDraftItem(null)}
         onLogToTasks={() => {}}
       />
+
+      {userId && (
+        <AiScheduleImportDialog
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          currentUserId={userId}
+          onImported={() => {
+            supabase
+              .from("staff_personal_schedule_items")
+              .select("*")
+              .eq("user_id", userId)
+              .gte("scheduled_date", fmtDate(windowStart))
+              .lte("scheduled_date", fmtDate(windowEnd))
+              .order("scheduled_date")
+              .order("start_time")
+              .then(({ data }) => { if (data) setItems(data as Item[]); });
+          }}
+        />
+      )}
     </div>
   );
 };
