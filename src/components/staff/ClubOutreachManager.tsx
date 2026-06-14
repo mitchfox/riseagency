@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2 } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
+import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
 
 const APP_BASE = "https://risefootballagency.com";
 const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
@@ -64,6 +65,7 @@ interface OutreachRow {
   agent_logo_url?: string | null;
   language?: string | null;
   translations?: any | null;
+  is_pending_strategy_draft?: boolean;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -96,6 +98,7 @@ export default function ClubOutreachManager() {
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
   const [mode, setMode] = useState<OutreachMode>('club');
+  const [topTab, setTopTab] = useState<'outreach' | 'strategy'>('outreach');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
@@ -133,6 +136,7 @@ export default function ClubOutreachManager() {
       link_players: (byLink.get(r.id) ?? []).sort((a, b) => a.sort_order - b.sort_order),
       club: clubMap.get(r.club_id) ?? null,
       target_type: (r.target_type ?? 'club') as OutreachMode,
+      is_pending_strategy_draft: !!r.is_pending_strategy_draft,
     })));
     setPlayers((playerRows ?? []) as PlayerLite[]);
     setClubs((clubRows ?? []) as ClubLite[]);
@@ -197,6 +201,27 @@ export default function ClubOutreachManager() {
     }
   };
 
+  const approvePending = async (row: OutreachRow) => {
+    const { error } = await supabase
+      .from("club_outreach_links")
+      .update({ is_pending_strategy_draft: false } as any)
+      .eq("id", row.id);
+    if (error) return toast.error(error.message);
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, is_pending_strategy_draft: false } : r)));
+    toast.success("Draft approved — edit and refine when ready");
+    setEditRow({ ...row, is_pending_strategy_draft: false });
+  };
+
+  const rejectPending = async (row: OutreachRow) => {
+    const { error } = await supabase
+      .from("club_outreach_links")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", row.id);
+    if (error) return toast.error(error.message);
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    toast.success("Draft rejected");
+  };
+
   const grouped = useMemo(() => {
     const map: Record<OutreachStatus, OutreachRow[]> = { ready: [], draft: [], sent: [] };
     filtered.forEach((r) => { map[r.status]?.push(r) ?? (map.draft.push(r)); });
@@ -205,6 +230,28 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
+      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+        {([
+          { v: 'outreach', label: 'Outreach' },
+          { v: 'strategy', label: 'Outreach Strategy' },
+        ] as { v: 'outreach' | 'strategy'; label: string }[]).map((t) => (
+          <button
+            key={t.v}
+            type="button"
+            onClick={() => setTopTab(t.v)}
+            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+              topTab === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {topTab === 'strategy' ? (
+        <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
+      ) : (
+      <>
       <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
         {([
           { v: 'club', label: 'Club Outreach' },
@@ -274,6 +321,8 @@ export default function ClubOutreachManager() {
                       onStatusChange={(s) => setStatus(r.id, s)}
                       templates={templates}
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
+                      onApprovePending={() => approvePending(r)}
+                      onRejectPending={() => rejectPending(r)}
                     />
                   ))}
                 </div>
@@ -295,11 +344,13 @@ export default function ClubOutreachManager() {
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
       )}
+      </>
+      )}
     </div>
   );
 }
 
-function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; }) {
+function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -310,6 +361,7 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
   const isAgent = (row.target_type ?? 'club') === 'agent';
   const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
   const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
+  const isPending = !!row.is_pending_strategy_draft;
   const copyTemplate = async (t: QuickTemplate) => {
     const filled = fillTemplate(t.content, {
       club: targetName,
@@ -328,7 +380,20 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
     }
   };
   return (
-    <div className="group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all">
+    <div
+      className={
+        isPending
+          ? "group relative rounded-xl border-2 border-[hsl(28,55%,38%)] bg-[hsl(28,30%,15%)] p-4 hover:border-[hsl(28,65%,48%)] transition-all"
+          : "group relative rounded-xl border border-border bg-card p-4 hover:border-[#cbb96b]/60 hover:shadow-[0_10px_40px_-15px_rgba(203,185,107,0.3)] transition-all"
+      }
+    >
+      {isPending && (
+        <div className="absolute -top-2 -right-2 flex items-center gap-1.5">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(28,55%,38%)] text-white shadow">
+            <HelpCircle className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      )}
       <div className="flex items-start gap-3">
         {targetLogo ? (
           <img src={targetLogo} alt={targetName} className="h-12 w-12 object-contain rounded-md bg-white/5 p-1" />
@@ -393,6 +458,25 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
               </button>
             );
           })}
+        </div>
+      )}
+      {isPending && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button
+            size="sm"
+            onClick={onApprovePending}
+            className="bg-emerald-600 text-white hover:bg-emerald-500"
+          >
+            <Check className="h-3.5 w-3.5 mr-1" /> Approve
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onRejectPending}
+            className="border-rose-500/60 text-rose-300 hover:bg-rose-500/10"
+          >
+            <X className="h-3.5 w-3.5 mr-1" /> Reject
+          </Button>
         </div>
       )}
       <StatusToggle status={row.status} onChange={onStatusChange} />

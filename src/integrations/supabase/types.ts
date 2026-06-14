@@ -814,6 +814,8 @@ export type Database = {
           image_url: string | null
           is_calibration_point: boolean | null
           latitude: number | null
+          league: string | null
+          league_level: string | null
           longitude: number | null
           updated_at: string
           x_position: number | null
@@ -827,6 +829,8 @@ export type Database = {
           image_url?: string | null
           is_calibration_point?: boolean | null
           latitude?: number | null
+          league?: string | null
+          league_level?: string | null
           longitude?: number | null
           updated_at?: string
           x_position?: number | null
@@ -840,6 +844,8 @@ export type Database = {
           image_url?: string | null
           is_calibration_point?: boolean | null
           latitude?: number | null
+          league?: string | null
+          league_level?: string | null
           longitude?: number | null
           updated_at?: string
           x_position?: number | null
@@ -1146,6 +1152,7 @@ export type Database = {
           created_by: string | null
           fit_recommendation: string | null
           id: string
+          is_pending_strategy_draft: boolean
           language: string
           player_id: string | null
           prepared_for_name: string | null
@@ -1155,6 +1162,7 @@ export type Database = {
           show_season_stats: boolean
           show_strengths: boolean
           status: string
+          strategy_id: string | null
           target_type: string
           translations: Json | null
           updated_at: string
@@ -1172,6 +1180,7 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          is_pending_strategy_draft?: boolean
           language?: string
           player_id?: string | null
           prepared_for_name?: string | null
@@ -1181,6 +1190,7 @@ export type Database = {
           show_season_stats?: boolean
           show_strengths?: boolean
           status?: string
+          strategy_id?: string | null
           target_type?: string
           translations?: Json | null
           updated_at?: string
@@ -1198,6 +1208,7 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          is_pending_strategy_draft?: boolean
           language?: string
           player_id?: string | null
           prepared_for_name?: string | null
@@ -1207,6 +1218,7 @@ export type Database = {
           show_season_stats?: boolean
           show_strengths?: boolean
           status?: string
+          strategy_id?: string | null
           target_type?: string
           translations?: Json | null
           updated_at?: string
@@ -1328,6 +1340,39 @@ export type Database = {
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      club_outreach_strategies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          defaults: Json
+          filters: Json
+          id: string
+          name: string
+          player_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          defaults?: Json
+          filters?: Json
+          id?: string
+          name: string
+          player_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          defaults?: Json
+          filters?: Json
+          id?: string
+          name?: string
+          player_ids?: string[]
+          updated_at?: string
         }
         Relationships: []
       }

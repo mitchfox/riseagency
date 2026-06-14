@@ -7,6 +7,7 @@ import { ActionReportsList } from "@/components/staff/analysis/ActionReportsList
 import { AnalysisDataTab } from "@/components/portal/AnalysisDataTab";
 import { AnalysisComparisons } from "@/components/portal/AnalysisComparisons";
 import { CreatePerformanceReportDialog } from "@/components/staff/CreatePerformanceReportDialog";
+import { MatchDataTotalsHeader } from "@/components/staff/MatchDataTotalsHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { ClipboardList, BarChart3, Database, User, RefreshCw } from "lucide-react";
 import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting";
@@ -194,7 +195,10 @@ export const CoachingDataSection = () => {
             className="w-full sm:w-[300px]"
           />
           {selectedPlayer !== "all" && currentPlayer ? (
-            <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
+            <>
+              <MatchDataTotalsHeader analyses={analyses} />
+              <AnalysisDataTab analyses={analyses} playerData={currentPlayer} embedded />
+            </>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
