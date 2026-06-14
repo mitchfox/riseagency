@@ -60,6 +60,8 @@ interface Payload {
     target_type?: 'club' | 'agent';
     agent_name?: string | null;
     agent_logo_url?: string | null;
+    language?: string | null;
+    translations?: { ui?: Record<string, string>; fits?: Record<string, string> } | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
@@ -167,6 +169,11 @@ export default function ClubOutreachProposal() {
     })();
   }, [shortId]);
 
+  useEffect(() => {
+    const lang = (data?.link?.language as string | undefined) || "en";
+    try { document.documentElement.lang = lang; } catch {}
+  }, [data?.link?.language]);
+
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
@@ -215,6 +222,17 @@ export default function ClubOutreachProposal() {
   const club = data.club;
   const player = current.player;
 
+  const lang = (data.link.language as string | undefined) || "en";
+  const uiT = data.link.translations?.ui ?? {};
+  const fitsT = data.link.translations?.fits ?? {};
+  const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
+  const fillTpl = (s: string, vars: Record<string, string | number>) =>
+    s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
+  const trFit = (playerId: string | undefined, en: string) => {
+    if (!playerId || lang === "en") return en;
+    return fitsT[playerId] ?? en;
+  };
+
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
   const agencyWaUrl = wa ? `https://wa.me/${wa}` : null;
 
@@ -230,7 +248,8 @@ export default function ClubOutreachProposal() {
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
   const hasMultiple = data.players.length > 1;
-  const fitText = (current.fit_recommendation ?? "").trim();
+  const fitTextEn = (current.fit_recommendation ?? "").trim();
+  const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
   const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -265,12 +284,14 @@ export default function ClubOutreachProposal() {
           </div>
         )}
         <div className="mt-6 flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">Rise Football Agency presents</p>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">{tr("hdr.presents", "Rise Football Agency presents")}</p>
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
-            {hasMultiple ? `${data.players.length} players` : (player?.name ?? "Player")}
+            {hasMultiple
+              ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
+              : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
           {preparedFor && (
-            <p className="text-xs text-white/40">For <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
@@ -282,7 +303,7 @@ export default function ClubOutreachProposal() {
             onClick={() => setActiveSlot(null)}
             className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
-            All
+            {tr("chip.all", "All")}
           </button>
           {slots.map((s) => (
             <button
@@ -313,7 +334,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details — moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} />
       </section>
 
       {/* Hero — first Stars highlight video, falls back to player image */}
@@ -347,7 +368,7 @@ export default function ClubOutreachProposal() {
       {fitText && (
         <section className="max-w-3xl mx-auto px-6 mt-6">
           <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Fit & Recommendation</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
             <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
           </div>
         </section>
@@ -359,8 +380,10 @@ export default function ClubOutreachProposal() {
           href={current.stars_url}
           icon={<Video className="h-6 w-6" />}
           eyebrow="01"
-          title="Video & Data"
-          subtitle="Full profile, highlights and statistics"
+          title={tr("card.videoTitle", "Video & Data")}
+          subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
+          openLabel={tr("card.open", "Open")}
+          unavailableLabel={tr("card.unavailable", "Unavailable")}
         />
         {data.link.target_type !== 'agent' && (
           <ProposalCard
@@ -371,9 +394,11 @@ export default function ClubOutreachProposal() {
             }
             icon={<FileBadge2 className="h-6 w-6" />}
             eyebrow="02"
-            title="Proof of Representation"
-            subtitle="Signed agreement with Rise Football Agency"
-            disabledLabel={current.proof_of_representation_url ? undefined : "Available on request"}
+            title={tr("card.proofTitle", "Proof of Representation")}
+            subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+            disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+            openLabel={tr("card.open", "Open")}
+            unavailableLabel={tr("card.unavailable", "Unavailable")}
             internal
           />
         )}
@@ -382,28 +407,28 @@ export default function ClubOutreachProposal() {
       {/* Optional Stars-derived sections (per-link toggles) */}
       {data.link.show_form && current.form_config && current.form_analyses && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} />
+          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
         </section>
       )}
       {data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0 && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <InNumbersCard stats={current.top_stats} />
+          <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
         </section>
       )}
       {data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0 && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <SeasonStatsCard stats={current.season_stats} />
+          <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
         </section>
       )}
       {data.link.show_strengths && current.strengths_and_play_style && (
         <section className="max-w-3xl mx-auto px-6 mt-4">
-          <StrengthsCard data={current.strengths_and_play_style} />
+          <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
         </section>
       )}
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">Discuss further</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">{tr("contact.discuss", "Discuss further")}</p>
         {agencyWaUrl && (
           <a
             href={agencyWaUrl}
@@ -423,7 +448,7 @@ export default function ClubOutreachProposal() {
                 <WhatsAppIcon className="h-6 w-6" />
               )}
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">WhatsApp {firstName}'s Agent</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(tr("contact.waAgent", "WhatsApp {firstName}'s Agent"), { firstName })}</div>
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
@@ -462,7 +487,7 @@ export default function ClubOutreachProposal() {
                 )}
                 <div className="text-left">
                   <div className="text-[10px] uppercase tracking-[0.25em]" style={{ color: bg ? subOpacity : undefined }}>
-                    WhatsApp Key Club Contact{clubContactRole ? ` – ${clubContactRole}` : ""}
+                    {tr("contact.waClubContact", "WhatsApp Key Club Contact")}{clubContactRole ? ` – ${clubContactRole}` : ""}
                   </div>
                   <div className="text-sm sm:text-base">
                     {clubContactName}
@@ -479,7 +504,7 @@ export default function ClubOutreachProposal() {
       <footer className="mt-12 flex items-center justify-center">
         <a
           href={PUBLIC_HOME_URL}
-          aria-label="Visit RISE Football Agency"
+          aria-label={tr("footer.visit", "Visit RISE Football Agency")}
           onClick={(e) => {
             e.preventDefault();
             goToPublicHomepage();
@@ -538,7 +563,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -547,6 +572,8 @@ function ProposalCard({
   subtitle: string;
   disabledLabel?: string;
   internal?: boolean;
+  openLabel?: string;
+  unavailableLabel?: string;
 }) {
   const disabled = !href || !!disabledLabel;
   const inner = (
@@ -557,7 +584,7 @@ function ProposalCard({
       <h3 className="mt-5 text-lg font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-white/55 leading-snug">{subtitle}</p>
       <div className="mt-4 flex items-center gap-2 text-xs text-[#cbb96b]">
-        {disabled ? (disabledLabel ?? "Unavailable") : <>Open <ExternalLink className="h-3.5 w-3.5" /></>}
+        {disabled ? (disabledLabel ?? unavailableLabel ?? "Unavailable") : <>{openLabel ?? "Open"} <ExternalLink className="h-3.5 w-3.5" /></>}
       </div>
     </div>
   );
@@ -573,9 +600,11 @@ function ProposalCard({
 function KeyDetailsCard({
   entry,
   age,
+  tr,
 }: {
   entry: PlayerEntry;
   age: number | null;
+  tr?: (key: string, en: string) => string;
 }) {
   const player = entry.player;
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -589,7 +618,7 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">Key Details</h3>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr ? tr("key.title", "Key Details") : "Key Details"}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* Club */}
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
@@ -615,7 +644,7 @@ function KeyDetailsCard({
           <div className="h-12 flex items-center justify-center">
             <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
           </div>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">Years old</p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{tr ? tr("key.yearsOld", "Years old") : "Years old"}</p>
         </div>
 
         {/* Nationality */}
@@ -666,7 +695,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
-function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[] }; rows: any[] }) {
+function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
   const STAT_LABELS: Record<string, string> = {
@@ -722,8 +751,9 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
   // Lay 5 items out as 3+2 centred; otherwise one even row.
   const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
+  const formTitle = (titleTemplate ?? "Form · Last {n}").replace("{n}", String(cfg.window_size));
   return (
-    <SectionShell title={`Form · Last ${cfg.window_size}`} eyebrow="04">
+    <SectionShell title={formTitle} eyebrow="04">
       {useSplit ? (
         <div className="space-y-2">
           {[items.slice(0, 3), items.slice(3, 5)].map((row, ri) => (
@@ -765,9 +795,9 @@ function FormBannerCard({ cfg, rows }: { cfg: { window_size: number; stats: any[
   );
 }
 
-function InNumbersCard({ stats }: { stats: any[] }) {
+function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   return (
-    <SectionShell title="In Numbers" eyebrow="05">
+    <SectionShell title={title ?? "In Numbers"} eyebrow="05">
       <div className="space-y-4">
         {stats.map((s, i) => (
           <div key={i} className="flex items-start gap-3">
@@ -783,7 +813,7 @@ function InNumbersCard({ stats }: { stats: any[] }) {
   );
 }
 
-function SeasonStatsCard({ stats }: { stats: any[] }) {
+function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
   const prettify = (s: string) =>
     (s ?? "")
       .replace(/_per90/gi, " /90")
@@ -791,7 +821,7 @@ function SeasonStatsCard({ stats }: { stats: any[] }) {
       .replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
   return (
-    <SectionShell title="Season Stats" eyebrow="06">
+    <SectionShell title={title ?? "Season Stats"} eyebrow="06">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stats.map((s, i) => (
           <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
@@ -804,7 +834,7 @@ function SeasonStatsCard({ stats }: { stats: any[] }) {
   );
 }
 
-function StrengthsCard({ data }: { data: any }) {
+function StrengthsCard({ data, title }: { data: any; title?: string }) {
   const items: string[] = Array.isArray(data)
     ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
     : typeof data === "string"
@@ -812,7 +842,7 @@ function StrengthsCard({ data }: { data: any }) {
     : [];
   if (items.length === 0) return null;
   return (
-    <SectionShell title="Strengths & Play Style" eyebrow="07">
+    <SectionShell title={title ?? "Strengths & Play Style"} eyebrow="07">
       <ul className="space-y-2">
         {items.map((s, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-white/85">

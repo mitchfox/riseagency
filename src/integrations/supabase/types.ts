@@ -1146,6 +1146,7 @@ export type Database = {
           created_by: string | null
           fit_recommendation: string | null
           id: string
+          language: string
           player_id: string | null
           prepared_for_name: string | null
           short_id: string
@@ -1155,6 +1156,7 @@ export type Database = {
           show_strengths: boolean
           status: string
           target_type: string
+          translations: Json | null
           updated_at: string
         }
         Insert: {
@@ -1170,6 +1172,7 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          language?: string
           player_id?: string | null
           prepared_for_name?: string | null
           short_id: string
@@ -1179,6 +1182,7 @@ export type Database = {
           show_strengths?: boolean
           status?: string
           target_type?: string
+          translations?: Json | null
           updated_at?: string
         }
         Update: {
@@ -1194,6 +1198,7 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          language?: string
           player_id?: string | null
           prepared_for_name?: string | null
           short_id?: string
@@ -1203,6 +1208,7 @@ export type Database = {
           show_strengths?: boolean
           status?: string
           target_type?: string
+          translations?: Json | null
           updated_at?: string
         }
         Relationships: [

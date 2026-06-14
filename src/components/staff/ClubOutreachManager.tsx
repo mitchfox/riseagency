@@ -62,9 +62,26 @@ interface OutreachRow {
   target_type?: 'club' | 'agent';
   agent_name?: string | null;
   agent_logo_url?: string | null;
+  language?: string | null;
+  translations?: any | null;
 }
 
 type OutreachMode = 'club' | 'agent';
+
+const OUTREACH_LANGUAGES: { code: string; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Spanish" },
+  { code: "pt", label: "Portuguese" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "it", label: "Italian" },
+  { code: "pl", label: "Polish" },
+  { code: "cs", label: "Czech" },
+  { code: "ru", label: "Russian" },
+  { code: "tr", label: "Turkish" },
+  { code: "hr", label: "Croatian" },
+  { code: "no", label: "Norwegian" },
+];
 
 export default function ClubOutreachManager() {
   const [rows, setRows] = useState<OutreachRow[]>([]);
@@ -454,6 +471,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
+  const [language, setLanguage] = useState<string>(editing?.language ?? "en");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [creatingClub, setCreatingClub] = useState(false);
   const [newClubName, setNewClubName] = useState("");
@@ -609,6 +627,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_in_numbers: showInNumbers,
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
+        language,
       };
       let linkId = editing?.id ?? null;
       if (editing) {
@@ -643,6 +662,37 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         }
       }
       toast.success(editing ? "Outreach updated" : "Outreach link created");
+
+      // Translate (or clear translations if English) so the proposal page renders in the chosen language.
+      try {
+        const editingShort = editing?.short_id;
+        let shortIdForTranslate = editingShort ?? null;
+        if (!shortIdForTranslate && linkId) {
+          const { data: row } = await supabase
+            .from("club_outreach_links")
+            .select("short_id")
+            .eq("id", linkId)
+            .maybeSingle();
+          shortIdForTranslate = row?.short_id ?? null;
+        }
+        if (shortIdForTranslate) {
+          if (language === "en") {
+            await supabase.functions.invoke("translate-club-outreach", {
+              body: { short_id: shortIdForTranslate, language: "en" },
+            });
+          } else {
+            toast.message("Translating proposal…");
+            const { error: tErr } = await supabase.functions.invoke("translate-club-outreach", {
+              body: { short_id: shortIdForTranslate, language },
+            });
+            if (tErr) toast.error(`Translation failed: ${tErr.message ?? tErr}`);
+            else toast.success("Proposal translated");
+          }
+        }
+      } catch (e: any) {
+        toast.error(`Translation failed: ${e?.message ?? e}`);
+      }
+
       onSaved();
     } catch (e: any) {
       toast.error(e.message ?? "Failed to save");
@@ -819,6 +869,20 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               <Label>Prepared for (recipient at target club)</Label>
               <p className="text-[11px] text-muted-foreground mt-1">The individual at the club you're outreaching to (e.g. their sporting director). Shown at the top under the player's name. This is different from the saved Key Club Contact at the bottom of the proposal.</p>
               <Input className="mt-1.5" placeholder="e.g. Mehmet Yilmaz" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} />
+            </div>
+            <div>
+              <Label>Proposal language</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">All titles, button labels, and the per-player Fit & Recommendation text on this proposal will be translated to the chosen language when you save. English fields stay editable here.</p>
+              <Select value={language} onValueChange={(v) => setLanguage(v)}>
+                <SelectTrigger className="mt-1.5 h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OUTREACH_LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Show on proposal</Label>
