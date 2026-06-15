@@ -3393,6 +3393,7 @@ const InvestorsPortal = () => {
     forecastSettings: ForecastSettingsRow | null;
     timeline: TimelineRow[];
     updates: { id: string; title: string; body: string | null; achieved_on: string; author_label: string | null; created_at: string }[];
+    otherIncome: OtherIncomeRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
