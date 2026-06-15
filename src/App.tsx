@@ -145,6 +145,7 @@ const App = () => {
                       <Route path="/clubs/:shortId" element={<ClubOutreachProposal />} />
                       <Route path="/club-proposal/:shortId" element={<ClubOutreachProposal />} />
                       <Route path="/club-proposal/:shortId/proof/:playerId" element={<ClubOutreachProof />} />
+                      <Route path="/agents/:shortId" element={<ClubOutreachProposal />} />
                       {createLocalizedRoutes('/coaches', <Coaches />)}
                       {createLocalizedRoutes('/scouts', <Scouts />)}
                       {createLocalizedRoutes('/agents', <Agents />)}
