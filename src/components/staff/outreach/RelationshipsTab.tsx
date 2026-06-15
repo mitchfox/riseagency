@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Bell, Archive, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Bell, Archive, ChevronDown, ChevronUp, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import OutreachToolsPanel from "./OutreachToolsPanel";
 
 type Rapport = "cold" | "warming" | "friendly" | "trusted" | "champion";
 
@@ -87,6 +88,7 @@ export default function RelationshipsTab() {
   const [addOpen, setAddOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [addSearch, setAddSearch] = useState("");
+  const [toolsOpen, setToolsOpen] = useState(false);
   const todayISO = new Date().toISOString().slice(0, 10);
 
   const load = async () => {
@@ -227,6 +229,9 @@ export default function RelationshipsTab() {
           <Button variant="outline" size="sm" onClick={() => setShowArchived((v) => !v)}>
             {showArchived ? "Active" : "Archived"}
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)}>
+            <Wrench className="w-4 h-4 mr-1" /> Tools
+          </Button>
         </div>
         <Button
           onClick={openAdd}
@@ -235,6 +240,8 @@ export default function RelationshipsTab() {
           <Plus className="w-4 h-4 mr-1" /> Add relationship
         </Button>
       </div>
+
+      <OutreachToolsPanel open={toolsOpen} onOpenChange={setToolsOpen} />
 
       {dueToday.length > 0 && (
         <div className="rounded-lg border-2 border-[#C6A332]/60 bg-[#C6A332]/10 p-3">
