@@ -478,7 +478,10 @@ export default function ClubOutreachProposal() {
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
-            <ExternalLink className="h-4 w-4 opacity-80" />
+            <div className="flex items-center gap-2">
+              <FifaLicenceBadge agentName={data.agent_name ?? "Jolon Levene"} />
+              <ExternalLink className="h-4 w-4 opacity-80" />
+            </div>
           </a>
         )}
         {clubWaUrl && clubContactName && (() => {
