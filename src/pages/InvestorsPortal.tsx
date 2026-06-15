@@ -114,6 +114,7 @@ interface ProspectRow {
 }
 interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; }
 interface SpendingRowExt extends SpendingRow { is_personal?: boolean | null; bank_transaction_id?: string | null }
+interface OtherIncomeRow { id: string; income_date: string; source: string; amount_gbp: number; notes: string | null }
 interface ClubContactRow {
   id: string; name: string; club_name: string | null; position: string | null;
   country: string | null; city: string | null; image_url: string | null;
