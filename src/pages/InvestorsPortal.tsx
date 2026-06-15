@@ -1192,43 +1192,65 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
             </div>
           </Card>
         </div>
-        <div className="rounded border border-border/40 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
-              <tr>
-                <th className="text-left px-3 py-2">Date</th>
-                <th className="text-left px-3 py-2">Category</th>
-                <th className="text-left px-3 py-2">Vendor</th>
-                <th className="text-left px-3 py-2">Notes</th>
-                <th className="text-right px-3 py-2">Amount</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No matching expenses.</td></tr>
-              ) : filtered.map(r => (
-                <tr key={r.id} className="hover:bg-muted/20">
-                  <td className="px-3 py-2 text-muted-foreground">{format(new Date(r.spend_date), "d MMM yyyy")}</td>
-                  <td className="px-3 py-2"><Badge variant="outline" className="border-primary/40 text-primary capitalize">{r.category}</Badge></td>
-                  <td className="px-3 py-2">{r.vendor || "—"}</td>
-                  <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
-                  <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
-                  <td className="px-3 py-2 flex items-center justify-end gap-1">
-                    <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
-                      onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
-                      {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
-                      <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {filtered.length === 0 ? (
+          <div className="rounded border border-border/40 text-center text-muted-foreground py-6 text-sm">No matching expenses.</div>
+        ) : (() => {
+          const groups = new Map<string, SpendingRowExt[]>();
+          [...filtered]
+            .sort((a, b) => b.spend_date.localeCompare(a.spend_date))
+            .forEach(r => {
+              const key = r.spend_date.slice(0, 10);
+              const list = groups.get(key) || [];
+              list.push(r);
+              groups.set(key, list);
+            });
+          const today = new Date().toISOString().slice(0, 10);
+          return (
+            <div className="space-y-2">
+              {Array.from(groups.entries()).map(([day, list]) => {
+                const dayTotal = list.reduce((s, r) => s + Number(r.amount_gbp), 0);
+                return (
+                  <details key={day} open={day === today} className="rounded border border-border/40 bg-card/40 group">
+                    <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-3 py-2 hover:bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                        <span className="font-medium">{format(new Date(day), "EEEE, d MMM yyyy")}</span>
+                        <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">
+                          {list.length} item{list.length === 1 ? "" : "s"}
+                        </Badge>
+                      </div>
+                      <span className="font-medium text-primary">{gbp(dayTotal)}</span>
+                    </summary>
+                    <table className="w-full text-sm border-t border-border/40">
+                      <tbody className="divide-y divide-border/40">
+                        {list.map(r => (
+                          <tr key={r.id} className="hover:bg-muted/20">
+                            <td className="px-3 py-2"><Badge variant="outline" className="border-primary/40 text-primary capitalize">{r.category}</Badge></td>
+                            <td className="px-3 py-2">{r.vendor || "—"}</td>
+                            <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
+                            <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
+                            <td className="px-3 py-2 w-[120px]">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
+                                  onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
+                                  {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
+                                </Button>
+                                <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
+                                  <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </details>
+                );
+              })}
+            </div>
+          );
+        })()}
       </SectionShell>
 
       <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
