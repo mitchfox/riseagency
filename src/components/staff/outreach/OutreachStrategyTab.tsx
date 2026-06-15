@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X } from "lucide-react";
+import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X, Check } from "lucide-react";
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; league: string | null; league_level: string | null; image_url: string | null; }
@@ -276,7 +276,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
     if (error) toast.error(error.message);
   };
 
-  type StratClub = { key: string; name: string; club_id?: string | null; note?: string; isExtra: boolean; extraIdx?: number };
+  type StratClub = { key: string; name: string; club_id?: string | null; note?: string; isExtra: boolean; extraIdx?: number; pending?: boolean };
   const strategyClubs = (s: StrategyRow): StratClub[] => {
     const out: StratClub[] = [];
     const ids: string[] = s.filters?.club_ids ?? [];
@@ -294,9 +294,11 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         note: ec.note,
         isExtra: true,
         extraIdx: i,
+        pending: !!ec.pending,
       });
     });
-    return out;
+    // Pending suggestions sort to the bottom so confirmed clubs come first.
+    return out.sort((a, b) => Number(!!a.pending) - Number(!!b.pending));
   };
 
   const toggleStrategyClub = (s: StrategyRow, key: string) => {
@@ -326,6 +328,13 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const removeExtraClub = (s: StrategyRow, idx: number) => {
     const arr = [...(s.defaults?.extra_clubs ?? [])];
     arr.splice(idx, 1);
+    persistDefaults(s, { extra_clubs: arr });
+  };
+
+  const approveExtraClub = (s: StrategyRow, idx: number) => {
+    const arr = [...(s.defaults?.extra_clubs ?? [])];
+    if (!arr[idx]) return;
+    arr[idx] = { ...arr[idx], pending: false };
     persistDefaults(s, { extra_clubs: arr });
   };
 
