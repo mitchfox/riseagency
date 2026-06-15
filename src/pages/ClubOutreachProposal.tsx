@@ -484,7 +484,7 @@ export default function ClubOutreachProposal() {
             </div>
           </a>
         )}
-        {clubWaUrl && clubContactName && (() => {
+        {clubWaUrl && clubContactName && data.link.target_type !== 'agent' && (() => {
           const accent = clubContactAccent;
           const useAccent = !!accent && /^#?[0-9a-fA-F]{3,6}$/.test(accent);
           const bg = useAccent ? (accent!.startsWith("#") ? accent! : `#${accent}`) : null;
