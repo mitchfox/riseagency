@@ -162,11 +162,17 @@ export default function ClubOutreachManager() {
     });
   }, [rows, q, playerById, mode]);
 
-  const proposalUrl = (shortId: string) => `${APP_BASE}/club-proposal/${shortId}`;
-  const externalProposalUrl = (shortId: string) => `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
+  const proposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+    targetType === 'agent'
+      ? `${APP_BASE}/agents/${shortId}`
+      : `${APP_BASE}/club-proposal/${shortId}`;
+  const externalProposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+    targetType === 'agent'
+      ? `${EXTERNAL_APP_BASE}/agents/${shortId}`
+      : `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
 
-  const copyLink = async (shortId: string) => {
-    await navigator.clipboard.writeText(proposalUrl(shortId));
+  const copyLink = async (shortId: string, targetType?: 'club' | 'agent') => {
+    await navigator.clipboard.writeText(proposalUrl(shortId, targetType));
     toast.success("Link copied");
   };
 
@@ -316,9 +322,9 @@ export default function ClubOutreachManager() {
                       key={r.id}
                       row={r}
                       players={players}
-                      url={proposalUrl(r.short_id)}
-                      externalUrl={externalProposalUrl(r.short_id)}
-                      onCopy={() => copyLink(r.short_id)}
+                      url={proposalUrl(r.short_id, r.target_type)}
+                      externalUrl={externalProposalUrl(r.short_id, r.target_type)}
+                      onCopy={() => copyLink(r.short_id, r.target_type)}
                       onEdit={() => setEditRow(r)}
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
