@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ChevronRight, ChevronDown, Search, Wand2, Save } from "lucide-react";
+import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X } from "lucide-react";
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; league: string | null; league_level: string | null; image_url: string | null; }
@@ -56,6 +56,10 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const [selectedClubIds, setSelectedClubIds] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [playerSearch, setPlayerSearch] = useState("");
+
+  const [expandedStrategyId, setExpandedStrategyId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [addClubQuery, setAddClubQuery] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
@@ -262,28 +266,218 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading strategy data…</div>;
 
+  const persistDefaults = async (s: StrategyRow, patch: any) => {
+    const nextDefaults = { ...(s.defaults || {}), ...patch };
+    setStrategies((prev) => prev.map((x) => (x.id === s.id ? { ...x, defaults: nextDefaults } : x)));
+    const { error } = await (supabase as any)
+      .from("club_outreach_strategies")
+      .update({ defaults: nextDefaults })
+      .eq("id", s.id);
+    if (error) toast.error(error.message);
+  };
+
+  type StratClub = { key: string; name: string; club_id?: string | null; note?: string; isExtra: boolean; extraIdx?: number };
+  const strategyClubs = (s: StrategyRow): StratClub[] => {
+    const out: StratClub[] = [];
+    const ids: string[] = s.filters?.club_ids ?? [];
+    for (const cid of ids) {
+      const c = clubs.find((x) => x.id === cid);
+      out.push({ key: `id:${cid}`, name: c?.club_name ?? "Unknown club", club_id: cid, isExtra: false });
+    }
+    (s.defaults?.extra_clubs ?? []).forEach((ec: any, i: number) => {
+      const key = ec.id ? `id:${ec.id}` : `name:${(ec.name || "").toLowerCase()}`;
+      const c = ec.id ? clubs.find((x) => x.id === ec.id) : null;
+      out.push({
+        key,
+        name: ec.name || c?.club_name || "?",
+        club_id: ec.id ?? null,
+        note: ec.note,
+        isExtra: true,
+        extraIdx: i,
+      });
+    });
+    return out;
+  };
+
+  const toggleStrategyClub = (s: StrategyRow, key: string) => {
+    const cur: string[] = s.defaults?.checked_keys ?? [];
+    const set = new Set(cur);
+    if (set.has(key)) set.delete(key); else set.add(key);
+    persistDefaults(s, { checked_keys: Array.from(set) });
+  };
+
+  const addExtraClub = (s: StrategyRow, club: { id?: string | null; name: string; note?: string }) => {
+    const existing: any[] = s.defaults?.extra_clubs ?? [];
+    if (club.id && existing.some((e) => e.id === club.id)) {
+      toast.message("Already in this strategy");
+      return;
+    }
+    if (!club.id && existing.some((e) => !e.id && (e.name || "").toLowerCase() === club.name.toLowerCase())) {
+      toast.message("Already in this strategy");
+      return;
+    }
+    if ((s.filters?.club_ids ?? []).includes(club.id)) {
+      toast.message("Already in this strategy");
+      return;
+    }
+    persistDefaults(s, { extra_clubs: [...existing, club] });
+  };
+
+  const removeExtraClub = (s: StrategyRow, idx: number) => {
+    const arr = [...(s.defaults?.extra_clubs ?? [])];
+    arr.splice(idx, 1);
+    persistDefaults(s, { extra_clubs: arr });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Saved strategies row */}
+      {/* Saved strategies — expandable checklist per strategy */}
       {strategies.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold mb-2 text-white">Saved strategies</h3>
-          <div className="flex flex-wrap gap-2">
-            {strategies.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => loadStrategy(s)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/10 px-3 py-1 text-xs font-medium text-[#cbb96b] hover:bg-[#cbb96b]/20"
-              >
-                {s.name}
-                <span className="text-[10px] text-muted-foreground">{(s.player_ids?.length ?? 0)}p</span>
-              </button>
-            ))}
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+          <h3 className="text-sm font-semibold mb-3 text-white">Saved strategies</h3>
+          <div className="space-y-2">
+            {strategies.map((s) => {
+              const open = expandedStrategyId === s.id;
+              const list = strategyClubs(s);
+              const checked: string[] = s.defaults?.checked_keys ?? [];
+              const doneCount = list.filter((c) => checked.includes(c.key)).length;
+              const q = (addClubQuery[s.id] ?? "").trim();
+              const stratCountry = s.filters?.country ?? null;
+              const suggestions = q.length >= 2
+                ? clubs
+                    .filter((c) => {
+                      const matchesQ = c.club_name.toLowerCase().includes(q.toLowerCase());
+                      const matchesCountry = !stratCountry || (c.country ?? "").toLowerCase() === stratCountry.toLowerCase();
+                      const already =
+                        (s.filters?.club_ids ?? []).includes(c.id) ||
+                        (s.defaults?.extra_clubs ?? []).some((e: any) => e.id === c.id);
+                      return matchesQ && matchesCountry && !already;
+                    })
+                    .slice(0, 8)
+                : [];
+              return (
+                <div key={s.id} className="rounded-md border border-border/70 bg-background/30">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedStrategyId(open ? null : s.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/30"
+                  >
+                    {open ? <ChevronDown className="h-4 w-4 text-[#cbb96b]" /> : <ChevronRight className="h-4 w-4 text-[#cbb96b]" />}
+                    <span className="flex-1 text-sm font-medium text-white">{s.name}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {doneCount}/{list.length} done
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); loadStrategy(s); }}
+                      className="text-[10px] uppercase tracking-wider text-[#cbb96b] hover:underline cursor-pointer"
+                    >
+                      Load
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {s.defaults?.notes && (
+                        <p className="text-[11px] text-muted-foreground italic">{s.defaults.notes}</p>
+                      )}
+                      {list.length === 0 && (
+                        <p className="text-xs text-muted-foreground">No clubs yet — add some below.</p>
+                      )}
+                      <ul className="space-y-1">
+                        {list.map((c) => {
+                          const isChecked = checked.includes(c.key);
+                          return (
+                            <li
+                              key={c.key}
+                              className="flex items-center gap-2 text-xs px-2 py-1 rounded hover:bg-muted/40"
+                            >
+                              <Checkbox checked={isChecked} onCheckedChange={() => toggleStrategyClub(s, c.key)} />
+                              <span className={`truncate flex-1 ${isChecked ? "line-through text-muted-foreground" : "text-white"}`}>
+                                {c.name}
+                              </span>
+                              {c.note && <span className="text-[10px] text-muted-foreground italic">{c.note}</span>}
+                              {c.isExtra && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeExtraClub(s, c.extraIdx!)}
+                                  className="text-muted-foreground hover:text-red-400"
+                                  title="Remove club"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+
+                      <div className="pt-2 border-t border-border/40">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            value={addClubQuery[s.id] ?? ""}
+                            onChange={(e) => setAddClubQuery((p) => ({ ...p, [s.id]: e.target.value }))}
+                            placeholder={stratCountry ? `Add club in ${stratCountry}…` : "Add club…"}
+                            className="pl-8 h-8 text-xs"
+                          />
+                        </div>
+                        {q.length >= 2 && (
+                          <div className="mt-1 rounded-md border border-border/60 bg-background/60 max-h-48 overflow-y-auto">
+                            {suggestions.map((c) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => {
+                                  addExtraClub(s, { id: c.id, name: c.club_name });
+                                  setAddClubQuery((p) => ({ ...p, [s.id]: "" }));
+                                }}
+                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left hover:bg-muted/40"
+                              >
+                                {c.image_url ? (
+                                  <img src={c.image_url} alt="" className="h-4 w-4 object-contain" />
+                                ) : (
+                                  <span className="h-4 w-4 rounded-sm bg-muted inline-block" />
+                                )}
+                                <span className="flex-1 truncate">{c.club_name}</span>
+                                <span className="text-[10px] text-muted-foreground">{c.country ?? ""}</span>
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                addExtraClub(s, { name: q });
+                                setAddClubQuery((p) => ({ ...p, [s.id]: "" }));
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left text-[#cbb96b] hover:bg-muted/40 border-t border-border/40"
+                            >
+                              <Plus className="h-3 w-3" />
+                              Add “{q}” as new club
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
+      <div>
+        <Button
+          variant="outline"
+          onClick={() => setShowCreate((v) => !v)}
+          className="w-full sm:w-auto"
+        >
+          {showCreate ? <ChevronDown className="h-4 w-4 mr-1.5" /> : <ChevronRight className="h-4 w-4 mr-1.5" />}
+          {showCreate ? "Hide new strategy builder" : "+ New strategy"}
+        </Button>
+      </div>
+
+      {showCreate && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Left: strategy form */}
         <div className="space-y-4 rounded-xl border border-border bg-card p-3 sm:p-5">
@@ -498,6 +692,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
           </p>
         </div>
       </div>
+      )}
     </div>
   );
 }
