@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronDown, ChevronRight, Check, X, Plus, ExternalLink, Trash2, Wrench, FileText, Link as LinkIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, X, Plus, ExternalLink, Trash2, Wrench, FileText, Link as LinkIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 type DocKind = "doc" | "resource" | "tool";
@@ -25,17 +25,20 @@ type Item = {
 };
 
 interface Props {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  inline?: boolean;
 }
 
-export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
+export default function OutreachToolsPanel({ open = true, onOpenChange, inline = true }: Props) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"pending" | "approved" | "all">("pending");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [newDoc, setNewDoc] = useState<{ title: string; kind: DocKind; body: string; url: string }>({
     title: "",
     kind: "doc",
@@ -72,6 +75,28 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
       .update({ status, decided_at: new Date().toISOString() })
       .eq("id", it.id);
     if (error) { toast.error(error.message); load(); }
+  };
+
+  const startEdit = (it: Item) => {
+    setEditingItemId(it.id);
+    setEditDraft(it.body);
+  };
+
+  const saveEdit = async (it: Item) => {
+    const body = editDraft.trim();
+    if (!body) { setEditingItemId(null); return; }
+    setItems((prev) => prev.map((x) => (x.id === it.id ? { ...x, body } : x)));
+    setEditingItemId(null);
+    const { error } = await (supabase as any)
+      .from("outreach_tools_doc_items")
+      .update({ body })
+      .eq("id", it.id);
+    if (error) { toast.error(error.message); load(); }
+  };
+
+  const deleteItem = async (it: Item) => {
+    setItems((prev) => prev.filter((x) => x.id !== it.id));
+    await (supabase as any).from("outreach_tools_doc_items").delete().eq("id", it.id);
   };
 
   const resetItem = async (it: Item) => {
@@ -119,16 +144,9 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
   const kindIcon = (k: DocKind) =>
     k === "tool" ? <Wrench className="w-3.5 h-3.5" /> : k === "resource" ? <LinkIcon className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-3 border-b border-border">
-          <DialogTitle className="flex items-center gap-2 text-[#C6A332]">
-            <Wrench className="w-5 h-5" /> Outreach tools and resources
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="px-6 py-3 flex flex-wrap gap-2 items-center border-b border-border">
+  const body = (
+    <div className="flex flex-col">
+      <div className="px-1 py-3 flex flex-wrap gap-2 items-center border-b border-border">
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -155,7 +173,7 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+        <div className="px-1 py-4 space-y-3">
           {docs.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-12">
               No tools or docs yet. Add a resource to get started.
@@ -233,8 +251,36 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
                               : "border-border bg-background/40"
                           }`}
                         >
-                          <p className="flex-1 whitespace-pre-wrap leading-relaxed">{it.body}</p>
+                          {editingItemId === it.id ? (
+                            <Textarea
+                              value={editDraft}
+                              onChange={(e) => setEditDraft(e.target.value)}
+                              onBlur={() => saveEdit(it)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEdit(it); }
+                                if (e.key === "Escape") { setEditingItemId(null); }
+                              }}
+                              autoFocus
+                              rows={2}
+                              className="flex-1 text-sm min-h-[60px] bg-background"
+                            />
+                          ) : (
+                            <p
+                              className="flex-1 whitespace-pre-wrap leading-relaxed cursor-text"
+                              onClick={() => startEdit(it)}
+                              title="Click to edit"
+                            >
+                              {it.body}
+                            </p>
+                          )}
                           <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => startEdit(it)}
+                              title="Edit"
+                              className="w-7 h-7 rounded-md text-muted-foreground hover:text-[#C6A332] hover:bg-muted/40 flex items-center justify-center"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
                             {it.status === "pending" ? (
                               <>
                                 <button
@@ -261,6 +307,13 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
                                 Undo
                               </button>
                             )}
+                            <button
+                              onClick={() => deleteItem(it)}
+                              title="Delete"
+                              className="w-7 h-7 rounded-md text-muted-foreground hover:text-red-400 hover:bg-muted/40 flex items-center justify-center"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -284,8 +337,6 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
             );
           })}
         </div>
-      </DialogContent>
-
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Add resource</DialogTitle></DialogHeader>
@@ -323,6 +374,41 @@ export default function OutreachToolsPanel({ open, onOpenChange }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+
+  if (inline) {
+    if (!open) return null;
+    return (
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="flex items-center gap-2 text-[#C6A332] font-semibold">
+            <Wrench className="w-5 h-5" /> Outreach tools and resources
+          </h3>
+          {onOpenChange && (
+            <button
+              onClick={() => onOpenChange(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Close
+            </button>
+          )}
+        </div>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-3 border-b border-border">
+          <DialogTitle className="flex items-center gap-2 text-[#C6A332]">
+            <Wrench className="w-5 h-5" /> Outreach tools and resources
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto px-6">{body}</div>
+      </DialogContent>
     </Dialog>
   );
 }
