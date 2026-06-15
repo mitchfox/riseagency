@@ -396,6 +396,33 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
                       <ul className="space-y-1">
                         {list.map((c) => {
                           const isChecked = checked.includes(c.key);
+                          if (c.pending) {
+                            return (
+                              <li
+                                key={c.key}
+                                className="flex items-center gap-2 text-xs px-2 py-1 rounded border border-dashed border-[#cbb96b]/40 bg-[#cbb96b]/5"
+                              >
+                                <span className="text-[9px] uppercase tracking-wider text-[#cbb96b]/80 shrink-0">Suggested</span>
+                                <span className="truncate flex-1 text-white/90">{c.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => approveExtraClub(s, c.extraIdx!)}
+                                  title="Add to list"
+                                  className="w-6 h-6 rounded-md bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white flex items-center justify-center"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExtraClub(s, c.extraIdx!)}
+                                  title="Reject suggestion"
+                                  className="w-6 h-6 rounded-md bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white flex items-center justify-center"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </li>
+                            );
+                          }
                           return (
                             <li
                               key={c.key}
