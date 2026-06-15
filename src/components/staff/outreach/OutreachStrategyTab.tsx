@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X } from "lucide-react";
+import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X, Check } from "lucide-react";
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; league: string | null; league_level: string | null; image_url: string | null; }
@@ -276,7 +276,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
     if (error) toast.error(error.message);
   };
 
-  type StratClub = { key: string; name: string; club_id?: string | null; note?: string; isExtra: boolean; extraIdx?: number };
+  type StratClub = { key: string; name: string; club_id?: string | null; note?: string; isExtra: boolean; extraIdx?: number; pending?: boolean };
   const strategyClubs = (s: StrategyRow): StratClub[] => {
     const out: StratClub[] = [];
     const ids: string[] = s.filters?.club_ids ?? [];
@@ -294,9 +294,11 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         note: ec.note,
         isExtra: true,
         extraIdx: i,
+        pending: !!ec.pending,
       });
     });
-    return out;
+    // Pending suggestions sort to the bottom so confirmed clubs come first.
+    return out.sort((a, b) => Number(!!a.pending) - Number(!!b.pending));
   };
 
   const toggleStrategyClub = (s: StrategyRow, key: string) => {
@@ -326,6 +328,13 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const removeExtraClub = (s: StrategyRow, idx: number) => {
     const arr = [...(s.defaults?.extra_clubs ?? [])];
     arr.splice(idx, 1);
+    persistDefaults(s, { extra_clubs: arr });
+  };
+
+  const approveExtraClub = (s: StrategyRow, idx: number) => {
+    const arr = [...(s.defaults?.extra_clubs ?? [])];
+    if (!arr[idx]) return;
+    arr[idx] = { ...arr[idx], pending: false };
     persistDefaults(s, { extra_clubs: arr });
   };
 
@@ -387,6 +396,33 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
                       <ul className="space-y-1">
                         {list.map((c) => {
                           const isChecked = checked.includes(c.key);
+                          if (c.pending) {
+                            return (
+                              <li
+                                key={c.key}
+                                className="flex items-center gap-2 text-xs px-2 py-1 rounded border border-dashed border-[#cbb96b]/40 bg-[#cbb96b]/5"
+                              >
+                                <span className="text-[9px] uppercase tracking-wider text-[#cbb96b]/80 shrink-0">Suggested</span>
+                                <span className="truncate flex-1 text-white/90">{c.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => approveExtraClub(s, c.extraIdx!)}
+                                  title="Add to list"
+                                  className="w-6 h-6 rounded-md bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white flex items-center justify-center"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExtraClub(s, c.extraIdx!)}
+                                  title="Reject suggestion"
+                                  className="w-6 h-6 rounded-md bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white flex items-center justify-center"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </li>
+                            );
+                          }
                           return (
                             <li
                               key={c.key}
