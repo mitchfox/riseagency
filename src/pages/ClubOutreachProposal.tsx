@@ -5,6 +5,32 @@ import { calculateAge } from "@/lib/ageUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
+import jolonFifaLicenseAsset from "@/assets/jolon-fifa-license.png.asset.json";
+
+const AGENT_FIFA_LICENCES: Record<string, { number: string; imageUrl: string }> = {
+  "jolon levene": { number: "202304-1453", imageUrl: jolonFifaLicenseAsset.url },
+};
+
+function FifaLicenceBadge({ agentName }: { agentName: string | null | undefined }) {
+  const key = (agentName || "").toLowerCase();
+  const match = Object.entries(AGENT_FIFA_LICENCES).find(([k]) => key.includes(k))?.[1];
+  if (!match) return null;
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(match.imageUrl, "_blank", "noopener,noreferrer");
+      }}
+      title={`FIFA Licence ${match.number}`}
+      aria-label={`FIFA Licence ${match.number}`}
+      className="ml-2 shrink-0 h-7 w-7 rounded-full bg-white text-[#1a3a8f] border border-white/70 shadow flex items-center justify-center text-[9px] font-extrabold tracking-tight hover:scale-110 transition-transform"
+    >
+      FIFA
+    </button>
+  );
+}
 
 function WhatsAppIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
@@ -452,7 +478,10 @@ export default function ClubOutreachProposal() {
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
-            <ExternalLink className="h-4 w-4 opacity-80" />
+            <div className="flex items-center gap-2">
+              <FifaLicenceBadge agentName={data.agent_name ?? "Jolon Levene"} />
+              <ExternalLink className="h-4 w-4 opacity-80" />
+            </div>
           </a>
         )}
         {clubWaUrl && clubContactName && (() => {
