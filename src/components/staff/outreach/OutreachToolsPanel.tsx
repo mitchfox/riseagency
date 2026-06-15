@@ -324,7 +324,7 @@ export default function OutreachToolsPanel({ open = true, onOpenChange, inline =
                         value={newItemBody[d.id] ?? ""}
                         onChange={(e) => setNewItemBody((p) => ({ ...p, [d.id]: e.target.value }))}
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(d.id); } }}
-                        placeholder="Add your own line — saved as kept"
+                        placeholder="Add your own line, saved as kept"
                         className="h-9 text-sm"
                       />
                       <Button size="sm" onClick={() => addItem(d.id)} disabled={!(newItemBody[d.id] ?? "").trim()}>
