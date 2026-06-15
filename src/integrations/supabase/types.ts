@@ -4527,6 +4527,24 @@ export type Database = {
           },
         ]
       }
+      outreach_strategy_staging: {
+        Row: {
+          defaults: Json
+          filters: Json
+          strategy_id: string
+        }
+        Insert: {
+          defaults: Json
+          filters: Json
+          strategy_id: string
+        }
+        Update: {
+          defaults?: Json
+          filters?: Json
+          strategy_id?: string
+        }
+        Relationships: []
+      }
       outreach_tools_doc_items: {
         Row: {
           body: string
@@ -9703,6 +9721,7 @@ export type Database = {
         Args: { new_value: string }
         Returns: undefined
       }
+      apply_outreach_strategy_staging: { Args: never; Returns: number }
       bump_player_portal_login: {
         Args: { _player_id: string }
         Returns: undefined
