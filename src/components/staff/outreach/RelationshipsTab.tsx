@@ -86,6 +86,7 @@ export default function RelationshipsTab() {
   const [showArchived, setShowArchived] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [addSearch, setAddSearch] = useState("");
   const todayISO = new Date().toISOString().slice(0, 10);
 
   const load = async () => {
@@ -141,7 +142,7 @@ export default function RelationshipsTab() {
     setContacts((data ?? []) as any);
   };
 
-  const openAdd = async () => { await loadContacts(); setAddOpen(true); };
+  const openAdd = async () => { setAddSearch(""); await loadContacts(); setAddOpen(true); };
 
   const addRelationship = async (contactId: string) => {
     const monday = mondayOf(new Date());
@@ -272,8 +273,25 @@ export default function RelationshipsTab() {
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-4xl w-[95vw] sm:w-auto max-h-[90vh] flex flex-col">
           <DialogHeader><DialogTitle>Add relationship</DialogTitle></DialogHeader>
+          <div className="relative">
+            <Input
+              autoFocus
+              value={addSearch}
+              onChange={(e) => setAddSearch(e.target.value)}
+              placeholder="Search name, club, role, country"
+              className="h-9"
+            />
+          </div>
           <div className="flex-1 overflow-y-auto divide-y divide-border -mx-6 px-6">
-            {contacts.map((c) => {
+            {contacts
+              .filter((c) => {
+                const q = addSearch.trim().toLowerCase();
+                if (!q) return true;
+                return `${c.name} ${c.club_name ?? ""} ${c.position ?? ""} ${c.country ?? ""}`
+                  .toLowerCase()
+                  .includes(q);
+              })
+              .map((c) => {
               const taken = rows.some((r) => r.contact_id === c.id);
               return (
                 <button
