@@ -1,72 +1,44 @@
-# Full public site translation sweep
+## Outreach strategies — Tyrese & Mikie
 
-The `translations` table already holds 2,039 keys, every one fully filled in all 12 languages. The gap is hardcoded English in page/component JSX that never calls `t()`. This plan finds those strings, registers them, wires `t()` calls into the components, and auto-translates the new rows.
+Insert one `club_outreach_strategies` row per (player × country × division). Each row uses the existing schema (`name`, `player_ids`, `filters {country, league_level, club_ids?}`, `defaults`). Strategy names follow `"<Player first name> — <Country> <Division>"`. For Belgium I'll add the divisional rows plus a separate `"Tyrese — Belgium (Targets)"` row with `club_ids` populated for RAAL, Zulte Waregem, Anderlecht, Lommel and Cercle Brugge (matched against `club_map_positions`; any not found are recorded in `defaults.notes`). UEFA competitions are stored as `country = "Champions League"`, `"Europa League"` and `"Conference League"` for both players. `defaults.notes` carries qualifiers like "low 2nd", "high 3rd", "?", and "Danish guy re Abi" on Mikie's Danish 1st row.
 
-## Scope (pages & components)
+### Mikie (Michael Vit Mulligan) — rows to insert
 
-In scope:
+```text
+Malta 1st, Greece 2nd, Slovenia 1st, Czech 2nd, Sweden 2nd, Denmark 2nd,
+Denmark 1st  (note: "Danish guy re Abi"),
+Ireland 1st, Ireland 2nd, Scotland 2nd, Poland 2nd, Slovakia 2nd, Austria 2nd,
+Portugal 2nd (note: "low 2nd"),
+Spain 3rd   (note: "high 3rd"),
+Italy 3rd, France 3rd, Luxembourg 1st (note: "Mondorf"),
+Romania 1st, Hungary 2nd (note: "?"), Serbia 1st, Serbia 2nd, Croatia 2nd,
+Moldova 1st, Switzerland 2nd, Georgia 1st, Bulgaria 1st (note: "?"), USA 2nd,
+Champions League, Europa League, Conference League
+```
 
-- **Core marketing**: `Landing`, `HowWeRise`, `Stars`, `PlayersPage`, `PlayersList`, `YouthPlayers`, `Scouts`, `LearnMorePage`, `RealisePotential`, `PlayerJourney`
-- **Secondary**: `Jobs`, `JobRole`, `Packages`, `PressReleases`, `Media`, `OpenAccess`, `PlayersFAQPage`, `PlayersFAQ`
-- **Funnel & dialogs**: `RequestRepresentation`, `Login`, `ScoutLogin`, `PortfolioRequestDialog`, `DeclareInterestDialog`, `DeclareInterestPlayerDialog`, `ContactDialog`, `CapabilityAccordion`, `Header`, `RadialMenu`, `LanguageSelector`, `LanguageMapSelector`, `DragNavigator`
-- **Public reports**: `PerformanceReport`, `PerformancePage`, `PlayerDetail`
+### Tyrese (Tyrese Omotoye) — rows to insert
 
-Explicitly out of scope: staff portal, player portal, admin tools, console-only strings, code identifiers.
+```text
+Czech 1st, Poland 1st, Denmark 1st, Sweden 1st, Scotland 1st,
+Belgium 1st, Belgium 2nd, Belgium (Targets: RAAL, Zulte Waregem, Anderlecht, Lommel, Cercle Brugge),
+Slovakia 1st (note: "?"), Austria 1st, Portugal 1st, Portugal 2nd, Spain 2nd,
+Italy 2nd, France 2nd, Germany 2nd, Turkey 1st, Turkey 2nd, Greece 1st,
+Russia 1st, Ukraine 1st (note: "top"), Serbia 1st (note: "top"), Croatia 1st,
+Romania 1st (note: "top"), Hungary 1st,
+Champions League, Europa League, Conference League
+```
 
-## How the audit runs (script, no UI changes)
+### Steps
 
-A one-off Node script under `scripts/translation-audit.ts`:
+1. Look up both player UUIDs (Tyrese `b94fd8f6-…`, Mikie `00dd8ae4-…`) and reuse them.
+2. Build all rows in one `supabase--insert` call using `INSERT … VALUES …` with `gen_random_uuid()`, `player_ids = ARRAY[...]::uuid[]`, and `filters` / `defaults` as JSON literals. Skip on duplicate name (`ON CONFLICT` not available — guard with a `NOT EXISTS` subquery on `(name, player_ids)`).
+3. For the Belgium Targets row, resolve club ids from `club_map_positions` by name (case-insensitive `LIKE`) and embed any unresolved names in `defaults.notes`.
+4. No code or schema changes — purely data inserts.
 
-1. Parses each in-scope file with the TypeScript compiler API.
-2. Collects every `JSXText` node (after trim) and every string literal/template literal passed to translatable JSX attributes only: `placeholder`, `title`, `alt`, `aria-label`, `aria-description`, `label`, `description`, the children of `<title>`/`<meta description>`, and the strings inside `toast({ title, description })`.
-3. Skips anything already inside a `t(...)` call, anything matching pure numbers/symbols/single-letters, anything matching a className/route/asset path pattern, anything already wired through `useTranslation` HOCs, and anything inside `// i18n-skip` blocks.
-4. Generates a deterministic `text_key`: `<page>.<slug-of-first-40-chars>`. Collisions get a `-2`, `-3` suffix.
-5. Emits two artefacts to `/mnt/documents/`:
-   - `translation-audit.csv` — page, file, line, text_key, english
-   - `translation-audit.patch.json` — exact edits to apply per file
+### Jolon's schedule
 
-I will review the audit output before any code changes ship.
+The schedule image was not attached this turn, so I'll wait for it and parse + insert into `staff_personal_schedule_items` for Jolon's user id in the next message.
 
-## Wiring components
+### Out of scope this turn
 
-For each row in the audit:
-
-- Insert into `translations` (`page_name`, `text_key`, `english`) using `INSERT ... ON CONFLICT DO NOTHING`.
-- Replace the source location with `{t('<page>.<text_key>', '<english fallback>')}` for JSX text, or `t(...)` calls for attribute strings.
-- Pages that don't already import `useLanguage` get the import added once.
-
-Hardcoded strings inside conditional / interpolated JSX (e.g. `Hello, {name}`) are rewritten with the existing `t` interpolation convention used elsewhere in the codebase (`t('key').replace('{name}', name)`).
-
-## Auto-translation
-
-After the inserts land:
-
-1. Call the existing `ai-translate-batch` edge function in chunks of 50 rows.
-2. For each row it produces translations for the 11 non-English columns using `google/gemini-3-flash-preview` (the AI gateway default — fast, low cost).
-3. The prompt enforces: UK English source, no em dashes, no Oxford comma overuse, preserve `{placeholders}`, keep football terms in the standard form per the localization memory.
-4. Failed rows retry once; anything still failing logs to `/mnt/documents/translation-failures.csv` for manual fill.
-
-## Verification
-
-- Re-run the audit script — it must return zero remaining hardcoded strings in the in-scope files.
-- Spot-check three pages in `?lang=es`, `?lang=de`, `?lang=cs` in the preview to confirm strings render and no English leaks remain.
-- SQL check: `SELECT COUNT(*) FROM translations WHERE spanish IS NULL OR portuguese IS NULL OR ...` must still return 0.
-
-## Estimated impact
-
-- Roughly 30 files touched, expect 400–900 new translation keys based on rough grep of bare text in those files.
-- AI translation cost: ~1 gateway call per row × 11 languages. Batched 50 at a time keeps it under a few cents.
-- One build message for the audit script + inserts, one for the wiring sweep, one for the AI fill. Total ~3 build messages.
-
-## Risks & mitigations
-
-- **False positives** (rewriting strings that should stay literal): the audit limits itself to JSX text and a fixed allowlist of attributes, and skips anything matching `/^[\d\s\W]+$/` or path-like patterns.
-- **JSX interpolation breakage**: any node containing child expressions is flagged for manual review instead of auto-rewritten.
-- **Layout shifts** in other languages (German is longer): no layout changes in this pass; if anything overflows, fix in a follow-up.
-- **Duplicate keys** across pages: page_name prefix in the key prevents collisions.
-
-## Out of scope (call out separately if you want them)
-
-- Translating dynamic DB content (job descriptions, blog posts, player bios) at read time.
-- Translating image-rendered text (graphics, hero overlays baked into assets).
-- Localising route slugs that aren't already mapped in `localizedRoutes`.
+UI tweaks, schema changes, anything related to the earlier translation/relationships work.
