@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     }
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems, businessPlan, capacityStaffRoles, forecast, forecastSettings, timeline] = await Promise.all([
+    const [activity, spending, pipeline, deals, notes, players, contracts, tasks, staffActivity, prospects, overviewSections, overviewCards, invoices, projections, scouting, outreachYouth, outreachPro, marketingSchedule, profiles, taskNotifications, clubContacts, playerAnalyses, analysisTags, timeCategories, timeItems, priorityCategories, priorityItems, businessPlan, capacityStaffRoles, forecast, forecastSettings, timeline, otherIncome] = await Promise.all([
       supabase.from("investor_activity_log").select("*").order("occurred_at", { ascending: false }).limit(500),
       supabase.from("investor_spending").select("*").order("spend_date", { ascending: false }).limit(2000),
       supabase.from("investor_pipeline").select("*").order("updated_at", { ascending: false }),
@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
       supabase.from("investor_forecast").select("*").order("month", { ascending: true }),
       supabase.from("investor_forecast_settings").select("*").order("created_at", { ascending: true }).limit(1).maybeSingle(),
       supabase.from("investor_timeline").select("*").order("start_date", { ascending: true }),
+      supabase.from("investor_other_income").select("*").order("income_date", { ascending: false }).limit(2000),
     ]);
 
     const { data: updatesData } = await supabase
@@ -233,6 +234,7 @@ Deno.serve(async (req) => {
       forecastSettings: forecastSettings.data || null,
       timeline: timeline.data || [],
       updates: updatesData || [],
+      otherIncome: otherIncome.data || [],
     }), { headers: { ...responseHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
