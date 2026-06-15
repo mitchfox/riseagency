@@ -2994,6 +2994,36 @@ export type Database = {
         }
         Relationships: []
       }
+      investor_other_income: {
+        Row: {
+          amount_gbp: number
+          created_at: string
+          id: string
+          income_date: string
+          notes: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          amount_gbp?: number
+          created_at?: string
+          id?: string
+          income_date?: string
+          notes?: string | null
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          amount_gbp?: number
+          created_at?: string
+          id?: string
+          income_date?: string
+          notes?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       investor_overview_cards: {
         Row: {
           content: string | null

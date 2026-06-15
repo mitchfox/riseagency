@@ -114,6 +114,7 @@ interface ProspectRow {
 }
 interface SpendingRow { id: string; spend_date: string; category: string; vendor: string | null; amount_gbp: number; notes: string | null; }
 interface SpendingRowExt extends SpendingRow { is_personal?: boolean | null; bank_transaction_id?: string | null }
+interface OtherIncomeRow { id: string; income_date: string; source: string; amount_gbp: number; notes: string | null }
 interface ClubContactRow {
   id: string; name: string; club_name: string | null; position: string | null;
   country: string | null; city: string | null; image_url: string | null;
@@ -1191,43 +1192,65 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
             </div>
           </Card>
         </div>
-        <div className="rounded border border-border/40 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
-              <tr>
-                <th className="text-left px-3 py-2">Date</th>
-                <th className="text-left px-3 py-2">Category</th>
-                <th className="text-left px-3 py-2">Vendor</th>
-                <th className="text-left px-3 py-2">Notes</th>
-                <th className="text-right px-3 py-2">Amount</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center text-muted-foreground py-6">No matching expenses.</td></tr>
-              ) : filtered.map(r => (
-                <tr key={r.id} className="hover:bg-muted/20">
-                  <td className="px-3 py-2 text-muted-foreground">{format(new Date(r.spend_date), "d MMM yyyy")}</td>
-                  <td className="px-3 py-2"><Badge variant="outline" className="border-primary/40 text-primary capitalize">{r.category}</Badge></td>
-                  <td className="px-3 py-2">{r.vendor || "—"}</td>
-                  <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
-                  <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
-                  <td className="px-3 py-2 flex items-center justify-end gap-1">
-                    <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
-                      onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
-                      {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
-                      <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {filtered.length === 0 ? (
+          <div className="rounded border border-border/40 text-center text-muted-foreground py-6 text-sm">No matching expenses.</div>
+        ) : (() => {
+          const groups = new Map<string, SpendingRowExt[]>();
+          [...filtered]
+            .sort((a, b) => b.spend_date.localeCompare(a.spend_date))
+            .forEach(r => {
+              const key = r.spend_date.slice(0, 10);
+              const list = groups.get(key) || [];
+              list.push(r);
+              groups.set(key, list);
+            });
+          const today = new Date().toISOString().slice(0, 10);
+          return (
+            <div className="space-y-2">
+              {Array.from(groups.entries()).map(([day, list]) => {
+                const dayTotal = list.reduce((s, r) => s + Number(r.amount_gbp), 0);
+                return (
+                  <details key={day} open={day === today} className="rounded border border-border/40 bg-card/40 group">
+                    <summary className="cursor-pointer list-none flex items-center justify-between gap-3 px-3 py-2 hover:bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90" />
+                        <span className="font-medium">{format(new Date(day), "EEEE, d MMM yyyy")}</span>
+                        <Badge variant="outline" className="border-border/60 text-muted-foreground text-[10px]">
+                          {list.length} item{list.length === 1 ? "" : "s"}
+                        </Badge>
+                      </div>
+                      <span className="font-medium text-primary">{gbp(dayTotal)}</span>
+                    </summary>
+                    <table className="w-full text-sm border-t border-border/40">
+                      <tbody className="divide-y divide-border/40">
+                        {list.map(r => (
+                          <tr key={r.id} className="hover:bg-muted/20">
+                            <td className="px-3 py-2"><Badge variant="outline" className="border-primary/40 text-primary capitalize">{r.category}</Badge></td>
+                            <td className="px-3 py-2">{r.vendor || "—"}</td>
+                            <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
+                            <td className="px-3 py-2 text-right font-medium">{gbp(Number(r.amount_gbp))}</td>
+                            <td className="px-3 py-2 w-[120px]">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button size="icon" variant="ghost" title={r.is_personal ? "Move to Business" : "Move to Personal"}
+                                  onClick={async () => { await write("update", "investor_spending", { id: r.id, patch: { is_personal: !r.is_personal } }); await onRefresh(); }}>
+                                  {r.is_personal ? <Briefcase className="w-4 h-4 text-muted-foreground" /> : <UserCircle className="w-4 h-4 text-muted-foreground" />}
+                                </Button>
+                                <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(r)}>
+                                  <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => write("delete", "investor_spending", { id: r.id })}><Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" /></Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </details>
+                );
+              })}
+            </div>
+          );
+        })()}
       </SectionShell>
 
       <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
@@ -1363,9 +1386,12 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
 };
 
 // ---------- Commission Forecast linked to invoices ----------
-const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
+const CommissionForecast = ({ players, invoices, editable, onSaveCommission, otherIncome, write, onRefresh }: {
   players: PlayerRow[]; invoices: InvoiceRow[]; editable: boolean;
   onSaveCommission: (id: string, val: number | null) => Promise<void>;
+  otherIncome: OtherIncomeRow[];
+  write: any;
+  onRefresh: () => Promise<void>;
 }) => {
   const live = players.filter(p =>
     p.representation_status === "represented" ||
@@ -1387,10 +1413,15 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
   invoices.forEach(i => { paidByPlayer[i.player_id] = (paidByPlayer[i.player_id] || 0) + Number(i.amount_paid || 0); });
 
   const sorted = sortPlayersByRepresentation(live);
+  const otherTotal = otherIncome.reduce((s, r) => s + Number(r.amount_gbp || 0), 0);
+  const otherCutoff = new Date(); otherCutoff.setFullYear(otherCutoff.getFullYear() - 1);
+  const otherLast12 = otherIncome
+    .filter(r => new Date(r.income_date) >= otherCutoff)
+    .reduce((s, r) => s + Number(r.amount_gbp || 0), 0);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Real Revenue (12mo)" value={gbp(last12Paid)} sub={`From ${invoices.length} invoices`} />
+        <Stat label="Real Revenue (12mo)" value={gbp(last12Paid + otherLast12)} sub={`${gbp(last12Paid)} commission + ${gbp(otherLast12)} other`} />
         <Stat label="Invoiced (All)" value={gbp(invoicedTotal)} sub={`${gbp(paidTotal)} paid`} />
         <Stat label="Forecast / yr" value={gbp(forecast)} sub={`${live.length} live players · guaranteed-style`} />
         <Stat label="Potential / yr" value={gbp(potential)} sub="Mandate upside (not guaranteed)" />
@@ -1406,7 +1437,143 @@ const CommissionForecast = ({ players, invoices, editable, onSaveCommission }: {
           ))}</div>
         )}
       </SectionShell>
+      <OtherIncomeSection rows={otherIncome} editable={editable} write={write} onRefresh={onRefresh} total={otherTotal} />
     </div>
+  );
+};
+
+// ---------- Other Income (non-commission revenue) ----------
+const OtherIncomeSection = ({ rows, editable, write, onRefresh, total }: {
+  rows: OtherIncomeRow[]; editable: boolean; write: any; onRefresh: () => Promise<void>; total: number;
+}) => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [source, setSource] = useState("");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editSource, setEditSource] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
+  const sorted = [...rows].sort((a, b) => b.income_date.localeCompare(a.income_date));
+
+  const save = async () => {
+    if (!source.trim() || !amount) { toast.error("Source and amount required"); return; }
+    try {
+      await write("insert", "investor_other_income", { row: {
+        income_date: date, source: source.trim(), amount_gbp: Number(amount), notes: notes.trim() || null,
+      }});
+      setSource(""); setAmount(""); setNotes(""); setAddOpen(false);
+      toast.success("Income added");
+      await onRefresh();
+    } catch (e: any) { toast.error(e.message || "Failed to save"); }
+  };
+
+  const openEdit = (r: OtherIncomeRow) => {
+    setEditingId(r.id);
+    setEditSource(r.source);
+    setEditDate(r.income_date.slice(0, 10));
+    setEditAmount(String(r.amount_gbp ?? ""));
+    setEditNotes(r.notes || "");
+  };
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      await write("update", "investor_other_income", { id: editingId, patch: {
+        income_date: editDate, source: editSource.trim(), amount_gbp: Number(editAmount), notes: editNotes.trim() || null,
+      }});
+      setEditingId(null);
+      toast.success("Updated");
+      await onRefresh();
+    } catch (e: any) { toast.error(e.message || "Failed"); }
+  };
+  const remove = async (id: string) => {
+    try { await write("delete", "investor_other_income", { id }); await onRefresh(); }
+    catch (e: any) { toast.error(e.message || "Failed"); }
+  };
+
+  return (
+    <SectionShell icon={Wallet} title={`Other Income — Non-commission revenue (${gbp(total)})`} action={
+      editable ? (
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-primary text-primary-foreground"><Plus className="w-4 h-4 mr-1" />Add income</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>Add other income</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Date</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+                <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} /></div>
+              </div>
+              <div><Label>Source</Label><Input value={source} onChange={e => setSource(e.target.value)} placeholder="e.g. Training fees, Consulting, Speaking" /></div>
+              <div><Label>Notes</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
+              <Button className="bg-primary text-primary-foreground" onClick={save}>Save</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : undefined
+    }>
+      {sorted.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center py-6">No other income recorded yet.</div>
+      ) : (
+        <div className="rounded border border-border/40 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground font-bbh">
+              <tr>
+                <th className="text-left px-3 py-2">Date</th>
+                <th className="text-left px-3 py-2">Source</th>
+                <th className="text-left px-3 py-2">Notes</th>
+                <th className="text-right px-3 py-2">Amount</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {sorted.map(r => (
+                <tr key={r.id} className="hover:bg-muted/20">
+                  <td className="px-3 py-2 text-muted-foreground">{format(new Date(r.income_date), "d MMM yyyy")}</td>
+                  <td className="px-3 py-2">{r.source}</td>
+                  <td className="px-3 py-2 text-muted-foreground max-w-xs truncate">{r.notes || "—"}</td>
+                  <td className="px-3 py-2 text-right font-medium text-primary">{gbp(Number(r.amount_gbp))}</td>
+                  <td className="px-3 py-2 flex items-center justify-end gap-1">
+                    {editable && (
+                      <>
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
+                          <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => remove(r.id)}>
+                          <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Dialog open={!!editingId} onOpenChange={(o) => { if (!o) setEditingId(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Edit income</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Date</Label><Input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} /></div>
+              <div><Label>Amount (GBP)</Label><Input type="number" step="0.01" value={editAmount} onChange={e => setEditAmount(e.target.value)} /></div>
+            </div>
+            <div><Label>Source</Label><Input value={editSource} onChange={e => setEditSource(e.target.value)} /></div>
+            <div><Label>Notes</Label><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} /></div>
+            <div className="flex gap-2">
+              <Button className="bg-primary text-primary-foreground" onClick={saveEdit}>Save changes</Button>
+              <Button variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </SectionShell>
   );
 };
 
@@ -3393,6 +3560,7 @@ const InvestorsPortal = () => {
     forecastSettings: ForecastSettingsRow | null;
     timeline: TimelineRow[];
     updates: { id: string; title: string; body: string | null; achieved_on: string; author_label: string | null; created_at: string }[];
+    otherIncome: OtherIncomeRow[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -3476,6 +3644,7 @@ const InvestorsPortal = () => {
         forecastSettings: dd.forecastSettings || null,
         timeline: dd.timeline || [],
         updates: dd.updates || [],
+        otherIncome: dd.otherIncome || [],
       });
     } catch (e: any) {
       if (seq === refreshSeqRef.current) toast.error(e.message || "Failed to load");
@@ -3854,7 +4023,7 @@ const InvestorsPortal = () => {
                   {active === "playerdatabase" && <PlayerDatabaseSection scouting={data.scoutingReports} youth={data.outreachYouth} pro={data.outreachPro} />}
                   {active === "contracts" && <ContractsView rows={data.contracts} />}
                   {active === "spending" && <Spending rows={data.spending} write={writeOp} token={token} onRefresh={refresh} />}
-                  {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} />}
+                  {active === "commission" && <CommissionForecast players={data.players} invoices={data.invoices} editable={canEdit} onSaveCommission={saveCommission} otherIncome={data.otherIncome} write={writeOp} onRefresh={refresh} />}
                   {active === "invoices" && <InvoicesView rows={data.invoices} players={data.players} />}
                   {active === "forecast" && <Forecast spending={data.spending as SpendingRowExt[]} invoices={data.invoices} projections={data.projections} forecast={data.forecast} forecastSettings={data.forecastSettings} editable={canEdit} write={writeOp} />}
                   {active === "projections" && <Projections projections={data.projections} players={data.players} editable={canEdit} write={writeOp} />}
