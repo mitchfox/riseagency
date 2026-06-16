@@ -1054,7 +1054,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               <label className="flex items-start gap-3 cursor-pointer">
                 <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
                 <div>
-                  <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
+                  <div className="text-xs font-semibold text-foreground">Mark as Mandated</div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     Use when this player's mandate has been given to another agent / agency. Their name replaces "Rise Football Agency presents" at the top, and a "Mandated by Rise Football Agency" line appears below.
                   </p>
