@@ -28,6 +28,7 @@ import { PageLoading } from "@/components/LoadingSpinner";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { normaliseActionKey } from "@/components/staff/PlayerHudlVisibilityTab";
 import { toTitleCase } from "@/lib/titleCase";
+import { heroCropStyle } from "@/lib/videoCropUtils";
 
 // Language column map for translation API responses
 const languageColumnMap: Record<string, string> = {
@@ -699,6 +700,7 @@ const PlayerDetail = () => {
                       autoPlayOnVisible
                       loadImmediately={currentVideoType === 0}
                       src={dbHighlights[currentVideoType].videoUrl}
+                      style={heroCropStyle(dbHighlights[currentVideoType].videoUrl)}
                      onError={(e) => {
                       console.error('Video error:', e);
                       console.log('Video URL:', dbHighlights[currentVideoType].videoUrl);
