@@ -507,7 +507,7 @@ export default function ClubOutreachProposal() {
                   src={heroBlobUrl ?? current.first_highlight_url}
                   className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
                   style={heroCropStyle(current.first_highlight_url)}
-                  controls
+                  controls={!shouldCropHeroVideo(current.first_highlight_url)}
                   playsInline
                   preload="auto"
                   onLoadedMetadata={(e) => {
@@ -543,6 +543,9 @@ export default function ClubOutreachProposal() {
                     heroAutoplayedRef.current = true;
                   }}
                 />
+                {shouldCropHeroVideo(current.first_highlight_url) && !heroPreparing && (
+                  <CroppedHeroControls videoRef={videoRef} />
+                )}
                 {heroPreparing && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
