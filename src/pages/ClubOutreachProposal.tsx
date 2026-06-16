@@ -396,7 +396,15 @@ export default function ClubOutreachProposal() {
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
   const playerClubLogo = current.player_club_image_url;
   const preparedFor =
-    (data.link.prepared_for_name ?? "").trim() || (club?.club_name ? `${club.club_name}${club.country ? `, ${club.country}` : ""}` : "");
+    (data.link.prepared_for_name ?? "").trim();
+
+  const isMandated = !!data.link.is_mandated;
+  const mandatedAgentName = (data.link.mandated_agent_name ?? "").trim();
+  const mandatedAgentRole = (data.link.mandated_agent_role ?? "").trim();
+  const mandatedAgentLogo = (data.link.mandated_agent_logo_url ?? "").trim();
+  const mandatedAgentPhone = (data.link.mandated_agent_phone ?? "").replace(/[^0-9]/g, "");
+  const mandatedAgentWaUrl = mandatedAgentPhone ? `https://wa.me/${mandatedAgentPhone}` : null;
+  const showMandatedHeader = isMandated && mandatedAgentName.length > 0;
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
