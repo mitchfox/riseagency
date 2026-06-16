@@ -675,16 +675,16 @@ export default function ClubOutreachProposal() {
           <div className="text-center mb-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#cbb96b] shadow-[0_0_8px_rgba(203,185,107,0.8)]" />
-              {tr("mandated.badge", "Mandated Representation")}
+              {tr("mandated.badge", "Mandated")}
             </span>
             <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
               {mandatedAgentName
                 ? fillTpl(
-                    tr("mandated.subtitleExternal", "Rise Football Agency has mandated {agent} to act on {firstName}'s behalf. Please speak with them directly to progress this conversation."),
+                    tr("mandated.subtitleExternal", "{agent} is mandated to act on {firstName}'s behalf."),
                     { firstName, agent: mandatedAgentName },
                   )
                 : fillTpl(
-                    tr("mandated.subtitleNoAgent", "Rise Football Agency has mandated an external agent to act on {firstName}'s behalf."),
+                    tr("mandated.subtitleNoAgent", "An external agent is mandated to act on {firstName}'s behalf."),
                     { firstName },
                   )}
             </p>
