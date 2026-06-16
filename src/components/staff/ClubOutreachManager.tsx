@@ -1021,6 +1021,22 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
+
+            <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+
+            <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+
+            <div className="rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/[0.06] p-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
+                <div>
+                  <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Signals to the recipient that the player has formally instructed Rise to negotiate on their behalf. A gold "Mandated" badge appears above the agent contact.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
         <DialogFooter>
