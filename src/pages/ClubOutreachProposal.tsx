@@ -911,8 +911,15 @@ function KeyDetailsCard({
   };
 
   // Adaptive grid: 2 cols on mobile, scale up so 5+ tiles still look balanced.
+  // Use a static map so Tailwind's JIT keeps the classes.
   const count = tiles.length;
-  const desktopCols = count <= 4 ? `sm:grid-cols-${count}` : count % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
+  const colMap: Record<number, string> = {
+    1: "sm:grid-cols-1",
+    2: "sm:grid-cols-2",
+    3: "sm:grid-cols-3",
+    4: "sm:grid-cols-4",
+  };
+  const desktopCols = count <= 4 ? colMap[count] : count % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
