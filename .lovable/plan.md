@@ -1,61 +1,39 @@
-## Goal
+I will make these targeted fixes:
 
-Give you full control over what appears on a club proposal page (and in what order), and let you mark a proposal as a formal mandate from the player.
+1. **Mandate proof document**
+   - Add separate mandate proof storage on outreach links, so mandated proposals can use their own uploaded proof document.
+   - In the staff outreach editor, show an upload field for **Proof of Mandate** when mandated is enabled.
+   - On the proposal card:
+     - Normal proposals show **Proof of Representation** and **Signed agreement with Rise Football Agency**.
+     - Mandated proposals show **Proof of Mandate** with copy that clearly refers to a mandate, not RISE representing the player.
 
-## What changes for you
+2. **Correct mandate wording everywhere**
+   - Header stays as: **AGENT / AGENCY NAME PRESENTS**.
+   - Sub-line stays as: **Mandated by RISE Football Agency**.
+   - Remove the incorrect bottom text about RISE being formally instructed to negotiate.
+   - Replace it with copy that makes clear RISE has granted / provided the mandate to the named external agent or agency to act on the player’s behalf.
 
-In the staff Club Outreach editor, each link gets three new controls:
+3. **Correct mandate contacts and WhatsApp routing**
+   - If a proposal is mandated and a mandated agent WhatsApp number exists, the main contact CTA and pinned WhatsApp button will go to that external mandated agent.
+   - Hide the RISE agent WhatsApp CTA on mandated proposals when a mandated agent contact is provided, so it does not show you as Michael’s mandated agent.
+   - Keep RISE contact only as a fallback if no mandated agent WhatsApp has been entered.
 
-1. **Key Details builder** — pick which tiles appear in the four-up grid above the video. Add, remove, reorder, and mix from:
-   - Built-in tiles: Club, Age, Nationality, League, Position, Contract Expiry, Current Salary (auto-pulled from the player record)
-   - Link-only tiles (typed per proposal): Salary Expectations, Transfer Fee, Contract Expiry override, Height, Preferred Foot, plus a "Custom" tile with your own label + value
-   - The grid auto-flows so 3, 5, 6+ tiles all look clean (2-col mobile, 3- or 4-col desktop)
-2. **Mandated proposal toggle** — when on, the proposal page shows a "Mandated Representation" badge near the agent contact, and the agent CTA copy switches to "{firstName}'s Mandated Agent". An info line under the badge explains the agent is formally instructed to negotiate on the player's behalf.
-3. **Section order** — drag-reorder list for everything below the hero video: Fit & Recommendation, Video & Data / Proof cards, Form, In Numbers, Season Stats, Strengths. Hidden sections (existing show_* toggles) stay hidden; order applies only to visible ones.
+4. **Fix “For” display**
+   - Keep the existing behaviour where an empty **Prepared for** field does not render the “For” line at all.
 
-Defaults match today's behaviour, so existing links keep rendering exactly as they do now until you edit them.
+5. **Improve In Numbers formatting**
+   - Restyle **In Numbers** to match the other stat cards: balanced grid tiles, gold values, compact labels and clean wrapping instead of the current awkward vertical list.
 
-## Technical details
+6. **Fix Michael Mulligan cropped video controls**
+   - Keep the top and bottom eleventh cropped from view.
+   - Move the custom controls into the visible safe area of the cropped video so seek, sound and fullscreen controls align properly and do not sit where the crop hides them.
 
-**Migration** — add three columns to `club_outreach_links`:
-- `is_mandated boolean not null default false`
-- `key_details jsonb` — ordered array of items, e.g.
-  ```json
-  [
-    {"kind":"club"},
-    {"kind":"age"},
-    {"kind":"nationality"},
-    {"kind":"league"},
-    {"kind":"contract_expiry"},
-    {"kind":"salary_expectations","value":"€1.2M/yr"},
-    {"kind":"custom","label":"Buyout","value":"€8M"}
-  ]
-  ```
-  `null` means "use the four legacy defaults".
-- `section_order jsonb` — ordered array of section keys (`fit`, `cards`, `form`, `in_numbers`, `season_stats`, `strengths`); `null` means default order.
+7. **Fix scheme history formation rendering**
+   - Add proper `4-2-1-3` support to `FormationDisplay`.
+   - Add a formation normaliser so strings like `4-2-1-3` and close variants do not silently fall back to `4-3-3`.
+   - Ensure TJ Jiskra Domažlice showing **CURRENT CLUB • 4-2-1-3** renders a real 4-2-1-3 layout on screen.
 
-**Edge function `get-club-proposal`** (the one feeding `ClubOutreachProposal.tsx`):
-- Return `link.is_mandated`, `link.key_details`, `link.section_order`.
-- For player-sourced key-detail kinds (`contract_expiry`, `current_salary`, `position`), include `contract_end_date`, `current_salary_annual`, `position`, `preferred_currency` for each player so the page can format locally.
-
-**Staff editor (`src/components/staff/ClubOutreachManager.tsx`)**:
-- New "Key Details" panel: list of selected items with up/down + remove buttons, "Add tile" dropdown sourced from the preset kinds, value/label inputs for the typed kinds, and a Reset to Defaults button.
-- New "Mandated" switch beside the existing visibility toggles.
-- New "Section Order" panel: dnd-kit sortable list (the project already uses dnd-kit, see `src/components/staff/RowDropZone.tsx`).
-- Persist new fields in the existing upsert payload (lines ~720 and ~736).
-
-**Proposal page (`src/pages/ClubOutreachProposal.tsx`)**:
-- Extend `Payload.link` typing with the three new fields plus the new per-player contract/salary/position fields.
-- `KeyDetailsCard` rewritten to render from `link.key_details ?? DEFAULT_KEY_DETAILS`. New tile renderers: contract expiry (formatted `MMM yyyy`), salary (formatted with `preferred_currency`), position pill, height, foot, custom. Grid uses `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` with `auto-rows-fr` so any count looks balanced.
-- Replace the hard-coded ordering of post-video sections with a single map keyed by section id, then render in `link.section_order ?? DEFAULT_SECTION_ORDER`, still respecting the existing `show_*` toggles.
-- Mandated state: render a small gold "Mandated Representation" pill above the agent WhatsApp CTA and swap the eyebrow text. Translations added via the existing `tr()` helper (`mandated.badge`, `mandated.subtitle`, `contact.waAgentMandated`).
-
-**Out of scope**
-- No changes to the agent-target view beyond honouring the same section order.
-- No changes to translations beyond adding the three new keys (existing auto-translate pipeline picks them up).
-
-## Verification
-
-- Existing proposal links render unchanged (defaults preserved).
-- New link with custom key details + reordered sections matches the editor preview on `/staff` and on the public proposal URL.
-- Mandated toggle visibly changes the agent CTA and shows the badge.
+Technical notes:
+- This needs one database migration for the separate mandate proof document path/url on `club_outreach_links`, with the required grants preserved.
+- I will update the existing public proposal edge function to return that new field.
+- I will only touch the proposal, outreach editor, video crop helper and formation display code needed for these issues.

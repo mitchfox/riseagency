@@ -109,6 +109,8 @@ interface Payload {
     mandated_agent_role?: string | null;
     mandated_agent_phone?: string | null;
     mandated_agent_logo_url?: string | null;
+    mandate_proof_url?: string | null;
+    mandate_proof_path?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
@@ -586,21 +588,37 @@ export default function ClubOutreachProposal() {
                 unavailableLabel={tr("card.unavailable", "Unavailable")}
               />
               {data.link.target_type !== 'agent' && (
-                <ProposalCard
-                  href={
-                    current.proof_of_representation_url && data.link.short_id && player?.id
-                      ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                      : null
-                  }
-                  icon={<FileBadge2 className="h-6 w-6" />}
-                  eyebrow="02"
-                  title={tr("card.proofTitle", "Proof of Representation")}
-                  subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
-                  disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
-                  openLabel={tr("card.open", "Open")}
-                  unavailableLabel={tr("card.unavailable", "Unavailable")}
-                  internal
-                />
+                (isMandated ? (
+                  <ProposalCard
+                    href={data.link.mandate_proof_url || null}
+                    icon={<FileBadge2 className="h-6 w-6" />}
+                    eyebrow="02"
+                    title={tr("card.mandateTitle", "Proof of Mandate")}
+                    subtitle={fillTpl(
+                      tr("card.mandateSubtitle", "Signed mandate granting {agent} the right to represent {firstName}"),
+                      { agent: mandatedAgentName || "the external agent", firstName },
+                    )}
+                    disabledLabel={data.link.mandate_proof_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                    openLabel={tr("card.open", "Open")}
+                    unavailableLabel={tr("card.unavailable", "Unavailable")}
+                  />
+                ) : (
+                  <ProposalCard
+                    href={
+                      current.proof_of_representation_url && data.link.short_id && player?.id
+                        ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+                        : null
+                    }
+                    icon={<FileBadge2 className="h-6 w-6" />}
+                    eyebrow="02"
+                    title={tr("card.proofTitle", "Proof of Representation")}
+                    subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+                    disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                    openLabel={tr("card.open", "Open")}
+                    unavailableLabel={tr("card.unavailable", "Unavailable")}
+                    internal
+                  />
+                ))
               )}
             </section>
           ),
@@ -639,10 +657,13 @@ export default function ClubOutreachProposal() {
             <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
               {mandatedAgentName
                 ? fillTpl(
-                    tr("mandated.subtitleExternal", "{firstName}'s representation has been mandated to {agent}. Speak with them directly to progress this conversation."),
+                    tr("mandated.subtitleExternal", "Rise Football Agency has mandated {agent} to act on {firstName}'s behalf. Please speak with them directly to progress this conversation."),
                     { firstName, agent: mandatedAgentName },
                   )
-                : tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
+                : fillTpl(
+                    tr("mandated.subtitleNoAgent", "Rise Football Agency has mandated an external agent to act on {firstName}'s behalf."),
+                    { firstName },
+                  )}
             </p>
           </div>
         )}
@@ -677,7 +698,7 @@ export default function ClubOutreachProposal() {
             <ExternalLink className="h-4 w-4 opacity-80" />
           </a>
         )}
-        {agencyWaUrl && (
+        {agencyWaUrl && !(isMandated && mandatedAgentWaUrl) && (
           <a
             href={agencyWaUrl}
             target="_blank"
@@ -1208,16 +1229,18 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
 }
 
 function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
+  const count = stats.length;
+  const cols = count >= 4 ? "sm:grid-cols-4" : count === 3 ? "sm:grid-cols-3" : count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
   return (
     <SectionShell title={title ?? "In Numbers"} eyebrow="05">
-      <div className="space-y-4">
+      <div className={`grid grid-cols-2 ${cols} gap-2`}>
         {stats.map((s, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className="text-3xl font-semibold text-[#cbb96b] leading-none min-w-[3rem]">{s.value}</div>
-            <div className="flex-1">
-              <div className="text-[11px] uppercase tracking-wider text-white/70">{s.label}</div>
-              {s.description && <p className="mt-1 text-xs text-white/60 leading-relaxed">{s.description}</p>}
-            </div>
+          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
+            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/70 leading-tight break-words whitespace-normal">{s.label}</div>
+            {s.description && (
+              <p className="mt-1 text-[11px] text-white/55 leading-snug break-words whitespace-normal">{s.description}</p>
+            )}
           </div>
         ))}
       </div>

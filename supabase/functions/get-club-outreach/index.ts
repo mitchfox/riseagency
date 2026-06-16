@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -60,6 +60,23 @@ Deno.serve(async (req) => {
         country: null,
         image_url: link.agent_logo_url ?? null,
       };
+    }
+
+    // Resolve a signed URL for the optional Proof of Mandate document.
+    if (link.is_mandated && link.mandate_proof_path) {
+      try {
+        const raw = link.mandate_proof_path as string;
+        if (/^https?:\/\//i.test(raw)) {
+          (link as any).mandate_proof_url = raw;
+        } else {
+          const { data: signed } = await supabase.storage
+            .from("proof-of-representation")
+            .createSignedUrl(raw, 60 * 60 * 24 * 7, { download: false });
+          (link as any).mandate_proof_url = signed?.signedUrl ?? null;
+        }
+      } catch (_) {
+        (link as any).mandate_proof_url = null;
+      }
     }
 
     const { data: settings } = await supabase
