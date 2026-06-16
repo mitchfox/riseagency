@@ -109,6 +109,8 @@ interface Payload {
     mandated_agent_role?: string | null;
     mandated_agent_phone?: string | null;
     mandated_agent_logo_url?: string | null;
+    mandate_proof_url?: string | null;
+    mandate_proof_path?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
