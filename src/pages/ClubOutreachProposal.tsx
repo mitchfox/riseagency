@@ -294,6 +294,16 @@ export default function ClubOutreachProposal() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!heroPrefetchFailed || heroReady) return;
+    const video = videoRef.current;
+    if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+    setHeroReady(true);
+    if (heroAutoplayedRef.current) return;
+    heroAutoplayedRef.current = true;
+    tryAutoplay(video);
+  }, [heroPrefetchFailed, heroReady, current?.first_highlight_url]);
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
