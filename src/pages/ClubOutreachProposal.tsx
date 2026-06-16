@@ -410,6 +410,9 @@ export default function ClubOutreachProposal() {
   const mandatedAgentWaUrl = mandatedAgentPhone ? `https://wa.me/${mandatedAgentPhone}` : null;
   const showMandatedHeader = isMandated && mandatedAgentName.length > 0;
 
+  const isSuggestedToAgent = !!data.link.is_suggested_to_agent && isMandated;
+  const suggestedAgentNote = (data.link.suggested_agent_note ?? "").trim();
+
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
       {/* Smudged black marble brand background */}
@@ -421,6 +424,24 @@ export default function ClubOutreachProposal() {
           backgroundPosition: "center",
         }}
       />
+      {isSuggestedToAgent && (
+        <div className="relative border-b border-[#cbb96b]/40 bg-gradient-to-b from-[#cbb96b]/[0.18] to-[#cbb96b]/[0.06] px-6 py-4 text-center">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] font-semibold">
+            {tr("suggested.label", "Suggested Proposal Preview")}
+          </p>
+          <p className="mt-1 text-xs sm:text-sm text-white/85 max-w-2xl mx-auto">
+            {tr(
+              "suggested.intro",
+              "This is a preview of a proposal we'd like you to send on this player's behalf.",
+            )}
+          </p>
+          {suggestedAgentNote && (
+            <p className="mt-2 text-xs sm:text-sm text-white/70 max-w-2xl mx-auto whitespace-pre-line italic">
+              {suggestedAgentNote}
+            </p>
+          )}
+        </div>
+      )}
       {/* Header */}
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
