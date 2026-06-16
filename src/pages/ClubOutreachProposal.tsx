@@ -774,7 +774,11 @@ export default function ClubOutreachProposal() {
       {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
       {(() => {
         const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
-        if (!tmUrl && !agencyWaUrl) return null;
+        const pinnedWaUrl = (isMandated && mandatedAgentWaUrl) ? mandatedAgentWaUrl : agencyWaUrl;
+        const pinnedWaTitle = (isMandated && mandatedAgentWaUrl)
+          ? `WhatsApp ${mandatedAgentName || "mandated agent"}`
+          : `WhatsApp ${data.agent_name ?? "agent"}`;
+        if (!tmUrl && !pinnedWaUrl) return null;
         return (
           <div
             className={`fixed inset-x-0 bottom-0 z-40 pointer-events-none transition-opacity duration-300 ${contactsVisible ? "opacity-0" : "opacity-100"}`}
@@ -795,12 +799,12 @@ export default function ClubOutreachProposal() {
                   <span className="text-[13px] font-extrabold tracking-tight leading-none">TM</span>
                 </a>
               )}
-              {agencyWaUrl && (
+              {pinnedWaUrl && (
                 <a
-                  href={agencyWaUrl}
+                  href={pinnedWaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`WhatsApp ${data.agent_name ?? "agent"}`}
+                  title={pinnedWaTitle}
                   className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
                   style={{ backgroundColor: "#25D366" }}
                 >
