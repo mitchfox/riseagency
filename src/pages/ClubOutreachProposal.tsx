@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
+import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import {
   DEFAULT_KEY_DETAILS,
