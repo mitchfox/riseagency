@@ -583,6 +583,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
+  const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
+  const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
+  const [mandatedAgentPhone, setMandatedAgentPhone] = useState<string>(editing?.mandated_agent_phone ?? "");
+  const [mandatedAgentLogoUrl, setMandatedAgentLogoUrl] = useState<string>(editing?.mandated_agent_logo_url ?? "");
+  const [mandatedLogoUploading, setMandatedLogoUploading] = useState(false);
   const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
     editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
   );
