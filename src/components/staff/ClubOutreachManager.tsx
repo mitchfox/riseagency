@@ -578,6 +578,13 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
+  const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
+  const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
+    editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
+  );
+  const [sectionOrder, setSectionOrder] = useState<ProposalSectionKey[]>(
+    editing?.section_order ? normaliseSectionOrder(editing.section_order) : DEFAULT_SECTION_ORDER
+  );
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
   const [language, setLanguage] = useState<string>(editing?.language ?? "en");
