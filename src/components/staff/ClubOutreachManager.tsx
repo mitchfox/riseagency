@@ -1045,10 +1045,58 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                 <div>
                   <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Signals to the recipient that the player has formally instructed Rise to negotiate on their behalf. A gold "Mandated" badge appears above the agent contact.
+                    Use when this player's mandate has been given to another agent / agency. Their name replaces "Rise Football Agency presents" at the top, and a "Mandated by Rise Football Agency" line appears below.
                   </p>
                 </div>
               </label>
+              {isMandated && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="sm:col-span-2">
+                    <Label className="text-[11px]">Mandated agent / agency name</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="e.g. ProActive Sports Management" value={mandatedAgentName} onChange={(e) => setMandatedAgentName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Contact role (optional)</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="e.g. Director" value={mandatedAgentRole} onChange={(e) => setMandatedAgentRole(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">WhatsApp number</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="+44 7…" value={mandatedAgentPhone} onChange={(e) => setMandatedAgentPhone(e.target.value)} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-[11px]">Logo / photo URL (optional)</Label>
+                    <div className="flex gap-2 items-center mt-1">
+                      <Input className="h-8 text-xs flex-1" placeholder="https://…" value={mandatedAgentLogoUrl} onChange={(e) => setMandatedAgentLogoUrl(e.target.value)} />
+                      <label className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-border cursor-pointer hover:bg-muted/40">
+                        <Upload className="h-3 w-3" /> {mandatedLogoUploading ? "Uploading…" : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            setMandatedLogoUploading(true);
+                            try {
+                              const ext = f.name.split(".").pop() || "png";
+                              const path = `mandated-agent-${Date.now()}.${ext}`;
+                              const { error: upErr } = await supabase.storage.from("club-logos").upload(path, f, { cacheControl: "3600", upsert: true });
+                              if (upErr) throw upErr;
+                              const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+                              setMandatedAgentLogoUrl(data.publicUrl);
+                              toast.success("Logo uploaded");
+                            } catch (err: any) {
+                              toast.error(err.message ?? "Upload failed");
+                            } finally {
+                              setMandatedLogoUploading(false);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
