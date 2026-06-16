@@ -467,7 +467,7 @@ export default function ClubOutreachProposal() {
                   ref={videoRef}
                   key={`${current.first_highlight_url}-${heroBlobUrl ? "blob" : "stream"}`}
                   src={heroBlobUrl ?? current.first_highlight_url}
-                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroReady ? "opacity-100" : "opacity-0"}`}
+                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
                   controls
                   playsInline
                   preload="auto"
@@ -494,17 +494,17 @@ export default function ClubOutreachProposal() {
                         const end = v.buffered.end(v.buffered.length - 1);
                         covered = end >= dur - 0.5;
                       }
-                      if (covered && !heroReady) {
+                      if (covered && heroPreparing) {
                         revealHeroVideo(v);
                       }
                     }
                   }}
                   onError={(e) => {
-                    setHeroReady(true);
+                    setHeroPreparing(false);
                     heroAutoplayedRef.current = true;
                   }}
                 />
-                {!heroReady && (
+                {heroPreparing && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
                   <p className="text-xs uppercase tracking-[0.3em] text-white/50">
