@@ -153,6 +153,9 @@ export default function ClubOutreachProposal() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const [contactsVisible, setContactsVisible] = useState(false);
+  const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
+  const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
 
   useEffect(() => {
     const node = contactsRef.current;
@@ -226,6 +229,52 @@ export default function ClubOutreachProposal() {
     video.currentTime = 0;
     tryAutoplay(video);
   }, [current?.first_highlight_url]);
+
+  // Fully prefetch the hero highlight to a blob URL so playback can run
+  // entirely from memory without mid-stream re-buffering. We accept a longer
+  // up-front wait to guarantee seamless playback.
+  useEffect(() => {
+    const url = current?.first_highlight_url;
+    setHeroReady(false);
+    setHeroPrefetchFailed(false);
+    setHeroBlobUrl((prev) => {
+      if (prev) {
+        try { URL.revokeObjectURL(prev); } catch {}
+      }
+      return null;
+    });
+    if (!url) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(url, { signal: controller.signal, cache: "force-cache" });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const blob = await res.blob();
+        if (cancelled) return;
+        const obj = URL.createObjectURL(blob);
+        setHeroBlobUrl(obj);
+      } catch (e) {
+        if (cancelled) return;
+        // Fall back to direct streaming with a stricter readiness gate.
+        setHeroPrefetchFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [current?.first_highlight_url]);
+
+  // Revoke the blob URL on unmount.
+  useEffect(() => {
+    return () => {
+      if (heroBlobUrl) {
+        try { URL.revokeObjectURL(heroBlobUrl); } catch {}
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
@@ -368,21 +417,48 @@ export default function ClubOutreachProposal() {
         <div className="max-w-3xl mx-auto px-6 mt-6">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
-              <video
-                ref={videoRef}
-                key={current.first_highlight_url}
-                src={current.first_highlight_url}
-                className="w-full h-full object-contain bg-black"
-                controls
-                playsInline
-                autoPlay
-                onLoadedMetadata={(e) => {
-                  e.currentTarget.currentTime = 0;
-                  tryAutoplay(e.currentTarget);
-                }}
-                onCanPlay={(e) => tryAutoplay(e.currentTarget)}
-                preload="auto"
-              />
+              heroBlobUrl || heroPrefetchFailed ? (
+                <video
+                  ref={videoRef}
+                  key={heroBlobUrl ?? current.first_highlight_url}
+                  src={heroBlobUrl ?? current.first_highlight_url}
+                  className="w-full h-full object-contain bg-black"
+                  controls
+                  playsInline
+                  preload="auto"
+                  onLoadedMetadata={(e) => {
+                    e.currentTarget.currentTime = 0;
+                    if (heroBlobUrl) {
+                      setHeroReady(true);
+                      tryAutoplay(e.currentTarget);
+                    }
+                  }}
+                  onCanPlayThrough={(e) => {
+                    // Fallback path: only start once the browser is confident
+                    // playback can complete without re-buffering.
+                    if (!heroBlobUrl && heroPrefetchFailed) {
+                      const v = e.currentTarget;
+                      const dur = v.duration;
+                      let covered = false;
+                      if (isFinite(dur) && v.buffered.length > 0) {
+                        const end = v.buffered.end(v.buffered.length - 1);
+                        covered = end >= dur - 0.5;
+                      }
+                      if (covered && !heroReady) {
+                        setHeroReady(true);
+                        tryAutoplay(v);
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-black">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+                    {tr("video.preparing", "Preparing video")}
+                  </p>
+                </div>
+              )
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}

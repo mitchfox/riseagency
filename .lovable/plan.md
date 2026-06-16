@@ -1,44 +1,30 @@
-## Outreach strategies — Tyrese & Mikie
+# Smooth hero video playback on proposal page
 
-Insert one `club_outreach_strategies` row per (player × country × division). Each row uses the existing schema (`name`, `player_ids`, `filters {country, league_level, club_ids?}`, `defaults`). Strategy names follow `"<Player first name> — <Country> <Division>"`. For Belgium I'll add the divisional rows plus a separate `"Tyrese — Belgium (Targets)"` row with `club_ids` populated for RAAL, Zulte Waregem, Anderlecht, Lommel and Cercle Brugge (matched against `club_map_positions`; any not found are recorded in `defaults.notes`). UEFA competitions are stored as `country = "Champions League"`, `"Europa League"` and `"Conference League"` for both players. `defaults.notes` carries qualifiers like "low 2nd", "high 3rd", "?", and "Danish guy re Abi" on Mikie's Danish 1st row.
+The hero highlight video on the club/agent proposal page (`src/pages/ClubOutreachProposal.tsx`) currently starts playing the moment the browser has the first few seconds buffered (`autoPlay` + `preload="auto"`), so on slower networks playback stalls roughly every 2 seconds while the next chunk downloads. Viewers see a stuttering clip, which is unacceptable on a recruitment-facing link.
 
-### Mikie (Michael Vit Mulligan) — rows to insert
+## Goal
 
-```text
-Malta 1st, Greece 2nd, Slovenia 1st, Czech 2nd, Sweden 2nd, Denmark 2nd,
-Denmark 1st  (note: "Danish guy re Abi"),
-Ireland 1st, Ireland 2nd, Scotland 2nd, Poland 2nd, Slovakia 2nd, Austria 2nd,
-Portugal 2nd (note: "low 2nd"),
-Spain 3rd   (note: "high 3rd"),
-Italy 3rd, France 3rd, Luxembourg 1st (note: "Mondorf"),
-Romania 1st, Hungary 2nd (note: "?"), Serbia 1st, Serbia 2nd, Croatia 2nd,
-Moldova 1st, Switzerland 2nd, Georgia 1st, Bulgaria 1st (note: "?"), USA 2nd,
-Champions League, Europa League, Conference League
-```
+Trade a longer up-front load for completely seamless playback. The hero video should not start until enough has been buffered that it can play to the end without re-buffering. Show a clear loading state during that wait.
 
-### Tyrese (Tyrese Omotoye) — rows to insert
+## Approach
 
-```text
-Czech 1st, Poland 1st, Denmark 1st, Sweden 1st, Scotland 1st,
-Belgium 1st, Belgium 2nd, Belgium (Targets: RAAL, Zulte Waregem, Anderlecht, Lommel, Cercle Brugge),
-Slovakia 1st (note: "?"), Austria 1st, Portugal 1st, Portugal 2nd, Spain 2nd,
-Italy 2nd, France 2nd, Germany 2nd, Turkey 1st, Turkey 2nd, Greece 1st,
-Russia 1st, Ukraine 1st (note: "top"), Serbia 1st (note: "top"), Croatia 1st,
-Romania 1st (note: "top"), Hungary 1st,
-Champions League, Europa League, Conference League
-```
+In the hero video block (lines ~366-391):
 
-### Steps
+1. Replace the immediate `autoPlay` with a gated, two-stage flow:
+   - Stage 1 — full prefetch: as soon as the highlight URL is known, fetch the file via `fetch(url)` and turn it into a `blob:` object URL. This forces the browser to download the entire video in one go (instead of HTTP range chunks that arrive as playback progresses).
+   - Stage 2 — playback: only set the `<video>` `src` to the blob URL once the blob is ready, then call `tryAutoplay`. Because the file is fully in memory, `currentTime` seeks and playback never wait on the network.
+   - Revoke the previous blob URL when the player swaps to another highlight (carousel via `current.first_highlight_url` change) or on unmount, to avoid memory leaks.
 
-1. Look up both player UUIDs (Tyrese `b94fd8f6-…`, Mikie `00dd8ae4-…`) and reuse them.
-2. Build all rows in one `supabase--insert` call using `INSERT … VALUES …` with `gen_random_uuid()`, `player_ids = ARRAY[...]::uuid[]`, and `filters` / `defaults` as JSON literals. Skip on duplicate name (`ON CONFLICT` not available — guard with a `NOT EXISTS` subquery on `(name, player_ids)`).
-3. For the Belgium Targets row, resolve club ids from `club_map_positions` by name (case-insensitive `LIKE`) and embed any unresolved names in `defaults.notes`.
-4. No code or schema changes — purely data inserts.
+2. While stage 1 is in progress, render a black 16:9 frame with the existing gold `Loader2` spinner and a small label such as `tr("video.preparing", "Preparing video…")` so the viewer understands the wait is intentional.
 
-### Jolon's schedule
+3. Add a safety fallback: if the prefetch fails (CORS, network error, abort), fall back to the current direct `src` + `preload="auto"` behaviour but additionally hold playback until `canplaythrough` fires and `video.buffered` covers the full duration — only then call `tryAutoplay`. This keeps the page working even when blob prefetch is blocked.
 
-The schedule image was not attached this turn, so I'll wait for it and parse + insert into `staff_personal_schedule_items` for Jolon's user id in the next message.
+4. Keep `playsInline`, `controls`, unmuted-first/muted-fallback autoplay behaviour, and the existing `videoRef` reset effect intact. The `key={current.first_highlight_url}` remount stays so swapping players still works.
 
-### Out of scope this turn
+5. No changes elsewhere — this is scoped to the hero video block in `ClubOutreachProposal.tsx`. Other video components (`ActionVideoPopup`, `LazyVideo`, shared clip player) are untouched.
 
-UI tweaks, schema changes, anything related to the earlier translation/relationships work.
+## Notes
+
+- Blob prefetch means the user waits longer before the first frame, but every subsequent second plays back from RAM. This matches the stated preference of "take the extra seconds loading… to ensure its seamless".
+- Highlight files are short clips (single Stars highlight), so the memory footprint of a blob URL is small (typically <30 MB).
+- No backend, schema, or other page changes required.
