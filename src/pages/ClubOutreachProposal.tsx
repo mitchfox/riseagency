@@ -132,6 +132,7 @@ function tryAutoplay(video: HTMLVideoElement) {
 }
 
 const PUBLIC_HOME_URL = "https://risefootballagency.com/";
+const HERO_PREFETCH_TIMEOUT_MS = 12000;
 
 function goToPublicHomepage() {
   try {
@@ -156,6 +157,8 @@ export default function ClubOutreachProposal() {
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
+  const heroBlobUrlRef = useRef<string | null>(null);
+  const heroAutoplayedRef = useRef(false);
 
   useEffect(() => {
     const node = contactsRef.current;
@@ -226,8 +229,8 @@ export default function ClubOutreachProposal() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
+    video.pause();
     video.currentTime = 0;
-    tryAutoplay(video);
   }, [current?.first_highlight_url]);
 
   // Fully prefetch the hero highlight to a blob URL so playback can run
@@ -235,17 +238,22 @@ export default function ClubOutreachProposal() {
   // up-front wait to guarantee seamless playback.
   useEffect(() => {
     const url = current?.first_highlight_url;
+    heroAutoplayedRef.current = false;
     setHeroReady(false);
     setHeroPrefetchFailed(false);
-    setHeroBlobUrl((prev) => {
-      if (prev) {
-        try { URL.revokeObjectURL(prev); } catch {}
-      }
-      return null;
-    });
+    if (heroBlobUrlRef.current) {
+      try { URL.revokeObjectURL(heroBlobUrlRef.current); } catch {}
+      heroBlobUrlRef.current = null;
+    }
+    setHeroBlobUrl(null);
     if (!url) return;
     let cancelled = false;
     const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      if (cancelled) return;
+      setHeroPrefetchFailed(true);
+      controller.abort();
+    }, HERO_PREFETCH_TIMEOUT_MS);
     (async () => {
       try {
         const res = await fetch(url, { signal: controller.signal, cache: "force-cache" });
@@ -253,15 +261,25 @@ export default function ClubOutreachProposal() {
         const blob = await res.blob();
         if (cancelled) return;
         const obj = URL.createObjectURL(blob);
+        if (cancelled) {
+          try { URL.revokeObjectURL(obj); } catch {}
+          return;
+        }
+        window.clearTimeout(timeout);
+        heroAutoplayedRef.current = false;
+        heroBlobUrlRef.current = obj;
         setHeroBlobUrl(obj);
+        setHeroPrefetchFailed(false);
       } catch (e) {
         if (cancelled) return;
+        window.clearTimeout(timeout);
         // Fall back to direct streaming with a stricter readiness gate.
         setHeroPrefetchFailed(true);
       }
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [current?.first_highlight_url]);
@@ -269,11 +287,11 @@ export default function ClubOutreachProposal() {
   // Revoke the blob URL on unmount.
   useEffect(() => {
     return () => {
-      if (heroBlobUrl) {
-        try { URL.revokeObjectURL(heroBlobUrl); } catch {}
+      if (heroBlobUrlRef.current) {
+        try { URL.revokeObjectURL(heroBlobUrlRef.current); } catch {}
+        heroBlobUrlRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
