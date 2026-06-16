@@ -1100,6 +1100,47 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                       </label>
                     </div>
                   </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-[11px]">Proof of Mandate document (PDF or image)</Label>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Replaces the standard Proof of Representation card for this proposal. Upload the signed mandate document granting representation to the agent / agency named above.
+                    </p>
+                    <div className="flex gap-2 items-center mt-1">
+                      <div className="flex-1 text-[11px] text-muted-foreground truncate">
+                        {mandateProofPath ? mandateProofPath.split("/").pop() : "No document uploaded yet"}
+                      </div>
+                      <label className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-border cursor-pointer hover:bg-muted/40">
+                        <Upload className="h-3 w-3" /> {mandateProofUploading ? "Uploading…" : mandateProofPath ? "Replace" : "Upload"}
+                        <input
+                          type="file"
+                          accept="application/pdf,image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            setMandateProofUploading(true);
+                            try {
+                              const ext = f.name.split(".").pop() || "pdf";
+                              const path = `mandate-proofs/${Date.now()}-${slugify(f.name.replace(/\.[^.]+$/, ""))}.${ext}`;
+                              const { error: upErr } = await supabase.storage.from("proof-of-representation").upload(path, f, { cacheControl: "3600", upsert: true });
+                              if (upErr) throw upErr;
+                              setMandateProofPath(path);
+                              toast.success("Mandate document uploaded");
+                            } catch (err: any) {
+                              toast.error(err.message ?? "Upload failed");
+                            } finally {
+                              setMandateProofUploading(false);
+                            }
+                          }}
+                        />
+                      </label>
+                      {mandateProofPath && (
+                        <button type="button" className="text-[11px] text-muted-foreground hover:text-destructive" onClick={() => setMandateProofPath("")}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
