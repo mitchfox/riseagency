@@ -156,7 +156,7 @@ export default function ClubOutreachProposal() {
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
+  const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
   const heroAutoplayedRef = useRef(false);
 
@@ -239,7 +239,7 @@ export default function ClubOutreachProposal() {
   useEffect(() => {
     const url = current?.first_highlight_url;
     heroAutoplayedRef.current = false;
-    setHeroReady(false);
+    setHeroPreparing(true);
     setHeroPrefetchFailed(false);
     if (heroBlobUrlRef.current) {
       try { URL.revokeObjectURL(heroBlobUrlRef.current); } catch {}
@@ -252,7 +252,7 @@ export default function ClubOutreachProposal() {
     const timeout = window.setTimeout(() => {
       if (cancelled) return;
       setHeroPrefetchFailed(true);
-      setHeroReady(true);
+      setHeroPreparing(false);
       if (videoRef.current && !heroAutoplayedRef.current) {
         heroAutoplayedRef.current = true;
         tryAutoplay(videoRef.current);
@@ -280,7 +280,7 @@ export default function ClubOutreachProposal() {
         window.clearTimeout(timeout);
         // Fall back to direct streaming with a stricter readiness gate.
         setHeroPrefetchFailed(true);
-        setHeroReady(true);
+        setHeroPreparing(false);
         if (videoRef.current && !heroAutoplayedRef.current) {
           heroAutoplayedRef.current = true;
           tryAutoplay(videoRef.current);
@@ -305,14 +305,14 @@ export default function ClubOutreachProposal() {
   }, []);
 
   useEffect(() => {
-    if (!heroPrefetchFailed || heroReady) return;
+    if (!heroPrefetchFailed || !heroPreparing) return;
     const video = videoRef.current;
     if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-    setHeroReady(true);
+    setHeroPreparing(false);
     if (heroAutoplayedRef.current) return;
     heroAutoplayedRef.current = true;
     tryAutoplay(video);
-  }, [heroPrefetchFailed, heroReady, current?.first_highlight_url]);
+  }, [heroPrefetchFailed, heroPreparing, current?.first_highlight_url]);
 
   if (loading) {
     return (
@@ -347,7 +347,7 @@ export default function ClubOutreachProposal() {
   };
 
   const revealHeroVideo = (video: HTMLVideoElement) => {
-    setHeroReady(true);
+    setHeroPreparing(false);
     if (heroAutoplayedRef.current) return;
     heroAutoplayedRef.current = true;
     tryAutoplay(video);
