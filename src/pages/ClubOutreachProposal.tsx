@@ -132,6 +132,7 @@ function tryAutoplay(video: HTMLVideoElement) {
 }
 
 const PUBLIC_HOME_URL = "https://risefootballagency.com/";
+const HERO_PREFETCH_TIMEOUT_MS = 12000;
 
 function goToPublicHomepage() {
   try {
@@ -155,7 +156,9 @@ export default function ClubOutreachProposal() {
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
+  const [heroPreparing, setHeroPreparing] = useState(true);
+  const heroBlobUrlRef = useRef<string | null>(null);
+  const heroAutoplayedRef = useRef(false);
 
   useEffect(() => {
     const node = contactsRef.current;
@@ -226,8 +229,8 @@ export default function ClubOutreachProposal() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
+    video.pause();
     video.currentTime = 0;
-    tryAutoplay(video);
   }, [current?.first_highlight_url]);
 
   // Fully prefetch the hero highlight to a blob URL so playback can run
@@ -235,17 +238,27 @@ export default function ClubOutreachProposal() {
   // up-front wait to guarantee seamless playback.
   useEffect(() => {
     const url = current?.first_highlight_url;
-    setHeroReady(false);
+    heroAutoplayedRef.current = false;
+    setHeroPreparing(true);
     setHeroPrefetchFailed(false);
-    setHeroBlobUrl((prev) => {
-      if (prev) {
-        try { URL.revokeObjectURL(prev); } catch {}
-      }
-      return null;
-    });
+    if (heroBlobUrlRef.current) {
+      try { URL.revokeObjectURL(heroBlobUrlRef.current); } catch {}
+      heroBlobUrlRef.current = null;
+    }
+    setHeroBlobUrl(null);
     if (!url) return;
     let cancelled = false;
     const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      if (cancelled) return;
+      setHeroPrefetchFailed(true);
+      setHeroPreparing(false);
+      if (videoRef.current && !heroAutoplayedRef.current) {
+        heroAutoplayedRef.current = true;
+        tryAutoplay(videoRef.current);
+      }
+      controller.abort();
+    }, HERO_PREFETCH_TIMEOUT_MS);
     (async () => {
       try {
         const res = await fetch(url, { signal: controller.signal, cache: "force-cache" });
@@ -253,15 +266,30 @@ export default function ClubOutreachProposal() {
         const blob = await res.blob();
         if (cancelled) return;
         const obj = URL.createObjectURL(blob);
+        if (cancelled) {
+          try { URL.revokeObjectURL(obj); } catch {}
+          return;
+        }
+        window.clearTimeout(timeout);
+        heroAutoplayedRef.current = false;
+        heroBlobUrlRef.current = obj;
         setHeroBlobUrl(obj);
+        setHeroPrefetchFailed(false);
       } catch (e) {
         if (cancelled) return;
+        window.clearTimeout(timeout);
         // Fall back to direct streaming with a stricter readiness gate.
         setHeroPrefetchFailed(true);
+        setHeroPreparing(false);
+        if (videoRef.current && !heroAutoplayedRef.current) {
+          heroAutoplayedRef.current = true;
+          tryAutoplay(videoRef.current);
+        }
       }
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
       controller.abort();
     };
   }, [current?.first_highlight_url]);
@@ -269,12 +297,22 @@ export default function ClubOutreachProposal() {
   // Revoke the blob URL on unmount.
   useEffect(() => {
     return () => {
-      if (heroBlobUrl) {
-        try { URL.revokeObjectURL(heroBlobUrl); } catch {}
+      if (heroBlobUrlRef.current) {
+        try { URL.revokeObjectURL(heroBlobUrlRef.current); } catch {}
+        heroBlobUrlRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!heroPrefetchFailed || !heroPreparing) return;
+    const video = videoRef.current;
+    if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+    setHeroPreparing(false);
+    if (heroAutoplayedRef.current) return;
+    heroAutoplayedRef.current = true;
+    tryAutoplay(video);
+  }, [heroPrefetchFailed, heroPreparing, current?.first_highlight_url]);
 
   if (loading) {
     return (
@@ -306,6 +344,13 @@ export default function ClubOutreachProposal() {
   const trFit = (playerId: string | undefined, en: string) => {
     if (!playerId || lang === "en") return en;
     return fitsT[playerId] ?? en;
+  };
+
+  const revealHeroVideo = (video: HTMLVideoElement) => {
+    setHeroPreparing(false);
+    if (heroAutoplayedRef.current) return;
+    heroAutoplayedRef.current = true;
+    tryAutoplay(video);
   };
 
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
@@ -415,23 +460,28 @@ export default function ClubOutreachProposal() {
       {/* Hero — first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
-              heroBlobUrl || heroPrefetchFailed ? (
+              <>
                 <video
                   ref={videoRef}
-                  key={heroBlobUrl ?? current.first_highlight_url}
+                  key={`${current.first_highlight_url}-${heroBlobUrl ? "blob" : "stream"}`}
                   src={heroBlobUrl ?? current.first_highlight_url}
-                  className="w-full h-full object-contain bg-black"
+                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
                   controls
                   playsInline
                   preload="auto"
                   onLoadedMetadata={(e) => {
                     e.currentTarget.currentTime = 0;
                     if (heroBlobUrl) {
-                      setHeroReady(true);
-                      tryAutoplay(e.currentTarget);
+                      revealHeroVideo(e.currentTarget);
                     }
+                  }}
+                  onLoadedData={(e) => {
+                    if (!heroBlobUrl && heroPrefetchFailed) revealHeroVideo(e.currentTarget);
+                  }}
+                  onCanPlay={(e) => {
+                    if (!heroBlobUrl && heroPrefetchFailed) revealHeroVideo(e.currentTarget);
                   }}
                   onCanPlayThrough={(e) => {
                     // Fallback path: only start once the browser is confident
@@ -444,21 +494,25 @@ export default function ClubOutreachProposal() {
                         const end = v.buffered.end(v.buffered.length - 1);
                         covered = end >= dur - 0.5;
                       }
-                      if (covered && !heroReady) {
-                        setHeroReady(true);
-                        tryAutoplay(v);
+                      if (covered && heroPreparing) {
+                        revealHeroVideo(v);
                       }
                     }
                   }}
+                  onError={(e) => {
+                    setHeroPreparing(false);
+                    heroAutoplayedRef.current = true;
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-black">
+                {heroPreparing && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
                   <p className="text-xs uppercase tracking-[0.3em] text-white/50">
                     {tr("video.preparing", "Preparing video")}
                   </p>
-                </div>
-              )
+                  </div>
+                )}
+              </>
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
