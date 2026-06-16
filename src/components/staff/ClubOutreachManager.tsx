@@ -78,6 +78,8 @@ interface OutreachRow {
   mandated_agent_role?: string | null;
   mandated_agent_phone?: string | null;
   mandated_agent_logo_url?: string | null;
+  mandate_proof_path?: string | null;
+  mandate_proof_url?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
