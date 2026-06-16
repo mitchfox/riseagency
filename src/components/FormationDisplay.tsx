@@ -49,7 +49,23 @@ export const FormationDisplay = ({ selectedPosition, selectedPositions, playerNa
 
   // Position coordinates based on formation
   const getFormationPositions = () => {
-    switch (formation) {
+    // Normalise: trim whitespace and treat empty as default.
+    const f = (formation || "").trim();
+    switch (f) {
+      case "4-2-1-3":
+        return {
+          GK: { top: 90, left: 50, label: "GK" },
+          LB: { top: 70, left: 15, label: "LB" },
+          LCB: { top: 70, left: 38, label: "CB" },
+          RCB: { top: 70, left: 62, label: "CB" },
+          RB: { top: 70, left: 85, label: "RB" },
+          LDM: { top: 52, left: 35, label: "DM" },
+          RDM: { top: 52, left: 65, label: "DM" },
+          CAM: { top: 35, left: 50, label: "CAM" },
+          LW: { top: 18, left: 20, label: "LW" },
+          ST: { top: 14, left: 50, label: "ST" },
+          RW: { top: 18, left: 80, label: "RW" },
+        };
       case "4-2-3-1":
         return {
           GK: { top: 90, left: 50, label: "GK" },
