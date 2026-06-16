@@ -4,6 +4,15 @@ import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } f
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
+import {
+  DEFAULT_KEY_DETAILS,
+  DEFAULT_SECTION_ORDER,
+  KEY_DETAIL_LABELS,
+  KeyDetailItem,
+  ProposalSectionKey,
+  normaliseKeyDetails,
+  normaliseSectionOrder,
+} from "@/lib/proposalConfig";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import jolonFifaLicenseAsset from "@/assets/jolon-fifa-license.png.asset.json";
@@ -52,6 +61,9 @@ interface PlayerEntry {
     image_url: string | null;
     club: string | null;
     league: string | null;
+    contract_end_date?: string | null;
+    current_salary_annual?: number | null;
+    preferred_currency?: string | null;
   } | null;
   position_slot: string | null;
   fit_recommendation: string | null;
@@ -84,6 +96,9 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    is_mandated?: boolean;
+    key_details?: KeyDetailItem[] | null;
+    section_order?: ProposalSectionKey[] | null;
     target_type?: 'club' | 'agent';
     agent_name?: string | null;
     agent_logo_url?: string | null;
