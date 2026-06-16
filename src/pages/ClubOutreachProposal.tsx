@@ -964,6 +964,8 @@ function KeyDetailsCard({
         return <TextTile key={idx} value={item.value ?? ""} label={T("key.height", "Height")} />;
       case "preferred_foot":
         return <TextTile key={idx} value={item.value ?? ""} label={T("key.preferredFoot", "Preferred foot")} />;
+      case "status":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.status", "Status")} />;
       case "custom":
         return <TextTile key={idx} value={item.value ?? ""} label={(item.label ?? "").trim() || T("key.custom", "Detail")} />;
       default:
