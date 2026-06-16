@@ -62,6 +62,23 @@ Deno.serve(async (req) => {
       };
     }
 
+    // Resolve a signed URL for the optional Proof of Mandate document.
+    if (link.is_mandated && link.mandate_proof_path) {
+      try {
+        const raw = link.mandate_proof_path as string;
+        if (/^https?:\/\//i.test(raw)) {
+          (link as any).mandate_proof_url = raw;
+        } else {
+          const { data: signed } = await supabase.storage
+            .from("proof-of-representation")
+            .createSignedUrl(raw, 60 * 60 * 24 * 7, { download: false });
+          (link as any).mandate_proof_url = signed?.signedUrl ?? null;
+        }
+      } catch (_) {
+        (link as any).mandate_proof_url = null;
+      }
+    }
+
     const { data: settings } = await supabase
       .from("club_outreach_settings")
       .select("whatsapp_number, agent_name, agent_image_url")
