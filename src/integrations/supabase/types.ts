@@ -1154,6 +1154,7 @@ export type Database = {
           id: string
           is_mandated: boolean
           is_pending_strategy_draft: boolean
+          is_suggested_to_agent: boolean
           key_details: Json | null
           language: string
           mandate_proof_path: string | null
@@ -1172,6 +1173,7 @@ export type Database = {
           show_strengths: boolean
           status: string
           strategy_id: string | null
+          suggested_agent_note: string | null
           target_type: string
           translations: Json | null
           updated_at: string
@@ -1191,6 +1193,7 @@ export type Database = {
           id?: string
           is_mandated?: boolean
           is_pending_strategy_draft?: boolean
+          is_suggested_to_agent?: boolean
           key_details?: Json | null
           language?: string
           mandate_proof_path?: string | null
@@ -1209,6 +1212,7 @@ export type Database = {
           show_strengths?: boolean
           status?: string
           strategy_id?: string | null
+          suggested_agent_note?: string | null
           target_type?: string
           translations?: Json | null
           updated_at?: string
@@ -1228,6 +1232,7 @@ export type Database = {
           id?: string
           is_mandated?: boolean
           is_pending_strategy_draft?: boolean
+          is_suggested_to_agent?: boolean
           key_details?: Json | null
           language?: string
           mandate_proof_path?: string | null
@@ -1246,6 +1251,7 @@ export type Database = {
           show_strengths?: boolean
           status?: string
           strategy_id?: string | null
+          suggested_agent_note?: string | null
           target_type?: string
           translations?: Json | null
           updated_at?: string

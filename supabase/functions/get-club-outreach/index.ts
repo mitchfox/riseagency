@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url, is_suggested_to_agent, suggested_agent_note"
       )
       .eq("short_id", shortId)
       .maybeSingle();

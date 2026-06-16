@@ -80,6 +80,8 @@ interface OutreachRow {
   mandated_agent_logo_url?: string | null;
   mandate_proof_path?: string | null;
   mandate_proof_url?: string | null;
+  is_suggested_to_agent?: boolean | null;
+  suggested_agent_note?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
@@ -592,6 +594,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [mandatedLogoUploading, setMandatedLogoUploading] = useState(false);
   const [mandateProofPath, setMandateProofPath] = useState<string>(editing?.mandate_proof_path ?? "");
   const [mandateProofUploading, setMandateProofUploading] = useState(false);
+  const [isSuggestedToAgent, setIsSuggestedToAgent] = useState<boolean>(editing?.is_suggested_to_agent ?? false);
+  const [suggestedAgentNote, setSuggestedAgentNote] = useState<string>(editing?.suggested_agent_note ?? "");
   const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
     editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
   );
@@ -764,6 +768,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         mandated_agent_phone: isMandated ? (mandatedAgentPhone.trim() || null) : null,
         mandated_agent_logo_url: isMandated ? (mandatedAgentLogoUrl.trim() || null) : null,
         mandate_proof_path: isMandated ? (mandateProofPath.trim() || null) : null,
+        is_suggested_to_agent: isMandated ? isSuggestedToAgent : false,
+        suggested_agent_note: isMandated && isSuggestedToAgent ? (suggestedAgentNote.trim() || null) : null,
         language,
       };
       let linkId = editing?.id ?? null;
@@ -1048,7 +1054,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               <label className="flex items-start gap-3 cursor-pointer">
                 <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
                 <div>
-                  <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
+                  <div className="text-xs font-semibold text-foreground">Mark as Mandated</div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     Use when this player's mandate has been given to another agent / agency. Their name replaces "Rise Football Agency presents" at the top, and a "Mandated by Rise Football Agency" line appears below.
                   </p>
@@ -1140,6 +1146,29 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                         </button>
                       )}
                     </div>
+                  </div>
+                  <div className="sm:col-span-2 mt-1 rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/[0.05] p-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <Checkbox checked={isSuggestedToAgent} onCheckedChange={(c) => setIsSuggestedToAgent(!!c)} />
+                      <div>
+                        <div className="text-xs font-semibold text-foreground">Send as suggestion to the mandated agent</div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Adds a banner at the top of the proposal explaining this is a preview of what we'd like the mandated agent to send on the player's behalf, with a personalised note from you.
+                        </p>
+                      </div>
+                    </label>
+                    {isSuggestedToAgent && (
+                      <div className="mt-2">
+                        <Label className="text-[11px]">Personalised note to the mandated agent</Label>
+                        <Textarea
+                          rows={3}
+                          className="mt-1 text-xs"
+                          placeholder="e.g. Hi David, we think this would land well with Sparta — feel free to tailor the wording before forwarding it on."
+                          value={suggestedAgentNote}
+                          onChange={(e) => setSuggestedAgentNote(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
