@@ -433,7 +433,16 @@ export default function ClubOutreachProposal() {
           </div>
         )}
         <div className="mt-6 flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">{tr("hdr.presents", "Rise Football Agency presents")}</p>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
+            {showMandatedHeader
+              ? fillTpl(tr("hdr.presentsBy", "{name} presents"), { name: mandatedAgentName })
+              : tr("hdr.presents", "Rise Football Agency presents")}
+          </p>
+          {showMandatedHeader && (
+            <p className="-mt-2 text-[10px] uppercase tracking-[0.3em] text-white/55">
+              {tr("hdr.mandatedBy", "Mandated by Rise Football Agency")}
+            </p>
+          )}
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
             {hasMultiple
               ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
