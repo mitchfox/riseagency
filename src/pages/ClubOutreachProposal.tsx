@@ -857,6 +857,106 @@ function ProposalCard({
   );
 }
 
+function CroppedHeroControls({ videoRef }: { videoRef: React.MutableRefObject<HTMLVideoElement | null> }) {
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onTime = () => {
+      setCurrent(v.currentTime);
+      if (v.duration > 0) setProgress((v.currentTime / v.duration) * 100);
+    };
+    const onMeta = () => setDuration(v.duration || 0);
+    const onVol = () => setMuted(v.muted);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("durationchange", onMeta);
+    v.addEventListener("volumechange", onVol);
+    setPlaying(!v.paused);
+    setMuted(v.muted);
+    if (v.duration) setDuration(v.duration);
+    return () => {
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("durationchange", onMeta);
+      v.removeEventListener("volumechange", onVol);
+    };
+  }, [videoRef]);
+
+  const fmtTime = (s: number) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  };
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+  };
+  const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = videoRef.current;
+    if (!v || !v.duration) return;
+    const pct = parseFloat(e.target.value);
+    v.currentTime = (pct / 100) * v.duration;
+  };
+  const goFullscreen = () => {
+    const v = videoRef.current as any;
+    if (!v) return;
+    const req = v.requestFullscreen || v.webkitRequestFullscreen || v.webkitEnterFullscreen;
+    if (req) req.call(v);
+  };
+
+  return (
+    <div
+      className="absolute inset-x-0 bottom-0 z-20 px-3 pb-2 pt-6 bg-gradient-to-t from-black/85 via-black/55 to-transparent text-white"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={0.1}
+        value={progress}
+        onChange={seek}
+        className="w-full h-1 accent-[#cbb96b] cursor-pointer"
+        aria-label="Seek"
+      />
+      <div className="mt-1.5 flex items-center gap-3">
+        <button type="button" onClick={togglePlay} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label={playing ? "Pause" : "Play"}>
+          {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+        </button>
+        <button type="button" onClick={toggleMute} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label={muted ? "Unmute" : "Mute"}>
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+        <span className="text-[11px] tabular-nums text-white/80">{fmtTime(current)} / {fmtTime(duration)}</span>
+        <div className="flex-1" />
+        <button type="button" onClick={goFullscreen} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label="Fullscreen">
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function KeyDetailsCard({
   entry,
   age,
