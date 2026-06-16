@@ -4,6 +4,15 @@ import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } f
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
+import {
+  DEFAULT_KEY_DETAILS,
+  DEFAULT_SECTION_ORDER,
+  KEY_DETAIL_LABELS,
+  KeyDetailItem,
+  ProposalSectionKey,
+  normaliseKeyDetails,
+  normaliseSectionOrder,
+} from "@/lib/proposalConfig";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import jolonFifaLicenseAsset from "@/assets/jolon-fifa-license.png.asset.json";
@@ -52,6 +61,9 @@ interface PlayerEntry {
     image_url: string | null;
     club: string | null;
     league: string | null;
+    contract_end_date?: string | null;
+    current_salary_annual?: number | null;
+    preferred_currency?: string | null;
   } | null;
   position_slot: string | null;
   fit_recommendation: string | null;
@@ -84,6 +96,9 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    is_mandated?: boolean;
+    key_details?: KeyDetailItem[] | null;
+    section_order?: ProposalSectionKey[] | null;
     target_type?: 'club' | 'agent';
     agent_name?: string | null;
     agent_logo_url?: string | null;
@@ -455,7 +470,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details — moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
       </section>
 
       {/* Hero — first Stars highlight video, falls back to player image */}
@@ -522,70 +537,85 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Fit & Recommendation — full width above cards */}
-      {fitText && (
-        <section className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
-            <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
-          </div>
-        </section>
-      )}
-
-      {/* Cards */}
-      <section className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
-        <ProposalCard
-          href={current.stars_url}
-          icon={<Video className="h-6 w-6" />}
-          eyebrow="01"
-          title={tr("card.videoTitle", "Video & Data")}
-          subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
-          openLabel={tr("card.open", "Open")}
-          unavailableLabel={tr("card.unavailable", "Unavailable")}
-        />
-        {data.link.target_type !== 'agent' && (
-          <ProposalCard
-            href={
-              current.proof_of_representation_url && data.link.short_id && player?.id
-                ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                : null
-            }
-            icon={<FileBadge2 className="h-6 w-6" />}
-            eyebrow="02"
-            title={tr("card.proofTitle", "Proof of Representation")}
-            subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
-            disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
-            openLabel={tr("card.open", "Open")}
-            unavailableLabel={tr("card.unavailable", "Unavailable")}
-            internal
-          />
-        )}
-      </section>
-
-      {/* Optional Stars-derived sections (per-link toggles) */}
-      {data.link.show_form && current.form_config && current.form_analyses && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
-        </section>
-      )}
-      {data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0 && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
-        </section>
-      )}
-      {data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0 && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
-        </section>
-      )}
-      {data.link.show_strengths && current.strengths_and_play_style && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
-        </section>
-      )}
+      {/* Sections after the hero video — order is staff-configurable per link */}
+      {(() => {
+        const order = normaliseSectionOrder(data.link.section_order);
+        const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
+          fit: () => fitText ? (
+            <section key="fit" className="max-w-3xl mx-auto px-6 mt-6">
+              <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
+              </div>
+            </section>
+          ) : null,
+          cards: () => (
+            <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
+              <ProposalCard
+                href={current.stars_url}
+                icon={<Video className="h-6 w-6" />}
+                eyebrow="01"
+                title={tr("card.videoTitle", "Video & Data")}
+                subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
+                openLabel={tr("card.open", "Open")}
+                unavailableLabel={tr("card.unavailable", "Unavailable")}
+              />
+              {data.link.target_type !== 'agent' && (
+                <ProposalCard
+                  href={
+                    current.proof_of_representation_url && data.link.short_id && player?.id
+                      ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+                      : null
+                  }
+                  icon={<FileBadge2 className="h-6 w-6" />}
+                  eyebrow="02"
+                  title={tr("card.proofTitle", "Proof of Representation")}
+                  subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+                  disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                  openLabel={tr("card.open", "Open")}
+                  unavailableLabel={tr("card.unavailable", "Unavailable")}
+                  internal
+                />
+              )}
+            </section>
+          ),
+          form: () => (data.link.show_form && current.form_config && current.form_analyses) ? (
+            <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            </section>
+          ) : null,
+          in_numbers: () => (data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
+            <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            </section>
+          ) : null,
+          season_stats: () => (data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
+            <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            </section>
+          ) : null,
+          strengths: () => (data.link.show_strengths && current.strengths_and_play_style) ? (
+            <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
+              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
+            </section>
+          ) : null,
+        };
+        return <>{order.map((k) => renderers[k]?.())}</>;
+      })()}
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
+        {data.link.is_mandated && (
+          <div className="text-center mb-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#cbb96b] shadow-[0_0_8px_rgba(203,185,107,0.8)]" />
+              {tr("mandated.badge", "Mandated Representation")}
+            </span>
+            <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
+              {tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
+            </p>
+          </div>
+        )}
         <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">{tr("contact.discuss", "Discuss further")}</p>
         {agencyWaUrl && (
           <a
@@ -606,7 +636,12 @@ export default function ClubOutreachProposal() {
                 <WhatsAppIcon className="h-6 w-6" />
               )}
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(tr("contact.waAgent", "WhatsApp {firstName}'s Agent"), { firstName })}</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(
+                  data.link.is_mandated
+                    ? tr("contact.waAgentMandated", "WhatsApp {firstName}'s Mandated Agent")
+                    : tr("contact.waAgent", "WhatsApp {firstName}'s Agent"),
+                  { firstName }
+                )}</div>
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
@@ -762,85 +797,135 @@ function KeyDetailsCard({
   entry,
   age,
   tr,
+  items,
 }: {
   entry: PlayerEntry;
   age: number | null;
   tr?: (key: string, en: string) => string;
+  items?: KeyDetailItem[];
 }) {
   const player = entry.player;
+  const T = (k: string, en: string) => (tr ? tr(k, en) : en);
+  const tiles = (items && items.length ? items : DEFAULT_KEY_DETAILS);
+
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
-  // League flag: derive country from the league name itself (e.g. "Czech Liga" → cz).
-  // Fall back to the player's own club country, then their nationality.
   const leagueFlag =
     getLeagueFlagUrl(player?.league) ??
     (entry.player_club_country ? getCountryFlagUrl(entry.player_club_country) : null) ??
     (player?.nationality ? getCountryFlagUrl(player.nationality) : null);
   const clubLogo = entry.player_club_image_url;
 
+  const fmtMoney = (n: number | null | undefined, ccy: string | null | undefined): string => {
+    if (!n || !isFinite(n)) return "—";
+    const code = (ccy || "GBP").toUpperCase();
+    try {
+      return new Intl.NumberFormat("en-GB", { style: "currency", currency: code, maximumFractionDigits: 0 }).format(n);
+    } catch {
+      return `${code} ${n.toLocaleString("en-GB")}`;
+    }
+  };
+  const fmtDate = (s: string | null | undefined): string => {
+    if (!s) return "—";
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+  };
+
+  const renderTile = (item: KeyDetailItem, idx: number): React.ReactNode => {
+    const TileShell = ({ children, label }: { children: React.ReactNode; label: string }) => (
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+        <div className="h-12 flex items-center justify-center">{children}</div>
+        <p className="mt-2 text-[11px] text-white/80 leading-tight">{label}</p>
+      </div>
+    );
+    const TextTile = ({ value, label }: { value: string | React.ReactNode; label: string }) => (
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+        <div className="h-12 flex items-center justify-center px-1">
+          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "—"}</span>
+        </div>
+        <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/60 leading-tight">{label}</p>
+      </div>
+    );
+
+    switch (item.kind) {
+      case "club":
+        return (
+          <TileShell key={idx} label={player?.club ?? "—"}>
+            {clubLogo ? (
+              <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">{(player?.club ?? "?")[0]}</div>
+            )}
+          </TileShell>
+        );
+      case "age":
+        return (
+          <div key={idx} className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+            <div className="h-12 flex items-center justify-center">
+              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+            </div>
+            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{T("key.yearsOld", "Years old")}</p>
+          </div>
+        );
+      case "nationality":
+        return (
+          <TileShell key={idx} label={player?.nationality ?? "—"}>
+            {nationalityFlag ? (
+              <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </TileShell>
+        );
+      case "league":
+        return (
+          <TileShell key={idx} label={player?.league ?? "—"}>
+            {leagueFlag ? (
+              <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </TileShell>
+        );
+      case "position":
+        return <TextTile key={idx} value={player?.position ?? "—"} label={T("key.position", "Position")} />;
+      case "contract_expiry":
+        return <TextTile key={idx} value={fmtDate(player?.contract_end_date)} label={T("key.contractExpiry", "Contract expiry")} />;
+      case "current_salary":
+        return <TextTile key={idx} value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} label={T("key.currentSalary", "Current salary")} />;
+      case "salary_expectations":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.salaryExpectations", "Salary expectations")} />;
+      case "transfer_fee":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.transferFee", "Transfer fee")} />;
+      case "contract_expiry_override":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.contractExpiry", "Contract expiry")} />;
+      case "height":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.height", "Height")} />;
+      case "preferred_foot":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.preferredFoot", "Preferred foot")} />;
+      case "custom":
+        return <TextTile key={idx} value={item.value ?? ""} label={(item.label ?? "").trim() || T("key.custom", "Detail")} />;
+      default:
+        return null;
+    }
+  };
+
+  // Adaptive grid: 2 cols on mobile, scale up so 5+ tiles still look balanced.
+  // Use a static map so Tailwind's JIT keeps the classes.
+  const count = tiles.length;
+  const colMap: Record<number, string> = {
+    1: "sm:grid-cols-1",
+    2: "sm:grid-cols-2",
+    3: "sm:grid-cols-3",
+    4: "sm:grid-cols-4",
+  };
+  const desktopCols = count <= 4 ? colMap[count] : count % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
+
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr ? tr("key.title", "Key Details") : "Key Details"}</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {/* Club */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {clubLogo ? (
-              <img
-                src={clubLogo}
-                alt={player?.club ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-12 w-12 object-contain"
-              />
-            ) : (
-              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
-                {(player?.club ?? "?")[0]}
-              </div>
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.club ?? "—"}</p>
-        </div>
-
-        {/* Age */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
-          </div>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{tr ? tr("key.yearsOld", "Years old") : "Years old"}</p>
-        </div>
-
-        {/* Nationality */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {nationalityFlag ? (
-              <img
-                src={nationalityFlag}
-                alt={player?.nationality ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-              />
-            ) : (
-              <div className="h-10 w-14 rounded-sm bg-white/10" />
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.nationality ?? "—"}</p>
-        </div>
-
-        {/* League */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {leagueFlag ? (
-              <img
-                src={leagueFlag}
-                alt={player?.league ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-              />
-            ) : (
-              <div className="h-10 w-14 rounded-sm bg-white/10" />
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.league ?? "—"}</p>
-        </div>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+      <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
+        {tiles.map((it, i) => renderTile(it, i))}
       </div>
     </div>
   );

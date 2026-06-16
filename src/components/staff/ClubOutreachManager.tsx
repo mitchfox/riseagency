@@ -7,11 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
 import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
+import {
+  DEFAULT_KEY_DETAILS,
+  DEFAULT_SECTION_ORDER,
+  KEY_DETAIL_HAS_VALUE,
+  KEY_DETAIL_LABELS,
+  KeyDetailItem,
+  KeyDetailKind,
+  ProposalSectionKey,
+  SECTION_LABELS,
+  normaliseKeyDetails,
+  normaliseSectionOrder,
+} from "@/lib/proposalConfig";
 
 const APP_BASE = "https://risefootballagency.com";
 const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
@@ -59,6 +71,9 @@ interface OutreachRow {
   show_in_numbers?: boolean;
   show_season_stats?: boolean;
   show_strengths?: boolean;
+  is_mandated?: boolean;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
@@ -563,6 +578,13 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
+  const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
+  const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
+    editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
+  );
+  const [sectionOrder, setSectionOrder] = useState<ProposalSectionKey[]>(
+    editing?.section_order ? normaliseSectionOrder(editing.section_order) : DEFAULT_SECTION_ORDER
+  );
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
   const [saving, setSaving] = useState(false);
   const [language, setLanguage] = useState<string>(editing?.language ?? "en");
@@ -721,6 +743,9 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_in_numbers: showInNumbers,
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
+        is_mandated: isMandated,
+        key_details: keyDetails,
+        section_order: sectionOrder,
         language,
       };
       let linkId = editing?.id ?? null;
@@ -996,6 +1021,22 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
+
+            <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+
+            <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+
+            <div className="rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/[0.06] p-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
+                <div>
+                  <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Signals to the recipient that the player has formally instructed Rise to negotiate on their behalf. A gold "Mandated" badge appears above the agent contact.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
         <DialogFooter>
@@ -1208,6 +1249,151 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const ADDABLE_KEY_DETAIL_KINDS: KeyDetailKind[] = [
+  "club",
+  "age",
+  "nationality",
+  "league",
+  "position",
+  "contract_expiry",
+  "current_salary",
+  "salary_expectations",
+  "transfer_fee",
+  "contract_expiry_override",
+  "height",
+  "preferred_foot",
+  "custom",
+];
+
+function KeyDetailsBuilder({ items, onChange }: { items: KeyDetailItem[]; onChange: (next: KeyDetailItem[]) => void }) {
+  const [adding, setAdding] = useState<KeyDetailKind | "">("");
+
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = items.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const update = (i: number, patch: Partial<KeyDetailItem>) =>
+    onChange(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+  const addKind = (kind: KeyDetailKind) => {
+    onChange([...items, { kind, label: kind === "custom" ? "" : undefined, value: KEY_DETAIL_HAS_VALUE[kind] ? "" : undefined }]);
+    setAdding("");
+  };
+
+  return (
+    <div>
+      <Label>Key details tiles</Label>
+      <p className="text-[11px] text-muted-foreground mt-1">
+        Tiles shown in the grid above the highlights video. Reorder, remove, or add extras. Empty = the original four defaults (Club, Age, Nationality, League).
+      </p>
+      <div className="mt-2 space-y-1.5">
+        {items.map((it, i) => {
+          const hasValue = KEY_DETAIL_HAS_VALUE[it.kind];
+          return (
+            <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
+              <div className="flex flex-col">
+                <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="h-4 w-5 inline-flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30">
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button type="button" onClick={() => move(i, 1)} disabled={i === items.length - 1} className="h-4 w-5 inline-flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30">
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-[#cbb96b] w-32 shrink-0">
+                {KEY_DETAIL_LABELS[it.kind]}
+              </div>
+              {it.kind === "custom" && (
+                <Input
+                  className="h-8 text-xs w-32"
+                  placeholder="Label"
+                  value={it.label ?? ""}
+                  onChange={(e) => update(i, { label: e.target.value })}
+                />
+              )}
+              {hasValue ? (
+                <Input
+                  className="h-8 text-xs flex-1"
+                  placeholder={it.kind === "custom" ? "Value" : `e.g. ${placeholderFor(it.kind)}`}
+                  value={it.value ?? ""}
+                  onChange={(e) => update(i, { value: e.target.value })}
+                />
+              ) : (
+                <div className="flex-1 text-[11px] text-muted-foreground">Pulled from player record</div>
+              )}
+              <button type="button" onClick={() => remove(i)} className="text-muted-foreground hover:text-destructive">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <Select value={adding} onValueChange={(v) => addKind(v as KeyDetailKind)}>
+          <SelectTrigger className="h-8 text-xs flex-1">
+            <SelectValue placeholder="Add tile…" />
+          </SelectTrigger>
+          <SelectContent>
+            {ADDABLE_KEY_DETAIL_KINDS.map((k) => (
+              <SelectItem key={k} value={k}>{KEY_DETAIL_LABELS[k]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange(DEFAULT_KEY_DETAILS)}>
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function placeholderFor(kind: KeyDetailKind): string {
+  switch (kind) {
+    case "salary_expectations": return "€1.2M/yr";
+    case "transfer_fee": return "€8M";
+    case "contract_expiry_override": return "Jun 2027";
+    case "height": return "1.86 m";
+    case "preferred_foot": return "Right";
+    default: return "";
+  }
+}
+
+function SectionOrderBuilder({ order, onChange }: { order: ProposalSectionKey[]; onChange: (next: ProposalSectionKey[]) => void }) {
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= order.length) return;
+    const next = order.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div>
+      <Label>Section order below the video</Label>
+      <p className="text-[11px] text-muted-foreground mt-1">
+        Reorder how Fit, the action cards, and the optional stats sections appear after the highlights video. Hidden sections still respect the toggles above.
+      </p>
+      <div className="mt-2 space-y-1.5">
+        {order.map((key, i) => (
+          <div key={key} className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs">
+            <div className="flex flex-col">
+              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="h-4 w-5 inline-flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <ArrowUp className="h-3 w-3" />
+              </button>
+              <button type="button" onClick={() => move(i, 1)} disabled={i === order.length - 1} className="h-4 w-5 inline-flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30">
+                <ArrowDown className="h-3 w-3" />
+              </button>
+            </div>
+            <span className="text-muted-foreground w-5">{i + 1}.</span>
+            <span className="font-medium text-foreground">{SECTION_LABELS[key]}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

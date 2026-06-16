@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("players")
             .select(
-              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights, bio"
+              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights, bio, contract_end_date, current_salary_annual, preferred_currency"
             )
             .in("id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
