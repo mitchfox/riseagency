@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
+import { heroCropStyle } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
@@ -468,6 +469,7 @@ export default function ClubOutreachProposal() {
                   key={`${current.first_highlight_url}-${heroBlobUrl ? "blob" : "stream"}`}
                   src={heroBlobUrl ?? current.first_highlight_url}
                   className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
+                  style={heroCropStyle(current.first_highlight_url)}
                   controls
                   playsInline
                   preload="auto"
