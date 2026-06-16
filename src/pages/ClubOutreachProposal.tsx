@@ -252,6 +252,11 @@ export default function ClubOutreachProposal() {
     const timeout = window.setTimeout(() => {
       if (cancelled) return;
       setHeroPrefetchFailed(true);
+      setHeroReady(true);
+      if (videoRef.current && !heroAutoplayedRef.current) {
+        heroAutoplayedRef.current = true;
+        tryAutoplay(videoRef.current);
+      }
       controller.abort();
     }, HERO_PREFETCH_TIMEOUT_MS);
     (async () => {
@@ -275,6 +280,11 @@ export default function ClubOutreachProposal() {
         window.clearTimeout(timeout);
         // Fall back to direct streaming with a stricter readiness gate.
         setHeroPrefetchFailed(true);
+        setHeroReady(true);
+        if (videoRef.current && !heroAutoplayedRef.current) {
+          heroAutoplayedRef.current = true;
+          tryAutoplay(videoRef.current);
+        }
       }
     })();
     return () => {
