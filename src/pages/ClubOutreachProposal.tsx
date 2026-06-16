@@ -537,67 +537,71 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Fit & Recommendation — full width above cards */}
-      {fitText && (
-        <section className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
-            <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
-          </div>
-        </section>
-      )}
-
-      {/* Cards */}
-      <section className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
-        <ProposalCard
-          href={current.stars_url}
-          icon={<Video className="h-6 w-6" />}
-          eyebrow="01"
-          title={tr("card.videoTitle", "Video & Data")}
-          subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
-          openLabel={tr("card.open", "Open")}
-          unavailableLabel={tr("card.unavailable", "Unavailable")}
-        />
-        {data.link.target_type !== 'agent' && (
-          <ProposalCard
-            href={
-              current.proof_of_representation_url && data.link.short_id && player?.id
-                ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                : null
-            }
-            icon={<FileBadge2 className="h-6 w-6" />}
-            eyebrow="02"
-            title={tr("card.proofTitle", "Proof of Representation")}
-            subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
-            disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
-            openLabel={tr("card.open", "Open")}
-            unavailableLabel={tr("card.unavailable", "Unavailable")}
-            internal
-          />
-        )}
-      </section>
-
-      {/* Optional Stars-derived sections (per-link toggles) */}
-      {data.link.show_form && current.form_config && current.form_analyses && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
-        </section>
-      )}
-      {data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0 && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
-        </section>
-      )}
-      {data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0 && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
-        </section>
-      )}
-      {data.link.show_strengths && current.strengths_and_play_style && (
-        <section className="max-w-3xl mx-auto px-6 mt-4">
-          <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
-        </section>
-      )}
+      {/* Sections after the hero video — order is staff-configurable per link */}
+      {(() => {
+        const order = normaliseSectionOrder(data.link.section_order);
+        const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
+          fit: () => fitText ? (
+            <section key="fit" className="max-w-3xl mx-auto px-6 mt-6">
+              <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
+              </div>
+            </section>
+          ) : null,
+          cards: () => (
+            <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
+              <ProposalCard
+                href={current.stars_url}
+                icon={<Video className="h-6 w-6" />}
+                eyebrow="01"
+                title={tr("card.videoTitle", "Video & Data")}
+                subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
+                openLabel={tr("card.open", "Open")}
+                unavailableLabel={tr("card.unavailable", "Unavailable")}
+              />
+              {data.link.target_type !== 'agent' && (
+                <ProposalCard
+                  href={
+                    current.proof_of_representation_url && data.link.short_id && player?.id
+                      ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+                      : null
+                  }
+                  icon={<FileBadge2 className="h-6 w-6" />}
+                  eyebrow="02"
+                  title={tr("card.proofTitle", "Proof of Representation")}
+                  subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+                  disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                  openLabel={tr("card.open", "Open")}
+                  unavailableLabel={tr("card.unavailable", "Unavailable")}
+                  internal
+                />
+              )}
+            </section>
+          ),
+          form: () => (data.link.show_form && current.form_config && current.form_analyses) ? (
+            <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            </section>
+          ) : null,
+          in_numbers: () => (data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
+            <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            </section>
+          ) : null,
+          season_stats: () => (data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
+            <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            </section>
+          ) : null,
+          strengths: () => (data.link.show_strengths && current.strengths_and_play_style) ? (
+            <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
+              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
+            </section>
+          ) : null,
+        };
+        return <>{order.map((k) => renderers[k]?.())}</>;
+      })()}
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
