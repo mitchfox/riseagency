@@ -694,7 +694,7 @@ export default function ClubOutreachProposal() {
               )}
               <div className="text-left">
                 <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(
-                  data.link.is_mandated
+                  isMandated && !mandatedAgentName
                     ? tr("contact.waAgentMandated", "WhatsApp {firstName}'s Mandated Agent")
                     : tr("contact.waAgent", "WhatsApp {firstName}'s Agent"),
                   { firstName }
