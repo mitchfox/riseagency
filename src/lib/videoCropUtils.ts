@@ -1,3 +1,5 @@
+import type React from "react";
+
 // Known video files that have baked-in letterbox bands we want to crop out of view.
 // Each entry is a substring match against the video URL (so storage cache-busters etc. still match).
 // The crop scales the video uniformly by 11/9 so the top and bottom 1/11th bands move past
@@ -21,6 +23,3 @@ export function heroCropStyle(url?: string | null): React.CSSProperties | undefi
     ? { transform: HERO_CROP_TRANSFORM, transformOrigin: "center" }
     : undefined;
 }
-
-// Ensure React types resolve in this file
-import type React from "react";
