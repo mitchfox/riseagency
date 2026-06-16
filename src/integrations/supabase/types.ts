@@ -1152,10 +1152,13 @@ export type Database = {
           created_by: string | null
           fit_recommendation: string | null
           id: string
+          is_mandated: boolean
           is_pending_strategy_draft: boolean
+          key_details: Json | null
           language: string
           player_id: string | null
           prepared_for_name: string | null
+          section_order: Json | null
           short_id: string
           show_form: boolean
           show_in_numbers: boolean
@@ -1180,10 +1183,13 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          is_mandated?: boolean
           is_pending_strategy_draft?: boolean
+          key_details?: Json | null
           language?: string
           player_id?: string | null
           prepared_for_name?: string | null
+          section_order?: Json | null
           short_id: string
           show_form?: boolean
           show_in_numbers?: boolean
@@ -1208,10 +1214,13 @@ export type Database = {
           created_by?: string | null
           fit_recommendation?: string | null
           id?: string
+          is_mandated?: boolean
           is_pending_strategy_draft?: boolean
+          key_details?: Json | null
           language?: string
           player_id?: string | null
           prepared_for_name?: string | null
+          section_order?: Json | null
           short_id?: string
           show_form?: boolean
           show_in_numbers?: boolean
