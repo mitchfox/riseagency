@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
+import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import {
   DEFAULT_KEY_DETAILS,
@@ -104,6 +105,10 @@ interface Payload {
     agent_logo_url?: string | null;
     language?: string | null;
     translations?: { ui?: Record<string, string>; fits?: Record<string, string> } | null;
+    mandated_agent_name?: string | null;
+    mandated_agent_role?: string | null;
+    mandated_agent_phone?: string | null;
+    mandated_agent_logo_url?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
@@ -391,7 +396,15 @@ export default function ClubOutreachProposal() {
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
   const playerClubLogo = current.player_club_image_url;
   const preparedFor =
-    (data.link.prepared_for_name ?? "").trim() || (club?.club_name ? `${club.club_name}${club.country ? `, ${club.country}` : ""}` : "");
+    (data.link.prepared_for_name ?? "").trim();
+
+  const isMandated = !!data.link.is_mandated;
+  const mandatedAgentName = (data.link.mandated_agent_name ?? "").trim();
+  const mandatedAgentRole = (data.link.mandated_agent_role ?? "").trim();
+  const mandatedAgentLogo = (data.link.mandated_agent_logo_url ?? "").trim();
+  const mandatedAgentPhone = (data.link.mandated_agent_phone ?? "").replace(/[^0-9]/g, "");
+  const mandatedAgentWaUrl = mandatedAgentPhone ? `https://wa.me/${mandatedAgentPhone}` : null;
+  const showMandatedHeader = isMandated && mandatedAgentName.length > 0;
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
@@ -420,7 +433,16 @@ export default function ClubOutreachProposal() {
           </div>
         )}
         <div className="mt-6 flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">{tr("hdr.presents", "Rise Football Agency presents")}</p>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
+            {showMandatedHeader
+              ? fillTpl(tr("hdr.presentsBy", "{name} presents"), { name: mandatedAgentName })
+              : tr("hdr.presents", "Rise Football Agency presents")}
+          </p>
+          {showMandatedHeader && (
+            <p className="-mt-2 text-[10px] uppercase tracking-[0.3em] text-white/55">
+              {tr("hdr.mandatedBy", "Mandated by Rise Football Agency")}
+            </p>
+          )}
           <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
             {hasMultiple
               ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
@@ -485,7 +507,7 @@ export default function ClubOutreachProposal() {
                   src={heroBlobUrl ?? current.first_highlight_url}
                   className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
                   style={heroCropStyle(current.first_highlight_url)}
-                  controls
+                  controls={!shouldCropHeroVideo(current.first_highlight_url)}
                   playsInline
                   preload="auto"
                   onLoadedMetadata={(e) => {
@@ -521,6 +543,9 @@ export default function ClubOutreachProposal() {
                     heroAutoplayedRef.current = true;
                   }}
                 />
+                {shouldCropHeroVideo(current.first_highlight_url) && !heroPreparing && (
+                  <CroppedHeroControls videoRef={videoRef} />
+                )}
                 {heroPreparing && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
@@ -605,18 +630,53 @@ export default function ClubOutreachProposal() {
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
-        {data.link.is_mandated && (
+        {isMandated && (
           <div className="text-center mb-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#cbb96b] shadow-[0_0_8px_rgba(203,185,107,0.8)]" />
               {tr("mandated.badge", "Mandated Representation")}
             </span>
             <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
-              {tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
+              {mandatedAgentName
+                ? fillTpl(
+                    tr("mandated.subtitleExternal", "{firstName}'s representation has been mandated to {agent}. Speak with them directly to progress this conversation."),
+                    { firstName, agent: mandatedAgentName },
+                  )
+                : tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
             </p>
           </div>
         )}
         <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">{tr("contact.discuss", "Discuss further")}</p>
+        {isMandated && mandatedAgentWaUrl && (
+          <a
+            href={mandatedAgentWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold shadow-[0_10px_40px_-10px_rgba(37,211,102,0.55)] hover:shadow-[0_14px_50px_-10px_rgba(37,211,102,0.85)] transition-all active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              {mandatedAgentLogo ? (
+                <img
+                  src={mandatedAgentLogo}
+                  alt={mandatedAgentName}
+                  onError={(e) => ((e.currentTarget.style.display = "none"))}
+                  className="h-10 w-10 rounded-full object-cover border-2 border-white/40 bg-white/10"
+                />
+              ) : (
+                <WhatsAppIcon className="h-6 w-6" />
+              )}
+              <div className="text-left">
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">
+                  {fillTpl(tr("contact.waMandatedAgent", "WhatsApp {firstName}'s Mandated Agent"), { firstName })}
+                </div>
+                <div className="text-sm sm:text-base">
+                  {mandatedAgentName}{mandatedAgentRole ? ` – ${mandatedAgentRole}` : ""}
+                </div>
+              </div>
+            </div>
+            <ExternalLink className="h-4 w-4 opacity-80" />
+          </a>
+        )}
         {agencyWaUrl && (
           <a
             href={agencyWaUrl}
@@ -637,7 +697,7 @@ export default function ClubOutreachProposal() {
               )}
               <div className="text-left">
                 <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(
-                  data.link.is_mandated
+                  isMandated && !mandatedAgentName
                     ? tr("contact.waAgentMandated", "WhatsApp {firstName}'s Mandated Agent")
                     : tr("contact.waAgent", "WhatsApp {firstName}'s Agent"),
                   { firstName }
@@ -717,7 +777,11 @@ export default function ClubOutreachProposal() {
       {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
       {(() => {
         const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
-        if (!tmUrl && !agencyWaUrl) return null;
+        const pinnedWaUrl = (isMandated && mandatedAgentWaUrl) ? mandatedAgentWaUrl : agencyWaUrl;
+        const pinnedWaTitle = (isMandated && mandatedAgentWaUrl)
+          ? `WhatsApp ${mandatedAgentName || "mandated agent"}`
+          : `WhatsApp ${data.agent_name ?? "agent"}`;
+        if (!tmUrl && !pinnedWaUrl) return null;
         return (
           <div
             className={`fixed inset-x-0 bottom-0 z-40 pointer-events-none transition-opacity duration-300 ${contactsVisible ? "opacity-0" : "opacity-100"}`}
@@ -738,12 +802,12 @@ export default function ClubOutreachProposal() {
                   <span className="text-[13px] font-extrabold tracking-tight leading-none">TM</span>
                 </a>
               )}
-              {agencyWaUrl && (
+              {pinnedWaUrl && (
                 <a
-                  href={agencyWaUrl}
+                  href={pinnedWaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`WhatsApp ${data.agent_name ?? "agent"}`}
+                  title={pinnedWaTitle}
                   className="inline-flex items-center justify-center h-11 w-11 rounded-full text-white"
                   style={{ backgroundColor: "#25D366" }}
                 >
@@ -790,6 +854,106 @@ function ProposalCard({
   }
   return (
     <a href={href!} target="_blank" rel="noopener noreferrer" className="block min-h-[180px]">{inner}</a>
+  );
+}
+
+function CroppedHeroControls({ videoRef }: { videoRef: React.MutableRefObject<HTMLVideoElement | null> }) {
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onTime = () => {
+      setCurrent(v.currentTime);
+      if (v.duration > 0) setProgress((v.currentTime / v.duration) * 100);
+    };
+    const onMeta = () => setDuration(v.duration || 0);
+    const onVol = () => setMuted(v.muted);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("durationchange", onMeta);
+    v.addEventListener("volumechange", onVol);
+    setPlaying(!v.paused);
+    setMuted(v.muted);
+    if (v.duration) setDuration(v.duration);
+    return () => {
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("durationchange", onMeta);
+      v.removeEventListener("volumechange", onVol);
+    };
+  }, [videoRef]);
+
+  const fmtTime = (s: number) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60).toString().padStart(2, "0");
+    return `${m}:${ss}`;
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  };
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+  };
+  const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = videoRef.current;
+    if (!v || !v.duration) return;
+    const pct = parseFloat(e.target.value);
+    v.currentTime = (pct / 100) * v.duration;
+  };
+  const goFullscreen = () => {
+    const v = videoRef.current as any;
+    if (!v) return;
+    const req = v.requestFullscreen || v.webkitRequestFullscreen || v.webkitEnterFullscreen;
+    if (req) req.call(v);
+  };
+
+  return (
+    <div
+      className="absolute inset-x-0 bottom-0 z-20 px-3 pb-2 pt-6 bg-gradient-to-t from-black/85 via-black/55 to-transparent text-white"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={0.1}
+        value={progress}
+        onChange={seek}
+        className="w-full h-1 accent-[#cbb96b] cursor-pointer"
+        aria-label="Seek"
+      />
+      <div className="mt-1.5 flex items-center gap-3">
+        <button type="button" onClick={togglePlay} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label={playing ? "Pause" : "Play"}>
+          {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+        </button>
+        <button type="button" onClick={toggleMute} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label={muted ? "Unmute" : "Mute"}>
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+        <span className="text-[11px] tabular-nums text-white/80">{fmtTime(current)} / {fmtTime(duration)}</span>
+        <div className="flex-1" />
+        <button type="button" onClick={goFullscreen} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition" aria-label="Fullscreen">
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -903,6 +1067,8 @@ function KeyDetailsCard({
         return <TextTile key={idx} value={item.value ?? ""} label={T("key.height", "Height")} />;
       case "preferred_foot":
         return <TextTile key={idx} value={item.value ?? ""} label={T("key.preferredFoot", "Preferred foot")} />;
+      case "status":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.status", "Status")} />;
       case "custom":
         return <TextTile key={idx} value={item.value ?? ""} label={(item.label ?? "").trim() || T("key.custom", "Detail")} />;
       default:

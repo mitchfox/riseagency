@@ -17,6 +17,7 @@ export type KeyDetailKind =
   | "contract_expiry_override"
   | "height"
   | "preferred_foot"
+  | "status"
   | "custom";
 
 export interface KeyDetailItem {
@@ -47,6 +48,7 @@ export const KEY_DETAIL_HAS_VALUE: Record<KeyDetailKind, boolean> = {
   contract_expiry_override: true,
   height: true,
   preferred_foot: true,
+  status: true,
   custom: true,
 };
 
@@ -63,6 +65,7 @@ export const KEY_DETAIL_LABELS: Record<KeyDetailKind, string> = {
   contract_expiry_override: "Contract expiry",
   height: "Height",
   preferred_foot: "Preferred foot",
+  status: "Status",
   custom: "Custom",
 };
 

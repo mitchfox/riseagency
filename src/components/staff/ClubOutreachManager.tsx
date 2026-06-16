@@ -74,6 +74,10 @@ interface OutreachRow {
   is_mandated?: boolean;
   key_details?: KeyDetailItem[] | null;
   section_order?: ProposalSectionKey[] | null;
+  mandated_agent_name?: string | null;
+  mandated_agent_role?: string | null;
+  mandated_agent_phone?: string | null;
+  mandated_agent_logo_url?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
@@ -579,6 +583,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
+  const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
+  const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
+  const [mandatedAgentPhone, setMandatedAgentPhone] = useState<string>(editing?.mandated_agent_phone ?? "");
+  const [mandatedAgentLogoUrl, setMandatedAgentLogoUrl] = useState<string>(editing?.mandated_agent_logo_url ?? "");
+  const [mandatedLogoUploading, setMandatedLogoUploading] = useState(false);
   const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
     editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
   );
@@ -746,6 +755,10 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
+        mandated_agent_name: isMandated ? (mandatedAgentName.trim() || null) : null,
+        mandated_agent_role: isMandated ? (mandatedAgentRole.trim() || null) : null,
+        mandated_agent_phone: isMandated ? (mandatedAgentPhone.trim() || null) : null,
+        mandated_agent_logo_url: isMandated ? (mandatedAgentLogoUrl.trim() || null) : null,
         language,
       };
       let linkId = editing?.id ?? null;
@@ -1032,10 +1045,58 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                 <div>
                   <div className="text-xs font-semibold text-foreground">Mark as Mandated Representation</div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Signals to the recipient that the player has formally instructed Rise to negotiate on their behalf. A gold "Mandated" badge appears above the agent contact.
+                    Use when this player's mandate has been given to another agent / agency. Their name replaces "Rise Football Agency presents" at the top, and a "Mandated by Rise Football Agency" line appears below.
                   </p>
                 </div>
               </label>
+              {isMandated && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="sm:col-span-2">
+                    <Label className="text-[11px]">Mandated agent / agency name</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="e.g. ProActive Sports Management" value={mandatedAgentName} onChange={(e) => setMandatedAgentName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Contact role (optional)</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="e.g. Director" value={mandatedAgentRole} onChange={(e) => setMandatedAgentRole(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">WhatsApp number</Label>
+                    <Input className="mt-1 h-8 text-xs" placeholder="+44 7…" value={mandatedAgentPhone} onChange={(e) => setMandatedAgentPhone(e.target.value)} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-[11px]">Logo / photo URL (optional)</Label>
+                    <div className="flex gap-2 items-center mt-1">
+                      <Input className="h-8 text-xs flex-1" placeholder="https://…" value={mandatedAgentLogoUrl} onChange={(e) => setMandatedAgentLogoUrl(e.target.value)} />
+                      <label className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-border cursor-pointer hover:bg-muted/40">
+                        <Upload className="h-3 w-3" /> {mandatedLogoUploading ? "Uploading…" : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            setMandatedLogoUploading(true);
+                            try {
+                              const ext = f.name.split(".").pop() || "png";
+                              const path = `mandated-agent-${Date.now()}.${ext}`;
+                              const { error: upErr } = await supabase.storage.from("club-logos").upload(path, f, { cacheControl: "3600", upsert: true });
+                              if (upErr) throw upErr;
+                              const { data } = supabase.storage.from("club-logos").getPublicUrl(path);
+                              setMandatedAgentLogoUrl(data.publicUrl);
+                              toast.success("Logo uploaded");
+                            } catch (err: any) {
+                              toast.error(err.message ?? "Upload failed");
+                            } finally {
+                              setMandatedLogoUploading(false);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1259,6 +1320,7 @@ const ADDABLE_KEY_DETAIL_KINDS: KeyDetailKind[] = [
   "league",
   "position",
   "contract_expiry",
+  "status",
   "current_salary",
   "salary_expectations",
   "transfer_fee",
@@ -1359,6 +1421,7 @@ function placeholderFor(kind: KeyDetailKind): string {
     case "contract_expiry_override": return "Jun 2027";
     case "height": return "1.86 m";
     case "preferred_foot": return "Right";
+    case "status": return "Available (Free)";
     default: return "";
   }
 }
