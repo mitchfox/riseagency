@@ -588,21 +588,37 @@ export default function ClubOutreachProposal() {
                 unavailableLabel={tr("card.unavailable", "Unavailable")}
               />
               {data.link.target_type !== 'agent' && (
-                <ProposalCard
-                  href={
-                    current.proof_of_representation_url && data.link.short_id && player?.id
-                      ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                      : null
-                  }
-                  icon={<FileBadge2 className="h-6 w-6" />}
-                  eyebrow="02"
-                  title={tr("card.proofTitle", "Proof of Representation")}
-                  subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
-                  disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
-                  openLabel={tr("card.open", "Open")}
-                  unavailableLabel={tr("card.unavailable", "Unavailable")}
-                  internal
-                />
+                (isMandated ? (
+                  <ProposalCard
+                    href={data.link.mandate_proof_url || null}
+                    icon={<FileBadge2 className="h-6 w-6" />}
+                    eyebrow="02"
+                    title={tr("card.mandateTitle", "Proof of Mandate")}
+                    subtitle={fillTpl(
+                      tr("card.mandateSubtitle", "Signed mandate granting {agent} the right to represent {firstName}"),
+                      { agent: mandatedAgentName || "the external agent", firstName },
+                    )}
+                    disabledLabel={data.link.mandate_proof_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                    openLabel={tr("card.open", "Open")}
+                    unavailableLabel={tr("card.unavailable", "Unavailable")}
+                  />
+                ) : (
+                  <ProposalCard
+                    href={
+                      current.proof_of_representation_url && data.link.short_id && player?.id
+                        ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
+                        : null
+                    }
+                    icon={<FileBadge2 className="h-6 w-6" />}
+                    eyebrow="02"
+                    title={tr("card.proofTitle", "Proof of Representation")}
+                    subtitle={tr("card.proofSubtitle", "Signed agreement with Rise Football Agency")}
+                    disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
+                    openLabel={tr("card.open", "Open")}
+                    unavailableLabel={tr("card.unavailable", "Unavailable")}
+                    internal
+                  />
+                ))
               )}
             </section>
           ),
