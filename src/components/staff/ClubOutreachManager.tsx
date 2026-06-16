@@ -755,6 +755,10 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
+        mandated_agent_name: isMandated ? (mandatedAgentName.trim() || null) : null,
+        mandated_agent_role: isMandated ? (mandatedAgentRole.trim() || null) : null,
+        mandated_agent_phone: isMandated ? (mandatedAgentPhone.trim() || null) : null,
+        mandated_agent_logo_url: isMandated ? (mandatedAgentLogoUrl.trim() || null) : null,
         language,
       };
       let linkId = editing?.id ?? null;
