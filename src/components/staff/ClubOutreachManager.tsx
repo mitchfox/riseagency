@@ -7,11 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
 import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
+import {
+  DEFAULT_KEY_DETAILS,
+  DEFAULT_SECTION_ORDER,
+  KEY_DETAIL_HAS_VALUE,
+  KEY_DETAIL_LABELS,
+  KeyDetailItem,
+  KeyDetailKind,
+  ProposalSectionKey,
+  SECTION_LABELS,
+  normaliseKeyDetails,
+  normaliseSectionOrder,
+} from "@/lib/proposalConfig";
 
 const APP_BASE = "https://risefootballagency.com";
 const EXTERNAL_APP_BASE = "https://www.risefootballagency.com";
@@ -59,6 +71,9 @@ interface OutreachRow {
   show_in_numbers?: boolean;
   show_season_stats?: boolean;
   show_strengths?: boolean;
+  is_mandated?: boolean;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
