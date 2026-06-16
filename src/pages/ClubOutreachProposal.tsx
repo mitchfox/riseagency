@@ -797,85 +797,128 @@ function KeyDetailsCard({
   entry,
   age,
   tr,
+  items,
 }: {
   entry: PlayerEntry;
   age: number | null;
   tr?: (key: string, en: string) => string;
+  items?: KeyDetailItem[];
 }) {
   const player = entry.player;
+  const T = (k: string, en: string) => (tr ? tr(k, en) : en);
+  const tiles = (items && items.length ? items : DEFAULT_KEY_DETAILS);
+
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
-  // League flag: derive country from the league name itself (e.g. "Czech Liga" → cz).
-  // Fall back to the player's own club country, then their nationality.
   const leagueFlag =
     getLeagueFlagUrl(player?.league) ??
     (entry.player_club_country ? getCountryFlagUrl(entry.player_club_country) : null) ??
     (player?.nationality ? getCountryFlagUrl(player.nationality) : null);
   const clubLogo = entry.player_club_image_url;
 
+  const fmtMoney = (n: number | null | undefined, ccy: string | null | undefined): string => {
+    if (!n || !isFinite(n)) return "—";
+    const code = (ccy || "GBP").toUpperCase();
+    try {
+      return new Intl.NumberFormat("en-GB", { style: "currency", currency: code, maximumFractionDigits: 0 }).format(n);
+    } catch {
+      return `${code} ${n.toLocaleString("en-GB")}`;
+    }
+  };
+  const fmtDate = (s: string | null | undefined): string => {
+    if (!s) return "—";
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+  };
+
+  const renderTile = (item: KeyDetailItem, idx: number): React.ReactNode => {
+    const TileShell = ({ children, label }: { children: React.ReactNode; label: string }) => (
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+        <div className="h-12 flex items-center justify-center">{children}</div>
+        <p className="mt-2 text-[11px] text-white/80 leading-tight">{label}</p>
+      </div>
+    );
+    const TextTile = ({ value, label }: { value: string | React.ReactNode; label: string }) => (
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+        <div className="h-12 flex items-center justify-center px-1">
+          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "—"}</span>
+        </div>
+        <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/60 leading-tight">{label}</p>
+      </div>
+    );
+
+    switch (item.kind) {
+      case "club":
+        return (
+          <TileShell key={idx} label={player?.club ?? "—"}>
+            {clubLogo ? (
+              <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">{(player?.club ?? "?")[0]}</div>
+            )}
+          </TileShell>
+        );
+      case "age":
+        return (
+          <div key={idx} className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
+            <div className="h-12 flex items-center justify-center">
+              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+            </div>
+            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{T("key.yearsOld", "Years old")}</p>
+          </div>
+        );
+      case "nationality":
+        return (
+          <TileShell key={idx} label={player?.nationality ?? "—"}>
+            {nationalityFlag ? (
+              <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </TileShell>
+        );
+      case "league":
+        return (
+          <TileShell key={idx} label={player?.league ?? "—"}>
+            {leagueFlag ? (
+              <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+            ) : (
+              <div className="h-10 w-14 rounded-sm bg-white/10" />
+            )}
+          </TileShell>
+        );
+      case "position":
+        return <TextTile key={idx} value={player?.position ?? "—"} label={T("key.position", "Position")} />;
+      case "contract_expiry":
+        return <TextTile key={idx} value={fmtDate(player?.contract_end_date)} label={T("key.contractExpiry", "Contract expiry")} />;
+      case "current_salary":
+        return <TextTile key={idx} value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} label={T("key.currentSalary", "Current salary")} />;
+      case "salary_expectations":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.salaryExpectations", "Salary expectations")} />;
+      case "transfer_fee":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.transferFee", "Transfer fee")} />;
+      case "contract_expiry_override":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.contractExpiry", "Contract expiry")} />;
+      case "height":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.height", "Height")} />;
+      case "preferred_foot":
+        return <TextTile key={idx} value={item.value ?? ""} label={T("key.preferredFoot", "Preferred foot")} />;
+      case "custom":
+        return <TextTile key={idx} value={item.value ?? ""} label={(item.label ?? "").trim() || T("key.custom", "Detail")} />;
+      default:
+        return null;
+    }
+  };
+
+  // Adaptive grid: 2 cols on mobile, scale up so 5+ tiles still look balanced.
+  const count = tiles.length;
+  const desktopCols = count <= 4 ? `sm:grid-cols-${count}` : count % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
+
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr ? tr("key.title", "Key Details") : "Key Details"}</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {/* Club */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {clubLogo ? (
-              <img
-                src={clubLogo}
-                alt={player?.club ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-12 w-12 object-contain"
-              />
-            ) : (
-              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">
-                {(player?.club ?? "?")[0]}
-              </div>
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.club ?? "—"}</p>
-        </div>
-
-        {/* Age */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
-          </div>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{tr ? tr("key.yearsOld", "Years old") : "Years old"}</p>
-        </div>
-
-        {/* Nationality */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {nationalityFlag ? (
-              <img
-                src={nationalityFlag}
-                alt={player?.nationality ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-              />
-            ) : (
-              <div className="h-10 w-14 rounded-sm bg-white/10" />
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.nationality ?? "—"}</p>
-        </div>
-
-        {/* League */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-          <div className="h-12 flex items-center justify-center">
-            {leagueFlag ? (
-              <img
-                src={leagueFlag}
-                alt={player?.league ?? ""}
-                onError={(e) => ((e.currentTarget.style.display = "none"))}
-                className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-              />
-            ) : (
-              <div className="h-10 w-14 rounded-sm bg-white/10" />
-            )}
-          </div>
-          <p className="mt-2 text-[11px] text-white/80 leading-tight">{player?.league ?? "—"}</p>
-        </div>
+      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+      <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
+        {tiles.map((it, i) => renderTile(it, i))}
       </div>
     </div>
   );
