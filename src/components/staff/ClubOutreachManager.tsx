@@ -1320,6 +1320,7 @@ const ADDABLE_KEY_DETAIL_KINDS: KeyDetailKind[] = [
   "league",
   "position",
   "contract_expiry",
+  "status",
   "current_salary",
   "salary_expectations",
   "transfer_fee",
@@ -1420,6 +1421,7 @@ function placeholderFor(kind: KeyDetailKind): string {
     case "contract_expiry_override": return "Jun 2027";
     case "height": return "1.86 m";
     case "preferred_foot": return "Right";
+    case "status": return "Available (Free)";
     default: return "";
   }
 }
