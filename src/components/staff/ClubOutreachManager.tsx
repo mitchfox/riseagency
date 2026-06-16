@@ -594,6 +594,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [mandatedLogoUploading, setMandatedLogoUploading] = useState(false);
   const [mandateProofPath, setMandateProofPath] = useState<string>(editing?.mandate_proof_path ?? "");
   const [mandateProofUploading, setMandateProofUploading] = useState(false);
+  const [isSuggestedToAgent, setIsSuggestedToAgent] = useState<boolean>(editing?.is_suggested_to_agent ?? false);
+  const [suggestedAgentNote, setSuggestedAgentNote] = useState<string>(editing?.suggested_agent_note ?? "");
   const [keyDetails, setKeyDetails] = useState<KeyDetailItem[]>(
     editing?.key_details ? normaliseKeyDetails(editing.key_details) : DEFAULT_KEY_DETAILS
   );
