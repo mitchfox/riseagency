@@ -657,10 +657,13 @@ export default function ClubOutreachProposal() {
             <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
               {mandatedAgentName
                 ? fillTpl(
-                    tr("mandated.subtitleExternal", "{firstName}'s representation has been mandated to {agent}. Speak with them directly to progress this conversation."),
+                    tr("mandated.subtitleExternal", "Rise Football Agency has mandated {agent} to act on {firstName}'s behalf. Please speak with them directly to progress this conversation."),
                     { firstName, agent: mandatedAgentName },
                   )
-                : tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
+                : fillTpl(
+                    tr("mandated.subtitleNoAgent", "Rise Football Agency has mandated an external agent to act on {firstName}'s behalf."),
+                    { firstName },
+                  )}
             </p>
           </div>
         )}
