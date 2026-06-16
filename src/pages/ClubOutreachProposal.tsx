@@ -636,7 +636,12 @@ export default function ClubOutreachProposal() {
                 <WhatsAppIcon className="h-6 w-6" />
               )}
               <div className="text-left">
-                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(tr("contact.waAgent", "WhatsApp {firstName}'s Agent"), { firstName })}</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">{fillTpl(
+                  data.link.is_mandated
+                    ? tr("contact.waAgentMandated", "WhatsApp {firstName}'s Mandated Agent")
+                    : tr("contact.waAgent", "WhatsApp {firstName}'s Agent"),
+                  { firstName }
+                )}</div>
                 <div className="text-sm sm:text-base">{data.agent_name ?? "Jolon Levene – RISE Football"}</div>
               </div>
             </div>
