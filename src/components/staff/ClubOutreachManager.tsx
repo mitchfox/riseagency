@@ -80,6 +80,8 @@ interface OutreachRow {
   mandated_agent_logo_url?: string | null;
   mandate_proof_path?: string | null;
   mandate_proof_url?: string | null;
+  is_suggested_to_agent?: boolean | null;
+  suggested_agent_note?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
   target_type?: 'club' | 'agent';
