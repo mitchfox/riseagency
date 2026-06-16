@@ -1156,6 +1156,8 @@ export type Database = {
           is_pending_strategy_draft: boolean
           key_details: Json | null
           language: string
+          mandate_proof_path: string | null
+          mandate_proof_url: string | null
           mandated_agent_logo_url: string | null
           mandated_agent_name: string | null
           mandated_agent_phone: string | null
@@ -1191,6 +1193,8 @@ export type Database = {
           is_pending_strategy_draft?: boolean
           key_details?: Json | null
           language?: string
+          mandate_proof_path?: string | null
+          mandate_proof_url?: string | null
           mandated_agent_logo_url?: string | null
           mandated_agent_name?: string | null
           mandated_agent_phone?: string | null
@@ -1226,6 +1230,8 @@ export type Database = {
           is_pending_strategy_draft?: boolean
           key_details?: Json | null
           language?: string
+          mandate_proof_path?: string | null
+          mandate_proof_url?: string | null
           mandated_agent_logo_url?: string | null
           mandated_agent_name?: string | null
           mandated_agent_phone?: string | null
