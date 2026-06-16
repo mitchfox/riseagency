@@ -326,6 +326,13 @@ export default function ClubOutreachProposal() {
     return fitsT[playerId] ?? en;
   };
 
+  const revealHeroVideo = (video: HTMLVideoElement) => {
+    setHeroReady(true);
+    if (heroAutoplayedRef.current) return;
+    heroAutoplayedRef.current = true;
+    tryAutoplay(video);
+  };
+
   const wa = (data.whatsapp_number ?? "").replace(/[^0-9]/g, "");
   const agencyWaUrl = wa ? `https://wa.me/${wa}` : null;
 
@@ -433,23 +440,28 @@ export default function ClubOutreachProposal() {
       {/* Hero — first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
-              heroBlobUrl || heroPrefetchFailed ? (
+              <>
                 <video
                   ref={videoRef}
-                  key={heroBlobUrl ?? current.first_highlight_url}
+                  key={`${current.first_highlight_url}-${heroBlobUrl ? "blob" : "stream"}`}
                   src={heroBlobUrl ?? current.first_highlight_url}
-                  className="w-full h-full object-contain bg-black"
+                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroReady ? "opacity-100" : "opacity-0"}`}
                   controls
                   playsInline
                   preload="auto"
                   onLoadedMetadata={(e) => {
                     e.currentTarget.currentTime = 0;
                     if (heroBlobUrl) {
-                      setHeroReady(true);
-                      tryAutoplay(e.currentTarget);
+                      revealHeroVideo(e.currentTarget);
                     }
+                  }}
+                  onLoadedData={(e) => {
+                    if (!heroBlobUrl && heroPrefetchFailed) revealHeroVideo(e.currentTarget);
+                  }}
+                  onCanPlay={(e) => {
+                    if (!heroBlobUrl && heroPrefetchFailed) revealHeroVideo(e.currentTarget);
                   }}
                   onCanPlayThrough={(e) => {
                     // Fallback path: only start once the browser is confident
@@ -463,20 +475,24 @@ export default function ClubOutreachProposal() {
                         covered = end >= dur - 0.5;
                       }
                       if (covered && !heroReady) {
-                        setHeroReady(true);
-                        tryAutoplay(v);
+                        revealHeroVideo(v);
                       }
                     }
                   }}
+                  onError={(e) => {
+                    setHeroReady(true);
+                    heroAutoplayedRef.current = true;
+                  }}
                 />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-black">
+                {!heroReady && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
                   <p className="text-xs uppercase tracking-[0.3em] text-white/50">
                     {tr("video.preparing", "Preparing video")}
                   </p>
-                </div>
-              )
+                  </div>
+                )}
+              </>
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
