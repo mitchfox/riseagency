@@ -470,7 +470,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details — moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
       </section>
 
       {/* Hero — first Stars highlight video, falls back to player image */}
