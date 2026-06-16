@@ -627,18 +627,53 @@ export default function ClubOutreachProposal() {
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
-        {data.link.is_mandated && (
+        {isMandated && (
           <div className="text-center mb-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#cbb96b] shadow-[0_0_8px_rgba(203,185,107,0.8)]" />
               {tr("mandated.badge", "Mandated Representation")}
             </span>
             <p className="mt-2 text-[11px] text-white/55 max-w-md mx-auto">
-              {tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
+              {mandatedAgentName
+                ? fillTpl(
+                    tr("mandated.subtitleExternal", "{firstName}'s representation has been mandated to {agent}. Speak with them directly to progress this conversation."),
+                    { firstName, agent: mandatedAgentName },
+                  )
+                : tr("mandated.subtitle", "Rise Football Agency is formally instructed to negotiate on the player's behalf.")}
             </p>
           </div>
         )}
         <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 text-center mb-1">{tr("contact.discuss", "Discuss further")}</p>
+        {isMandated && mandatedAgentWaUrl && (
+          <a
+            href={mandatedAgentWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 w-full rounded-2xl px-5 py-4 bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold shadow-[0_10px_40px_-10px_rgba(37,211,102,0.55)] hover:shadow-[0_14px_50px_-10px_rgba(37,211,102,0.85)] transition-all active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              {mandatedAgentLogo ? (
+                <img
+                  src={mandatedAgentLogo}
+                  alt={mandatedAgentName}
+                  onError={(e) => ((e.currentTarget.style.display = "none"))}
+                  className="h-10 w-10 rounded-full object-cover border-2 border-white/40 bg-white/10"
+                />
+              ) : (
+                <WhatsAppIcon className="h-6 w-6" />
+              )}
+              <div className="text-left">
+                <div className="text-[10px] uppercase tracking-[0.25em] opacity-80">
+                  {fillTpl(tr("contact.waMandatedAgent", "WhatsApp {firstName}'s Mandated Agent"), { firstName })}
+                </div>
+                <div className="text-sm sm:text-base">
+                  {mandatedAgentName}{mandatedAgentRole ? ` – ${mandatedAgentRole}` : ""}
+                </div>
+              </div>
+            </div>
+            <ExternalLink className="h-4 w-4 opacity-80" />
+          </a>
+        )}
         {agencyWaUrl && (
           <a
             href={agencyWaUrl}
