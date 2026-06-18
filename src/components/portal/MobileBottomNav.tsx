@@ -31,7 +31,7 @@ export const MobileBottomNav = ({ activeTab, onTabChange, onMoreClick, lang }: M
               {isActive && (
                 <motion.div
                   layoutId="bottomNavIndicator"
-                  className="absolute top-0 left-[15%] right-[15%] h-[2px] rounded-b"
+                  className="absolute top-0 left-[15%] right-[15%] h-[2px] rounded-b pointer-events-none"
                   style={{ background: 'linear-gradient(90deg, transparent, hsl(43, 49%, 61%), transparent)' }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
@@ -39,7 +39,7 @@ export const MobileBottomNav = ({ activeTab, onTabChange, onMoreClick, lang }: M
               {isActive && (
                 <motion.div
                   layoutId="bottomNavGlow"
-                  className="absolute inset-0 rounded-lg opacity-10"
+                  className="absolute inset-0 rounded-lg opacity-10 pointer-events-none"
                   style={{ background: 'radial-gradient(circle at 50% 30%, hsl(43, 49%, 61%), transparent 70%)' }}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />

@@ -3452,7 +3452,7 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="physical" className="space-y-6">
+            <TabsContent value="physical" className="space-y-6 pb-24 md:pb-8 overflow-x-hidden">
               {hasTechnicalPrograms && (
                 <div className="container mx-auto px-4 -mb-4">
                   <div className="inline-flex rounded-md border bg-muted p-1">
@@ -5244,7 +5244,7 @@ const Dashboard = () => {
       </Dialog>
 
       {/* Logout Section */}
-      {!(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_logout") === "1") && (
+      {activeTab !== "physical" && !(typeof window !== "undefined" && sessionStorage.getItem("portal_hide_logout") === "1") && (
       <div className="container mx-auto px-4 pb-8 mb-20 md:mb-0">
         <div className="border-t border-border my-6" />
         <div className="flex justify-center items-center gap-4">
