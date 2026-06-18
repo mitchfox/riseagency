@@ -175,19 +175,23 @@ export const TechnicalScheduleTab = ({ playerId, currentTechnicalProgrammeId }: 
       </Card>
 
       {!techProgramme && (
-        <p className="text-sm text-muted-foreground">No current technical programme selected. Open the Programmes tab and mark one as current to manage its schedule here.</p>
+        <Card>
+          <CardContent className="pt-4 text-sm text-muted-foreground">
+            No current technical programme selected. The Strength, Power and Speed schedule is shown below — create a technical programme and mark it as current to add technical sessions on the free days.
+          </CardContent>
+        </Card>
       )}
 
       {techProgramme && (
-        <>
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Weeks — {techProgramme.program_name}</h4>
-            <Button size="sm" variant="outline" onClick={addWeek}>
-              <Plus className="w-3.5 h-3.5 mr-1" />Add week
-            </Button>
-          </div>
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-sm">Weeks — {techProgramme.program_name}</h4>
+          <Button size="sm" variant="outline" onClick={addWeek}>
+            <Plus className="w-3.5 h-3.5 mr-1" />Add week
+          </Button>
+        </div>
+      )}
 
-          {Array.from(allWeeks.values()).map(({ label }) => {
+      {Array.from(allWeeks.values()).map(({ label }) => {
             const techRow = findTechRow(label);
             return (
               <Card key={label}>
@@ -232,7 +236,7 @@ export const TechnicalScheduleTab = ({ playerId, currentTechnicalProgrammeId }: 
                             <Select
                               value={techVal || "__none__"}
                               onValueChange={(v) => setTechDay(label, day, v === "__none__" ? "" : v)}
-                              disabled={!techRow && techSessions.length === 0}
+                              disabled={!techProgramme}
                             >
                               <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                               <SelectContent>
@@ -252,12 +256,13 @@ export const TechnicalScheduleTab = ({ playerId, currentTechnicalProgrammeId }: 
                 </CardContent>
               </Card>
             );
-          })}
+      })}
 
-          {allWeeks.size === 0 && (
-            <p className="text-sm text-muted-foreground">No weeks scheduled yet. Add a week to begin.</p>
-          )}
-        </>
+      {allWeeks.size === 0 && techProgramme && (
+        <p className="text-sm text-muted-foreground">No weeks scheduled yet. Add a week to begin.</p>
+      )}
+      {allWeeks.size === 0 && !techProgramme && (
+        <p className="text-sm text-muted-foreground">No Strength, Power and Speed schedule found for this player yet.</p>
       )}
     </div>
   );
