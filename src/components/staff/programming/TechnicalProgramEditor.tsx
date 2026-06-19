@@ -354,6 +354,7 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
 interface FieldsProps {
   value: {
+    id?: string;
     description: string | null;
     reps: string | null;
     sets: string | null;
@@ -384,13 +385,17 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
       )}
     </button>
     <div className="space-y-2">
-      <Textarea
-        defaultValue={value.description || ""}
-        placeholder="Description / coaching points"
-        onBlur={(e) => onPatch({ description: e.target.value })}
-        className="min-h-[60px] text-sm"
-      />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="space-y-1">
+        <Label className="text-xs">Description</Label>
+        <Textarea
+          key={`desc-${value.id ?? ''}`}
+          defaultValue={value.description || ""}
+          placeholder="Description / coaching points"
+          onBlur={(e) => onPatch({ description: e.target.value })}
+          className="min-h-[60px] text-sm"
+        />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <div className="space-y-1">
           <Label className="text-xs">Reps</Label>
           <Input defaultValue={value.reps || ""} onBlur={(e) => onPatch({ reps: e.target.value })} className="h-8" />
@@ -398,10 +403,6 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
         <div className="space-y-1">
           <Label className="text-xs">Sets</Label>
           <Input defaultValue={value.sets || ""} onBlur={(e) => onPatch({ sets: e.target.value })} className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Load / intensity</Label>
-          <Input defaultValue={value.load || ""} onBlur={(e) => onPatch({ load: e.target.value })} className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Recovery</Label>
@@ -412,11 +413,12 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
         <Switch
           checked={value.reps_per_side}
           onCheckedChange={(v) => onPatch({ reps_per_side: v })}
-          id={`per-side-${Math.random()}`}
+          id={`per-side-${value.id ?? 'x'}`}
         />
-        <Label className="text-xs">Reps are each side / foot</Label>
+        <Label htmlFor={`per-side-${value.id ?? 'x'}`} className="text-xs cursor-pointer">Reps are each side / foot</Label>
       </div>
       <Textarea
+        key={`notes-${value.id ?? ''}`}
         defaultValue={value.notes || ""}
         placeholder="Notes (optional)"
         onBlur={(e) => onPatch({ notes: e.target.value })}
