@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil } from "lucide-react";
+import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 import { DrillDiagramEditor, DrillDiagramView, DrillDiagram } from "./DrillDiagramEditor";
 
@@ -114,7 +114,8 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateSession = async (id: string, patch: Partial<Session>) => {
     const { error } = await supabase.from("technical_sessions" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...patch } as Session : s));
   };
 
   const deleteSession = async (id: string) => {
@@ -136,7 +137,11 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateDrill = async (id: string, patch: Partial<Drill>) => {
     const { error } = await supabase.from("technical_drills" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => ({
+      ...s,
+      drills: s.drills.map(d => d.id === id ? { ...d, ...patch } as Drill : d),
+    })));
   };
 
   const deleteDrill = async (id: string) => {
@@ -168,7 +173,14 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateVariation = async (id: string, patch: Partial<Variation>) => {
     const { error } = await supabase.from("technical_drill_variations" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => ({
+      ...s,
+      drills: s.drills.map(d => ({
+        ...d,
+        variations: d.variations.map(v => v.id === id ? { ...v, ...patch } as Variation : v),
+      })),
+    })));
   };
 
   const deleteVariation = async (id: string) => {
@@ -193,7 +205,19 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-sm">Sessions</h4>
-        <Button size="sm" variant="outline" onClick={addSession}><Plus className="w-3.5 h-3.5 mr-1" />Add session</Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              (document.activeElement as HTMLElement | null)?.blur();
+              setTimeout(() => { load(); toast.success("Saved"); }, 50);
+            }}
+          >
+            <Save className="w-3.5 h-3.5 mr-1" />Save
+          </Button>
+          <Button size="sm" variant="outline" onClick={addSession}><Plus className="w-3.5 h-3.5 mr-1" />Add session</Button>
+        </div>
       </div>
 
       {sessions.length === 0 && (
