@@ -38,9 +38,10 @@ export const StrengthPowerSpeedSection = () => {
       const fetchPrograms = async () => {
         const { data } = await supabase
           .from("player_programs")
-          .select("id, program_name, start_date, end_date, is_current")
+          .select("id, program_name, end_date, is_current, display_order, created_at")
           .eq("player_id", selectedPlayer)
-          .order("start_date", { ascending: true });
+          .order("display_order", { ascending: true })
+          .order("created_at", { ascending: true });
         setPlayerPrograms(data || []);
       };
       fetchPrograms();
