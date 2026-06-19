@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExerciseDatabaseSelector } from "./ExerciseDatabaseSelector";
 import { SessionDatabaseSelector } from "./SessionDatabaseSelector";
 import { SaveToCoachingDBDialog } from "./SaveToCoachingDBDialog";
+import { ProgrammingWeeksEditor } from "./programming/ProgrammingWeeksEditor";
 interface ProgrammingManagementProps {
   isOpen?: boolean;
   onClose?: () => void;
