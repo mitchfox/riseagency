@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 import { DrillDiagramEditor, DrillDiagramView, DrillDiagram } from "./DrillDiagramEditor";
+import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 
 interface Variation {
   id: string;
@@ -51,9 +52,9 @@ interface Session {
   drills: Drill[];
 }
 
-interface Props { programId: string }
+interface Props { programId: string; playerId?: string }
 
-export const TechnicalProgramEditor = ({ programId }: Props) => {
+export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [openSessions, setOpenSessions] = useState<Record<string, boolean>>({});
@@ -243,6 +244,12 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   return (
     <div className="space-y-4">
+      {playerId && (
+        <ProgrammingWeeksEditor
+          playerId={playerId}
+          programmeLink={{ table: "technical_programs", programmeId: programId }}
+        />
+      )}
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-sm">Sessions</h4>
         <div className="flex gap-2">
