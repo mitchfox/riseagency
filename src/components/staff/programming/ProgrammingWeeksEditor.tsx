@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner";
 import { useProgrammingSessions, ProgrammingSessionRef } from "./useProgrammingSessions";
 import { SessionQuickEditDialog } from "./SessionQuickEditDialog";
+import { getSessionColor } from "@/lib/sessionColors";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 type Day = typeof DAYS[number];
@@ -308,20 +309,18 @@ const SlotCell = ({ slot, refIndex, sessions, onPickSession, onPickFreeText, onC
 
   if (ref) {
     const isSps = ref.effectiveType === "sps";
+    const colors = getSessionColor(ref.sessionKey);
     return (
       <div className="flex flex-col gap-1">
         <button
           type="button"
           onClick={() => onEditSession(ref)}
-          className={`h-9 rounded-md text-xs font-bold uppercase border-2 transition hover:opacity-90 ${
-            isSps
-              ? "bg-primary/20 text-primary border-primary"
-              : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500"
-          }`}
+          className="h-9 rounded-md text-xs font-bold uppercase border-2 border-black/30 transition hover:opacity-90"
+          style={{ backgroundColor: colors.bg, color: colors.text }}
           title={`${ref.programmeName} · Session ${ref.sessionKey}${ref.sessionTitle ? ` — ${ref.sessionTitle}` : ""}`}
         >
           {ref.sessionKey || "?"}
-          <span className="ml-1 text-[9px] opacity-70">{isSps ? "SPS" : "T"}</span>
+          <span className="ml-1 text-[9px] opacity-70">{isSps ? "SPS" : "TECH"}</span>
         </button>
         <button
           type="button"
@@ -335,12 +334,14 @@ const SlotCell = ({ slot, refIndex, sessions, onPickSession, onPickFreeText, onC
   }
 
   if (slot?.free_text) {
+    const colors = getSessionColor(slot.free_text);
     return (
       <div className="flex flex-col gap-1">
         <button
           type="button"
           onClick={onClear}
-          className="h-9 rounded-md text-xs font-bold uppercase border-2 border-muted bg-muted text-muted-foreground"
+          className="h-9 rounded-md text-xs font-bold uppercase border-2 border-black/30"
+          style={{ backgroundColor: colors.bg, color: colors.text }}
           title="Tap to clear"
         >
           {slot.free_text}
