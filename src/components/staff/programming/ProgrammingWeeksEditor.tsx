@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, Calendar, Link2, Unlink } from "lucide-react";
+import { Plus, Trash2, Link2, Unlink, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useProgrammingSessions, ProgrammingSessionRef } from "./useProgrammingSessions";
 import { SessionQuickEditDialog } from "./SessionQuickEditDialog";
@@ -36,9 +37,12 @@ interface Props {
     table: "player_programs" | "technical_programs";
     programmeId: string;
   };
+  /** When true, hides the embedded "Master schedule" collapsible (used to avoid recursion). */
+  hideMasterCollapsible?: boolean;
 }
 
-export const ProgrammingWeeksEditor = ({ playerId, programmeLink }: Props) => {
+export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterCollapsible }: Props) => {
+  const [masterOpen, setMasterOpen] = useState(false);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [allPlayerWeeks, setAllPlayerWeeks] = useState<Week[]>([]);
   const [linkedIds, setLinkedIds] = useState<string[]>([]);
@@ -148,19 +152,26 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink }: Props) => {
 
   return (
     <div className="space-y-3">
-      <Card className="bg-muted/30">
-        <CardContent className="pt-4 text-sm flex items-start gap-2">
-          <Calendar className="w-4 h-4 mt-0.5 text-primary" />
-          <div>
-            {programmeLink
-              ? "Weeks this programme runs across. Editing a slot here updates the player's master schedule and every programme that links the same week."
-              : "Master schedule for this player. SPS and Technical programmes link to weeks from here. Tap a slot to assign or edit a session inline."}
-          </div>
-        </CardContent>
-      </Card>
+      {programmeLink && !hideMasterCollapsible && (
+        <Collapsible open={masterOpen} onOpenChange={setMasterOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide">Master schedule (all weeks)</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${masterOpen ? "rotate-180" : ""}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <Card className="bg-muted/20">
+              <CardContent className="pt-4">
+                <ProgrammingWeeksEditor playerId={playerId} hideMasterCollapsible />
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h4 className="font-semibold text-sm">{programmeLink ? "Linked weeks" : "Programming weeks"}</h4>
+        <h4 className="font-semibold text-sm">{programmeLink ? "Programme weeks" : "Player master schedule"}</h4>
         <div className="flex gap-2">
           {programmeLink && (
             <Popover open={linkPickerOpen} onOpenChange={setLinkPickerOpen}>
@@ -202,53 +213,67 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink }: Props) => {
         </p>
       )}
 
-      {weeks.map(week => (
-        <Card key={week.id}>
-          <CardHeader className="py-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                defaultValue={week.label || ""}
-                placeholder="Week label"
-                onBlur={(e) => e.target.value !== (week.label || "") && updateWeek(week.id, { label: e.target.value })}
-                className="h-8 max-w-[200px] font-medium"
-              />
-              <Input
-                type="date"
-                defaultValue={week.week_start_date || ""}
-                onBlur={(e) => e.target.value !== (week.week_start_date || "") && updateWeek(week.id, { week_start_date: e.target.value || null } as any)}
-                className="h-8 max-w-[160px]"
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => deleteWeek(week.id)}
-                className="text-destructive ml-auto"
-                title={programmeLink ? "Unlink from programme" : "Delete week"}
-              >
-                {programmeLink ? <Unlink className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-7 gap-2">
-              {DAYS.map(day => (
-                <div key={day} className="space-y-1">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{day}</div>
-                  <SlotCell
-                    slot={week.slots[day]}
-                    refIndex={refIndex}
-                    sessions={sessions}
-                    onPickSession={(ref) => setSlot(week, day, { refId: ref.refId })}
-                    onPickFreeText={(t) => setSlot(week, day, { free_text: t })}
-                    onClear={() => setSlot(week, day, null)}
-                    onEditSession={(ref) => setEditing(ref)}
-                  />
-                </div>
+      {weeks.length > 0 && (
+        <div className="rounded-md border overflow-x-auto">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-left px-2 py-2 font-semibold w-[180px] sticky left-0 bg-muted/40 z-10">Week</th>
+                {DAYS.map(d => (
+                  <th key={d} className="text-left px-2 py-2 font-semibold uppercase tracking-wide text-[10px] min-w-[90px]">{d.slice(0, 3)}</th>
+                ))}
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {weeks.map(week => (
+                <tr key={week.id} className="border-b last:border-0 align-top">
+                  <td className="px-2 py-2 sticky left-0 bg-background z-10">
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        defaultValue={week.label || ""}
+                        placeholder="Week label"
+                        onBlur={(e) => e.target.value !== (week.label || "") && updateWeek(week.id, { label: e.target.value })}
+                        className="h-7 text-xs font-medium"
+                      />
+                      <Input
+                        type="date"
+                        defaultValue={week.week_start_date || ""}
+                        onBlur={(e) => e.target.value !== (week.week_start_date || "") && updateWeek(week.id, { week_start_date: e.target.value || null } as any)}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                  </td>
+                  {DAYS.map(day => (
+                    <td key={day} className="px-1.5 py-2">
+                      <SlotCell
+                        slot={week.slots[day]}
+                        refIndex={refIndex}
+                        sessions={sessions}
+                        onPickSession={(ref) => setSlot(week, day, { refId: ref.refId })}
+                        onPickFreeText={(t) => setSlot(week, day, { free_text: t })}
+                        onClear={() => setSlot(week, day, null)}
+                        onEditSession={(ref) => setEditing(ref)}
+                      />
+                    </td>
+                  ))}
+                  <td className="px-1 py-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteWeek(week.id)}
+                      className="text-destructive h-7 w-7"
+                      title={programmeLink ? "Unlink from programme" : "Delete week"}
+                    >
+                      {programmeLink ? <Unlink className="h-3.5 w-3.5" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    </Button>
+                  </td>
+                </tr>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <SessionQuickEditDialog
         session={editing}
