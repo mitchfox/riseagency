@@ -1524,15 +1524,23 @@ const Dashboard = () => {
         .order("created_at", { ascending: false });
 
       if (programsError) throw programsError;
-      
-      // Normalize program data to ensure arrays exist
-      const normalizedPrograms = (programsData || []).map(program => ({
-        ...program,
-        weekly_schedules: Array.isArray(program.weekly_schedules) ? program.weekly_schedules : [],
-        sessions: program.sessions && typeof program.sessions === 'object' && !Array.isArray(program.sessions) 
-          ? program.sessions 
-          : {}
-      }));
+
+      // Pull unified weeks from programming_weeks (single source of truth)
+      const { composeWeeklySchedulesForPlayer } = await import("@/lib/composeWeeklySchedules");
+      const unified = await composeWeeklySchedulesForPlayer(playerData.id);
+
+      // Normalize program data and prefer the unified weeks when present
+      const normalizedPrograms = (programsData || []).map(program => {
+        const unifiedWeeks = unified.byProgram.get(program.id) || [];
+        const legacy = Array.isArray(program.weekly_schedules) ? program.weekly_schedules : [];
+        return {
+          ...program,
+          weekly_schedules: unifiedWeeks.length > 0 ? unifiedWeeks : legacy,
+          sessions: program.sessions && typeof program.sessions === 'object' && !Array.isArray(program.sessions)
+            ? program.sessions
+            : {}
+        };
+      });
       
       setPrograms(normalizedPrograms);
       
