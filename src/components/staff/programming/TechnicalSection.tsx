@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Target, ChevronDown, ChevronRight, Save } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
-import { TechnicalScheduleTab } from "./TechnicalScheduleTab";
+import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
 
 interface Program {
@@ -29,7 +28,6 @@ export const TechnicalSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [programs, setPrograms] = useState<Program[]>([]);
   const [openProgram, setOpenProgram] = useState<string | null>(null);
-  const [tab, setTab] = useState<"programmes" | "schedule">("programmes");
   const [saveDialog, setSaveDialog] = useState<{ open: boolean; programId: string | null; programName: string; phase: string | null }>({
     open: false, programId: null, programName: "", phase: null,
   });
@@ -57,7 +55,6 @@ export const TechnicalSection = () => {
   useEffect(() => { loadPrograms(); }, [loadPrograms]);
 
   const current = players.find(p => p.id === selectedPlayer);
-  const currentProgramme = programs.find(p => p.is_current) || programs[0];
 
   const addProgram = async () => {
     if (selectedPlayer === "all") return;
@@ -139,14 +136,10 @@ export const TechnicalSection = () => {
         <div className="space-y-4">
           <SPSTimeline programs={programs as any} playerName={current.name} />
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-            <TabsList>
-              <TabsTrigger value="programmes">Programmes</TabsTrigger>
-              <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            </TabsList>
+          <ProgrammingWeeksEditor playerId={selectedPlayer} />
 
-            <TabsContent value="programmes" className="space-y-4 mt-4">
-              <div className="flex items-center justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Technical Programmes</h3>
                 <Button size="sm" onClick={addProgram}><Plus className="w-3.5 h-3.5 mr-1" />New programme</Button>
               </div>
@@ -211,15 +204,7 @@ export const TechnicalSection = () => {
               )}
             </Card>
               ))}
-            </TabsContent>
-
-            <TabsContent value="schedule" className="mt-4">
-              <TechnicalScheduleTab
-                playerId={selectedPlayer}
-                currentTechnicalProgrammeId={currentProgramme?.id ?? null}
-              />
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
       )}
 
