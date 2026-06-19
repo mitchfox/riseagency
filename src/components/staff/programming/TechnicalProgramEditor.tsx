@@ -47,6 +47,7 @@ interface Session {
   title: string | null;
   description: string | null;
   display_order: number;
+  session_type?: "sps" | "technical";
   drills: Drill[];
 }
 
@@ -286,6 +287,15 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
                   onBlur={(e) => updateSession(session.id, { title: e.target.value })}
                   className="h-8"
                 />
+              </div>
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-muted/40">
+                <span className={`text-[10px] uppercase font-bold tracking-wider ${(session.session_type ?? "technical") === "technical" ? "text-blue-600 dark:text-blue-300" : "text-muted-foreground"}`}>Tech</span>
+                <Switch
+                  id={`stype-${session.id}`}
+                  checked={(session.session_type ?? "technical") === "sps"}
+                  onCheckedChange={(c) => updateSession(session.id, { session_type: c ? "sps" : "technical" } as any)}
+                />
+                <span className={`text-[10px] uppercase font-bold tracking-wider ${session.session_type === "sps" ? "text-primary" : "text-muted-foreground"}`}>SPS</span>
               </div>
               <Button size="icon" variant="ghost" onClick={() => deleteSession(session.id)} className="text-destructive">
                 <Trash2 className="h-4 w-4" />
