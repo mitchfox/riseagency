@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil } from "lucide-react";
+import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 import { DrillDiagramEditor, DrillDiagramView, DrillDiagram } from "./DrillDiagramEditor";
 
@@ -114,7 +114,8 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateSession = async (id: string, patch: Partial<Session>) => {
     const { error } = await supabase.from("technical_sessions" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...patch } as Session : s));
   };
 
   const deleteSession = async (id: string) => {
@@ -136,7 +137,11 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateDrill = async (id: string, patch: Partial<Drill>) => {
     const { error } = await supabase.from("technical_drills" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => ({
+      ...s,
+      drills: s.drills.map(d => d.id === id ? { ...d, ...patch } as Drill : d),
+    })));
   };
 
   const deleteDrill = async (id: string) => {
@@ -168,7 +173,14 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
   const updateVariation = async (id: string, patch: Partial<Variation>) => {
     const { error } = await supabase.from("technical_drill_variations" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setSessions(prev => prev.map(s => ({
+      ...s,
+      drills: s.drills.map(d => ({
+        ...d,
+        variations: d.variations.map(v => v.id === id ? { ...v, ...patch } as Variation : v),
+      })),
+    })));
   };
 
   const deleteVariation = async (id: string) => {
@@ -193,7 +205,19 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-sm">Sessions</h4>
-        <Button size="sm" variant="outline" onClick={addSession}><Plus className="w-3.5 h-3.5 mr-1" />Add session</Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              (document.activeElement as HTMLElement | null)?.blur();
+              setTimeout(() => { load(); toast.success("Saved"); }, 50);
+            }}
+          >
+            <Save className="w-3.5 h-3.5 mr-1" />Save
+          </Button>
+          <Button size="sm" variant="outline" onClick={addSession}><Plus className="w-3.5 h-3.5 mr-1" />Add session</Button>
+        </div>
       </div>
 
       {sessions.length === 0 && (
@@ -330,6 +354,7 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
 
 interface FieldsProps {
   value: {
+    id?: string;
     description: string | null;
     reps: string | null;
     sets: string | null;
@@ -360,13 +385,17 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
       )}
     </button>
     <div className="space-y-2">
-      <Textarea
-        defaultValue={value.description || ""}
-        placeholder="Description / coaching points"
-        onBlur={(e) => onPatch({ description: e.target.value })}
-        className="min-h-[60px] text-sm"
-      />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="space-y-1">
+        <Label className="text-xs">Description</Label>
+        <Textarea
+          key={`desc-${value.id ?? ''}`}
+          defaultValue={value.description || ""}
+          placeholder="Description / coaching points"
+          onBlur={(e) => onPatch({ description: e.target.value })}
+          className="min-h-[60px] text-sm"
+        />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <div className="space-y-1">
           <Label className="text-xs">Reps</Label>
           <Input defaultValue={value.reps || ""} onBlur={(e) => onPatch({ reps: e.target.value })} className="h-8" />
@@ -374,10 +403,6 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
         <div className="space-y-1">
           <Label className="text-xs">Sets</Label>
           <Input defaultValue={value.sets || ""} onBlur={(e) => onPatch({ sets: e.target.value })} className="h-8" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Load / intensity</Label>
-          <Input defaultValue={value.load || ""} onBlur={(e) => onPatch({ load: e.target.value })} className="h-8" />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Recovery</Label>
@@ -388,11 +413,12 @@ const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
         <Switch
           checked={value.reps_per_side}
           onCheckedChange={(v) => onPatch({ reps_per_side: v })}
-          id={`per-side-${Math.random()}`}
+          id={`per-side-${value.id ?? 'x'}`}
         />
-        <Label className="text-xs">Reps are each side / foot</Label>
+        <Label htmlFor={`per-side-${value.id ?? 'x'}`} className="text-xs cursor-pointer">Reps are each side / foot</Label>
       </div>
       <Textarea
+        key={`notes-${value.id ?? ''}`}
         defaultValue={value.notes || ""}
         placeholder="Notes (optional)"
         onBlur={(e) => onPatch({ notes: e.target.value })}
