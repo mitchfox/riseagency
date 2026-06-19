@@ -6171,6 +6171,7 @@ export type Database = {
           end_date: string | null
           id: string
           is_current: boolean
+          linked_week_ids: string[]
           overview_text: string | null
           phase_dates: string | null
           phase_image_url: string | null
@@ -6189,6 +6190,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_current?: boolean
+          linked_week_ids?: string[]
           overview_text?: string | null
           phase_dates?: string | null
           phase_image_url?: string | null
@@ -6207,6 +6209,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_current?: boolean
+          linked_week_ids?: string[]
           overview_text?: string | null
           phase_dates?: string | null
           phase_image_url?: string | null
@@ -6910,6 +6913,39 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone_number?: string | null
+        }
+        Relationships: []
+      }
+      programming_weeks: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          label: string | null
+          player_id: string
+          slots: Json
+          updated_at: string
+          week_start_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string | null
+          player_id: string
+          slots?: Json
+          updated_at?: string
+          week_start_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          label?: string | null
+          player_id?: string
+          slots?: Json
+          updated_at?: string
+          week_start_date?: string | null
         }
         Relationships: []
       }
@@ -9038,6 +9074,7 @@ export type Database = {
           end_date: string | null
           id: string
           is_current: boolean
+          linked_week_ids: string[]
           overview_text: string | null
           phase_dates: string | null
           phase_name: string | null
@@ -9054,6 +9091,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_current?: boolean
+          linked_week_ids?: string[]
           overview_text?: string | null
           phase_dates?: string | null
           phase_name?: string | null
@@ -9070,6 +9108,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_current?: boolean
+          linked_week_ids?: string[]
           overview_text?: string | null
           phase_dates?: string | null
           phase_name?: string | null
@@ -9105,6 +9144,7 @@ export type Database = {
           id: string
           program_id: string
           session_key: string
+          session_type: string
           title: string | null
           updated_at: string
         }
@@ -9115,6 +9155,7 @@ export type Database = {
           id?: string
           program_id: string
           session_key: string
+          session_type?: string
           title?: string | null
           updated_at?: string
         }
@@ -9125,6 +9166,7 @@ export type Database = {
           id?: string
           program_id?: string
           session_key?: string
+          session_type?: string
           title?: string | null
           updated_at?: string
         }
