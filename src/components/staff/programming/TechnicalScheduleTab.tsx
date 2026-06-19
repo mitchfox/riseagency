@@ -41,12 +41,18 @@ export const TechnicalScheduleTab = ({ playerId }: Props) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("player_programs")
-      .select("id, program_name, weekly_schedules, is_current, start_date")
+      .select("id, program_name, weekly_schedules, is_current, display_order, created_at")
       .eq("player_id", playerId)
-      .order("start_date", { ascending: true });
-    setSpsProgrammes(((data || []) as any).map((p: any) => ({ ...p, weekly_schedules: p.weekly_schedules || [] })));
+      .order("is_current", { ascending: false })
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) toast.error(error.message);
+    setSpsProgrammes(((data || []) as any).map((p: any) => ({
+      ...p,
+      weekly_schedules: Array.isArray(p.weekly_schedules) ? p.weekly_schedules : [],
+    })));
     setLoading(false);
   }, [playerId]);
 
