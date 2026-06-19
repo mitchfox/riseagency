@@ -1,34 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
-import { toast } from "sonner";
-
-const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
-type Day = typeof DAYS[number];
-
-interface WeekRow {
-  week?: string;
-  week_start_date?: string;
-  monday?: string;
-  tuesday?: string;
-  wednesday?: string;
-  thursday?: string;
-  friday?: string;
-  saturday?: string;
-  sunday?: string;
-  [k: string]: any;
-}
-
-interface Programme {
-  id: string;
-  program_name: string;
-  weekly_schedules: WeekRow[];
-  is_current: boolean;
-}
+import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 
 interface Props {
   playerId: string;
@@ -36,6 +6,8 @@ interface Props {
 }
 
 export const TechnicalScheduleTab = ({ playerId }: Props) => {
+  return <ProgrammingWeeksEditor playerId={playerId} />;
+};
   const [spsProgrammes, setSpsProgrammes] = useState<Programme[]>([]);
   const [loading, setLoading] = useState(true);
 
