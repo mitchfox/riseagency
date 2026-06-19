@@ -1,94 +1,44 @@
-## What you actually want
+## What's wrong now
 
-There is ONE schedule per player. It lives at the player level (`programming_weeks`).
+1. **Session colours are gone from the editor.** The unified `ProgrammingWeeksEditor` table just paints every cell gold (SPS) or blue (Technical). The old SPS schedule used a per-session-letter colour map (A = navy, B = green, C = red, D = gold, E = olive, F = purple, G = teal, PRE-x = darker shades, R/Rest = light grey, etc.) and that's what you want back — in the editor and everywhere it's rendered.
+2. **Portal is still reading the old data.** The player Dashboard and Hub still read `player_programs.weekly_schedules` (the legacy JSONB field). We migrated everything into `programming_weeks`, so the portal now shows stale data and Technical programmes don't appear in the weekly schedule at all.
 
-Each programme (SPS or Technical) does not own its own schedule. It just says "I run across Week 3, Week 4, Week 5" and then those weeks from the global schedule are shown inside the programme. Editing a slot inside a programme edits the global week — there is only ever one copy.
+## Plan
 
-```text
-Player
- └── Programming Weeks  (global, single source of truth)
-       Week 1, Week 2, Week 3, Week 4, ...
-       Each week has Mon–Sun slots
-       Each slot points at a real session
+### 1. Bring back per-session colours (shared)
 
- ├── SPS Programme A
- │     linked weeks: [Week 3, Week 4, Week 5]
- │     → shows those same weeks inline, fully editable
- │
- └── Technical Programme A
-       linked weeks: [Week 4, Week 5]
-       → shows those same weeks inline, fully editable
-```
+- Lift the `getSessionColor` map out of `Dashboard.tsx` into a small shared helper `src/lib/sessionColors.ts` so the editor, portal Dashboard, portal Hub, and Technical view all use the exact same colours.
+- Keys: `A`–`G`, `PRE-A`–`PRE-G`, `PREHAB`, `T`/`TESTING`, `R`/`REST`, plus a fallback. Same HSL values as today (rise-gold text on coloured backgrounds).
+- Update `Dashboard.tsx` and `Hub.tsx` to import from the helper instead of defining it inline (no visual change for them).
 
-Adding a session to a slot from inside the SPS programme writes to the global week, so Technical (and the player-level view) see it instantly. Same the other way around.
+### 2. Repaint the editor cells
 
-## Why this keeps failing
+In `ProgrammingWeeksEditor.tsx` `SlotCell`:
+- When a slot points at a session, look up the colour by `ref.sessionKey` (e.g. `A`, `PRE-B`, `T`). Apply it as inline `backgroundColor` + `color` on the cell button so Session A looks the same everywhere.
+- Keep the small `SPS` / `T` corner badge so you can still tell programme type at a glance, but the dominant colour comes from the session letter.
+- Free-text slots (`Rest`, `Match`, `Off`) use the same map (`REST`, fallback for Match/Off) so a Rest day is always the same light grey.
+- The collapsed Master schedule at the top uses the same cells, so colours match there too.
 
-1. **Existing per-programme schedules were never migrated.** Every SPS programme has a real, correct `weekly_schedules` array sitting inside `player_programs`. None of it has been promoted into `programming_weeks`, so the new global schedule is empty and nothing shows in Technical.
-2. **Programmes have no UI for "which weeks do I run across".** `linked_week_ids` columns exist on `player_programs` and `technical_programs` but nothing reads or writes them, so a programme has no way to declare its weeks.
-3. **Inside a programme, the global weeks are not rendered.** SPS shows its own legacy week editor; Technical shows nothing. Neither pulls from `programming_weeks` filtered by `linked_week_ids`.
-4. **Two schedule surfaces still exist for SPS.** The legacy `weekly_schedules` editor in `ProgrammingManagement` and the new `ProgrammingWeeksEditor` both write to different stores, so edits diverge.
+### 3. Connect the portal to `programming_weeks`
 
-## Fix
+- Add a small loader in the portal (new hook `usePlayerProgrammingWeeks(playerId)`) that pulls from `programming_weeks` + joins session info via the same `useProgrammingSessions` ref lookup, returning an array of `{ id, label, week_start_date, slots: { monday: {key, title, type}, … } }`.
+- **Portal Dashboard (`src/pages/Dashboard.tsx`)**: replace the `program.weekly_schedules` rendering block (around L3561–3640) with the unified weeks from the hook, rendered as the same week-by-week table with the shared `getSessionColor`. The "today" highlight and click-to-jump-to-session behaviour stays.
+- **Portal Hub (`src/components/dashboard/Hub.tsx`)**: replace the "today's session" lookup (L449–466) to find the matching week in `programming_weeks` by `week_start_date` and read today's slot from there, again using the shared colour map.
+- **Technical portal view (`src/components/portal/TechnicalProgramView.tsx`)**: add the same weekly table at the top of each technical programme, scoped to that programme's `linked_week_ids` so a player sees the technical schedule alongside the drills.
+- Legacy `weekly_schedules` JSONB stays in the database untouched; the portal just stops reading it.
 
-### 1. Migrate existing per-programme schedules into the global player schedule
+### 4. Click behaviour parity
 
-For every existing SPS programme (`player_programs.weekly_schedules`) and Technical programme (`technical_programs.weekly_schedules`):
+- In the editor, clicking a coloured cell still opens `SessionQuickEditDialog` (existing behaviour).
+- In the portal, clicking a coloured cell still jumps to that session in the programme view (existing Dashboard behaviour, just driven by the new data).
 
-```text
-for each week row:
-  - create a programming_weeks row for that player
-    (label = week.week || "Week N", week_start_date = week.week_start_date)
-  - convert each day field (monday..sunday) into a slot:
-      * if the value matches an SPS session key (A, B, ...) for that programme
-        → slot.refId = sps:<programmeId>:session<Letter>
-      * if it matches a technical_sessions.session_key for that programme
-        → slot.refId = tech:<sessionId>
-      * otherwise → slot.free_text = the raw value (Rest, Match, etc.)
-  - push the new programming_weeks.id into that programme's linked_week_ids
-```
+## Files touched
 
-Done via a SQL migration that runs once. After this, every programme already shows the right weeks under the new model, with zero data loss.
+- New: `src/lib/sessionColors.ts`
+- New: `src/hooks/usePlayerProgrammingWeeks.ts`
+- Edit: `src/components/staff/programming/ProgrammingWeeksEditor.tsx` (colour cells by session key)
+- Edit: `src/pages/Dashboard.tsx` (swap data source + shared colour helper)
+- Edit: `src/components/dashboard/Hub.tsx` (swap data source + shared colour helper)
+- Edit: `src/components/portal/TechnicalProgramView.tsx` (add weekly table)
 
-### 2. Add a "weeks this programme runs across" picker on each programme
-
-Inside the SPS programme editor and inside each Technical programme:
-
-```text
-[ Week 3 (15 Jan) ] [ Week 4 (22 Jan) ] [ Week 5 (29 Jan) ]  [+ Add week]
-```
-
-- Add week opens the existing global weeks list (or creates a new one) and pushes its id into `linked_week_ids`.
-- Removing a chip removes from `linked_week_ids` only (never deletes the underlying week).
-
-### 3. Render the linked weeks inline inside the programme
-
-Use the existing `ProgrammingWeeksEditor` but filtered to only the weeks in `linked_week_ids`. Same component, same data, same edit path. Editing a slot writes straight to `programming_weeks.slots` — no per-programme copy is kept.
-
-This is the part that closes the loop: a slot edited inside SPS programme A is the same row Technical programme A reads.
-
-### 4. Slot reference model (already in place, kept)
-
-```text
-slot = { refId: "sps:<programmeId>:sessionA" }
-slot = { refId: "tech:<technicalSessionId>" }
-slot = { free_text: "Rest" }
-```
-
-Clicking a populated slot opens the correct inline editor (SPS exercises or Technical drills/variations) — already implemented in `SessionQuickEditDialog`.
-
-### 5. Remove the legacy SPS weekly schedule editor
-
-The old `weeklySchedules` tab inside `ProgrammingManagement` is replaced by the linked-weeks view from step 3. The underlying `player_programs.weekly_schedules` column stays in place for safety but is no longer written to from the UI. Same for `technical_programs.weekly_schedules`.
-
-### 6. Top of the player section: the full global schedule
-
-At the player level (above the programme list) the `ProgrammingWeeksEditor` still shows every week the player has, unfiltered. This is the master view. Programmes are just windows into a subset of these weeks.
-
-## Result
-
-- One schedule per player. No duplication.
-- All existing programme schedules preserved and visible everywhere.
-- Each programme says which weeks it runs and shows them inline.
-- Adding a session inside a programme appears immediately on the global view and any other programme that links the same week.
-- Switching a session between SPS and Technical (via the existing toggle on Technical sessions) instantly reflects in both programmes that share that week.
+No database changes — `programming_weeks` is already the source of truth from the previous migration.
