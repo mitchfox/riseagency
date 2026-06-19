@@ -1,64 +1,17 @@
-## Goal
+## Issue
 
-Make Strength/Power/Speed and Technical programming share one schedule, so clicking any day-cell session opens the owning session in an inline popup — no matter which section you're viewing.
+In Technical, the shared schedule is hidden behind a "Schedule" tab inside `TechnicalSection`, so it looks like nothing is there. In SPS the same editor renders directly under the timeline, which is why you can edit it from SPS but never see it from Technical. The data is shared — it's purely a UI placement issue.
 
-## New architecture
+## Fix
 
-```text
-Programming Weeks (standalone, per player)
-   ├── Week 1 (label + start date + per-day metadata)
-   ├── Week 2
-   └── ...
-        ↑
-   Programmes link to weeks (SPS programme OR Technical programme)
-        ↑
-   Sessions inside a programme each have a TYPE toggle: SPS | Technical
-        ↑
-   A day-cell holds a reference: { programme_id, session_id, label: "A" }
-   The cell's colour/badge comes from that session's type toggle.
-```
+1. **`TechnicalSection.tsx`** — remove the `Tabs` wrapper. Render the page like SPS:
+   - Timeline
+   - `<ProgrammingWeeksEditor playerId={...} />` (always visible, same component SPS uses)
+   - Technical Programmes list (current "Programmes" tab content, ungated)
+   - Delete the now-unused `tab` state and `TabsList`/`TabsTrigger` imports.
 
-A single source of truth: **programming_weeks** per player. SPS and Technical programmes both reference the same weeks table. Day-cells store a typed reference to a session, not a free-text letter.
+2. **`TechnicalScheduleTab.tsx`** — keep as a thin wrapper for back-compat or delete it (it's only referenced from `TechnicalSection`). I'll delete it since nothing else imports it.
 
-## Steps
+3. **Consistency check** — both sections will now show the identical `ProgrammingWeeksEditor` in the same spot, so a week added/edited in SPS appears instantly in Technical and vice versa (already wired through the shared `programming_weeks` table; this just makes it visible).
 
-1. **Schema**
-   - New table `programming_weeks(player_id, label, week_start_date, display_order, slots jsonb)`. `slots` shape: `{ monday: { session_id, label } | { free_text: "Rest" } | null, … }`.
-   - Add `session_type` column to `technical_sessions` ('sps' | 'technical', default 'technical').
-   - Add `session_type` to SPS sessions (in `player_programs.weekly_schedules` we already have per-session objects — extend with `type`).
-   - Add `linked_week_ids uuid[]` to `player_programs` and `technical_programs` so a programme inherits the weeks it runs across.
-   - Keep legacy `player_programs.weekly_schedules` readable for back-compat; new edits write to `programming_weeks`.
-
-2. **Shared `ProgrammingWeeksEditor` component**
-   - Lists weeks for the current player. Add/remove/reorder.
-   - Each day-cell is a picker: choose any session from any linked programme (SPS or Technical), or type free text (Rest/Match), or leave blank.
-   - Session pills coloured by type (SPS = gold, Technical = blue) with a small SPS/T badge.
-   - Used inside both `StrengthPowerSpeedSection` and `TechnicalSection`. Edits sync live via a shared query key.
-
-3. **Per-session SPS/Technical toggle**
-   - In `TechnicalProgramEditor`, add a Switch on each session card: "Type: SPS · Technical". Default Technical.
-   - In SPS programme editor (`ProgrammingManagement`), add the same toggle. Default SPS.
-   - Toggle just flips `session_type`; the cell pill colour updates immediately.
-
-4. **Programme ↔ Weeks linkage**
-   - On each programme card add a multi-select "Runs across weeks…" populated from `programming_weeks`. Saving updates `linked_week_ids`.
-   - Schedule view filters to weeks linked to the visible programme, but the underlying weeks data is shared.
-
-5. **Inline session popup (cross-section jump)**
-   - New `<SessionQuickEditDialog>` — wide dialog (per project rule).
-   - Clicking any day-cell pill opens the dialog with that session loaded (drills/variations editor for Technical, exercise list editor for SPS) — regardless of whether you're in the SPS or Technical section.
-   - Save persists back to the owning table. Closing returns to the schedule untouched.
-
-6. **Migration of existing data**
-   - On first load per player, if `programming_weeks` is empty but `player_programs.weekly_schedules` has rows, seed `programming_weeks` from the SPS weeks and tag every existing letter as an SPS session (best-effort match by letter). User can re-tag via the picker.
-
-7. **Cleanup**
-   - Remove the read-only "shared schedule" notice in `TechnicalScheduleTab` — both sections now render the full shared editor.
-   - Remove the day-clash trigger `validate_program_day_unique` (it becomes redundant; cell-level enforcement is structural — one slot, one reference).
-
-## Technical notes
-
-- All new tables get standard GRANT + RLS for `authenticated` (staff-only via `has_role`).
-- `programming_weeks.slots` stays JSON for flexibility; FK-style integrity is enforced in the picker UI plus a server-side sanity trigger that nulls dangling `session_id`s when a session is deleted.
-- One shared TanStack Query key `['programming-weeks', playerId]` so SPS and Technical views update each other instantly.
-- Dialog uses existing `<Dialog>` wide variant (`max-w-5xl`).
+No schema changes, no behaviour changes to the editor itself — just surfacing it in Technical the same way SPS surfaces it.
