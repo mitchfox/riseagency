@@ -118,7 +118,7 @@ export const TechnicalSection = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 -mx-6 sm:mx-0 px-2 sm:px-0">
       <PlayerCombobox
         players={players}
         value={selectedPlayer}
