@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, Calendar } from "lucide-react";
+import { Plus, Trash2, Calendar, Link2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { useProgrammingSessions, ProgrammingSessionRef } from "./useProgrammingSessions";
 import { SessionQuickEditDialog } from "./SessionQuickEditDialog";
@@ -14,8 +14,8 @@ const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
 type Day = typeof DAYS[number];
 
 interface Slot {
-  refId?: string;          // points into ProgrammingSessionRef.refId
-  free_text?: string;      // 'Rest', 'Match', etc.
+  refId?: string;
+  free_text?: string;
 }
 interface Week {
   id: string;
@@ -27,10 +27,22 @@ interface Week {
 
 interface Props {
   playerId: string;
+  /**
+   * When set, scopes the editor to the weeks linked to a specific programme.
+   * "Add week" both creates a global week AND links it to the programme.
+   * Delete becomes "unlink from programme" (the underlying week stays).
+   */
+  programmeLink?: {
+    table: "player_programs" | "technical_programs";
+    programmeId: string;
+  };
 }
 
-export const ProgrammingWeeksEditor = ({ playerId }: Props) => {
+export const ProgrammingWeeksEditor = ({ playerId, programmeLink }: Props) => {
   const [weeks, setWeeks] = useState<Week[]>([]);
+  const [allPlayerWeeks, setAllPlayerWeeks] = useState<Week[]>([]);
+  const [linkedIds, setLinkedIds] = useState<string[]>([]);
+  const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<ProgrammingSessionRef | null>(null);
   const { sessions, reload: reloadSessions } = useProgrammingSessions(playerId);
@@ -50,21 +62,60 @@ export const ProgrammingWeeksEditor = ({ playerId }: Props) => {
       .order("display_order")
       .order("created_at");
     if (error) toast.error(error.message);
-    setWeeks(((data || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })));
+    const allRows = ((data || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })) as Week[];
+    setAllPlayerWeeks(allRows);
+
+    if (programmeLink) {
+      const { data: prog, error: pErr } = await supabase
+        .from(programmeLink.table as any)
+        .select("linked_week_ids")
+        .eq("id", programmeLink.programmeId)
+        .single();
+      if (pErr) toast.error(pErr.message);
+      const ids: string[] = (((prog as any)?.linked_week_ids) || []) as string[];
+      setLinkedIds(ids);
+      const ordered = ids
+        .map(id => allRows.find(w => w.id === id))
+        .filter(Boolean) as Week[];
+      setWeeks(ordered);
+    } else {
+      setLinkedIds([]);
+      setWeeks(allRows);
+    }
     setLoading(false);
-  }, [playerId]);
+  }, [playerId, programmeLink?.table, programmeLink?.programmeId]);
 
   useEffect(() => { load(); }, [load]);
 
-  const addWeek = async () => {
-    const { error } = await supabase.from("programming_weeks" as any).insert({
-      player_id: playerId,
-      label: `Week ${weeks.length + 1}`,
-      display_order: weeks.length,
-      slots: {},
-    } as any);
+  const setLinkedIdsRemote = async (ids: string[]) => {
+    if (!programmeLink) return;
+    const unique = Array.from(new Set(ids));
+    const { error } = await supabase
+      .from(programmeLink.table as any)
+      .update({ linked_week_ids: unique } as any)
+      .eq("id", programmeLink.programmeId);
     if (error) return toast.error(error.message);
     load();
+  };
+
+  const addWeek = async () => {
+    const baseCount = allPlayerWeeks.length;
+    const { data: inserted, error } = await supabase
+      .from("programming_weeks" as any)
+      .insert({
+        player_id: playerId,
+        label: `Week ${baseCount + 1}`,
+        display_order: baseCount,
+        slots: {},
+      } as any)
+      .select("id")
+      .single();
+    if (error || !inserted) return toast.error(error?.message || "Failed to add week");
+    if (programmeLink) {
+      await setLinkedIdsRemote([...linkedIds, (inserted as any).id]);
+    } else {
+      load();
+    }
   };
 
   const updateWeek = async (id: string, patch: Partial<Week>) => {
@@ -74,7 +125,12 @@ export const ProgrammingWeeksEditor = ({ playerId }: Props) => {
   };
 
   const deleteWeek = async (id: string) => {
-    if (!confirm("Delete this week?")) return;
+    if (programmeLink) {
+      if (!confirm("Unlink this week from the programme? The week itself stays in the player's master schedule.")) return;
+      await setLinkedIdsRemote(linkedIds.filter(i => i !== id));
+      return;
+    }
+    if (!confirm("Delete this week from the player's master schedule? This removes it from every programme that links to it.")) return;
     const { error } = await supabase.from("programming_weeks" as any).delete().eq("id", id);
     if (error) return toast.error(error.message);
     load();
@@ -88,24 +144,62 @@ export const ProgrammingWeeksEditor = ({ playerId }: Props) => {
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading schedule…</p>;
 
+  const linkable = programmeLink ? allPlayerWeeks.filter(w => !linkedIds.includes(w.id)) : [];
+
   return (
     <div className="space-y-3">
       <Card className="bg-muted/30">
         <CardContent className="pt-4 text-sm flex items-start gap-2">
           <Calendar className="w-4 h-4 mt-0.5 text-primary" />
           <div>
-            One schedule shared across SPS and Technical. Tap a slot to assign any session from either side — tap an assigned slot to edit that session in place.
+            {programmeLink
+              ? "Weeks this programme runs across. Editing a slot here updates the player's master schedule and every programme that links the same week."
+              : "Master schedule for this player. SPS and Technical programmes link to weeks from here. Tap a slot to assign or edit a session inline."}
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-sm">Programming weeks</h4>
-        <Button size="sm" onClick={addWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add week</Button>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h4 className="font-semibold text-sm">{programmeLink ? "Linked weeks" : "Programming weeks"}</h4>
+        <div className="flex gap-2">
+          {programmeLink && (
+            <Popover open={linkPickerOpen} onOpenChange={setLinkPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant="outline" disabled={linkable.length === 0}>
+                  <Link2 className="w-3.5 h-3.5 mr-1" />Link existing week
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-2" align="end">
+                <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 pb-1">Player weeks</div>
+                  {linkable.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-2 py-3">All player weeks already linked.</p>
+                  )}
+                  {linkable.map(w => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => { setLinkedIdsRemote([...linkedIds, w.id]); setLinkPickerOpen(false); }}
+                      className="w-full text-left px-2 py-1.5 rounded hover:bg-muted text-xs"
+                    >
+                      <span className="font-medium">{w.label || "Untitled week"}</span>
+                      {w.week_start_date && <span className="text-muted-foreground ml-2">{w.week_start_date}</span>}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          <Button size="sm" onClick={addWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add week</Button>
+        </div>
       </div>
 
       {weeks.length === 0 && (
-        <p className="text-sm text-muted-foreground">No weeks yet. Add one to start scheduling.</p>
+        <p className="text-sm text-muted-foreground">
+          {programmeLink
+            ? "No weeks linked yet. Add a new week or link an existing one from the player's master schedule."
+            : "No weeks yet. Add one to start scheduling."}
+        </p>
       )}
 
       {weeks.map(week => (
@@ -124,8 +218,14 @@ export const ProgrammingWeeksEditor = ({ playerId }: Props) => {
                 onBlur={(e) => e.target.value !== (week.week_start_date || "") && updateWeek(week.id, { week_start_date: e.target.value || null } as any)}
                 className="h-8 max-w-[160px]"
               />
-              <Button size="icon" variant="ghost" onClick={() => deleteWeek(week.id)} className="text-destructive ml-auto">
-                <Trash2 className="h-4 w-4" />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => deleteWeek(week.id)}
+                className="text-destructive ml-auto"
+                title={programmeLink ? "Unlink from programme" : "Delete week"}
+              >
+                {programmeLink ? <Unlink className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
               </Button>
             </div>
           </CardHeader>
@@ -174,7 +274,6 @@ const SlotCell = ({ slot, refIndex, sessions, onPickSession, onPickFreeText, onC
   const ref = slot?.refId ? refIndex.get(slot.refId) : undefined;
 
   if (slot?.refId && !ref) {
-    // dangling reference (session deleted)
     return (
       <Button variant="outline" className="h-9 w-full text-xs text-destructive" onClick={onClear}>
         Missing · clear

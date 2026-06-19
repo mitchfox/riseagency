@@ -199,7 +199,7 @@ export const TechnicalSection = () => {
               </CardHeader>
               {openProgram === p.id && (
                 <CardContent>
-                  <TechnicalProgramEditor programId={p.id} />
+                  <TechnicalProgramEditor programId={p.id} playerId={selectedPlayer} />
                 </CardContent>
               )}
             </Card>
