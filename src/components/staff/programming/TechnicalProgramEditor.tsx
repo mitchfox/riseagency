@@ -135,6 +135,45 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
     load();
   };
 
+  const duplicateDrill = async (drill: Drill) => {
+    const { data: inserted, error } = await supabase
+      .from("technical_drills" as any)
+      .insert({
+        session_id: drill.session_id,
+        name: `${drill.name} (copy)`,
+        description: drill.description,
+        reps: drill.reps,
+        sets: drill.sets,
+        reps_per_side: drill.reps_per_side,
+        load: drill.load,
+        recovery_time: drill.recovery_time,
+        notes: drill.notes,
+        diagram: drill.diagram as any,
+        display_order: drill.display_order + 1,
+      } as any)
+      .select("id")
+      .single();
+    if (error || !inserted) return toast.error(error?.message || "Failed to duplicate drill");
+    if (drill.variations.length) {
+      await supabase.from("technical_drill_variations" as any).insert(
+        drill.variations.map((v) => ({
+          drill_id: (inserted as any).id,
+          label: v.label,
+          description: v.description,
+          reps: v.reps,
+          sets: v.sets,
+          reps_per_side: v.reps_per_side,
+          load: v.load,
+          recovery_time: v.recovery_time,
+          notes: v.notes,
+          diagram: v.diagram as any,
+          display_order: v.display_order,
+        })) as any
+      );
+    }
+    load();
+  };
+
   const updateDrill = async (id: string, patch: Partial<Drill>) => {
     const { error } = await supabase.from("technical_drills" as any).update(patch as any).eq("id", id);
     if (error) return toast.error(error.message);
@@ -262,9 +301,9 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
                 className="min-h-[60px] text-sm"
               />
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {session.drills.map((drill, di) => (
-                  <Card key={drill.id} className="border-primary/30">
+                  <Card key={drill.id} className="border-2 border-primary/40 bg-primary/[0.03]">
                     <CardHeader className="py-2.5">
                       <div className="flex items-center gap-2">
                         <Collapsible open={openDrills[drill.id] !== false} onOpenChange={o => setOpenDrills(s => ({ ...s, [drill.id]: o }))}>
@@ -274,12 +313,16 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
                             </Button>
                           </CollapsibleTrigger>
                         </Collapsible>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary text-primary-foreground shrink-0">Drill</span>
                         <Input
                           defaultValue={drill.name}
                           placeholder="Drill name"
                           onBlur={(e) => updateDrill(drill.id, { name: e.target.value })}
                           className="h-8 font-medium"
                         />
+                        <Button size="sm" variant="outline" onClick={() => duplicateDrill(drill)} className="shrink-0">
+                          <Copy className="w-3.5 h-3.5 mr-1" />Duplicate drill
+                        </Button>
                         <Button size="icon" variant="ghost" onClick={() => deleteDrill(drill.id)} className="text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -293,19 +336,20 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
                           onEditDiagram={() => setEditingDiagram({ kind: "drill", id: drill.id, diagram: drill.diagram ?? null, title: `${drill.name} — Diagram` })}
                         />
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 border-t pt-3 mt-2 ml-2 pl-3 border-l-2 border-muted-foreground/20">
                           <div className="flex items-center justify-between">
-                            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variations</Label>
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variations of this drill</Label>
                             <Button size="sm" variant="outline" onClick={() => addVariation(drill, drill.variations[drill.variations.length - 1])}>
-                              <Copy className="w-3.5 h-3.5 mr-1" />Duplicate last
+                              <Plus className="w-3.5 h-3.5 mr-1" />Add variation
                             </Button>
                           </div>
                           {drill.variations.length === 0 && (
-                            <p className="text-xs text-muted-foreground">No variations yet. Duplicate the drill above as a starting point.</p>
+                            <p className="text-xs text-muted-foreground">No variations yet. Add one to create a tweak of this drill.</p>
                           )}
                           {drill.variations.map(v => (
-                            <div key={v.id} className="border rounded-md p-3 space-y-2 bg-muted/30">
+                            <div key={v.id} className="border border-dashed rounded-md p-3 space-y-2 bg-muted/40">
                               <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground border shrink-0">Variation</span>
                                 <Input
                                   defaultValue={v.label}
                                   onBlur={(e) => updateVariation(v.id, { label: e.target.value })}
@@ -313,7 +357,7 @@ export const TechnicalProgramEditor = ({ programId }: Props) => {
                                 />
                                 <div className="ml-auto flex gap-1">
                                   <Button size="sm" variant="outline" onClick={() => addVariation(drill, v)}>
-                                    <Copy className="w-3.5 h-3.5 mr-1" />Duplicate
+                                    <Copy className="w-3.5 h-3.5 mr-1" />Duplicate variation
                                   </Button>
                                   <Button size="icon" variant="ghost" onClick={() => deleteVariation(v.id)} className="text-destructive">
                                     <Trash2 className="h-4 w-4" />
