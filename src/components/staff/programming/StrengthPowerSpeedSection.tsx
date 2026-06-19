@@ -6,7 +6,6 @@ import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
-import { ProgrammingWeeksEditor } from "@/components/staff/programming/ProgrammingWeeksEditor";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -83,8 +82,6 @@ export const StrengthPowerSpeedSection = () => {
         <div className="space-y-4">
           {/* Visual Timeline */}
           <SPSTimeline programs={playerPrograms} playerName={currentPlayer.name} />
-
-          <ProgrammingWeeksEditor playerId={currentPlayer.id} />
 
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Testing Results</h3>
