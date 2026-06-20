@@ -1,44 +1,58 @@
-## What's wrong now
+## Parsed from the notes
 
-1. **Session colours are gone from the editor.** The unified `ProgrammingWeeksEditor` table just paints every cell gold (SPS) or blue (Technical). The old SPS schedule used a per-session-letter colour map (A = navy, B = green, C = red, D = gold, E = olive, F = purple, G = teal, PRE-x = darker shades, R/Rest = light grey, etc.) and that's what you want back — in the editor and everywhere it's rendered.
-2. **Portal is still reading the old data.** The player Dashboard and Hub still read `player_programs.weekly_schedules` (the legacy JSONB field). We migrated everything into `programming_weeks`, so the portal now shows stale data and Technical programmes don't appear in the weekly schedule at all.
+Two pages of handwriting, mostly about the **Player Proposal / Rise With Us** flow, with a block on **Club Outreach**. Grouped below by surface, with what I read off the paper in plain English. Tell me which group(s) to tackle first (or reorder / drop anything I've misread).
 
-## Plan
+---
 
-### 1. Bring back per-session colours (shared)
+### A. Player Proposal — "PP" content & visuals
+1. **Add a video clip where the images are**, with annotations linked (clickable card → video + annotation timestamp).
+2. **Improve the intro visual** — fix text alignment etc. on the opening card.
+3. ~~Show how they stack in our rating system~~ — marked auto-done on the note.
+4. **Improve the "Why Us?" section** — show who we've worked with, add best-quality player images.
+5. **Allow multiple videos, "Stars" style** (carousel/grid of clips rather than one).
+6. **Best player images** sourced for the Why Us section.
 
-- Lift the `getSessionColor` map out of `Dashboard.tsx` into a small shared helper `src/lib/sessionColors.ts` so the editor, portal Dashboard, portal Hub, and Technical view all use the exact same colours.
-- Keys: `A`–`G`, `PRE-A`–`PRE-G`, `PREHAB`, `T`/`TESTING`, `R`/`REST`, plus a fallback. Same HSL values as today (rise-gold text on coloured backgrounds).
-- Update `Dashboard.tsx` and `Hub.tsx` to import from the helper instead of defining it inline (no visual change for them).
+### B. Player Proposal — pathway & personalisation
+7. **Pathway Planning section**: clear the journey, eliminate risk of failure, adapt to *their* level of risk. (Linked on the note to the "why us" / TO arrow.)
+8. **Must add HQ** — feature the London HQ somewhere in the proposal.
+9. **Allow linking of additional options** depending on club context (e.g. "no transfer budget? → free options"). Assigned on note to **TO → MS/PW**.
 
-### 2. Repaint the editor cells
+### C. Player Proposal — meeting / call-to-action
+10. **Set up the auto meeting-setter at the end** (booking widget after the proposal flow).
+11. **In-meeting script setup** to follow: Plan for them → How we work → Next steps.
+12. **Follow-up process** (post-meeting workflow) — tick on note suggests partly there.
+13. **Internal WhatsApp group for each booked meeting** with: TO, MM, MS, PW, ME, JS.
 
-In `ProgrammingWeeksEditor.tsx` `SlotCell`:
-- When a slot points at a session, look up the colour by `ref.sessionKey` (e.g. `A`, `PRE-B`, `T`). Apply it as inline `backgroundColor` + `color` on the cell button so Session A looks the same everywhere.
-- Keep the small `SPS` / `T` corner badge so you can still tell programme type at a glance, but the dominant colour comes from the session letter.
-- Free-text slots (`Rest`, `Match`, `Off`) use the same map (`REST`, fallback for Match/Off) so a Rest day is always the same light grey.
-- The collapsed Master schedule at the top uses the same cells, so colours match there too.
+### D. Player Proposal — additional content blocks (from sheet 2)
+14. **Training methodology explained** box.
+15. **Performance Team provision** box.
+16. **Our Ballon d'Or vision / Team of the Year — "why them?"** narrative. Tone: **Exciting, Forward-Looking**.
+17. **"Massive opportunity / FOMO"** framing block.
+18. **Parent's role box** — explain their role and how we work together with them.
+19. **Box explaining how we work, including the language-support explanation**.
+20. **Design change**: add the slant to boxes etc. (carry the RISE slanted-edge motif into proposal cards).
+21. **Auto-select position as the start for the player** when opening the proposal.
 
-### 3. Connect the portal to `programming_weeks`
+### E. Club Outreach (sheet 2, top + sheet 1 right column)
+22. **Add a club glow** to outreach links (club-coloured glow on the shared link / card).
+23. **Haptic feedback on outreach** interactions.
+24. **Data etc. within outreach** — surface player data inside the outreach link view.
+25. **5 Top Youth → age bracket above → convert them over** — pitch the top 5 youth plus the next age bracket, signalled accordingly.
+26. **"Signal accordingly"** — visual signalling on outreach cards (exciting / forward-looking treatment, matched to club context).
 
-- Add a small loader in the portal (new hook `usePlayerProgrammingWeeks(playerId)`) that pulls from `programming_weeks` + joins session info via the same `useProgrammingSessions` ref lookup, returning an array of `{ id, label, week_start_date, slots: { monday: {key, title, type}, … } }`.
-- **Portal Dashboard (`src/pages/Dashboard.tsx`)**: replace the `program.weekly_schedules` rendering block (around L3561–3640) with the unified weeks from the hook, rendered as the same week-by-week table with the shared `getSessionColor`. The "today" highlight and click-to-jump-to-session behaviour stays.
-- **Portal Hub (`src/components/dashboard/Hub.tsx`)**: replace the "today's session" lookup (L449–466) to find the matching week in `programming_weeks` by `week_start_date` and read today's slot from there, again using the shared colour map.
-- **Technical portal view (`src/components/portal/TechnicalProgramView.tsx`)**: add the same weekly table at the top of each technical programme, scoped to that programme's `linked_week_ids` so a player sees the technical schedule alongside the drills.
-- Legacy `weekly_schedules` JSONB stays in the database untouched; the portal just stops reading it.
+---
 
-### 4. Click behaviour parity
+### Suggested order of attack
+1. **D + B** (content blocks + pathway) — biggest copy/structure changes, do together.
+2. **A** (visual polish, multiple videos, intro).
+3. **C** (meeting booker + WhatsApp group + follow-up).
+4. **E** (club outreach polish).
 
-- In the editor, clicking a coloured cell still opens `SessionQuickEditDialog` (existing behaviour).
-- In the portal, clicking a coloured cell still jumps to that session in the programme view (existing Dashboard behaviour, just driven by the new data).
+### What I need from you before building
+- Confirm I've read items correctly (especially **9** "TO → MS/PW", **13** initials list, **25** "5 Top Youth").
+- For **10** the meeting booker: Calendly embed, a custom in-app slot picker, or something else?
+- For **13** WhatsApp group auto-creation: WhatsApp Business API isn't wired up — fine to start with a notification + pre-filled `wa.me` link instead?
+- For **21** auto-select position: should it use the player's primary position from `players.position`, or the most-recent scouted position?
+- For **22** club glow: use the club's primary colour from `club_map_positions`, or pull crest-derived colour?
 
-## Files touched
-
-- New: `src/lib/sessionColors.ts`
-- New: `src/hooks/usePlayerProgrammingWeeks.ts`
-- Edit: `src/components/staff/programming/ProgrammingWeeksEditor.tsx` (colour cells by session key)
-- Edit: `src/pages/Dashboard.tsx` (swap data source + shared colour helper)
-- Edit: `src/components/dashboard/Hub.tsx` (swap data source + shared colour helper)
-- Edit: `src/components/portal/TechnicalProgramView.tsx` (add weekly table)
-
-No database changes — `programming_weeks` is already the source of truth from the previous migration.
+Once you confirm scope, I'll start with whichever group you pick.
