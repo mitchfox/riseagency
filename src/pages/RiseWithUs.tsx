@@ -583,7 +583,6 @@ const _PortalWelcomeOverlayImpl = ({
   lang, open, setOpen,
 }: { lang: string; open: boolean; setOpen: (v: boolean) => void }) => {
   if (!open) return null;
-  if (!open) return null;
   return (
     <motion.div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
