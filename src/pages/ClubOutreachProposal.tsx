@@ -470,13 +470,21 @@ export default function ClubOutreachProposal() {
       )}
       {/* Header */}
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
+        {/* Ambient club-coloured glow that wraps the crest. Falls back to
+            RISE gold when no club accent is configured. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-64"
+          style={{
+            background: `radial-gradient(ellipse at top, ${clubGlow}38, transparent 65%)`,
+          }}
+        />
         {club?.image_url ? (
           <img
             src={club.image_url}
             alt={club.club_name}
             onError={(e) => ((e.currentTarget.style.display = "none"))}
-            className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]"
+            className="relative mx-auto h-24 sm:h-28 w-auto object-contain"
+            style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
           />
         ) : (
           <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
