@@ -387,6 +387,202 @@ const PillarsSection = ({
 /* ============== PORTAL WELCOME OVERLAY ============== */
 const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
   const [open, setOpen] = useState(true);
+
+  return _PortalWelcomeOverlayImpl({ lang, open, setOpen });
+};
+
+/* ============== STARS SHOWCASE (Why Us — videos + best players) ==============
+ * Item A1, A4, A5, A6 from the proposal backlog:
+ * - multiple video clips, "Stars" style carousel (homepage_videos)
+ * - best-quality player images alongside the videos (visible_on_stars_page)
+ * - "who we've worked with" framing inside the Why Us narrative.
+ * Renders nothing when no data is available, so the page degrades gracefully.
+ */
+interface StarPlayerRow {
+  id: string; name: string; position: string | null;
+  club: string | null; image_url: string | null;
+}
+const StarsShowcase = ({ lang }: { lang: string }) => {
+  const [videos, setVideos] = useState<string[]>([]);
+  const [stars, setStars] = useState<StarPlayerRow[]>([]);
+  const [videoIdx, setVideoIdx] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: vData }, { data: pData }] = await Promise.all([
+        supabase
+          .from("homepage_videos")
+          .select("video_url")
+          .eq("is_active", true)
+          .order("order_position", { ascending: true })
+          .limit(6),
+        (supabase as any)
+          .from("players")
+          .select("id, name, position, club, image_url")
+          .eq("visible_on_stars_page", true)
+          .eq("representation_status", "represented")
+          .not("image_url", "is", null)
+          .limit(6),
+      ]);
+      setVideos((vData || []).map((v: any) => v.video_url).filter(Boolean));
+      setStars((pData || []) as StarPlayerRow[]);
+    })();
+  }, []);
+
+  // Auto-advance video carousel every 9s.
+  useEffect(() => {
+    if (videos.length < 2) return;
+    const id = window.setInterval(() => {
+      setVideoIdx((i) => (i + 1) % videos.length);
+    }, 9000);
+    return () => window.clearInterval(id);
+  }, [videos.length]);
+
+  if (videos.length === 0 && stars.length === 0) return null;
+
+  const activeVideo = videos[videoIdx];
+  const isIframeVideo = (url: string) =>
+    /youtube\.com|youtu\.be|vimeo\.com|player\./i.test(url);
+
+  return (
+    <div className="my-6 md:my-8">
+      <div className="mb-5 flex items-center gap-3 md:mb-6">
+        <div className="h-[1px] flex-1 bg-primary/40" />
+        <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+          {offerT(lang, "rwu_stars_heading", "Our Stars")}
+        </span>
+        <div className="h-[1px] flex-1 bg-primary/40" />
+      </div>
+
+      <p
+        className="mx-auto mb-4 max-w-2xl text-center text-[12.5px] leading-relaxed text-foreground/80 md:text-[14px]"
+        style={{ hyphens: "none", wordBreak: "normal", overflowWrap: "normal" }}
+      >
+        {offerT(
+          lang,
+          "rwu_stars_body",
+          "A snapshot of the players we work with day to day, and the on-pitch moments we help create.",
+        )}
+      </p>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-5 md:gap-4">
+        {/* Video carousel */}
+        {activeVideo && (
+          <div
+            className="relative md:col-span-3"
+            style={{ clipPath: slantClip, WebkitClipPath: slantClip }}
+          >
+            <div
+              className="relative p-[1px]"
+              style={{ background: "linear-gradient(135deg, hsl(var(--gold)/0.55), hsl(var(--gold)/0.12) 55%, hsl(var(--gold)/0.35))" }}
+            >
+              <div
+                className="relative aspect-video w-full overflow-hidden bg-black"
+                style={{ clipPath: slantClip, WebkitClipPath: slantClip }}
+              >
+                {isIframeVideo(activeVideo) ? (
+                  <iframe
+                    key={activeVideo}
+                    src={activeVideo}
+                    title="RISE Stars"
+                    className="absolute inset-0 h-full w-full"
+                    frameBorder={0}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                ) : (
+                  <video
+                    key={activeVideo}
+                    src={activeVideo}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                )}
+                {/* Play badge */}
+                <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-primary/40 bg-black/55 px-2.5 py-1 backdrop-blur-sm">
+                  <Play className="h-3 w-3 text-primary" fill="currentColor" />
+                  <span className="font-bebas text-[10px] uppercase tracking-[0.22em] text-primary">
+                    {offerT(lang, "rwu_stars_live", "Live")}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {videos.length > 1 && (
+              <div className="mt-2 flex items-center justify-center gap-1.5">
+                {videos.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setVideoIdx(i)}
+                    aria-label={`Show clip ${i + 1}`}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === videoIdx ? "w-6 bg-primary" : "w-1.5 bg-foreground/30 hover:bg-foreground/55"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Best-player images */}
+        {stars.length > 0 && (
+          <div
+            className={`grid gap-2 ${activeVideo ? "md:col-span-2" : "md:col-span-5"} ${
+              stars.length === 1 ? "grid-cols-1" : "grid-cols-2"
+            }`}
+          >
+            {stars.slice(0, activeVideo ? 4 : 6).map((p) => (
+              <div
+                key={p.id}
+                className="relative overflow-hidden"
+                style={{ clipPath: slantClip, WebkitClipPath: slantClip }}
+              >
+                <div
+                  className="relative p-[1px]"
+                  style={{ background: "linear-gradient(135deg, hsl(var(--gold)/0.45), hsl(var(--gold)/0.10) 55%, hsl(var(--gold)/0.3))" }}
+                >
+                  <div
+                    className="relative aspect-[3/4] w-full overflow-hidden bg-black"
+                    style={{ clipPath: slantClip, WebkitClipPath: slantClip }}
+                  >
+                    {p.image_url && (
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="absolute inset-0 h-full w-full object-cover object-top"
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-2">
+                      <p className="font-bebas text-[12px] uppercase leading-tight tracking-[0.08em] text-foreground">
+                        {p.name}
+                      </p>
+                      <p className="font-bebas text-[9px] uppercase tracking-[0.22em] text-primary/95">
+                        {[normalisePosition(p.position || ""), p.club].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const _PortalWelcomeOverlayImpl = ({
+  lang, open, setOpen,
+}: { lang: string; open: boolean; setOpen: (v: boolean) => void }) => {
+  if (!open) return null;
   if (!open) return null;
   return (
     <motion.div
