@@ -396,6 +396,227 @@ const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
   return _PortalWelcomeOverlayImpl({ lang, open, setOpen });
 };
 
+/* ============== MEETING BOOKER ==============
+ * Item C from the proposal backlog. We do not embed a third-party
+ * calendar. The prospect submits their WhatsApp number plus a couple
+ * of preferred slots, and the request is logged for staff to follow
+ * up manually (TO/MM/MS/PW/ME/JS get tagged on the notification).
+ */
+const MEETING_STAFF_TAGS = ["TO", "MM", "MS", "PW", "ME", "JS"];
+
+type TimeOfDay = "morning" | "afternoon" | "evening" | "any";
+const timeOfDayDict: Record<TimeOfDay, Partial<Record<Lang, string>>> = {
+  morning:  { en: "Morning",  es: "Mañana",  pt: "Manhã",   fr: "Matin",   de: "Vormittag", it: "Mattina",     pl: "Rano",      cs: "Ráno",     ru: "Утром",     tr: "Sabah",   hr: "Jutro",   no: "Morgen" },
+  afternoon:{ en: "Afternoon",es: "Tarde",   pt: "Tarde",   fr: "Après-midi", de: "Nachmittag", it: "Pomeriggio", pl: "Popołudnie", cs: "Odpoledne", ru: "Днём",     tr: "Öğleden sonra", hr: "Popodne", no: "Ettermiddag" },
+  evening:  { en: "Evening",  es: "Noche",   pt: "Noite",   fr: "Soir",    de: "Abend",     it: "Sera",        pl: "Wieczór",   cs: "Večer",    ru: "Вечером",  tr: "Akşam",   hr: "Večer",   no: "Kveld" },
+  any:      { en: "Any time", es: "Cualquier hora", pt: "Qualquer hora", fr: "À n'importe quelle heure", de: "Jederzeit", it: "Qualunque ora", pl: "O dowolnej porze", cs: "Kdykoli", ru: "В любое время", tr: "Her saat", hr: "Bilo kada", no: "Når som helst" },
+};
+
+const MeetingBookerDialog = ({
+  open, onOpenChange, player, lang,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  player: ProspectPlayer;
+  lang: string;
+}) => {
+  const [whatsapp, setWhatsapp] = useState("");
+  const [preferredDates, setPreferredDates] = useState("");
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("any");
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset when reopened.
+  useEffect(() => {
+    if (open) {
+      setDone(false); setError(null);
+      setWhatsapp(""); setPreferredDates(""); setTimeOfDay("any"); setNote("");
+    }
+  }, [open]);
+
+  const labelFor = (k: TimeOfDay) =>
+    timeOfDayDict[k]?.[lang as Lang] || timeOfDayDict[k]?.en || k;
+
+  const submit = async () => {
+    if (!whatsapp.trim()) {
+      setError(offerT(lang, "rwu_meet_need_whatsapp", "Please add your WhatsApp number so we can reach you."));
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const slug = window.location.pathname.split("/").filter(Boolean).pop() || null;
+      const { error: insertErr } = await (supabase as any)
+        .from("proposal_meeting_requests")
+        .insert({
+          player_id: player.id,
+          player_slug: slug,
+          player_name: player.name,
+          whatsapp_number: whatsapp.trim(),
+          preferred_dates: preferredDates.trim() || null,
+          preferred_time_of_day: timeOfDay,
+          message: note.trim() || null,
+          language: lang,
+        });
+      if (insertErr) throw insertErr;
+
+      await insertStaffNotification({
+        eventType: "proposal_meeting_request",
+        title: `Meeting requested: ${player.name}`,
+        body: `${player.name} (${whatsapp.trim()}) — ${preferredDates.trim() || "no dates"} · ${labelFor(timeOfDay)}`,
+        eventData: {
+          player_id: player.id,
+          player_name: player.name,
+          whatsapp_number: whatsapp.trim(),
+          preferred_dates: preferredDates.trim(),
+          preferred_time_of_day: timeOfDay,
+          message: note.trim(),
+          tagged_staff: MEETING_STAFF_TAGS,
+          source: "rise_with_us",
+        },
+      });
+      setDone(true);
+    } catch (e: any) {
+      console.error("Meeting request failed", e);
+      setError(offerT(lang, "rwu_meet_error", "Something went wrong. Please WhatsApp us directly and we'll sort it."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
+        {!done ? (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10">
+                  <CalendarClock className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
+                    {offerT(lang, "rwu_meet_title", "Set Up Our Meeting")}
+                  </DialogTitle>
+                  <DialogDescription className="text-foreground/75">
+                    {offerT(
+                      lang,
+                      "rwu_meet_subtitle",
+                      "Leave us your WhatsApp and a couple of times that suit you. We'll message you to lock it in.",
+                    )}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="md:col-span-1">
+                <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
+                  {offerT(lang, "rwu_meet_whatsapp", "WhatsApp number")}
+                </label>
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+44 7…"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
+                  {offerT(lang, "rwu_meet_time_of_day", "Preferred time of day")}
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(["morning", "afternoon", "evening", "any"] as TimeOfDay[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setTimeOfDay(k)}
+                      className={`rounded-md border px-2 py-1.5 font-bebas text-[11px] uppercase tracking-[0.14em] transition-colors ${
+                        timeOfDay === k
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border/60 text-foreground/75 hover:border-primary/40 hover:text-foreground"
+                      }`}
+                    >
+                      {labelFor(k)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
+                  {offerT(lang, "rwu_meet_dates", "Dates that work for you")}
+                </label>
+                <Input
+                  placeholder={offerT(lang, "rwu_meet_dates_ph", "e.g. Mon 24 Jun or this weekend")}
+                  value={preferredDates}
+                  onChange={(e) => setPreferredDates(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
+                  {offerT(lang, "rwu_meet_note", "Anything you want us to know (optional)")}
+                </label>
+                <Textarea
+                  rows={3}
+                  placeholder={offerT(lang, "rwu_meet_note_ph", "Family present, language preference, questions…")}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+                {offerT(lang, "rwu_meet_cancel", "Cancel")}
+              </Button>
+              <Button
+                onClick={submit}
+                disabled={submitting}
+                className="font-bebas uppercase tracking-[0.2em] bg-primary text-primary-foreground hover:bg-primary/90 px-6"
+              >
+                {submitting
+                  ? offerT(lang, "rwu_meet_sending", "Sending…")
+                  : offerT(lang, "rwu_meet_submit", "Send Request")}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="py-6 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-primary/40 bg-primary/10 shadow-[0_0_30px_hsl(var(--gold)/0.25)]">
+              <CheckCircle2 className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
+              {offerT(lang, "rwu_meet_done_title", "Request received")}
+            </h3>
+            <p className="mx-auto mt-3 max-w-xl text-foreground/85">
+              {offerT(
+                lang,
+                "rwu_meet_done_body",
+                "Thanks. We'll WhatsApp you shortly to lock in a time that works.",
+              )}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={() => onOpenChange(false)}
+                className="font-bebas uppercase tracking-[0.2em] bg-primary text-primary-foreground hover:bg-primary/90 px-6"
+              >
+                {offerT(lang, "rwu_meet_done_close", "Close")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 /* ============== STARS SHOWCASE (Why Us — videos + best players) ==============
  * Item A1, A4, A5, A6 from the proposal backlog:
  * - multiple video clips, "Stars" style carousel (homepage_videos)
