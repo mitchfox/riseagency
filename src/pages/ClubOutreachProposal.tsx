@@ -17,6 +17,14 @@ import {
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import jolonFifaLicenseAsset from "@/assets/jolon-fifa-license.png.asset.json";
+import whyUsP1 from "@/assets/whyus/player-1.jpg";
+import whyUsP2 from "@/assets/whyus/player-2.jpg";
+import whyUsP3 from "@/assets/whyus/player-3.jpg";
+import whyUsP4 from "@/assets/whyus/player-4.jpg";
+import whyUsP5 from "@/assets/whyus/player-5.jpg";
+import whyUsP6 from "@/assets/whyus/player-6.jpg";
+
+const WHY_US_IMAGERY = [whyUsP1, whyUsP2, whyUsP3, whyUsP4, whyUsP5, whyUsP6];
 
 const AGENT_FIFA_LICENCES: Record<string, { number: string; imageUrl: string }> = {
   "jolon levene": { number: "202304-1453", imageUrl: jolonFifaLicenseAsset.url },
@@ -469,11 +477,11 @@ export default function ClubOutreachProposal() {
         </div>
       )}
       {/* Header */}
-      <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
+      <header className="relative px-6 pt-[max(20px,env(safe-area-inset-top))] pb-5 text-center border-b border-white/5">
         {/* Ambient club-coloured glow that wraps the crest. Falls back to
             RISE gold when no club accent is configured. */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-64"
+          className="pointer-events-none absolute inset-x-0 top-0 h-56"
           style={{
             background: `radial-gradient(ellipse at top, ${clubGlow}38, transparent 65%)`,
           }}
@@ -483,32 +491,32 @@ export default function ClubOutreachProposal() {
             src={club.image_url}
             alt={club.club_name}
             onError={(e) => ((e.currentTarget.style.display = "none"))}
-            className="relative mx-auto h-24 sm:h-28 w-auto object-contain"
+            className="relative mx-auto h-20 sm:h-24 w-auto object-contain"
             style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
           />
         ) : (
-          <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
+          <div className="relative mx-auto h-20 sm:h-24 w-20 sm:w-24 rounded-full bg-white/5 flex items-center justify-center text-3xl">
             {club?.club_name?.[0] ?? "?"}
           </div>
         )}
-        <div className="mt-6 flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
+        <div className="mt-5 flex flex-col items-center gap-2.5">
+          <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
             {showMandatedHeader
               ? fillTpl(tr("hdr.presentsBy", "{name} presents"), { name: mandatedAgentName })
               : tr("hdr.presents", "Rise Football Agency presents")}
           </p>
           {showMandatedHeader && (
-            <p className="-mt-2 text-[10px] uppercase tracking-[0.3em] text-white/55">
+            <p className="-mt-1 text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-white/55">
               {tr("hdr.mandatedBy", "Mandated by Rise Football Agency")}
             </p>
           )}
-          <h1 className="text-3xl sm:text-4xl font-semibold leading-tight">
+          <h1 className="text-[28px] sm:text-4xl font-semibold leading-[1.1] tracking-tight">
             {hasMultiple
               ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
               : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
           {preparedFor && (
-            <p className="text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
@@ -627,6 +635,73 @@ export default function ClubOutreachProposal() {
           </div>
         </div>
       )}
+
+      {/* Why Us — credibility block + best-player imagery strip */}
+      <section className="max-w-3xl mx-auto px-6 mt-6">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
+            {tr("whyUs.title", "Why Rise")}
+          </p>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.fifaEyebrow", "Licensed")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.fifaTitle", "FIFA Licensed Agency")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.fifaBody", "Operating under a current FIFA licence with full regulatory compliance.")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.networkEyebrow", "Reach")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.networkTitle", "Global Network")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.networkBody", "Direct relationships with sporting and recruitment staff across European and overseas leagues.")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.perfEyebrow", "Method")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.perfTitle", "Performance-led")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.perfBody", "Every recommendation backed by our R90 methodology and match-by-match analysis.")}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/45">
+              {tr("whyUs.rosterLabel", "From our roster")}
+            </p>
+            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {WHY_US_IMAGERY.map((src, i) => (
+                <div
+                  key={i}
+                  className="relative shrink-0 h-20 w-16 sm:h-24 sm:w-20 rounded-lg overflow-hidden border border-white/10 bg-black"
+                  style={{ boxShadow: `0 6px 18px -8px ${clubGlow}55` }}
+                >
+                  <img
+                    src={src}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Sections after the hero video — order is staff-configurable per link */}
       {(() => {
