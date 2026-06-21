@@ -52,6 +52,7 @@ const StaffAvailabilityManagement = lazy(() => import("@/components/staff/StaffA
 const StaffSchedulesManagement = lazy(() => import("@/components/staff/StaffSchedulesManagement").then(m => ({ default: m.StaffSchedulesManagement })));
 const MarketingManagement = lazy(() => import("@/components/staff/MarketingManagement").then(m => ({ default: m.MarketingManagement })));
 const ScheduleManager = lazy(() => import("@/components/staff/marketing/ScheduleManager").then(m => ({ default: m.ScheduleManager })));
+const MarketingGalleryViewer = lazy(() => import("@/components/staff/MarketingGalleryViewer").then(m => ({ default: m.MarketingGalleryViewer })));
 const ContentCreator = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.ContentCreator })));
 const SalesDeck = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.SalesDeck })));
 const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentManagement").then(m => ({ default: m.RecruitmentManagement })));
