@@ -1094,6 +1094,7 @@ const RiseWithUs = () => {
   const [scoutingPosition, setScoutingPosition] = useState<ScoutingPosition | null>(null);
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
+  const [meetingOpen, setMeetingOpen] = useState(false);
 
   const isPickerMode = !slug;
 
