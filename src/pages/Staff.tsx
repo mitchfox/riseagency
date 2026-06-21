@@ -123,6 +123,7 @@ import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
 import { Palette, Tv, Music } from "lucide-react";
 import { UserRoundCheck } from "lucide-react";
+import { Image as GalleryImageIcon } from "lucide-react";
 import { 
   Calendar, 
   Users, 
