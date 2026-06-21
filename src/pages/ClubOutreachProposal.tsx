@@ -159,6 +159,29 @@ function tryAutoplay(video: HTMLVideoElement) {
 const PUBLIC_HOME_URL = "https://risefootballagency.com/";
 const HERO_PREFETCH_TIMEOUT_MS = 12000;
 
+// ============== HAPTIC + GLOW HELPERS (Club Outreach polish, scope E) ==============
+// Subtle vibration on key outreach interactions. Safe no-op when the
+// browser (or iOS Safari) does not expose the Vibration API.
+function hapticTap(ms = 8) {
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate(ms);
+    }
+  } catch {
+    // ignore — vibration is best-effort cosmetic feedback
+  }
+}
+
+// Normalise a hex string (with or without leading #) to a valid CSS hex,
+// returning null when the input is unusable. Mirrors the validation that
+// was already in place inline for the contact card accent.
+function normaliseAccentHex(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!/^#?[0-9a-fA-F]{3,6}$/.test(trimmed)) return null;
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
 function goToPublicHomepage() {
   try {
     localStorage.removeItem("pwa_last_route");
@@ -385,6 +408,9 @@ export default function ClubOutreachProposal() {
   const clubContactName = data.club_contact?.contact_name ?? data.link.club_contact_name;
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
+  // Club glow — derived from the (already staff-configurable) accent
+  // colour. Falls back to RISE gold when no accent is set.
+  const clubGlow = normaliseAccentHex(clubContactAccent) ?? "#cbb96b";
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
   const clubContactRole = data.club_contact?.contact_role ?? data.link.club_contact_role;
   const clubContactClubName = data.club_contact?.contact_club_name ?? null;
@@ -444,13 +470,21 @@ export default function ClubOutreachProposal() {
       )}
       {/* Header */}
       <header className="relative px-6 pt-[max(24px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,_rgba(203,185,107,0.18),_transparent_60%)]" />
+        {/* Ambient club-coloured glow that wraps the crest. Falls back to
+            RISE gold when no club accent is configured. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-64"
+          style={{
+            background: `radial-gradient(ellipse at top, ${clubGlow}38, transparent 65%)`,
+          }}
+        />
         {club?.image_url ? (
           <img
             src={club.image_url}
             alt={club.club_name}
             onError={(e) => ((e.currentTarget.style.display = "none"))}
-            className="relative mx-auto h-24 sm:h-28 w-auto object-contain drop-shadow-[0_4px_24px_rgba(203,185,107,0.4)]"
+            className="relative mx-auto h-24 sm:h-28 w-auto object-contain"
+            style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
           />
         ) : (
           <div className="relative mx-auto h-24 sm:h-28 w-24 sm:w-28 rounded-full bg-white/5 flex items-center justify-center text-3xl">
@@ -483,7 +517,7 @@ export default function ClubOutreachProposal() {
       {hasMultiple && slots.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-6 flex flex-wrap gap-2 justify-center">
           <button
-            onClick={() => setActiveSlot(null)}
+            onClick={() => { hapticTap(); setActiveSlot(null); }}
             className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
             {tr("chip.all", "All")}
@@ -491,7 +525,7 @@ export default function ClubOutreachProposal() {
           {slots.map((s) => (
             <button
               key={s}
-              onClick={() => setActiveSlot(s)}
+              onClick={() => { hapticTap(); setActiveSlot(s); }}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
               {s}
@@ -503,13 +537,20 @@ export default function ClubOutreachProposal() {
       {/* Carousel controls */}
       {filteredPlayers.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
-          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
+          <button
+            onClick={() => { hapticTap(); setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length); }}
+            className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60 transition-shadow"
+            style={{ boxShadow: `0 0 0 0 ${clubGlow}` }}
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 text-center text-xs text-white/60">
             <span className="text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
           </div>
-          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
+          <button
+            onClick={() => { hapticTap(); setActiveIndex((i) => (i + 1) % filteredPlayers.length); }}
+            className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60 transition-shadow"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
