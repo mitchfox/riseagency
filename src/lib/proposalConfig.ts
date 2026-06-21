@@ -29,9 +29,11 @@ export interface KeyDetailItem {
 
 export const DEFAULT_KEY_DETAILS: KeyDetailItem[] = [
   { kind: "club" },
+  { kind: "position" },
   { kind: "age" },
   { kind: "nationality" },
   { kind: "league" },
+  { kind: "contract_expiry" },
 ];
 
 // Whether a key-detail kind carries free-text data on the link itself.
