@@ -386,6 +386,7 @@ const PillarsSection = ({
 
 /* ============== PORTAL WELCOME OVERLAY ============== */
 const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
+  // (kept below the new Stars showcase)
   const [open, setOpen] = useState(true);
   if (!open) return null;
   return (
