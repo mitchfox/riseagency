@@ -240,6 +240,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
             </Popover>
           )}
           <Button size="sm" onClick={addWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add week</Button>
+          <Button size="sm" variant="secondary" onClick={addNextWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add next week</Button>
         </div>
       </div>
 
