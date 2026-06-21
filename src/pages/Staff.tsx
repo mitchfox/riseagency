@@ -1034,6 +1034,7 @@ const Staff = () => {
           { id: '_group_content', title: 'Content', isGroupLabel: true },
             { id: 'marketingschedule', title: 'Schedule', icon: Calendar },
           { id: 'marketing', title: 'Marketing', icon: Megaphone },
+          { id: 'marketinggallery', title: 'Marketing Gallery', icon: ImageIcon as any },
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
           { id: 'publiccontent', title: 'Public Content', icon: Megaphone },
           { id: '_group_commercial', title: 'Commercial', isGroupLabel: true },
