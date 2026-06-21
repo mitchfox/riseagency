@@ -1494,6 +1494,13 @@ const RiseWithUs = () => {
               <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
             </footer>
           )}
+
+          <MeetingBookerDialog
+            open={meetingOpen}
+            onOpenChange={setMeetingOpen}
+            player={player}
+            lang={lang}
+          />
         </>
       )}
     </div>
