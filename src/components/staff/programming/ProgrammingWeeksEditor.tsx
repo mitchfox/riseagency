@@ -123,6 +123,43 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     }
   };
 
+  const addNextWeek = async () => {
+    const baseCount = allPlayerWeeks.length;
+    // Find the latest week_start_date among the currently shown weeks, else today's Monday
+    const dated = weeks
+      .map(w => w.week_start_date)
+      .filter((d): d is string => !!d)
+      .sort();
+    let nextStart: Date;
+    if (dated.length) {
+      nextStart = new Date(dated[dated.length - 1] + "T00:00:00");
+      nextStart.setDate(nextStart.getDate() + 7);
+    } else {
+      nextStart = new Date();
+      const day = nextStart.getDay(); // 0 Sun..6 Sat
+      const offset = day === 0 ? 1 : (8 - day); // next Monday
+      nextStart.setDate(nextStart.getDate() + offset);
+    }
+    const iso = nextStart.toISOString().slice(0, 10);
+    const { data: inserted, error } = await supabase
+      .from("programming_weeks" as any)
+      .insert({
+        player_id: playerId,
+        label: `Week ${baseCount + 1}`,
+        week_start_date: iso,
+        display_order: baseCount,
+        slots: {},
+      } as any)
+      .select("id")
+      .single();
+    if (error || !inserted) return toast.error(error?.message || "Failed to add next week");
+    if (programmeLink) {
+      await setLinkedIdsRemote([...linkedIds, (inserted as any).id]);
+    } else {
+      load();
+    }
+  };
+
   const updateWeek = async (id: string, patch: Partial<Week>) => {
     setWeeks(prev => prev.map(w => w.id === id ? { ...w, ...patch } as Week : w));
     const { error } = await supabase.from("programming_weeks" as any).update(patch as any).eq("id", id);
