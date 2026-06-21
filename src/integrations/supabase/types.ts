@@ -6949,6 +6949,66 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_meeting_requests: {
+        Row: {
+          created_at: string
+          id: string
+          language: string | null
+          message: string | null
+          player_id: string | null
+          player_name: string
+          player_slug: string | null
+          preferred_dates: string | null
+          preferred_time_of_day: string | null
+          status: string
+          updated_at: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string | null
+          message?: string | null
+          player_id?: string | null
+          player_name: string
+          player_slug?: string | null
+          preferred_dates?: string | null
+          preferred_time_of_day?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_number: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string | null
+          message?: string | null
+          player_id?: string | null
+          player_name?: string
+          player_slug?: string | null
+          preferred_dates?: string | null
+          preferred_time_of_day?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_meeting_requests_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_meeting_requests_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospects: {
         Row: {
           age: number | null
