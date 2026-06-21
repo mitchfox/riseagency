@@ -749,7 +749,14 @@ const RiseWithUs = () => {
 
   const openCard = (k: CardKey) => {
     setActiveCard(k);
-    setScoutingPosition(null);
+    // Auto-select the player's primary position when entering the
+    // Scouting card so they land directly on their own breakdown
+    // instead of the position picker.
+    if (k === "scouting") {
+      setScoutingPosition(resolveScoutingPosition(player?.position));
+    } else {
+      setScoutingPosition(null);
+    }
     setPerformanceSub(null);
     window.scrollTo({ top: 0, behavior: "auto" });
   };
