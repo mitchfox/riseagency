@@ -1018,6 +1018,9 @@ const RiseWithUs = () => {
                     parent's role (U18 only), multilingual support. */}
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
+                {/* Our Stars — clips + best player imagery */}
+                <StarsShowcase lang={lang} />
+
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
                   if (cards.length === 0) return null;
