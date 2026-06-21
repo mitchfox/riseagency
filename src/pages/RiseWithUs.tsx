@@ -1440,8 +1440,15 @@ const RiseWithUs = () => {
                   <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
                     {ot("wed_love_to_hear", "We'd love to hear what you think and any questions you have.")}
                   </p>
-                  <div className="pt-2">
-                    <Button asChild size="lg" className="font-bebas uppercase tracking-wider bg-[#25D366] hover:bg-[#1fb858] text-white">
+                  <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
+                    <Button
+                      size="lg"
+                      onClick={() => setMeetingOpen(true)}
+                      className="font-bebas uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Set Up Our Meeting")}
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="font-bebas uppercase tracking-wider border-[#25D366]/60 text-[#25D366] hover:bg-[#25D366]/10">
                       <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                         <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
                       </a>
