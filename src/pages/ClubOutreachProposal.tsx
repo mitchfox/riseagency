@@ -636,6 +636,73 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
+      {/* Why Us — credibility block + best-player imagery strip */}
+      <section className="max-w-3xl mx-auto px-6 mt-6">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
+            {tr("whyUs.title", "Why Rise")}
+          </p>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.fifaEyebrow", "Licensed")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.fifaTitle", "FIFA Licensed Agency")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.fifaBody", "Operating under a current FIFA licence with full regulatory compliance.")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.networkEyebrow", "Reach")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.networkTitle", "Global Network")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.networkBody", "Direct relationships with sporting and recruitment staff across European and overseas leagues.")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
+                {tr("whyUs.perfEyebrow", "Method")}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-white">
+                {tr("whyUs.perfTitle", "Performance-led")}
+              </p>
+              <p className="mt-1 text-[12px] leading-snug text-white/65">
+                {tr("whyUs.perfBody", "Every recommendation backed by our R90 methodology and match-by-match analysis.")}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/45">
+              {tr("whyUs.rosterLabel", "From our roster")}
+            </p>
+            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {WHY_US_IMAGERY.map((src, i) => (
+                <div
+                  key={i}
+                  className="relative shrink-0 h-20 w-16 sm:h-24 sm:w-20 rounded-lg overflow-hidden border border-white/10 bg-black"
+                  style={{ boxShadow: `0 6px 18px -8px ${clubGlow}55` }}
+                >
+                  <img
+                    src={src}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Sections after the hero video — order is staff-configurable per link */}
       {(() => {
         const order = normaliseSectionOrder(data.link.section_order);
