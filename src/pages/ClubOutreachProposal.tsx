@@ -787,6 +787,31 @@ export default function ClubOutreachProposal() {
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
+        {/* Brand signature band — sits above the CTAs so the proposal closes
+            with a clear Rise mark before the contact actions. */}
+        <div
+          className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 px-5 py-4 flex items-center gap-4"
+          style={{
+            background: `linear-gradient(135deg, ${clubGlow}1f, transparent 70%), rgba(255,255,255,0.02)`,
+          }}
+        >
+          <img
+            src={riseLogoWhite}
+            alt="Rise Football Agency"
+            className="h-9 w-auto shrink-0 opacity-95"
+            style={{ filter: `drop-shadow(0 4px 14px ${clubGlow}55)` }}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
+              {tr("brand.eyebrow", "Rise Football Agency")}
+            </p>
+            <p className="mt-0.5 text-[12px] sm:text-[13px] leading-snug text-white/75">
+              {tr("brand.promise", "Performance-led representation. Considered moves, not noise.")}
+            </p>
+          </div>
+          <FifaLicenceBadge agentName={data.agent_name} />
+        </div>
+
         {isMandated && (
           <div className="text-center mb-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
