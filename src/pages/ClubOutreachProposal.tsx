@@ -517,7 +517,7 @@ export default function ClubOutreachProposal() {
       {hasMultiple && slots.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-6 flex flex-wrap gap-2 justify-center">
           <button
-            onClick={() => setActiveSlot(null)}
+            onClick={() => { hapticTap(); setActiveSlot(null); }}
             className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === null ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
           >
             {tr("chip.all", "All")}
@@ -525,7 +525,7 @@ export default function ClubOutreachProposal() {
           {slots.map((s) => (
             <button
               key={s}
-              onClick={() => setActiveSlot(s)}
+              onClick={() => { hapticTap(); setActiveSlot(s); }}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
               {s}
@@ -537,13 +537,20 @@ export default function ClubOutreachProposal() {
       {/* Carousel controls */}
       {filteredPlayers.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
-          <button onClick={() => setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
+          <button
+            onClick={() => { hapticTap(); setActiveIndex((i) => (i - 1 + filteredPlayers.length) % filteredPlayers.length); }}
+            className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60 transition-shadow"
+            style={{ boxShadow: `0 0 0 0 ${clubGlow}` }}
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 text-center text-xs text-white/60">
             <span className="text-white/40">{activeIndex + 1} / {filteredPlayers.length}</span>
           </div>
-          <button onClick={() => setActiveIndex((i) => (i + 1) % filteredPlayers.length)} className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60">
+          <button
+            onClick={() => { hapticTap(); setActiveIndex((i) => (i + 1) % filteredPlayers.length); }}
+            className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:border-[#cbb96b]/60 transition-shadow"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
