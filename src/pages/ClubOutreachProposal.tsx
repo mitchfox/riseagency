@@ -17,6 +17,14 @@ import {
 import blackMarbleBg from "@/assets/black-marble-smudged.png";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import jolonFifaLicenseAsset from "@/assets/jolon-fifa-license.png.asset.json";
+import whyUsP1 from "@/assets/whyus/player-1.jpg";
+import whyUsP2 from "@/assets/whyus/player-2.jpg";
+import whyUsP3 from "@/assets/whyus/player-3.jpg";
+import whyUsP4 from "@/assets/whyus/player-4.jpg";
+import whyUsP5 from "@/assets/whyus/player-5.jpg";
+import whyUsP6 from "@/assets/whyus/player-6.jpg";
+
+const WHY_US_IMAGERY = [whyUsP1, whyUsP2, whyUsP3, whyUsP4, whyUsP5, whyUsP6];
 
 const AGENT_FIFA_LICENCES: Record<string, { number: string; imageUrl: string }> = {
   "jolon levene": { number: "202304-1453", imageUrl: jolonFifaLicenseAsset.url },
