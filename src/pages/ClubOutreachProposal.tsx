@@ -159,6 +159,29 @@ function tryAutoplay(video: HTMLVideoElement) {
 const PUBLIC_HOME_URL = "https://risefootballagency.com/";
 const HERO_PREFETCH_TIMEOUT_MS = 12000;
 
+// ============== HAPTIC + GLOW HELPERS (Club Outreach polish, scope E) ==============
+// Subtle vibration on key outreach interactions. Safe no-op when the
+// browser (or iOS Safari) does not expose the Vibration API.
+function hapticTap(ms = 8) {
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate(ms);
+    }
+  } catch {
+    // ignore — vibration is best-effort cosmetic feedback
+  }
+}
+
+// Normalise a hex string (with or without leading #) to a valid CSS hex,
+// returning null when the input is unusable. Mirrors the validation that
+// was already in place inline for the contact card accent.
+function normaliseAccentHex(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!/^#?[0-9a-fA-F]{3,6}$/.test(trimmed)) return null;
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
 function goToPublicHomepage() {
   try {
     localStorage.removeItem("pwa_last_route");
