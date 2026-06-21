@@ -817,6 +817,11 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
+                {/* Pillar boxes — pathway, HQ, training methodology,
+                    performance team, Ballon d'Or vision/FOMO,
+                    parent's role (U18 only), multilingual support. */}
+                <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
+
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
                   if (cards.length === 0) return null;
