@@ -52,6 +52,7 @@ const StaffAvailabilityManagement = lazy(() => import("@/components/staff/StaffA
 const StaffSchedulesManagement = lazy(() => import("@/components/staff/StaffSchedulesManagement").then(m => ({ default: m.StaffSchedulesManagement })));
 const MarketingManagement = lazy(() => import("@/components/staff/MarketingManagement").then(m => ({ default: m.MarketingManagement })));
 const ScheduleManager = lazy(() => import("@/components/staff/marketing/ScheduleManager").then(m => ({ default: m.ScheduleManager })));
+const MarketingGalleryViewer = lazy(() => import("@/components/staff/MarketingGalleryViewer").then(m => ({ default: m.MarketingGalleryViewer })));
 const ContentCreator = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.ContentCreator })));
 const SalesDeck = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.SalesDeck })));
 const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentManagement").then(m => ({ default: m.RecruitmentManagement })));
@@ -122,6 +123,7 @@ import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
 import { Palette, Tv, Music } from "lucide-react";
 import { UserRoundCheck } from "lucide-react";
+import { Image as GalleryImageIcon } from "lucide-react";
 import { 
   Calendar, 
   Users, 
@@ -193,7 +195,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -1033,6 +1035,7 @@ const Staff = () => {
           { id: '_group_content', title: 'Content', isGroupLabel: true },
             { id: 'marketingschedule', title: 'Schedule', icon: Calendar },
           { id: 'marketing', title: 'Marketing', icon: Megaphone },
+          { id: 'marketinggallery', title: 'Marketing Gallery', icon: GalleryImageIcon },
           { id: 'contentcreator', title: 'Content Creator', icon: Film },
           { id: 'publiccontent', title: 'Public Content', icon: Megaphone },
           { id: '_group_commercial', title: 'Commercial', isGroupLabel: true },
@@ -1961,6 +1964,7 @@ const Staff = () => {
                   {expandedSection === 'psychology' && <PsychologySection />}
                   {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'marketinggallery' && <MarketingGalleryViewer />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
