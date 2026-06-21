@@ -3,7 +3,10 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronLeft, MessageCircle, X } from "lucide-react";
+import {
+  ArrowRight, ChevronLeft, MessageCircle, X,
+  Compass, MapPin, Dumbbell, HeartPulse, Trophy, Users2, Languages,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
@@ -20,6 +23,7 @@ import {
   type PerformanceSub,
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
+import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
