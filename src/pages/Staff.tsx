@@ -1962,6 +1962,7 @@ const Staff = () => {
                   {expandedSection === 'psychology' && <PsychologySection />}
                   {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
                   {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
+                  {expandedSection === 'marketinggallery' && <MarketingGalleryViewer />}
                   {expandedSection === 'contentcreator' && <ContentCreator />}
                   {expandedSection === 'videocompressor' && <VideoCompressor />}
                   {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
