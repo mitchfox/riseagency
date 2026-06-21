@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, ChevronLeft, MessageCircle, X,
   Compass, MapPin, Dumbbell, HeartPulse, Trophy, Users2, Languages,
-  Play, ChevronRight,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
