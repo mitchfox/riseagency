@@ -3,7 +3,10 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronLeft, MessageCircle, X } from "lucide-react";
+import {
+  ArrowRight, ChevronLeft, MessageCircle, X,
+  Compass, MapPin, Dumbbell, HeartPulse, Trophy, Users2, Languages,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
@@ -20,6 +23,7 @@ import {
   type PerformanceSub,
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
+import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 
@@ -204,6 +208,179 @@ const allDicts = { ...offerDict, ...portalWelcomeDict };
 const offerT = (lang: string, key: string, fallback: string): string => {
   const code = (lang || "en") as Lang;
   return allDicts[key]?.[code] || allDicts[key]?.en || fallback;
+};
+
+/* ============== AUTO-POSITION RESOLUTION ============== */
+/** Map normalised position abbreviations (GK, CB, LW, …) to the
+ *  broader scouting groupings used by the Scouting card. Mirrors
+ *  POSITION_TO_SCOUTING in RequestRepresentation.tsx. */
+const ABBR_TO_SCOUTING: Record<string, ScoutingPosition> = {
+  GK: "Goalkeeper",
+  LB: "Full-Back", RB: "Full-Back", LWB: "Full-Back", RWB: "Full-Back",
+  CB: "Centre-Back",
+  CDM: "Central Defensive Midfielder",
+  CM: "Central Midfielder", LM: "Central Midfielder", RM: "Central Midfielder",
+  CAM: "Central Attacking Midfielder",
+  LW: "Winger / Wide Forward", RW: "Winger / Wide Forward",
+  CF: "Centre Forward / Striker",
+};
+
+const resolveScoutingPosition = (raw?: string | null): ScoutingPosition | null => {
+  if (!raw) return null;
+  const abbr = normalisePosition(raw);
+  return ABBR_TO_SCOUTING[abbr] || null;
+};
+
+/* ============== PILLARS (Why Us / Pathway / How We Work) ============== */
+/** Slanted-edge "pillar" boxes that sit between the hub mission
+ *  paragraph and the existing three card groups. They cover the
+ *  proposal-side narrative the existing cards do not: pathway
+ *  planning, HQ, training methodology, performance team provision,
+ *  Ballon d'Or vision / FOMO, parent's role (under 18 only), and
+ *  the multilingual "how we work" promise. Slant carries the RISE
+ *  brand wedge across the proposal surface. */
+const SLANT = 18; // px diagonal cut on top-right / bottom-left corners
+const slantClip = `polygon(0 0, calc(100% - ${SLANT}px) 0, 100% ${SLANT}px, 100% 100%, ${SLANT}px 100%, 0 calc(100% - ${SLANT}px))`;
+
+type Pillar = {
+  key: string;
+  icon: typeof Compass;
+  titleKey: string; titleFallback: string;
+  bodyKey: string;  bodyFallback: string;
+  badgeKey?: string; badgeFallback?: string;
+  showFor?: "under18" | "over18" | "all";
+};
+
+const PILLARS: Pillar[] = [
+  {
+    key: "pathway",
+    icon: Compass,
+    titleKey: "rwu_pathway_title", titleFallback: "Pathway Planning",
+    bodyKey:  "rwu_pathway_body",
+    bodyFallback:
+      "We map out a clear journey from where you are today to where you want to be. Each step is chosen to remove the risk of failure and fit your appetite for risk, so you always know what comes next and why.",
+  },
+  {
+    key: "hq",
+    icon: MapPin,
+    titleKey: "rwu_hq_title", titleFallback: "London HQ",
+    bodyKey:  "rwu_hq_body",
+    bodyFallback:
+      "Our base in London puts us inside the world's most-watched football market, with daily access to Premier League contacts, recruitment staff and decision-makers.",
+    badgeKey: "rwu_hq_badge", badgeFallback: "London, England",
+  },
+  {
+    key: "training",
+    icon: Dumbbell,
+    titleKey: "rwu_training_title", titleFallback: "Training Methodology",
+    bodyKey:  "rwu_training_body",
+    bodyFallback:
+      "Programming is built around match weeks, not generic templates. Strength, power, speed and technical work are sequenced to peak you for the games that matter and recover you properly after.",
+  },
+  {
+    key: "perf_team",
+    icon: HeartPulse,
+    titleKey: "rwu_perf_team_title", titleFallback: "Performance Team Provision",
+    bodyKey:  "rwu_perf_team_body",
+    bodyFallback:
+      "Full Premier League level support — analysis, S&C, nutrition, sports psychology, technique — wrapped around you, working off one shared plan, not a list of disconnected freelancers.",
+  },
+  {
+    key: "vision",
+    icon: Trophy,
+    titleKey: "rwu_vision_title", titleFallback: "Our Ballon d'Or Vision",
+    bodyKey:  "rwu_vision_body",
+    bodyFallback:
+      "Our ambition is the highest level the game has — Ballon d'Or, Team of the Year, World Cup. We pick a small group of players we genuinely believe can get there, and we back them all the way. This is the most exciting time to join, with a massive opportunity to be one of the first.",
+    badgeKey: "rwu_vision_badge", badgeFallback: "Forward-looking · Limited spots",
+  },
+  {
+    key: "parent",
+    icon: Users2,
+    titleKey: "rwu_parent_title", titleFallback: "The Parent's Role",
+    bodyKey:  "rwu_parent_body",
+    bodyFallback:
+      "We work alongside you, not around you. You stay in the loop on every decision, every conversation with a club, every step in the plan. Your job is the home environment and steady support; ours is the football, the contacts and the standards.",
+    showFor: "under18",
+  },
+  {
+    key: "how_we_work",
+    icon: Languages,
+    titleKey: "rwu_how_title", titleFallback: "How We Work With You",
+    bodyKey:  "rwu_how_body",
+    bodyFallback:
+      "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation and the family is included.",
+  },
+];
+
+const PillarsSection = ({
+  lang, ageGroup, t,
+}: {
+  lang: string; ageGroup: "under18" | "over18";
+  t: (key: string, fallback: string) => string;
+}) => {
+  const visible = PILLARS.filter((p) => !p.showFor || p.showFor === "all" || p.showFor === ageGroup);
+  return (
+    <div className="my-6 md:my-8">
+      <div className="mb-5 flex items-center gap-3 md:mb-6">
+        <div className="h-[1px] flex-1 bg-primary/40" />
+        <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+          {offerT(lang, "rwu_pillars_heading", "Why RISE")}
+        </span>
+        <div className="h-[1px] flex-1 bg-primary/40" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+        {visible.map((p, i) => {
+          const Icon = p.icon;
+          return (
+            <motion.div
+              key={p.key}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="relative"
+              style={{ clipPath: slantClip, WebkitClipPath: slantClip }}
+            >
+              {/* Inner clipped surface; uses a slightly larger outer
+                  wrapper so the slanted gold edge reads as a border. */}
+              <div
+                className="relative h-full p-[1px]"
+                style={{ background: "linear-gradient(135deg, hsl(var(--gold)/0.55), hsl(var(--gold)/0.12) 55%, hsl(var(--gold)/0.35))" }}
+              >
+                <div
+                  className="relative h-full px-4 py-4 md:px-5 md:py-5"
+                  style={{ ...solidBlackSectionStyle, clipPath: slantClip, WebkitClipPath: slantClip }}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.10),transparent_55%)]" />
+                  <div className="relative flex items-start gap-3 md:gap-4">
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_22px_hsl(var(--gold)/0.18)] md:h-11 md:w-11">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bebas text-lg uppercase leading-tight tracking-[0.1em] text-foreground md:text-xl">
+                        {t(p.titleKey, p.titleFallback)}
+                      </p>
+                      {p.badgeFallback && (
+                        <p className="mt-1 font-bebas text-[10px] uppercase tracking-[0.22em] text-primary/90">
+                          {t(p.badgeKey || "", p.badgeFallback)}
+                        </p>
+                      )}
+                      <p
+                        className="mt-2 text-[12.5px] leading-relaxed text-foreground/85 md:text-[13.5px]"
+                        style={{ hyphens: "none", wordBreak: "normal", overflowWrap: "normal" }}
+                      >
+                        {t(p.bodyKey, p.bodyFallback)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 /* ============== PORTAL WELCOME OVERLAY ============== */
@@ -572,7 +749,14 @@ const RiseWithUs = () => {
 
   const openCard = (k: CardKey) => {
     setActiveCard(k);
-    setScoutingPosition(null);
+    // Auto-select the player's primary position when entering the
+    // Scouting card so they land directly on their own breakdown
+    // instead of the position picker.
+    if (k === "scouting") {
+      setScoutingPosition(resolveScoutingPosition(player?.position));
+    } else {
+      setScoutingPosition(null);
+    }
     setPerformanceSub(null);
     window.scrollTo({ top: 0, behavior: "auto" });
   };
@@ -632,6 +816,11 @@ const RiseWithUs = () => {
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
+
+                {/* Pillar boxes — pathway, HQ, training methodology,
+                    performance team, Ballon d'Or vision/FOMO,
+                    parent's role (U18 only), multilingual support. */}
+                <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
