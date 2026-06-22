@@ -402,6 +402,17 @@ Deno.serve(async (req) => {
         const windowSize = cfg?.window_size ?? 5;
         const allAnalyses = analysesByPlayer.get(e.player_id) ?? [];
         const recentAnalyses = allAnalyses.slice(0, windowSize);
+        // Attach the resolved opponent logo to every match row.
+        const matchByMatchWithLogos = allAnalyses.map((a: any) => {
+          const opKey = (a.opponent ?? "").toString().toLowerCase().trim();
+          const op = opKey ? clubLookup.get(opKey) : null;
+          return { ...a, opponent_logo: op?.image_url ?? null };
+        });
+        // Per-player default Match by Match category lives on the outreach
+        // defaults now (kept on form_config as a legacy fallback).
+        const defaultMbmCategory =
+          (d?.default_match_by_match_category as string | null) ??
+          (cfg?.match_by_match_default_category ?? null);
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -422,12 +433,12 @@ Deno.serve(async (req) => {
             ? {
                 window_size: windowSize,
                 stats: cfg.stats ?? [],
-                match_by_match_default_category: cfg.match_by_match_default_category ?? null,
+                match_by_match_default_category: defaultMbmCategory,
               }
             : null,
           form_analyses: recentAnalyses,
-          match_by_match: allAnalyses,
-          match_by_match_default_category: cfg?.match_by_match_default_category ?? null,
+          match_by_match: matchByMatchWithLogos,
+          match_by_match_default_category: defaultMbmCategory,
         };
       })
     );
