@@ -21,6 +21,7 @@ import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
+import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
