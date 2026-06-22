@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2, Copy, ChevronDown, ChevronRight, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
-import { DrillDiagramEditor, DrillDiagramView, DrillDiagram } from "./DrillDiagramEditor";
+import { DrillDiagramInline, DrillDiagramView, DrillDiagram } from "./DrillDiagramEditor";
 import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 
 interface Variation {
@@ -59,10 +59,10 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
   const [loading, setLoading] = useState(true);
   const [openSessions, setOpenSessions] = useState<Record<string, boolean>>({});
   const [openDrills, setOpenDrills] = useState<Record<string, boolean>>({});
-  const [editingDiagram, setEditingDiagram] = useState<
-    | { kind: "drill" | "variation"; id: string; diagram: DrillDiagram | null; title: string }
-    | null
-  >(null);
+  // `editingDiagramId` holds the drill or variation id currently being edited.
+  // We render the editor inline inside that drill/variation card rather than
+  // a full-screen dialog so it stays usable on standard laptop screens.
+  const [editingDiagramId, setEditingDiagramId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -230,14 +230,15 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
     load();
   };
 
-  const saveDiagram = async (diagram: DrillDiagram) => {
-    if (!editingDiagram) return;
-    if (editingDiagram.kind === "drill") {
-      await updateDrill(editingDiagram.id, { diagram } as any);
-    } else {
-      await updateVariation(editingDiagram.id, { diagram } as any);
-    }
-    load();
+  const saveDrillDiagram = async (id: string, diagram: DrillDiagram) => {
+    await updateDrill(id, { diagram } as any);
+    setEditingDiagramId(null);
+    toast.success("Diagram saved");
+  };
+  const saveVariationDiagram = async (id: string, diagram: DrillDiagram) => {
+    await updateVariation(id, { diagram } as any);
+    setEditingDiagramId(null);
+    toast.success("Diagram saved");
   };
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading sessions…</p>;
@@ -258,7 +259,10 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
             variant="outline"
             onClick={() => {
               (document.activeElement as HTMLElement | null)?.blur();
-              setTimeout(() => { load(); toast.success("Saved"); }, 50);
+              // All fields autosave on blur — this button just confirms that
+              // and surfaces a toast, without re-fetching and collapsing the
+              // entire editor tree.
+              setTimeout(() => { toast.success("Saved"); }, 50);
             }}
           >
             <Save className="w-3.5 h-3.5 mr-1" />Save
@@ -350,7 +354,10 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
                         <DrillFields
                           value={drill}
                           onPatch={(p) => updateDrill(drill.id, p)}
-                          onEditDiagram={() => setEditingDiagram({ kind: "drill", id: drill.id, diagram: drill.diagram ?? null, title: `${drill.name} — Diagram` })}
+                          editing={editingDiagramId === drill.id}
+                          onEditDiagram={() => setEditingDiagramId(drill.id)}
+                          onCancelDiagram={() => setEditingDiagramId(null)}
+                          onSaveDiagram={(d) => saveDrillDiagram(drill.id, d)}
                         />
 
                         <div className="space-y-2 border-t pt-3 mt-2 ml-2 pl-3 border-l-2 border-muted-foreground/20">
@@ -384,7 +391,10 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
                               <DrillFields
                                 value={v}
                                 onPatch={(p) => updateVariation(v.id, p)}
-                                onEditDiagram={() => setEditingDiagram({ kind: "variation", id: v.id, diagram: v.diagram ?? null, title: `${drill.name} — ${v.label}` })}
+                                editing={editingDiagramId === v.id}
+                                onEditDiagram={() => setEditingDiagramId(v.id)}
+                                onCancelDiagram={() => setEditingDiagramId(null)}
+                                onSaveDiagram={(d) => saveVariationDiagram(v.id, d)}
                               />
                             </div>
                           ))}
@@ -401,14 +411,6 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
           )}
         </Card>
       ))}
-
-      <DrillDiagramEditor
-        open={!!editingDiagram}
-        onClose={() => setEditingDiagram(null)}
-        initial={editingDiagram?.diagram ?? null}
-        title={editingDiagram?.title}
-        onSave={saveDiagram}
-      />
     </div>
   );
 };
@@ -426,25 +428,38 @@ interface FieldsProps {
     diagram: DrillDiagram | null;
   };
   onPatch: (patch: any) => void;
+  editing: boolean;
   onEditDiagram: () => void;
+  onCancelDiagram: () => void;
+  onSaveDiagram: (d: DrillDiagram) => void;
 }
-const DrillFields = ({ value, onPatch, onEditDiagram }: FieldsProps) => (
-  <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-    <button
-      type="button"
-      onClick={onEditDiagram}
-      className="relative w-full overflow-hidden rounded-md border bg-muted/40 hover:border-primary transition"
-      style={{ aspectRatio: "3 / 4" }}
-    >
-      {value.diagram && (value.diagram.tokens.length || value.diagram.arrows.length) ? (
-        <DrillDiagramView diagram={value.diagram} className="border-0" />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-xs text-muted-foreground gap-1">
-          <Pencil className="w-4 h-4" />
-          <span>Draw diagram</span>
-        </div>
-      )}
-    </button>
+const DrillFields = ({ value, onPatch, editing, onEditDiagram, onCancelDiagram, onSaveDiagram }: FieldsProps) => (
+  <div className={editing ? "space-y-3" : "grid gap-2 sm:grid-cols-[180px_1fr]"}>
+    {editing ? (
+      <div className="rounded-md border bg-muted/20 p-2">
+        <DrillDiagramInline
+          initial={value.diagram}
+          onCancel={onCancelDiagram}
+          onSave={onSaveDiagram}
+        />
+      </div>
+    ) : (
+      <button
+        type="button"
+        onClick={onEditDiagram}
+        className="relative w-full overflow-hidden rounded-md border bg-muted/40 hover:border-primary transition"
+        style={{ aspectRatio: "3 / 4" }}
+      >
+        {value.diagram && (value.diagram.tokens.length || value.diagram.arrows.length) ? (
+          <DrillDiagramView diagram={value.diagram} className="border-0" />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-xs text-muted-foreground gap-1">
+            <Pencil className="w-4 h-4" />
+            <span>Draw diagram</span>
+          </div>
+        )}
+      </button>
+    )}
     <div className="space-y-2">
       <div className="space-y-1">
         <Label className="text-xs">Description</Label>
