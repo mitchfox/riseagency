@@ -4,6 +4,7 @@ import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Pl
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
+import { supabase } from "@/integrations/supabase/client";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -522,6 +523,7 @@ export default function ClubOutreachProposal() {
             <MatchByMatchCard
               analyses={current.match_by_match}
               position={current?.player?.position ?? null}
+              excludeAnalysisIds={shownAnalysisIds}
             />
           )}
           {current?.stars_url && (
