@@ -2095,6 +2095,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       setPlayerDefaultSectionOrder(Array.isArray(so) && so.length > 0 ? normaliseSectionOrder(so) : DEFAULT_SECTION_ORDER);
       const dv = (data as any)?.default_selected_video_ids;
       setPlayerDefaultSelectedVideoIds(Array.isArray(dv) ? dv : []);
+      setPlayerDefaultMbmCategory(((data as any)?.default_match_by_match_category as string | null) ?? "");
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
