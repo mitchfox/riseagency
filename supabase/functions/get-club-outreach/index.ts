@@ -414,7 +414,7 @@ Deno.serve(async (req) => {
                 stats: cfg.stats ?? [],
                 match_by_match_default_category: cfg.match_by_match_default_category ?? null,
               }
-            : { window_size: 5, stats: [], match_by_match_default_category: null },
+            : null,
           form_analyses: recentAnalyses,
           match_by_match: allAnalyses,
         };
