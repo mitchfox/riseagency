@@ -1902,6 +1902,9 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
+  const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
+  const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
+  const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
@@ -1970,6 +1973,16 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
+      const sm = (data as any)?.default_season_data_mode;
+      setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
+      setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
+      const { data: seasons } = await supabase
+        .from("player_seasons")
+        .select("id, name, sort_order")
+        .eq("player_id", selectedPlayerId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
     })();
   }, [selectedPlayerId]);
 
@@ -2078,6 +2091,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       proof_of_representation_path: defaults.proof_path,
       default_fit_recommendation: playerDefaultFit.trim() || null,
       default_position: playerDefaultPosition.trim() || null,
+      default_season_data_mode: playerDefaultSeasonMode || null,
+      default_season_id: playerDefaultSeasonId,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
