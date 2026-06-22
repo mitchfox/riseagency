@@ -432,6 +432,11 @@ export const TeamPerformance = () => {
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-foreground truncate">
                       {row.starter.name} <span className="text-xs text-muted-foreground">· {row.starter.position}</span>
+                      {row.starter.floorGeneral && (
+                        <Badge variant="outline" className="ml-2 text-[9px] gap-0.5 border-primary/40 text-primary">
+                          <Star className="h-2.5 w-2.5 fill-primary" /> Floor General
+                        </Badge>
+                      )}
                     </span>
                     <span className="text-sm font-semibold text-foreground tabular-nums">{row.done} done</span>
                   </div>
@@ -489,12 +494,42 @@ export const TeamPerformance = () => {
                   <div>
                     <div>{open.name}</div>
                     <div className="text-sm font-normal text-muted-foreground">{open.position}</div>
+                    {open.floorGeneral && (
+                      <Badge variant="outline" className="mt-1 text-[10px] gap-0.5 border-primary/40 text-primary">
+                        <Star className="h-3 w-3 fill-primary" /> Floor General · extra responsibilities
+                      </Badge>
+                    )}
                   </div>
                 </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-5">
                 <p className="text-base text-foreground">{open.role}</p>
+
+                {activeBox && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                      <Activity className="h-4 w-4 text-primary" /> Weekly box score
+                    </h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                      {BOX_KEYS.map(k => (
+                        <div key={k} className="p-2 rounded-md bg-muted/40 text-center" title={BOX_META[k].meaning}>
+                          <div className={`text-lg font-bold tabular-nums ${BOX_META[k].tone}`}>{activeBox[k]}</div>
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{BOX_META[k].label}</div>
+                        </div>
+                      ))}
+                      <div className="p-2 rounded-md bg-primary/10 text-center">
+                        <div className="text-lg font-bold tabular-nums text-primary">
+                          {activeBox.plusMinus >= 0 ? "+" : ""}{activeBox.plusMinus}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">+/−</div>
+                      </div>
+                    </div>
+                    <div className={`mt-2 text-xs font-semibold ${performanceTier(activeBox.PTS).tone}`}>
+                      {performanceTier(activeBox.PTS).label}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
