@@ -799,7 +799,7 @@ export default function ClubOutreachProposal() {
                     openLabel={tr("card.open", "Open")}
                     unavailableLabel={tr("card.unavailable", "Unavailable")}
                   />
-                ) : (
+                ) : current.proof_of_representation_url ? (
                   <ProposalCard
                     href={
                       current.proof_of_representation_url && data.link.short_id && player?.id
@@ -815,7 +815,7 @@ export default function ClubOutreachProposal() {
                     unavailableLabel={tr("card.unavailable", "Unavailable")}
                     internal
                   />
-                ))
+                ) : null)
               )}
             </section>
           ),
