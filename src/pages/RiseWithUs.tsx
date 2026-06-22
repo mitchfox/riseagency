@@ -1315,19 +1315,33 @@ const RiseWithUs = () => {
                     </div>
                     <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                       <p
-                        className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
-                        style={{ hyphens: "none", wordBreak: "normal", overflowWrap: "normal" }}
+                        className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
+                        style={{
+                          textWrap: "pretty",
+                          hyphens: "none",
+                          wordBreak: "normal",
+                          overflowWrap: "normal",
+                        } as React.CSSProperties}
                       >
-                        {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                        {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
                       </p>
                     </div>
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
+                {/* Item 9 — dedicated Ballon d'Or vision card sits
+                    above the pillar grid and the Stars showcase. */}
+                <BallonDorVisionCard
+                  lang={lang}
+                  firstName={firstName}
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
+
                 {/* Pillar boxes — pathway, HQ, training methodology,
-                    performance team, Ballon d'Or vision/FOMO,
-                    parent's role (U18 only), multilingual support. */}
+                    performance team, parent's role (U18 only),
+                    multilingual support. */}
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {/* Our Stars — clips + best player imagery */}
