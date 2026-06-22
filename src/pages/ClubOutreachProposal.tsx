@@ -103,6 +103,7 @@ interface PlayerEntry {
     striker_stats?: Record<string, any> | null;
     fixture_stats?: Record<string, any> | null;
   }> | null;
+  match_by_match_default_category?: string | null;
 }
 
 interface Payload {
