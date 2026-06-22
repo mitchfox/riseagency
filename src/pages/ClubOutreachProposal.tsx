@@ -1010,7 +1010,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -1021,8 +1021,9 @@ function ProposalCard({
   internal?: boolean;
   openLabel?: string;
   unavailableLabel?: string;
+  onClick?: () => void;
 }) {
-  const disabled = !href || !!disabledLabel;
+  const disabled = (!href && !onClick) || !!disabledLabel;
   const inner = (
     <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
@@ -1036,6 +1037,11 @@ function ProposalCard({
     </div>
   );
   if (disabled) return <div className="block min-h-[180px]">{inner}</div>;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block w-full min-h-[180px] text-left">{inner}</button>
+    );
+  }
   if (internal) {
     return <Link to={href!} className="block min-h-[180px]">{inner}</Link>;
   }
