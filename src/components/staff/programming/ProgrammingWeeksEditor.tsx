@@ -15,6 +15,30 @@ import { getSessionColor } from "@/lib/sessionColors";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 type Day = typeof DAYS[number];
 
+const addDaysIso = (iso: string, days: number) => {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return iso;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + days));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+};
+
+const weekOverlapsRange = (weekStart: string | null, rangeStart: string, rangeEnd: string) => {
+  if (!weekStart) return true;
+  const weekEnd = addDaysIso(weekStart, 6);
+  return weekStart <= rangeEnd && weekEnd >= rangeStart;
+};
+
+const legacySessionToSlot = (programmeId: string, value: unknown): Slot | null => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const normalised = raw.toLowerCase().replace(/\s+/g, "").replace(/_/g, "-");
+  const pre = normalised.match(/^pre-?([a-h])$/i);
+  const main = normalised.match(/^(session)?([a-h])$/i);
+  if (pre) return { refId: `sps:${programmeId}:preSession${pre[1].toUpperCase()}` };
+  if (main) return { refId: `sps:${programmeId}:session${main[2].toUpperCase()}` };
+  return { free_text: raw };
+};
+
 interface Slot {
   refId?: string;
   free_text?: string;
@@ -25,6 +49,18 @@ interface Week {
   week_start_date: string | null;
   display_order: number;
   slots: Partial<Record<Day, Slot>>;
+}
+
+interface LegacyWeeklySchedule {
+  week?: string | null;
+  week_start_date?: string | null;
+  monday?: unknown;
+  tuesday?: unknown;
+  wednesday?: unknown;
+  thursday?: unknown;
+  friday?: unknown;
+  saturday?: unknown;
+  sunday?: unknown;
 }
 
 interface Props {
@@ -40,9 +76,10 @@ interface Props {
   };
   /** When true, hides the embedded "Master schedule" collapsible (used to avoid recursion). */
   hideMasterCollapsible?: boolean;
+  hideProgramDateControls?: boolean;
 }
 
-export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterCollapsible }: Props) => {
+export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterCollapsible, hideProgramDateControls }: Props) => {
   const [masterOpen, setMasterOpen] = useState(false);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [allPlayerWeeks, setAllPlayerWeeks] = useState<Week[]>([]);
@@ -74,7 +111,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
 
     if (programmeLink) {
       const selectCols = programmeLink.table === "player_programs"
-        ? "linked_week_ids, end_date"
+        ? "linked_week_ids, start_date, end_date, weekly_schedules"
         : "linked_week_ids, start_date, end_date";
       const { data: prog, error: pErr } = await supabase
         .from(programmeLink.table as any)
@@ -83,12 +120,56 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         .single();
       if (pErr) toast.error(pErr.message);
       const ids: string[] = (((prog as any)?.linked_week_ids) || []) as string[];
-      setProgrammeRange({
+      const nextRange = {
         start: (prog as any)?.start_date ?? null,
         end: (prog as any)?.end_date ?? null,
-      });
-      setLinkedIds(ids);
-      const ordered = ids
+      };
+      const legacySchedules = programmeLink.table === "player_programs" && Array.isArray((prog as any)?.weekly_schedules)
+        ? ((prog as any).weekly_schedules as LegacyWeeklySchedule[])
+        : [];
+      let legacyWeekIds: string[] = [];
+      if (legacySchedules.length) {
+        const existingDates = new Set(allRows.filter(w => w.week_start_date).map(w => w.week_start_date));
+        const rowsToInsert = legacySchedules
+          .filter(w => w.week_start_date && !existingDates.has(w.week_start_date))
+          .map((w, index) => ({
+            player_id: playerId,
+            label: w.week || `Week ${allRows.length + index + 1}`,
+            week_start_date: w.week_start_date,
+            display_order: allRows.length + index,
+            slots: DAYS.reduce((acc, day) => {
+              const slot = legacySessionToSlot(programmeLink.programmeId, w[day]);
+              if (slot) acc[day] = slot;
+              return acc;
+            }, {} as Partial<Record<Day, Slot>>),
+          }));
+        if (rowsToInsert.length) {
+          const { data: inserted } = await supabase
+            .from("programming_weeks" as any)
+            .insert(rowsToInsert as any)
+            .select("*");
+          allRows.push(...(((inserted || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })) as Week[]));
+        }
+        legacyWeekIds = legacySchedules
+          .map(w => w.week_start_date ? allRows.find(row => row.week_start_date === w.week_start_date)?.id : null)
+          .filter(Boolean) as string[];
+      }
+      const rangeIds = nextRange.start && nextRange.end
+        ? allRows
+            .filter(w => weekOverlapsRange(w.week_start_date, nextRange.start!, nextRange.end!))
+            .map(w => w.id)
+        : [];
+      const displayIds = Array.from(new Set([...ids, ...legacyWeekIds, ...rangeIds]));
+      const missingRangeIds = displayIds.filter(id => !ids.includes(id));
+      if (missingRangeIds.length) {
+        await supabase
+          .from(programmeLink.table as any)
+          .update({ linked_week_ids: displayIds } as any)
+          .eq("id", programmeLink.programmeId);
+      }
+      setProgrammeRange(nextRange);
+      setLinkedIds(displayIds);
+      const ordered = displayIds
         .map(id => allRows.find(w => w.id === id))
         .filter(Boolean) as Week[];
       setWeeks(ordered);
@@ -114,14 +195,14 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     if (showOutsideRange) return sorted;
     return sorted.filter(w => {
       if (!w.week_start_date) return true;
-      return w.week_start_date >= programmeRange.start! && w.week_start_date <= programmeRange.end!;
+      return weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!);
     });
   }, [weeks, programmeLink, programmeRange, showOutsideRange]);
 
   const outsideCount = useMemo(() => {
     if (!programmeLink || !programmeRange.start || !programmeRange.end) return 0;
     return weeks.filter(w =>
-      w.week_start_date && (w.week_start_date < programmeRange.start! || w.week_start_date > programmeRange.end!)
+      w.week_start_date && !weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!)
     ).length;
   }, [weeks, programmeLink, programmeRange]);
 
@@ -134,6 +215,27 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       .eq("id", programmeLink.programmeId);
     if (error) return toast.error(error.message);
     load();
+  };
+
+  const updateProgrammeRange = async (patch: Partial<typeof programmeRange>) => {
+    if (!programmeLink) return;
+    const next = { ...programmeRange, ...patch };
+    if (next.start && next.end && next.end < next.start) {
+      toast.error("End date cannot be before start date");
+      return;
+    }
+    setProgrammeRange(next);
+    const dbPatch: Record<string, string | null> = {};
+    if ("start" in patch) dbPatch.start_date = patch.start ?? null;
+    if ("end" in patch) dbPatch.end_date = patch.end ?? null;
+    const { error } = await supabase
+      .from(programmeLink.table as any)
+      .update(dbPatch as any)
+      .eq("id", programmeLink.programmeId);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
   };
 
   /** Create one programming_weeks row per Monday inside the programme date range
@@ -149,8 +251,8 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     const day = startDate.getUTCDay(); // 0=Sun
     const back = day === 0 ? 6 : day - 1;
     const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() - back));
-    const existingDates = new Set(
-      allPlayerWeeks.filter(w => w.week_start_date).map(w => w.week_start_date as string)
+    const existingByDate = new Map(
+      allPlayerWeeks.filter(w => w.week_start_date).map(w => [w.week_start_date as string, w] as const)
     );
     const isoOf = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
     const newRows: any[] = [];
@@ -158,7 +260,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     let weekNum = 1;
     while (cursor.getTime() <= endDate.getTime()) {
       const iso = isoOf(cursor);
-      if (!existingDates.has(iso)) {
+      if (!existingByDate.has(iso)) {
         newRows.push({
           player_id: playerId,
           label: `Week ${weekNum}`,
@@ -168,7 +270,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         });
       } else {
         // Existing week — link it if it's not already linked
-        const existing = allPlayerWeeks.find(w => w.week_start_date === iso);
+        const existing = existingByDate.get(iso);
         if (existing && !linkedIds.includes(existing.id)) toLink.push(existing.id);
       }
       cursor.setUTCDate(cursor.getUTCDate() + 7);
@@ -358,6 +460,29 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       </div>
 
+      {programmeLink && !hideProgramDateControls && (
+        <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/20 px-3 py-2">
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Programme start</label>
+            <Input
+              type="date"
+              value={programmeRange.start || ""}
+              onChange={(e) => updateProgrammeRange({ start: e.target.value || null })}
+              className="h-8 w-[150px] text-xs"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Programme end</label>
+            <Input
+              type="date"
+              value={programmeRange.end || ""}
+              onChange={(e) => updateProgrammeRange({ end: e.target.value || null })}
+              className="h-8 w-[150px] text-xs"
+            />
+          </div>
+        </div>
+      )}
+
       {rangeActive && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border rounded px-3 py-2">
           <CalendarRange className="w-3.5 h-3.5" />
@@ -374,11 +499,17 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       )}
 
+      {programmeLink && rangeActive && linkedIds.length === 0 && allPlayerWeeks.some(w => w.week_start_date && weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!)) && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+          Master schedule weeks already exist inside these dates. Use <span className="font-semibold text-foreground">Generate weeks for this period</span> to link those existing weeks into this programme.
+        </div>
+      )}
+
       {visibleWeeks.length === 0 && (
         <p className="text-sm text-muted-foreground">
           {programmeLink
             ? (rangeActive
-                ? "No linked weeks fall inside this programme's date range. Use Generate weeks for this period, or click Show outside this period above."
+                ? "No linked weeks fall inside this programme's date range. Use Generate weeks for this period to link matching master schedule weeks, or click Show outside this period above."
                 : "No weeks linked yet. Add a new week or link an existing one from the player's master schedule.")
             : "No weeks yet. Add one to start scheduling."}
         </p>

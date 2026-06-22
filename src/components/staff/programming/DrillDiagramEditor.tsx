@@ -164,25 +164,30 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
     setDiagram(d => ({ ...d, tokens: [...d.tokens, { id: uid(), kind, x, y, label }] }));
   };
 
-  // Dragging works from any tool when the press starts on an existing item.
-  // This makes the editor feel more like a normal canvas — you don't have to
-  // remember to switch back to the Select tool just to nudge a token.
   const startDragToken = (id: string) => (evt: React.MouseEvent) => {
     evt.stopPropagation();
+    if (tool !== "select") return;
+    if (selectedId !== id) {
+      setSelectedId(id);
+      return;
+    }
     setDragId(id);
-    setSelectedId(id);
     draggedRef.current = false;
   };
 
   const startDragShape = (id: string) => (evt: React.MouseEvent) => {
     evt.stopPropagation();
+    if (tool !== "select") return;
+    if (selectedId !== id) {
+      setSelectedId(id);
+      return;
+    }
     const { x, y } = toCoords(evt);
     const sh = (diagram.shapes ?? []).find(s => s.id === id);
     if (!sh) return;
     const mx = (sh.from.x + sh.to.x) / 2;
     const my = (sh.from.y + sh.to.y) / 2;
     setDragShape({ id, offX: x - mx, offY: y - my });
-    setSelectedId(id);
     draggedRef.current = false;
   };
 
@@ -329,7 +334,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const handleDouble = (e: React.MouseEvent) => { e.stopPropagation(); removeShape(s.id); };
               if (s.kind === "line") {
                 return (
-                  <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: "grab" }}>
+                    <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: tool === "select" && isSelected ? "grab" : "pointer" }}>
                     {/* fat invisible hit area for easier grabbing */}
                     <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke="transparent" strokeWidth="4" />
                     <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke={st.stroke} strokeWidth={st.width} strokeDasharray="3 2" strokeLinecap="round" opacity={0.9} />
@@ -345,7 +350,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const p4 = { x: s.from.x - nx * half, y: s.from.y - ny * half };
               const pts = `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}`;
               return (
-                <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: "grab" }}>
+                <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: tool === "select" && isSelected ? "grab" : "pointer" }}>
                   {/* invisible thick hit area */}
                   <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke="transparent" strokeWidth={Math.max(5, st.width + 3)} />
                   <polygon points={pts} fill={st.fill} stroke={st.stroke} strokeWidth="0.25" />
@@ -363,8 +368,13 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
             {diagram.arrows.map(a => {
               const s = ARROW_STYLES[a.kind];
               const isSelected = selectedId === a.id;
+              const handleArrowMouseDown = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (tool === "select") setSelectedId(a.id);
+              };
               return (
                 <g key={a.id}
+                   onMouseDown={handleArrowMouseDown}
                    onClick={(e) => { e.stopPropagation(); setSelectedId(a.id); }}
                    onDoubleClick={(e) => { e.stopPropagation(); removeArrow(a.id); }}>
                   <defs>
@@ -393,7 +403,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const onClickToken = (e: React.MouseEvent) => { e.stopPropagation(); setSelectedId(t.id); };
               const onDouble = (e: React.MouseEvent) => { e.stopPropagation(); removeToken(t.id); };
               const isSelected = selectedId === t.id;
-              const commonStyle = { cursor: dragId === t.id ? "grabbing" : "grab" } as React.CSSProperties;
+              const commonStyle = { cursor: tool === "select" && selectedId === t.id ? (dragId === t.id ? "grabbing" : "grab") : "pointer" } as React.CSSProperties;
               if (t.kind === "player") {
                 return (
                   <g key={t.id} onMouseDown={onPointerDown} onClick={onClickToken} onDoubleClick={onDouble} style={commonStyle}>
@@ -443,8 +453,8 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
             ? arrowStart ? "Click the end point to finish the arrow." : "Click the start point of the arrow."
             : tool === "line" || tool === "wall" || tool === "rebounder"
             ? shapeStart ? `Click the end point to finish the ${tool}.` : `Click the start point of the ${tool}. Walls and rebounders are placed between two points.`
-            : tool === "select" ? "Drag tokens to reposition. Double-click to remove."
-            : "Click on the pitch to place. You can drag any item at any time."}
+            : tool === "select" ? "Click an item to select it, then drag the selected item to reposition. Double-click to remove."
+            : "Click on the pitch to place. Existing items only move with Select."}
         </p>
 
       <div className="flex justify-end gap-2 pt-1">

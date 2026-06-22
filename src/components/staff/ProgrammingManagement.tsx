@@ -92,6 +92,8 @@ interface WeeklySchedule {
 interface ProgrammingData {
   phaseName: string;
   phaseDates: string;
+  startDate: string;
+  endDate: string;
   overviewText: string;
   sessionA: SessionData;
   sessionB: SessionData;
@@ -161,6 +163,8 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
 const initialProgrammingData = (): ProgrammingData => ({
   phaseName: '',
   phaseDates: '',
+  startDate: '',
+  endDate: '',
   overviewText: '',
   sessionA: emptySession(),
   sessionB: emptySession(),
@@ -414,6 +418,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
       setProgrammingData({
         phaseName: data.phase_name || '',
         phaseDates: data.phase_dates || '',
+        startDate: (data as any).start_date || '',
+        endDate: data.end_date || '',
         overviewText: data.overview_text || '',
         sessionA: sessions.A || sessions.sessionA || emptySession(),
         sessionB: sessions.B || sessions.sessionB || emptySession(),
@@ -653,6 +659,8 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
           program_name: programmingData.phaseName,
           phase_name: programmingData.phaseName,
           phase_dates: programmingData.phaseDates,
+          start_date: programmingData.startDate || null,
+          end_date: programmingData.endDate || null,
           overview_text: programmingData.overviewText,
           sessions: deepClone({
             A: programmingData.sessionA,
@@ -1709,6 +1717,24 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                           placeholder="e.g., October"
                           value={programmingData.phaseDates}
                           onChange={(e) => updateField('phaseDates', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="startDate">Start Date</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={programmingData.startDate}
+                          onChange={(e) => updateField('startDate', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endDate">End Date</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={programmingData.endDate}
+                          onChange={(e) => updateField('endDate', e.target.value)}
                         />
                       </div>
                     </div>
