@@ -61,6 +61,8 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
   const [language, setLanguage] = useState<string>("en");
   const [under18, setUnder18] = useState(false);
   const [secondaryParagraph, setSecondaryParagraph] = useState("");
+  const [showDatabaseCard, setShowDatabaseCard] = useState<boolean | null>(null);
+  const [playerFitScore, setPlayerFitScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "image" | "video">(null);
@@ -71,6 +73,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       setLoading(true);
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
+      setShowDatabaseCard(data?.show_database_card ?? null);
       // Prefer the new intro_media list. Fall back to the legacy section_images
       // record so older players don't lose their pictures on first open.
       const rawList = Array.isArray(data?.intro_media) ? data!.intro_media : [];
@@ -91,8 +94,9 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       }
       setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
-        .from("players").select("portal_language").eq("id", playerId).maybeSingle();
+        .from("players").select("portal_language, fit_score").eq("id", playerId).maybeSingle();
       setLanguage(pData?.portal_language || "en");
+      setPlayerFitScore(typeof pData?.fit_score === "number" ? pData.fit_score : null);
       const { data: portalData } = await (supabase as any)
         .from("player_portal_settings")
         .select("rise_with_us_under18, representation_subtitle_secondary")
@@ -157,6 +161,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       hidden_sections: [...hidden],
       intro_media: introMedia,
       section_images: legacyImages,
+      show_database_card: showDatabaseCard,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
@@ -216,6 +221,33 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                 placeholder="Add an extra paragraph under the main Rise With Us introduction..."
                 rows={4}
               />
+            </div>
+          </div>
+          <div className="rounded-lg border p-3 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Label className="font-medium">Show scouting database card</Label>
+                <p className="text-xs text-muted-foreground">
+                  Drops a mock of our internal player database into their Rise With Us page — their row highlighted, others around them blurred. Adds a "we've been tracking you" feel.
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Current fit score: <span className="font-mono">{playerFitScore != null ? Math.round(playerFitScore) : "—"}</span>
+                  {" · "}Auto threshold: <span className="font-mono">60</span>
+                </p>
+              </div>
+              <Select
+                value={showDatabaseCard === null ? "auto" : showDatabaseCard ? "on" : "off"}
+                onValueChange={(v) => setShowDatabaseCard(v === "auto" ? null : v === "on")}
+              >
+                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    Auto {((playerFitScore ?? 0) >= 60) ? "(showing)" : "(hidden)"}
+                  </SelectItem>
+                  <SelectItem value="on">Always show</SelectItem>
+                  <SelectItem value="off">Hide</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="rounded-lg border p-3 space-y-3">

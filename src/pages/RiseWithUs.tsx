@@ -20,6 +20,7 @@ import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
+import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
@@ -49,6 +50,7 @@ interface OfferSettings {
   intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both" }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
+  show_database_card?: boolean | null;
 }
 
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
@@ -1205,7 +1207,8 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null, show_database_card: null });
+  const [fitScore, setFitScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -1229,16 +1232,17 @@ const RiseWithUs = () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status")
+        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
       if (error || !data) { setNotFound(true); }
       else {
         setPlayer(data);
+        setFitScore(typeof (data as any).fit_score === "number" ? (data as any).fit_score : null);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images, intro_media")
+          .select("hidden_sections, section_images, intro_media, show_database_card")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -1262,6 +1266,7 @@ const RiseWithUs = () => {
             : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
+          show_database_card: sData?.show_database_card ?? null,
         });
         // NOTE: We do NOT call switchLanguage here — it would redirect to a
         // different language subdomain on production and break the offer
@@ -1435,6 +1440,24 @@ const RiseWithUs = () => {
                   </section>
                 )}
                 <StarsShowcase lang={lang} />
+
+                {/* Scouting database snapshot — shows the prospect they're tracked
+                    in our database with neighbouring rows blurred. Auto-shows when
+                    fit_score >= 60, or when staff have toggled it on. */}
+                {(settings.show_database_card === true
+                  || (settings.show_database_card == null && (fitScore ?? 0) >= 60)) && (
+                  <ScoutingDatabaseCard
+                    playerId={player.id}
+                    playerName={player.name}
+                    position={player.position}
+                    club={player.club}
+                    nationality={player.nationality}
+                    imageUrl={player.image_url}
+                    fitScore={fitScore}
+                    lang={lang}
+                    t={t}
+                  />
+                )}
 
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
