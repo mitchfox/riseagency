@@ -1301,8 +1301,8 @@ const Staff = () => {
               if (logoPressTimerRef.current) window.clearTimeout(logoPressTimerRef.current);
               logoPressTimerRef.current = window.setTimeout(() => {
                 logoLongPressFiredRef.current = true;
-                if (expandedSection !== 'schedule' && expandedSection !== 'marketingschedule' && expandedSection !== 'staffschedules') {
-                  setExpandedSection('schedule');
+                if (expandedSection !== 'overview') {
+                  setExpandedSection('overview');
                 }
               }, 500);
             }}
