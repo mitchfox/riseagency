@@ -1,0 +1,2 @@
+ALTER TABLE public.player_offer_settings ADD COLUMN IF NOT EXISTS show_database_card boolean;
+COMMENT ON COLUMN public.player_offer_settings.show_database_card IS 'When NULL, auto-decide based on fit_score >= 60. true/false to override.';

@@ -5726,6 +5726,7 @@ export type Database = {
           intro_media: Json
           player_id: string
           section_images: Json
+          show_database_card: boolean | null
           updated_at: string
         }
         Insert: {
@@ -5735,6 +5736,7 @@ export type Database = {
           intro_media?: Json
           player_id: string
           section_images?: Json
+          show_database_card?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -5744,6 +5746,7 @@ export type Database = {
           intro_media?: Json
           player_id?: string
           section_images?: Json
+          show_database_card?: boolean | null
           updated_at?: string
         }
         Relationships: []
