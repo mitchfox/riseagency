@@ -1267,6 +1267,54 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 )}
               </div>
             </div>
+            <div>
+              <Label>Season to show</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div className="min-w-[220px]">
+                  <Select
+                    value={seasonId ?? "__all__"}
+                    onValueChange={(v) => setSeasonId(v === "__all__" ? null : v)}
+                    disabled={!primaryPlayerId}
+                  >
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder={primaryPlayerId ? "All seasons" : "Add a player first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All seasons</SelectItem>
+                      {playerSeasons.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {primaryPlayerId && playerSeasons.length === 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    No seasons set up yet — add them in Data → Player Summary.
+                  </span>
+                )}
+                {primaryPlayerId && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { error } = await (supabase as any)
+                        .from("club_outreach_player_defaults")
+                        .upsert(
+                          { player_id: primaryPlayerId, default_season_id: seasonId, updated_at: new Date().toISOString() },
+                          { onConflict: "player_id" },
+                        );
+                      if (error) { toast.error(error.message ?? "Failed to save default"); return; }
+                      toast.success("Default season saved for this player");
+                    }}
+                    className="ml-auto text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Save as player default
+                  </button>
+                )}
+              </div>
+            </div>
             {primaryPlayerId && (
               <div>
                 <Label>Videos to include (carousel)</Label>
