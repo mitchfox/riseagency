@@ -26,7 +26,7 @@ export const StrengthPowerSpeedSection = () => {
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("players")
-        .select("id, name, position, representation_status")
+        .select("id, name, position, image_url, representation_status")
         .order("name");
       setPlayers(data || []);
     };
