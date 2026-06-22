@@ -394,7 +394,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     <Collapsible defaultOpen={defaultOpen}>
       <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-md border border-border/60 bg-background/30 px-3 py-2 hover:bg-background/50 transition">
         <div className="flex items-center gap-2">
-          <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+          <span className="h-[3px] w-6 bg-[#EBC773]/70" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
             {title}
           </span>
@@ -415,15 +415,151 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     return `${r >= 0 ? "+" : "−"}${a.toFixed(2)} ${strength}`;
   };
 
+  // ----- Visual helpers (inline SVG) -----
+  const RISE_GOLD = "#EBC773";
+  const POS = "#34d399";
+  const NEG = "#fb7185";
+
+  const Sparkline = ({
+    values,
+    width = 96,
+    height = 24,
+    fill = true,
+  }: {
+    values: (number | null)[];
+    width?: number;
+    height?: number;
+    fill?: boolean;
+  }) => {
+    const nums = values.filter((v): v is number => v != null);
+    if (nums.length < 2) {
+      return (
+        <svg width={width} height={height} className="opacity-40">
+          <line x1={0} y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" strokeWidth={1} strokeDasharray="2 3" />
+        </svg>
+      );
+    }
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const range = max - min || 1;
+    const step = values.length > 1 ? width / (values.length - 1) : width;
+    const pts = values
+      .map((v, i) => (v == null ? null : [i * step, height - ((v - min) / range) * (height - 2) - 1] as [number, number]))
+      .filter((p): p is [number, number] => p != null);
+    const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    const areaD = `${pathD} L${pts[pts.length - 1][0].toFixed(1)},${height} L${pts[0][0].toFixed(1)},${height} Z`;
+    const last = pts[pts.length - 1];
+    const first = pts[0];
+    const color = last[1] <= first[1] ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        {fill && <path d={areaD} fill={color} opacity={0.12} />}
+        <path d={pathD} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={last[0]} cy={last[1]} r={2} fill={color} />
+      </svg>
+    );
+  };
+
+  const CorrBar = ({ r, width = 120, height = 8 }: { r: number; width?: number; height?: number }) => {
+    const mid = width / 2;
+    const w = Math.min(1, Math.abs(r)) * (width / 2 - 2);
+    const color = r >= 0 ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={height / 2 - 1} width={width} height={2} fill="currentColor" opacity={0.18} />
+        <rect x={r >= 0 ? mid : mid - w} y={0} width={w} height={height} rx={2} fill={color} />
+        <rect x={mid - 0.5} y={-2} width={1} height={height + 4} fill="currentColor" opacity={0.45} />
+      </svg>
+    );
+  };
+
+  const ConsistencyStrip = ({
+    values,
+    width = 150,
+    height = 30,
+  }: {
+    values: (number | null)[];
+    width?: number;
+    height?: number;
+  }) => {
+    const nums = values.filter((v): v is number => v != null);
+    if (nums.length < 2) return null;
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const range = max - min || 1;
+    const m = mean(nums);
+    const s = std(nums);
+    const yFor = (v: number) => height - ((v - min) / range) * (height - 6) - 3;
+    const yMean = yFor(m);
+    const yLow = yFor(Math.max(min, m - s));
+    const yHigh = yFor(Math.min(max, m + s));
+    const step = values.length > 1 ? width / (values.length - 1) : width;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={yHigh} width={width} height={Math.max(1, yLow - yHigh)} fill={RISE_GOLD} opacity={0.14} />
+        <line x1={0} y1={yMean} x2={width} y2={yMean} stroke={RISE_GOLD} strokeWidth={1} strokeDasharray="3 3" />
+        {values.map((v, i) => (v == null ? null : <circle key={i} cx={i * step} cy={yFor(v)} r={2} fill="currentColor" opacity={0.85} />))}
+      </svg>
+    );
+  };
+
+  const MiniScatter = ({
+    xs,
+    ys,
+    width = 140,
+    height = 56,
+  }: {
+    xs: (number | null)[];
+    ys: (number | null)[];
+    width?: number;
+    height?: number;
+  }) => {
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < xs.length; i++) {
+      if (xs[i] != null && ys[i] != null) pairs.push([xs[i] as number, ys[i] as number]);
+    }
+    if (pairs.length < 3) return null;
+    const xVals = pairs.map((p) => p[0]);
+    const yVals = pairs.map((p) => p[1]);
+    const minX = Math.min(...xVals);
+    const maxX = Math.max(...xVals);
+    const minY = Math.min(...yVals);
+    const maxY = Math.max(...yVals);
+    const rX = maxX - minX || 1;
+    const rY = maxY - minY || 1;
+    const px = (v: number) => 4 + ((v - minX) / rX) * (width - 8);
+    const py = (v: number) => height - 4 - ((v - minY) / rY) * (height - 8);
+    const mx = mean(xVals);
+    const my = mean(yVals);
+    let num = 0;
+    let den = 0;
+    for (const [x, y] of pairs) {
+      num += (x - mx) * (y - my);
+      den += (x - mx) ** 2;
+    }
+    const slopeXY = den === 0 ? 0 : num / den;
+    const intercept = my - slopeXY * mx;
+    const lineColor = slopeXY >= 0 ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={0} width={width} height={height} fill="currentColor" opacity={0.05} rx={3} />
+        <line x1={px(minX)} y1={py(slopeXY * minX + intercept)} x2={px(maxX)} y2={py(slopeXY * maxX + intercept)} stroke={lineColor} strokeWidth={1.2} opacity={0.85} />
+        {pairs.map(([x, y], i) => (
+          <circle key={i} cx={px(x)} cy={py(y)} r={1.8} fill={RISE_GOLD} opacity={0.9} />
+        ))}
+      </svg>
+    );
+  };
+
   return (
-    <div className="rounded-lg border-2 border-[#C6A332]/60 bg-card p-4 space-y-4">
+    <div className="rounded-lg border-2 border-[#EBC773]/60 bg-card p-4 space-y-4">
       <div>
-        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332] mb-2">Totals</h4>
+        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773] mb-2">Totals</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {totalCards.map((c) => (
             <div
               key={c.label}
-              className="rounded-md border border-[#C6A332]/40 bg-background/40 px-3 py-2"
+              className="rounded-md border border-[#EBC773]/40 bg-background/40 px-3 py-2"
             >
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.label}</div>
               <div className="text-lg font-semibold text-foreground">{c.value}</div>
@@ -434,7 +570,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
 
       {/* Advanced statistical modelling — collapsed by default. */}
       <div className="space-y-2">
-        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773]">
           Advanced insights
         </h4>
 
@@ -444,54 +580,42 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               Not enough overlapping data yet to link individual stats to R90.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {r90Drivers.map((d) => (
-                <div
-                  key={d.key}
-                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
-                >
-                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(d.key)}>
-                    {prettifyKey(d.key)}
-                  </span>
-                  <span
-                    className={
-                      "text-[10px] tabular-nums font-semibold " +
-                      (d.r >= 0 ? "text-emerald-400" : "text-rose-400")
-                    }
-                  >
-                    {corrLabel(d.r)}
-                  </span>
+                <div key={d.key} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(d.key)}>{prettifyKey(d.key)}</span>
+                    <span className={"text-[10px] tabular-nums font-semibold " + (d.r >= 0 ? "text-emerald-400" : "text-rose-400")}>{(d.r >= 0 ? "+" : "−") + Math.abs(d.r).toFixed(2)}</span>
+                  </div>
+                  <div className="text-muted-foreground"><CorrBar r={d.r} /></div>
+                  <div className="text-muted-foreground/80"><MiniScatter xs={series.map[d.key].values} ys={series.r90Series} height={48} /></div>
+                  <div className="text-[10px] text-muted-foreground/80">n={d.n} · {Math.abs(d.r) >= 0.8 ? "very strong" : Math.abs(d.r) >= 0.6 ? "strong" : "moderate"} link to R90</div>
                 </div>
               ))}
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Pearson correlation between each stat and R90 across the loaded window. Positive values mean the stat tends to rise on his higher-rated matches.
+            Each card plots the stat (x) against R90 (y) match-by-match. The bar shows direction and strength; an up-sloping regression line means the stat lifts R90.
           </p>
         </Section>
 
         <Section title="Form trends" count={Object.keys(advanced).length}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {Object.entries(advanced)
               .filter(([, v]) => Math.abs(v.trendPct) >= 15 && v.n >= 4)
               .sort((a, b) => Math.abs(b[1].trendPct) - Math.abs(a[1].trendPct))
               .slice(0, 18)
               .map(([key, v]) => (
-                <div
-                  key={key}
-                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
-                >
-                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(key)}>
-                    {prettifyKey(key)}
-                  </span>
-                  <span
-                    className={
-                      "text-[10px] tabular-nums font-semibold " +
-                      (v.trendPct >= 0 ? "text-emerald-400" : "text-rose-400")
-                    }
-                  >
-                    {fmtPct(v.trendPct)}
-                  </span>
+                <div key={key} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(key)}>{prettifyKey(key)}</span>
+                    <span className={"text-[10px] tabular-nums font-semibold " + (v.trendPct >= 0 ? "text-emerald-400" : "text-rose-400")}>{fmtPct(v.trendPct)}</span>
+                  </div>
+                  <div className="text-muted-foreground"><Sparkline values={series.map[key].values} width={150} height={28} /></div>
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground/80 tabular-nums">
+                    <span>avg {v.mean.toFixed(2)}</span>
+                    <span>peak {v.best.toFixed(2)}</span>
+                  </div>
                 </div>
               ))}
           </div>
@@ -506,9 +630,12 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most consistent</div>
               <div className="space-y-1">
                 {consistency.mostConsistent.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
-                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
-                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  <div key={row.key} className="rounded border border-border/60 bg-background/40 px-2 py-1.5 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                      <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                    </div>
+                    <div className="text-muted-foreground"><ConsistencyStrip values={series.map[row.key].values} /></div>
                   </div>
                 ))}
               </div>
@@ -517,16 +644,19 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most volatile</div>
               <div className="space-y-1">
                 {consistency.mostVolatile.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
-                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
-                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  <div key={row.key} className="rounded border border-border/60 bg-background/40 px-2 py-1.5 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                      <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                    </div>
+                    <div className="text-muted-foreground"><ConsistencyStrip values={series.map[row.key].values} /></div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Standard deviation and coefficient of variation across the window. Low CV stats are the reliable floor; high CV stats are the fixable swings.
+            Gold band = ±1σ around the mean, dashed line = mean. Dots are individual matches — tight clusters are the reliable floor, wide spreads are fixable swings.
           </p>
         </Section>
 
@@ -534,28 +664,30 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
           {statPairCorrs.length === 0 ? (
             <p className="text-xs text-muted-foreground px-1">No strong pairwise links surfaced in this window.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {statPairCorrs.map((p) => (
-                <div key={p.a + p.b} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-foreground/90 truncate" title={`${prettifyKey(p.a)} × ${prettifyKey(p.b)}`}>
-                    {prettifyKey(p.a)} <span className="text-muted-foreground">×</span> {prettifyKey(p.b)}
-                  </span>
-                  <span className={"text-[10px] tabular-nums font-semibold " + (p.r >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    {corrLabel(p.r)}
-                  </span>
+                <div key={p.a + p.b} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-foreground/90 truncate" title={prettifyKey(p.a)}>{prettifyKey(p.a)}</div>
+                      <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(p.b)}>vs {prettifyKey(p.b)}</div>
+                    </div>
+                    <span className={"text-[10px] tabular-nums font-semibold shrink-0 " + (p.r >= 0 ? "text-emerald-400" : "text-rose-400")}>{(p.r >= 0 ? "+" : "−") + Math.abs(p.r).toFixed(2)}</span>
+                  </div>
+                  <div className="text-muted-foreground/80"><MiniScatter xs={series.map[p.a].values} ys={series.map[p.b].values} width={160} height={60} /></div>
                 </div>
               ))}
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Stats that move together (positive) or trade off (negative) match-to-match. Useful for spotting compensations and tactical patterns.
+            Each scatter plots two stats match-by-match with a best-fit line. Up-sloping = they rise together, down-sloping = they trade off.
           </p>
         </Section>
       </div>
 
       {allStatKeys.length > 0 && (
         <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773]">
             Season averages by category
           </h4>
           {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => {
@@ -589,15 +721,21 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
                           const avg = computeStatAverage(analyses, key);
                           const suffix = isPercentageMetric(key) ? "%" : "";
                           const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
+                          const seriesValues = series.map[key]?.values || [];
                           return (
                             <div
                               key={key}
-                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
+                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 space-y-1"
                             >
                               <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
                                 {prettifyKey(key)}
                               </div>
-                              <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                              <div className="flex items-end justify-between gap-2">
+                                <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                                <div className="text-muted-foreground/70">
+                                  <Sparkline values={seriesValues} width={56} height={18} fill={false} />
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
