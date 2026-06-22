@@ -1381,108 +1381,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 )}
               </div>
             )}
-            <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
-              <Label>Alternate profiles</Label>
+            <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+              <Label>Alternate Options (optional)</Label>
               <p className="text-[11px] text-muted-foreground">
-                Attach other outreach links as alternates. They appear in their own section near the bottom of the proposal under a short blurb (e.g. for budget-tight clubs).
+                A wide thin card at the bottom of the proposal where you add extra detail — e.g. free-transfer alternatives, loan options, budget profiles. Plain text, no images, no links.
               </p>
               <Textarea
-                rows={2}
-                placeholder="If budget is tight, here are free options we'd also recommend…"
+                rows={4}
+                placeholder="If budget is tight we'd also recommend looking at…"
                 value={altBlurb}
                 onChange={(e) => setAltBlurb(e.target.value)}
                 className="text-sm"
               />
-              <Input
-                placeholder="Search other outreach links by player name"
-                value={altQuery}
-                onChange={(e) => setAltQuery(e.target.value)}
-              />
-              {(() => {
-                const others = allRows.filter((r) => r.id !== editing?.id);
-                const playerNameFor = (r: OutreachRow) => {
-                  const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                  return pid ? (playerById.get(pid)?.name ?? "Unknown") : "Unknown";
-                };
-                const targetLabelFor = (r: OutreachRow) =>
-                  r.target_type === 'agent' ? (r.agent_name ?? 'Agent') : (r.club?.club_name ?? 'Club');
-                const q = altQuery.trim().toLowerCase();
-                const matches = others
-                  .filter((r) => !altLinkIds.includes(r.id))
-                  .filter((r) => !q || playerNameFor(r).toLowerCase().includes(q) || targetLabelFor(r).toLowerCase().includes(q))
-                  .slice(0, 20);
-                const selected = altLinkIds
-                  .map((id) => allRows.find((r) => r.id === id))
-                  .filter(Boolean) as OutreachRow[];
-                return (
-                  <>
-                    {altQuery && matches.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
-                        {matches.map((r) => {
-                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                          const p = pid ? playerById.get(pid) : null;
-                          return (
-                            <button
-                              key={r.id}
-                              type="button"
-                              onClick={() => { setAltLinkIds((prev) => [...prev, r.id]); setAltQuery(""); }}
-                              className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:border-[#cbb96b]/60"
-                            >
-                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
-                              <div className="min-w-0">
-                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
-                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {selected.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No alternate profiles yet.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {selected.map((r, idx) => {
-                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                          const p = pid ? playerById.get(pid) : null;
-                          return (
-                            <div key={r.id} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
-                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
-                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
-                              </div>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === 0} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })}><ArrowUp className="h-3.5 w-3.5" /></Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === selected.length - 1} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })}><ArrowDown className="h-3.5 w-3.5" /></Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setAltLinkIds((prev) => prev.filter((id) => id !== r.id))}><X className="h-3.5 w-3.5" /></Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {primaryPlayerId && (
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const { error } = await (supabase as any)
-                              .from("club_outreach_player_defaults")
-                              .upsert(
-                                { player_id: primaryPlayerId, default_alternate_profile_link_ids: altLinkIds, default_alternate_profiles_blurb: altBlurb.trim() || null, updated_at: new Date().toISOString() },
-                                { onConflict: "player_id" },
-                              );
-                            if (error) { toast.error(error.message ?? "Failed to save default"); return; }
-                            toast.success("Default alternates saved for this player");
-                          }}
-                          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                        >
-                          Save as player default
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
 
@@ -1992,6 +1902,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
+  const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
+  const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
@@ -2060,6 +1972,16 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
+      const sm = (data as any)?.default_season_data_mode;
+      setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
+      setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
+      const { data: seasons } = await supabase
+        .from("player_seasons")
+        .select("id, name, sort_order")
+        .eq("player_id", selectedPlayerId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
     })();
   }, [selectedPlayerId]);
 
@@ -2168,6 +2090,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       proof_of_representation_path: defaults.proof_path,
       default_fit_recommendation: playerDefaultFit.trim() || null,
       default_position: playerDefaultPosition.trim() || null,
+      default_season_data_mode: playerDefaultSeasonMode || null,
+      default_season_id: playerDefaultSeasonId,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2489,6 +2413,45 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                       {POSITION_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label>Default season data display</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">How the Video &amp; Data tile opens for this player by default. Leave on "Use global default" to follow the proposal-wide setting.</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {([
+                      { v: '' as const, label: 'Use global default' },
+                      { v: 'popup' as const, label: 'In-page popup' },
+                      { v: 'link' as const, label: 'Link to Stars profile' },
+                    ]).map((opt) => (
+                      <button
+                        key={opt.v || 'global'}
+                        type="button"
+                        onClick={() => setPlayerDefaultSeasonMode(opt.v)}
+                        className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${playerDefaultSeasonMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Default season to show</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Scope the data popup and Form banner to one of this player's named seasons. Leave on "All seasons" to use every match.</p>
+                  <Select
+                    value={playerDefaultSeasonId ?? "__all__"}
+                    onValueChange={(v) => setPlayerDefaultSeasonId(v === "__all__" ? null : v)}
+                  >
+                    <SelectTrigger className="mt-1.5 h-9 text-xs"><SelectValue placeholder="All seasons" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All seasons</SelectItem>
+                      {playerSeasonsForDefaults.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {playerSeasonsForDefaults.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">No seasons set up yet — add them in Data → Player Summary.</p>
+                  )}
                 </div>
                 <div>
                   <Label className="flex items-center gap-2"><FileBadge2 className="h-3.5 w-3.5" /> Proof of Representation PDF</Label>
