@@ -377,6 +377,29 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       </div>
 
+      {programmeLink && !hideProgramDateControls && (
+        <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/20 px-3 py-2">
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Programme start</label>
+            <Input
+              type="date"
+              value={programmeRange.start || ""}
+              onChange={(e) => updateProgrammeRange({ start: e.target.value || null })}
+              className="h-8 w-[150px] text-xs"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Programme end</label>
+            <Input
+              type="date"
+              value={programmeRange.end || ""}
+              onChange={(e) => updateProgrammeRange({ end: e.target.value || null })}
+              className="h-8 w-[150px] text-xs"
+            />
+          </div>
+        </div>
+      )}
+
       {rangeActive && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border rounded px-3 py-2">
           <CalendarRange className="w-3.5 h-3.5" />
