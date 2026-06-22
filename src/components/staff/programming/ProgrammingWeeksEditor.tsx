@@ -125,14 +125,15 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
 
   const addNextWeek = async () => {
     const baseCount = allPlayerWeeks.length;
-    // Find the latest week_start_date among the currently shown weeks, else today's Monday
-    const dated = weeks
-      .map(w => w.week_start_date)
-      .filter((d): d is string => !!d)
-      .sort();
+    // Find the most recent dated week in the current view; clone its slots and
+    // its full label/date forward by 7 days.
+    const datedWeeks = weeks
+      .filter(w => !!w.week_start_date)
+      .sort((a, b) => (a.week_start_date! < b.week_start_date! ? -1 : 1));
+    const source: Week | undefined = datedWeeks[datedWeeks.length - 1] ?? weeks[weeks.length - 1];
     let nextStart: Date;
-    if (dated.length) {
-      nextStart = new Date(dated[dated.length - 1] + "T00:00:00");
+    if (source?.week_start_date) {
+      nextStart = new Date(source.week_start_date + "T00:00:00");
       nextStart.setDate(nextStart.getDate() + 7);
     } else {
       nextStart = new Date();
@@ -141,14 +142,24 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       nextStart.setDate(nextStart.getDate() + offset);
     }
     const iso = nextStart.toISOString().slice(0, 10);
+    // Carry over the source week's sessions / free-text slots so the new week
+    // starts fully populated. The session refs point to the same underlying
+    // programme sessions, so any edits to a session apply across weeks as before.
+    const clonedSlots = source?.slots ? JSON.parse(JSON.stringify(source.slots)) : {};
+    // Generate a sensible label — increment trailing number if present, else append "(next)".
+    const baseLabel = source?.label || `Week ${baseCount}`;
+    const numMatch = baseLabel.match(/^(.*?)(\d+)(\s*)$/);
+    const nextLabel = numMatch
+      ? `${numMatch[1]}${parseInt(numMatch[2], 10) + 1}${numMatch[3]}`
+      : `Week ${baseCount + 1}`;
     const { data: inserted, error } = await supabase
       .from("programming_weeks" as any)
       .insert({
         player_id: playerId,
-        label: `Week ${baseCount + 1}`,
+        label: nextLabel,
         week_start_date: iso,
         display_order: baseCount,
-        slots: {},
+        slots: clonedSlots,
       } as any)
       .select("id")
       .single();

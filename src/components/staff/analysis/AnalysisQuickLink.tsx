@@ -71,7 +71,7 @@ export const AnalysisQuickLink = ({
       try {
         const { data, error } = await supabase
           .from("players")
-          .select("id, name, club, club_logo, representation_status")
+          .select("id, name, club, club_logo, image_url, representation_status")
           .order("name");
 
         if (error) throw error;
