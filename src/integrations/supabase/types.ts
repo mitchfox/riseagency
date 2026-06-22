@@ -5001,6 +5001,7 @@ export type Database = {
           fixture_stats: Json | null
           id: string
           is_scouting_report: boolean
+          is_todo: boolean
           linked_video_analysis_ids: string[] | null
           minutes_played: number | null
           notes: string | null
@@ -5025,6 +5026,7 @@ export type Database = {
           team_name: string | null
           team_roster: Json
           team_scoring_method: string
+          todo_note: string | null
           translated_content: Json | null
           updated_at: string
           video_url: string | null
@@ -5041,6 +5043,7 @@ export type Database = {
           fixture_stats?: Json | null
           id?: string
           is_scouting_report?: boolean
+          is_todo?: boolean
           linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
@@ -5065,6 +5068,7 @@ export type Database = {
           team_name?: string | null
           team_roster?: Json
           team_scoring_method?: string
+          todo_note?: string | null
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
@@ -5081,6 +5085,7 @@ export type Database = {
           fixture_stats?: Json | null
           id?: string
           is_scouting_report?: boolean
+          is_todo?: boolean
           linked_video_analysis_ids?: string[] | null
           minutes_played?: number | null
           notes?: string | null
@@ -5105,6 +5110,7 @@ export type Database = {
           team_name?: string | null
           team_roster?: Json
           team_scoring_method?: string
+          todo_note?: string | null
           translated_content?: Json | null
           updated_at?: string
           video_url?: string | null
