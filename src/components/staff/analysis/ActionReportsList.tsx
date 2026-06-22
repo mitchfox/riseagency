@@ -307,12 +307,27 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       <Tabs value={statusTab} onValueChange={setStatusTab}>
         <TabsList className="h-auto p-1 bg-muted/50">
           <TabsTrigger value="all" className="text-xs px-3 py-1.5">All ({statusCounts.all})</TabsTrigger>
+          <TabsTrigger value="todo" className="text-xs px-3 py-1.5 data-[state=active]:text-primary">
+            <ListChecks className="w-3 h-3 mr-1" />
+            To Do ({statusCounts.todo})
+          </TabsTrigger>
           <TabsTrigger value="draft" className="text-xs px-3 py-1.5">Draft ({statusCounts.draft})</TabsTrigger>
           <TabsTrigger value="clipped" className="text-xs px-3 py-1.5">Clipped ({statusCounts.clipped})</TabsTrigger>
           <TabsTrigger value="hidden" className="text-xs px-3 py-1.5">Hidden ({statusCounts.hidden})</TabsTrigger>
           <TabsTrigger value="live" className="text-xs px-3 py-1.5">Live ({statusCounts.live})</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {statusTab === "todo" && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            A manual list of reports that need action. Each one shows its note as a banner at the top of the report.
+          </p>
+          <Button size="sm" onClick={() => { setTodoPickerOpen(true); setTodoPickerSearch(""); setTodoPickerNote(""); }}>
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> Add to To Do
+          </Button>
+        </div>
+      )}
 
       {/* Reports List */}
       {filteredReports.length === 0 ? (
