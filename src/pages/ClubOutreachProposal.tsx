@@ -105,6 +105,7 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    season_data_mode?: 'popup' | 'link' | null;
     is_mandated?: boolean;
     key_details?: KeyDetailItem[] | null;
     section_order?: ProposalSectionKey[] | null;
