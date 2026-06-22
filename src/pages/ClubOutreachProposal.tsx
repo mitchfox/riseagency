@@ -567,17 +567,18 @@ export default function ClubOutreachProposal() {
               analyses={current.match_by_match}
               position={current?.player?.position ?? null}
               excludeAnalysisIds={shownAnalysisIds}
+              defaultCategory={current?.match_by_match_default_category ?? null}
             />
           )}
           {current?.stars_url && (
-            <div className="flex justify-end pt-1">
+            <div className="pt-2">
               <a
                 href={current.stars_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/40 text-[#cbb96b] hover:bg-[#cbb96b]/10 transition"
               >
-                {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+                {tr("card.openFull", "View Full Stars Profile")} <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           )}
