@@ -126,15 +126,12 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
       setLoading(true);
       const { data } = await (supabase as any)
         .from("player_form_config")
-        .select("window_size, stats, match_by_match_default_category")
+        .select("window_size, stats")
         .eq("player_id", playerId)
         .maybeSingle();
       if (cancelled) return;
       if (data) {
         setWindowSize(data.window_size || 5);
-        setDefaultCategory(
-          (data.match_by_match_default_category as string | null) || "Passing",
-        );
         // stats can be either:
         //   string[] (legacy) — auto mode for each
         //   { key, mode, value }[] (new)
@@ -192,7 +189,6 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         _player_id: playerId,
         _window_size: windowSize,
         _stats: stats,
-        _match_by_match_default_category: defaultCategory || null,
       });
     if (error) throw error;
     setDirty(false);
@@ -207,7 +203,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         return false;
       }
     }
-  }), [order, enabled, modes, manualValues, windowSize, defaultCategory, playerId, loading, dirty]);
+  }), [order, enabled, modes, manualValues, windowSize, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -243,23 +239,6 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
             setWindowSize(Math.max(1, Math.min(50, n)));
           }}
         />
-      </div>
-
-      <div className="max-w-xs space-y-2">
-        <Label>Match by Match — default category</Label>
-        <Select
-          value={defaultCategory || "Passing"}
-          onValueChange={(v) => { setDirty(true); setDefaultCategory(v); }}
-        >
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Shooting">Shooting</SelectItem>
-            <SelectItem value="Passing">Passing</SelectItem>
-            <SelectItem value="Possession">Possession</SelectItem>
-            <SelectItem value="Defending">Defending</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">Which tab opens first on the proposal's Match by Match table. Defaults to Passing.</p>
       </div>
 
       <div>
