@@ -1142,6 +1142,8 @@ export type Database = {
         Row: {
           agent_logo_url: string | null
           agent_name: string | null
+          alternate_profile_link_ids: string[]
+          alternate_profiles_blurb: string | null
           archived_at: string | null
           club_contact_accent: string | null
           club_contact_name: string | null
@@ -1165,7 +1167,9 @@ export type Database = {
           mandated_agent_role: string | null
           player_id: string | null
           prepared_for_name: string | null
+          season_data_mode: string
           section_order: Json | null
+          selected_video_ids: string[]
           short_id: string
           show_form: boolean
           show_in_numbers: boolean
@@ -1181,6 +1185,8 @@ export type Database = {
         Insert: {
           agent_logo_url?: string | null
           agent_name?: string | null
+          alternate_profile_link_ids?: string[]
+          alternate_profiles_blurb?: string | null
           archived_at?: string | null
           club_contact_accent?: string | null
           club_contact_name?: string | null
@@ -1204,7 +1210,9 @@ export type Database = {
           mandated_agent_role?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
+          season_data_mode?: string
           section_order?: Json | null
+          selected_video_ids?: string[]
           short_id: string
           show_form?: boolean
           show_in_numbers?: boolean
@@ -1220,6 +1228,8 @@ export type Database = {
         Update: {
           agent_logo_url?: string | null
           agent_name?: string | null
+          alternate_profile_link_ids?: string[]
+          alternate_profiles_blurb?: string | null
           archived_at?: string | null
           club_contact_accent?: string | null
           club_contact_name?: string | null
@@ -1243,7 +1253,9 @@ export type Database = {
           mandated_agent_role?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
+          season_data_mode?: string
           section_order?: Json | null
+          selected_video_ids?: string[]
           short_id?: string
           show_form?: boolean
           show_in_numbers?: boolean
@@ -1282,8 +1294,13 @@ export type Database = {
       }
       club_outreach_player_defaults: {
         Row: {
+          default_alternate_profile_link_ids: string[]
+          default_alternate_profiles_blurb: string | null
           default_fit_recommendation: string | null
+          default_key_details: Json | null
           default_position: string | null
+          default_season_data_mode: string | null
+          default_selected_video_ids: string[]
           highlights_url: string | null
           player_id: string
           proof_of_representation_path: string | null
@@ -1291,8 +1308,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          default_alternate_profile_link_ids?: string[]
+          default_alternate_profiles_blurb?: string | null
           default_fit_recommendation?: string | null
+          default_key_details?: Json | null
           default_position?: string | null
+          default_season_data_mode?: string | null
+          default_selected_video_ids?: string[]
           highlights_url?: string | null
           player_id: string
           proof_of_representation_path?: string | null
@@ -1300,8 +1322,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          default_alternate_profile_link_ids?: string[]
+          default_alternate_profiles_blurb?: string | null
           default_fit_recommendation?: string | null
+          default_key_details?: Json | null
           default_position?: string | null
+          default_season_data_mode?: string | null
+          default_selected_video_ids?: string[]
           highlights_url?: string | null
           player_id?: string
           proof_of_representation_path?: string | null
