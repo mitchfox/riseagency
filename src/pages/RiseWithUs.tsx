@@ -293,15 +293,6 @@ const PILLARS: Pillar[] = [
       "Full Premier League level support — analysis, S&C, nutrition, sports psychology, technique — wrapped around you, working off one shared plan, not a list of disconnected freelancers.",
   },
   {
-    key: "vision",
-    icon: Trophy,
-    titleKey: "rwu_vision_title", titleFallback: "Our Ballon d'Or Vision",
-    bodyKey:  "rwu_vision_body",
-    bodyFallback:
-      "Our ambition is the highest level the game has — Ballon d'Or, Team of the Year, World Cup. We pick a small group of players we genuinely believe can get there, and we back them all the way. This is the most exciting time to join, with a massive opportunity to be one of the first.",
-    badgeKey: "rwu_vision_badge", badgeFallback: "Forward-looking · Limited spots",
-  },
-  {
     key: "parent",
     icon: Users2,
     titleKey: "rwu_parent_title", titleFallback: "The Parent's Role",
