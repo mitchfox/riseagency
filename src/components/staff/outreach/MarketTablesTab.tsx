@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -390,7 +390,7 @@ export default function MarketTablesTab() {
               const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
               const isOpen = expanded.has(club.id);
               return (
-                <React.Fragment key={club.id}>
+                <Fragment key={club.id}>
                 <tr className="border-t border-border/40 hover:bg-muted/20">
                   <td className="px-1 py-2 align-top">
                     <button
@@ -508,7 +508,7 @@ export default function MarketTablesTab() {
                     </td>
                   </tr>
                 )}
-                </React.Fragment>
+                </Fragment>
               );
             })}
           </tbody>
