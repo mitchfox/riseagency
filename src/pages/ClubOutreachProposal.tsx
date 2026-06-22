@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -90,6 +92,16 @@ interface PlayerEntry {
   strengths_and_play_style: any | null;
   form_config: { window_size: number; stats: any[] } | null;
   form_analyses: any[] | null;
+  match_by_match?: Array<{
+    id: string;
+    analysis_date: string;
+    opponent: string | null;
+    result: string | null;
+    r90_score: number | null;
+    minutes_played: number | null;
+    striker_stats?: Record<string, any> | null;
+    fixture_stats?: Record<string, any> | null;
+  }> | null;
 }
 
 interface Payload {
@@ -1031,6 +1043,12 @@ export default function ClubOutreachProposal() {
             {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
               <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
             )}
+            {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
+              <MatchByMatchCard
+                analyses={current.match_by_match}
+                position={current?.player?.position ?? null}
+              />
+            )}
             {current?.stars_url && (
               <div className="flex justify-end pt-2">
                 <a
@@ -1499,6 +1517,111 @@ function StrengthsCard({ data, title }: { data: any; title?: string }) {
           </li>
         ))}
       </ul>
+    </SectionShell>
+  );
+}
+
+function MatchByMatchCard({
+  analyses,
+  position,
+}: {
+  analyses: NonNullable<PlayerEntry["match_by_match"]>;
+  position: string | null;
+}) {
+  const categories = useMemo(
+    () => getMetricCategoriesForPosition(position ?? undefined),
+    [position],
+  );
+  const defaultCat =
+    categories.find((c) => c.category === "Passing")?.category ??
+    categories[0]?.category ??
+    "";
+
+  const sorted = useMemo(
+    () =>
+      [...analyses].sort((a, b) =>
+        (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""),
+      ),
+    [analyses],
+  );
+
+  const fmtVal = (raw: any, key: string): string => {
+    if (raw === null || raw === undefined || raw === "") return "—";
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return String(raw);
+    if (/_pct$|_percentage$/i.test(key)) return `${n.toFixed(0)}%`;
+    if (Number.isInteger(n)) return n.toString();
+    return n.toFixed(2);
+  };
+
+  const getVal = (a: any, key: string): any => {
+    if (a?.fixture_stats && a.fixture_stats[key] != null) return a.fixture_stats[key];
+    if (a?.striker_stats && a.striker_stats[key] != null) return a.striker_stats[key];
+    return null;
+  };
+
+  const fmtDate = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+    } catch {
+      return iso;
+    }
+  };
+
+  return (
+    <SectionShell title="Match by Match" eyebrow="06">
+      <Tabs defaultValue={defaultCat}>
+        <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
+          {categories.map((c) => (
+            <TabsTrigger
+              key={c.category}
+              value={c.category}
+              className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
+            >
+              {c.category}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {categories.map((c) => (
+          <TabsContent key={c.category} value={c.category} className="mt-3">
+            <div className="overflow-x-auto rounded-lg border border-white/10">
+              <table className="w-full text-[11px] min-w-[640px]">
+                <thead>
+                  <tr className="bg-white/[0.04] text-white/60">
+                    <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
+                    {c.metrics.map((m) => (
+                      <th key={m.key} className="text-right px-2.5 py-2 font-medium whitespace-nowrap">
+                        {m.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((a) => (
+                    <tr key={a.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                      <td className="px-2.5 py-1.5 sticky left-0 bg-black/80 backdrop-blur z-10">
+                        <div className="text-white/90 whitespace-nowrap">
+                          {a.opponent || "—"}
+                        </div>
+                        <div className="text-white/40 text-[10px] whitespace-nowrap">
+                          {fmtDate(a.analysis_date)}
+                          {a.result ? ` · ${a.result}` : ""}
+                        </div>
+                      </td>
+                      {c.metrics.map((m) => (
+                        <td key={m.key} className="px-2.5 py-1.5 text-right text-white/80 tabular-nums whitespace-nowrap">
+                          {fmtVal(getVal(a, m.key), m.key)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
     </SectionShell>
   );
 }
