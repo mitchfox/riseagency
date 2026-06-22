@@ -127,6 +127,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       const legacySchedules = programmeLink.table === "player_programs" && Array.isArray((prog as any)?.weekly_schedules)
         ? ((prog as any).weekly_schedules as LegacyWeeklySchedule[])
         : [];
+      let legacyWeekIds: string[] = [];
       if (legacySchedules.length) {
         const existingDates = new Set(allRows.filter(w => w.week_start_date).map(w => w.week_start_date));
         const rowsToInsert = legacySchedules
@@ -149,13 +150,16 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
             .select("*");
           allRows.push(...(((inserted || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })) as Week[]));
         }
+        legacyWeekIds = legacySchedules
+          .map(w => w.week_start_date ? allRows.find(row => row.week_start_date === w.week_start_date)?.id : null)
+          .filter(Boolean) as string[];
       }
       const rangeIds = nextRange.start && nextRange.end
         ? allRows
             .filter(w => weekOverlapsRange(w.week_start_date, nextRange.start!, nextRange.end!))
             .map(w => w.id)
         : [];
-      const displayIds = Array.from(new Set([...ids, ...rangeIds]));
+      const displayIds = Array.from(new Set([...ids, ...legacyWeekIds, ...rangeIds]));
       const missingRangeIds = displayIds.filter(id => !ids.includes(id));
       if (missingRangeIds.length) {
         await supabase
