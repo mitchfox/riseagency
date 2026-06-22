@@ -555,9 +555,30 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                 <TableRow key={a.id}>
                   <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString(dateLocale(playerData?.portal_language))}</TableCell>
                   <TableCell className="text-sm font-medium">
-                    {a.opponent || '-'}
+                    <div className="flex items-center gap-2">
+                      <span>{a.opponent || '-'}</span>
+                      {embedded && (
+                        <button
+                          onClick={() => toggleDataUnavailable(a)}
+                          title={a.data_unavailable ? "Restore match data" : "Mark as no data available"}
+                          className={`inline-flex items-center justify-center w-5 h-5 rounded transition-colors ${
+                            a.data_unavailable
+                              ? "text-destructive hover:text-destructive/80"
+                              : "text-muted-foreground/40 hover:text-muted-foreground"
+                          }`}
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm">{effectiveMinutes(a) ?? '-'}</TableCell>
+                  <TableCell className="text-sm">
+                    {a.data_unavailable ? (
+                      <span className="blur-sm select-none text-muted-foreground">–</span>
+                    ) : (
+                      effectiveMinutes(a) ?? '-'
+                    )}
+                  </TableCell>
                   <TableCell>
                     {(() => {
                       const r = effectiveR90(a);
@@ -570,7 +591,13 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                       );
                     })()}
                   </TableCell>
-                  {currentMetrics.map(m => {
+                  {a.data_unavailable ? (
+                    <TableCell colSpan={currentMetrics.length} className="text-sm">
+                      <div className="flex items-center justify-center text-xs uppercase tracking-wider text-muted-foreground italic">
+                        No data available
+                      </div>
+                    </TableCell>
+                  ) : currentMetrics.map(m => {
                     const val = getStatValue(a, m.key);
                     const isEditing = editingCell?.analysisId === a.id && editingCell?.metricKey === m.key;
                     
