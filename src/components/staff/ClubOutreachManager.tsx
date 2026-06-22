@@ -1992,8 +1992,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
-  const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
-  const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
@@ -2062,16 +2060,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
-      const sm = (data as any)?.default_season_data_mode;
-      setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
-      setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
-      const { data: seasons } = await supabase
-        .from("player_seasons")
-        .select("id, name, sort_order")
-        .eq("player_id", selectedPlayerId)
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true });
-      setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
     })();
   }, [selectedPlayerId]);
 
@@ -2180,8 +2168,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       proof_of_representation_path: defaults.proof_path,
       default_fit_recommendation: playerDefaultFit.trim() || null,
       default_position: playerDefaultPosition.trim() || null,
-      default_season_data_mode: playerDefaultSeasonMode || null,
-      default_season_id: playerDefaultSeasonId,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2503,45 +2489,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                       {POSITION_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Label>Default season data display</Label>
-                  <p className="text-[11px] text-muted-foreground mt-1">How the Video &amp; Data tile opens for this player by default. Leave on "Use global default" to follow the proposal-wide setting.</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {([
-                      { v: '' as const, label: 'Use global default' },
-                      { v: 'popup' as const, label: 'In-page popup' },
-                      { v: 'link' as const, label: 'Link to Stars profile' },
-                    ]).map((opt) => (
-                      <button
-                        key={opt.v || 'global'}
-                        type="button"
-                        onClick={() => setPlayerDefaultSeasonMode(opt.v)}
-                        className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${playerDefaultSeasonMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label>Default season to show</Label>
-                  <p className="text-[11px] text-muted-foreground mt-1">Scope the data popup and Form banner to one of this player's named seasons. Leave on "All seasons" to use every match.</p>
-                  <Select
-                    value={playerDefaultSeasonId ?? "__all__"}
-                    onValueChange={(v) => setPlayerDefaultSeasonId(v === "__all__" ? null : v)}
-                  >
-                    <SelectTrigger className="mt-1.5 h-9 text-xs"><SelectValue placeholder="All seasons" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">All seasons</SelectItem>
-                      {playerSeasonsForDefaults.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {playerSeasonsForDefaults.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground mt-1">No seasons set up yet — add them in Data → Player Summary.</p>
-                  )}
                 </div>
                 <div>
                   <Label className="flex items-center gap-2"><FileBadge2 className="h-3.5 w-3.5" /> Proof of Representation PDF</Label>
