@@ -1339,6 +1339,7 @@ const RiseWithUs = () => {
             fullName={fullName}
             lang={lang}
             extraImages={extraImages}
+            extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
             onDone={() => setIntroDone(true)}
           />
