@@ -1589,6 +1589,9 @@ const Staff = () => {
               <CommandInput 
                 placeholder="Search players, updates, content..." 
                 onValueChange={(value) => {
+                  // Update query state immediately so section filtering reacts
+                  // to every keystroke (entity results still run on debounce).
+                  setSearchQuery(value);
                   // Clear previous timeout
                   if (searchTimeoutRef.current) {
                     clearTimeout(searchTimeoutRef.current);
