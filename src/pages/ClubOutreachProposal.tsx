@@ -210,6 +210,7 @@ export default function ClubOutreachProposal() {
   const [err, setErr] = useState<string | null>(null);
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const [contactsVisible, setContactsVisible] = useState(false);
@@ -283,6 +284,9 @@ export default function ClubOutreachProposal() {
   }, [data, activeSlot]);
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
+  // Reset the active hero video whenever the player changes — clicking a
+  // thumbnail in the carousel below sets this to the chosen videoUrl.
+  useEffect(() => { setActiveVideoUrl(null); }, [activeIndex]);
 
   const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
 
