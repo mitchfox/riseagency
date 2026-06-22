@@ -785,6 +785,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_in_numbers: showInNumbers,
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
+        season_data_mode: seasonDataMode,
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
