@@ -90,6 +90,16 @@ interface PlayerEntry {
   strengths_and_play_style: any | null;
   form_config: { window_size: number; stats: any[] } | null;
   form_analyses: any[] | null;
+  match_by_match?: Array<{
+    id: string;
+    analysis_date: string;
+    opponent: string | null;
+    result: string | null;
+    r90_score: number | null;
+    minutes_played: number | null;
+    striker_stats?: Record<string, any> | null;
+    fixture_stats?: Record<string, any> | null;
+  }> | null;
 }
 
 interface Payload {
