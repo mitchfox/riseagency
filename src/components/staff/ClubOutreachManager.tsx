@@ -125,6 +125,8 @@ export default function ClubOutreachManager() {
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
+  const [defaultSeasonDataMode, setDefaultSeasonDataMode] = useState<'popup' | 'link'>('popup');
+  const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [mode, setMode] = useState<OutreachMode>('club');
   const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships'>('outreach');
 
@@ -133,8 +135,16 @@ export default function ClubOutreachManager() {
     setTemplates((data ?? []) as QuickTemplate[]);
   };
   const loadSettings = async () => {
-    const { data } = await (supabase as any).from("club_outreach_settings").select("default_fit_recommendation").eq("id", 1).maybeSingle();
+    const { data } = await (supabase as any)
+      .from("club_outreach_settings")
+      .select("default_fit_recommendation, default_season_data_mode, default_video_selection_mode")
+      .eq("id", 1)
+      .maybeSingle();
     setDefaultFit(data?.default_fit_recommendation ?? "");
+    const sm = data?.default_season_data_mode;
+    if (sm === 'popup' || sm === 'link') setDefaultSeasonDataMode(sm);
+    const vm = data?.default_video_selection_mode;
+    if (vm === 'all' || vm === 'first' || vm === 'custom') setDefaultVideoMode(vm);
   };
 
   const load = async () => {
