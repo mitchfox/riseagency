@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,31 +34,80 @@ interface Entry {
 
 const MARKET_TABLE_KEY = "summer-26";
 
-const TD_RE = /(technical director|director of football|sporting director|football director|managing director professional football)/i;
+const TD_RE = /(technical director|director of football|sporting director|sports director|football director|managing director professional football)/i;
 const CS_RE = /(chief scout|head of recruitment|head scout|scout director)/i;
+
+const GENERIC_CLUB_WORDS = new Set([
+  "club", "football", "futbol", "futebol", "calcio", "fotbal", "spor", "sport", "sports",
+  "soccer", "team", "united", "county", "sporting", "royal", "real", "fotboll",
+  "the", "and",
+]);
 
 const norm = (s: string | null | undefined) =>
   (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const clubTokens = (clubName: string): string[] =>
+  clubName
+    .split(/\s+/)
+    .map((w) => w.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((w) => w.length >= 4 && !GENERIC_CLUB_WORDS.has(w));
+
+const contactMatchesClub = (
+  contact: ContactRow,
+  clubName: string,
+  country: string | null,
+): boolean => {
+  if (country && contact.country && contact.country !== country) return false;
+  const target = norm(clubName);
+  if (!target) return false;
+  const cn = norm(contact.club_name);
+  if (cn && (cn === target || cn.includes(target) || target.includes(cn))) return true;
+  // Fallback: tokenised search inside the contact name (many rows embed the club).
+  const tokens = clubTokens(clubName);
+  if (tokens.length === 0) return false;
+  const haystack = (contact.name ?? "").toLowerCase();
+  return tokens.some((t) => haystack.includes(t));
+};
 
 const matchContactForClub = (
   contacts: ContactRow[],
   clubName: string,
   country: string | null,
   re: RegExp,
-): ContactRow | null => {
-  const target = norm(clubName);
-  if (!target) return null;
-  return (
-    contacts.find((c) => {
-      if (!c.position || !re.test(c.position)) return false;
-      const cn = norm(c.club_name);
-      if (!cn) return false;
-      if (cn === target) return true;
-      // looser containment match (e.g. "FC Porto" vs "Porto")
-      return cn.includes(target) || target.includes(cn);
-    }) ?? null
-  );
-};
+): ContactRow | null =>
+  contacts.find(
+    (c) => c.position && re.test(c.position) && contactMatchesClub(c, clubName, country),
+  ) ?? null;
+
+const additionalContactsForClub = (
+  contacts: ContactRow[],
+  clubName: string,
+  country: string | null,
+  excludeIds: Set<string>,
+): ContactRow[] =>
+  contacts
+    .filter((c) => {
+      if (excludeIds.has(c.id)) return false;
+      if (!contactMatchesClub(c, clubName, country)) return false;
+      if (c.position && TD_RE.test(c.position)) return false;
+      if (c.position && CS_RE.test(c.position)) return false;
+      if (c.position && /\b(player|agent)\b/i.test(c.position)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const order = (p: string | null) => {
+        const s = (p ?? "").toLowerCase();
+        if (/president|chair/.test(s)) return 1;
+        if (/ceo|managing director/.test(s)) return 2;
+        if (/director|teamchef|\bchef\b/.test(s)) return 3;
+        if (/scout|recruit/.test(s)) return 4;
+        if (/coach|trainer|manager/.test(s)) return 5;
+        return 9;
+      };
+      const d = order(a.position) - order(b.position);
+      if (d !== 0) return d;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
