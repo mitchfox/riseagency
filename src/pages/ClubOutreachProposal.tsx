@@ -555,6 +555,24 @@ export default function ClubOutreachProposal() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+          {(() => {
+            const allV = current?.all_videos ?? current?.videos ?? [];
+            const shownSet = new Set(
+              (current?.videos ?? [])
+                .map((v) => (v?.videoUrl ?? "").split("#")[0])
+                .filter(Boolean),
+            );
+            const remaining = allV.filter(
+              (v) => v?.videoUrl && !shownSet.has(v.videoUrl.split("#")[0]),
+            );
+            if (remaining.length === 0) return null;
+            return (
+              <RemainingVideosCard
+                videos={remaining}
+                title={tr("inline.moreVideos", "More Videos")}
+              />
+            );
+          })()}
           {!data.link.show_form && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
             <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
           )}
