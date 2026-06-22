@@ -416,11 +416,17 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       )}
 
+      {programmeLink && rangeActive && linkedIds.length === 0 && allPlayerWeeks.some(w => w.week_start_date && w.week_start_date >= programmeRange.start! && w.week_start_date <= programmeRange.end!) && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+          Master schedule weeks already exist inside these dates. Use <span className="font-semibold text-foreground">Generate weeks for this period</span> to link those existing weeks into this programme.
+        </div>
+      )}
+
       {visibleWeeks.length === 0 && (
         <p className="text-sm text-muted-foreground">
           {programmeLink
             ? (rangeActive
-                ? "No linked weeks fall inside this programme's date range. Use Generate weeks for this period, or click Show outside this period above."
+                ? "No linked weeks fall inside this programme's date range. Use Generate weeks for this period to link matching master schedule weeks, or click Show outside this period above."
                 : "No weeks linked yet. Add a new week or link an existing one from the player's master schedule.")
             : "No weeks yet. Add one to start scheduling."}
         </p>
