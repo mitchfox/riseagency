@@ -127,6 +127,16 @@ interface Payload {
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
+  alternate_profiles?: Array<{
+    short_id: string;
+    target_type?: 'club' | 'agent' | null;
+    player_name: string | null;
+    image_url: string | null;
+    position: string | null;
+    age: number | null;
+    date_of_birth: string | null;
+    club: string | null;
+  }> | null;
   whatsapp_number: string | null;
   agent_name: string | null;
   agent_image_url: string | null;
