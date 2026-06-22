@@ -1109,14 +1109,18 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 24px hsl(var(--gold)/0.45)" }}>
                 {fullName.toUpperCase()}
               </p>
-              <p className="text-justify text-base sm:text-xl md:text-2xl leading-snug text-foreground font-medium"
-                 style={{ wordSpacing: "-0.03em" }}>
-                {offerT(lang, "stood_out_line", "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star.")}
+              <p
+                className="mx-auto max-w-[36ch] text-base sm:text-xl md:text-2xl leading-snug text-foreground font-medium sm:max-w-[42ch] md:max-w-[44ch]"
+                style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+              >
+                {widont(offerT(lang, "stood_out_line", "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star."))}
               </p>
               {secondaryParagraph && (
-                <p className="text-justify text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90"
-                   style={{ wordSpacing: "-0.02em" }}>
-                  {secondaryParagraph}
+                <p
+                  className="mx-auto max-w-[40ch] text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90 sm:max-w-[46ch] md:max-w-[50ch]"
+                  style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+                >
+                  {widont(secondaryParagraph)}
                 </p>
               )}
             </motion.div>
@@ -1125,10 +1129,10 @@ const IntroCinematic = ({
             <motion.p key="p2"
               initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.45 }}
-              className="text-justify text-base sm:text-xl md:text-2xl leading-relaxed text-foreground/95"
-              style={{ wordSpacing: "-0.02em" }}
+              className="mx-auto max-w-[38ch] text-base sm:text-xl md:text-2xl leading-relaxed text-foreground/95 sm:max-w-[44ch] md:max-w-[48ch]"
+              style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
             >
-              {offerT(lang, "differentiate_line", "We differentiate players by their will, skill and potential, to find those who will use our English Premier League Performance Team to the fullest effect to realise their potential on the pitch and in life.")}
+              {widont(offerT(lang, "differentiate_line", "We differentiate players by their will, skill and potential, to find those who will use our English Premier League Performance Team to the fullest effect to realise their potential on the pitch and in life."))}
             </motion.p>
           )}
           {phase === 3 && (
