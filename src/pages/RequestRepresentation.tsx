@@ -5,7 +5,7 @@ import {
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
-  Trophy, CalendarClock,
+  Trophy,
 } from "lucide-react";
 import { widont } from "@/components/SlantedBox";
 import { SEO } from "@/components/SEO";
