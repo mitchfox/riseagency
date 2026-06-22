@@ -12,6 +12,7 @@ type Starter = {
   name: string;
   role: string;
   responsibilities: string[];
+  floorGeneral?: boolean;
   // SVG positions on a half-court (viewBox 0 0 600 560)
   x: number;
   y: number;
@@ -29,6 +30,7 @@ const STARTERS: Starter[] = [
       "Own client-facing strategy and high-leverage decisions",
       "Read the floor — spot opportunities before anyone else",
     ],
+    floorGeneral: true,
     x: 300,
     y: 470,
   },
@@ -57,6 +59,7 @@ const STARTERS: Starter[] = [
       "Cover both ends — quality control on coaching and data",
       "Translate insight into actionable next steps",
     ],
+    floorGeneral: true,
     x: 480,
     y: 350,
   },
@@ -85,6 +88,7 @@ const STARTERS: Starter[] = [
       "Set screens for the rest of the team to score",
       "Reliable presence everyone can play through",
     ],
+    floorGeneral: true,
     x: 400,
     y: 220,
   },
