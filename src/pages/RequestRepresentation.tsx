@@ -831,16 +831,17 @@ const RequestRepresentation = () => {
                   {/* Mission, in a contained glass plate */}
                   <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
-                      className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
+                      className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
                       style={{
+                        textWrap: "pretty",
                         hyphens: "none",
                         WebkitHyphens: "none",
                         msHyphens: "none",
                         wordBreak: "normal",
                         overflowWrap: "normal",
-                      }}
+                      } as React.CSSProperties}
                     >
-                      {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                      {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
                     </p>
                   </div>
                 </div>
