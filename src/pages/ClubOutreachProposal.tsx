@@ -202,7 +202,7 @@ function hapticTap(ms = 8) {
       navigator.vibrate(ms);
     }
   } catch {
-    // ignore — vibration is best-effort cosmetic feedback
+    // ignore - vibration is best-effort cosmetic feedback
   }
 }
 
@@ -307,7 +307,7 @@ export default function ClubOutreachProposal() {
   }, [data, activeSlot]);
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
-  // Reset the active hero video whenever the player changes — clicking a
+  // Reset the active hero video whenever the player changes - clicking a
   // thumbnail in the carousel below sets this to the chosen videoUrl.
   useEffect(() => { setActiveVideoUrl(null); }, [activeIndex]);
 
@@ -447,7 +447,7 @@ export default function ClubOutreachProposal() {
   const clubContactName = data.club_contact?.contact_name ?? data.link.club_contact_name;
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
-  // Club glow — derived from the (already staff-configurable) accent
+  // Club glow - derived from the (already staff-configurable) accent
   // colour. Falls back to RISE gold when no accent is set.
   const clubGlow = normaliseAccentHex(clubContactAccent) ?? "#cbb96b";
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
@@ -595,12 +595,12 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Key details — moved above the hero video */}
+      {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
         <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
       </section>
 
-      {/* Hero — first Stars highlight video, falls back to player image */}
+      {/* Hero - first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
@@ -664,7 +664,7 @@ export default function ClubOutreachProposal() {
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
           </div>
-          {/* Video carousel — only when the player has more than one highlight */}
+          {/* Video carousel - only when the player has more than one highlight */}
           {(current.videos?.length ?? 0) > 1 && (
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {current.videos!.map((v) => {
@@ -705,7 +705,7 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Sections after the hero video — order is staff-configurable per link */}
+      {/* Sections after the hero video - order is staff-configurable per link */}
       {(() => {
         const order = normaliseSectionOrder(data.link.section_order);
         const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
@@ -788,7 +788,7 @@ export default function ClubOutreachProposal() {
         return <>{order.map((k) => renderers[k]?.())}</>;
       })()}
 
-      {/* Alternate Options — wide thin card with a heading, the staffer's
+      {/* Alternate Options - wide thin card with a heading, the staffer's
           free-text note, and plain clickable links to alternate player
           profiles the club can switch to. Renders only when blurb or linked
           profiles exist. */}
@@ -819,7 +819,7 @@ export default function ClubOutreachProposal() {
                       >
                         {alt.player_name ?? alt.short_id}
                       </a>
-                      {meta && <span className="text-white/50"> — {meta}</span>}
+                      {meta && <span className="text-white/50"> - {meta}</span>}
                     </li>
                   );
                 })}
@@ -978,7 +978,7 @@ export default function ClubOutreachProposal() {
         </a>
       </footer>
 
-      {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
+      {/* Floating pinned actions - hide once the visitor reaches the contact CTAs */}
       {(() => {
         const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
         const pinnedWaUrl = (isMandated && mandatedAgentWaUrl) ? mandatedAgentWaUrl : agencyWaUrl;
@@ -1023,7 +1023,7 @@ export default function ClubOutreachProposal() {
         );
       })()}
 
-      {/* Season data popup — opens in place of navigating to the Stars
+      {/* Season data popup - opens in place of navigating to the Stars
           profile when season_data_mode === 'popup'. Wide sheet, scrolls
           internally, surfaces Form / In Numbers / Season Stats together. */}
       <Dialog open={dataPopupOpen} onOpenChange={setDataPopupOpen}>
@@ -1232,7 +1232,7 @@ function KeyDetailsCard({
   const clubLogo = entry.player_club_image_url;
 
   const fmtMoney = (n: number | null | undefined, ccy: string | null | undefined): string => {
-    if (!n || !isFinite(n)) return "—";
+    if (!n || !isFinite(n)) return "-";
     const code = (ccy || "GBP").toUpperCase();
     try {
       return new Intl.NumberFormat("en-GB", { style: "currency", currency: code, maximumFractionDigits: 0 }).format(n);
@@ -1241,7 +1241,7 @@ function KeyDetailsCard({
     }
   };
   const fmtDate = (s: string | null | undefined): string => {
-    if (!s) return "—";
+    if (!s) return "-";
     const d = new Date(s);
     if (isNaN(d.getTime())) return s;
     return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
@@ -1257,7 +1257,7 @@ function KeyDetailsCard({
     const TextTile = ({ value, label }: { value: string | React.ReactNode; label: string }) => (
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
         <div className="h-12 flex items-center justify-center px-1">
-          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "—"}</span>
+          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "-"}</span>
         </div>
         <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/60 leading-tight">{label}</p>
       </div>
@@ -1266,7 +1266,7 @@ function KeyDetailsCard({
     switch (item.kind) {
       case "club":
         return (
-          <TileShell key={idx} label={player?.club ?? "—"}>
+          <TileShell key={idx} label={player?.club ?? "-"}>
             {clubLogo ? (
               <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
             ) : (
@@ -1278,14 +1278,14 @@ function KeyDetailsCard({
         return (
           <div key={idx} className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
             <div className="h-12 flex items-center justify-center">
-              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "-"}</span>
             </div>
             <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{T("key.yearsOld", "Years old")}</p>
           </div>
         );
       case "nationality":
         return (
-          <TileShell key={idx} label={player?.nationality ?? "—"}>
+          <TileShell key={idx} label={player?.nationality ?? "-"}>
             {nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1295,7 +1295,7 @@ function KeyDetailsCard({
         );
       case "league":
         return (
-          <TileShell key={idx} label={player?.league ?? "—"}>
+          <TileShell key={idx} label={player?.league ?? "-"}>
             {leagueFlag ? (
               <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1304,7 +1304,7 @@ function KeyDetailsCard({
           </TileShell>
         );
       case "position":
-        return <TextTile key={idx} value={player?.position ?? "—"} label={T("key.position", "Position")} />;
+        return <TextTile key={idx} value={player?.position ?? "-"} label={T("key.position", "Position")} />;
       case "contract_expiry":
         return <TextTile key={idx} value={fmtDate(player?.contract_end_date)} label={T("key.contractExpiry", "Contract expiry")} />;
       case "current_salary":
@@ -1398,7 +1398,7 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
     return isNaN(n) ? null : n;
   };
   const fmt = (v: number | null, k: string) =>
-    v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+    v == null ? "-" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
   const items = (cfg.stats || []).map((s: any) => {
     const key = typeof s === "string" ? s : s.key;
     const label = humanize(key);
@@ -1546,7 +1546,7 @@ function MatchByMatchCard({
   );
 
   const fmtVal = (raw: any, key: string): string => {
-    if (raw === null || raw === undefined || raw === "") return "—";
+    if (raw === null || raw === undefined || raw === "") return "-";
     const n = Number(raw);
     if (!Number.isFinite(n)) return String(raw);
     if (/_pct$|_percentage$/i.test(key)) return `${n.toFixed(0)}%`;
@@ -1602,7 +1602,7 @@ function MatchByMatchCard({
                     <tr key={a.id} className="border-t border-white/5 hover:bg-white/[0.02]">
                       <td className="px-2.5 py-1.5 sticky left-0 bg-black/80 backdrop-blur z-10">
                         <div className="text-white/90 whitespace-nowrap">
-                          {a.opponent || "—"}
+                          {a.opponent || "-"}
                         </div>
                         <div className="text-white/40 text-[10px] whitespace-nowrap">
                           {fmtDate(a.analysis_date)}
