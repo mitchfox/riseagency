@@ -2153,6 +2153,64 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
           <section>
             <div className="flex items-center gap-2 mb-2">
+              <FileEdit className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Proposal auto-defaults</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              What every new outreach starts with before you tweak it. Per-player defaults still override these, and you can change any of it on the individual outreach.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-semibold">Season data display</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+                  How the Video &amp; Data tile opens. Popup keeps clubs on the proposal in a wide in-page sheet. Link sends them out to the player's Stars page.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { v: 'popup' as const, label: 'In-page popup' },
+                    { v: 'link' as const, label: 'Link to Stars profile' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => setDefaultSeasonDataMode(opt.v)}
+                      className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${defaultSeasonDataMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Video carousel — what auto-shows</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+                  Which of the player's Stars highlights pre-fill the hero carousel before you manually pick.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { v: 'all' as const, label: 'All Stars highlights' },
+                    { v: 'first' as const, label: 'First highlight only' },
+                    { v: 'custom' as const, label: 'None — pick manually' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => setDefaultVideoMode(opt.v)}
+                      className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${defaultVideoMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end mt-3">
+              <Button onClick={saveWhatsapp} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
               <Copy className="h-4 w-4 text-[#cbb96b]" />
               <h3 className="text-sm font-semibold">Quick copy templates</h3>
             </div>
