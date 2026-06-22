@@ -363,10 +363,10 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'overview';
+    let defaultSection = 'teamperformance';
     if (permissionManagedRole) {
       const viewable = getViewableSections();
-      const firstViewable = viewable.find(s => s !== 'overview' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
+      const firstViewable = viewable.find(s => s !== 'overview' && s !== 'teamperformance' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
         || viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
       if (firstViewable) defaultSection = firstViewable;
     }
