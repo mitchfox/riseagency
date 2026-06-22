@@ -415,6 +415,142 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     return `${r >= 0 ? "+" : "−"}${a.toFixed(2)} ${strength}`;
   };
 
+  // ----- Visual helpers (inline SVG) -----
+  const RISE_GOLD = "#EBC773";
+  const POS = "#34d399";
+  const NEG = "#fb7185";
+
+  const Sparkline = ({
+    values,
+    width = 96,
+    height = 24,
+    fill = true,
+  }: {
+    values: (number | null)[];
+    width?: number;
+    height?: number;
+    fill?: boolean;
+  }) => {
+    const nums = values.filter((v): v is number => v != null);
+    if (nums.length < 2) {
+      return (
+        <svg width={width} height={height} className="opacity-40">
+          <line x1={0} y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" strokeWidth={1} strokeDasharray="2 3" />
+        </svg>
+      );
+    }
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const range = max - min || 1;
+    const step = values.length > 1 ? width / (values.length - 1) : width;
+    const pts = values
+      .map((v, i) => (v == null ? null : [i * step, height - ((v - min) / range) * (height - 2) - 1] as [number, number]))
+      .filter((p): p is [number, number] => p != null);
+    const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    const areaD = `${pathD} L${pts[pts.length - 1][0].toFixed(1)},${height} L${pts[0][0].toFixed(1)},${height} Z`;
+    const last = pts[pts.length - 1];
+    const first = pts[0];
+    const color = last[1] <= first[1] ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        {fill && <path d={areaD} fill={color} opacity={0.12} />}
+        <path d={pathD} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={last[0]} cy={last[1]} r={2} fill={color} />
+      </svg>
+    );
+  };
+
+  const CorrBar = ({ r, width = 120, height = 8 }: { r: number; width?: number; height?: number }) => {
+    const mid = width / 2;
+    const w = Math.min(1, Math.abs(r)) * (width / 2 - 2);
+    const color = r >= 0 ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={height / 2 - 1} width={width} height={2} fill="currentColor" opacity={0.18} />
+        <rect x={r >= 0 ? mid : mid - w} y={0} width={w} height={height} rx={2} fill={color} />
+        <rect x={mid - 0.5} y={-2} width={1} height={height + 4} fill="currentColor" opacity={0.45} />
+      </svg>
+    );
+  };
+
+  const ConsistencyStrip = ({
+    values,
+    width = 150,
+    height = 30,
+  }: {
+    values: (number | null)[];
+    width?: number;
+    height?: number;
+  }) => {
+    const nums = values.filter((v): v is number => v != null);
+    if (nums.length < 2) return null;
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const range = max - min || 1;
+    const m = mean(nums);
+    const s = std(nums);
+    const yFor = (v: number) => height - ((v - min) / range) * (height - 6) - 3;
+    const yMean = yFor(m);
+    const yLow = yFor(Math.max(min, m - s));
+    const yHigh = yFor(Math.min(max, m + s));
+    const step = values.length > 1 ? width / (values.length - 1) : width;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={yHigh} width={width} height={Math.max(1, yLow - yHigh)} fill={RISE_GOLD} opacity={0.14} />
+        <line x1={0} y1={yMean} x2={width} y2={yMean} stroke={RISE_GOLD} strokeWidth={1} strokeDasharray="3 3" />
+        {values.map((v, i) => (v == null ? null : <circle key={i} cx={i * step} cy={yFor(v)} r={2} fill="currentColor" opacity={0.85} />))}
+      </svg>
+    );
+  };
+
+  const MiniScatter = ({
+    xs,
+    ys,
+    width = 140,
+    height = 56,
+  }: {
+    xs: (number | null)[];
+    ys: (number | null)[];
+    width?: number;
+    height?: number;
+  }) => {
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < xs.length; i++) {
+      if (xs[i] != null && ys[i] != null) pairs.push([xs[i] as number, ys[i] as number]);
+    }
+    if (pairs.length < 3) return null;
+    const xVals = pairs.map((p) => p[0]);
+    const yVals = pairs.map((p) => p[1]);
+    const minX = Math.min(...xVals);
+    const maxX = Math.max(...xVals);
+    const minY = Math.min(...yVals);
+    const maxY = Math.max(...yVals);
+    const rX = maxX - minX || 1;
+    const rY = maxY - minY || 1;
+    const px = (v: number) => 4 + ((v - minX) / rX) * (width - 8);
+    const py = (v: number) => height - 4 - ((v - minY) / rY) * (height - 8);
+    const mx = mean(xVals);
+    const my = mean(yVals);
+    let num = 0;
+    let den = 0;
+    for (const [x, y] of pairs) {
+      num += (x - mx) * (y - my);
+      den += (x - mx) ** 2;
+    }
+    const slopeXY = den === 0 ? 0 : num / den;
+    const intercept = my - slopeXY * mx;
+    const lineColor = slopeXY >= 0 ? POS : NEG;
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <rect x={0} y={0} width={width} height={height} fill="currentColor" opacity={0.05} rx={3} />
+        <line x1={px(minX)} y1={py(slopeXY * minX + intercept)} x2={px(maxX)} y2={py(slopeXY * maxX + intercept)} stroke={lineColor} strokeWidth={1.2} opacity={0.85} />
+        {pairs.map(([x, y], i) => (
+          <circle key={i} cx={px(x)} cy={py(y)} r={1.8} fill={RISE_GOLD} opacity={0.9} />
+        ))}
+      </svg>
+    );
+  };
+
   return (
     <div className="rounded-lg border-2 border-[#EBC773]/60 bg-card p-4 space-y-4">
       <div>
