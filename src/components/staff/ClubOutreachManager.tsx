@@ -1905,7 +1905,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
   const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
-  const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
