@@ -410,7 +410,7 @@ export const StaffAccountManagement = () => {
                   { key: "leadership", label: "Leadership & Core", roles: ["admin", "staff", "member"] },
                   { key: "performance", label: "Performance & Data", roles: ["analyst", "stats_updater"] },
                   { key: "marketing", label: "Marketing & Content", roles: ["marketeer", "marketing_gallery"] },
-                  { key: "network", label: "Network & Partners", roles: ["network_collaborator"] },
+                  { key: "network", label: "Network & Partners", roles: ["network_collaborator", "table_editor"] },
                 ];
                 const known = new Set(CATEGORIES.flatMap((c) => c.roles));
                 const otherAccounts = existingAccounts.filter((a) => !known.has(a.role));
