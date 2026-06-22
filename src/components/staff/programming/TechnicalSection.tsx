@@ -12,6 +12,7 @@ import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
 import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
+import { Label } from "@/components/ui/label";
 
 interface Program {
   id: string;
@@ -22,6 +23,14 @@ interface Program {
   is_current: boolean;
   display_order: number;
 }
+
+const weeksBetween = (start: string | null, end: string | null) => {
+  if (!start || !end) return null;
+  const s = new Date(start + "T00:00:00Z").getTime();
+  const e = new Date(end + "T00:00:00Z").getTime();
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return null;
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24 * 7)));
+};
 
 export const TechnicalSection = () => {
   const [players, setPlayers] = useState<any[]>([]);
