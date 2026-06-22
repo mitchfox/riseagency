@@ -327,6 +327,88 @@ export const TeamPerformance = () => {
         </div>
       </Card>
 
+      {/* Weekly Box Score */}
+      <Card className="p-4 sm:p-6">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Weekly Box Score</h3>
+            <Badge variant="outline" className="text-[10px]">Last 7 days · vs. The Market</Badge>
+          </div>
+          <div className={`text-xs font-semibold ${performanceTier(boxScore.team.PTS).tone}`}>
+            {performanceTier(boxScore.team.PTS).label}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 mb-4">
+          {BOX_KEYS.map(k => (
+            <div key={k} className="p-2.5 rounded-md bg-muted/40 text-center" title={BOX_META[k].meaning}>
+              <div className={`text-xl font-bold tabular-nums ${BOX_META[k].tone}`}>{boxScore.team[k]}</div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{BOX_META[k].label}</div>
+            </div>
+          ))}
+          <div className="p-2.5 rounded-md bg-primary/10 text-center" title="Points + Assists + Rebounds + Steals + Blocks − Turnovers">
+            <div className="text-xl font-bold tabular-nums text-primary">
+              {boxScore.team.plusMinus >= 0 ? "+" : ""}{boxScore.team.plusMinus}
+            </div>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">+/−</div>
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground mb-3">
+          FG%: {boxScore.fgPct}% from {boxScore.attempts} scoring attempts
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                <th className="text-left font-medium py-2">Starter</th>
+                {BOX_KEYS.map(k => (
+                  <th key={k} className="text-right font-medium py-2 px-2">{k}</th>
+                ))}
+                <th className="text-right font-medium py-2 px-2">+/−</th>
+              </tr>
+            </thead>
+            <tbody>
+              {STARTERS.map(s => {
+                const line = boxScore.perStarter.get(s.name)!;
+                return (
+                  <tr key={s.name} className="border-b border-border/40 last:border-0">
+                    <td className="py-2">
+                      <button onClick={() => setOpen(s)} className="text-left hover:text-primary transition-colors">
+                        <span className="font-medium text-foreground">{s.name}</span>
+                        <span className="text-[10px] text-muted-foreground ml-1.5">{s.abbr}</span>
+                        {s.floorGeneral && (
+                          <span className="ml-1.5 inline-flex items-center gap-0.5 text-[9px] uppercase tracking-wide text-primary">
+                            <Star className="h-2.5 w-2.5 fill-primary" /> FG
+                          </span>
+                        )}
+                      </button>
+                    </td>
+                    {BOX_KEYS.map(k => (
+                      <td key={k} className="text-right tabular-nums py-2 px-2 text-foreground">{line[k]}</td>
+                    ))}
+                    <td className={`text-right tabular-nums py-2 px-2 font-semibold ${line.plusMinus >= 0 ? "text-primary" : "text-red-400"}`}>
+                      {line.plusMinus >= 0 ? "+" : ""}{line.plusMinus}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-3 text-[11px] text-muted-foreground">
+          {BOX_KEYS.map(k => (
+            <div key={k} className="flex gap-1.5">
+              <span className={`font-semibold ${BOX_META[k].tone}`}>{k}</span>
+              <span>{BOX_META[k].meaning}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       {/* Leaderboard */}
       <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
