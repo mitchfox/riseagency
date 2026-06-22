@@ -1,55 +1,62 @@
-## What I got wrong
+## What changes
 
-- Built the wrong "alternate" feature on the proposal: a strip of mini player cards (pulling other outreach links + their player photos). That's the "AI images of other players" you've been telling me to kill. Those cards have to go.
-- Removed the season-mode and season-id from the per-player settings panel after you told me the per-player stuff was perfect. Putting them back exactly as they were.
+### 1. Per-player defaults — what we save
 
-## What I will change
+Extend `club_outreach_player_defaults` so each player can carry defaults for everything that's currently set per outreach. New columns:
 
-### 1. Club outreach proposal page (`src/pages/ClubOutreachProposal.tsx`)
+- `default_show_form` (bool)
+- `default_show_in_numbers` (bool)
+- `default_show_season_stats` (bool)
+- `default_show_strengths` (bool)
+- `default_section_order` (jsonb — array of section keys)
 
-Delete the entire "Alternate Profiles" mini-card strip (the section that renders `data.alternate_profiles.map(...)` with player photo / name / position / age / club tiles linking to other proposals).
+These join the existing per-player default columns: `default_selected_video_ids`, `default_season_id`, `default_season_data_mode`, `default_key_details`, `default_fit_recommendation`, `default_position`, `default_alternate_profile_link_ids`, `default_alternate_profiles_blurb`, `highlights_url`, `stars_url_override`, `proof_of_representation_path`.
 
-In its place, add one wide thin card just above the closing contact CTAs:
+### 2. Per-player defaults — settings UI
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│ ALTERNATE OPTIONS                                            │
-│ <free-text body — whatever the staffer wrote in the editor>  │
-└──────────────────────────────────────────────────────────────┘
-```
+In the Club Outreach Settings dialog, the per-player block gains:
 
-- Full max-width of the proposal column, thin vertical padding (matches the slim hairline cards already on the page).
-- Heading: "Alternate Options" in the same gold eyebrow style used elsewhere on the proposal.
-- Body: renders the existing `alternate_profiles_blurb` field as plain text (whitespace preserved). No images. No links. No cards. No player references unless the staffer types them in.
-- Card only appears when the blurb is non-empty.
+- "Show on proposal" toggles (Form / In Numbers / Season Stats / Strengths)
+- "Default season to show" + "Season data display" (already partly there — keep)
+- "Videos to include by default" — same picker as the outreach dialog, sourced from the player's Stars highlights
+- "Default key details tiles" — same `KeyDetailsBuilder` used on the outreach
+- "Default section order" — same `SectionOrderBuilder` used on the outreach
 
-### 2. Club outreach editor (`src/components/staff/ClubOutreachManager.tsx`)
+One "Save player defaults" button covers everything.
 
-In the per-outreach edit dialog, the "Alternate profiles" section becomes a simple block:
+### 3. New outreach dialog — prefill + collapse
 
-- Label: "Alternate Options (optional)"
-- Helper: "A wide thin card at the bottom of the proposal where you add extra detail — e.g. free-transfer alternatives, loan options, budget profiles."
-- One `Textarea` bound to `alternate_profiles_blurb` (already exists).
+When a player is added to a new outreach (and it's the primary player), prefill from their defaults:
 
-Delete the "attach other outreach links" picker, the selected/available link lists, the "Save defaults for this player" button tied to link IDs, and all `altLinkIds` state and save paths.
+- show_form / show_in_numbers / show_season_stats / show_strengths
+- selected_video_ids
+- season_id / season_data_mode
+- key_details (only if outreach doesn't already have custom ones)
+- section_order
 
-Keep the column `alternate_profile_link_ids` in the DB untouched — just stop reading or writing it from the UI. No migration needed.
+Existing outreaches don't get overwritten — defaults only fill in when the field is empty / at its initial state.
 
-### 3. Per-player settings panel (same file)
+Then group the editor into collapsed sections (shadcn `Accordion`, all closed by default) so the dialog is short and you only open what you want to override. Groups:
 
-Restore the two blocks I removed, exactly as they were:
+1. Basics — club / agent target, players, language, prepared for, mandate
+2. Show on proposal — the four toggles
+3. Videos to include
+4. Season data — mode + season selector
+5. Key details tiles
+6. Section order
+7. Alternate Options (blurb + linked profiles)
 
-- "Default season data display" pill group (Use global default / In-page popup / Link to Stars profile) bound to `playerDefaultSeasonMode`.
-- "Default season to show" select bound to `playerDefaultSeasonId`, populated from `player_seasons` for the selected player.
+Header strip stays visible; everything below collapses.
 
-Re-add the state (`playerDefaultSeasonMode`, `playerDefaultSeasonId`, `playerSeasonsForDefaults`), the loader effect, and the two fields in the `saveDefaults` upsert (`default_season_data_mode`, `default_season_id`).
+### 4. Out of scope
 
-### 4. Edge function (`supabase/functions/get-club-outreach/index.ts`)
+- No changes to the public proposal page rendering — same fields, just better defaults flowing in.
+- Multi-player outreaches: defaults still pull from the primary (first) player only, same as today.
 
-No code path change required — the `alternate_profiles` array it returns will just be ignored by the new proposal UI. Leave it alone to avoid risk to other consumers.
+## Technical notes
 
-## What I will NOT touch
-
-- The "Players we've worked with" slider on /representation and /rise-with-us — that one pulls real photos from the `players` table and is staying.
-- Anything else in the per-player panel.
-- Any database schema.
+- Migration: `ALTER TABLE public.club_outreach_player_defaults ADD COLUMN ...` for the five new columns. Table already has grants and policies — no new grants needed.
+- `OutreachDialog` already loads the player defaults row in two places (lines ~750 and ~858 of `ClubOutreachManager.tsx`). Extend those two `select(...)` calls and apply the new defaults into local state when the primary player is set and the corresponding outreach field is still at its initial empty value.
+- `saveDefaults` in `SettingsDialog` (~line 2147) gets the new columns added to its upsert.
+- `KeyDetailsBuilder` and `SectionOrderBuilder` are already exported in the same file — reuse directly in the settings panel.
+- Wrap the existing editor blocks in `Accordion` / `AccordionItem` / `AccordionTrigger` / `AccordionContent` from `@/components/ui/accordion`. Default `value=[]` so all sections start collapsed.
