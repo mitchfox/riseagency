@@ -97,12 +97,26 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         .single();
       if (pErr) toast.error(pErr.message);
       const ids: string[] = (((prog as any)?.linked_week_ids) || []) as string[];
-      setProgrammeRange({
+      const nextRange = {
         start: (prog as any)?.start_date ?? null,
         end: (prog as any)?.end_date ?? null,
-      });
-      setLinkedIds(ids);
-      const ordered = ids
+      };
+      const rangeIds = nextRange.start && nextRange.end
+        ? allRows
+            .filter(w => weekOverlapsRange(w.week_start_date, nextRange.start!, nextRange.end!))
+            .map(w => w.id)
+        : [];
+      const displayIds = Array.from(new Set([...ids, ...rangeIds]));
+      const missingRangeIds = displayIds.filter(id => !ids.includes(id));
+      if (missingRangeIds.length) {
+        await supabase
+          .from(programmeLink.table as any)
+          .update({ linked_week_ids: displayIds } as any)
+          .eq("id", programmeLink.programmeId);
+      }
+      setProgrammeRange(nextRange);
+      setLinkedIds(displayIds);
+      const ordered = displayIds
         .map(id => allRows.find(w => w.id === id))
         .filter(Boolean) as Week[];
       setWeeks(ordered);
