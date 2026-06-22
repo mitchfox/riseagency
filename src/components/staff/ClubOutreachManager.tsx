@@ -95,6 +95,7 @@ interface OutreachRow {
   selected_video_ids?: string[] | null;
   alternate_profile_link_ids?: string[] | null;
   alternate_profiles_blurb?: string | null;
+  season_id?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
