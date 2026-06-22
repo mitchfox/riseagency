@@ -28,6 +28,17 @@ const weekOverlapsRange = (weekStart: string | null, rangeStart: string, rangeEn
   return weekStart <= rangeEnd && weekEnd >= rangeStart;
 };
 
+const legacySessionToSlot = (programmeId: string, value: unknown): Slot | null => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const normalised = raw.toLowerCase().replace(/\s+/g, "").replace(/_/g, "-");
+  const pre = normalised.match(/^pre-?([a-h])$/i);
+  const main = normalised.match(/^(session)?([a-h])$/i);
+  if (pre) return { refId: `sps:${programmeId}:preSession${pre[1].toUpperCase()}` };
+  if (main) return { refId: `sps:${programmeId}:session${main[2].toUpperCase()}` };
+  return { free_text: raw };
+};
+
 interface Slot {
   refId?: string;
   free_text?: string;
