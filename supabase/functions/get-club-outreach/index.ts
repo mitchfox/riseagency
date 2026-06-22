@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
         const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
         // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
-        let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null }[] = [];
+        let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
         let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
