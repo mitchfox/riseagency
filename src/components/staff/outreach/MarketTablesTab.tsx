@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,31 +34,80 @@ interface Entry {
 
 const MARKET_TABLE_KEY = "summer-26";
 
-const TD_RE = /(technical director|director of football|sporting director|football director|managing director professional football)/i;
+const TD_RE = /(technical director|director of football|sporting director|sports director|football director|managing director professional football)/i;
 const CS_RE = /(chief scout|head of recruitment|head scout|scout director)/i;
+
+const GENERIC_CLUB_WORDS = new Set([
+  "club", "football", "futbol", "futebol", "calcio", "fotbal", "spor", "sport", "sports",
+  "soccer", "team", "united", "county", "sporting", "royal", "real", "fotboll",
+  "the", "and",
+]);
 
 const norm = (s: string | null | undefined) =>
   (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const clubTokens = (clubName: string): string[] =>
+  clubName
+    .split(/\s+/)
+    .map((w) => w.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((w) => w.length >= 4 && !GENERIC_CLUB_WORDS.has(w));
+
+const contactMatchesClub = (
+  contact: ContactRow,
+  clubName: string,
+  country: string | null,
+): boolean => {
+  if (country && contact.country && contact.country !== country) return false;
+  const target = norm(clubName);
+  if (!target) return false;
+  const cn = norm(contact.club_name);
+  if (cn && (cn === target || cn.includes(target) || target.includes(cn))) return true;
+  // Fallback: tokenised search inside the contact name (many rows embed the club).
+  const tokens = clubTokens(clubName);
+  if (tokens.length === 0) return false;
+  const haystack = (contact.name ?? "").toLowerCase();
+  return tokens.some((t) => haystack.includes(t));
+};
 
 const matchContactForClub = (
   contacts: ContactRow[],
   clubName: string,
   country: string | null,
   re: RegExp,
-): ContactRow | null => {
-  const target = norm(clubName);
-  if (!target) return null;
-  return (
-    contacts.find((c) => {
-      if (!c.position || !re.test(c.position)) return false;
-      const cn = norm(c.club_name);
-      if (!cn) return false;
-      if (cn === target) return true;
-      // looser containment match (e.g. "FC Porto" vs "Porto")
-      return cn.includes(target) || target.includes(cn);
-    }) ?? null
-  );
-};
+): ContactRow | null =>
+  contacts.find(
+    (c) => c.position && re.test(c.position) && contactMatchesClub(c, clubName, country),
+  ) ?? null;
+
+const additionalContactsForClub = (
+  contacts: ContactRow[],
+  clubName: string,
+  country: string | null,
+  excludeIds: Set<string>,
+): ContactRow[] =>
+  contacts
+    .filter((c) => {
+      if (excludeIds.has(c.id)) return false;
+      if (!contactMatchesClub(c, clubName, country)) return false;
+      if (c.position && TD_RE.test(c.position)) return false;
+      if (c.position && CS_RE.test(c.position)) return false;
+      if (c.position && /\b(player|agent)\b/i.test(c.position)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const order = (p: string | null) => {
+        const s = (p ?? "").toLowerCase();
+        if (/president|chair/.test(s)) return 1;
+        if (/ceo|managing director/.test(s)) return 2;
+        if (/director|teamchef|\bchef\b/.test(s)) return 3;
+        if (/scout|recruit/.test(s)) return 4;
+        if (/coach|trainer|manager/.test(s)) return 5;
+        return 9;
+      };
+      const d = order(a.position) - order(b.position);
+      if (d !== 0) return d;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
@@ -80,6 +129,14 @@ export default function MarketTablesTab() {
   const [editing, setEditing] = useState<ContactEditState | null>(null);
   const [savingContact, setSavingContact] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (clubId: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(clubId) ? next.delete(clubId) : next.add(clubId);
+      return next;
+    });
 
   useEffect(() => {
     (async () => {
@@ -312,6 +369,7 @@ export default function MarketTablesTab() {
         <table className="w-full text-sm">
           <thead className="text-[11px] uppercase tracking-wider text-muted-foreground bg-muted/30">
             <tr>
+              <th className="w-6 px-1 py-2" />
               <th className="text-left px-3 py-2 font-medium">Club</th>
               <th className="text-left px-3 py-2 font-medium">Country / League</th>
               <th className="text-left px-3 py-2 font-medium">Technical Director</th>
@@ -320,14 +378,30 @@ export default function MarketTablesTab() {
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={4} className="px-3 py-6 text-center text-muted-foreground text-xs">
+              <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground text-xs">
                 No clubs match. Strategies need clubs added before they show here.
               </td></tr>
             )}
             {filtered.map((club) => {
               const { tdContact, csContact, tdName, csName } = getValues(club);
+              const exclude = new Set<string>();
+              if (tdContact) exclude.add(tdContact.id);
+              if (csContact) exclude.add(csContact.id);
+              const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
+              const isOpen = expanded.has(club.id);
               return (
-                <tr key={club.id} className="border-t border-border/40 hover:bg-muted/20">
+                <Fragment key={club.id}>
+                <tr className="border-t border-border/40 hover:bg-muted/20">
+                  <td className="px-1 py-2 align-top">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(club.id)}
+                      title={isOpen ? "Hide additional contacts" : `Additional contacts${extras.length ? ` (${extras.length})` : ""}`}
+                      className="text-muted-foreground hover:text-white p-1"
+                    >
+                      <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                    </button>
+                  </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2 min-w-[180px]">
                       {club.image_url ? (
@@ -336,6 +410,17 @@ export default function MarketTablesTab() {
                         <div className="h-6 w-6 rounded-sm bg-muted" />
                       )}
                       <span className="text-white font-medium">{club.club_name}</span>
+                      {extras.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(club.id)}
+                          className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white border border-border/60 rounded-full px-1.5 py-0.5"
+                          title="Additional contacts"
+                        >
+                          <Users className="h-3 w-3" />
+                          {extras.length}
+                        </button>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-2 text-muted-foreground text-xs">
@@ -396,6 +481,34 @@ export default function MarketTablesTab() {
                     </div>
                   </td>
                 </tr>
+                {isOpen && (
+                  <tr className="border-t border-border/40 bg-muted/10">
+                    <td />
+                    <td colSpan={4} className="px-3 py-3">
+                      {extras.length === 0 ? (
+                        <div className="text-xs text-muted-foreground">No additional contacts in the network for this club.</div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                            Additional contacts
+                          </div>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
+                            {extras.map((c) => (
+                              <li key={c.id} className="flex items-center gap-2 text-xs">
+                                <span className="text-white">{c.name}</span>
+                                {c.position && (
+                                  <span className="text-muted-foreground">· {c.position}</span>
+                                )}
+                                {renderContactLinks(c)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>
