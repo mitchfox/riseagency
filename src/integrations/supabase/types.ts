@@ -9142,6 +9142,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_view_as_log: {
+        Row: {
+          admin_email: string | null
+          admin_user_id: string
+          created_at: string
+          id: string
+          reason: string
+          target_email: string | null
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_email?: string | null
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          target_email?: string | null
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_email?: string | null
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          target_email?: string | null
+          target_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       staff_web_push_subscriptions: {
         Row: {
           created_at: string | null
