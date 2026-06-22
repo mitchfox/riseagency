@@ -224,6 +224,33 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
             </div>
           </div>
           <div className="rounded-lg border p-3 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Label className="font-medium">Show scouting database card</Label>
+                <p className="text-xs text-muted-foreground">
+                  Drops a mock of our internal player database into their Rise With Us page — their row highlighted, others around them blurred. Adds a "we've been tracking you" feel.
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Current fit score: <span className="font-mono">{playerFitScore != null ? Math.round(playerFitScore) : "—"}</span>
+                  {" · "}Auto threshold: <span className="font-mono">60</span>
+                </p>
+              </div>
+              <Select
+                value={showDatabaseCard === null ? "auto" : showDatabaseCard ? "on" : "off"}
+                onValueChange={(v) => setShowDatabaseCard(v === "auto" ? null : v === "on")}
+              >
+                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    Auto {((playerFitScore ?? 0) >= 60) ? "(showing)" : "(hidden)"}
+                  </SelectItem>
+                  <SelectItem value="on">Always show</SelectItem>
+                  <SelectItem value="off">Hide</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="rounded-lg border p-3 space-y-3">
             <div>
               <Label className="font-medium">Intro media</Label>
               <p className="text-xs text-muted-foreground">
