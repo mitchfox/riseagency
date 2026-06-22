@@ -2233,7 +2233,6 @@ Example format:
                   <ProgrammingWeeksEditor
                     playerId={playerId}
                     programmeLink={{ table: "player_programs", programmeId: selectedProgram.id }}
-                    hideProgramDateControls
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">Select a programme to manage its weeks.</p>
