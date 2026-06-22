@@ -983,3 +983,33 @@ a:hover .hover-text-letter-clone,
   pointer-events: none;
 }
 .shine-on-hover:hover::after { transform: translateX(120%); }
+
+/* ============== RISE SLANT CARD ==============
+ * Shared corner-slant utility so the Rise With Us hub and the
+ * RequestRepresentation hub read as part of the same wedge motif
+ * without having to swap every container for the SlantedBox
+ * component. Apply alongside existing border/background classes:
+ *   <div class="rise-slant-card border border-border/60 bg-card/55 p-4">
+ * Any inherited border-radius is superseded by the clip path. */
+.rise-slant-card {
+  --rise-slant: 14px;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--rise-slant)) 0,
+    100% var(--rise-slant),
+    100% 100%,
+    var(--rise-slant) 100%,
+    0 calc(100% - var(--rise-slant))
+  );
+  -webkit-clip-path: polygon(
+    0 0,
+    calc(100% - var(--rise-slant)) 0,
+    100% var(--rise-slant),
+    100% 100%,
+    var(--rise-slant) 100%,
+    0 calc(100% - var(--rise-slant))
+  );
+}
+.rise-slant-card-sm { --rise-slant: 10px; }
+.rise-slant-card-lg { --rise-slant: 20px; }

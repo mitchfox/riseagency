@@ -5,7 +5,9 @@ import {
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
+  Trophy, CalendarClock,
 } from "lucide-react";
+import { widont } from "@/components/SlantedBox";
 import { SEO } from "@/components/SEO";
 import { RepresentationDialog } from "@/components/RepresentationDialog";
 import { Button } from "@/components/ui/button";
@@ -827,23 +829,87 @@ const RequestRepresentation = () => {
                      <span className="h-px flex-1 bg-primary/45" />
                    </div>
                   {/* Mission, in a contained glass plate */}
-                  <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                  <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
-                      className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
+                      className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
                       style={{
+                        textWrap: "pretty",
                         hyphens: "none",
                         WebkitHyphens: "none",
                         msHyphens: "none",
                         wordBreak: "normal",
                         overflowWrap: "normal",
-                      }}
+                      } as React.CSSProperties}
                     >
-                      {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                      {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
                     </p>
                   </div>
                 </div>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
               </header>
+
+              {/* Ballon d'Or vision — mirror of the dedicated card on the
+                  Rise With Us hub. Sits above the grouped tile sections
+                  so the ambition lands before the breakdown. */}
+              <div className="my-6 md:my-8">
+                <div
+                  className="relative overflow-hidden rise-slant-card-lg border border-border/60"
+                  style={solidBlackSectionStyle}
+                >
+                  <div className="pointer-events-none absolute inset-0">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.20),transparent_55%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,hsl(var(--gold)/0.12),transparent_60%)]" />
+                  </div>
+                  <div className="relative grid gap-5 px-5 py-6 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-7 md:px-8 md:py-8">
+                    <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/12 shadow-[0_0_36px_hsl(var(--gold)/0.30)] md:h-14 md:w-14">
+                        <Trophy className="h-6 w-6 text-primary md:h-7 md:w-7" />
+                      </div>
+                      <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+                        {t("vision.eyebrow", "Our vision")}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p
+                        className="font-bebas text-3xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-4xl lg:text-5xl"
+                        style={{ textShadow: "0 0 22px hsl(var(--gold)/0.35)", textWrap: "balance" } as React.CSSProperties}
+                      >
+                        {widont(t("vision.headline", "Why not you?"))}
+                      </p>
+                      <p
+                        className="mt-3 text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
+                        style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+                      >
+                        {widont(t(
+                          "vision.body_anon",
+                          "Our ambition is the very top of the game — Ballon d'Or, Team of the Year, World Cup winners. We pick a small group of players we genuinely believe can get there, and we back them all the way. If you have what it takes to work with us, there is no reason that group cannot include you.",
+                        ))}
+                      </p>
+                      <p
+                        className="mt-3 text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+                        style={{ textWrap: "balance" } as React.CSSProperties}
+                      >
+                        {widont(t(
+                          "vision.urgency",
+                          "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
+                        ))}
+                      </p>
+                    </div>
+                    <div className="flex md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowForm(true)}
+                        className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
+                        style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+                      >
+                        <CalendarClock className="h-4 w-4 text-primary" />
+                        <span>{t("vision.cta", "Set up our meeting")}</span>
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Grouped tile sections */}
               {GROUPS.map((g) => {
@@ -1086,7 +1152,7 @@ export const DetailView = ({
               const dmeta = DOMAIN_META[domain];
               const DIcon = dmeta.icon;
               return (
-                <div key={domain} className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
+                <div key={domain} className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.18em] ${dmeta.chip}`}>
                       <DIcon className="h-3 w-3" /> {translateDomainLabel(domain)}
@@ -1131,13 +1197,13 @@ export const DetailView = ({
           <TitlePlate icon={SIcon} title={t(sub.title, sub.title)} eyebrow={t(sub.blurb, sub.blurb)} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
-              <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
+              <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
                 {t(p, p)}
               </div>
             ))}
           </div>
           {performanceSub === "analysis" && (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 md:mt-6">
+            <div className="mt-4 overflow-hidden rise-slant-card border border-border/60 bg-card/40 md:mt-6">
               <div className="relative aspect-video w-full">
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
@@ -1157,7 +1223,7 @@ export const DetailView = ({
               href={withLang(CRISTIANO_REAL_MADRID_REPORT_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -1171,7 +1237,7 @@ export const DetailView = ({
               href={withLang(CRISTIANO_GETAFE_ANALYSIS_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Gauge className="h-4 w-4 text-primary" />
@@ -1203,7 +1269,7 @@ export const DetailView = ({
                   "noopener,noreferrer",
                 );
               }}
-              className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex w-full items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
@@ -1246,7 +1312,7 @@ export const DetailView = ({
                 <AccordionItem
                   key={idx}
                   value={`faq-${idx}`}
-                  className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
+                  className="rise-slant-card border border-border/60 bg-card/55 px-4 md:px-5"
                 >
                   <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
                     {t(faq.q, faq.q)}
@@ -1265,7 +1331,7 @@ export const DetailView = ({
           {activeCard === "scouting" && (
             <div className="space-y-4 md:space-y-6">
               {/* 1. Network intro — mirrors Players page wording. */}
-              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
+              <div className="rise-slant-card border border-border/60 bg-card/55 p-4 text-center md:p-6">
                 <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
                   {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
@@ -1278,7 +1344,7 @@ export const DetailView = ({
               </div>
 
               {/* 2. The same interactive map used on the Players page. */}
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
                 <div className="h-[640px] md:h-[760px] lg:h-[860px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
@@ -1291,7 +1357,7 @@ export const DetailView = ({
                   { n: "02", title: t("home.scouting_point_2_title", "Future-Focused Scouting"), desc: t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
                   { n: "03", title: t("home.scouting_point_3_title", "Complete Player Knowledge"), desc: t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
                 ].map((p) => (
-                  <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
+                  <div key={p.n} className="rise-slant-card border border-border/60 bg-card/30 p-5">
                     <div className="flex items-start gap-4">
                       <span className="font-bebas text-3xl text-primary/30 md:text-4xl">{p.n}</span>
                       <div>
@@ -1307,7 +1373,7 @@ export const DetailView = ({
 
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1352,7 +1418,7 @@ export const DetailView = ({
             <div className="space-y-4">
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1371,7 +1437,7 @@ export const DetailView = ({
                       key={sub.key}
                       type="button"
                       onClick={() => { scrollToTop(); setPerformanceSub(sub.key); }}
-                      className="group rounded-2xl border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
+                      className="group rise-slant-card border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
                     >
                       <div className="flex items-center gap-2">
                         <SIcon className="h-4 w-4 text-primary" />
@@ -1393,7 +1459,7 @@ export const DetailView = ({
             <div className="space-y-3">
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1402,7 +1468,7 @@ export const DetailView = ({
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary/85">
                 <Globe2 className="h-3.5 w-3.5" /> {t("representation.our_live_network", "Our live scouting network")}
               </div>
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
                 <div className="h-[420px] md:h-[600px]">
                   <ScoutingNetworkMap hideStats hideGridToggle />
                 </div>
@@ -1419,7 +1485,7 @@ export const DetailView = ({
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.24 }}
-                  className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
+                  className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
                 >
                   {point.startsWith("representation.") ? t(point, point) : point}
                 </motion.div>
