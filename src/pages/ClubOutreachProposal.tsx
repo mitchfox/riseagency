@@ -721,7 +721,14 @@ export default function ClubOutreachProposal() {
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
                 href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
-                onClick={data.link.season_data_mode === 'popup' ? () => setDataPopupOpen(true) : undefined}
+                onClick={
+                  data.link.season_data_mode === 'popup'
+                    ? () => {
+                        setInlineDataOpen(true);
+                        try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+                      }
+                    : undefined
+                }
                 icon={<Video className="h-6 w-6" />}
                 eyebrow="01"
                 title={tr("card.videoTitle", "Video & Data")}
