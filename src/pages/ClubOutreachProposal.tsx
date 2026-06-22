@@ -1007,6 +1007,42 @@ export default function ClubOutreachProposal() {
           </div>
         );
       })()}
+
+      {/* Season data popup — opens in place of navigating to the Stars
+          profile when season_data_mode === 'popup'. Wide sheet, scrolls
+          internally, surfaces Form / In Numbers / Season Stats together. */}
+      <Dialog open={dataPopupOpen} onOpenChange={setDataPopupOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto bg-black text-white border-[#cbb96b]/30">
+          <DialogHeader>
+            <DialogTitle className="text-[#cbb96b]">
+              {tr("card.videoTitle", "Video & Data")} · {current?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-2">
+            {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            )}
+            {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            )}
+            {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            )}
+            {current?.stars_url && (
+              <div className="flex justify-end pt-2">
+                <a
+                  href={current.stars_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+                >
+                  {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
