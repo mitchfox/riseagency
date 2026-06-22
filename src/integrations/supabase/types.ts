@@ -1311,7 +1311,12 @@ export type Database = {
           default_position: string | null
           default_season_data_mode: string | null
           default_season_id: string | null
+          default_section_order: Json | null
           default_selected_video_ids: string[]
+          default_show_form: boolean | null
+          default_show_in_numbers: boolean | null
+          default_show_season_stats: boolean | null
+          default_show_strengths: boolean | null
           highlights_url: string | null
           player_id: string
           proof_of_representation_path: string | null
@@ -1326,7 +1331,12 @@ export type Database = {
           default_position?: string | null
           default_season_data_mode?: string | null
           default_season_id?: string | null
+          default_section_order?: Json | null
           default_selected_video_ids?: string[]
+          default_show_form?: boolean | null
+          default_show_in_numbers?: boolean | null
+          default_show_season_stats?: boolean | null
+          default_show_strengths?: boolean | null
           highlights_url?: string | null
           player_id: string
           proof_of_representation_path?: string | null
@@ -1341,7 +1351,12 @@ export type Database = {
           default_position?: string | null
           default_season_data_mode?: string | null
           default_season_id?: string | null
+          default_section_order?: Json | null
           default_selected_video_ids?: string[]
+          default_show_form?: boolean | null
+          default_show_in_numbers?: boolean | null
+          default_show_season_stats?: boolean | null
+          default_show_strengths?: boolean | null
           highlights_url?: string | null
           player_id?: string
           proof_of_representation_path?: string | null

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
@@ -856,7 +857,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       if (!editing && selectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
-          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb")
+          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
@@ -876,6 +877,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
+        if (!cancelled) {
+          if (typeof defs?.default_show_form === 'boolean') setShowForm(defs.default_show_form);
+          if (typeof defs?.default_show_in_numbers === 'boolean') setShowInNumbers(defs.default_show_in_numbers);
+          if (typeof defs?.default_show_season_stats === 'boolean') setShowSeasonStats(defs.default_show_season_stats);
+          if (typeof defs?.default_show_strengths === 'boolean') setShowStrengths(defs.default_show_strengths);
+          if (Array.isArray(defs?.default_section_order) && defs.default_section_order.length > 0) {
+            setSectionOrder(normaliseSectionOrder(defs.default_section_order));
+          }
+          if (Array.isArray(defs?.default_key_details) && defs.default_key_details.length > 0) {
+            setKeyDetails(normaliseKeyDetails(defs.default_key_details));
+          }
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -1205,9 +1218,14 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Show on proposal</Label>
-              <p className="text-[11px] text-muted-foreground mt-1">Pull these sections through from the player's Stars profile.</p>
+            <p className="text-[11px] text-muted-foreground -mb-1">
+              The blocks below carry the primary player's saved defaults. Open one only if you need to override it for this outreach.
+            </p>
+            <Accordion type="multiple" className="space-y-2">
+            <AccordionItem value="show" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Show on proposal</AccordionTrigger>
+              <AccordionContent className="pb-3">
+              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from the player's Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
                   { v: showForm, set: setShowForm, label: "Form" },
@@ -1221,9 +1239,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </label>
                 ))}
               </div>
-            </div>
-            <div>
-              <Label>Season data — popup or link</Label>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="seasonmode" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season data — popup or link</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
                 Popup keeps clubs on the proposal in a wide in-page sheet. Link opens the player's Stars profile in a new tab.
               </p>
@@ -1266,9 +1286,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </button>
                 )}
               </div>
-            </div>
-            <div>
-              <Label>Season to show</Label>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="season" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season to show</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
                 Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
               </p>
@@ -1314,10 +1336,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </button>
                 )}
               </div>
-            </div>
+              </AccordionContent>
+            </AccordionItem>
             {primaryPlayerId && (
-              <div>
-                <Label>Videos to include (carousel)</Label>
+              <AccordionItem value="videos" className="border border-border rounded-md bg-background/40 px-3">
+                <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Videos to include (carousel)</AccordionTrigger>
+                <AccordionContent className="pb-3">
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Pick which of {playerById.get(primaryPlayerId)?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
                 </p>
@@ -1379,10 +1403,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     </div>
                   </>
                 )}
-              </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
-            <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
-              <Label>Alternate Options (optional)</Label>
+            <AccordionItem value="alt" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Alternate Options (optional)</AccordionTrigger>
+              <AccordionContent className="pb-3 space-y-2">
               <p className="text-[11px] text-muted-foreground">
                 A wide thin card at the bottom of the proposal where you add extra detail (e.g. free-transfer alternatives, loan options, budget profiles) and optionally link to other player profiles the club can switch to.
               </p>
@@ -1456,14 +1482,23 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </div>
                 )}
               </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
-
-            <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
-
-            <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
-
-            <div className="rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/[0.06] p-3">
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="keydetails" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Key detail tiles</AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="sectionorder" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Section order</AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="mandate" className="border border-[#cbb96b]/40 rounded-md bg-[#cbb96b]/[0.06] px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Mandate / suggested-to-agent</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
                 <div>
@@ -1585,7 +1620,10 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </div>
                 </div>
               )}
-            </div>
+              </AccordionContent>
+            </AccordionItem>
+            </Accordion>
+            <p className="text-[11px] text-muted-foreground">Club contact details live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
           </div>
         </div>
         <DialogFooter>
@@ -1968,6 +2006,14 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
   const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
+  const [playerDefaultShowForm, setPlayerDefaultShowForm] = useState<boolean>(false);
+  const [playerDefaultShowInNumbers, setPlayerDefaultShowInNumbers] = useState<boolean>(false);
+  const [playerDefaultShowSeasonStats, setPlayerDefaultShowSeasonStats] = useState<boolean>(false);
+  const [playerDefaultShowStrengths, setPlayerDefaultShowStrengths] = useState<boolean>(false);
+  const [playerDefaultKeyDetails, setPlayerDefaultKeyDetails] = useState<KeyDetailItem[]>(DEFAULT_KEY_DETAILS);
+  const [playerDefaultSectionOrder, setPlayerDefaultSectionOrder] = useState<ProposalSectionKey[]>(DEFAULT_SECTION_ORDER);
+  const [playerDefaultVideos, setPlayerDefaultVideos] = useState<{ id: string; name: string }[]>([]);
+  const [playerDefaultSelectedVideoIds, setPlayerDefaultSelectedVideoIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
@@ -2038,6 +2084,16 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       const sm = (data as any)?.default_season_data_mode;
       setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
       setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
+      setPlayerDefaultShowForm(!!(data as any)?.default_show_form);
+      setPlayerDefaultShowInNumbers(!!(data as any)?.default_show_in_numbers);
+      setPlayerDefaultShowSeasonStats(!!(data as any)?.default_show_season_stats);
+      setPlayerDefaultShowStrengths(!!(data as any)?.default_show_strengths);
+      const kd = (data as any)?.default_key_details;
+      setPlayerDefaultKeyDetails(Array.isArray(kd) && kd.length > 0 ? normaliseKeyDetails(kd) : DEFAULT_KEY_DETAILS);
+      const so = (data as any)?.default_section_order;
+      setPlayerDefaultSectionOrder(Array.isArray(so) && so.length > 0 ? normaliseSectionOrder(so) : DEFAULT_SECTION_ORDER);
+      const dv = (data as any)?.default_selected_video_ids;
+      setPlayerDefaultSelectedVideoIds(Array.isArray(dv) ? dv : []);
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
@@ -2045,6 +2101,21 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
       setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
+      // Load this player's highlights so we can offer the same video picker
+      // that lives inside the new-outreach dialog.
+      const { data: playerRow } = await supabase
+        .from("players")
+        .select("highlights")
+        .eq("id", selectedPlayerId)
+        .maybeSingle();
+      let h: any = (playerRow as any)?.highlights ?? null;
+      try { if (typeof h === "string") h = JSON.parse(h); } catch (_) { h = null; }
+      let pool: any[] = [];
+      if (Array.isArray(h)) pool = h;
+      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+      setPlayerDefaultVideos(pool
+        .filter((x: any) => x && (x.videoUrl || x.video_url))
+        .map((x: any) => ({ id: String(x.id ?? x.videoUrl ?? x.video_url), name: String(x.name ?? "Highlight") })));
     })();
   }, [selectedPlayerId]);
 
@@ -2155,6 +2226,13 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       default_position: playerDefaultPosition.trim() || null,
       default_season_data_mode: playerDefaultSeasonMode || null,
       default_season_id: playerDefaultSeasonId,
+      default_show_form: playerDefaultShowForm,
+      default_show_in_numbers: playerDefaultShowInNumbers,
+      default_show_season_stats: playerDefaultShowSeasonStats,
+      default_show_strengths: playerDefaultShowStrengths,
+      default_key_details: playerDefaultKeyDetails,
+      default_section_order: playerDefaultSectionOrder,
+      default_selected_video_ids: playerDefaultSelectedVideoIds,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2528,6 +2606,60 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                     <span>{uploading ? "Uploading…" : "Upload PDF"}</span>
                     <input type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProof(f); }} disabled={uploading} />
                   </label>
+                </div>
+                <div>
+                  <Label>Default — show on proposal</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Which sections pre-tick when this player is added to a new outreach.</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {[
+                      { v: playerDefaultShowForm, set: setPlayerDefaultShowForm, label: "Form" },
+                      { v: playerDefaultShowInNumbers, set: setPlayerDefaultShowInNumbers, label: "In Numbers" },
+                      { v: playerDefaultShowSeasonStats, set: setPlayerDefaultShowSeasonStats, label: "Season stats" },
+                      { v: playerDefaultShowStrengths, set: setPlayerDefaultShowStrengths, label: "Strengths / Play style" },
+                    ].map((opt) => (
+                      <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
+                        <Checkbox checked={opt.v} onCheckedChange={(c) => opt.set(!!c)} />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {playerDefaultVideos.length > 0 && (
+                  <div>
+                    <Label>Default — videos to include</Label>
+                    <p className="text-[11px] text-muted-foreground mt-1">Pre-ticks the highlights carousel. Leave all unticked to show every video.</p>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                      {playerDefaultVideos.map((v) => {
+                        const isOn = playerDefaultSelectedVideoIds.includes(v.id);
+                        return (
+                          <label key={v.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
+                            <Checkbox
+                              checked={isOn}
+                              onCheckedChange={(c) => {
+                                setPlayerDefaultSelectedVideoIds((prev) => c ? Array.from(new Set([...prev, v.id])) : prev.filter((id) => id !== v.id));
+                              }}
+                            />
+                            <span className="truncate">{v.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {playerDefaultSelectedVideoIds.length > 0 && (
+                      <button type="button" onClick={() => setPlayerDefaultSelectedVideoIds([])} className="mt-2 text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+                        Clear (show all)
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <Label>Default — key detail tiles</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the Key Details tiles on a new outreach for this player.</p>
+                  <KeyDetailsBuilder items={playerDefaultKeyDetails} onChange={setPlayerDefaultKeyDetails} />
+                </div>
+                <div>
+                  <Label>Default — section order</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the proposal section order for this player.</p>
+                  <SectionOrderBuilder order={playerDefaultSectionOrder} onChange={setPlayerDefaultSectionOrder} />
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={saveDefaults} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
