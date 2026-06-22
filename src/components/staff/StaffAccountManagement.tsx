@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users } from "lucide-react";
+import { UserPlus, Trash2, Users, ChevronDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RolePermissionsEditor } from "./RolePermissionsEditor";
 import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
 import { HighlightMakersManagement } from "./HighlightMakersManagement";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AvailableRole {
   role_key: string;
@@ -397,8 +398,38 @@ export const StaffAccountManagement = () => {
           ) : existingAccounts.length === 0 ? (
             <p className="text-muted-foreground">No staff accounts found</p>
           ) : (
-            <div className="space-y-2">
-              {existingAccounts.map((account) => (
+            <div className="space-y-3">
+              {(() => {
+                // Group existing accounts by category so each role family
+                // (leadership, performance, marketing, etc.) collapses into
+                // its own section instead of one long flat list.
+                const CATEGORIES: { key: string; label: string; roles: string[] }[] = [
+                  { key: "leadership", label: "Leadership & Core", roles: ["admin", "staff", "member"] },
+                  { key: "performance", label: "Performance & Data", roles: ["analyst", "stats_updater"] },
+                  { key: "marketing", label: "Marketing & Content", roles: ["marketeer", "marketing_gallery"] },
+                  { key: "network", label: "Network & Partners", roles: ["network_collaborator"] },
+                ];
+                const known = new Set(CATEGORIES.flatMap((c) => c.roles));
+                const otherAccounts = existingAccounts.filter((a) => !known.has(a.role));
+                const groups = CATEGORIES.map((cat) => ({
+                  ...cat,
+                  rows: existingAccounts.filter((a) => cat.roles.includes(a.role)),
+                })).filter((g) => g.rows.length > 0);
+                if (otherAccounts.length > 0) {
+                  groups.push({ key: "other", label: "Other", roles: [], rows: otherAccounts });
+                }
+                return groups.map((group) => (
+                  <Collapsible key={group.key} defaultOpen={false}>
+                    <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-lg border border-primary/20 bg-muted/30 px-4 py-3 text-left hover:bg-muted/50">
+                      <span className="font-semibold text-sm md:text-base">
+                        {group.label}
+                        <span className="ml-2 text-xs text-muted-foreground">({group.rows.length})</span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <div className="space-y-2">
+                        {group.rows.map((account) => (
                 <div 
                   key={account.user_id} 
                   className="p-3 md:p-4 border border-primary/20 rounded-lg bg-muted/30"
@@ -564,7 +595,26 @@ export const StaffAccountManagement = () => {
                     </AlertDialog>
                   </div>
                 </div>
-              ))}
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ));
+              })()}
+              {/* Highlights Makers grouped in as its own collapsible section
+                  so external clip editors live alongside the staff role groups. */}
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-lg border border-primary/20 bg-muted/30 px-4 py-3 text-left hover:bg-muted/50">
+                  <span className="font-semibold text-sm md:text-base">
+                    Highlights Makers
+                    <span className="ml-2 text-xs text-muted-foreground">External clip editors</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2">
+                  <HighlightMakersManagement isAdmin={isAdmin} />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           )}
         </CardContent>
@@ -727,13 +777,6 @@ export const StaffAccountManagement = () => {
       {assignmentUserId && (
         <StatsUpdaterAssignments userId={assignmentUserId} open={!!assignmentUserId} onOpenChange={(o) => !o && setAssignmentUserId(null)} />
       )}
-
-      {/* Highlights Makers (username-only external clip editors) */}
-      <Card>
-        <CardContent className="pt-6">
-          <HighlightMakersManagement isAdmin={isAdmin} />
-        </CardContent>
-      </Card>
     </div>
   );
 };
