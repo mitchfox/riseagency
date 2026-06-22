@@ -380,10 +380,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
