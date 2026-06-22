@@ -1592,6 +1592,8 @@ function MatchByMatchCard({
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
 }) {
+  const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
+  const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
   const categories = useMemo(
     () => getMetricCategoriesForPosition(position ?? undefined),
     [position],
@@ -1622,6 +1624,18 @@ function MatchByMatchCard({
     if (a?.fixture_stats && a.fixture_stats[key] != null) return a.fixture_stats[key];
     if (a?.striker_stats && a.striker_stats[key] != null) return a.striker_stats[key];
     return null;
+  };
+
+  const isStrong = (raw: any, key: string, mins: number | null): boolean => {
+    if (raw === null || raw === undefined || raw === "") return false;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return false;
+    const mk = normalizeStatKey(key);
+    if (!hasThresholds(mk)) return false;
+    // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
+    const isPct = /_pct$|_percentage$/i.test(key);
+    const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
+    return STRONG_GRADES.has(getGradeForScore(mk, scaled).grade);
   };
 
   const fmtDate = (iso: string) => {
