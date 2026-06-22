@@ -1043,6 +1043,12 @@ export default function ClubOutreachProposal() {
             {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
               <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
             )}
+            {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
+              <MatchByMatchCard
+                analyses={current.match_by_match}
+                position={current?.player?.position ?? null}
+              />
+            )}
             {current?.stars_url && (
               <div className="flex justify-end pt-2">
                 <a
