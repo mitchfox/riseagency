@@ -6270,6 +6270,7 @@ export type Database = {
           program_name: string
           schedule_notes: string | null
           sessions: Json | null
+          start_date: string | null
           updated_at: string
           weekly_schedules: Json | null
         }
@@ -6289,6 +6290,7 @@ export type Database = {
           program_name: string
           schedule_notes?: string | null
           sessions?: Json | null
+          start_date?: string | null
           updated_at?: string
           weekly_schedules?: Json | null
         }
@@ -6308,6 +6310,7 @@ export type Database = {
           program_name?: string
           schedule_notes?: string | null
           sessions?: Json | null
+          start_date?: string | null
           updated_at?: string
           weekly_schedules?: Json | null
         }
