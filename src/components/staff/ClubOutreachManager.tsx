@@ -1892,6 +1892,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [agentUploading, setAgentUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [defaultFit, setDefaultFit] = useState("");
+  const [defaultSeasonDataMode, setDefaultSeasonDataMode] = useState<'popup' | 'link'>('popup');
+  const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [newTplTitle, setNewTplTitle] = useState("");
   const [newTplContent, setNewTplContent] = useState("");
@@ -1921,11 +1923,15 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation").eq("id", 1).maybeSingle();
+      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation, default_season_data_mode, default_video_selection_mode").eq("id", 1).maybeSingle();
       setWhatsapp(data?.whatsapp_number ?? "");
       setAgentName(data?.agent_name ?? "");
       setAgentImageUrl(data?.agent_image_url ?? "");
       setDefaultFit(data?.default_fit_recommendation ?? "");
+      const sm = data?.default_season_data_mode;
+      if (sm === 'popup' || sm === 'link') setDefaultSeasonDataMode(sm);
+      const vm = data?.default_video_selection_mode;
+      if (vm === 'all' || vm === 'first' || vm === 'custom') setDefaultVideoMode(vm);
       setLoading(false);
       const { data: tpls } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
       setTemplates((tpls ?? []) as QuickTemplate[]);
