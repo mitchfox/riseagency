@@ -368,8 +368,13 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
             {diagram.arrows.map(a => {
               const s = ARROW_STYLES[a.kind];
               const isSelected = selectedId === a.id;
+              const handleArrowMouseDown = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (tool === "select") setSelectedId(a.id);
+              };
               return (
                 <g key={a.id}
+                   onMouseDown={handleArrowMouseDown}
                    onClick={(e) => { e.stopPropagation(); setSelectedId(a.id); }}
                    onDoubleClick={(e) => { e.stopPropagation(); removeArrow(a.id); }}>
                   <defs>
@@ -398,7 +403,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const onClickToken = (e: React.MouseEvent) => { e.stopPropagation(); setSelectedId(t.id); };
               const onDouble = (e: React.MouseEvent) => { e.stopPropagation(); removeToken(t.id); };
               const isSelected = selectedId === t.id;
-              const commonStyle = { cursor: dragId === t.id ? "grabbing" : "grab" } as React.CSSProperties;
+              const commonStyle = { cursor: tool === "select" && selectedId === t.id ? (dragId === t.id ? "grabbing" : "grab") : "pointer" } as React.CSSProperties;
               if (t.kind === "player") {
                 return (
                   <g key={t.id} onMouseDown={onPointerDown} onClick={onClickToken} onDoubleClick={onDouble} style={commonStyle}>
