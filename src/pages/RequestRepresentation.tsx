@@ -827,7 +827,7 @@ const RequestRepresentation = () => {
                      <span className="h-px flex-1 bg-primary/45" />
                    </div>
                   {/* Mission, in a contained glass plate */}
-                  <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                  <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                     <p
                       className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
                       style={{
@@ -1086,7 +1086,7 @@ export const DetailView = ({
               const dmeta = DOMAIN_META[domain];
               const DIcon = dmeta.icon;
               return (
-                <div key={domain} className="rounded-2xl border border-border/60 bg-card/55 p-4 md:p-5">
+                <div key={domain} className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-5">
                   <div className="mb-3 flex items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bebas uppercase tracking-[0.18em] ${dmeta.chip}`}>
                       <DIcon className="h-3 w-3" /> {translateDomainLabel(domain)}
@@ -1131,13 +1131,13 @@ export const DetailView = ({
           <TitlePlate icon={SIcon} title={t(sub.title, sub.title)} eyebrow={t(sub.blurb, sub.blurb)} />
           <div className="mt-5 space-y-3 md:mt-7 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sub.detail.map((p, i) => (
-              <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
+              <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/85 md:p-5 md:text-base">
                 {t(p, p)}
               </div>
             ))}
           </div>
           {performanceSub === "analysis" && (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 md:mt-6">
+            <div className="mt-4 overflow-hidden rise-slant-card border border-border/60 bg-card/40 md:mt-6">
               <div className="relative aspect-video w-full">
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/pWH2cdmzwVg?rel=0"
@@ -1157,7 +1157,7 @@ export const DetailView = ({
               href={withLang(CRISTIANO_REAL_MADRID_REPORT_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -1171,7 +1171,7 @@ export const DetailView = ({
               href={withLang(CRISTIANO_GETAFE_ANALYSIS_URL, language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Gauge className="h-4 w-4 text-primary" />
@@ -1203,7 +1203,7 @@ export const DetailView = ({
                   "noopener,noreferrer",
                 );
               }}
-              className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
+              className="mt-4 flex w-full items-center justify-between gap-3 rise-slant-card border border-primary/40 bg-primary/10 p-4 text-sm font-medium text-foreground transition-colors hover:bg-primary/15 md:p-5"
             >
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
@@ -1246,7 +1246,7 @@ export const DetailView = ({
                 <AccordionItem
                   key={idx}
                   value={`faq-${idx}`}
-                  className="rounded-2xl border border-border/60 bg-card/55 px-4 md:px-5"
+                  className="rise-slant-card border border-border/60 bg-card/55 px-4 md:px-5"
                 >
                   <AccordionTrigger className="py-4 text-left font-bebas text-sm uppercase tracking-[0.12em] hover:no-underline md:text-base">
                     {t(faq.q, faq.q)}
@@ -1265,7 +1265,7 @@ export const DetailView = ({
           {activeCard === "scouting" && (
             <div className="space-y-4 md:space-y-6">
               {/* 1. Network intro — mirrors Players page wording. */}
-              <div className="rounded-2xl border border-border/60 bg-card/55 p-4 text-center md:p-6">
+              <div className="rise-slant-card border border-border/60 bg-card/55 p-4 text-center md:p-6">
                 <span className="inline-block rounded-full border border-primary/30 px-4 py-1 font-bebas text-[10px] uppercase tracking-[0.18em] text-primary md:text-xs">
                   {t("home.eyes_across_europe", "Eyes Across All Of Europe")}
                 </span>
@@ -1278,7 +1278,7 @@ export const DetailView = ({
               </div>
 
               {/* 2. The same interactive map used on the Players page. */}
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
                 <div className="h-[640px] md:h-[760px] lg:h-[860px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
@@ -1291,7 +1291,7 @@ export const DetailView = ({
                   { n: "02", title: t("home.scouting_point_2_title", "Future-Focused Scouting"), desc: t("home.scouting_point_2_desc", "Novel scouting based on qualities that level up through the game, not just what works now, but what scales with a player's career.") },
                   { n: "03", title: t("home.scouting_point_3_title", "Complete Player Knowledge"), desc: t("home.scouting_point_3_desc", "For any professional or academy player, we intend to know not just who they are, but how they play, what makes them tick, and what qualities they have that level up.") },
                 ].map((p) => (
-                  <div key={p.n} className="rounded-2xl border border-border/60 bg-card/30 p-5">
+                  <div key={p.n} className="rise-slant-card border border-border/60 bg-card/30 p-5">
                     <div className="flex items-start gap-4">
                       <span className="font-bebas text-3xl text-primary/30 md:text-4xl">{p.n}</span>
                       <div>
@@ -1307,7 +1307,7 @@ export const DetailView = ({
 
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1352,7 +1352,7 @@ export const DetailView = ({
             <div className="space-y-4">
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1371,7 +1371,7 @@ export const DetailView = ({
                       key={sub.key}
                       type="button"
                       onClick={() => { scrollToTop(); setPerformanceSub(sub.key); }}
-                      className="group rounded-2xl border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
+                      className="group rise-slant-card border border-border/60 bg-card/55 p-4 text-left transition-all hover:border-primary/60 hover:bg-card/70 md:p-5"
                     >
                       <div className="flex items-center gap-2">
                         <SIcon className="h-4 w-4 text-primary" />
@@ -1393,7 +1393,7 @@ export const DetailView = ({
             <div className="space-y-3">
               <div className="md:grid md:grid-cols-2 md:gap-4 space-y-3 md:space-y-0">
                 {content.points.map((p: string, i: number) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
+                  <div key={i} className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base">
                     {p.startsWith("representation.") ? t(p, p) : p}
                   </div>
                 ))}
@@ -1402,7 +1402,7 @@ export const DetailView = ({
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary/85">
                 <Globe2 className="h-3.5 w-3.5" /> {t("representation.our_live_network", "Our live scouting network")}
               </div>
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
                 <div className="h-[420px] md:h-[600px]">
                   <ScoutingNetworkMap hideStats hideGridToggle />
                 </div>
@@ -1419,7 +1419,7 @@ export const DetailView = ({
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.24 }}
-                  className="rounded-2xl border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
+                  className="rise-slant-card border border-border/60 bg-card/55 p-4 text-sm leading-relaxed text-foreground/84 md:p-5 md:text-base"
                 >
                   {point.startsWith("representation.") ? t(point, point) : point}
                 </motion.div>

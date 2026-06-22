@@ -1317,7 +1317,7 @@ const RiseWithUs = () => {
                       </h1>
                       <span className="h-px flex-1 bg-primary/45" />
                     </div>
-                    <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                    <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                       <p
                         className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
                         style={{
