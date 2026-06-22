@@ -429,7 +429,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       )}
 
-      {programmeLink && rangeActive && linkedIds.length === 0 && allPlayerWeeks.some(w => w.week_start_date && w.week_start_date >= programmeRange.start! && w.week_start_date <= programmeRange.end!) && (
+      {programmeLink && rangeActive && linkedIds.length === 0 && allPlayerWeeks.some(w => w.week_start_date && weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!)) && (
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
           Master schedule weeks already exist inside these dates. Use <span className="font-semibold text-foreground">Generate weeks for this period</span> to link those existing weeks into this programme.
         </div>
