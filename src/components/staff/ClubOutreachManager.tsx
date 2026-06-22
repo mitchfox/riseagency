@@ -2235,6 +2235,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       default_key_details: playerDefaultKeyDetails,
       default_section_order: playerDefaultSectionOrder,
       default_selected_video_ids: playerDefaultSelectedVideoIds,
+      default_match_by_match_category: playerDefaultMbmCategory.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
