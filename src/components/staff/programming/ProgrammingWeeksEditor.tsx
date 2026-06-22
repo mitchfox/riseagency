@@ -159,7 +159,50 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
             .filter(w => weekOverlapsRange(w.week_start_date, nextRange.start!, nextRange.end!))
             .map(w => w.id)
         : [];
-      const displayIds = Array.from(new Set([...ids, ...legacyWeekIds, ...rangeIds]));
+      let displayIds = Array.from(new Set([...ids, ...legacyWeekIds, ...rangeIds]));
+
+      // Auto-create any Monday inside the programme range that doesn't yet have
+      // a programming_weeks row. Without this the schedule looks empty until the
+      // user clicks "Generate weeks", which the team kept missing.
+      if (nextRange.start && nextRange.end) {
+        const sM = nextRange.start.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const eM = nextRange.end.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (sM && eM) {
+          const startDate = new Date(Date.UTC(+sM[1], +sM[2] - 1, +sM[3]));
+          const endDate = new Date(Date.UTC(+eM[1], +eM[2] - 1, +eM[3]));
+          const dow = startDate.getUTCDay();
+          const back = dow === 0 ? 6 : dow - 1;
+          const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() - back));
+          const existingByDate = new Map(allRows.filter(w => w.week_start_date).map(w => [w.week_start_date as string, w]));
+          const toInsert: any[] = [];
+          let weekNum = (allRows.length || 0) + 1;
+          while (cursor.getTime() <= endDate.getTime()) {
+            const iso = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}-${String(cursor.getUTCDate()).padStart(2, "0")}`;
+            if (!existingByDate.has(iso)) {
+              toInsert.push({
+                player_id: playerId,
+                label: `Week ${weekNum}`,
+                week_start_date: iso,
+                display_order: (allRows.length || 0) + toInsert.length,
+                slots: {},
+              });
+              weekNum += 1;
+            }
+            cursor.setUTCDate(cursor.getUTCDate() + 7);
+          }
+          if (toInsert.length) {
+            const { data: inserted } = await supabase
+              .from("programming_weeks" as any)
+              .insert(toInsert)
+              .select("*");
+            const insertedRows = ((inserted || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })) as Week[];
+            allRows.push(...insertedRows);
+            insertedRows.forEach(r => displayIds.push(r.id));
+            displayIds = Array.from(new Set(displayIds));
+          }
+        }
+      }
+
       const missingRangeIds = displayIds.filter(id => !ids.includes(id));
       if (missingRangeIds.length) {
         await supabase
