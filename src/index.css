@@ -67,6 +67,28 @@ All colors MUST be HSL.
     --scrollbar-width: 0px;
   }
 
+  /* Daytime (09:00–19:00) brightening for the staff portal.
+     Subtle lift on dark tokens so the UI is easier to read with sun
+     hitting the screen, while keeping the dark theme intact. */
+  html.staff-daytime {
+    --background: 0 0% 6%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 43 45% 80%;
+    --border: 0 0% 26%;
+    --input: 0 0% 22%;
+    --text-primary: 0 0% 100%;
+    --text-secondary: 43 55% 72%;
+    --bg-dark: 0 0% 6%;
+    --bg-card: 0 0% 7%;
+  }
+
   .light {
     --background: 40 6% 92%; /* Cream background */
     --foreground: 0 0% 10%; /* Near black for text */
