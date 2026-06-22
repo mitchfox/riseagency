@@ -15,6 +15,19 @@ import { getSessionColor } from "@/lib/sessionColors";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 type Day = typeof DAYS[number];
 
+const addDaysIso = (iso: string, days: number) => {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return iso;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + days));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+};
+
+const weekOverlapsRange = (weekStart: string | null, rangeStart: string, rangeEnd: string) => {
+  if (!weekStart) return true;
+  const weekEnd = addDaysIso(weekStart, 6);
+  return weekStart <= rangeEnd && weekEnd >= rangeStart;
+};
+
 interface Slot {
   refId?: string;
   free_text?: string;
