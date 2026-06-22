@@ -73,6 +73,78 @@ function categoriseStatKey(key: string): StatCategory {
   return "Other";
 }
 
+/**
+ * Sub-bucket a key inside its category so we can show clear sub-headings
+ * (e.g. Attacking → Goals / Shots / Finishing). Order returned by
+ * SUB_ORDER drives render order; "Other" always renders last within its
+ * category.
+ */
+function subCategoriseStatKey(category: StatCategory, key: string): string {
+  const k = key.toLowerCase();
+  switch (category) {
+    case "Attacking":
+      if (/conversion|finish|xg_per_shot/.test(k)) return "Finishing";
+      if (/sot|on_target|shots_on/.test(k)) return "Shots on target";
+      if (/shot/.test(k)) return "Shots";
+      if (/xg|npxg/.test(k)) return "Expected goals";
+      if (/goal/.test(k)) return "Goals";
+      return "Other";
+    case "Chance Creation":
+      if (/assist/.test(k)) return "Assists";
+      if (/xa/.test(k)) return "Expected assists";
+      if (/key_pass/.test(k)) return "Key passes";
+      if (/cross/.test(k)) return "Crosses";
+      if (/through_ball/.test(k)) return "Through balls";
+      if (/big_chance|chance/.test(k)) return "Chances created";
+      if (/xgchain|xt\b/.test(k)) return "Build-up value";
+      return "Other";
+    case "Passing & Possession":
+      if (/long_pass|long_ball/.test(k)) return "Long passing";
+      if (/short_pass/.test(k)) return "Short passing";
+      if (/forward_pass|progressive_pass/.test(k)) return "Forward / progressive passing";
+      if (/pass.*acc|pass.*pct|pass.*%/.test(k)) return "Pass accuracy";
+      if (/pass/.test(k)) return "Passing volume";
+      if (/dribble/.test(k)) return "Dribbles & carries";
+      if (/carry|carries|progressive_run/.test(k)) return "Carries";
+      if (/touches/.test(k)) return "Touches";
+      if (/possession/.test(k)) return "Possession";
+      if (/turnover/.test(k)) return "Turnovers";
+      return "Other";
+    case "Defending":
+      if (/tackle/.test(k)) return "Tackles";
+      if (/interception/.test(k)) return "Interceptions";
+      if (/clearance/.test(k)) return "Clearances";
+      if (/block/.test(k)) return "Blocks";
+      if (/recover|ball_won/.test(k)) return "Ball recoveries";
+      if (/press/.test(k)) return "Pressing";
+      return "Other";
+    case "Goalkeeping":
+      if (/save/.test(k)) return "Saves";
+      if (/goals_conce/.test(k)) return "Goals conceded";
+      if (/claim|punch/.test(k)) return "Crosses & claims";
+      if (/sweep/.test(k)) return "Sweeping";
+      if (/keeper|gk_/.test(k)) return "Distribution";
+      return "Other";
+    case "Duels & Physical":
+      if (/aerial/.test(k)) return "Aerial duels";
+      if (/duel/.test(k)) return "Ground duels";
+      if (/sprint/.test(k)) return "Sprints";
+      if (/hsr/.test(k)) return "High-speed running";
+      if (/distance/.test(k)) return "Distance covered";
+      if (/speed/.test(k)) return "Top speed";
+      if (/fouled/.test(k)) return "Fouls won";
+      return "Other";
+    case "Discipline":
+      if (/yellow/.test(k)) return "Yellow cards";
+      if (/red/.test(k)) return "Red cards";
+      if (/foul/.test(k)) return "Fouls";
+      if (/offside/.test(k)) return "Offsides";
+      return "Other";
+    default:
+      return "Other";
+  }
+}
+
 export const MatchDataTotalsHeader = ({ analyses }: Props) => {
   // Discover every numeric stat key appearing across the loaded analyses.
   const allStatKeys = useMemo(() => {
