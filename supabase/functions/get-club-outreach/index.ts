@@ -263,7 +263,7 @@ Deno.serve(async (req) => {
       playerIds.length
         ? supabase
             .from("player_form_config")
-            .select("player_id, window_size, stats")
+            .select("player_id, window_size, stats, match_by_match_default_category")
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
       playerIds.length
@@ -408,9 +408,16 @@ Deno.serve(async (req) => {
           top_stats: bioParsed?.topStats ?? null,
           season_stats: bioParsed?.seasonStats ?? null,
           strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,
-          form_config: cfg ? { window_size: windowSize, stats: cfg.stats ?? [] } : null,
+          form_config: cfg
+            ? {
+                window_size: windowSize,
+                stats: cfg.stats ?? [],
+                match_by_match_default_category: cfg.match_by_match_default_category ?? null,
+              }
+            : null,
           form_analyses: recentAnalyses,
           match_by_match: allAnalyses,
+          match_by_match_default_category: cfg?.match_by_match_default_category ?? null,
         };
       })
     );

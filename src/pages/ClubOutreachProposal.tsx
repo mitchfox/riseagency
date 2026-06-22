@@ -103,6 +103,7 @@ interface PlayerEntry {
     striker_stats?: Record<string, any> | null;
     fixture_stats?: Record<string, any> | null;
   }> | null;
+  match_by_match_default_category?: string | null;
 }
 
 interface Payload {
@@ -566,17 +567,18 @@ export default function ClubOutreachProposal() {
               analyses={current.match_by_match}
               position={current?.player?.position ?? null}
               excludeAnalysisIds={shownAnalysisIds}
+              defaultCategory={current?.match_by_match_default_category ?? null}
             />
           )}
           {current?.stars_url && (
-            <div className="flex justify-end pt-1">
+            <div className="pt-2">
               <a
                 href={current.stars_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/40 text-[#cbb96b] hover:bg-[#cbb96b]/10 transition"
               >
-                {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+                {tr("card.openFull", "View Full Stars Profile")} <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           )}
@@ -1334,81 +1336,101 @@ function KeyDetailsCard({
   };
 
   const renderTile = (item: KeyDetailItem, idx: number): React.ReactNode => {
-    const TileShell = ({ children, label }: { children: React.ReactNode; label: string }) => (
-      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-        <div className="h-12 flex items-center justify-center">{children}</div>
-        <p className="mt-2 text-[11px] text-white/80 leading-tight">{label}</p>
+    // Unified tile: always renders an UPPERCASE label row at the bottom so
+    // every key detail shares the same vertical rhythm.
+    const Tile = ({
+      visual,
+      secondary,
+      label,
+    }: {
+      visual: React.ReactNode;
+      secondary?: string | null;
+      label: string;
+    }) => (
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center h-full">
+        <div className="h-12 flex items-center justify-center px-1">{visual}</div>
+        <p className="mt-2 min-h-[14px] text-[11px] text-white/85 leading-tight break-words">
+          {secondary || ""}
+        </p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-white/55 leading-tight">
+          {label}
+        </p>
       </div>
     );
-    const TextTile = ({ value, label }: { value: string | React.ReactNode; label: string }) => (
-      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-        <div className="h-12 flex items-center justify-center px-1">
-          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "-"}</span>
-        </div>
-        <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/60 leading-tight">{label}</p>
-      </div>
+    const TextValue = ({ value }: { value: string | React.ReactNode }) => (
+      <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">
+        {value || "-"}
+      </span>
     );
 
     switch (item.kind) {
       case "club":
         return (
-          <TileShell key={idx} label={player?.club ?? "-"}>
-            {clubLogo ? (
+          <Tile
+            key={idx}
+            label={T("key.club", "Club")}
+            secondary={player?.club ?? "-"}
+            visual={clubLogo ? (
               <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
             ) : (
               <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-semibold">{(player?.club ?? "?")[0]}</div>
             )}
-          </TileShell>
+          />
         );
       case "age":
         return (
-          <div key={idx} className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
-            <div className="h-12 flex items-center justify-center">
-              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "-"}</span>
-            </div>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{T("key.yearsOld", "Years old")}</p>
-          </div>
+          <Tile
+            key={idx}
+            label={T("key.yearsOld", "Years old")}
+            visual={<span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "-"}</span>}
+          />
         );
       case "nationality":
         return (
-          <TileShell key={idx} label={player?.nationality ?? "-"}>
-            {nationalityFlag ? (
+          <Tile
+            key={idx}
+            label={T("key.nationality", "Nationality")}
+            secondary={player?.nationality ?? "-"}
+            visual={nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
               <div className="h-10 w-14 rounded-sm bg-white/10" />
             )}
-          </TileShell>
+          />
         );
       case "league":
         return (
-          <TileShell key={idx} label={player?.league ?? "-"}>
-            {leagueFlag ? (
+          <Tile
+            key={idx}
+            label={T("key.league", "League")}
+            secondary={player?.league ?? "-"}
+            visual={leagueFlag ? (
               <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
               <div className="h-10 w-14 rounded-sm bg-white/10" />
             )}
-          </TileShell>
+          />
         );
       case "position":
-        return <TextTile key={idx} value={player?.position ?? "-"} label={T("key.position", "Position")} />;
+        return <Tile key={idx} label={T("key.position", "Position")} visual={<TextValue value={player?.position ?? "-"} />} />;
       case "contract_expiry":
-        return <TextTile key={idx} value={fmtDate(player?.contract_end_date)} label={T("key.contractExpiry", "Contract expiry")} />;
+        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={fmtDate(player?.contract_end_date)} />} />;
       case "current_salary":
-        return <TextTile key={idx} value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} label={T("key.currentSalary", "Current salary")} />;
+        return <Tile key={idx} label={T("key.currentSalary", "Current salary")} visual={<TextValue value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} />} />;
       case "salary_expectations":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.salaryExpectations", "Salary expectations")} />;
+        return <Tile key={idx} label={T("key.salaryExpectations", "Salary expectations")} visual={<TextValue value={item.value ?? ""} />} />;
       case "transfer_fee":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.transferFee", "Transfer fee")} />;
+        return <Tile key={idx} label={T("key.transferFee", "Transfer fee")} visual={<TextValue value={item.value ?? ""} />} />;
       case "contract_expiry_override":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.contractExpiry", "Contract expiry")} />;
+        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={item.value ?? ""} />} />;
       case "height":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.height", "Height")} />;
+        return <Tile key={idx} label={T("key.height", "Height")} visual={<TextValue value={item.value ?? ""} />} />;
       case "preferred_foot":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.preferredFoot", "Preferred foot")} />;
+        return <Tile key={idx} label={T("key.preferredFoot", "Preferred foot")} visual={<TextValue value={item.value ?? ""} />} />;
       case "status":
-        return <TextTile key={idx} value={item.value ?? ""} label={T("key.status", "Status")} />;
+        return <Tile key={idx} label={T("key.status", "Status")} visual={<TextValue value={item.value ?? ""} />} />;
       case "custom":
-        return <TextTile key={idx} value={item.value ?? ""} label={(item.label ?? "").trim() || T("key.custom", "Detail")} />;
+        return <Tile key={idx} label={(item.label ?? "").trim() || T("key.custom", "Detail")} visual={<TextValue value={item.value ?? ""} />} />;
       default:
         return null;
     }
@@ -1572,13 +1594,22 @@ function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   const cols = count >= 4 ? "sm:grid-cols-4" : count === 3 ? "sm:grid-cols-3" : count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
   return (
     <SectionShell title={title ?? "In Numbers"} eyebrow="05">
-      <div className={`grid grid-cols-2 ${cols} gap-2 items-stretch`}>
+      <div className={`grid grid-cols-2 ${cols} gap-2.5 auto-rows-fr items-stretch`}>
         {stats.map((s, i) => (
-          <div key={i} className="h-full rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center min-w-0">
-            <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/70 leading-tight break-words whitespace-normal">{s.label}</div>
+          <div
+            key={i}
+            className="h-full min-h-[140px] rounded-xl bg-white/[0.03] border border-white/5 px-3 py-4 flex flex-col items-center justify-center text-center min-w-0 gap-1.5"
+          >
+            <div className="text-3xl sm:text-4xl font-semibold text-[#cbb96b] leading-none tabular-nums">
+              {s.value}
+            </div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-white/75 leading-tight break-words whitespace-normal">
+              {s.label}
+            </div>
             {s.description && (
-              <p className="mt-1 text-[11px] text-white/55 leading-snug break-words whitespace-normal">{s.description}</p>
+              <p className="text-[11px] text-white/55 leading-snug break-words whitespace-normal">
+                {s.description}
+              </p>
             )}
           </div>
         ))}
@@ -1633,10 +1664,12 @@ function MatchByMatchCard({
   analyses,
   position,
   excludeAnalysisIds,
+  defaultCategory: defaultCategoryProp,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
   excludeAnalysisIds?: Set<string>;
+  defaultCategory?: string | null;
 }) {
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
@@ -1644,9 +1677,11 @@ function MatchByMatchCard({
     () => getMetricCategoriesForPosition(position ?? undefined),
     [position],
   );
+  const preferred = (defaultCategoryProp ?? "").trim();
   const defaultCat =
-    categories.find((c) => c.category === "Passing")?.category ??
-    categories[0]?.category ??
+    (preferred && categories.find((c) => c.category === preferred)?.category) ||
+    categories.find((c) => c.category === "Passing")?.category ||
+    categories[0]?.category ||
     "";
 
   const sorted = useMemo(
