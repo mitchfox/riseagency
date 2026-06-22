@@ -118,10 +118,14 @@ interface VisionRow {
   actionable_plans: string[] | null;
 }
 
-const nameMatches = (assigned: string[] | null, first: string) => {
+const assignedToStarter = (assigned: string[] | null, s: Starter): boolean => {
   if (!assigned || assigned.length === 0) return false;
-  const lower = first.toLowerCase();
-  return assigned.some(a => (a || "").toLowerCase().includes(lower));
+  const lowerFirst = s.name.toLowerCase();
+  return assigned.some(a => {
+    if (!a) return false;
+    if (s.userIds.includes(a)) return true;
+    return a.toLowerCase().includes(lowerFirst);
+  });
 };
 
 // Box-score classification. Each rule = (regex, stat key, points).
@@ -129,38 +133,40 @@ const nameMatches = (assigned: string[] | null, first: string) => {
 type BoxStat = "PTS" | "AST" | "REB" | "STL" | "BLK" | "TO";
 const BOX_RULES: { re: RegExp; stat: BoxStat; pts: number; label: string }[] = [
   // Points — direct agency progress
-  { re: /payment received|invoice paid|received payment/i, stat: "PTS", pts: 30, label: "Payment received" },
-  { re: /signed|closed (deal|client)|contract signed|deal closed/i, stat: "PTS", pts: 25, label: "Closed paid client" },
-  { re: /testimonial|referral received/i, stat: "PTS", pts: 12, label: "Testimonial / referral" },
-  { re: /delivered|deliverable|report sent|highlight (sent|delivered)/i, stat: "PTS", pts: 10, label: "Deliverable completed" },
-  { re: /booked? (call|meeting)|qualified call/i, stat: "PTS", pts: 8, label: "Booked qualified call" },
-  { re: /proposal|offer sent|representation offer/i, stat: "PTS", pts: 5, label: "Proposal sent" },
-  { re: /landing page|deck|portfolio|improve offer/i, stat: "PTS", pts: 3, label: "Asset improved" },
-  { re: /publish|posted|content posted|blog|article/i, stat: "PTS", pts: 2, label: "Content published" },
-  { re: /outreach|cold (message|email|dm)|send (message|email)/i, stat: "PTS", pts: 1, label: "Outreach sent" },
+  { re: /payment received|invoice paid|received payment/i, stat: "PTS", pts: 80, label: "Payment received" },
+  { re: /signed|closed (deal|client)|contract signed|deal closed/i, stat: "PTS", pts: 50, label: "Closed paid client" },
+  { re: /testimonial|referral received/i, stat: "PTS", pts: 20, label: "Testimonial / referral" },
+  { re: /delivered|deliverable|report sent|highlight (sent|delivered)/i, stat: "PTS", pts: 15, label: "Deliverable completed" },
+  { re: /booked? (call|meeting)|qualified call|meeting held/i, stat: "PTS", pts: 12, label: "Booked qualified call" },
+  { re: /proposal|offer sent|representation offer/i, stat: "PTS", pts: 10, label: "Proposal sent" },
+  { re: /publish|posted|content posted|blog|article|reel|tiktok|story|stories/i, stat: "PTS", pts: 8, label: "Content published" },
+  { re: /landing page|deck|portfolio|improve offer/i, stat: "PTS", pts: 8, label: "Asset improved" },
+  { re: /recruit|database|add player|player.+(added|image|details)|shortlist/i, stat: "PTS", pts: 7, label: "Recruitment input" },
+  { re: /outreach|cold (message|email|dm)|send (message|email)|birthday/i, stat: "PTS", pts: 6, label: "Outreach sent" },
+  { re: /like|follow|engage|comment/i, stat: "PTS", pts: 5, label: "Engagement action" },
 
   // Assists — created future scoring chances
-  { re: /intro(duction)?|connected|opened door/i, stat: "AST", pts: 2, label: "Intro / connection" },
-  { re: /lead list|prospect list|shortlist built/i, stat: "AST", pts: 2, label: "Lead list created" },
-  { re: /helpful idea|shared idea|sent insight/i, stat: "AST", pts: 1, label: "Idea shared" },
-  { re: /partner conversation|partner chat|partnership/i, stat: "AST", pts: 2, label: "Partner conversation" },
+  { re: /intro(duction)?|connected|opened door/i, stat: "AST", pts: 8, label: "Intro / connection" },
+  { re: /lead list|prospect list|shortlist built/i, stat: "AST", pts: 6, label: "Lead list created" },
+  { re: /partner(ship)?|collab/i, stat: "AST", pts: 7, label: "Partner conversation" },
+  { re: /helpful idea|shared idea|sent insight/i, stat: "AST", pts: 5, label: "Idea shared" },
 
   // Rebounds — follow-ups and recoveries
-  { re: /follow.?up|chase|revive|reopen/i, stat: "REB", pts: 1, label: "Follow-up / revival" },
-  { re: /unpaid|chase invoice|chase payment/i, stat: "REB", pts: 1, label: "Chased payment" },
-  { re: /fix(ed)? (task|issue|bug)|cleanup/i, stat: "REB", pts: 1, label: "Recovered a miss" },
+  { re: /unpaid|chase invoice|chase payment/i, stat: "REB", pts: 6, label: "Chased payment" },
+  { re: /follow.?up|chase|revive|reopen/i, stat: "REB", pts: 5, label: "Follow-up / revival" },
+  { re: /fix(ed)? (task|issue|bug)|cleanup|clean up/i, stat: "REB", pts: 5, label: "Recovered a miss" },
 
   // Steals — captured opportunities
-  { re: /spotted|noticed (lead|opportunity)|opportunistic/i, stat: "STL", pts: 1, label: "Spotted opportunity" },
-  { re: /trend|timely post|jumped on/i, stat: "STL", pts: 1, label: "Caught a trend" },
-  { re: /decision.?maker|found contact|sourced contact/i, stat: "STL", pts: 1, label: "Found decision-maker" },
+  { re: /decision.?maker|found contact|sourced contact/i, stat: "STL", pts: 6, label: "Found decision-maker" },
+  { re: /spotted|noticed (lead|opportunity)|opportunistic/i, stat: "STL", pts: 5, label: "Spotted opportunity" },
+  { re: /trend|timely post|jumped on/i, stat: "STL", pts: 5, label: "Caught a trend" },
 
   // Blocks — prevented problems
-  { re: /scope|clarif|prevent|template|checklist/i, stat: "BLK", pts: 1, label: "Prevented an issue" },
-  { re: /said no|declined|killed (idea|task)/i, stat: "BLK", pts: 1, label: "Said no to drag" },
+  { re: /scope|clarif|prevent|template|checklist/i, stat: "BLK", pts: 5, label: "Prevented an issue" },
+  { re: /said no|declined|killed (idea|task)/i, stat: "BLK", pts: 4, label: "Said no to drag" },
 
   // Turnovers — wasted chances
-  { re: /missed|forgot|late reply|dropped/i, stat: "TO", pts: 1, label: "Turnover" },
+  { re: /missed|forgot|late reply|dropped/i, stat: "TO", pts: 4, label: "Turnover" },
 ];
 
 const BOX_KEYS: BoxStat[] = ["PTS", "AST", "REB", "STL", "BLK", "TO"];
@@ -178,8 +184,8 @@ function classifyTask(t: TaskRow): { stat: BoxStat; pts: number; label: string }
   for (const rule of BOX_RULES) {
     if (rule.re.test(hay)) return { stat: rule.stat, pts: rule.pts, label: rule.label };
   }
-  // Default: any completed task counts as 1 PT — at least it's on the board.
-  return { stat: "PTS", pts: 1, label: "Action completed" };
+  // Default: any completed action is worth a base 6 PTS.
+  return { stat: "PTS", pts: 6, label: "Action completed" };
 }
 
 type BoxLine = { PTS: number; AST: number; REB: number; STL: number; BLK: number; TO: number; plusMinus: number };
@@ -188,11 +194,32 @@ function withPM(b: BoxLine): BoxLine { return { ...b, plusMinus: b.PTS + b.AST +
 
 function performanceTier(pts: number): { label: string; tone: string } {
   if (pts >= 120) return { label: "MVP — career night", tone: "text-primary" };
-  if (pts >= 90)  return { label: "Franchise performance", tone: "text-primary" };
-  if (pts >= 60)  return { label: "All-Star week", tone: "text-yellow-400" };
-  if (pts >= 40)  return { label: "Solid starter", tone: "text-emerald-400" };
-  if (pts >= 20)  return { label: "Role player", tone: "text-blue-400" };
-  return { label: "Quiet game", tone: "text-muted-foreground" };
+  if (pts >= 100) return { label: "Big win — playoff form", tone: "text-primary" };
+  if (pts >= 80)  return { label: "Close loss — stay in the game", tone: "text-yellow-400" };
+  if (pts >= 50)  return { label: "Off night — lost the game", tone: "text-blue-400" };
+  return { label: "Blown out — reset needed", tone: "text-muted-foreground" };
+}
+
+// ----- Week / season helpers -----
+const SEASON_START = new Date(Date.UTC(2026, 5, 22)); // Mon 22 Jun 2026
+const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+const WIN_THRESHOLD = 120;
+
+function startOfWeekUTC(d: Date): Date {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = x.getUTCDay(); // 0 Sun .. 6 Sat
+  const diff = (day + 6) % 7;  // back to Monday
+  x.setUTCDate(x.getUTCDate() - diff);
+  return x;
+}
+function weekIndex(d: Date): number {
+  return Math.floor((startOfWeekUTC(d).getTime() - SEASON_START.getTime()) / MS_WEEK);
+}
+function weekLabel(idx: number): { start: string; end: string } {
+  const start = new Date(SEASON_START.getTime() + idx * MS_WEEK);
+  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return { start: fmt(start), end: fmt(end) };
 }
 
 export const TeamPerformance = () => {
