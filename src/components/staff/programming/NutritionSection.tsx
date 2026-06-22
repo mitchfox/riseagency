@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { UtensilsCrossed, BookOpen } from "lucide-react";
@@ -19,9 +20,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const NutritionSection = () => {
-  const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
+  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.nutrition.selectedPlayer", "all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
-  const [activeTab, setActiveTab] = useState("programming");
+  const [activeTab, setActiveTab] = usePersistedState<string>("programming.nutrition.tab", "programming");
 
   useEffect(() => {
     const fetchPlayers = async () => {
