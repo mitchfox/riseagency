@@ -1604,112 +1604,103 @@ const Staff = () => {
               <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
             ) : (
               <>
-                {searchResults.length > 0 && (
-                  <CommandGroup heading={`Found ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}>
-                    {searchResults.map((result) => (
-                      <CommandItem
-                        key={`${result.type}-${result.id}`}
-                        onSelect={() => {
-                          // Always expand the section (don't toggle)
-                          setExpandedSection(result.sectionId as any);
-                          setExpandedCategory(
-                            categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
-                          );
-                          
-                          // Navigate with player ID if it's a player search result
-                          if (result.type === 'player') {
-                            const nextParams = createStaffSearchParams({ section: result.sectionId, player: result.id });
-                            navigate(`/staff?${nextParams.toString()}`);
-                            toast.success(`Opening ${result.title} in ${result.section}`);
-                          } else {
-                            toast.success(`Opening ${result.section}`);
-                          }
-                          
-                          // Ensure the opened section is visible at the top of the page
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                          setSidebarSearchOpen(false);
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <div className="flex flex-col gap-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{result.title}</span>
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">{result.section}</span>
-                          </div>
-                          {result.description && (
-                            <span className="text-xs text-muted-foreground line-clamp-1">{result.description}</span>
-                          )}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-                
-                {searchResults.length === 0 && (
-                  <CommandEmpty>
-                    {searchLoading ? 'Searching...' : 'No results found. Try searching for players, updates, or other content.'}
-                  </CommandEmpty>
-                )}
-                
-                <CommandGroup heading="Jump to Section">
-                  {(() => {
-                    const searchInput = document.querySelector('[cmdk-input]') as HTMLInputElement;
-                    const currentSearch = searchInput?.value?.toLowerCase() || '';
-                    
-                    // Flatten sections and sort by relevance to search (exclude group labels)
-                    const allSections = categories.flatMap(category => 
-                      category.sections.filter(s => !(s as any).isGroupLabel).map(section => ({ section, category }))
-                    );
-                    
-                    // Sort: exact matches first, then starts-with, then contains
-                    const sortedSections = allSections.sort((a, b) => {
-                      if (!currentSearch) return 0;
-                      
-                      const aTitle = a.section.title.toLowerCase();
-                      const bTitle = b.section.title.toLowerCase();
-                      
-                      const aExact = aTitle === currentSearch;
-                      const bExact = bTitle === currentSearch;
-                      if (aExact && !bExact) return -1;
-                      if (bExact && !aExact) return 1;
-                      
-                      const aStarts = aTitle.startsWith(currentSearch);
-                      const bStarts = bTitle.startsWith(currentSearch);
-                      if (aStarts && !bStarts) return -1;
-                      if (bStarts && !aStarts) return 1;
-                      
-                      const aContains = aTitle.includes(currentSearch);
-                      const bContains = bTitle.includes(currentSearch);
-                      if (aContains && !bContains) return -1;
-                      if (bContains && !aContains) return 1;
-                      
-                      return 0;
-                    });
-                    
-                    return sortedSections.map(({ section, category }) => {
-                      const Icon = section.icon;
-                      return (
-                        <CommandItem
-                          key={section.id}
-                          onSelect={() => {
-                            if (category.locked) {
-                              toast.error("You don't have permission to access this section");
-                              return;
-                            }
-                            handleSectionToggle(section.id as any);
-                            setExpandedCategory(category.id);
-                            setSidebarSearchOpen(false);
-                          }}
-                          disabled={category.locked}
-                          className="cursor-pointer"
-                        >
-                          <Icon className="mr-2 h-4 w-4" />
-                          <span>{section.title}</span>
-                        </CommandItem>
-                      );
-                    });
-                  })()}
-                </CommandGroup>
+                {(() => {
+                  const currentSearch = (searchQuery || '').trim().toLowerCase();
+                  // Strict section filter: only show sections whose title contains the typed letters.
+                  const allSections = categories.flatMap(category =>
+                    category.sections.filter(s => !(s as any).isGroupLabel).map(section => ({ section, category }))
+                  );
+                  const matchedSections = currentSearch
+                    ? allSections.filter(({ section }) => section.title.toLowerCase().includes(currentSearch))
+                    : allSections;
+                  // Sort: exact > starts-with > contains
+                  const sortedSections = matchedSections.sort((a, b) => {
+                    if (!currentSearch) return 0;
+                    const aTitle = a.section.title.toLowerCase();
+                    const bTitle = b.section.title.toLowerCase();
+                    if (aTitle === currentSearch && bTitle !== currentSearch) return -1;
+                    if (bTitle === currentSearch && aTitle !== currentSearch) return 1;
+                    const aStarts = aTitle.startsWith(currentSearch);
+                    const bStarts = bTitle.startsWith(currentSearch);
+                    if (aStarts && !bStarts) return -1;
+                    if (bStarts && !aStarts) return 1;
+                    return 0;
+                  });
+                  return (
+                    <>
+                      {sortedSections.length > 0 && (
+                        <CommandGroup heading="Jump to Section">
+                          {sortedSections.map(({ section, category }) => {
+                            const Icon = section.icon;
+                            return (
+                              <CommandItem
+                                key={section.id}
+                                value={`section-${section.id}-${section.title}`}
+                                onSelect={() => {
+                                  if (category.locked) {
+                                    toast.error("You don't have permission to access this section");
+                                    return;
+                                  }
+                                  handleSectionToggle(section.id as any);
+                                  setExpandedCategory(category.id);
+                                  setSidebarSearchOpen(false);
+                                }}
+                                disabled={category.locked}
+                                className="cursor-pointer"
+                              >
+                                <Icon className="mr-2 h-4 w-4" />
+                                <span>{section.title}</span>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      )}
+
+                      {searchResults.length > 0 && (
+                        <CommandGroup heading={`Found ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`}>
+                          {searchResults.map((result) => (
+                            <CommandItem
+                              key={`${result.type}-${result.id}`}
+                              value={`result-${result.type}-${result.id}-${result.title}`}
+                              onSelect={() => {
+                                setExpandedSection(result.sectionId as any);
+                                setExpandedCategory(
+                                  categories.find(c => c.sections.some(s => s.id === result.sectionId))?.id || null
+                                );
+                                if (result.type === 'player') {
+                                  const nextParams = createStaffSearchParams({ section: result.sectionId, player: result.id });
+                                  navigate(`/staff?${nextParams.toString()}`);
+                                  toast.success(`Opening ${result.title} in ${result.section}`);
+                                } else {
+                                  toast.success(`Opening ${result.section}`);
+                                }
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                setSidebarSearchOpen(false);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex flex-col gap-1 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{result.title}</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">{result.section}</span>
+                                </div>
+                                {result.description && (
+                                  <span className="text-xs text-muted-foreground line-clamp-1">{result.description}</span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+
+                      {sortedSections.length === 0 && searchResults.length === 0 && (
+                        <CommandEmpty>
+                          {searchLoading ? 'Searching...' : 'No matching section or content.'}
+                        </CommandEmpty>
+                      )}
+                    </>
+                  );
+                })()}
               </>
             )}
           </CommandList>
