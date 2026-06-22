@@ -922,6 +922,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
         season_data_mode: seasonDataMode,
+        season_id: seasonId,
         selected_video_ids: selectedVideoIds,
         alternate_profile_link_ids: altLinkIds,
         alternate_profiles_blurb: altBlurb.trim() || null,
