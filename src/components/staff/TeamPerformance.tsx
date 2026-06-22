@@ -424,9 +424,13 @@ export const TeamPerformance = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Team Performance</h2>
-          <p className="text-sm text-muted-foreground">Our starting five — click a player to see their role and how they're performing.</p>
         </div>
-        <Badge variant="outline" className="gap-1.5"><Trophy className="h-3 w-3" /> Starting 5</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5"><Trophy className="h-3 w-3" /> Starting 5</Badge>
+          <Badge variant="outline" className="gap-1.5 border-primary/40 text-primary">
+            {wins}W · {losses}L
+          </Badge>
+        </div>
       </div>
 
       {/* Basketball court */}
@@ -458,8 +462,9 @@ export const TeamPerformance = () => {
 
             {/* Players */}
             {STARTERS.map((s) => {
-              const st = stats.find(x => x.starter.name === s.name);
-              const isLeader = st && topDone > 0 && st.done === topDone;
+              const avg = seasonAverages.get(s.name)!;
+              const wk = boxScore.perStarter.get(s.name)!;
+              const isLeader = topWeekPts > 0 && wk.PTS === topWeekPts;
               return (
                 <g key={s.name} className="cursor-pointer" onClick={() => setOpen(s)}>
                   <circle cx={s.x} cy={s.y} r="40" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="3" />
@@ -471,8 +476,14 @@ export const TeamPerformance = () => {
                   )}
                   <text x={s.x} y={s.y - 4} textAnchor="middle" fontSize="14" fontWeight="700" fill="hsl(var(--primary))">{s.abbr}</text>
                   <text x={s.x} y={s.y + 14} textAnchor="middle" fontSize="13" fontWeight="600" fill="hsl(var(--foreground))">{s.name}</text>
-                  <text x={s.x} y={s.y + 60} textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">
-                    {st ? `${st.done}/${st.total} done` : ""}
+                  {s.floorGeneral && (
+                    <g>
+                      <rect x={s.x - 38} y={s.y + 48} width="76" height="16" rx="8" fill="hsl(var(--primary) / 0.18)" stroke="hsl(var(--primary))" strokeWidth="1" />
+                      <text x={s.x} y={s.y + 59} textAnchor="middle" fontSize="9" fontWeight="700" fill="hsl(var(--primary))" letterSpacing="0.5">FLOOR GENERAL</text>
+                    </g>
+                  )}
+                  <text x={s.x} y={s.y + (s.floorGeneral ? 80 : 60)} textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">
+                    {avg.ppg.toFixed(1)} PPG · {avg.apg.toFixed(1)} APG · {avg.rpg.toFixed(1)} RPG
                   </text>
                 </g>
               );
@@ -487,7 +498,16 @@ export const TeamPerformance = () => {
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">Weekly Box Score</h3>
-            <Badge variant="outline" className="text-[10px]">Last 7 days · vs. The Market</Badge>
+            <Badge variant="outline" className="text-[10px]">
+              {weekLabel(currentWeekIdx).start} – {weekLabel(currentWeekIdx).end} · vs. The Market
+            </Badge>
+            <Badge
+              variant="outline"
+              className={`text-[10px] gap-1 ${boxScore.team.PTS >= WIN_THRESHOLD ? "border-primary/60 text-primary" : "border-red-400/40 text-red-400"}`}
+              title={`Win at ${WIN_THRESHOLD}+ PTS`}
+            >
+              {boxScore.team.PTS >= WIN_THRESHOLD ? "W" : "L pace"} · target {WIN_THRESHOLD}
+            </Badge>
           </div>
           <div className={`text-xs font-semibold ${performanceTier(boxScore.team.PTS).tone}`}>
             {performanceTier(boxScore.team.PTS).label}
@@ -510,7 +530,7 @@ export const TeamPerformance = () => {
         </div>
 
         <div className="text-xs text-muted-foreground mb-3">
-          FG%: {boxScore.fgPct}% from {boxScore.attempts} scoring attempts
+          FG%: {boxScore.fgPct}% from {boxScore.attempts} scoring attempts · Win line at {WIN_THRESHOLD} PTS
         </div>
 
         <div className="overflow-x-auto">
@@ -563,17 +583,222 @@ export const TeamPerformance = () => {
         </div>
       </Card>
 
+      {/* Season tabs — schedule, averages, advanced, scoring rules */}
+      <Card className="p-4 sm:p-6">
+        <Tabs defaultValue="schedule" className="w-full">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full">
+            <TabsTrigger value="schedule"><CalendarDays className="h-3.5 w-3.5 mr-1.5" />Schedule</TabsTrigger>
+            <TabsTrigger value="averages">Season Averages</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="rules">Scoring</TabsTrigger>
+          </TabsList>
+
+          {/* Fixture list */}
+          <TabsContent value="schedule" className="mt-4">
+            <div className="text-xs text-muted-foreground mb-3">
+              52-game season. Each game = one calendar week. A win is {WIN_THRESHOLD}+ team PTS, anything less is a loss.
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                    <th className="text-left font-medium py-2 px-2">#</th>
+                    <th className="text-left font-medium py-2 px-2">Game week</th>
+                    <th className="text-right font-medium py-2 px-2">PTS</th>
+                    <th className="text-right font-medium py-2 px-2">+/−</th>
+                    <th className="text-right font-medium py-2 px-2">Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fixtures.map(f => (
+                    <tr
+                      key={f.i}
+                      className={`border-b border-border/30 last:border-0 ${f.isCurrent ? "bg-primary/5" : ""}`}
+                    >
+                      <td className="py-1.5 px-2 text-[11px] text-muted-foreground tabular-nums">{f.i + 1}</td>
+                      <td className="py-1.5 px-2">
+                        <span className="text-foreground">{f.start} – {f.end}</span>
+                        {f.isCurrent && (
+                          <Badge variant="outline" className="ml-2 text-[9px] border-primary/40 text-primary">Live</Badge>
+                        )}
+                      </td>
+                      <td className="py-1.5 px-2 text-right tabular-nums text-foreground">
+                        {f.isPast || f.isCurrent ? f.line.PTS : "—"}
+                      </td>
+                      <td className={`py-1.5 px-2 text-right tabular-nums ${f.line.plusMinus >= 0 ? "text-primary" : "text-red-400"}`}>
+                        {f.isPast || f.isCurrent ? `${f.line.plusMinus >= 0 ? "+" : ""}${f.line.plusMinus}` : "—"}
+                      </td>
+                      <td className="py-1.5 px-2 text-right">
+                        {f.result === "W" && <span className="font-bold text-primary">W</span>}
+                        {f.result === "L" && <span className="font-bold text-red-400">L</span>}
+                        {f.result === "—" && <span className="text-muted-foreground">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+
+          {/* Season averages */}
+          <TabsContent value="averages" className="mt-4">
+            <div className="text-xs text-muted-foreground mb-3">
+              Per-game averages across {teamAverages.games} game{teamAverages.games === 1 ? "" : "s"} played.
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                    <th className="text-left font-medium py-2 px-2">Starter</th>
+                    <th className="text-right font-medium py-2 px-2">GP</th>
+                    <th className="text-right font-medium py-2 px-2">PPG</th>
+                    <th className="text-right font-medium py-2 px-2">APG</th>
+                    <th className="text-right font-medium py-2 px-2">RPG</th>
+                    <th className="text-right font-medium py-2 px-2">SPG</th>
+                    <th className="text-right font-medium py-2 px-2">BPG</th>
+                    <th className="text-right font-medium py-2 px-2">TO</th>
+                    <th className="text-right font-medium py-2 px-2">+/−</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {STARTERS.map(s => {
+                    const a = seasonAverages.get(s.name)!;
+                    return (
+                      <tr key={s.name} className="border-b border-border/30 last:border-0">
+                        <td className="py-2 px-2">
+                          <button onClick={() => setOpen(s)} className="text-left hover:text-primary">
+                            <span className="font-medium text-foreground">{s.name}</span>
+                            <span className="text-[10px] text-muted-foreground ml-1.5">{s.abbr}</span>
+                            {s.floorGeneral && <Star className="inline h-2.5 w-2.5 ml-1 fill-primary text-primary" />}
+                          </button>
+                        </td>
+                        <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{a.games}</td>
+                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-foreground">{a.ppg}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-foreground">{a.apg}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-foreground">{a.rpg}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-foreground">{a.spg}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-foreground">{a.bpg}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-foreground">{a.topg}</td>
+                        <td className={`py-2 px-2 text-right tabular-nums font-semibold ${a.pmpg >= 0 ? "text-primary" : "text-red-400"}`}>
+                          {a.pmpg >= 0 ? "+" : ""}{a.pmpg}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t border-border/60">
+                    <td className="py-2 px-2 font-semibold text-foreground">Team</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-muted-foreground">{teamAverages.games}</td>
+                    <td className="py-2 px-2 text-right tabular-nums font-semibold text-primary">{teamAverages.ppg}</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-foreground">{teamAverages.apg}</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-foreground">{teamAverages.rpg}</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-foreground">{teamAverages.spg}</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-foreground">{teamAverages.bpg}</td>
+                    <td className="py-2 px-2 text-right tabular-nums text-foreground">{teamAverages.topg}</td>
+                    <td className={`py-2 px-2 text-right tabular-nums font-semibold ${teamAverages.pmpg >= 0 ? "text-primary" : "text-red-400"}`}>
+                      {teamAverages.pmpg >= 0 ? "+" : ""}{teamAverages.pmpg}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+
+          {/* Advanced metrics */}
+          <TabsContent value="advanced" className="mt-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {STARTERS.map(s => {
+                const a = seasonAverages.get(s.name)!;
+                const usageDenom = teamAverages.ppg * (a.games || 1);
+                const usage = usageDenom ? Math.round((a.ppg / teamAverages.ppg) * 100) : 0;
+                const astTo = a.topg > 0 ? +(a.apg / a.topg).toFixed(2) : a.apg;
+                const efficiency = +(a.ppg + a.apg * 1.5 + a.rpg + a.spg * 2 + a.bpg * 2 - a.topg * 2).toFixed(1);
+                return (
+                  <div key={s.name} className="p-3 rounded-md border border-border bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-semibold text-foreground">{s.name}</div>
+                      <span className="text-[10px] text-muted-foreground">{s.abbr}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      <div className="text-muted-foreground">Usage %</div>
+                      <div className="text-right tabular-nums text-foreground">{usage}%</div>
+                      <div className="text-muted-foreground">AST / TO</div>
+                      <div className="text-right tabular-nums text-foreground">{astTo}</div>
+                      <div className="text-muted-foreground">Efficiency</div>
+                      <div className="text-right tabular-nums text-foreground">{efficiency}</div>
+                      <div className="text-muted-foreground">Season total PTS</div>
+                      <div className="text-right tabular-nums text-foreground">{a.totalPts}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-3">
+              Usage = share of team PPG · AST/TO = creation vs waste · Efficiency = PTS + 1.5·AST + REB + 2·STL + 2·BLK − 2·TO.
+            </p>
+          </TabsContent>
+
+          {/* Scoring rules */}
+          <TabsContent value="rules" className="mt-4">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h4 className="font-semibold text-foreground mb-2">How the box score works</h4>
+                <ul className="space-y-1.5 text-muted-foreground text-xs">
+                  <li><span className="font-semibold text-primary">PTS</span> — direct agency progress (closed clients, payments, content shipped).</li>
+                  <li><span className="font-semibold text-blue-400">AST</span> — created future opportunity (intros, lead lists, partnerships).</li>
+                  <li><span className="font-semibold text-emerald-400">REB</span> — follow-ups and recoveries (chases, revivals, fixes).</li>
+                  <li><span className="font-semibold text-yellow-400">STL</span> — captured opportunities (decision-makers, trends, openings).</li>
+                  <li><span className="font-semibold text-purple-400">BLK</span> — problems prevented (templates, said-no, scope clarity).</li>
+                  <li><span className="font-semibold text-red-400">TO</span> — wasted chances (dropped balls, missed deadlines).</li>
+                  <li><span className="font-semibold text-primary">+/−</span> — total momentum (PTS + AST + REB + STL + BLK − TO).</li>
+                  <li className="pt-1">A <strong>win</strong> is {WIN_THRESHOLD}+ team PTS in a week. Anything less is a loss.</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-foreground mb-2">Action values</h4>
+                <div className="max-h-80 overflow-y-auto pr-2">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                        <th className="text-left font-medium py-1.5">Action</th>
+                        <th className="text-center font-medium py-1.5">Stat</th>
+                        <th className="text-right font-medium py-1.5">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {BOX_RULES.map((r, i) => (
+                        <tr key={i} className="border-b border-border/30">
+                          <td className="py-1.5 text-foreground">{r.label}</td>
+                          <td className={`py-1.5 text-center font-semibold ${BOX_META[r.stat].tone}`}>{r.stat}</td>
+                          <td className="py-1.5 text-right tabular-nums text-foreground">{r.pts}</td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td className="py-1.5 text-muted-foreground italic">Any other completed action</td>
+                        <td className="py-1.5 text-center font-semibold text-primary">PTS</td>
+                        <td className="py-1.5 text-right tabular-nums text-foreground">6</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </Card>
+
       {/* Leaderboard */}
       <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Task Leaderboard</h3>
+          <h3 className="text-lg font-semibold text-foreground">Weekly Scoring Leaders</h3>
         </div>
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <div className="space-y-3">
-            {leaderboard.map((row, idx) => (
+            {leaderboard.map((row, idx) => {
+              const pct = WIN_THRESHOLD ? Math.min(100, Math.round((row.weekPts / WIN_THRESHOLD) * 100)) : 0;
+              return (
               <button
                 key={row.starter.name}
                 onClick={() => setOpen(row.starter)}
@@ -592,15 +817,18 @@ export const TeamPerformance = () => {
                         </Badge>
                       )}
                     </span>
-                    <span className="text-sm font-semibold text-foreground tabular-nums">{row.done} done</span>
+                    <span className="text-sm font-semibold text-foreground tabular-nums">
+                      {row.weekPts} PTS <span className="text-[10px] font-normal text-muted-foreground">· {row.avg.ppg} PPG</span>
+                    </span>
                   </div>
                   <div className="mt-1 flex items-center gap-2">
-                    <Progress value={row.rate} className="h-1.5 flex-1" />
-                    <span className="text-[11px] text-muted-foreground tabular-nums w-10 text-right">{row.rate}%</span>
+                    <Progress value={pct} className="h-1.5 flex-1" />
+                    <span className="text-[11px] text-muted-foreground tabular-nums w-12 text-right">{pct}% of W</span>
                   </div>
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -638,7 +866,7 @@ export const TeamPerformance = () => {
       {/* Player role dialog */}
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-w-3xl">
-          {open && activeStat && (
+          {open && activeAvg && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3 text-2xl">
@@ -700,27 +928,31 @@ export const TeamPerformance = () => {
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 rounded-md bg-muted/50 text-center">
-                    <div className="text-2xl font-bold text-foreground tabular-nums">{activeStat.done}</div>
-                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Completed</div>
+                    <div className="text-2xl font-bold text-foreground tabular-nums">{activeAvg.ppg}</div>
+                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">PPG</div>
                   </div>
                   <div className="p-3 rounded-md bg-muted/50 text-center">
-                    <div className="text-2xl font-bold text-foreground tabular-nums">{activeStat.total}</div>
-                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Assigned</div>
+                    <div className="text-2xl font-bold text-foreground tabular-nums">{activeAvg.games}</div>
+                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Games played</div>
                   </div>
                   <div className="p-3 rounded-md bg-muted/50 text-center">
-                    <div className="text-2xl font-bold text-foreground tabular-nums">{activeStat.rate}%</div>
-                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Completion</div>
+                    <div className={`text-2xl font-bold tabular-nums ${activeAvg.pmpg >= 0 ? "text-primary" : "text-red-400"}`}>
+                      {activeAvg.pmpg >= 0 ? "+" : ""}{activeAvg.pmpg}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">+/− per game</div>
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">Types of task completed</h4>
-                  {activeStat.categories.length === 0 ? (
+                  {activeCategories.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No completed tasks yet.</p>
                   ) : (
                     <div className="space-y-2">
-                      {activeStat.categories.map(([cat, count]) => {
-                        const pct = Math.round((count / activeStat.done) * 100);
+                      {(() => {
+                        const totalCount = activeCategories.reduce((a, [, n]) => a + n, 0) || 1;
+                        return activeCategories.map(([cat, count]) => {
+                          const pct = Math.round((count / totalCount) * 100);
                         return (
                           <div key={cat}>
                             <div className="flex justify-between text-xs mb-1">
@@ -730,7 +962,8 @@ export const TeamPerformance = () => {
                             <Progress value={pct} className="h-1.5" />
                           </div>
                         );
-                      })}
+                        });
+                      })()}
                     </div>
                   )}
                 </div>
