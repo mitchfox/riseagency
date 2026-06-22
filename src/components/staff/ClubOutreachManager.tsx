@@ -819,7 +819,19 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
-        if (def.length > 0 && !cancelled) setSelectedVideoIds(def);
+        if (def.length > 0 && !cancelled) {
+          setSelectedVideoIds(def);
+        } else if (!cancelled) {
+          // Fall back to the global default video selection mode.
+          if (defaultVideoMode === 'first' && list.length > 0) {
+            setSelectedVideoIds([list[0].id]);
+          } else if (defaultVideoMode === 'custom') {
+            // Custom mode: leave empty as a signal "all", staff picks manually.
+            // We intentionally don't pre-tick anything.
+            setSelectedVideoIds([]);
+          }
+          // 'all' → leave [] (renderer treats empty as "show all").
+        }
         const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
