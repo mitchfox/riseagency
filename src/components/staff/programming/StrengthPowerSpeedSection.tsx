@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, ChevronDown } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
 import { SpsSection } from "@/components/staff/programming/SpsSection";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useState as useReactState } from "react";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
