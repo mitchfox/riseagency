@@ -1206,7 +1206,8 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null, show_database_card: null });
+  const [fitScore, setFitScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [introDone, setIntroDone] = useState(false);
