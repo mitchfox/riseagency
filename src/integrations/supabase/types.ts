@@ -1283,6 +1283,7 @@ export type Database = {
       club_outreach_player_defaults: {
         Row: {
           default_fit_recommendation: string | null
+          default_position: string | null
           highlights_url: string | null
           player_id: string
           proof_of_representation_path: string | null
@@ -1291,6 +1292,7 @@ export type Database = {
         }
         Insert: {
           default_fit_recommendation?: string | null
+          default_position?: string | null
           highlights_url?: string | null
           player_id: string
           proof_of_representation_path?: string | null
@@ -1299,6 +1301,7 @@ export type Database = {
         }
         Update: {
           default_fit_recommendation?: string | null
+          default_position?: string | null
           highlights_url?: string | null
           player_id?: string
           proof_of_representation_path?: string | null
