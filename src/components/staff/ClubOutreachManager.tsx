@@ -2062,16 +2062,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
-      const sm = (data as any)?.default_season_data_mode;
-      setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
-      setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
-      const { data: seasons } = await supabase
-        .from("player_seasons")
-        .select("id, name, sort_order")
-        .eq("player_id", selectedPlayerId)
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true });
-      setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
     })();
   }, [selectedPlayerId]);
 
