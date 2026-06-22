@@ -417,6 +417,7 @@ Deno.serve(async (req) => {
             : null,
           form_analyses: recentAnalyses,
           match_by_match: allAnalyses,
+          match_by_match_default_category: cfg?.match_by_match_default_category ?? null,
         };
       })
     );
