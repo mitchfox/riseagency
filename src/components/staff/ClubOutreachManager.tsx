@@ -601,7 +601,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
-    (editing?.season_data_mode as 'popup' | 'link' | null) ?? 'popup',
+    (editing?.season_data_mode as 'popup' | 'link' | null) ?? defaultSeasonDataMode ?? 'popup',
   );
   const [primaryVideos, setPrimaryVideos] = useState<{ id: string; name: string; videoUrl: string }[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(
