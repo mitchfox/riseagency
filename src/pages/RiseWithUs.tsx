@@ -981,9 +981,10 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, secondaryParagraph, onDone,
+  fullName, lang, extraImages, extraIntro, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
+  extraIntro: Array<{ kind: "image" | "video"; url: string }>;
   secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
