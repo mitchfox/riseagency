@@ -388,6 +388,59 @@ Deno.serve(async (req) => {
       /* ignore */
     }
 
+    // Resolve alternate profiles: for each linked outreach id, fetch its
+    // short_id + primary player's name / photo / position / age / club so the
+    // proposal can render a compact strip of mini-cards linking through to
+    // each alternate proposal.
+    const altIds: string[] = Array.isArray((link as any).alternate_profile_link_ids)
+      ? (link as any).alternate_profile_link_ids
+      : [];
+    let alternateProfiles: any[] = [];
+    if (altIds.length > 0) {
+      const { data: altLinks } = await supabase
+        .from("club_outreach_links")
+        .select("id, short_id, player_id, club_id, target_type, agent_name")
+        .in("id", altIds)
+        .is("archived_at", null);
+      const { data: altLinkPlayers } = await supabase
+        .from("club_outreach_link_players")
+        .select("link_id, player_id, sort_order")
+        .in("link_id", altIds)
+        .order("sort_order", { ascending: true });
+      const primaryByLink = new Map<string, string>();
+      (altLinkPlayers ?? []).forEach((lp: any) => {
+        if (!primaryByLink.has(lp.link_id)) primaryByLink.set(lp.link_id, lp.player_id);
+      });
+      const altPlayerIds = Array.from(new Set(
+        (altLinks ?? []).map((l: any) => primaryByLink.get(l.id) ?? l.player_id).filter(Boolean)
+      ));
+      const { data: altPlayerRows } = altPlayerIds.length
+        ? await supabase
+            .from("players")
+            .select("id, name, image_url, position, age, date_of_birth, club")
+            .in("id", altPlayerIds)
+        : { data: [] as any[] };
+      const altPlayerById = new Map<string, any>((altPlayerRows ?? []).map((p: any) => [p.id, p]));
+      // Preserve the order set by staff.
+      alternateProfiles = altIds
+        .map((id) => (altLinks ?? []).find((l: any) => l.id === id))
+        .filter(Boolean)
+        .map((l: any) => {
+          const pid = primaryByLink.get(l.id) ?? l.player_id ?? null;
+          const p = pid ? altPlayerById.get(pid) : null;
+          return {
+            short_id: l.short_id,
+            target_type: l.target_type ?? 'club',
+            player_name: p?.name ?? null,
+            image_url: p?.image_url ?? null,
+            position: p?.position ?? null,
+            age: p?.age ?? null,
+            date_of_birth: p?.date_of_birth ?? null,
+            club: p?.club ?? null,
+          };
+        });
+    }
+
     return new Response(
       JSON.stringify({
         link,
