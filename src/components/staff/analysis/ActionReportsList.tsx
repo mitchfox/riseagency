@@ -669,6 +669,100 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           }}
         />
       )}
+
+      {/* To Do — note editor (per report) */}
+      <Dialog open={!!todoNoteEditor} onOpenChange={(o) => !o && setTodoNoteEditor(null)}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>What needs to be done?</DialogTitle>
+          </DialogHeader>
+          {todoNoteEditor && (() => {
+            const report = reports.find(r => r.id === todoNoteEditor.id);
+            return (
+              <div className="space-y-3">
+                {report && (
+                  <p className="text-xs text-muted-foreground">
+                    {report.player_name} {report.opponent ? `vs ${report.opponent}` : ""}
+                  </p>
+                )}
+                <Textarea
+                  autoFocus
+                  value={todoNoteEditor.note}
+                  onChange={(e) => setTodoNoteEditor({ ...todoNoteEditor, note: e.target.value })}
+                  placeholder="e.g. Re-clip 17' goal, fix opponent name, rate finishing"
+                  rows={3}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setTodoNoteEditor(null)}>Cancel</Button>
+                  <Button
+                    onClick={async () => {
+                      if (!report) { setTodoNoteEditor(null); return; }
+                      await toggleTodo(report, true, todoNoteEditor.note.trim() || null);
+                      setTodoNoteEditor(null);
+                    }}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* To Do — pick an existing report to add */}
+      <Dialog open={todoPickerOpen} onOpenChange={setTodoPickerOpen}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add a report to To Do</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Search by player or opponent..."
+              value={todoPickerSearch}
+              onChange={(e) => setTodoPickerSearch(e.target.value)}
+            />
+            <Textarea
+              value={todoPickerNote}
+              onChange={(e) => setTodoPickerNote(e.target.value)}
+              placeholder="Optional note for the report banner"
+              rows={2}
+            />
+            <div className="max-h-[50vh] overflow-y-auto rounded border divide-y">
+              {reports
+                .filter(r => !r.is_todo)
+                .filter(r => {
+                  const q = todoPickerSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return (r.player_name || "").toLowerCase().includes(q) || (r.opponent || "").toLowerCase().includes(q);
+                })
+                .slice(0, 50)
+                .map(r => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={async () => {
+                      await toggleTodo(r, true, todoPickerNote.trim() || null);
+                      setTodoPickerOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-muted/50"
+                  >
+                    <span className="truncate">
+                      <span className="font-medium">{r.player_name}</span>
+                      <span className="text-muted-foreground"> · {r.opponent ? `vs ${r.opponent}` : "—"}</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {format(new Date(r.analysis_date), "dd MMM yyyy")}
+                    </span>
+                  </button>
+                ))}
+              {reports.filter(r => !r.is_todo).length === 0 && (
+                <p className="p-4 text-sm text-muted-foreground text-center">All reports are already on the To Do list.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
