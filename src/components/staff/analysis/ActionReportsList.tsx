@@ -69,6 +69,10 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [pendingReportType, setPendingReportType] = useState<'player' | 'team'>('player');
   const [showPlayerPicker, setShowPlayerPicker] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
+  const [todoPickerOpen, setTodoPickerOpen] = useState(false);
+  const [todoNoteEditor, setTodoNoteEditor] = useState<{ id: string; note: string } | null>(null);
+  const [todoPickerSearch, setTodoPickerSearch] = useState("");
+  const [todoPickerNote, setTodoPickerNote] = useState("");
 
   useEffect(() => {
     if (scope.loading) return;
