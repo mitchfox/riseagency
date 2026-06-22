@@ -9,6 +9,7 @@ import {
   Play,
   CalendarClock, CheckCircle2,
 } from "lucide-react";
+import { SlantedBox, widont } from "@/components/SlantedBox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
