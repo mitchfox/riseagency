@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { computeStatAverage, formatStat, isPercentageMetric, getStatValue } from "@/lib/statAggregation";
 import { effectiveR90, effectiveMinutes } from "@/lib/r90";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface Props {
   analyses: any[];
