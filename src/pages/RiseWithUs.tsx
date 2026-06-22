@@ -1258,7 +1258,20 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
-  const extraImages = Object.values(settings.section_images).filter(Boolean) as string[];
+  // Build the intro pool from the new intro_media list (kind=image|video,
+  // show=true, position in intro/both). Fall back to legacy section_images
+  // when the player hasn't been migrated yet so we never go blank.
+  const introVisible = settings.intro_media.filter(
+    (m) => m.show && (m.position === "intro" || m.position === "both"),
+  );
+  const extraIntro: Array<{ kind: "image" | "video"; url: string }> =
+    introVisible.length > 0
+      ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
+      : Object.values(settings.section_images)
+          .filter(Boolean)
+          .map((url) => ({ kind: "image" as const, url: url as string }));
+  // Keep the old name working for any downstream consumers that just want urls.
+  const extraImages = extraIntro.map((m) => m.url);
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
 
