@@ -168,8 +168,8 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     const day = startDate.getUTCDay(); // 0=Sun
     const back = day === 0 ? 6 : day - 1;
     const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() - back));
-    const existingDates = new Set(
-      allPlayerWeeks.filter(w => w.week_start_date).map(w => w.week_start_date as string)
+    const existingByDate = new Map(
+      allPlayerWeeks.filter(w => w.week_start_date).map(w => [w.week_start_date as string, w] as const)
     );
     const isoOf = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
     const newRows: any[] = [];
@@ -177,7 +177,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     let weekNum = 1;
     while (cursor.getTime() <= endDate.getTime()) {
       const iso = isoOf(cursor);
-      if (!existingDates.has(iso)) {
+      if (!existingByDate.has(iso)) {
         newRows.push({
           player_id: playerId,
           label: `Week ${weekNum}`,
@@ -187,7 +187,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         });
       } else {
         // Existing week — link it if it's not already linked
-        const existing = allPlayerWeeks.find(w => w.week_start_date === iso);
+        const existing = existingByDate.get(iso);
         if (existing && !linkedIds.includes(existing.id)) toLink.push(existing.id);
       }
       cursor.setUTCDate(cursor.getUTCDate() + 7);
