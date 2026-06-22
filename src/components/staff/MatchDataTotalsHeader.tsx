@@ -394,7 +394,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     <Collapsible defaultOpen={defaultOpen}>
       <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-md border border-border/60 bg-background/30 px-3 py-2 hover:bg-background/50 transition">
         <div className="flex items-center gap-2">
-          <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+          <span className="h-[3px] w-6 bg-[#EBC773]/70" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
             {title}
           </span>
@@ -416,14 +416,14 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
   };
 
   return (
-    <div className="rounded-lg border-2 border-[#C6A332]/60 bg-card p-4 space-y-4">
+    <div className="rounded-lg border-2 border-[#EBC773]/60 bg-card p-4 space-y-4">
       <div>
-        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332] mb-2">Totals</h4>
+        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773] mb-2">Totals</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {totalCards.map((c) => (
             <div
               key={c.label}
-              className="rounded-md border border-[#C6A332]/40 bg-background/40 px-3 py-2"
+              className="rounded-md border border-[#EBC773]/40 bg-background/40 px-3 py-2"
             >
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.label}</div>
               <div className="text-lg font-semibold text-foreground">{c.value}</div>
@@ -434,7 +434,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
 
       {/* Advanced statistical modelling — collapsed by default. */}
       <div className="space-y-2">
-        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773]">
           Advanced insights
         </h4>
 
@@ -555,7 +555,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
 
       {allStatKeys.length > 0 && (
         <div className="space-y-4">
-          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#EBC773]">
             Season averages by category
           </h4>
           {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => {
