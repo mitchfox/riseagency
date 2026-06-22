@@ -390,7 +390,8 @@ Deno.serve(async (req) => {
         // Form banner inputs
         const cfg = formCfgByPlayer.get(e.player_id) ?? null;
         const windowSize = cfg?.window_size ?? 5;
-        const recentAnalyses = (analysesByPlayer.get(e.player_id) ?? []).slice(0, windowSize);
+        const allAnalyses = analysesByPlayer.get(e.player_id) ?? [];
+        const recentAnalyses = allAnalyses.slice(0, windowSize);
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -409,6 +410,7 @@ Deno.serve(async (req) => {
           strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,
           form_config: cfg ? { window_size: windowSize, stats: cfg.stats ?? [] } : null,
           form_analyses: recentAnalyses,
+          match_by_match: allAnalyses,
         };
       })
     );
