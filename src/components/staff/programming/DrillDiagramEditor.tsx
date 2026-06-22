@@ -164,25 +164,30 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
     setDiagram(d => ({ ...d, tokens: [...d.tokens, { id: uid(), kind, x, y, label }] }));
   };
 
-  // Dragging works from any tool when the press starts on an existing item.
-  // This makes the editor feel more like a normal canvas — you don't have to
-  // remember to switch back to the Select tool just to nudge a token.
   const startDragToken = (id: string) => (evt: React.MouseEvent) => {
     evt.stopPropagation();
+    if (tool !== "select") return;
+    if (selectedId !== id) {
+      setSelectedId(id);
+      return;
+    }
     setDragId(id);
-    setSelectedId(id);
     draggedRef.current = false;
   };
 
   const startDragShape = (id: string) => (evt: React.MouseEvent) => {
     evt.stopPropagation();
+    if (tool !== "select") return;
+    if (selectedId !== id) {
+      setSelectedId(id);
+      return;
+    }
     const { x, y } = toCoords(evt);
     const sh = (diagram.shapes ?? []).find(s => s.id === id);
     if (!sh) return;
     const mx = (sh.from.x + sh.to.x) / 2;
     const my = (sh.from.y + sh.to.y) / 2;
     setDragShape({ id, offX: x - mx, offY: y - my });
-    setSelectedId(id);
     draggedRef.current = false;
   };
 
