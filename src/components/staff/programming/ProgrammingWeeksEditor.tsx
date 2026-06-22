@@ -51,6 +51,18 @@ interface Week {
   slots: Partial<Record<Day, Slot>>;
 }
 
+interface LegacyWeeklySchedule {
+  week?: string | null;
+  week_start_date?: string | null;
+  monday?: unknown;
+  tuesday?: unknown;
+  wednesday?: unknown;
+  thursday?: unknown;
+  friday?: unknown;
+  saturday?: unknown;
+  sunday?: unknown;
+}
+
 interface Props {
   playerId: string;
   /**
