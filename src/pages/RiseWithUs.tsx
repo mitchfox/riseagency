@@ -1069,46 +1069,45 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — images and short clips — appear only on the
-          final RISE logo beat. Layout uses the same 1–6 frame grid as before
-          so existing compositions stay intact; videos play muted + looped. */}
-      {phase === 3 && extraIntro.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[5]">
-          {extraIntro.slice(0, 6).map((m, i) => {
-            const frame = getIntroImageFrames(extraIntro.slice(0, 6).length)[i];
-            const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
-            if (m.kind === "video") {
-              return (
+      {/* Uploaded intro media — images and short clips — rotate one at a time
+          on the final RISE logo beat with a crossfade between beats. Videos
+          play muted + looped while on screen. */}
+      {phase === 3 && extraIntro.length > 0 && (() => {
+        const frame = getIntroImageFrames(1)[0];
+        const m = extraIntro[introIdx % extraIntro.length];
+        const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+        return (
+          <div className="pointer-events-none absolute inset-0 z-[5]">
+            <AnimatePresence mode="wait">
+              {m.kind === "video" ? (
                 <motion.video
-                  key={m.url + i}
+                  key={m.url}
                   src={m.url}
                   className={commonClass}
                   style={frame.style}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  initial={{ opacity: 0, scale: 0.75 }}
-                  animate={{ opacity: 0.9, scale: 1 }}
-                  transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                  autoPlay muted loop playsInline
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 0.92, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.03 }}
+                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
                 />
-              );
-            }
-            return (
-              <motion.img
-                key={m.url + i}
-                src={m.url}
-                alt=""
-                className={commonClass}
-                style={frame.style}
-                initial={{ opacity: 0, scale: 0.75 }}
-                animate={{ opacity: 0.9, scale: 1 }}
-                transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-              />
-            );
-          })}
-        </div>
-      )}
+              ) : (
+                <motion.img
+                  key={m.url}
+                  src={m.url}
+                  alt=""
+                  className={commonClass}
+                  style={frame.style}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 0.92, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.03 }}
+                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })()}
 
       {/* Player image is intentionally NOT rendered in the intro cinematic.
           The intro must show only the smudged marble + RISE logo. */}
