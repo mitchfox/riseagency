@@ -91,6 +91,7 @@ interface OutreachRow {
   translations?: any | null;
   is_pending_strategy_draft?: boolean;
   season_data_mode?: 'popup' | 'link' | null;
+  selected_video_ids?: string[] | null;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -590,6 +591,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
     (editing?.season_data_mode as 'popup' | 'link' | null) ?? 'popup',
   );
+  const [primaryVideos, setPrimaryVideos] = useState<{ id: string; name: string; videoUrl: string }[]>([]);
+  const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(
+    Array.isArray(editing?.selected_video_ids) ? (editing!.selected_video_ids as string[]) : [],
+  );
+  const [loadingPrimaryVideos, setLoadingPrimaryVideos] = useState(false);
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
   const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
   const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
@@ -752,6 +758,57 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
 
+  // Whenever the primary player changes, fetch their highlights so the staff
+  // can pick which ones appear in the proposal carousel.
+  const primaryPlayerId = entries[0]?.player_id ?? null;
+  useEffect(() => {
+    let cancelled = false;
+    if (!primaryPlayerId) {
+      setPrimaryVideos([]);
+      return;
+    }
+    setLoadingPrimaryVideos(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from("players")
+        .select("highlights")
+        .eq("id", primaryPlayerId)
+        .maybeSingle();
+      if (cancelled) return;
+      setLoadingPrimaryVideos(false);
+      if (error) {
+        setPrimaryVideos([]);
+        return;
+      }
+      let h: any = (data as any)?.highlights ?? null;
+      try { if (typeof h === "string") h = JSON.parse(h); } catch (_) { h = null; }
+      let pool: any[] = [];
+      if (Array.isArray(h)) pool = h;
+      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+      const list = pool
+        .filter((x: any) => x && (x.videoUrl || x.video_url))
+        .map((x: any) => ({
+          id: String(x.id ?? x.videoUrl ?? x.video_url),
+          name: String(x.name ?? "Highlight"),
+          videoUrl: String(x.videoUrl ?? x.video_url),
+        }));
+      setPrimaryVideos(list);
+      // Seed selection from per-player default when this is a fresh outreach
+      // and the user hasn't yet picked anything for this player.
+      if (!editing && selectedVideoIds.length === 0) {
+        const { data: defs } = await (supabase as any)
+          .from("club_outreach_player_defaults")
+          .select("default_selected_video_ids")
+          .eq("player_id", primaryPlayerId)
+          .maybeSingle();
+        const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
+        if (def.length > 0 && !cancelled) setSelectedVideoIds(def);
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryPlayerId]);
+
   const savePlayerPositionDefault = async (playerId: string, position: string | null) => {
     if (!position) {
       toast.error("Pick a position first, then save it as default");
@@ -792,6 +849,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
         season_data_mode: seasonDataMode,
+        selected_video_ids: selectedVideoIds,
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
