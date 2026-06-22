@@ -1,24 +1,55 @@
-I’ll fix the Club Outreach settings so per-player customisation actually exists as a complete editable panel, not just partial defaults.
+## What I got wrong
 
-Plan:
-1. Expand the per-player section in Club Outreach Settings into a clear selected-player editor matching the fields staff expect:
-   - Stars page URL override
-   - Full season highlights URL
-   - Default fit / recommendation
-   - Default position
-   - Default season data mode: popup or Stars link
-   - Default season to show from that player’s existing seasons
-   - Default video selection where possible
-   - Proof of Representation PDF
-2. Load all of those saved values when a player is selected, including the new season/mode/position/video defaults that currently exist in the data layer but are not properly exposed in the settings UI.
-3. Save all per-player defaults in one “Save defaults” action so changes persist and are applied when that player is added to a new outreach.
-4. Keep the proposal creation/edit dialog behaviour aligned with the settings defaults:
-   - first player in a new outreach gets their per-player defaults
-   - global defaults only fill gaps
-   - existing outreach-specific choices are not overwritten when editing.
-5. Keep the proof card hidden on public proposals when no proof URL exists, and do not touch unrelated report/data logic.
+- Built the wrong "alternate" feature on the proposal: a strip of mini player cards (pulling other outreach links + their player photos). That's the "AI images of other players" you've been telling me to kill. Those cards have to go.
+- Removed the season-mode and season-id from the per-player settings panel after you told me the per-player stuff was perfect. Putting them back exactly as they were.
 
-Technical notes:
-- Main file: `src/components/staff/ClubOutreachManager.tsx`.
-- Existing columns already support most of this: `default_position`, `default_fit_recommendation`, `default_season_data_mode`, `default_season_id`, `default_selected_video_ids`, URL fields and proof path.
-- No schema change should be needed unless I find a missing field during implementation.
+## What I will change
+
+### 1. Club outreach proposal page (`src/pages/ClubOutreachProposal.tsx`)
+
+Delete the entire "Alternate Profiles" mini-card strip (the section that renders `data.alternate_profiles.map(...)` with player photo / name / position / age / club tiles linking to other proposals).
+
+In its place, add one wide thin card just above the closing contact CTAs:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ALTERNATE OPTIONS                                            │
+│ <free-text body — whatever the staffer wrote in the editor>  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+- Full max-width of the proposal column, thin vertical padding (matches the slim hairline cards already on the page).
+- Heading: "Alternate Options" in the same gold eyebrow style used elsewhere on the proposal.
+- Body: renders the existing `alternate_profiles_blurb` field as plain text (whitespace preserved). No images. No links. No cards. No player references unless the staffer types them in.
+- Card only appears when the blurb is non-empty.
+
+### 2. Club outreach editor (`src/components/staff/ClubOutreachManager.tsx`)
+
+In the per-outreach edit dialog, the "Alternate profiles" section becomes a simple block:
+
+- Label: "Alternate Options (optional)"
+- Helper: "A wide thin card at the bottom of the proposal where you add extra detail — e.g. free-transfer alternatives, loan options, budget profiles."
+- One `Textarea` bound to `alternate_profiles_blurb` (already exists).
+
+Delete the "attach other outreach links" picker, the selected/available link lists, the "Save defaults for this player" button tied to link IDs, and all `altLinkIds` state and save paths.
+
+Keep the column `alternate_profile_link_ids` in the DB untouched — just stop reading or writing it from the UI. No migration needed.
+
+### 3. Per-player settings panel (same file)
+
+Restore the two blocks I removed, exactly as they were:
+
+- "Default season data display" pill group (Use global default / In-page popup / Link to Stars profile) bound to `playerDefaultSeasonMode`.
+- "Default season to show" select bound to `playerDefaultSeasonId`, populated from `player_seasons` for the selected player.
+
+Re-add the state (`playerDefaultSeasonMode`, `playerDefaultSeasonId`, `playerSeasonsForDefaults`), the loader effect, and the two fields in the `saveDefaults` upsert (`default_season_data_mode`, `default_season_id`).
+
+### 4. Edge function (`supabase/functions/get-club-outreach/index.ts`)
+
+No code path change required — the `alternate_profiles` array it returns will just be ignored by the new proposal UI. Leave it alone to avoid risk to other consumers.
+
+## What I will NOT touch
+
+- The "Players we've worked with" slider on /representation and /rise-with-us — that one pulls real photos from the `players` table and is staying.
+- Anything else in the per-player panel.
+- Any database schema.
