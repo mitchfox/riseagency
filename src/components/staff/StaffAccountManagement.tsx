@@ -13,6 +13,8 @@ import { RolePermissionsEditor } from "./RolePermissionsEditor";
 import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
 import { HighlightMakersManagement } from "./HighlightMakersManagement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { QuickLoginDialog } from "./QuickLoginDialog";
+import { LogIn } from "lucide-react";
 
 interface AvailableRole {
   role_key: string;
