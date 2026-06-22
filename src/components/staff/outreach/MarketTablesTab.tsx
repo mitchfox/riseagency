@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ExternalLink, MessageCircle, Mail, Phone, Search } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface ClubRow {
   id: string;
@@ -59,6 +62,13 @@ const matchContactForClub = (
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
+type ContactEditState = {
+  club: ClubRow;
+  role: "td" | "cs";
+  existing: ContactRow | null;
+  draft: { name: string; position: string; email: string; phone: string };
+};
+
 export default function MarketTablesTab() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [contacts, setContacts] = useState<ContactRow[]>([]);
@@ -67,6 +77,9 @@ export default function MarketTablesTab() {
   const [country, setCountry] = useState<string>("all");
   const [league, setLeague] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<ContactEditState | null>(null);
+  const [savingContact, setSavingContact] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -122,7 +135,7 @@ export default function MarketTablesTab() {
       setEntries(map);
       setLoading(false);
     })();
-  }, []);
+  }, [reloadKey]);
 
   const countries = useMemo(() => {
     const set = new Set<string>();
@@ -206,6 +219,55 @@ export default function MarketTablesTab() {
         )}
       </span>
     );
+  };
+
+  const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
+    const defaultPos = role === "td" ? "Technical Director" : "Chief Scout";
+    setEditing({
+      club,
+      role,
+      existing,
+      draft: {
+        name: existing?.name ?? (role === "td" ? entries[club.id]?.technical_director_name ?? "" : entries[club.id]?.chief_scout_name ?? ""),
+        position: existing?.position ?? defaultPos,
+        email: existing?.email ?? "",
+        phone: existing?.phone ?? "",
+      },
+    });
+  };
+
+  const saveContact = async () => {
+    if (!editing) return;
+    const { club, role, existing, draft } = editing;
+    if (!draft.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setSavingContact(true);
+    const payload = {
+      name: draft.name.trim(),
+      position: draft.position.trim() || null,
+      email: draft.email.trim() || null,
+      phone: draft.phone.trim() || null,
+      club_name: club.club_name,
+      country: club.country,
+    };
+    const { error } = existing
+      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id)
+      : await supabase.from("club_network_contacts").insert(payload);
+    if (error) {
+      toast.error(error.message);
+      setSavingContact(false);
+      return;
+    }
+    // Also persist the name into the market table entry so it sticks.
+    await persist(club.id, role === "td"
+      ? { technical_director_name: payload.name }
+      : { chief_scout_name: payload.name });
+    toast.success(existing ? "Contact updated" : "Contact added");
+    setSavingContact(false);
+    setEditing(null);
+    setReloadKey((k) => k + 1);
   };
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading market table…</div>;
@@ -297,6 +359,14 @@ export default function MarketTablesTab() {
                         }}
                       />
                       {renderContactLinks(tdContact)}
+                      <button
+                        type="button"
+                        onClick={() => openEdit(club, "td", tdContact)}
+                        title={tdContact ? "Edit contact" : "Add contact"}
+                        className="ml-1 text-muted-foreground hover:text-white"
+                      >
+                        {tdContact ? <Pencil className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                      </button>
                     </div>
                   </td>
                   <td className="px-3 py-2">
@@ -315,6 +385,14 @@ export default function MarketTablesTab() {
                         }}
                       />
                       {renderContactLinks(csContact)}
+                      <button
+                        type="button"
+                        onClick={() => openEdit(club, "cs", csContact)}
+                        title={csContact ? "Edit contact" : "Add contact"}
+                        className="ml-1 text-muted-foreground hover:text-white"
+                      >
+                        {csContact ? <Pencil className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -323,6 +401,59 @@ export default function MarketTablesTab() {
           </tbody>
         </table>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editing?.existing ? "Edit contact" : "Add contact"} — {editing?.club.club_name}
+            </DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Name</Label>
+                <Input
+                  value={editing.draft.name}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, name: e.target.value } })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Position</Label>
+                <Input
+                  value={editing.draft.position}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, position: e.target.value } })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Email</Label>
+                <Input
+                  type="email"
+                  value={editing.draft.email}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, email: e.target.value } })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Phone (WhatsApp)</Label>
+                <Input
+                  value={editing.draft.phone}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, phone: e.target.value } })}
+                  placeholder="+44 7..."
+                />
+              </div>
+              <div className="sm:col-span-2 text-[11px] text-muted-foreground">
+                Saved to Network as {editing.club.club_name} ({editing.club.country ?? "—"}).
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)} disabled={savingContact}>Cancel</Button>
+            <Button onClick={saveContact} disabled={savingContact}>
+              {savingContact ? "Saving…" : "Save contact"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
