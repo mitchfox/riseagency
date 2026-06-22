@@ -1308,6 +1308,7 @@ export type Database = {
           default_alternate_profiles_blurb: string | null
           default_fit_recommendation: string | null
           default_key_details: Json | null
+          default_match_by_match_category: string | null
           default_position: string | null
           default_season_data_mode: string | null
           default_season_id: string | null
@@ -1328,6 +1329,7 @@ export type Database = {
           default_alternate_profiles_blurb?: string | null
           default_fit_recommendation?: string | null
           default_key_details?: Json | null
+          default_match_by_match_category?: string | null
           default_position?: string | null
           default_season_data_mode?: string | null
           default_season_id?: string | null
@@ -1348,6 +1350,7 @@ export type Database = {
           default_alternate_profiles_blurb?: string | null
           default_fit_recommendation?: string | null
           default_key_details?: Json | null
+          default_match_by_match_category?: string | null
           default_position?: string | null
           default_season_data_mode?: string | null
           default_season_id?: string | null
