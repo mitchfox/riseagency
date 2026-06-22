@@ -1381,108 +1381,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 )}
               </div>
             )}
-            <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
-              <Label>Alternate profiles</Label>
+            <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
+              <Label>Alternate Options (optional)</Label>
               <p className="text-[11px] text-muted-foreground">
-                Attach other outreach links as alternates. They appear in their own section near the bottom of the proposal under a short blurb (e.g. for budget-tight clubs).
+                A wide thin card at the bottom of the proposal where you add extra detail — e.g. free-transfer alternatives, loan options, budget profiles. Plain text, no images, no links.
               </p>
               <Textarea
-                rows={2}
-                placeholder="If budget is tight, here are free options we'd also recommend…"
+                rows={4}
+                placeholder="If budget is tight we'd also recommend looking at…"
                 value={altBlurb}
                 onChange={(e) => setAltBlurb(e.target.value)}
                 className="text-sm"
               />
-              <Input
-                placeholder="Search other outreach links by player name"
-                value={altQuery}
-                onChange={(e) => setAltQuery(e.target.value)}
-              />
-              {(() => {
-                const others = allRows.filter((r) => r.id !== editing?.id);
-                const playerNameFor = (r: OutreachRow) => {
-                  const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                  return pid ? (playerById.get(pid)?.name ?? "Unknown") : "Unknown";
-                };
-                const targetLabelFor = (r: OutreachRow) =>
-                  r.target_type === 'agent' ? (r.agent_name ?? 'Agent') : (r.club?.club_name ?? 'Club');
-                const q = altQuery.trim().toLowerCase();
-                const matches = others
-                  .filter((r) => !altLinkIds.includes(r.id))
-                  .filter((r) => !q || playerNameFor(r).toLowerCase().includes(q) || targetLabelFor(r).toLowerCase().includes(q))
-                  .slice(0, 20);
-                const selected = altLinkIds
-                  .map((id) => allRows.find((r) => r.id === id))
-                  .filter(Boolean) as OutreachRow[];
-                return (
-                  <>
-                    {altQuery && matches.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
-                        {matches.map((r) => {
-                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                          const p = pid ? playerById.get(pid) : null;
-                          return (
-                            <button
-                              key={r.id}
-                              type="button"
-                              onClick={() => { setAltLinkIds((prev) => [...prev, r.id]); setAltQuery(""); }}
-                              className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:border-[#cbb96b]/60"
-                            >
-                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
-                              <div className="min-w-0">
-                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
-                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {selected.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No alternate profiles yet.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {selected.map((r, idx) => {
-                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
-                          const p = pid ? playerById.get(pid) : null;
-                          return (
-                            <div key={r.id} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
-                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
-                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
-                              </div>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === 0} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })}><ArrowUp className="h-3.5 w-3.5" /></Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === selected.length - 1} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })}><ArrowDown className="h-3.5 w-3.5" /></Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setAltLinkIds((prev) => prev.filter((id) => id !== r.id))}><X className="h-3.5 w-3.5" /></Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {primaryPlayerId && (
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const { error } = await (supabase as any)
-                              .from("club_outreach_player_defaults")
-                              .upsert(
-                                { player_id: primaryPlayerId, default_alternate_profile_link_ids: altLinkIds, default_alternate_profiles_blurb: altBlurb.trim() || null, updated_at: new Date().toISOString() },
-                                { onConflict: "player_id" },
-                              );
-                            if (error) { toast.error(error.message ?? "Failed to save default"); return; }
-                            toast.success("Default alternates saved for this player");
-                          }}
-                          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                        >
-                          Save as player default
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
 
