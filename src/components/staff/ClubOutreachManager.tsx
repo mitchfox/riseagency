@@ -92,6 +92,8 @@ interface OutreachRow {
   is_pending_strategy_draft?: boolean;
   season_data_mode?: 'popup' | 'link' | null;
   selected_video_ids?: string[] | null;
+  alternate_profile_link_ids?: string[] | null;
+  alternate_profiles_blurb?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
