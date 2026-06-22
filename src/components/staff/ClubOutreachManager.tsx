@@ -92,6 +92,8 @@ interface OutreachRow {
   is_pending_strategy_draft?: boolean;
   season_data_mode?: 'popup' | 'link' | null;
   selected_video_ids?: string[] | null;
+  alternate_profile_link_ids?: string[] | null;
+  alternate_profiles_blurb?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -368,10 +370,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-       <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-       <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
@@ -575,7 +577,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, editing, defaultFit, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; mode?: OutreachMode; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; mode?: OutreachMode; }) {
   const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
@@ -596,6 +598,11 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     Array.isArray(editing?.selected_video_ids) ? (editing!.selected_video_ids as string[]) : [],
   );
   const [loadingPrimaryVideos, setLoadingPrimaryVideos] = useState(false);
+  const [altLinkIds, setAltLinkIds] = useState<string[]>(
+    Array.isArray(editing?.alternate_profile_link_ids) ? (editing!.alternate_profile_link_ids as string[]) : [],
+  );
+  const [altBlurb, setAltBlurb] = useState<string>(editing?.alternate_profiles_blurb ?? "");
+  const [altQuery, setAltQuery] = useState<string>("");
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
   const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
   const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
@@ -798,11 +805,14 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
       if (!editing && selectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
-          .select("default_selected_video_ids")
+          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb")
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
         if (def.length > 0 && !cancelled) setSelectedVideoIds(def);
+        const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
+        if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
+        if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
       }
     })();
     return () => { cancelled = true; };
@@ -850,6 +860,8 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_strengths: showStrengths,
         season_data_mode: seasonDataMode,
         selected_video_ids: selectedVideoIds,
+        alternate_profile_link_ids: altLinkIds,
+        alternate_profiles_blurb: altBlurb.trim() || null,
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
@@ -1257,6 +1269,109 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                 )}
               </div>
             )}
+            <div className="rounded-md border border-border bg-background/40 p-3 space-y-3">
+              <Label>Alternate profiles</Label>
+              <p className="text-[11px] text-muted-foreground">
+                Attach other outreach links as alternates. They appear in their own section near the bottom of the proposal under a short blurb (e.g. for budget-tight clubs).
+              </p>
+              <Textarea
+                rows={2}
+                placeholder="If budget is tight, here are free options we'd also recommend…"
+                value={altBlurb}
+                onChange={(e) => setAltBlurb(e.target.value)}
+                className="text-sm"
+              />
+              <Input
+                placeholder="Search other outreach links by player name"
+                value={altQuery}
+                onChange={(e) => setAltQuery(e.target.value)}
+              />
+              {(() => {
+                const others = allRows.filter((r) => r.id !== editing?.id);
+                const playerNameFor = (r: OutreachRow) => {
+                  const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
+                  return pid ? (playerById.get(pid)?.name ?? "Unknown") : "Unknown";
+                };
+                const targetLabelFor = (r: OutreachRow) =>
+                  r.target_type === 'agent' ? (r.agent_name ?? 'Agent') : (r.club?.club_name ?? 'Club');
+                const q = altQuery.trim().toLowerCase();
+                const matches = others
+                  .filter((r) => !altLinkIds.includes(r.id))
+                  .filter((r) => !q || playerNameFor(r).toLowerCase().includes(q) || targetLabelFor(r).toLowerCase().includes(q))
+                  .slice(0, 20);
+                const selected = altLinkIds
+                  .map((id) => allRows.find((r) => r.id === id))
+                  .filter(Boolean) as OutreachRow[];
+                return (
+                  <>
+                    {altQuery && matches.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                        {matches.map((r) => {
+                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
+                          const p = pid ? playerById.get(pid) : null;
+                          return (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => { setAltLinkIds((prev) => [...prev, r.id]); setAltQuery(""); }}
+                              className="flex items-center gap-2 rounded-md border border-border p-2 text-left hover:border-[#cbb96b]/60"
+                            >
+                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
+                              <div className="min-w-0">
+                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
+                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {selected.length === 0 ? (
+                      <div className="rounded-md border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No alternate profiles yet.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {selected.map((r, idx) => {
+                          const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
+                          const p = pid ? playerById.get(pid) : null;
+                          return (
+                            <div key={r.id} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
+                              {p?.image_url ? <img src={p.image_url} className="h-8 w-8 rounded-full object-cover" /> : <div className="h-8 w-8 rounded-full bg-muted" />}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium truncate">{playerNameFor(r)}</div>
+                                <div className="text-[10px] text-muted-foreground truncate">{targetLabelFor(r)}</div>
+                              </div>
+                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === 0} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })}><ArrowUp className="h-3.5 w-3.5" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 px-2" disabled={idx === selected.length - 1} onClick={() => setAltLinkIds((prev) => { const n = [...prev]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })}><ArrowDown className="h-3.5 w-3.5" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setAltLinkIds((prev) => prev.filter((id) => id !== r.id))}><X className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {primaryPlayerId && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const { error } = await (supabase as any)
+                              .from("club_outreach_player_defaults")
+                              .upsert(
+                                { player_id: primaryPlayerId, default_alternate_profile_link_ids: altLinkIds, default_alternate_profiles_blurb: altBlurb.trim() || null, updated_at: new Date().toISOString() },
+                                { onConflict: "player_id" },
+                              );
+                            if (error) { toast.error(error.message ?? "Failed to save default"); return; }
+                            toast.success("Default alternates saved for this player");
+                          }}
+                          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        >
+                          Save as player default
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
 
             <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
