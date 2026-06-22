@@ -35,6 +35,44 @@ function isNumericValue(v: any): v is number {
   return typeof v === "number" && !Number.isNaN(v);
 }
 
+const CATEGORY_ORDER = [
+  "Attacking",
+  "Chance Creation",
+  "Passing & Possession",
+  "Defending",
+  "Goalkeeping",
+  "Duels & Physical",
+  "Discipline",
+  "Other",
+] as const;
+type StatCategory = typeof CATEGORY_ORDER[number];
+
+function categoriseStatKey(key: string): StatCategory {
+  const k = key.toLowerCase();
+  if (/(goal|shot|xg|npxg|conversion|finish|sot|on_target|shots_on)/.test(k) && !/conce|saved_against|gk_/.test(k)) {
+    return "Attacking";
+  }
+  if (/(assist|xa|key_pass|chance|cross|through_ball|xgchain|xt\b|big_chance)/.test(k)) {
+    return "Chance Creation";
+  }
+  if (/(pass|possession|touches|carry|carries|progressive|dribble|turnover)/.test(k)) {
+    return "Passing & Possession";
+  }
+  if (/(tackle|interception|clearance|block|recover|press|defensive|ball_won)/.test(k)) {
+    return "Defending";
+  }
+  if (/(save|gk_|keeper|claim|punch|sweep|goals_conce)/.test(k)) {
+    return "Goalkeeping";
+  }
+  if (/(duel|aerial|header|tackle_won|fouled|sprint|distance|hsr|speed)/.test(k)) {
+    return "Duels & Physical";
+  }
+  if (/(card|yellow|red|foul|offside)/.test(k)) {
+    return "Discipline";
+  }
+  return "Other";
+}
+
 export const MatchDataTotalsHeader = ({ analyses }: Props) => {
   // Discover every numeric stat key appearing across the loaded analyses.
   const allStatKeys = useMemo(() => {
@@ -83,6 +121,20 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
 
   if (analyses.length === 0) return null;
 
+  const grouped: Record<StatCategory, string[]> = {
+    "Attacking": [],
+    "Chance Creation": [],
+    "Passing & Possession": [],
+    "Defending": [],
+    "Goalkeeping": [],
+    "Duels & Physical": [],
+    "Discipline": [],
+    "Other": [],
+  };
+  for (const key of allStatKeys) {
+    grouped[categoriseStatKey(key)].push(key);
+  }
+
   const totalCards: { label: string; value: string }[] = [
     { label: "Matches", value: String(totals.matches) },
     { label: "Minutes", value: totals.minutes ? String(totals.minutes) : "—" },
@@ -110,28 +162,41 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
         </div>
       </div>
       {allStatKeys.length > 0 && (
-        <div>
-          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332] mb-2">
-            Averages — every match statistic
+        <div className="space-y-4">
+          <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+            Season averages by category
           </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
-            {allStatKeys.map((key) => {
-              const avg = computeStatAverage(analyses, key);
-              const suffix = isPercentageMetric(key) ? "%" : "";
-              const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
-              return (
-                <div
-                  key={key}
-                  className="rounded-md border border-border/60 bg-background/30 px-2.5 py-1.5"
-                >
-                  <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
-                    {prettifyKey(key)}
-                  </div>
-                  <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
-                </div>
-              );
-            })}
-          </div>
+          {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => (
+            <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+                <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
+                  {cat}
+                </h5>
+                <span className="text-[10px] text-muted-foreground ml-1">
+                  {grouped[cat].length}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
+                {grouped[cat].map((key) => {
+                  const avg = computeStatAverage(analyses, key);
+                  const suffix = isPercentageMetric(key) ? "%" : "";
+                  const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
+                  return (
+                    <div
+                      key={key}
+                      className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
+                    >
+                      <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
+                        {prettifyKey(key)}
+                      </div>
+                      <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
