@@ -1688,7 +1688,14 @@ function MatchByMatchCard({
                         </div>
                       </td>
                       {c.metrics.map((m) => (
-                        <td key={m.key} className="px-2.5 py-1.5 text-right text-white/80 tabular-nums whitespace-nowrap">
+                        <td
+                          key={m.key}
+                          className={`px-2.5 py-1.5 text-right tabular-nums whitespace-nowrap ${
+                            isStrong(getVal(a, m.key), m.key, a.minutes_played ?? null)
+                              ? "text-emerald-200 bg-emerald-400/[0.10] shadow-[inset_0_0_18px_-4px_rgba(74,222,128,0.5)]"
+                              : "text-white/80"
+                          }`}
+                        >
                           {fmtVal(getVal(a, m.key), m.key)}
                         </td>
                       ))}
