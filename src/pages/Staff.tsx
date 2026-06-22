@@ -48,6 +48,7 @@ const SiteVisitorsManagement = lazy(() => import("@/components/staff/SiteVisitor
 const InvoiceManagement = lazy(() => import("@/components/staff/InvoiceManagement").then(m => ({ default: m.InvoiceManagement })));
 const UpdatesManagement = lazy(() => import("@/components/staff/UpdatesManagement").then(m => ({ default: m.UpdatesManagement })));
 const StaffAccountabilityOverview = lazy(() => import("@/components/staff/StaffAccountabilityOverview").then(m => ({ default: m.StaffAccountabilityOverview })));
+const TeamPerformance = lazy(() => import("@/components/staff/TeamPerformance").then(m => ({ default: m.TeamPerformance })));
 const InteractionHistory = lazy(() => import("@/components/staff/InteractionHistory").then(m => ({ default: m.InteractionHistory })));
 const StaffAvailabilityManagement = lazy(() => import("@/components/staff/StaffAvailabilityManagement").then(m => ({ default: m.StaffAvailabilityManagement })));
 const StaffSchedulesManagement = lazy(() => import("@/components/staff/StaffSchedulesManagement").then(m => ({ default: m.StaffSchedulesManagement })));
