@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Target, CheckCircle2, ListChecks } from "lucide-react";
+import { Trophy, Target, CheckCircle2, ListChecks, Star, Activity } from "lucide-react";
 
 type Starter = {
   position: string;
@@ -117,6 +117,77 @@ const nameMatches = (assigned: string[] | null, first: string) => {
   return assigned.some(a => (a || "").toLowerCase().includes(lower));
 };
 
+// Box-score classification. Each rule = (regex, stat key, points).
+// Highest-priority match wins (first hit).
+type BoxStat = "PTS" | "AST" | "REB" | "STL" | "BLK" | "TO";
+const BOX_RULES: { re: RegExp; stat: BoxStat; pts: number; label: string }[] = [
+  // Points — direct agency progress
+  { re: /payment received|invoice paid|received payment/i, stat: "PTS", pts: 30, label: "Payment received" },
+  { re: /signed|closed (deal|client)|contract signed|deal closed/i, stat: "PTS", pts: 25, label: "Closed paid client" },
+  { re: /testimonial|referral received/i, stat: "PTS", pts: 12, label: "Testimonial / referral" },
+  { re: /delivered|deliverable|report sent|highlight (sent|delivered)/i, stat: "PTS", pts: 10, label: "Deliverable completed" },
+  { re: /booked? (call|meeting)|qualified call/i, stat: "PTS", pts: 8, label: "Booked qualified call" },
+  { re: /proposal|offer sent|representation offer/i, stat: "PTS", pts: 5, label: "Proposal sent" },
+  { re: /landing page|deck|portfolio|improve offer/i, stat: "PTS", pts: 3, label: "Asset improved" },
+  { re: /publish|posted|content posted|blog|article/i, stat: "PTS", pts: 2, label: "Content published" },
+  { re: /outreach|cold (message|email|dm)|send (message|email)/i, stat: "PTS", pts: 1, label: "Outreach sent" },
+
+  // Assists — created future scoring chances
+  { re: /intro(duction)?|connected|opened door/i, stat: "AST", pts: 2, label: "Intro / connection" },
+  { re: /lead list|prospect list|shortlist built/i, stat: "AST", pts: 2, label: "Lead list created" },
+  { re: /helpful idea|shared idea|sent insight/i, stat: "AST", pts: 1, label: "Idea shared" },
+  { re: /partner conversation|partner chat|partnership/i, stat: "AST", pts: 2, label: "Partner conversation" },
+
+  // Rebounds — follow-ups and recoveries
+  { re: /follow.?up|chase|revive|reopen/i, stat: "REB", pts: 1, label: "Follow-up / revival" },
+  { re: /unpaid|chase invoice|chase payment/i, stat: "REB", pts: 1, label: "Chased payment" },
+  { re: /fix(ed)? (task|issue|bug)|cleanup/i, stat: "REB", pts: 1, label: "Recovered a miss" },
+
+  // Steals — captured opportunities
+  { re: /spotted|noticed (lead|opportunity)|opportunistic/i, stat: "STL", pts: 1, label: "Spotted opportunity" },
+  { re: /trend|timely post|jumped on/i, stat: "STL", pts: 1, label: "Caught a trend" },
+  { re: /decision.?maker|found contact|sourced contact/i, stat: "STL", pts: 1, label: "Found decision-maker" },
+
+  // Blocks — prevented problems
+  { re: /scope|clarif|prevent|template|checklist/i, stat: "BLK", pts: 1, label: "Prevented an issue" },
+  { re: /said no|declined|killed (idea|task)/i, stat: "BLK", pts: 1, label: "Said no to drag" },
+
+  // Turnovers — wasted chances
+  { re: /missed|forgot|late reply|dropped/i, stat: "TO", pts: 1, label: "Turnover" },
+];
+
+const BOX_KEYS: BoxStat[] = ["PTS", "AST", "REB", "STL", "BLK", "TO"];
+const BOX_META: Record<BoxStat, { label: string; meaning: string; tone: string }> = {
+  PTS: { label: "PTS", meaning: "Direct agency progress", tone: "text-primary" },
+  AST: { label: "AST", meaning: "Future scoring chances created", tone: "text-blue-400" },
+  REB: { label: "REB", meaning: "Follow-ups and recoveries", tone: "text-emerald-400" },
+  STL: { label: "STL", meaning: "Opportunities captured", tone: "text-yellow-400" },
+  BLK: { label: "BLK", meaning: "Problems prevented", tone: "text-purple-400" },
+  TO:  { label: "TO",  meaning: "Wasted chances", tone: "text-red-400" },
+};
+
+function classifyTask(t: TaskRow): { stat: BoxStat; pts: number; label: string } | null {
+  const hay = `${t.title || ""} ${t.category || ""}`;
+  for (const rule of BOX_RULES) {
+    if (rule.re.test(hay)) return { stat: rule.stat, pts: rule.pts, label: rule.label };
+  }
+  // Default: any completed task counts as 1 PT — at least it's on the board.
+  return { stat: "PTS", pts: 1, label: "Action completed" };
+}
+
+type BoxLine = { PTS: number; AST: number; REB: number; STL: number; BLK: number; TO: number; plusMinus: number };
+function emptyBox(): BoxLine { return { PTS: 0, AST: 0, REB: 0, STL: 0, BLK: 0, TO: 0, plusMinus: 0 }; }
+function withPM(b: BoxLine): BoxLine { return { ...b, plusMinus: b.PTS + b.AST + b.REB + b.STL + b.BLK - b.TO }; }
+
+function performanceTier(pts: number): { label: string; tone: string } {
+  if (pts >= 120) return { label: "MVP — career night", tone: "text-primary" };
+  if (pts >= 90)  return { label: "Franchise performance", tone: "text-primary" };
+  if (pts >= 60)  return { label: "All-Star week", tone: "text-yellow-400" };
+  if (pts >= 40)  return { label: "Solid starter", tone: "text-emerald-400" };
+  if (pts >= 20)  return { label: "Role player", tone: "text-blue-400" };
+  return { label: "Quiet game", tone: "text-muted-foreground" };
+}
+
 export const TeamPerformance = () => {
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [vision, setVision] = useState<VisionRow[]>([]);
@@ -158,7 +229,41 @@ export const TeamPerformance = () => {
   const leaderboard = useMemo(() => [...stats].sort((a, b) => b.done - a.done), [stats]);
   const topDone = leaderboard[0]?.done || 0;
 
+  // Weekly box score (last 7 days based on last_completed_at)
+  const boxScore = useMemo(() => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const team = emptyBox();
+    const perStarter = new Map<string, BoxLine>();
+    STARTERS.forEach(s => perStarter.set(s.name, emptyBox()));
+    let attempts = 0;
+    let madeWeighted = 0;
+
+    tasks.forEach(t => {
+      if (!t.completed) return;
+      const ts = t.last_completed_at ? new Date(t.last_completed_at).getTime() : 0;
+      if (!ts || ts < cutoff) return;
+      const c = classifyTask(t);
+      if (!c) return;
+      team[c.stat] += c.pts;
+      attempts += 1;
+      if (c.stat === "PTS" && c.pts >= 3) madeWeighted += 1;
+      STARTERS.forEach(s => {
+        if (nameMatches(t.assigned_to, s.name)) {
+          const line = perStarter.get(s.name)!;
+          line[c.stat] += c.pts;
+        }
+      });
+    });
+
+    const teamFinal = withPM(team);
+    const perStarterFinal = new Map<string, BoxLine>();
+    perStarter.forEach((v, k) => perStarterFinal.set(k, withPM(v)));
+    const fgPct = attempts ? Math.round((madeWeighted / attempts) * 100) : 0;
+    return { team: teamFinal, perStarter: perStarterFinal, attempts, fgPct };
+  }, [tasks]);
+
   const activeStat = open ? stats.find(s => s.starter.name === open.name) : null;
+  const activeBox = open ? boxScore.perStarter.get(open.name) : null;
 
   return (
     <div className="space-y-6">
