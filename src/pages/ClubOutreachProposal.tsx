@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
+import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -202,7 +202,7 @@ function hapticTap(ms = 8) {
       navigator.vibrate(ms);
     }
   } catch {
-    // ignore — vibration is best-effort cosmetic feedback
+    // ignore - vibration is best-effort cosmetic feedback
   }
 }
 
@@ -238,7 +238,7 @@ export default function ClubOutreachProposal() {
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
-  const [dataPopupOpen, setDataPopupOpen] = useState(false);
+  const [inlineDataOpen, setInlineDataOpen] = useState(false);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
@@ -307,7 +307,7 @@ export default function ClubOutreachProposal() {
   }, [data, activeSlot]);
 
   useEffect(() => { setActiveIndex(0); }, [activeSlot]);
-  // Reset the active hero video whenever the player changes — clicking a
+  // Reset the active hero video whenever the player changes - clicking a
   // thumbnail in the carousel below sets this to the chosen videoUrl.
   useEffect(() => { setActiveVideoUrl(null); }, [activeIndex]);
 
@@ -447,7 +447,7 @@ export default function ClubOutreachProposal() {
   const clubContactName = data.club_contact?.contact_name ?? data.link.club_contact_name;
   const clubContactPhoneRaw = data.club_contact?.contact_phone ?? data.link.club_contact_phone;
   const clubContactAccent = data.club_contact?.contact_accent ?? data.link.club_contact_accent;
-  // Club glow — derived from the (already staff-configurable) accent
+  // Club glow - derived from the (already staff-configurable) accent
   // colour. Falls back to RISE gold when no accent is set.
   const clubGlow = normaliseAccentHex(clubContactAccent) ?? "#cbb96b";
   const clubContactImage = data.club_contact?.contact_image_url ?? null;
@@ -477,6 +477,82 @@ export default function ClubOutreachProposal() {
 
   const isSuggestedToAgent = !!data.link.is_suggested_to_agent && isMandated;
   const suggestedAgentNote = (data.link.suggested_agent_note ?? "").trim();
+
+  if (inlineDataOpen) {
+    return (
+      <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
+        <div
+          className="fixed inset-0 -z-10 bg-black"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.85)), url(${blackMarbleBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="sticky top-0 z-20 bg-black/80 backdrop-blur border-b border-white/10">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setInlineDataOpen(false);
+                try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border border-white/15 text-white/80 hover:border-[#cbb96b]/60 hover:text-white transition"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {tr("inline.back", "Back to proposal")}
+            </button>
+            <p className="ml-auto text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#cbb96b] truncate">
+              {tr("card.videoTitle", "Video & Data")}
+              {current?.player?.name ? ` · ${current.player.name}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+          {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+          )}
+          {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+          )}
+          {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+          )}
+          {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
+            <MatchByMatchCard
+              analyses={current.match_by_match}
+              position={current?.player?.position ?? null}
+            />
+          )}
+          {current?.stars_url && (
+            <div className="flex justify-end pt-1">
+              <a
+                href={current.stars_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+              >
+                {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          )}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setInlineDataOpen(false);
+                try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+              }}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-white/15 text-white/80 hover:border-[#cbb96b]/60 hover:text-white transition"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {tr("inline.back", "Back to proposal")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
@@ -595,12 +671,12 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Key details — moved above the hero video */}
+      {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
         <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
       </section>
 
-      {/* Hero — first Stars highlight video, falls back to player image */}
+      {/* Hero - first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
@@ -664,7 +740,7 @@ export default function ClubOutreachProposal() {
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
           </div>
-          {/* Video carousel — only when the player has more than one highlight */}
+          {/* Video carousel - only when the player has more than one highlight */}
           {(current.videos?.length ?? 0) > 1 && (
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {current.videos!.map((v) => {
@@ -705,7 +781,7 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Sections after the hero video — order is staff-configurable per link */}
+      {/* Sections after the hero video - order is staff-configurable per link */}
       {(() => {
         const order = normaliseSectionOrder(data.link.section_order);
         const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
@@ -721,7 +797,14 @@ export default function ClubOutreachProposal() {
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
                 href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
-                onClick={data.link.season_data_mode === 'popup' ? () => setDataPopupOpen(true) : undefined}
+                onClick={
+                  data.link.season_data_mode === 'popup'
+                    ? () => {
+                        setInlineDataOpen(true);
+                        try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+                      }
+                    : undefined
+                }
                 icon={<Video className="h-6 w-6" />}
                 eyebrow="01"
                 title={tr("card.videoTitle", "Video & Data")}
@@ -788,7 +871,7 @@ export default function ClubOutreachProposal() {
         return <>{order.map((k) => renderers[k]?.())}</>;
       })()}
 
-      {/* Alternate Options — wide thin card with a heading, the staffer's
+      {/* Alternate Options - wide thin card with a heading, the staffer's
           free-text note, and plain clickable links to alternate player
           profiles the club can switch to. Renders only when blurb or linked
           profiles exist. */}
@@ -819,7 +902,7 @@ export default function ClubOutreachProposal() {
                       >
                         {alt.player_name ?? alt.short_id}
                       </a>
-                      {meta && <span className="text-white/50"> — {meta}</span>}
+                      {meta && <span className="text-white/50"> - {meta}</span>}
                     </li>
                   );
                 })}
@@ -978,7 +1061,7 @@ export default function ClubOutreachProposal() {
         </a>
       </footer>
 
-      {/* Floating pinned actions — hide once the visitor reaches the contact CTAs */}
+      {/* Floating pinned actions - hide once the visitor reaches the contact CTAs */}
       {(() => {
         const tmUrl = (data.club_contact?.transfermarkt_url ?? "").trim();
         const pinnedWaUrl = (isMandated && mandatedAgentWaUrl) ? mandatedAgentWaUrl : agencyWaUrl;
@@ -1023,47 +1106,6 @@ export default function ClubOutreachProposal() {
         );
       })()}
 
-      {/* Season data popup — opens in place of navigating to the Stars
-          profile when season_data_mode === 'popup'. Wide sheet, scrolls
-          internally, surfaces Form / In Numbers / Season Stats together. */}
-      <Dialog open={dataPopupOpen} onOpenChange={setDataPopupOpen}>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto bg-black text-white border-[#cbb96b]/30">
-          <DialogHeader>
-            <DialogTitle className="text-[#cbb96b]">
-              {tr("card.videoTitle", "Video & Data")}{current?.player?.name ? ` · ${current.player.name}` : ""}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-2">
-            {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
-              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
-            )}
-            {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
-              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
-            )}
-            {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
-              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
-            )}
-            {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
-              <MatchByMatchCard
-                analyses={current.match_by_match}
-                position={current?.player?.position ?? null}
-              />
-            )}
-            {current?.stars_url && (
-              <div className="flex justify-end pt-2">
-                <a
-                  href={current.stars_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
-                >
-                  {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -1232,7 +1274,7 @@ function KeyDetailsCard({
   const clubLogo = entry.player_club_image_url;
 
   const fmtMoney = (n: number | null | undefined, ccy: string | null | undefined): string => {
-    if (!n || !isFinite(n)) return "—";
+    if (!n || !isFinite(n)) return "-";
     const code = (ccy || "GBP").toUpperCase();
     try {
       return new Intl.NumberFormat("en-GB", { style: "currency", currency: code, maximumFractionDigits: 0 }).format(n);
@@ -1241,7 +1283,7 @@ function KeyDetailsCard({
     }
   };
   const fmtDate = (s: string | null | undefined): string => {
-    if (!s) return "—";
+    if (!s) return "-";
     const d = new Date(s);
     if (isNaN(d.getTime())) return s;
     return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
@@ -1257,7 +1299,7 @@ function KeyDetailsCard({
     const TextTile = ({ value, label }: { value: string | React.ReactNode; label: string }) => (
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
         <div className="h-12 flex items-center justify-center px-1">
-          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "—"}</span>
+          <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">{value || "-"}</span>
         </div>
         <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/60 leading-tight">{label}</p>
       </div>
@@ -1266,7 +1308,7 @@ function KeyDetailsCard({
     switch (item.kind) {
       case "club":
         return (
-          <TileShell key={idx} label={player?.club ?? "—"}>
+          <TileShell key={idx} label={player?.club ?? "-"}>
             {clubLogo ? (
               <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
             ) : (
@@ -1278,14 +1320,14 @@ function KeyDetailsCard({
         return (
           <div key={idx} className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center">
             <div className="h-12 flex items-center justify-center">
-              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "—"}</span>
+              <span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "-"}</span>
             </div>
             <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/60">{T("key.yearsOld", "Years old")}</p>
           </div>
         );
       case "nationality":
         return (
-          <TileShell key={idx} label={player?.nationality ?? "—"}>
+          <TileShell key={idx} label={player?.nationality ?? "-"}>
             {nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1295,7 +1337,7 @@ function KeyDetailsCard({
         );
       case "league":
         return (
-          <TileShell key={idx} label={player?.league ?? "—"}>
+          <TileShell key={idx} label={player?.league ?? "-"}>
             {leagueFlag ? (
               <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1304,7 +1346,7 @@ function KeyDetailsCard({
           </TileShell>
         );
       case "position":
-        return <TextTile key={idx} value={player?.position ?? "—"} label={T("key.position", "Position")} />;
+        return <TextTile key={idx} value={player?.position ?? "-"} label={T("key.position", "Position")} />;
       case "contract_expiry":
         return <TextTile key={idx} value={fmtDate(player?.contract_end_date)} label={T("key.contractExpiry", "Contract expiry")} />;
       case "current_salary":
@@ -1360,6 +1402,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
 }
 
 function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
+  const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
   const STAT_LABELS: Record<string, string> = {
@@ -1398,7 +1441,14 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
     return isNaN(n) ? null : n;
   };
   const fmt = (v: number | null, k: string) =>
-    v == null ? "—" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+    v == null ? "-" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+  const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
+  const isStrong = (key: string, v: number | null) => {
+    if (v == null) return false;
+    const mk = normalizeStatKey(key);
+    if (!hasThresholds(mk)) return false;
+    return STRONG_GRADES.has(getGradeForScore(mk, v).grade);
+  };
   const items = (cfg.stats || []).map((s: any) => {
     const key = typeof s === "string" ? s : s.key;
     const label = humanize(key);
@@ -1430,7 +1480,14 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
               }}
             >
               {row.map((it) => (
-                <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+                <div
+                  key={it.key}
+                  className={`rounded-lg p-2 flex flex-col items-center text-center min-w-0 border ${
+                    isStrong(it.key, it.value)
+                      ? "bg-emerald-400/[0.08] border-emerald-400/30 shadow-[0_0_18px_-2px_rgba(74,222,128,0.45)]"
+                      : "bg-white/[0.03] border-white/5"
+                  }`}
+                >
                   <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
                     {it.label}
@@ -1446,7 +1503,14 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {items.map((it) => (
-            <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+            <div
+              key={it.key}
+              className={`rounded-lg p-2 flex flex-col items-center text-center min-w-0 border ${
+                isStrong(it.key, it.value)
+                  ? "bg-emerald-400/[0.08] border-emerald-400/30 shadow-[0_0_18px_-2px_rgba(74,222,128,0.45)]"
+                  : "bg-white/[0.03] border-white/5"
+              }`}
+            >
               <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
               <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
                 {it.label}
@@ -1528,6 +1592,8 @@ function MatchByMatchCard({
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
 }) {
+  const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
+  const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
   const categories = useMemo(
     () => getMetricCategoriesForPosition(position ?? undefined),
     [position],
@@ -1546,7 +1612,7 @@ function MatchByMatchCard({
   );
 
   const fmtVal = (raw: any, key: string): string => {
-    if (raw === null || raw === undefined || raw === "") return "—";
+    if (raw === null || raw === undefined || raw === "") return "-";
     const n = Number(raw);
     if (!Number.isFinite(n)) return String(raw);
     if (/_pct$|_percentage$/i.test(key)) return `${n.toFixed(0)}%`;
@@ -1558,6 +1624,18 @@ function MatchByMatchCard({
     if (a?.fixture_stats && a.fixture_stats[key] != null) return a.fixture_stats[key];
     if (a?.striker_stats && a.striker_stats[key] != null) return a.striker_stats[key];
     return null;
+  };
+
+  const isStrong = (raw: any, key: string, mins: number | null): boolean => {
+    if (raw === null || raw === undefined || raw === "") return false;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return false;
+    const mk = normalizeStatKey(key);
+    if (!hasThresholds(mk)) return false;
+    // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
+    const isPct = /_pct$|_percentage$/i.test(key);
+    const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
+    return STRONG_GRADES.has(getGradeForScore(mk, scaled).grade);
   };
 
   const fmtDate = (iso: string) => {
@@ -1602,7 +1680,7 @@ function MatchByMatchCard({
                     <tr key={a.id} className="border-t border-white/5 hover:bg-white/[0.02]">
                       <td className="px-2.5 py-1.5 sticky left-0 bg-black/80 backdrop-blur z-10">
                         <div className="text-white/90 whitespace-nowrap">
-                          {a.opponent || "—"}
+                          {a.opponent || "-"}
                         </div>
                         <div className="text-white/40 text-[10px] whitespace-nowrap">
                           {fmtDate(a.analysis_date)}
@@ -1610,7 +1688,14 @@ function MatchByMatchCard({
                         </div>
                       </td>
                       {c.metrics.map((m) => (
-                        <td key={m.key} className="px-2.5 py-1.5 text-right text-white/80 tabular-nums whitespace-nowrap">
+                        <td
+                          key={m.key}
+                          className={`px-2.5 py-1.5 text-right tabular-nums whitespace-nowrap ${
+                            isStrong(getVal(a, m.key), m.key, a.minutes_played ?? null)
+                              ? "text-emerald-200 bg-emerald-400/[0.10] shadow-[inset_0_0_18px_-4px_rgba(74,222,128,0.5)]"
+                              : "text-white/80"
+                          }`}
+                        >
                           {fmtVal(getVal(a, m.key), m.key)}
                         </td>
                       ))}
