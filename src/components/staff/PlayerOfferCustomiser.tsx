@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, ArrowUp, ArrowDown, Image as ImageIcon, Video as VideoIcon, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export const OFFER_SECTIONS = [
@@ -42,15 +42,28 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+export type IntroMediaItem = {
+  id: string;
+  kind: "image" | "video";
+  url: string;
+  show: boolean;
+  position: "intro" | "hub" | "both";
+};
+
+const newId = () =>
+  (typeof crypto !== "undefined" && (crypto as any).randomUUID
+    ? (crypto as any).randomUUID()
+    : `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+
 export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange }: Props) => {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [images, setImages] = useState<Record<string, string>>({});
+  const [introMedia, setIntroMedia] = useState<IntroMediaItem[]>([]);
   const [language, setLanguage] = useState<string>("en");
   const [under18, setUnder18] = useState(false);
   const [secondaryParagraph, setSecondaryParagraph] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<null | "image" | "video">(null);
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +71,25 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       setLoading(true);
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
-      setImages((data?.section_images || {}) as Record<string, string>);
+      // Prefer the new intro_media list. Fall back to the legacy section_images
+      // record so older players don't lose their pictures on first open.
+      const rawList = Array.isArray(data?.intro_media) ? data!.intro_media : [];
+      let normalised: IntroMediaItem[] = rawList
+        .filter((x: any) => x && typeof x.url === "string" && x.url)
+        .map((x: any) => ({
+          id: String(x.id ?? newId()),
+          kind: x.kind === "video" ? "video" : "image",
+          url: String(x.url),
+          show: x.show !== false,
+          position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+        }));
+      if (normalised.length === 0) {
+        const legacy = (data?.section_images || {}) as Record<string, string>;
+        normalised = Object.values(legacy)
+          .filter(Boolean)
+          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const }));
+      }
+      setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
         .from("players").select("portal_language").eq("id", playerId).maybeSingle();
       setLanguage(pData?.portal_language || "en");
@@ -79,29 +110,53 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
     setHidden(next);
   };
 
-  const uploadImage = async (sectionId: string, file: File) => {
-    setUploadingId(sectionId);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `offer-sections/${playerId}/${sectionId}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("marketing-gallery")
-      .upload(path, file, { cacheControl: "3600", upsert: true });
-    if (error) {
-      toast.error("Upload failed");
-      setUploadingId(null);
-      return;
+  const uploadMedia = async (kind: "image" | "video", file: File) => {
+    setUploading(kind);
+    try {
+      const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+      const path = `offer-sections/${playerId}/${kind}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("marketing-gallery")
+        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
+      if (error) { toast.error("Upload failed"); return; }
+      const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+      setIntroMedia((prev) => [
+        ...prev,
+        { id: newId(), kind, url: data.publicUrl, show: true, position: "intro" },
+      ]);
+    } finally {
+      setUploading(null);
     }
-    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
-    setImages((prev) => ({ ...prev, [sectionId]: data.publicUrl }));
-    setUploadingId(null);
   };
+
+  const patchItem = (id: string, patch: Partial<IntroMediaItem>) =>
+    setIntroMedia((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const removeItem = (id: string) =>
+    setIntroMedia((prev) => prev.filter((m) => m.id !== id));
+  const moveItem = (id: string, dir: -1 | 1) =>
+    setIntroMedia((prev) => {
+      const idx = prev.findIndex((m) => m.id === id);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      const j = idx + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return next;
+    });
 
   const save = async () => {
     setSaving(true);
+    // Keep the legacy section_images record in sync so anything still reading
+    // the old shape keeps working (mainly the public proposal renderer's fallback).
+    const legacyImages: Record<string, string> = {};
+    introMedia
+      .filter((m) => m.kind === "image" && m.show)
+      .forEach((m, i) => { legacyImages[`m${i}`] = m.url; });
     const payload = {
       player_id: playerId,
       hidden_sections: [...hidden],
-      section_images: images,
+      intro_media: introMedia,
+      section_images: legacyImages,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
@@ -165,44 +220,70 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
           </div>
           <div className="rounded-lg border p-3 space-y-3">
             <div>
-              <Label className="font-medium">Intro cinematic images</Label>
-              <p className="text-xs text-muted-foreground">These appear in the opening cinematic collage on the offer page (not on the later cards). Upload up to 6 personal or aspirational images.</p>
+              <Label className="font-medium">Intro media</Label>
+              <p className="text-xs text-muted-foreground">
+                Images and short video clips that play in the opening cinematic. Toggle each one's visibility and choose where it appears — the opening Intro beat, the hub Why-Us strip, or both. Drag-style reorder with the arrows. Keep clips short and silent.
+              </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {Object.entries(images).map(([key, url]) => (
-                <div key={key} className="relative">
-                  <img src={url} alt="Intro" className="h-32 w-full object-cover rounded border" />
-                  <button
-                    type="button"
-                    onClick={() => setImages((prev) => { const n = { ...prev }; delete n[key]; return n; })}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 border hover:bg-background"
-                    aria-label="Remove image"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+            <div className="space-y-2">
+              {introMedia.length === 0 && (
+                <div className="rounded border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  No intro media yet. Add an image or a short clip below.
+                </div>
+              )}
+              {introMedia.map((m, idx) => (
+                <div key={m.id} className={`flex items-center gap-3 rounded border p-2 ${m.show ? "" : "opacity-60"}`}>
+                  <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded bg-muted">
+                    {m.kind === "video" ? (
+                      <video src={m.url} className="h-full w-full object-cover" muted playsInline />
+                    ) : (
+                      <img src={m.url} alt="" className="h-full w-full object-cover" />
+                    )}
+                    <span className="absolute bottom-0.5 left-0.5 rounded bg-background/80 px-1 text-[9px] uppercase tracking-wider">
+                      {m.kind === "video" ? "Clip" : "Image"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => patchItem(m.id, { show: !m.show })}
+                        className="inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] hover:bg-muted/40"
+                        title={m.show ? "Visible" : "Hidden"}
+                      >
+                        {m.show ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        {m.show ? "Show" : "Hide"}
+                      </button>
+                      <Select value={m.position} onValueChange={(v) => patchItem(m.id, { position: v as IntroMediaItem["position"] })}>
+                        <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="intro">Intro only</SelectItem>
+                          <SelectItem value="hub">Hub Why-Us only</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="truncate text-[10px] text-muted-foreground">{m.url}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === 0} onClick={() => moveItem(m.id, -1)}><ArrowUp className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" disabled={idx === introMedia.length - 1} onClick={() => moveItem(m.id, 1)}><ArrowDown className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => removeItem(m.id)}><X className="h-3.5 w-3.5" /></Button>
+                  </div>
                 </div>
               ))}
-              {Object.keys(images).length < 6 && (
-                <label className="flex items-center justify-center gap-2 h-32 w-full rounded border border-dashed cursor-pointer hover:bg-muted/40 transition">
-                  {uploadingId === "intro" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      <span className="text-sm text-muted-foreground">Add image</span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadImage(`intro-${Date.now()}`, f);
-                    }}
-                  />
+              <div className="flex flex-wrap gap-2 pt-1">
+                <label className="inline-flex items-center gap-2 cursor-pointer rounded border px-3 py-2 text-xs hover:bg-muted/40">
+                  {uploading === "image" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                  <span>Add image</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMedia("image", f); e.currentTarget.value = ""; }} disabled={uploading !== null} />
                 </label>
-              )}
+                <label className="inline-flex items-center gap-2 cursor-pointer rounded border px-3 py-2 text-xs hover:bg-muted/40">
+                  {uploading === "video" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <VideoIcon className="h-3.5 w-3.5" />}
+                  <span>Add video clip</span>
+                  <input type="file" accept="video/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMedia("video", f); e.currentTarget.value = ""; }} disabled={uploading !== null} />
+                </label>
+              </div>
             </div>
           </div>
 

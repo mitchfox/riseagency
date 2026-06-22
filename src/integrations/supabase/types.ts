@@ -5723,6 +5723,7 @@ export type Database = {
           created_at: string
           hidden_sections: string[]
           id: string
+          intro_media: Json
           player_id: string
           section_images: Json
           updated_at: string
@@ -5731,6 +5732,7 @@ export type Database = {
           created_at?: string
           hidden_sections?: string[]
           id?: string
+          intro_media?: Json
           player_id: string
           section_images?: Json
           updated_at?: string
@@ -5739,6 +5741,7 @@ export type Database = {
           created_at?: string
           hidden_sections?: string[]
           id?: string
+          intro_media?: Json
           player_id?: string
           section_images?: Json
           updated_at?: string

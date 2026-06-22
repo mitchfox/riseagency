@@ -46,6 +46,7 @@ interface ProspectPlayer {
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
+  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both" }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
 }
@@ -980,9 +981,10 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, secondaryParagraph, onDone,
+  fullName, lang, extraImages, extraIntro, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
+  extraIntro: Array<{ kind: "image" | "video"; url: string }>;
   secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
@@ -1058,17 +1060,37 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro images appear only on the final RISE logo beat. */}
-      {phase === 3 && extraImages.length > 0 && (
+      {/* Uploaded intro media — images and short clips — appear only on the
+          final RISE logo beat. Layout uses the same 1–6 frame grid as before
+          so existing compositions stay intact; videos play muted + looped. */}
+      {phase === 3 && extraIntro.length > 0 && (
         <div className="pointer-events-none absolute inset-0 z-[5]">
-          {extraImages.slice(0, 6).map((src, i) => {
-            const frame = getIntroImageFrames(extraImages.slice(0, 6).length)[i];
+          {extraIntro.slice(0, 6).map((m, i) => {
+            const frame = getIntroImageFrames(extraIntro.slice(0, 6).length)[i];
+            const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+            if (m.kind === "video") {
+              return (
+                <motion.video
+                  key={m.url + i}
+                  src={m.url}
+                  className={commonClass}
+                  style={frame.style}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  initial={{ opacity: 0, scale: 0.75 }}
+                  animate={{ opacity: 0.9, scale: 1 }}
+                  transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                />
+              );
+            }
             return (
               <motion.img
-                key={src + i}
-                src={src}
+                key={m.url + i}
+                src={m.url}
                 alt=""
-                className={`absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`}
+                className={commonClass}
                 style={frame.style}
                 initial={{ opacity: 0, scale: 0.75 }}
                 animate={{ opacity: 0.9, scale: 1 }}
@@ -1175,7 +1197,7 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, rise_with_us_under18: false, representation_subtitle_secondary: null });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -1208,7 +1230,7 @@ const RiseWithUs = () => {
         setPlayer(data);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images")
+          .select("hidden_sections, section_images, intro_media")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -1219,6 +1241,17 @@ const RiseWithUs = () => {
         setSettings({
           hidden_sections: (sData?.hidden_sections || []) as string[],
           section_images: (sData?.section_images || {}) as Record<string, string>,
+          intro_media: Array.isArray(sData?.intro_media)
+            ? (sData!.intro_media as any[])
+                .filter((x) => x && typeof x.url === "string" && x.url)
+                .map((x) => ({
+                  id: String(x.id ?? x.url),
+                  kind: x.kind === "video" ? "video" : "image",
+                  url: String(x.url),
+                  show: x.show !== false,
+                  position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+                }))
+            : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
         });
@@ -1246,7 +1279,20 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
-  const extraImages = Object.values(settings.section_images).filter(Boolean) as string[];
+  // Build the intro pool from the new intro_media list (kind=image|video,
+  // show=true, position in intro/both). Fall back to legacy section_images
+  // when the player hasn't been migrated yet so we never go blank.
+  const introVisible = settings.intro_media.filter(
+    (m) => m.show && (m.position === "intro" || m.position === "both"),
+  );
+  const extraIntro: Array<{ kind: "image" | "video"; url: string }> =
+    introVisible.length > 0
+      ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
+      : Object.values(settings.section_images)
+          .filter(Boolean)
+          .map((url) => ({ kind: "image" as const, url: url as string }));
+  // Keep the old name working for any downstream consumers that just want urls.
+  const extraImages = extraIntro.map((m) => m.url);
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
 
@@ -1293,6 +1339,7 @@ const RiseWithUs = () => {
             fullName={fullName}
             lang={lang}
             extraImages={extraImages}
+            extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
             onDone={() => setIntroDone(true)}
           />
