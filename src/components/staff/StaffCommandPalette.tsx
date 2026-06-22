@@ -185,7 +185,11 @@ export const StaffCommandPalette = ({ open, onOpenChange, sections, onNavigateSe
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      commandProps={{ shouldFilter: false }}
+    >
       <CommandInput
         placeholder="Search players, fixtures, contacts, tasks, contracts, sections…"
         value={query}
