@@ -991,6 +991,15 @@ const IntroCinematic = ({
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
+  // Phase-3 carousel rotation across the curated intro items.
+  const [introIdx, setIntroIdx] = useState(0);
+  useEffect(() => {
+    if (phase !== 3 || extraIntro.length <= 1) return;
+    const t = setInterval(() => {
+      setIntroIdx((i) => (i + 1) % extraIntro.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [phase, extraIntro.length]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
