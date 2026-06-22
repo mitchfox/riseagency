@@ -161,6 +161,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       hidden_sections: [...hidden],
       intro_media: introMedia,
       section_images: legacyImages,
+      show_database_card: showDatabaseCard,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
