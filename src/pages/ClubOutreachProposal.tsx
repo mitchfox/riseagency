@@ -1635,10 +1635,12 @@ function MatchByMatchCard({
   analyses,
   position,
   excludeAnalysisIds,
+  defaultCategory: defaultCategoryProp,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
   excludeAnalysisIds?: Set<string>;
+  defaultCategory?: string | null;
 }) {
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
@@ -1646,9 +1648,11 @@ function MatchByMatchCard({
     () => getMetricCategoriesForPosition(position ?? undefined),
     [position],
   );
+  const preferred = (defaultCategoryProp ?? "").trim();
   const defaultCat =
-    categories.find((c) => c.category === "Passing")?.category ??
-    categories[0]?.category ??
+    (preferred && categories.find((c) => c.category === preferred)?.category) ||
+    categories.find((c) => c.category === "Passing")?.category ||
+    categories[0]?.category ||
     "";
 
   const sorted = useMemo(
