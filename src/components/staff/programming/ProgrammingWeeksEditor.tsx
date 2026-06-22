@@ -128,14 +128,14 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     if (showOutsideRange) return sorted;
     return sorted.filter(w => {
       if (!w.week_start_date) return true;
-      return w.week_start_date >= programmeRange.start! && w.week_start_date <= programmeRange.end!;
+      return weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!);
     });
   }, [weeks, programmeLink, programmeRange, showOutsideRange]);
 
   const outsideCount = useMemo(() => {
     if (!programmeLink || !programmeRange.start || !programmeRange.end) return 0;
     return weeks.filter(w =>
-      w.week_start_date && (w.week_start_date < programmeRange.start! || w.week_start_date > programmeRange.end!)
+      w.week_start_date && !weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!)
     ).length;
   }, [weeks, programmeLink, programmeRange]);
 
