@@ -2014,6 +2014,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultSectionOrder, setPlayerDefaultSectionOrder] = useState<ProposalSectionKey[]>(DEFAULT_SECTION_ORDER);
   const [playerDefaultVideos, setPlayerDefaultVideos] = useState<{ id: string; name: string }[]>([]);
   const [playerDefaultSelectedVideoIds, setPlayerDefaultSelectedVideoIds] = useState<string[]>([]);
+  const [playerDefaultMbmCategory, setPlayerDefaultMbmCategory] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
@@ -2094,6 +2095,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       setPlayerDefaultSectionOrder(Array.isArray(so) && so.length > 0 ? normaliseSectionOrder(so) : DEFAULT_SECTION_ORDER);
       const dv = (data as any)?.default_selected_video_ids;
       setPlayerDefaultSelectedVideoIds(Array.isArray(dv) ? dv : []);
+      setPlayerDefaultMbmCategory(((data as any)?.default_match_by_match_category as string | null) ?? "");
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
@@ -2233,6 +2235,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       default_key_details: playerDefaultKeyDetails,
       default_section_order: playerDefaultSectionOrder,
       default_selected_video_ids: playerDefaultSelectedVideoIds,
+      default_match_by_match_category: playerDefaultMbmCategory.trim() || null,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2660,6 +2663,23 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Label>Default — section order</Label>
                   <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the proposal section order for this player.</p>
                   <SectionOrderBuilder order={playerDefaultSectionOrder} onChange={setPlayerDefaultSectionOrder} />
+                </div>
+                <div>
+                  <Label>Default — Match by Match category</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Which tab opens first on the proposal's Match by Match table for this player.</p>
+                  <Select
+                    value={playerDefaultMbmCategory || "__default__"}
+                    onValueChange={(v) => setPlayerDefaultMbmCategory(v === "__default__" ? "" : v)}
+                  >
+                    <SelectTrigger className="max-w-xs"><SelectValue placeholder="Default (Passing)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__default__">Default (Passing)</SelectItem>
+                      <SelectItem value="Shooting">Shooting</SelectItem>
+                      <SelectItem value="Passing">Passing</SelectItem>
+                      <SelectItem value="Possession">Possession</SelectItem>
+                      <SelectItem value="Defending">Defending</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={saveDefaults} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>

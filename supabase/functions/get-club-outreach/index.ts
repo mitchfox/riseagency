@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -299,10 +299,20 @@ Deno.serve(async (req) => {
           .filter((s: string) => s.length > 0)
       )
     );
+    // Also include every opponent name we'll surface in Match by Match so the
+    // proposal can render a small club logo next to each row.
+    const uniqueOpponentNames = Array.from(
+      new Set(
+        (formAnalyses ?? [])
+          .map((a: any) => (a.opponent ?? "").toString().trim())
+          .filter((s: string) => s.length > 0)
+      )
+    );
+    const allClubNames = Array.from(new Set([...uniqueClubNames, ...uniqueOpponentNames]));
     let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
-    if (uniqueClubNames.length) {
+    if (allClubNames.length) {
       // Case-insensitive name match via ilike OR-list keeps lookups tolerant.
-      const orFilter = uniqueClubNames
+      const orFilter = allClubNames
         .map((n) => `club_name.ilike.${n.replace(/[,()]/g, " ")}`)
         .join(",");
       const { data: clubRows } = await supabase
@@ -392,6 +402,17 @@ Deno.serve(async (req) => {
         const windowSize = cfg?.window_size ?? 5;
         const allAnalyses = analysesByPlayer.get(e.player_id) ?? [];
         const recentAnalyses = allAnalyses.slice(0, windowSize);
+        // Attach the resolved opponent logo to every match row.
+        const matchByMatchWithLogos = allAnalyses.map((a: any) => {
+          const opKey = (a.opponent ?? "").toString().toLowerCase().trim();
+          const op = opKey ? clubLookup.get(opKey) : null;
+          return { ...a, opponent_logo: op?.image_url ?? null };
+        });
+        // Per-player default Match by Match category lives on the outreach
+        // defaults now (kept on form_config as a legacy fallback).
+        const defaultMbmCategory =
+          (d?.default_match_by_match_category as string | null) ??
+          (cfg?.match_by_match_default_category ?? null);
         return {
           player: p ?? null,
           position_slot: e.position_slot,
@@ -412,12 +433,12 @@ Deno.serve(async (req) => {
             ? {
                 window_size: windowSize,
                 stats: cfg.stats ?? [],
-                match_by_match_default_category: cfg.match_by_match_default_category ?? null,
+                match_by_match_default_category: defaultMbmCategory,
               }
             : null,
           form_analyses: recentAnalyses,
-          match_by_match: allAnalyses,
-          match_by_match_default_category: cfg?.match_by_match_default_category ?? null,
+          match_by_match: matchByMatchWithLogos,
+          match_by_match_default_category: defaultMbmCategory,
         };
       })
     );
