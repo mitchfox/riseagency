@@ -122,6 +122,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           placeholder_minutes,
           category,
           notes,
+          is_todo,
+          todo_note,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -149,6 +151,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         placeholder_minutes: report.placeholder_minutes,
         category: report.category || "match",
         notes: report.notes || null,
+        is_todo: !!report.is_todo,
+        todo_note: report.todo_note || null,
       }));
 
       const scoped = scope.isScoped
