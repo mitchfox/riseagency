@@ -205,7 +205,7 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
       load: base.load ?? null,
       recovery_time: base.recovery_time ?? null,
       notes: base.notes ?? null,
-      diagram: base.diagram ?? null,
+      diagram: (source?.diagram ?? drill.diagram) ?? null,
       display_order: count,
     } as any);
     if (error) return toast.error(error.message);
@@ -363,7 +363,7 @@ export const TechnicalProgramEditor = ({ programId, playerId }: Props) => {
                         <div className="space-y-2 border-t pt-3 mt-2 ml-2 pl-3 border-l-2 border-muted-foreground/20">
                           <div className="flex items-center justify-between">
                             <Label className="text-xs uppercase tracking-wide text-muted-foreground">Variations of this drill</Label>
-                            <Button size="sm" variant="outline" onClick={() => addVariation(drill, drill.variations[drill.variations.length - 1])}>
+                            <Button size="sm" variant="outline" onClick={() => addVariation(drill)}>
                               <Plus className="w-3.5 h-3.5 mr-1" />Add variation
                             </Button>
                           </div>
