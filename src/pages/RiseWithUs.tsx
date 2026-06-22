@@ -49,6 +49,7 @@ interface OfferSettings {
   intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both" }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
+  show_database_card?: boolean | null;
 }
 
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
