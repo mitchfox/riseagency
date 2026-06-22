@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,7 @@ const weeksBetween = (start: string | null, end: string | null) => {
 
 export const TechnicalSection = () => {
   const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
+  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.technical.selectedPlayer", "all");
   const [programs, setPrograms] = useState<Program[]>([]);
   const [openProgram, setOpenProgram] = useState<string | null>(null);
   const [saveDialog, setSaveDialog] = useState<{ open: boolean; programId: string | null; programName: string; phase: string | null }>({

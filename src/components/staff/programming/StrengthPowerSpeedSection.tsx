@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
+import { usePersistedState } from "@/hooks/usePersistedState";
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell, ChevronDown } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
@@ -21,7 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const StrengthPowerSpeedSection = () => {
-  const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
+  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.sps.selectedPlayer", "all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
   const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
   const [legacyOpen, setLegacyOpen] = useState(false);
