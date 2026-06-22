@@ -87,8 +87,8 @@ interface PlayerEntry {
   player_club_image_url: string | null;
   player_club_country: string | null;
   first_highlight_url: string | null;
-  videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
-  all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
+  videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   top_stats: any | null;
   season_stats: any | null;
   strengths_and_play_style: any | null;
@@ -1832,12 +1832,22 @@ function RemainingVideosCard({
   videos,
   title,
 }: {
-  videos: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
+  videos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   title: string;
 }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [carouselStart, setCarouselStart] = useState(0);
+  const [mobileVisibleRows, setMobileVisibleRows] = useState(1);
   const active = videos[Math.min(activeIdx, videos.length - 1)] ?? videos[0];
   if (!active) return null;
+  const PAGE = 12;
+  const useCarousel = videos.length > PAGE;
+  const start = useCarousel ? ((carouselStart % videos.length) + videos.length) % videos.length : 0;
+  const visible = useCarousel
+    ? Array.from({ length: PAGE }, (_, i) => ({ video: videos[(start + i) % videos.length], index: (start + i) % videos.length }))
+    : videos.map((video, index) => ({ video, index }));
+  const mobileVisibleCount = Math.min(videos.length, 8 * mobileVisibleRows);
+  const mobileRemaining = videos.length - mobileVisibleCount;
   return (
     <SectionShell title={title} eyebrow="05">
       <div>
@@ -1852,8 +1862,19 @@ function RemainingVideosCard({
           />
           {videos.length > 1 && (
             <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
-              <div className="flex items-center justify-center gap-2 pointer-events-auto">
-                {videos.map((v, i) => {
+              <div className="relative flex items-center justify-center gap-2">
+                {useCarousel && (
+                  <button
+                    type="button"
+                    onClick={() => setCarouselStart((s) => s - PAGE)}
+                    className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                    aria-label="Previous logos"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <div className="flex gap-1 md:gap-2 pointer-events-auto">
+                {visible.map(({ video: v, index: i }) => {
                   const isActive = i === activeIdx;
                   return (
                     <button
@@ -1876,16 +1897,32 @@ function RemainingVideosCard({
                           loading="eager"
                         />
                       ) : null}
+                      {(v.venue === "H" || v.venue === "A") && (
+                        <span className="absolute bottom-0 right-0 leading-none text-[8px] md:text-[9px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
+                          {v.venue}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
+                </div>
+                {useCarousel && (
+                  <button
+                    type="button"
+                    onClick={() => setCarouselStart((s) => s + PAGE)}
+                    className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                    aria-label="Next logos"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
         {videos.length > 1 && (
           <div className="md:hidden mt-2 grid grid-cols-8 gap-1.5">
-            {videos.map((v, i) => {
+            {videos.slice(0, mobileVisibleCount).map((v, i) => {
               const isActive = i === activeIdx;
               return (
                 <button
@@ -1906,10 +1943,24 @@ function RemainingVideosCard({
                       loading="eager"
                     />
                   ) : null}
+                  {(v.venue === "H" || v.venue === "A") && (
+                    <span className="absolute bottom-0 right-0 leading-none text-[8px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
+                      {v.venue}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
+        )}
+        {mobileRemaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setMobileVisibleRows((r) => r + 1)}
+            className="md:hidden mt-2 w-full text-xs font-bebas uppercase tracking-wider text-[#cbb96b] border border-[#cbb96b]/40 rounded py-1.5 hover:bg-[#cbb96b]/10"
+          >
+            See more ({mobileRemaining})
+          </button>
         )}
       </div>
     </SectionShell>

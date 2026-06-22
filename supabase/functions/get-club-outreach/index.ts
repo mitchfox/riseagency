@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
             // count.
             let q = supabase
               .from("player_analysis")
-              .select("id, player_id, analysis_date, opponent, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .select("id, player_id, analysis_date, opponent, club_logo_url, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
       )
     );
     const allClubNames = Array.from(new Set([...uniqueClubNames, ...uniqueOpponentNames]));
-    let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
+    const clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
     if (allClubNames.length) {
       // Case-insensitive name match via ilike OR-list keeps lookups tolerant.
       const orFilter = allClubNames
@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
         const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
         // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
-        let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null }[] = [];
+        let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
         let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
@@ -369,7 +369,8 @@ Deno.serve(async (req) => {
               id: String(x.id ?? x.videoUrl ?? x.video_url),
               name: String(x.name ?? "Highlight"),
               videoUrl: String(x.videoUrl ?? x.video_url),
-              logoUrl: x.logoUrl ?? null,
+              logoUrl: x.logoUrl ?? x.clubLogo ?? null,
+              venue: x.venue ?? null,
             }));
         } catch (_) {
           allVideos = [];
@@ -408,7 +409,7 @@ Deno.serve(async (req) => {
           const op = opKey ? clubLookup.get(opKey) : null;
           return {
             ...a,
-            opponent_logo: a.opponent_logo_url ?? op?.image_url ?? null,
+            opponent_logo: a.club_logo_url ?? a.opponent_logo_url ?? op?.image_url ?? null,
           };
         });
         // Per-player default Match by Match category lives on the outreach
