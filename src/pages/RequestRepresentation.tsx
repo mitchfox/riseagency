@@ -934,6 +934,9 @@ const RequestRepresentation = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Players we've worked with — represented & mandated, live from DB. */}
+              <PlayersWeWorkWith />
             </div>
           </motion.section>
         ) : null}
