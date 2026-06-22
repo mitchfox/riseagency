@@ -88,6 +88,7 @@ interface PlayerEntry {
   player_club_country: string | null;
   first_highlight_url: string | null;
   videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
+  all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
   top_stats: any | null;
   season_stats: any | null;
   strengths_and_play_style: any | null;
