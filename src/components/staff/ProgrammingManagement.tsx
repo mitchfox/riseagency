@@ -1719,6 +1719,24 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
                           onChange={(e) => updateField('phaseDates', e.target.value)}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="startDate">Start Date</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={programmingData.startDate}
+                          onChange={(e) => updateField('startDate', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endDate">End Date</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={programmingData.endDate}
+                          onChange={(e) => updateField('endDate', e.target.value)}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
