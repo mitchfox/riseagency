@@ -426,6 +426,7 @@ Deno.serve(async (req) => {
           player_club_country: clubInfo?.country ?? null,
           first_highlight_url: firstHighlightUrl,
           videos,
+          all_videos: allVideos,
           top_stats: bioParsed?.topStats ?? null,
           season_stats: bioParsed?.seasonStats ?? null,
           strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,
