@@ -315,6 +315,47 @@ export default function ClubOutreachProposal() {
 
   const current = filteredPlayers[activeIndex] ?? filteredPlayers[0];
 
+  // Map the videos shown in the main carousel back to the analysis_id they came
+  // from, so the inline "Match by Match" table can skip games whose video
+  // has already been shown on the main proposal page.
+  useEffect(() => {
+    const videoUrls = (current?.videos ?? [])
+      .map((v) => v?.videoUrl)
+      .filter((u): u is string => !!u)
+      .map((u) => u.split("#")[0]);
+    const playerId = current?.player?.id;
+    if (!playerId || videoUrls.length === 0) {
+      setShownAnalysisIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data: analyses } = await supabase
+        .from("player_analysis")
+        .select("id")
+        .eq("player_id", playerId);
+      const aIds = (analyses ?? []).map((a: any) => a.id);
+      if (aIds.length === 0) {
+        if (!cancelled) setShownAnalysisIds(new Set());
+        return;
+      }
+      const { data: acts } = await supabase
+        .from("performance_report_actions")
+        .select("video_url, analysis_id")
+        .in("analysis_id", aIds)
+        .not("video_url", "is", null);
+      if (cancelled) return;
+      const urlSet = new Set(videoUrls);
+      const matched = new Set<string>();
+      (acts ?? []).forEach((a: any) => {
+        const base = (a.video_url || "").split("#")[0];
+        if (urlSet.has(base) && a.analysis_id) matched.add(a.analysis_id);
+      });
+      setShownAnalysisIds(matched);
+    })();
+    return () => { cancelled = true; };
+  }, [current?.player?.id, current?.videos]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !current?.first_highlight_url) return;
