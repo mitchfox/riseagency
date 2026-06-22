@@ -64,6 +64,7 @@ const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccoun
 const PlayerPasswordManagement = lazy(() => import("@/components/staff/PlayerPasswordManagement").then(m => ({ default: m.PlayerPasswordManagement })));
 const ClubNetworkManagement = lazy(() => import("@/components/staff/ClubNetworkManagement"));
 const ClubOutreachManager = lazy(() => import("@/components/staff/ClubOutreachManager"));
+const MarketTablesStandalone = lazy(() => import("@/components/staff/outreach/MarketTablesTab"));
 const LegalManagement = lazy(() => import("@/components/staff/LegalManagement"));
 const PartnersManagement = lazy(() => import("@/components/staff/PartnersManagement").then(m => ({ default: m.PartnersManagement })));
 const LanguagesManagement = lazy(() => import("@/components/staff/LanguagesManagement"));
@@ -196,7 +197,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'markettables' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -908,6 +909,7 @@ const Staff = () => {
             { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
             { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
+            { id: 'markettables', title: 'Market Tables', icon: Mail },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
             { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
             { id: 'submissions', title: 'Form Submissions', icon: Mail },
@@ -1029,6 +1031,7 @@ const Staff = () => {
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
           { id: 'recruitment', title: 'Recruitment', icon: Target },
           { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
+          { id: 'markettables', title: 'Market Tables', icon: Mail },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
           { id: 'submissions', title: 'Form Submissions', icon: Mail },
@@ -1988,6 +1991,7 @@ const Staff = () => {
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
                   {expandedSection === 'cluboutreach' && <ClubOutreachManager />}
+                  {expandedSection === 'markettables' && <MarketTablesStandalone />}
                   {expandedSection === 'casestudies' && <ScriptsAndCaseStudies />}
                   {expandedSection === 'representationoffers' && <RepresentationOffers />}
                   {expandedSection === 'transferreports' && <TransferReports />}
