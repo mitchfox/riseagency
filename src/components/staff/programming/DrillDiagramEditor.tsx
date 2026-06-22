@@ -71,6 +71,36 @@ interface Props {
 type Tool = "select" | "player" | "cone" | "ball" | "gate" | "arrow" | "line" | "wall" | "rebounder";
 
 export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Diagram" }: Props) => {
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-5xl w-[95vw]">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <DrillDiagramInline
+          initial={initial}
+          onCancel={onClose}
+          onSave={(d) => { onSave(d); onClose(); }}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface InlineProps {
+  initial: DrillDiagram | null;
+  onSave: (diagram: DrillDiagram) => void;
+  onCancel?: () => void;
+  /** Tightens the pitch to this max width (px). Defaults to 360 for inline use. */
+  maxWidth?: number;
+}
+
+/**
+ * Inline diagram editor body. Used directly inside drill cards so editors
+ * don't have to open a full-screen dialog on desktop (the dialog was too
+ * large to interact with on standard laptop screens).
+ */
+export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }: InlineProps) => {
   const [diagram, setDiagram] = useState<DrillDiagram>(emptyDiagram());
   const [tool, setTool] = useState<Tool>("select");
   const [arrowKind, setArrowKind] = useState<DiagramArrow["kind"]>("pass");
@@ -83,15 +113,13 @@ export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Di
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (open) {
-      const init = initial ?? emptyDiagram();
-      setDiagram({ ...init, shapes: init.shapes ?? [] });
-      setTool("select");
-      setArrowStart(null);
-      setShapeStart(null);
-      setSelectedId(null);
-    }
-  }, [open, initial]);
+    const init = initial ?? emptyDiagram();
+    setDiagram({ ...init, shapes: init.shapes ?? [] });
+    setTool("select");
+    setArrowStart(null);
+    setShapeStart(null);
+    setSelectedId(null);
+  }, [initial]);
 
   const toCoords = (evt: React.MouseEvent | React.TouchEvent) => {
     const svg = svgRef.current;
@@ -234,12 +262,8 @@ export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Di
   ];
 
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-5xl w-[95vw]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-wrap items-center gap-2 mb-2">
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
           {tools.map(t => {
             const Icon = t.icon;
             return (
@@ -247,15 +271,16 @@ export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Di
                 key={t.id}
                 size="sm"
                 variant={tool === t.id ? "default" : "outline"}
+                className="h-7 px-2 text-xs"
                 onClick={() => { setTool(t.id); setArrowStart(null); setShapeStart(null); setSelectedId(null); }}
               >
-                <Icon className="w-3.5 h-3.5 mr-1" /> {t.label}
+                <Icon className="w-3 h-3 mr-1" /> {t.label}
               </Button>
             );
           })}
           {tool === "arrow" && (
             <Select value={arrowKind} onValueChange={(v: any) => setArrowKind(v)}>
-              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(ARROW_STYLES) as DiagramArrow["kind"][]).map(k => (
                   <SelectItem key={k} value={k}>{ARROW_STYLES[k].label}</SelectItem>
@@ -265,17 +290,17 @@ export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Di
           )}
           <div className="ml-auto flex items-center gap-2">
             <Select value={diagram.pitch} onValueChange={(v: any) => setDiagram(d => ({ ...d, pitch: v }))}>
-              <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-7 w-24 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="half">Half pitch</SelectItem>
                 <SelectItem value="full">Full pitch</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" onClick={clearAll}><Trash2 className="w-3.5 h-3.5 mr-1" />Clear</Button>
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearAll}><Trash2 className="w-3 h-3 mr-1" />Clear</Button>
           </div>
-        </div>
+      </div>
 
-        <div className="relative w-full" style={{ aspectRatio: "3 / 4" }}>
+      <div className="relative w-full" style={{ aspectRatio: "3 / 4", maxWidth }}>
           <svg
             ref={svgRef}
             viewBox="0 0 100 100"
