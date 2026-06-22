@@ -1015,7 +1015,7 @@ export default function ClubOutreachProposal() {
         <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto bg-black text-white border-[#cbb96b]/30">
           <DialogHeader>
             <DialogTitle className="text-[#cbb96b]">
-              {tr("card.videoTitle", "Video & Data")} · {current?.name}
+              {tr("card.videoTitle", "Video & Data")}{current?.player?.name ? ` · ${current.player.name}` : ""}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-2">
